@@ -103,9 +103,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 					     "_", 0);
 		fprintf(ci->fh, "if(ORBIT_STUB_IsBypass (_obj, %s__classid)) {\n", id);
 
-		fprintf(ci->fh, "ORBit_POAInvocation _invoke_rec G_GNUC_UNUSED;\n");
-
-		fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj, _invoke_rec);\n");
+		fprintf(ci->fh, "ORBIT_STUB_PreCall (_obj);\n");
 
 		fprintf(ci->fh, "%s((POA_%s__epv *)ORBIT_STUB_GetEpv(_obj, %s__classid))->%s(\n"
 			"ORBIT_STUB_GetServant(_obj), ",
@@ -123,7 +121,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 
 		fprintf(ci->fh, "ev);\n");
 
-		fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, _invoke_rec);\n");
+		fprintf(ci->fh, "ORBIT_STUB_PostCall (_obj);\n");
 	}
 
 	fprintf (of, " } else\n");

@@ -21,6 +21,9 @@ gboolean           ORBit_POA_is_inuse              (PortableServer_POA  poa,
 					            CORBA_boolean       consider_children,
                                                     CORBA_Environment  *ev);
 
+PortableServer_Current 
+		   ORBit_POACurrent_new            (CORBA_ORB orb);
+
 /*
  * Exported by poa-manager.c
  */

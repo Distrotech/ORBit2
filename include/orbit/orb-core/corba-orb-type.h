@@ -33,23 +33,16 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 #endif
 
 struct CORBA_ORB_type {
-  struct ORBit_RootObject_struct root_object;
-  GIOPVersion default_giop_version;
+	struct ORBit_RootObject_struct  root_object;
+	GIOPVersion                     default_giop_version;
 
-  GSList *servers;
-  GPtrArray *adaptors;
-  gpointer poa_current;
-  gpointer poa_current_invocations;
-  gpointer default_ctx;
-  GHashTable *initial_refs;
-  ORBit_genrand genrand;
-  guint life_flags;
+	GSList                         *servers;
+	GPtrArray                      *adaptors;
+	GSList                         *current_invocations;
+	gpointer                        default_ctx;
+	GHashTable                     *initial_refs;
+	ORBit_genrand                   genrand;
+	guint                           life_flags;
 };
-
-typedef struct {
-  gpointer objref;
-  gboolean listme : 1;
-  gboolean free_name : 1; /* Might as well use up the space since it's here */
-} ORBit_InitialReference;
 
 #endif

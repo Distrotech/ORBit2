@@ -42,8 +42,8 @@
 #  define d_print(a) g_print(a)
 #endif
 
-CORBA_ORB orb;
-gboolean  in_proc;
+extern CORBA_ORB global_orb;
+gboolean         in_proc;
 
 void
 testConst (void)
@@ -302,7 +302,7 @@ testFixedLengthStruct (test_TestFactory   factory,
 	ior = test_TestFactory_getStructServerIOR (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-	objref = CORBA_ORB_string_to_object (orb, ior, ev);
+	objref = CORBA_ORB_string_to_object (global_orb, ior, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (objref != CORBA_OBJECT_NIL);
 	CORBA_free (ior);
@@ -1000,6 +1000,22 @@ testMisc (test_TestFactory   factory,
 	g_assert (CORBA_TypeCode_equivalent (
 		TC_test_StrSeq, TC_test_AnotherStrSeq, ev));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/*
+	 * dead reference check
+	 */
+	if (!factory->adaptor_obj) {
+		test_DeadReferenceObj obj;
+
+		obj = test_TestFactory_createDeadReferenceObj (factory, ev);
+
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		g_assert (obj != CORBA_OBJECT_NIL);
+
+		test_DeadReferenceObj_test (obj, ev);
+
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	}
 }
 
 static int done = 0;
@@ -1142,6 +1158,43 @@ testSegv (test_TestFactory   factory,
 	}
 }
 
+void
+test_initial_references (CORBA_ORB          orb,
+			 CORBA_Environment *ev)
+{
+	CORBA_ORB_ObjectIdList *list;
+	int                     i;
+
+	fprintf (stderr, "\nInitial References:\n");
+
+	list = CORBA_ORB_list_initial_services (orb, ev);
+
+	g_assert (ev->_major == CORBA_NO_EXCEPTION && list && list->_length);
+
+	for (i = 0; i < list->_length; i++) {
+		CORBA_ORB_ObjectId id;
+		CORBA_Object       obj;
+
+		id = list->_buffer [i];
+
+		g_assert (id);
+
+		fprintf (stderr, "\t%s ... ", id);
+
+		obj = CORBA_ORB_resolve_initial_references (orb, id, ev);
+
+		g_assert (ev->_major == CORBA_NO_EXCEPTION && obj != CORBA_OBJECT_NIL);
+
+		CORBA_Object_release (obj, ev);
+
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+		fprintf (stderr, "okay\n");
+	}
+
+	CORBA_free (list);
+}
+
 static void
 run_tests (test_TestFactory   factory, 
 	   CORBA_Environment *ev)
@@ -1212,8 +1265,10 @@ main (int argc, char *argv [])
 	if (!g_thread_supported ())
 		g_thread_init (NULL);
 
-	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
+	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
+
+	test_initial_references (global_orb, &ev);
 
 	free (malloc (8)); /* -lefence */
 
@@ -1223,7 +1278,7 @@ main (int argc, char *argv [])
 #ifndef TIMING_RUN
 	fprintf (stderr, "\n --- In proc ---\n\n\n");
 	{
-		factory = get_server (orb, &ev);
+		factory = get_server (global_orb, &ev);
 		g_assert (factory->profile_list == NULL);
 		g_assert (ORBit_object_get_connection (factory) == NULL);
 		run_tests (factory, &ev);
@@ -1249,7 +1304,7 @@ main (int argc, char *argv [])
 		fclose (infile);
 		ior [size] = '\0';   /* insure that string is terminated correctly */
 
-		factory = CORBA_ORB_string_to_object (orb, ior, &ev);
+		factory = CORBA_ORB_string_to_object (global_orb, ior, &ev);
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 
 		if (CORBA_Object_non_existent (factory, &ev))
@@ -1266,7 +1321,7 @@ main (int argc, char *argv [])
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	
-	CORBA_ORB_destroy (orb, &ev);
+	CORBA_ORB_destroy (global_orb, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
 	CORBA_exception_free (&ev);

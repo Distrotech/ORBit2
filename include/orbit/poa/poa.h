@@ -69,12 +69,6 @@ typedef struct {
   POA_PortableServer_ServantLocator__vepv *vepv;
 } POA_PortableServer_ServantLocator;
 
-typedef struct ORBit_POAInvocation ORBit_POAInvocation;
-struct ORBit_POAInvocation {
-  ORBit_POAInvocation                *prev;
-  ORBit_POAObject                     pobj;
-};
-
 #include <orbit/poa/portableserver-poa-type.h>
 #include <orbit/poa/portableserver-current-type.h>
 

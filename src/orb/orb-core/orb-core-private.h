@@ -12,6 +12,10 @@ void         ORBit_register_objref  (CORBA_Object obj);
 CORBA_Object ORBit_objref_get_proxy (CORBA_Object obj);
 void         ORBit_start_servers    (CORBA_ORB    orb);
 
+void         ORBit_set_initial_reference (CORBA_ORB    orb,
+					  gchar       *identifier,
+					  gpointer     objref);
+
 /*
  * profile methods.
  */
