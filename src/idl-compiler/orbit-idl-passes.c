@@ -21,7 +21,10 @@ static struct {
   enum { FOR_IN=1, FOR_OUT=2 } dirs;
 } idl_passes[] = {
   {"Position updates", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_make_updates, FOR_OUT},
+#if 0
+  /* This pass causes problems for struct foo { sequence<struct_bar> baz; } */
   {"Set collapsing", (OIDL_Pass_Func)oidl_pass_run_for_ops, orbit_idl_collapse_sets, FOR_IN|FOR_OUT},
+#endif
   {"Alignment calculation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_alignment, FOR_IN|FOR_OUT},
   {"Endian dependancy", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_endian_dependant, FOR_IN|FOR_OUT},
   {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility, FOR_IN|FOR_OUT},
@@ -532,6 +535,7 @@ if(!(anode)->name \
    && SET_SIZE((anode)) == 1) { \
 (anode) = (anode)->u.set_info.subnodes->data; \
 (anode)->up = node; \
+g_message("Successful collapse of %s", (anode)->name); \
 }
 
   switch(node->type) {
@@ -545,6 +549,7 @@ if(!(anode)->name \
 	ltmp->data = ntmp->u.set_info.subnodes->data;
 	ntmp = ltmp->data;
 	ntmp->up = node;
+	g_message("Successful collapse of %s", ntmp->name);
       }
     }
     break;
