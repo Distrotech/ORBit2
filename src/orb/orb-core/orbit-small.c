@@ -606,7 +606,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 
 	if (adaptor_obj) {
 		/* FIXME: unchecked cast */
-		if (ORBit_poa_allow_cross_thread_call ((ORBit_POAObject) adaptor_obj)) {
+		if (ORBit_poa_allow_cross_thread_call ((ORBit_POAObject) adaptor_obj,
+						       m_data->flags)) {
 			tprintf_header (obj, m_data);
 			tprintf ("[in-proc]");
 			ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
@@ -614,6 +615,11 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 			goto clean_out;
 		} else {
 			tprintf ("[in-proc-XT]");
+			/*
+			 * FIXME: this is _really_ slow, can easily be optimised
+			 * by shoving the GIOP data straight on the incoming
+			 * queue
+			 */
 			xt_proxy = ORBit_objref_get_proxy (obj);
 			obj = xt_proxy;
 		}

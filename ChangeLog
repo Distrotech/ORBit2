@@ -1,3 +1,16 @@
+2004-01-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): add performance
+	comment and pass method flags in.
+
+	* src/orb/poa/poa.c (get_c_method),
+	(ORBit_c_stub_invoke): extract / pass on the
+	method flags to:
+	(ORBit_poa_allow_cross_thread_call): if we
+	have an non-std. threading policy, then do
+	a 'true' oneway call. 
+
 2004-01-06  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: fix 'if !' bug for Morten.
