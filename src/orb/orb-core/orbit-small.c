@@ -613,6 +613,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 
 	if (m_data->flags & ORBit_I_METHOD_1_WAY) {
 		tprintf ("[ one way ]");
+		giop_recv_list_destroy_queue_entry (&mqe);
 		goto clean_out;
 	}
 
@@ -1004,7 +1005,7 @@ ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
 }
 #endif
 
-typedef struct {
+struct _ORBitAsyncQueueEntry {
 	GIOPMessageQueueEntry   mqe;
 	CORBA_Object            obj;
 	ORBitAsyncInvokeFunc    fn;
@@ -1012,20 +1013,14 @@ typedef struct {
 	gpointer               *args;
 	ORBit_IMethod          *m_data;
 	CORBA_completion_status completion_status;
-} AsyncQueueEntry;
+};
 
-static void
-async_recv_cb (AsyncQueueEntry *aqe)
+void
+ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
+			     gpointer              ret,
+			     gpointer             *args,
+			     CORBA_Environment    *ev)
 {
-	CORBA_Environment *ev, real_ev;
-
-	ev = &real_ev;
-	CORBA_exception_init (ev);
-
-	g_warning ("Async: We need to check the connection before de-marshaling, "
-		   "and flag the right exceptions");
-	g_warning ("ASync: return types stubbed - need an any.");
-
 	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, &aqe->mqe, ev,
 				       NULL, aqe->m_data, aqe->args)) {
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
@@ -1058,9 +1053,24 @@ async_recv_cb (AsyncQueueEntry *aqe)
 
  clean_out:
 	tprintf ("\n");
+}
 
-	aqe->fn (aqe->obj, aqe->m_data, NULL, aqe->args,
-		 aqe->user_data, ev);
+static void
+async_recv_cb (ORBitAsyncQueueEntry *aqe)
+{
+	CORBA_Environment *ev, real_ev;
+
+	ev = &real_ev;
+	CORBA_exception_init (ev);
+
+	/* So we don't get invoked again */
+	aqe->mqe.u.unthreaded.cb = NULL;
+
+	if (aqe->mqe.cnx->parent.status == LINC_DISCONNECTED)
+		CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
+					    aqe->completion_status);
+
+	aqe->fn (aqe->obj, aqe->m_data, aqe, aqe->user_data, ev);
 
 	ORBit_RootObject_release (aqe->obj);
 /*	ORBit_RootObject_release (aqe->m_data); */
@@ -1093,7 +1103,7 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 {
 	CORBA_unsigned_long     request_id;
 	GIOPConnection         *cnx;
-	AsyncQueueEntry        *aqe = g_new (AsyncQueueEntry, 1);
+	ORBitAsyncQueueEntry        *aqe = g_new (ORBitAsyncQueueEntry, 1);
 
 	cnx = ORBit_object_get_connection (obj);
 
@@ -1117,6 +1127,9 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	if (!orbit_small_marshal (obj, cnx, &aqe->mqe, request_id,
 				  m_data, args, ctx))
 		goto system_exception;
+
+	if (m_data->flags & ORBit_I_METHOD_1_WAY)
+		giop_recv_list_destroy_queue_entry (&aqe->mqe);
 
 	aqe->completion_status = CORBA_COMPLETED_MAYBE;
 	aqe->fn = fn;

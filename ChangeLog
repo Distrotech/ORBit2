@@ -1,3 +1,23 @@
+2001-10-13  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c: lots of debugging
+	instrumentation.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_stub):
+	un-queue the reply tag for oneway methods - there is no reply.
+	(ORBit_small_invoke_async): ditto.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_zap):
+	iterate over the full list, invoke the unthreaded cb
+	when the connection is dead, and unlink before invoke.
+	(giop_recv_list_push): unlink from giop_queued_messages.
+
+	* src/orb/orb-core/orbit-small.c (async_recv_cb): upd,
+	and set COMM_FAILURE on a broken method ...
+	(ORBit_small_demarshal_async): impl. to simplify
+	de-marshaling.
+	(ORBit_small_invoke_async): upd.
+
 2001-10-11  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get):

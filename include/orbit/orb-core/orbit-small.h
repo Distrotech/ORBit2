@@ -45,12 +45,13 @@ CORBA_sequence_CORBA_TypeCode *
 CORBA_sequence_ORBit_IInterface *
                   ORBit_small_get_iinterfaces     (const char        *name);
 
-typedef void (*ORBitAsyncInvokeFunc) (CORBA_Object       object,
-				      ORBit_IMethod     *m_data,
-				      const CORBA_any   *ret,
-				      gpointer          *args,
-				      gpointer           user_data, 
-				      CORBA_Environment *ev);
+typedef struct _ORBitAsyncQueueEntry ORBitAsyncQueueEntry;
+
+typedef void (*ORBitAsyncInvokeFunc) (CORBA_Object          object,
+				      ORBit_IMethod        *m_data,
+				      ORBitAsyncQueueEntry *aqe,
+				      gpointer              user_data, 
+				      CORBA_Environment    *ev);
 
 /* Various bits for Async work */
 void              ORBit_small_invoke_async        (CORBA_Object           obj,
@@ -59,6 +60,11 @@ void              ORBit_small_invoke_async        (CORBA_Object           obj,
 						   gpointer               user_data,
 						   gpointer              *args,
 						   CORBA_Context          ctx,
+						   CORBA_Environment     *ev);
+
+void              ORBit_small_demarshal_async     (ORBitAsyncQueueEntry  *aqe,
+						   gpointer               ret,
+						   gpointer              *args,
 						   CORBA_Environment     *ev);
 
 #endif /* CORBA_SMALL_H */

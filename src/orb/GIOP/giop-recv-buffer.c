@@ -54,10 +54,18 @@ giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 #ifdef ORBIT_THREADED
 	  pthread_cond_signal(&ent->condvar);
 #else
-	  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+	  if (ent->u.unthreaded.cb) {
+		  giop_queued_messages = g_list_remove_link (
+			  giop_queued_messages, ltmp);
+		  g_list_free_1 (ltmp);
+		  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-	  if (ent->u.unthreaded.cb)
+#ifdef DEBUG
+		  g_warning ("Call %p:%p:%p", ltmp, ent, ent->u.unthreaded.cb);
+#endif
 		  ent->u.unthreaded.cb (ent);
+	  } else
+		  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 #endif
 	}
       else
@@ -702,23 +710,32 @@ void
 giop_recv_list_zap (GIOPConnection *cnx)
 {
 	GList *ltmp;
-	GIOPMessageQueueEntry *ent;
 
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 
-	for (ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next) {
-		GIOPMessageQueueEntry *tmpent = ltmp->data;
-		if(tmpent->cnx == cnx) {
-			ent = tmpent;
-			break;
-		}
-	}
+	for (ltmp = giop_queued_messages; ltmp; ltmp = ltmp->next) {
+		GIOPMessageQueueEntry *ent = ltmp->data;
 
-	if (ent) {
-		ent->buffer = NULL;
+		if (ent->cnx == cnx) {
+			ent->buffer = NULL;
 #ifdef ORBIT_THREADED
-		pthread_cond_signal(&ent->condvar);
+			pthread_cond_signal (&ent->condvar);
+#else
+			if (ent->u.unthreaded.cb) {
+				/* Remove it from the list */
+				giop_queued_messages = g_list_remove_link (
+					giop_queued_messages, ltmp);
+				g_list_free_1 (ltmp);
+				
+				LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+#ifdef DEBUG
+				g_warning ("About to invoke %p:%p:%p", ltmp, ent, ent->u.unthreaded.cb);
 #endif
+				ent->u.unthreaded.cb (ent);
+				LINC_MUTEX_LOCK (giop_queued_messages_lock);
+			}
+#endif
+		}
 	}
 
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
@@ -780,6 +797,9 @@ giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 {
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
+#ifdef DEBUG
+	g_warning ("Pop XX:%p:NULL - %d", ent, g_list_length (giop_queued_messages));
+#endif
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
 #ifdef ORBIT_THREADED
@@ -798,7 +818,7 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
 #ifdef ORBIT_THREADED
 	/* FIXME: fix this mess */
 	LINC_MUTEX_INIT (ent->condvar_lock);
-	pthread_cond_init(&ent->condvar, NULL);
+	pthread_cond_init (&ent->condvar, NULL);
 	LINC_MUTEX_LOCK (ent->condvar_lock);
 #else
 	ent->u.unthreaded.cb = NULL;
@@ -809,7 +829,10 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
 	ent->request_id = request_id;
 
 	LINC_MUTEX_LOCK   (giop_queued_messages_lock);
-	giop_queued_messages = g_list_prepend(giop_queued_messages, ent);
+#ifdef DEBUG
+	g_warning ("Push XX:%p:NULL - %d", ent, g_list_length (giop_queued_messages));
+#endif
+	giop_queued_messages = g_list_prepend (giop_queued_messages, ent);
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
 	ent->buffer = NULL;
@@ -822,6 +845,10 @@ giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
 	g_return_if_fail (ent != NULL);
 
 	ent->u.unthreaded.cb = cb;
+
+#ifdef DEBUG
+	g_warning ("Set async to XX:%p:%p", ent, ent->u.unthreaded.cb);
+#endif
 }
 
 GIOPRecvBuffer *

@@ -1001,23 +1001,27 @@ testMisc (test_TestFactory   factory,
 static int done = 0;
 
 static void
-test_BasicServer_opExceptionA_cb (CORBA_Object       object,
-				  ORBit_IMethod     *m_data,
-				  const CORBA_any   *ret,
-				  gpointer          *args,
-				  gpointer           user_data, 
-				  CORBA_Environment *ev)
+test_BasicServer_opExceptionA_cb (CORBA_Object          object,
+				  ORBit_IMethod        *m_data,
+				  ORBitAsyncQueueEntry *aqe,
+				  gpointer              user_data, 
+				  CORBA_Environment    *ev)
 {
 	test_TestException *ex;
 
-	g_assert(ev->_major == CORBA_USER_EXCEPTION);
-	g_assert(strcmp(CORBA_exception_id(ev),ex_test_TestException) == 0);
+	/* Not a broken connection */
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	ex = CORBA_exception_value(ev);
-	g_assert(strcmp(ex->reason,constants_STRING_IN) == 0);
-	g_assert(ex->number == constants_LONG_IN);
-	g_assert(ex->aseq._length == 1);
-	g_assert(ex->aseq._buffer[0] == constants_LONG_IN);
+	ORBit_small_demarshal_async (aqe, NULL, NULL, ev);
+
+	g_assert (ev->_major == CORBA_USER_EXCEPTION);
+	g_assert (strcmp (CORBA_exception_id (ev),ex_test_TestException) == 0);
+
+	ex = CORBA_exception_value (ev);
+	g_assert (strcmp (ex->reason,constants_STRING_IN) == 0);
+	g_assert (ex->number == constants_LONG_IN);
+	g_assert (ex->aseq._length == 1);
+	g_assert (ex->aseq._buffer[0] == constants_LONG_IN);
 
 	done = 1;
 }
