@@ -1,3 +1,8 @@
+Version 0.5.4
+
+	* fixes
+		+ IPv4/6 name resolution snafu (Elliot Lee)
+
 Version 0.5.3
 
 	* fixes
