@@ -91,20 +91,22 @@ linc_mainloop_handle_input (GIOChannel   *source,
 			    gpointer      data)
 {
 	char c;
-	GList *l;
+	GList *l, *queue;
 
 	g_mutex_lock (linc_cmd_queue_lock);
+	{
+		/* FIXME: read a big, non-blocking slurp here */
+		read (LINC_WAKEUP_POLL, &c, sizeof (c));
 
-	/* FIXME: read a big, non-blocking slurp here */
-	read (LINC_WAKEUP_POLL, &c, sizeof (c));
+		queue = linc_cmd_queue;
+		linc_cmd_queue = NULL;
+	}
+	g_mutex_unlock (linc_cmd_queue_lock);
 
-	for (l = linc_cmd_queue; l; l = l->next)
+	for (l = queue; l; l = l->next)
 		linc_dispatch_command (l->data);
 
-	g_list_free (linc_cmd_queue);
-	linc_cmd_queue = NULL;
-
-	g_mutex_unlock (linc_cmd_queue_lock);
+	g_list_free (queue);
 
 	return TRUE;
 }
@@ -230,7 +232,7 @@ linc_init (gboolean init_threads)
 	linc_ssl_ctx = SSL_CTX_new (linc_ssl_method);
 #endif
 
-	linc_cmd_queue_lock =  linc_mutex_new ();
+	linc_cmd_queue_lock  = linc_mutex_new ();
 	linc_lifecycle_mutex = linc_mutex_new ();
 
 	if (init_threads) {
