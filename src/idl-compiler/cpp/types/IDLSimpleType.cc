@@ -48,12 +48,13 @@ IDLSimpleType::typedef_decl_write (ostream          &ostr,
 				   const IDLTypedef &target,
 				   const IDLTypedef *active_typedef = 0) const
 {
-	ostr << indent << "typedef " << get_fixed_cpp_typename ()
-	     << " " << target.get_cpp_identifier ()
-	     << ';' << endl;
-	ostr << indent << "typedef " << get_fixed_cpp_typename () << "_out "
-	     << " " << target.get_cpp_identifier () << "_out"
-	     << ';' << endl;
+	string src_id = get_fixed_cpp_typename ();
+	string target_id = target.get_cpp_identifier ();
+	
+	ostr << indent << "typedef " << src_id
+	     << " " << target_id << ';' << endl;
+	ostr << indent << "typedef " << src_id << "_out"
+	     << " " << target_id << "_out;" << endl;
 }
 
 string

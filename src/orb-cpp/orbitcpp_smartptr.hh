@@ -644,28 +644,33 @@ namespace _orbitcpp {
 			return *this;
 		}
 
-		T_slice &operator[](CORBA::ULong index) {
+		T_slice& operator[] (CORBA::ULong index) {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
+		
+		const T_slice& operator[] (CORBA::ULong index) const {
 			g_assert (m_data);
 			return m_data[index];
 	  	}
 
-		T_slice const &operator[](CORBA::ULong index) const {
-			g_assert (m_data);
-			return m_data[index];
-	  	}
-
+#if 0
+		operator const T_slice *() const {
+			return m_data;
+		}
+		
+/*
   // GCC spews warnings if we include this
 		operator T_slice const *() const {
 			return m_data;
 		}
+*/
 
-#if 0
-// Not needed because ArrayVariable_out have converson constructor
 		operator T_slice *&() {
 			return out();
 		}
 #endif
-
+		
 		// parameter passing conversion
 		T_slice const *in() const {
 			return m_data;

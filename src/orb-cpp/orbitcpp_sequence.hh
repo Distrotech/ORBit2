@@ -32,223 +32,223 @@
 namespace _orbitcpp {
 
     template<typename CPPElem, typename CElem, typename ElemTraits,
-	     typename CSeq>
+		typename CSeq>
     class SequenceBase
     {
     public:
-	typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> self_t;
-	
-	typedef CPPElem       value_t;
-	typedef CElem         c_value_t;
-	typedef value_t      *buffer_t;
-	typedef CSeq          c_seq_t;
-	typedef ElemTraits    elem_traits_t;
-	
-	typedef CORBA::ULong  size_t;
-	typedef CORBA::ULong  index_t;
+		typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> self_t;
+		
+		typedef CPPElem       value_t;
+		typedef CElem         c_value_t;
+		typedef value_t      *buffer_t;
+		typedef CSeq          c_seq_t;
+		typedef ElemTraits    elem_traits_t;
+		
+		typedef CORBA::ULong  size_t;
+		typedef CORBA::ULong  index_t;
 		
     protected:
-	size_t   _max;
-	size_t   _length;
-	buffer_t _buffer;
-	bool     _release;
-	
+		size_t   _max;
+		size_t   _length;
+		buffer_t _buffer;
+		bool     _release;
+		
     public:
-	// Empty constructor
-	SequenceBase (size_t max = 0):
-	    _max (max),
-	    _length (0),
-	    _buffer (max ? new value_t[max] : 0),
-	    _release (true)
-	    {
-	    }
-	
-	// Create sequence from flat buffer
-	SequenceBase (size_t max,
-		      size_t length, buffer_t buffer,
-		      CORBA::Boolean release = false):
-	    _max (max),
-	    _length (length),
-	    _buffer (buffer),
-	    _release (release)
-	    {
-		g_assert (length <= max);
-	    }
-	
-	// Copy constructor
-	SequenceBase (const self_t &src):
-	    _max (src._max),
-	    _length (src._length),
-	    _release (true)
-	    {
-		_buffer = allocbuf (_max);
-		if (!_buffer)
-		    throw CORBA::NO_MEMORY ();
+		// Empty constructor
+		SequenceBase (size_t max = 0):
+			_max (max),
+			_length (0),
+			_buffer (max ? new value_t[max] : 0),
+			_release (true)
+			{
+			}
 		
-		for (index_t i = 0; i < _length; i++)
-		    _buffer[i] = src._buffer[i];
-	    }
-	
-	// Copy operator
-	self_t & operator= (const self_t &src) {
-	    buffer_t buffer_tmp = 0;
-	    
-	    if (src._max != 0) {
-		buffer_tmp = allocbuf (src._max);
-		if (!buffer_tmp)
-		    throw CORBA::NO_MEMORY ();
-	    }
-	    
-	    for (index_t i = 0; i < src._length; i++)
-		buffer_tmp[i] = src._buffer[i];
-	    
-	    _length = src._length;
-	    _max = src._max;
-	    
-	    if (_release)
-		freebuf (_buffer);
-	    _buffer = buffer_tmp;
-	    
-	    return *this;
-	}
-	
-	// Destructor
-	virtual ~SequenceBase () {
-	    if (_release)
-		freebuf (_buffer);
-	}
-	
-	// Size information
-	size_t maximum () const { return _max;    };
-	size_t length () const  { return _length; };
-	virtual void length (size_t new_length) = 0;
-	
-	// Element access
-	value_t& operator[] (index_t index)             { return _buffer[index]; };
-	const value_t& operator[] (index_t index) const { return _buffer[index]; };
-	
-	// Memory managment
-	static buffer_t allocbuf (size_t num_elems) { return new value_t[num_elems]; };
-	static void freebuf (buffer_t buffer)       { delete buffer;                 };    
-	
-	// ORBit2/C++ extension: create C sequence
-	c_seq_t* _orbitcpp_pack () const {
-	    c_seq_t *retval = alloc_c ();
-	    _orbitcpp_pack (*retval);
-	    return retval;
-	}
-	
-	// ORBit2/C++ extension: fill C sequence
-	void _orbitcpp_pack (c_seq_t &c_seq) const {
-	    c_seq._length = _length;
-	    c_seq._buffer = alloc_c_buf (_length);
-	    for (index_t i = 0; i < _length; i++)
-		elem_traits_t().pack_elem (_buffer[i], c_seq._buffer[i]);
-	}
-	
-	// ORBit2/C++ extension: fill C++ sequence from C sequence
-	void _orbitcpp_unpack (const c_seq_t &c_seq) {
-	    length (c_seq._length);
-	    for (index_t i = 0; i < c_seq._length; i++)
-		elem_traits_t().unpack_elem (_buffer[i], c_seq._buffer[i]);
-	}
-
+		// Create sequence from flat buffer
+		SequenceBase (size_t max,
+					  size_t length, buffer_t buffer,
+					  CORBA::Boolean release = false):
+			_max (max),
+			_length (length),
+			_buffer (buffer),
+			_release (release)
+			{
+				g_assert (length <= max);
+			}
+		
+		// Copy constructor
+		SequenceBase (const self_t &src):
+			_max (src._max),
+			_length (src._length),
+			_release (true)
+			{
+				_buffer = allocbuf (_max);
+				if (!_buffer)
+					throw CORBA::NO_MEMORY ();
+				
+				for (index_t i = 0; i < _length; i++)
+					_buffer[i] = src._buffer[i];
+			}
+		
+		// Copy operator
+		self_t & operator= (const self_t &src) {
+			buffer_t buffer_tmp = 0;
+			
+			if (src._max != 0) {
+				buffer_tmp = allocbuf (src._max);
+				if (!buffer_tmp)
+					throw CORBA::NO_MEMORY ();
+			}
+			
+			for (index_t i = 0; i < src._length; i++)
+				buffer_tmp[i] = src._buffer[i];
+			
+			_length = src._length;
+			_max = src._max;
+			
+			if (_release)
+				freebuf (_buffer);
+			_buffer = buffer_tmp;
+			
+			return *this;
+		}
+		
+		// Destructor
+		virtual ~SequenceBase () {
+			if (_release)
+				freebuf (_buffer);
+		}
+		
+		// Size information
+		size_t maximum () const { return _max;    };
+		size_t length () const  { return _length; };
+		virtual void length (size_t new_length) = 0;
+		
+		// Element access
+		value_t& operator[] (index_t index)             { return _buffer[index]; };
+		const value_t& operator[] (index_t index) const { return _buffer[index]; };
+		
+		// Memory managment
+		static buffer_t allocbuf (size_t num_elems) { return new value_t[num_elems]; };
+		static void freebuf (buffer_t buffer)       { delete buffer;                 };    
+		
+		// ORBit2/C++ extension: create C sequence
+		c_seq_t* _orbitcpp_pack () const {
+			c_seq_t *retval = alloc_c ();
+			_orbitcpp_pack (*retval);
+			return retval;
+		}
+		
+		// ORBit2/C++ extension: fill C sequence
+		void _orbitcpp_pack (c_seq_t &c_seq) const {
+			c_seq._length = _length;
+			c_seq._buffer = alloc_c_buf (_length);
+			for (index_t i = 0; i < _length; i++)
+				elem_traits_t().pack_elem (_buffer[i], c_seq._buffer[i]);
+		}
+		
+		// ORBit2/C++ extension: fill C++ sequence from C sequence
+		void _orbitcpp_unpack (const c_seq_t &c_seq) {
+			length (c_seq._length);
+			for (index_t i = 0; i < c_seq._length; i++)
+				elem_traits_t().unpack_elem (_buffer[i], c_seq._buffer[i]);
+		}
+		
     protected:
-	// ORBit2/C++ extension: memory managment of underlying C sequences
+		// ORBit2/C++ extension: memory managment of underlying C sequences
         virtual c_seq_t* alloc_c () const = 0;
-	virtual c_value_t* alloc_c_buf (size_t length) const = 0;
-	
+		virtual c_value_t* alloc_c_buf (size_t length) const = 0;
+		
     };
     
     template<typename CPPElem, typename CElem, typename ElemTraits,
-	     typename CSeq>
+		     typename CSeq>
     class UnboundedSequence: public SequenceBase<CPPElem, CElem, ElemTraits, CSeq>
     {
-	typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> Super;
-	
+		typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> Super;
+		
     public:
-	// Empty constructor
-	UnboundedSequence (size_t max = 0):
-	    Super (max)
-	    {
-	    }
-	
-	// Create sequence from flat buffer
-	UnboundedSequence (size_t max,
-			   size_t length, buffer_t buffer,
+		// Empty constructor
+		UnboundedSequence (size_t max = 0):
+			Super (max)
+			{
+			}
+		
+		// Create sequence from flat buffer
+		UnboundedSequence (size_t max,
+						   size_t length, buffer_t buffer,
 			   CORBA::Boolean release = false):
-	    Super (max, length, buffer, release)
-	    {
-	    }
-	
-	// Copying
-	UnboundedSequence (const self_t &other):
-	    Super (other)
-	    {
-	    }
-	
-	// Size information
-	size_t maximum () const { return _max;    };
-	size_t length () const  { return _length; };
-	
-	// Size requisition
-	void length (size_t new_length) {
-	    if (new_length > _max)
-	    {
-		buffer_t buffer_tmp = allocbuf (new_length);
-		if (!buffer_tmp)
-		    throw CORBA::NO_MEMORY ();
+			Super (max, length, buffer, release)
+			{
+			}
 		
-		for (index_t i = 0; i < _length; i++)
-		    buffer_tmp[i] = _buffer[i];
+		// Copying
+		UnboundedSequence (const self_t &other):
+			Super (other)
+			{
+			}
 		
-		if (_release)
-		    freebuf (_buffer);
+		// Size information
+		size_t maximum () const { return _max;    };
+		size_t length () const  { return _length; };
 		
-		_buffer = buffer_tmp;
-		_max = new_length;
-	    }
-	    
-	    _length = new_length;
-	}
+		// Size requisition
+		void length (size_t new_length) {
+			if (new_length > _max)
+			{
+				buffer_t buffer_tmp = allocbuf (new_length);
+				if (!buffer_tmp)
+					throw CORBA::NO_MEMORY ();
+				
+				for (index_t i = 0; i < _length; i++)
+					buffer_tmp[i] = _buffer[i];
+				
+				if (_release)
+					freebuf (_buffer);
+				
+				_buffer = buffer_tmp;
+				_max = new_length;
+			}
+			
+			_length = new_length;
+		}
     };
     
     template<typename CPPElem, typename CElem, typename ElemTraits,
-	     typename CSeq, CORBA::ULong max>
+		     typename CSeq, CORBA::ULong max>
     class BoundedSequence: public SequenceBase<CPPElem, CElem, ElemTraits, CSeq>
     {
-	typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> Super;
+		typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> Super;
 		
     public:
-	// Empty constructor
-	BoundedSequence ():
-	    Super (max)
-	    {
-	    }
-	
-	// Create sequence from flat buffer
-	BoundedSequence (size_t length, buffer_t buffer,
-			 CORBA::Boolean release = false):
-	    Super (max, length, buffer, release)
-	    {
-	    }
-	
-	// Copying
-	BoundedSequence (const self_t &other):
-	    Super (other)
-	    {
-	    }
-	
-	// Size information
-	size_t maximum () const { return _max;    };
-	size_t length () const  { return _length; };
-	
-	// Size requisition
-	void length (size_t new_length) {
-	    g_assert (new_length <= _max);
-	    
-	    _length = new_length;
-	}
+		// Empty constructor
+		BoundedSequence ():
+			Super (max)
+			{
+			}
+		
+		// Create sequence from flat buffer
+		BoundedSequence (size_t length, buffer_t buffer,
+						 CORBA::Boolean release = false):
+			Super (max, length, buffer, release)
+			{
+			}
+		
+		// Copying
+		BoundedSequence (const self_t &other):
+			Super (other)
+			{
+			}
+		
+		// Size information
+		size_t maximum () const { return _max;    };
+		size_t length () const  { return _length; };
+		
+		// Size requisition
+		void length (size_t new_length) {
+			g_assert (new_length <= _max);
+			
+			_length = new_length;
+		}
     };
 } // namespace _orbitcpp
 

@@ -26,6 +26,7 @@ headers = 		\
   IDLObject.hh		\
   IDLOperation.hh	\
   IDLScope.hh		\
+  IDLSequence.hh	\
   IDLSimpleType.hh	\
   IDLString.hh		\
   IDLStruct.hh		\
@@ -51,6 +52,7 @@ modules =		\
   IDLObject.cc		\
   IDLOperation.cc	\
   IDLScope.cc		\
+  IDLSequence.cc	\
   IDLSimpleType.cc	\
   IDLString.cc		\
   IDLStruct.cc		\
