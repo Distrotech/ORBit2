@@ -118,7 +118,8 @@ typedef enum {
     MW_Auto = 1<<1,
     MW_Alloca = 1<<2,
     MW_Msg = 1<<3,
-    MW_Heap = 1<<4
+    MW_Heap = 1<<4,
+    MW_Any = (MW_Null|MW_Auto|MW_Alloca|MW_Msg|MW_Heap)
 } OIDL_Marshal_Where;
 
 struct _OIDL_Marshal_Node {
