@@ -1,3 +1,10 @@
+2001-10-18  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_connected):
+	simplify flow, ignore handle_input's return value,
+	always return TRUE, we remove ourself from both main
+	contexts elsewhere.
+
 2001-10-16  Mark McLoughlin <mark@skynet.ie>
 
 	* Makefile.am (EXTRA_DIST): kill linc-config.in,

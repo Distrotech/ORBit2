@@ -103,26 +103,29 @@ linc_io_add_watch (GIOChannel    *channel,
 }
 
 void
-linc_io_remove_watch (LincWatch *watch)
+linc_io_remove_watch (LincWatch *w)
 {
-	if (watch) {
+	if (w) {
 		GSource *source;
 
+		/* If these warnings fire, we're prolly returning
+		   TRUE from the source's handler somewhere in error */
+		   
 		source = g_main_context_find_source_by_id (
-			NULL, watch->main_id);
+			NULL, w->main_id);
 		if (source)
 			g_source_destroy (source);
 		else
 			g_warning ("Missing source on main context");
 
 		source = g_main_context_find_source_by_id (
-			linc_context, watch->linc_id);
+			linc_context, w->linc_id);
 		if (source)
 			g_source_destroy (source);
 		else
 			g_warning ("Missing source on linc context");
 
-		g_free (watch);
+		g_free (w);
 	}
 }
 
