@@ -1,3 +1,11 @@
+2002-03-20  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/iop-profiles.c:
+	(IOP_components_marshal): also marshal the CODE_SETS component
+	in an encapsulated buffer.
+	(IOP_TAG_CODE_SETS_demarshal): demarshal it from the
+	encapsulated buffer.
+
 2002-03-13  Laszlo Peter  <laca@ireland.sun.com>
 
 	* include/orbit/orb-core/corba-typecode.h: change CORBA_tk_recursive
