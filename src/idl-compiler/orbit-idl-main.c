@@ -165,8 +165,8 @@ int main(int argc, const char *argv[])
   }
 
   if (cl_output_version) {
-	  fprintf (stderr, "orbit-idl-2 %s - serial %d\n\n",
-		   VERSION, ORBIT_CONFIG_SERIAL);
+	  printf ("orbit-idl-2 %s - serial %d\n\n",
+		  VERSION, ORBIT_CONFIG_SERIAL);
 	  exit (0);
   }
 
@@ -199,16 +199,16 @@ int main(int argc, const char *argv[])
   rinfo.onlytop = cl_onlytop;
   rinfo.idata = !cl_disable_idata;
   
-  fprintf (stderr, "orbit-idl-2 " VERSION " compiling\n");
-  fprintf (stderr, " %s mode, %s preprocessor errors, passes: %s%s%s%s%s%s\n\n",
-	   rinfo.is_pidl ? "pidl" : "",
-	   rinfo.show_cpp_errors ? "show" : "hide",
-	   cl_disable_stubs ? "" : "stubs ",
-	   cl_disable_skels ? "" : "skels ",
-	   cl_disable_common ? "" : "common ",
-	   cl_disable_headers ? "" : "headers ",
-	   cl_enable_skeleton_impl ? "" : "skel_impl ",
-	   cl_enable_imodule ? "" : "imodule");
+  printf ("orbit-idl-2 " VERSION " compiling\n");
+  printf (" %s mode, %s preprocessor errors, passes: %s%s%s%s%s%s\n\n",
+	  rinfo.is_pidl ? "pidl" : "",
+	  rinfo.show_cpp_errors ? "show" : "hide",
+	  cl_disable_stubs ? "" : "stubs ",
+	  cl_disable_skels ? "" : "skels ",
+	  cl_disable_common ? "" : "common ",
+	  cl_disable_headers ? "" : "headers ",
+	  cl_enable_skeleton_impl ? "" : "skel_impl ",
+	  cl_enable_imodule ? "" : "imodule");
 	   
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {

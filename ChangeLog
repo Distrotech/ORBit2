@@ -1,3 +1,8 @@
+2003-07-25  Dan Winship  <danw@ximian.com>
+
+	* src/idl-compiler/orbit-idl-main.c (main): Don't print version
+	info / flags to stderr. They're not errors.
+
 2003-07-15  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/util/orbit-options.c
