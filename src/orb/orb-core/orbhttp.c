@@ -489,37 +489,17 @@ orbHTTPScanAnswer(orbHTTPCtxtPtr ctxt, const char *line) {
 	}
 	if ((*cur != 0) && (*cur != ' ') && (*cur != '\t')) return;
 	ctxt->returnValue = ret;
-    } else if (!strncmp(line, "Content-Type:", 13)) {
-        cur += 13;
-	while ((*cur == ' ') || (*cur == '\t')) cur++;
-	if (ctxt->contentType != NULL)
-	    g_free(ctxt->contentType);
-	ctxt->contentType = g_strdup(cur);
-    } else if (!strncmp(line, "ContentType:", 12)) {
-        cur += 12;
+    } else if (!strncasecmp(line, "content-type:", 13)
+	       || !strncasecmp(line, "contenttype:", 12)) {
+        cur = strchr(cur, ':') + 1;
 	if (ctxt->contentType != NULL) return;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
 	ctxt->contentType = g_strdup(cur);
-    } else if (!strncmp(line, "content-type:", 13)) {
-        cur += 13;
-	if (ctxt->contentType != NULL) return;
-	while ((*cur == ' ') || (*cur == '\t')) cur++;
-	ctxt->contentType = g_strdup(cur);
-    } else if (!strncmp(line, "contenttype:", 12)) {
-        cur += 12;
-	if (ctxt->contentType != NULL) return;
-	while ((*cur == ' ') || (*cur == '\t')) cur++;
-	ctxt->contentType = g_strdup(cur);
-    } else if (!strncmp(line, "Location:", 9)) {
+    } else if (!strncasecmp(line, "Location:", 9)) {
         cur += 9;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
 	if (ctxt->location != NULL)
 	    g_free(ctxt->location);
-	ctxt->location = g_strdup(cur);
-    } else if (!strncmp(line, "location:", 9)) {
-        cur += 9;
-	if (ctxt->location != NULL) return;
-	while ((*cur == ' ') || (*cur == '\t')) cur++;
 	ctxt->location = g_strdup(cur);
     }
 }
@@ -711,9 +691,11 @@ orbHTTPOpen(const char *URL) {
 
 retry:
     if (redirURL == NULL)
-	ctxt = orbHTTPNewCtxt(URL);
+      ctxt = orbHTTPNewCtxt(URL);
     else if(CHECK_URI(redirURL))
       {
+	ctxt = orbHTTPNewCtxt("");
+	ctxt->location = redirURL;
 	return ctxt;
       }
     else
@@ -886,9 +868,13 @@ orb_http_resolve(const char *URL)
       retval = g_strdup(ctxt->location);
     else
       {
-	for(len_read = len = 0; len >= 0; len_read += len)
+	len_read = 0;
+	do {
 	  len = orbHTTPRead(ctxt, buf + len_read, sizeof(buf) - len_read);
-	buf[len_read - 1] = '\0';
+	  len_read += len;
+	} while(len > 0);
+	len_read += len;
+	buf[len_read] = '\0';
 	g_strstrip(buf);
 	if(CHECK_URI(buf))
 	  retval = g_strdup(buf);

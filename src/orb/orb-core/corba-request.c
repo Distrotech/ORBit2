@@ -1,3 +1,6 @@
+#include "config.h"
+#include <orbit/orbit.h>
+
 void
 CORBA_Request_add_arg(CORBA_Request _obj, const CORBA_Identifier name,
 		      const CORBA_TypeCode arg_type,
