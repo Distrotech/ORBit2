@@ -221,39 +221,6 @@ giop_connection_get_type (void)
 }
 
 GIOPConnection *
-giop_connection_from_fd (int fd, const LINCProtocolInfo *proto,
-			 const char *remote_host_info,
-			 const char *remote_serv_info,
-			 gboolean was_initiated,
-			 LINCConnectionStatus status,
-			 LINCConnectionOptions options,
-			 GIOPVersion giop_version)
-{
-	GIOPConnection *cnx;
-  
-	LINC_MUTEX_LOCK (cnx_list.lock);
-
-	cnx = (GIOPConnection *) g_object_new (
-		giop_connection_get_type (), NULL);
-
-	cnx->giop_version = giop_version;
-	if (!linc_connection_from_fd (
-		(LINCConnection *)cnx, fd, proto, remote_host_info,
-		remote_serv_info, was_initiated, status, options)) {
-
-		g_object_unref (G_OBJECT (cnx));
-		cnx = NULL;
-	} else
-		giop_connection_list_add (cnx);
-
-	LINC_MUTEX_UNLOCK (cnx_list.lock);
-
-	return cnx;
-}
-
-/* This will just create the fd, do the connect and all, and then call
-   giop_connection_from_fd */
-GIOPConnection *
 giop_connection_initiate (const char *proto_name,
 			  const char *remote_host_info,
 			  const char *remote_serv_info,
