@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -373,6 +374,55 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 }
 #endif /* AF_INET6 */
 
+#ifdef AF_UNIX
+/*
+ *   This is rumoured not to work at all
+ * with 2.0.X kernels.
+ */
+static void
+cleanup_sweep (void)
+{
+	int removed = 0, to_remove;
+	DIR *dirh = opendir (linc_tmpdir);
+	struct dirent *dent;
+
+#ifdef G_ENABLE_DEBUG
+	to_remove = G_MAXINT;
+#else
+	to_remove = 4; /* We should create 1 */
+#endif
+
+	while (removed < to_remove && (dent = readdir (dirh))) {
+		int usfd, ret, saddr_len;
+		struct sockaddr_un saddr;
+
+		saddr.sun_family = AF_UNIX;
+
+		if (strncmp (dent->d_name, "linc-", 5))
+			continue;
+
+		g_snprintf (saddr.sun_path,
+			    sizeof (saddr.sun_path),
+			    "%s/%s", linc_tmpdir, dent->d_name);
+
+		usfd = socket (AF_UNIX, SOCK_STREAM, 0);
+		g_assert (usfd >= 0);
+
+		saddr_len = sizeof (struct sockaddr_un) -
+			sizeof (saddr.sun_path) + strlen (saddr.sun_path);
+
+		ret = connect (usfd, &saddr, saddr_len);
+		close (usfd);
+
+		if (ret >= 0)
+			continue;
+
+		unlink (saddr.sun_path);
+		removed++;
+	}
+	closedir (dirh);
+}
+
 /*
  * linc_protocol_get_sockaddr_unix:
  * @proto: the #LINCProtocolInfo structure for the UNIX sockets protocol.
@@ -388,7 +438,6 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
  * Return Value: a pointer to a valid #sockaddr_un structure if the call 
  *               succeeds, NULL otherwise.
  */
-#ifdef AF_UNIX
 static struct sockaddr *
 linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 				 const char             *dummy,
@@ -398,8 +447,14 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 	struct sockaddr_un *saddr;
 	int                 pathlen;
 	char                buf[64], *actual_path;
+	static gboolean     done_cleanup_sweep = FALSE;
 
 	g_assert (proto->family == AF_UNIX);
+
+	if (!done_cleanup_sweep) {
+		done_cleanup_sweep = TRUE;
+		cleanup_sweep ();
+	}
 
 	if (!path) {
 		struct timeval t;
@@ -424,8 +479,7 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 			g_warning ("'%s' already exists !", buf);
 #endif
 		actual_path = buf;
-		}
-	else 
+	} else 
 		actual_path = (char *)path;
 
 	pathlen = strlen (actual_path);
