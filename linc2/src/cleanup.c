@@ -55,6 +55,8 @@ read_sockets (const char *dir)
 	struct dirent *dent;
 
 	dirh = opendir (dir);
+	if (!dirh)
+		return NULL;
 
 	while ((dent = readdir (dirh))) {
 		if (strncmp (dent->d_name, "linc-", 5))
