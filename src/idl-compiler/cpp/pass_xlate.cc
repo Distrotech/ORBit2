@@ -649,6 +649,10 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 	<< "(CORBA::TypeCode_ptr)TC_" + iface.getQualifiedCIdentifier() + ";" << endl;
 
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
+
+  // _duplicate() and _narrow implementations:
+	// write the static method definitions
+	doInterfaceStaticMethodDefinitions(iface);
 }
 
 
@@ -667,6 +671,54 @@ IDLPassXlate::doInterfaceStaticMethodDeclarations(IDLInterface &iface)
 	<< ++indent << "return CORBA_OBJECT_NIL;" << endl
 	<< --indent << '}' << endl;
 }
+
+void IDLPassXlate::doInterfaceStaticMethodDefinitions(IDLInterface &iface)
+{
+	// *** FIXME try _is_a query before narrowing
+	
+	string ifname = iface.getCPPIdentifier();
+
+	m_module
+	<< indent << iface.getQualifiedCPP_ptr() << " "
+	<< iface.getQualifiedCPPIdentifier(iface.getRootScope()) << "::_duplicate("
+	<< iface.getQualifiedCPP_ptr() << " obj)" << endl
+	<< indent << "{" << endl;
+
+ 	m_module
+ 	<< ++indent << "CORBA::Object_ptr ptr = obj;" << endl;
+
+ 	m_module
+ 	<< indent << iface.getNSScopedCTypeName()
+ 	<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
+ 	<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
+ 	<< indent << "return new " << iface.getQualifiedCPPStub() << "(cobj);" << endl;
+
+	m_module
+	<< --indent << '}' << endl << endl
+	
+	<< indent << iface.getQualifiedCPP_ptr() << " "
+	<< iface.getQualifiedCPPIdentifier(iface.getRootScope())
+	<< "::_narrow(CORBA::Object_ptr obj)" << endl
+	<< indent << "{" << endl;
+
+	// Are we using smart pointers for _ptrs?
+	if(iface.requiresSmartPtr())
+	{
+		m_module
+		<< ++indent << "return _duplicate(reinterpret_cast< "
+		<< iface.getQualifiedCPPStub() << " *>(obj));" << endl;
+	}
+	else
+	{
+		m_module
+		<< ++indent << "return _duplicate(static_cast< "
+		<< iface.getQualifiedCPP_ptr() << ">(obj));" << endl;
+	}
+
+	m_module
+	<< --indent << '}' << endl << endl;
+}
+
 
 void
 IDLPassXlate::doInterfacePtrClass(IDLInterface &iface) {

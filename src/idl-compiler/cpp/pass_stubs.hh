@@ -55,7 +55,6 @@ protected:
 	void doInterfaceDownCall(IDLInterface &iface,IDLInterface &of);
 
 	void doInterface(IDLInterface &iface);
-	void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
 };
 
 

@@ -414,54 +414,5 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 
 	// end namespace
 	m_header << indent << ns_end << "}} //namespaces" << endl << endl;
-
-	// write the static method definitions
-	doInterfaceStaticMethodDefinitions(iface);
 }
 
-
-void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
-	// *** FIXME try _is_a query before narrowing
-	
-	string ifname = iface.getCPPIdentifier();
-
-	m_header
-	<< indent << "inline " << iface.getQualifiedCPP_ptr() << " "
-	<< iface.getQualifiedCPPIdentifier(iface.getRootScope()) << "::_duplicate("
-	<< iface.getQualifiedCPP_ptr() << " obj)" << endl
-	<< indent << "{" << endl;
-
- 	m_header
- 	<< ++indent << "CORBA::Object_ptr ptr = obj;" << endl;
-
- 	m_header
- 	<< indent << iface.getNSScopedCTypeName()
- 	<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
- 	<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
- 	<< indent << "return new " << iface.getQualifiedCPPStub() << "(cobj);" << endl;
-
-	m_header
-	<< --indent << '}' << endl << endl
-	  
-	<< indent << "inline " << iface.getQualifiedCPP_ptr() << " "
-	<< iface.getQualifiedCPPIdentifier(iface.getRootScope())
-	<< "::_narrow(CORBA::Object_ptr obj)" << endl
-	<< indent << "{" << endl;
-
-	// Are we using smart pointers for _ptrs?
-	if(iface.requiresSmartPtr())
-	{
-		m_header
-		<< ++indent << "return _duplicate(reinterpret_cast< "
-		<< iface.getQualifiedCPPStub() << " *>(obj));" << endl;
-	}
-	else
-	{
-		m_header
-		<< ++indent << "return _duplicate(static_cast< "
-		<< iface.getQualifiedCPP_ptr() << ">(obj));" << endl;
-	}
-
-	m_header
-	<< --indent << '}' << endl << endl;
-}

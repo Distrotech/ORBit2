@@ -76,6 +76,7 @@ protected:
 	void doInterfacePtrClass(IDLInterface &iface);
  
 	void doInterfaceStaticMethodDeclarations(IDLInterface &iface);
+  void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
 	void enumHook(IDL_tree list,IDLScope &scope);
 };
 
