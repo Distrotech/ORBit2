@@ -25,6 +25,7 @@ typedef struct {
 
   char *output_language;
   char *input_filename;
+  char *backend_directory;
 } OIDL_Run_Info;
 
 int orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo);
@@ -138,7 +139,7 @@ typedef struct {
   const char *name;
   void (*op_output)(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
 } OIDL_Backend_Info;
-OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang);
+OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang,const char *backend_dir);
 
 /* genmarshal */
 OIDL_Marshal_Node *orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels);

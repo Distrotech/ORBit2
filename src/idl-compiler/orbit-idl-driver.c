@@ -45,7 +45,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   char *basename, *ctmp;
   OIDL_Output_Tree otree;
 
-  binfo = orbit_idl_backend_for_lang(rinfo->output_language);
+  binfo = orbit_idl_backend_for_lang(rinfo->output_language,rinfo->backend_directory);
 
   g_return_val_if_fail(binfo && binfo->op_output, 0);
 
