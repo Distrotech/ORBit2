@@ -199,7 +199,7 @@ public:
 		: IDLElement(id,node,parentscope) {
 	}
 	string getNSScopedCTypeName() const {
-		return IDL_IMPL_C_NS "::" + getQualifiedCIdentifier();
+		return IDL_IMPL_C_NS_NOTUSED + getQualifiedCIdentifier();
 	}
 };
 

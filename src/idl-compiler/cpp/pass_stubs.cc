@@ -124,7 +124,7 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << attr.getType()->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS "::" <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),_ev);" << endl;
+	<< IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),_ev);" << endl;
 
 	m_module
 	<< mod_indent << "_ev.propagate_sysex();" << endl;
@@ -156,7 +156,7 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		  << mod_indent << IDL_IMPL_NS "::CEnvironment _ev;" << endl;
 
 		m_module
-			<< mod_indent << IDL_IMPL_C_NS "::" <<  iface.getQualifiedCIdentifier()
+			<< mod_indent << IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()
 			<< "__set_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),"
 			<<attr.getType()->getCPPStubParameterTerm(IDL_PARAM_IN,"val");
 		m_module
@@ -209,7 +209,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << op.m_returntype->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS "::" <<  op.getQualifiedCIdentifier() << "(_orbitcpp_get_c_object(),";
+	<< IDL_IMPL_C_NS_NOTUSED <<  op.getQualifiedCIdentifier() << "(_orbitcpp_get_c_object(),";
 
 	first = op.m_parameterinfo.begin();
 	last = op.m_parameterinfo.end();
@@ -248,7 +248,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 			m_module
 			<< mod_indent << (*exfirst)->getQualifiedCPPIdentifier() << " ex;" << endl
 			<< mod_indent << "ex._orbitcpp_unpack(*(("
-			<< IDL_IMPL_C_NS "::" << (*exfirst)->getQualifiedCIdentifier() <<" *) value));" << endl
+			<< IDL_IMPL_C_NS_NOTUSED << (*exfirst)->getQualifiedCIdentifier() <<" *) value));" << endl
 			<< mod_indent << "throw ex;" << endl
 			<< mod_indent << '}' << endl;
 			mod_indent--;

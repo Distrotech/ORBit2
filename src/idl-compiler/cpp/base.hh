@@ -45,11 +45,11 @@ using namespace std;
 #define IDL_CORBA_NS				"CORBA"
 #define IDL_POA_NS					"PortableServer"
 #define IDL_IMPL_NS_ID				"_orbitcpp"
-#define IDL_IMPL_C_NS_ID			"c"
+//#define IDL_IMPL_C_NS_ID			"c"
 #define IDL_IMPL_TYPE_CONT_NS_ID	"type_container"
 #define IDL_IMPL_STUB_NS_ID			"stub"
 #define IDL_IMPL_NS					"::" IDL_IMPL_NS_ID
-#define IDL_IMPL_C_NS				"::" IDL_IMPL_NS_ID "::" IDL_IMPL_C_NS_ID
+//#define IDL_IMPL_C_NS				"::" IDL_IMPL_NS_ID "::" IDL_IMPL_C_NS_ID
 
 //Uncomment the second line to see the error. murrayc.
 #define IDL_IMPL_C_NS_NOTUSED ""

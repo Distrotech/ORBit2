@@ -709,7 +709,7 @@ IDLPassSkels::doInterfaceFinalizer(IDLInterface &iface) {
 	<<  "::PortableServer_Servant servant,"
 	<<  "::CORBA_Environment *ev) {" << endl;
 	m_module
-	<< ++mod_indent << IDL_IMPL_C_NS "::"
+	<< ++mod_indent << IDL_IMPL_C_NS_NOTUSED
 	<< iface.getQualifiedC_POA() << "__fini(servant,ev);" << endl;
 	m_module
 	<< mod_indent << iface.getQualifiedCPP_POA() << " *self = "
@@ -807,7 +807,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	<< mod_indent << "m_target.m_cppservant = this; // does an appropriate upcast thunk" << endl
 	<< mod_indent << "m_target.m_cppimpl = this;" << endl
 	<< mod_indent << IDL_IMPL_NS "::CEnvironment ev;" << endl
-	<< mod_indent << IDL_IMPL_C_NS "::" << iface.getQualifiedC_POA()
+	<< mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.getQualifiedC_POA()
 	<< "__init(&m_target.m_cservant,ev);" << endl
 	<< mod_indent << "ev.propagate_sysex();" << endl;
 	m_module

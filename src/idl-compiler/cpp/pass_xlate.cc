@@ -43,13 +43,13 @@ IDLPassXlate::runPass() {
 	<< endl << endl
 	<< indent << "#include <string.h>" << endl
 	<< indent << "#include <orbit/orb-cpp/orbitcpp.hh>" << endl
-	<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
-	indent++;
-	m_header
+	//<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
+	//indent++;
+	//m_header
 	<< indent << "#include \"" << m_state.m_basename << ".h\"" << endl;
-	indent--;
-	m_header
-	<< indent << "} }" << endl;
+	//indent--;
+	//m_header
+	//<< indent << "} }" << endl;
 
 	m_module << mod_indent
 	<< "#include \"" << m_state.m_basename << IDL_CPP_STUB_HEADER_EXT << "\"" << endl
