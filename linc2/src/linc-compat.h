@@ -88,10 +88,6 @@
 #  undef AF_UNIX		/* No Unix domain sockets */
 #  undef AF_INET6		/* Doesn't have sockaddr_in6 */
 
-void link_map_winsock_error_to_errno (void);
-
-int  link_socketpair (int *handles);
-
 #endif
 
 #if !defined (NI_MAXSERV) || !defined (NI_MAXHOST)

@@ -1,3 +1,15 @@
+2005-01-28  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-compat.c: Rename link_socketpair() to link_pipe(), and
+	make it cross-platform, just encapsulating pipe() on Unix.
+
+	* src/linc.c: Change accordingly.
+
+	* src/linc/linc-compat.h
+	* include/linc/linc.h: Move declarations of
+	link_map_winsock_error_to_errno() and link_pipe() to linc.h, as
+	they are used also in GIOP.
+
 2005-01-27  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-compat.h: Include <sys/utime.h> if that's where utime.h

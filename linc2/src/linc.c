@@ -418,14 +418,8 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 	link_connections_move_io_T (to_io_thread);
 	link_servers_move_io_T     (to_io_thread);
 
-#ifdef HAVE_WINSOCK2_H
-	/* Use socket pair instead of pipe */
-	if (link_socketpair (link_wakeup_fds) < 0)
+	if (link_pipe (link_wakeup_fds) < 0)
 		g_error ("Can't create CORBA main-thread wakeup pipe");
-#else
-	if (pipe (link_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
-		g_error ("Can't create CORBA main-thread wakeup pipe");
-#endif
 
 	link_main_source = link_source_create_watch
 		(link_thread_context, LINK_WAKEUP_POLL,
