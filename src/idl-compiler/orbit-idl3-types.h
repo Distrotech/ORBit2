@@ -79,7 +79,10 @@ typedef enum {
   MN_ENDIAN_DEPENDANT = 1<<8,
   MN_DEMARSHAL_UPDATE_AFTER = 1<<9,
   MN_RECURSIVE_TOP = 1<<10,
-  MN_TOPLEVEL = 1<<11 /* This is the toplevel thingie for the operation, so we can do special-case things for mem allocation */
+  MN_TOPLEVEL = 1<<11, /* This is the toplevel thingie for the operation, so we can do special-case things for mem allocation */
+  MN_PARAM_INOUT = 1<<12, /* For a node representing the top of an inout param, where we need to allocate slightly differently */
+  MN_NEED_CURPTR_LOCAL = 1<<13,
+  MN_NEED_CURPTR_RECVBUF = 1<<14
 } OIDL_Marshal_Node_Flags;
 
 /**
@@ -161,10 +164,10 @@ struct _OIDL_Marshal_Node {
     } set_info;
   } u;
   OIDL_Marshal_Node_Flags flags;
+  OIDL_Marshal_Where where;
   guint8 arch_head_align, arch_tail_align;
   guint8 iiop_head_align, iiop_tail_align;
   guint8 nptrs, use_count;
-  OIDL_Marshal_Where where;
 };
 
 /* Handling an IDLN_ATTR_DCL:

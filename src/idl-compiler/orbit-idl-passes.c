@@ -1,18 +1,19 @@
 #include "config.h"
 #include "orbit-idl2.h"
 
-typedef void (*OIDL_Pass_Func)(IDL_tree tree, gpointer data, gboolean is_out);
+typedef void (*OIDL_Pass_Func)(IDL_tree tree, gpointer data, gboolean is_demarshal);
 typedef void (*OIDL_Node_Pass_Func)(OIDL_Marshal_Node *node);
 
-static void oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out);
+static void oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_demarshal);
 
 static void orbit_idl_collapse_sets(OIDL_Marshal_Node *node);
 static void oidl_pass_make_updates(OIDL_Marshal_Node *node);
-static void oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out);
+static void oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_demarshal);
 static void oidl_pass_set_coalescibility(OIDL_Marshal_Node *node);
 static void oidl_pass_set_alignment(OIDL_Marshal_Node *node);
 static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
 static void oidl_pass_del_tail_update(OIDL_Marshal_Node *node); /* Must run after coalescibility */
+static void oidl_pass_set_first_curptr_usage(OIDL_Marshal_Node *node);
 
 static void oidl_node_pass_tmpvars(OIDL_Marshal_Node *top);
 
@@ -23,23 +24,20 @@ static struct {
   enum { FOR_IN=1<<0, FOR_OUT=1<<1 } dirs;
 } idl_passes[] = {
   {"Position updates", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_make_updates, FOR_OUT},
-#if 0
-  /* This pass causes problems for struct foo { sequence<struct_bar> baz; } */
-  {"Set collapsing", (OIDL_Pass_Func)oidl_pass_run_for_ops, orbit_idl_collapse_sets, FOR_IN|FOR_OUT},
-#endif
   {"Alignment calculation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_alignment, FOR_IN|FOR_OUT},
   {"Endian dependancy", (OIDL_Pass_Func)oidl_pass_run_for_ops, (OIDL_Node_Pass_Func)oidl_pass_set_endian_dependant,
    FOR_IN|FOR_OUT},
   {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility, FOR_IN|FOR_OUT},
   {"Extra update removal", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_del_tail_update, FOR_OUT},
   {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, oidl_node_pass_tmpvars, FOR_IN|FOR_OUT},
+  {"First curptr usage", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_first_curptr_usage, FOR_IN|FOR_OUT},
   {NULL, NULL}
 };
 
 void
-orbit_idl_do_node_passes(OIDL_Marshal_Node *node, gboolean is_out)
+orbit_idl_do_node_passes(OIDL_Marshal_Node *node, gboolean is_demarshal)
 {
-  gint flag = is_out?FOR_OUT:FOR_IN;
+  gint flag = is_demarshal?FOR_OUT:FOR_IN;
   int i;
 
   for(i = 0; idl_passes[i].name; i++)
@@ -99,7 +97,7 @@ oidl_node_pass_tmpvars(OIDL_Marshal_Node *top)
 }
 
 static void
-oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
+oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_demarshal)
 {
   IDL_tree node;
 
@@ -108,21 +106,21 @@ oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
-      oidl_pass_tmpvars(IDL_LIST(node).data, dummy, is_out);
+      oidl_pass_tmpvars(IDL_LIST(node).data, dummy, is_demarshal);
     }
     break;
   case IDLN_MODULE:
-    oidl_pass_tmpvars(IDL_MODULE(tree).definition_list, dummy, is_out);
+    oidl_pass_tmpvars(IDL_MODULE(tree).definition_list, dummy, is_demarshal);
     break;
   case IDLN_INTERFACE:
-    oidl_pass_tmpvars(IDL_INTERFACE(tree).body, dummy, is_out);
+    oidl_pass_tmpvars(IDL_INTERFACE(tree).body, dummy, is_demarshal);
     break;
   case IDLN_EXCEPT_DCL:
     {
       OIDL_Except_Info *ei = tree->data;
       int ctr = 0;
 
-      if(is_out)
+      if(is_demarshal)
 	orbit_idl_tmpvars_assign(ei->demarshal, &ctr);
       else
 	orbit_idl_tmpvars_assign(ei->marshal, &ctr);
@@ -134,7 +132,7 @@ oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
 
       oi = tree->data;
 
-      if(is_out) {
+      if(is_demarshal) {
 	if(oi->out_stubs)
 	  orbit_idl_tmpvars_assign(oi->out_stubs, &oi->counter);
 	if(oi->in_skels)
@@ -154,9 +152,9 @@ oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
 	attr_name = IDL_LIST(curnode).data;
 
-	oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op1, dummy, is_out);
+	oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op1, dummy, is_demarshal);
 	if(((OIDL_Attr_Info *)attr_name->data)->op2)
-	  oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op2, dummy, is_out);
+	  oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op2, dummy, is_demarshal);
       }
     }
     break;
@@ -166,7 +164,7 @@ oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
 }
 
 static void
-oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
+oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_demarshal)
 {
   IDL_tree node;
 
@@ -175,19 +173,19 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
-      oidl_pass_run_for_ops(IDL_LIST(node).data, func, is_out);
+      oidl_pass_run_for_ops(IDL_LIST(node).data, func, is_demarshal);
     }
     break;
   case IDLN_MODULE:
-    oidl_pass_run_for_ops(IDL_MODULE(tree).definition_list, func, is_out);
+    oidl_pass_run_for_ops(IDL_MODULE(tree).definition_list, func, is_demarshal);
     break;
   case IDLN_INTERFACE:
-    oidl_pass_run_for_ops(IDL_INTERFACE(tree).body, func, is_out);
+    oidl_pass_run_for_ops(IDL_INTERFACE(tree).body, func, is_demarshal);
     break;
   case IDLN_EXCEPT_DCL:
     {
       OIDL_Except_Info *ei = tree->data;
-      if(is_out)
+      if(is_demarshal)
 	func(ei->demarshal, NULL);
       else
 	func(ei->marshal, NULL);
@@ -197,7 +195,7 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
     {
       OIDL_Op_Info *oi = (OIDL_Op_Info *)tree->data;
 
-      if(is_out) {
+      if(is_demarshal) {
 	if(oi->out_stubs)
 	  func(oi->out_stubs, NULL);
 	if(oi->in_skels)
@@ -217,9 +215,9 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
 	IDL_tree attr_name = IDL_LIST(curnode).data;
 	OIDL_Attr_Info *ai = attr_name->data;
-	oidl_pass_run_for_ops(ai->op1, func, is_out);
+	oidl_pass_run_for_ops(ai->op1, func, is_demarshal);
 	if(ai->op2)
-	  oidl_pass_run_for_ops(ai->op2, func, is_out);
+	  oidl_pass_run_for_ops(ai->op2, func, is_demarshal);
       }
     }
     break;
@@ -375,32 +373,35 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
     node->arch_head_align = node->arch_tail_align = node->iiop_head_align = node->iiop_tail_align = 1;
     break;
   case MARSHAL_COMPLEX:
+    /* Used to set node->iiop_head_align to the size of the first element in the complex thingie,
+       but that just caused extra alignment instructions to be generated, so I set it to 1 now and
+       require the complex marshal/demarshal function to internally ensure its alignment requirements are met */
     switch(node->u.complex_info.type) {
     case CX_CORBA_FIXED:
       node->arch_head_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_SHORT);
       node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_SHORT);
-      node->iiop_head_align = sizeof(CORBA_short);
+      node->iiop_head_align = 1; /* sizeof(CORBA_short); */
       node->iiop_tail_align = 1;
       break;
     case CX_CORBA_OBJECT:
       node->arch_head_align = node->arch_tail_align = sizeof(gpointer);
-      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* Leading type_id string */
+      node->iiop_head_align = 1; /* sizeof(CORBA_unsigned_long); */ /* Leading type_id string */
       node->iiop_tail_align = 1;
       break;
     case CX_CORBA_ANY:
       node->arch_head_align = node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_POINTER);
-      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* TCKind enum */
+      node->iiop_head_align = 1; /* sizeof(CORBA_unsigned_long); */ /* TCKind enum */
       node->iiop_tail_align = 1;
       break;
     case CX_CORBA_TYPECODE:
       node->arch_head_align = node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT,
 							  MAX(ALIGNOF_CORBA_POINTER, ALIGNOF_CORBA_LONG));
-      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* TCKind enum */
+      node->iiop_head_align = 1; /* sizeof(CORBA_unsigned_long); */ /* TCKind enum */
       node->iiop_tail_align = 1;
       break;
     case CX_CORBA_CONTEXT:
       node->arch_head_align = node->arch_tail_align = sizeof(CORBA_unsigned_long);
-      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* sequence<string> length */
+      node->iiop_head_align = 1; /* sizeof(CORBA_unsigned_long); */ /* sequence<string> length */
       node->iiop_tail_align = 1;
       break;
     case CX_NATIVE:
@@ -771,3 +772,75 @@ oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
   node->use_count--;
 }
 
+static gint
+oidl_node_pass_set_first_curptr_usage(OIDL_Marshal_Node *node)
+{
+  gint retval = 2, itmp;
+  GSList *ltmp;
+
+  if(!node)
+    goto out;
+
+  if(node->use_count)
+    goto out;
+
+  if(node->flags & MN_NOMARSHAL)
+    goto out;
+
+  node->use_count++;
+
+  switch(node->type) {
+  case MARSHAL_COMPLEX:
+    retval = 0;
+    break;
+  case MARSHAL_DATUM:
+    retval = 1;
+    break;
+  case MARSHAL_LOOP:
+    g_assert(node->u.loop_info.loop_var->flags & MN_NOMARSHAL);
+    retval = oidl_node_pass_set_first_curptr_usage(node->u.loop_info.length_var);
+    itmp = oidl_node_pass_set_first_curptr_usage(node->u.loop_info.contents);
+    if(retval == 2)
+      retval = itmp;
+    break;
+  case MARSHAL_SET:
+    for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = ltmp->next)
+      {
+	itmp = oidl_node_pass_set_first_curptr_usage(ltmp->data);
+	if(retval == 2)
+	  retval = itmp;
+      }
+    break;
+  case MARSHAL_SWITCH:
+    retval = oidl_node_pass_set_first_curptr_usage(node->u.switch_info.discrim);
+    for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp))
+      itmp = oidl_node_pass_set_first_curptr_usage(ltmp->data);
+    break;
+  default:
+    g_assert_not_reached();
+    break;
+  }
+
+  node->use_count--;
+
+  switch(retval)
+    {
+    case 0:
+      node->flags |= MN_NEED_CURPTR_RECVBUF;
+      break;
+    case 1:
+      node->flags |= MN_NEED_CURPTR_LOCAL;
+      break;
+    default:
+      break;
+    }
+
+ out:
+  return retval;
+}
+
+static void
+oidl_pass_set_first_curptr_usage(OIDL_Marshal_Node *node)
+{
+  oidl_node_pass_set_first_curptr_usage(node);
+}

@@ -77,10 +77,11 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
 	node = IDL_NODE_UP(node);
       return oidl_marshal_type_info(ctxt, IDL_NODE_UP(node), count_add, TRUE);
       break;
+    case IDLN_TYPE_SEQUENCE:
     case IDLN_TYPE_UNION:
     case IDLN_TYPE_STRUCT:
-    case IDLN_TYPE_SEQUENCE:
     case IDLN_EXCEPT_DCL:
+    case IDLN_TYPE_ARRAY:
       add_it = TRUE;
       break;
     default:
@@ -93,6 +94,7 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
     {
       if(IDL_tree_is_recursive(node, NULL))
 	{
+	  count_add++; /* We have to count the function calling itself */
 	  mtype &= ~MARSHAL_INLINE;
 	  dmtype &= ~MARSHAL_INLINE;
 	}
@@ -148,6 +150,11 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
       break;
     case IDLN_MEMBER:
       add_size += oidl_marshal_type_info(ctxt, IDL_MEMBER(node).type_spec, count_add*IDL_list_length(IDL_MEMBER(node).dcls), FALSE) * IDL_list_length(IDL_MEMBER(node).dcls);
+      retval = add_size;
+      break;
+    case IDLN_TYPE_ARRAY:
+      add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_DCL(IDL_NODE_UP(IDL_NODE_UP(node))).type_spec, count_add, FALSE);
+      add_size += 1; /* Overhead for the loop */
       retval = add_size;
       break;
     case IDLN_TYPE_STRING:
@@ -328,6 +335,9 @@ dump_tmi(gpointer key, gpointer value, gpointer data)
       break;
     case IDLN_EXCEPT_DCL:
       ident = IDL_EXCEPT_DCL(tree).ident;
+      break;
+    case IDLN_TYPE_ARRAY:
+      ident = IDL_TYPE_ARRAY(tree).ident;
       break;
     default:
       break;

@@ -112,10 +112,11 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "};\n");
   }
 
-  fprintf(ci->fh, "register GIOP_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;\n");
+  fprintf(ci->fh, "register CORBA_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;\n");
   fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
   fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
-  fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
+  if(!IDL_OP_DCL(tree).f_oneway)
+    fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
 
   if(oi->out_stubs) /* Lame hack to ensure we get _ORBIT_retval available */
@@ -135,12 +136,10 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "POA_%s__epv *_epv=(POA_%s__epv*)ORBIT_STUB_GetEpv(_obj,%s__classid);\n",
 	    id, id, id);
-#ifndef BACKWARDS_COMPAT_0_4
     fprintf(ci->fh, "int *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
     fprintf(ci->fh, "_pobj = ORBIT_STUB_GetPoaObj(_obj);\n");
     fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
     fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
-#endif
     fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj, invoke_rec);\n");
     fprintf(ci->fh, "%s _epv->%s(ORBIT_STUB_GetServant(_obj), ",
 	    IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval = ":"",
@@ -157,9 +156,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "ev);\n");
 
     fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, invoke_rec);\n");
-#ifndef BACKWARDS_COMPAT_0_4
     fprintf(ci->fh, "if(_use_count) { if(!(--(*_use_count))) _death_func(_use_count, _user_data); }\n");
-#endif
     fprintf(ci->fh, "return %s;\n}\n", IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval":"");
   }
 
@@ -196,11 +193,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   c_marshalling_generate(oi->in_stubs, ci, TRUE);
 
-#ifdef BACKWARDS_COMPAT_0_4
-  fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
-#else
   fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) goto _ORBIT_system_exception;\n");
-#endif
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_MAYBE;\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
   fprintf(ci->fh, "}\n");
@@ -223,7 +216,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     cs_stub_alloc_params(tree, ci);
 
-    c_demarshalling_generate(oi->out_stubs, ci, FALSE);
+    c_demarshalling_generate(oi->out_stubs, ci, FALSE, FALSE);
 
     fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
     cs_stub_print_return (tree, ci);
@@ -477,10 +470,10 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "void\n_ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev)\n", id);
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
-    fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
+    fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
     orbit_cbe_alloc_tmpvars(ei->demarshal, ci);
     fprintf(ci->fh, "%s *_ORBIT_exdata = %s__alloc();\n", id, id);
-    c_demarshalling_generate(ei->demarshal, ci, FALSE);
+    c_demarshalling_generate(ei->demarshal, ci, FALSE, FALSE);
   }
 
   fprintf(ci->fh, "CORBA_exception_set(ev, CORBA_USER_EXCEPTION, TC_%s_struct.repo_id, %s);\n",

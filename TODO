@@ -1,0 +1,16 @@
+TODO:
+
+idl-compiler:
+
+	memory management
+	. Get all the MN_TOPLEVEL details & impl worked out
+		- write standard routines for "print out the variables I need". Also make all immediate children of a toplevel
+		just be MN_NEED_TMPVAR and allocate that way...
+	. Fix the demarshalling code to use the hints (fun fun!)
+
+	bounds checking
+	. need some sort of expression tree thing
+	typedef struct {
+		int required_size;
+		char *varname;
+	} OIDL_Marshal_Bounds_Requirements;
