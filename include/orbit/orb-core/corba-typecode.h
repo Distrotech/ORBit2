@@ -7,7 +7,7 @@
 
 G_BEGIN_DECLS
 
-#define CORBA_tk_recursive -1
+#define CORBA_tk_recursive 0xffffffff
 #define CORBA_tk_last (CORBA_tk_abstract_interface + 1)
 
 struct CORBA_TypeCode_struct {
