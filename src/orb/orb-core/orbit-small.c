@@ -1339,7 +1339,7 @@ ORBit_small_unlisten_for_broken_full (CORBA_Object obj,
 	else {
 		GIOPConnection *cnx;
 
-		cnx = ORBit_object_get_connection (obj);
+		cnx = ORBit_object_peek_connection (obj);
 
 		if (cnx) {
 			ret = get_status (cnx);
