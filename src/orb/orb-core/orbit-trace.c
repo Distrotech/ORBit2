@@ -52,7 +52,6 @@ void
 ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 {
 	CORBA_unsigned_long      i;
-	ORBit_marshal_value_info submi;
 	gconstpointer            subval;
 
 #ifdef DEBUG_TRACE
@@ -68,8 +67,7 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 
 	case CORBA_tk_alias: {
 		subval = *val;
-		submi.alias_element_type = tc->subtypes[0];
-		ORBit_trace_value (&subval, submi.alias_element_type);
+		ORBit_trace_value (&subval, tc->subtypes[0]);
 		break;
 	}
 
@@ -165,11 +163,10 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 
 	case CORBA_tk_array: {
 		subval = *val;
-		submi.alias_element_type = tc->subtypes[0];
 
 		tprintf ("array[%d]={ ", tc->length);
 		for(i = 0; i < tc->length; i++) {
-			ORBit_trace_value (&subval, submi.alias_element_type);
+			ORBit_trace_value (&subval, tc->subtypes[0]);
 			if (i < tc->length - 1)
 				tprintf (", ");
 		}

@@ -302,8 +302,8 @@ typedef struct {
 	char                opname[1];
 } OpData;
 
-#define do_marshal_value(a,b,c,d)     \
-	ORBit_marshal_value   ((a),(gconstpointer *)(b),(c),(d))
+#define do_marshal_value(a,b,c)     \
+	ORBit_marshal_value   ((a),(gconstpointer *)(b),(c))
 #define do_demarshal_value(a,b,c,e) \
 	ORBit_demarshal_value ((c),(b),(a),TRUE,(e))
 
@@ -320,7 +320,6 @@ orbit_small_marshal (CORBA_Object           obj,
 	struct iovec             op_vec;
 	CORBA_TypeCode           tc;
 	int                      i;
-	ORBit_marshal_value_info mi;
 
 #ifdef TRACE_DEBUG
 	tprintf ("p%4x : (", getpid ());
@@ -375,7 +374,7 @@ orbit_small_marshal (CORBA_Object           obj,
 		tprintf_trace_value (&p, tc);
 
 		p = args [i];
-		do_marshal_value (send_buffer, &p, tc, &mi);
+		do_marshal_value (send_buffer, &p, tc);
 
 		if (m_data->arguments._buffer [i+1].flags)
 			tprintf (", ");

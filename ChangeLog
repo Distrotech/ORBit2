@@ -1,3 +1,22 @@
+2001-08-28 Mark McLoughlin <mark@skynet.ie>
+	
+	* include/orbit/orb-core/corba-any-type.h:
+	kill ORBit_marshal_value_info_struct.
+
+	* include/orbit/orb-core/corba-any.h,
+	  /src/orb/orb-core/corba-any.c
+	(ORBit_marshal_value): remove
+	ORBit_marshal_value_info arg, special case
+	boolean/char/octet sequences and arrays.
+	(ORBit_marshal_arg): update ORBit_marshal_value call.
+	(ORBit_marshal_any): ditto.
+
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_marshal): ditto.
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_value): kill ORBit_marshal_value_info.
+	
 2001-08-27 Mark McLoughlin <mark@skynet.ie>
 
 	* test/everything/server.c
