@@ -8,9 +8,10 @@ typedef enum {
 	ORBIT_DEBUG_TIMINGS       = 1 << 2,
 	ORBIT_DEBUG_TYPES         = 1 << 3,
 	ORBIT_DEBUG_MESSAGES      = 1 << 4,
-	ORBIT_DEBUG_OBJECTS       = 1 << 5,
-	ORBIT_DEBUG_GIOP          = 1 << 6,
-	ORBIT_DEBUG_REFS          = 1 << 7
+	ORBIT_DEBUG_ERRORS        = 1 << 5,
+	ORBIT_DEBUG_OBJECTS       = 1 << 6,
+	ORBIT_DEBUG_GIOP          = 1 << 7,
+	ORBIT_DEBUG_REFS          = 1 << 8
 } OrbitDebugFlags;
 
 #ifndef G_ENABLE_DEBUG

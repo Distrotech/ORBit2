@@ -138,6 +138,7 @@ ORBit_setup_debug_flags (void)
 		{ "timings",       ORBIT_DEBUG_TIMINGS },
 		{ "types",         ORBIT_DEBUG_TYPES },
 		{ "messages",      ORBIT_DEBUG_MESSAGES },
+		{ "errors",        ORBIT_DEBUG_ERRORS },
 		{ "objects",       ORBIT_DEBUG_OBJECTS },
 		{ "giop",          ORBIT_DEBUG_GIOP },
 		{ "refs",          ORBIT_DEBUG_REFS },
@@ -212,6 +213,8 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_setup_debug_flags ();
 #endif /* G_ENABLE_DEBUG */
 
+	ORBit_genuid_init (ORBit_genuid_type ());
+
 	giop_init ();
 
 	ORBit_locks_initialize ();
@@ -223,7 +226,6 @@ CORBA_ORB_init (int *argc, char **argv,
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 	g_atexit (shutdown_orb);
 
-	ORBit_genuid_init (ORBit_genuid_type ());
 	retval->default_giop_version = GIOP_LATEST;
 
 	retval->adaptors = g_ptr_array_new ();
@@ -1088,9 +1090,11 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa &&
 	    ((ORBit_RootObject) root_poa)->refs != 1) {
+#ifdef G_ENABLE_DEBUG
 		g_warning ("CORBA_ORB_destroy: Application still has %d "
 			   "refs to RootPOA.",
 			   ((ORBit_RootObject)root_poa)->refs - 1);
+#endif
 		CORBA_exception_set_system (
 			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 	}
@@ -1117,14 +1121,18 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 		}
 
 		if (leaked_adaptors) {
+#ifdef G_ENABLE_DEBUG
 			g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors", leaked_adaptors);
+#endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
 
 		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
+#ifdef G_ENABLE_DEBUG
 			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
 				   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
+#endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}

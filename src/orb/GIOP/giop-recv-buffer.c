@@ -10,6 +10,9 @@
 
 #undef DEBUG
 
+void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer *buf) = NULL;
+
+
 #define MORE_FRAGMENTS_FOLLOW(buf) ((buf)->msg.header.flags & GIOP_FLAG_FRAGMENTED)
 
 /*
@@ -745,7 +748,7 @@ giop_connection_get_frag (GIOPConnection     *cnx,
 	if (return_first_if_none && cnx->incoming_frags) {
 		static int warned = 0;
 		if (!warned++)
-			g_warning ("GIOP-1.1 1 fragment set per cnx (?)");
+			dprintf (MESSAGES, "GIOP-1.1 1 fragment set per cnx (?)");
 
 		return cnx->incoming_frags->data;
 	}
@@ -864,8 +867,8 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 			message_id = 0;
 		break;
 	default:
-		g_warning ("Bogus fragment packet type %d",
-			   buf->msg.header.message_type);
+		dprintf (ERRORS, "Bogus fragment packet type %d",
+			 buf->msg.header.message_type);
 		return TRUE;
 	}
 
@@ -940,8 +943,13 @@ handle_reply (GIOPRecvBuffer *buf)
 			 * system exception in reply.
 			 */
  		} else {
-			g_warning ("We received an unexpected reply:");
-			giop_dump_recv (buf);
+			if (giop_debug_hook_unexpected_reply)
+				giop_debug_hook_unexpected_reply (buf);
+
+			else if (_orbit_debug_flags & ORBIT_DEBUG_ERRORS) {
+				dprintf (ERRORS, "We received an unexpected reply:");
+				giop_dump_recv (buf);
+			}
 		}
 
 		giop_recv_buffer_unuse (buf);

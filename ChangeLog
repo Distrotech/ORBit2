@@ -1,3 +1,48 @@
+2002-06-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_destroy): don't print out debug
+	unless G_ENABLE_DEBUG is on.
+
+2002-06-10  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_init): upd.
+	(test_safe_socket_dir): impl.
+	(scan_socket_dir): impl.
+	(giop_tmpdir_init): impl.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): hoist random init up the
+	file so we can use it in the giop init.
+
+2002-06-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_init):
+	g_strdup_printf instead of snprintf.
+
+2002-06-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_list_add): remove bogus ref,
+	we've been leaking connection objects a lot it
+	seems.
+	(giop_connection_real_state_changed): add broken
+	lock handling, all because Mark added a status
+	change notification to linc_connection_read
+	[ that should go long term ].
+
+	* test/test-giop.c (test_fragments): upd.
+
+	* test/Makefile.am (INCLUDES): add some internals.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(handle_reply): add unexpected reply debug hook.
+	(giop_connection_get_frag): calm printout.
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_setup_debug_flags): add ORBIT_DEBUG_ERRORS,
+	so we don't spew stuff all the time.
+
 2002-06-07  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-typecode.c
