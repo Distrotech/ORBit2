@@ -284,9 +284,14 @@ link_main_get_context (void)
 	return link_context;
 }
 
+/*
+ *   This method is unreliable, and for use
+ * only for debugging.
+ */
 gboolean
 link_mutex_is_locked (GMutex *lock)
 {
+#ifdef __GLIBC__
 	gboolean result = TRUE;
 
 	if (lock && g_mutex_trylock (lock)) {
@@ -295,6 +300,18 @@ link_mutex_is_locked (GMutex *lock)
 	}
 
 	return result;
+#else
+	/*
+	 * On at least Solaris & BSD if we link our
+	 * app without -lthread, and pull in ORBit2
+	 * with threading enabled, we get NOP pthread
+	 * operations. This is fine mostly, but we get
+	 * bogus return values from trylock which screws
+	 * our debugging.
+	 */
+	d_printf ("hosed system is_lock-ing");
+	return TRUE;
+#endif
 }
 
 void
