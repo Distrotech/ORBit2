@@ -139,35 +139,35 @@ public:
 	// Compound conversion: C++ -> C
 	virtual void member_pack_to_c_pre  (ostream      &ostr,
 					    Indent       &indent,
-					    const string &member_id,
-					    const string &c_struct_id) const = 0;
+					    const string &cpp_id,
+					    const string &c_id) const = 0;
 
 	virtual void member_pack_to_c_pack (ostream      &ostr,
 					    Indent       &indent,
-					    const string &member_id,
-					    const string &c_struct_id) const = 0;
+					    const string &cpp_id,
+					    const string &c_id) const = 0;
 
 	virtual void member_pack_to_c_post (ostream      &ostr,
 					    Indent       &indent,
-					    const string &member_id,
-					    const string &c_struct_id) const = 0;
+					    const string &cpp_id,
+					    const string &c_id) const = 0;
 
 	
 	// Compound conversion: C -> C++
 	virtual void member_unpack_from_c_pre  (ostream      &ostr,
 						Indent       &indent,
-						const string &member_id,
-						const string &c_struct_id) const = 0;
+						const string &cpp_id,
+						const string &c_id) const = 0;
 
 	virtual void member_unpack_from_c_pack (ostream      &ostr,
 						Indent       &indent,
-						const string &member_id,
-						const string &c_struct_id) const = 0;
+						const string &cpp_id,
+						const string &c_id) const = 0;
 
 	virtual void member_unpack_from_c_post  (ostream      &ostr,
 						 Indent       &indent,
-						 const string &member_id,
-						 const string &c_struct_id) const = 0;
+						 const string &cpp_id,
+						 const string &c_id) const = 0;
 };
 
 #endif //ORBITCPP_TYPES_IDLTYPE

@@ -194,7 +194,7 @@ IDLInterface::stub_decl_arg_get (const string     &cpp_id,
 				 const IDLTypedef *active_typedef) const
 {
 	string retval;
-	
+
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
@@ -250,9 +250,10 @@ IDLInterface::stub_impl_arg_call (const string   &cpp_id,
 	
 	switch (direction)
 	{
-	case IDL_PARAM_INOUT:
+	case IDL_PARAM_IN:
 		retval = get_c_id (cpp_id);
 		break;
+	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
 		retval = "&" + get_c_id (cpp_id);
 		break;
@@ -275,7 +276,7 @@ IDLInterface::stub_impl_arg_post (ostream        &ostr,
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
 		ostr << indent << cpp_id << " = "
-		     << get_cpp_stub_typename () << "::wrap"
+		     << get_cpp_stub_typename () << "::_orbitcpp_wrap"
 		     << " (" << get_c_id (cpp_id) << ");"
 		     << endl;
 	}
@@ -287,6 +288,7 @@ IDLInterface::stub_impl_arg_post (ostream        &ostr,
 string
 IDLInterface::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 {
+	return get_cpp_typename_ptr ();
 }
 	
 void
@@ -309,7 +311,8 @@ void
 IDLInterface::stub_impl_ret_post (ostream &ostr,
 				  Indent  &indent) const
 {
-	// WRITE ME
+	ostr << indent << "return " << get_cpp_stub_typename ()
+	     << "::_orbitcpp_wrap (_retval);" << endl;
 }
 	
 
@@ -324,14 +327,20 @@ IDLInterface::skel_decl_arg_get (const string     &c_id,
 				 IDL_param_attr    direction,
 				 const IDLTypedef *active_typedef) const
 {
+	string retval;
+	
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		return get_c_typename () + " " + c_id;
+		retval = get_c_typename () + " " + c_id;
+		break;
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
-		return get_c_typename () + " *" + c_id;
+		retval = get_c_typename () + " *" + c_id;
+		break;
 	}
+
+	return retval;
 }
 
 void
@@ -340,14 +349,29 @@ IDLInterface::skel_impl_arg_pre (ostream        &ostr,
 				 const string   &c_id,
 				 IDL_param_attr  direction) const
 {
-	// WRITE ME
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+	case IDL_PARAM_INOUT:
+		ostr << indent << get_cpp_typename_var () << " "
+		     << get_cpp_id (c_id) << " = " << get_cpp_stub_typename ()
+		     << "::_orbitcpp_wrap (" << c_id << ");" << endl;
+		break;
+	case IDL_PARAM_OUT:
+		ostr << indent << get_cpp_typename_ptr () << " "
+		     << get_cpp_id (c_id) << ";" << endl;
+		break;
+	}
 }
 	
 string
 IDLInterface::skel_impl_arg_call (const string   &c_id,
 				  IDL_param_attr  direction) const
 {
+#warning "WRITE ME"
 	// WRITE ME
+
+	return get_cpp_id (c_id);
 }
 	
 void
@@ -356,7 +380,21 @@ IDLInterface::skel_impl_arg_post (ostream        &ostr,
 				  const string   &c_id,
 				  IDL_param_attr  direction) const
 {
-	// WRITE ME
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		// Do nothing
+		break;
+	case IDL_PARAM_INOUT:
+		ostr << indent << "*" << c_id << " = " << get_cpp_id (c_id)
+		     << "._retn ()->_orbitcpp_get_c_object ();"
+		     << endl;
+		break;
+	case IDL_PARAM_OUT:
+		ostr << indent << "*" << c_id << " = " << get_cpp_id (c_id)
+		     << "->_orbitcpp_get_c_object ();" << endl;
+		break;
+	}
 }
 
 
@@ -365,7 +403,7 @@ IDLInterface::skel_impl_arg_post (ostream        &ostr,
 string
 IDLInterface::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
-	// WRITE ME
+	return get_c_typename ();
 }
 
 void
@@ -389,7 +427,7 @@ void
 IDLInterface::skel_impl_ret_post (ostream &ostr,
 				  Indent  &indent) const
 {
-	// WRITE ME
+	ostr << indent << "return _retval->_orbitcpp_get_c_object ();" << endl;
 }
 
 
@@ -414,6 +452,7 @@ IDLInterface::member_impl_arg_copy (ostream      &ostr,
 				    Indent       &indent,
 				    const string &cpp_id) const
 {
+#warning "WRITE ME"
 	// WRITE ME
 	ostr << indent << cpp_id << " = _par_" << cpp_id
 	     << ';' << endl;
@@ -422,8 +461,8 @@ IDLInterface::member_impl_arg_copy (ostream      &ostr,
 void
 IDLInterface::member_pack_to_c_pre  (ostream      &ostr,
 				     Indent       &indent,
-				     const string &member_id,
-				     const string &c_struct_id) const
+				     const string &cpp_id,
+				     const string &c_id) const
 {
 	// Do nothing
 }
@@ -431,43 +470,37 @@ IDLInterface::member_pack_to_c_pre  (ostream      &ostr,
 void
 IDLInterface::member_pack_to_c_pack (ostream      &ostr,
 				     Indent       &indent,
-				     const string &member_id,
-				     const string &c_struct_id) const
+				     const string &cpp_id,
+				     const string &c_id) const
 {
-	string c_id = c_struct_id + '.' + member_id;
-	string cpp_id = member_id;
-	
 	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_object ()"
 	     << ';' << endl;
 }
 
 void
 IDLInterface::member_pack_to_c_post (ostream      &ostr,
-				Indent       &indent,
-				const string &member_id,
-				const string &c_struct_id) const
+				     Indent       &indent,
+				     const string &cpp_id,
+				     const string &c_id) const
 {
 	// Do nothing
 }
 
 void
 IDLInterface::member_unpack_from_c_pre  (ostream      &ostr,
-				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const
+					 Indent       &indent,
+					 const string &cpp_id,
+					 const string &c_id) const
 {
 	// Do nothing
 }
 
 void
 IDLInterface::member_unpack_from_c_pack (ostream      &ostr,
-				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const
+					 Indent       &indent,
+					 const string &cpp_id,
+					 const string &c_id) const
 {
-	string c_id = c_struct_id + '.' + member_id;
-	string cpp_id = member_id;
-	
 	ostr << indent << cpp_id << " = "
 	     << get_cpp_stub_typename () << "::_orbitcpp_wrap ("
 	     << "::_orbitcpp::duplicate_guarded (" << c_id << ")"
@@ -478,8 +511,8 @@ IDLInterface::member_unpack_from_c_pack (ostream      &ostr,
 void
 IDLInterface::member_unpack_from_c_post  (ostream      &ostr,
 				     Indent       &indent,
-				     const string &member_id,
-				     const string &c_struct_id) const
+				     const string &cpp_id,
+				     const string &c_id) const
 {
 	// Do nothing
 }

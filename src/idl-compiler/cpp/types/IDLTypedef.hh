@@ -134,35 +134,35 @@ public:
 	// Compound conversion: C++ -> C
 	void member_pack_to_c_pre  (ostream      &ostr,
 				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const;
+				    const string &cpp_id,
+				    const string &c_id) const;
 
 	void member_pack_to_c_pack (ostream      &ostr,
 				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const;
+				    const string &cpp_id,
+				    const string &c_id) const;
 
 	void member_pack_to_c_post (ostream      &ostr,
 				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const;
+				    const string &cpp_id,
+				    const string &c_id) const;
 
 	
 	// Compound conversion: C -> C++
 	void member_unpack_from_c_pre  (ostream      &ostr,
 					Indent       &indent,
-					const string &member_id,
-					const string &c_struct_id) const;
+					const string &cpp_id,
+					const string &c_id) const;
 
 	void member_unpack_from_c_pack (ostream      &ostr,
 					Indent       &indent,
-					const string &member_id,
-					const string &c_struct_id) const;
+					const string &cpp_id,
+					const string &c_id) const;
 
 	void member_unpack_from_c_post  (ostream      &ostr,
 					 Indent       &indent,
-					 const string &member_id,
-					 const string &c_struct_id) const;
+					 const string &cpp_id,
+					 const string &c_id) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLTYPEDEF
