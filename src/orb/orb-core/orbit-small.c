@@ -599,6 +599,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 		goto clean_out;
 	}
 
+	CORBA_exception_init (ev);
+
 	if ((invoke_policy = ORBit_object_get_policy (obj)))
 		ORBit_policy_push (invoke_policy);
 

@@ -1,3 +1,15 @@
+2004-01-14  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testWithException): add.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): always clean Environment
+	as it enters - otherwise there's no way of telling if
+	the return value is valid.
+
+	* src/orb/poa/poa.c (ORBit_c_stub_invoke): init ev.
+	here too; same reason; upd. locking comments.
+
 2004-01-14  The Written Word  <bugzilla-gnome@thewrittenword.com>
 
 	* include/orbit/GIOP/giop-recv-buffer.h: guint for
