@@ -40,6 +40,12 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 AM_PROG_LIBTOOL
 AM_MAINTAINER_MODE
 
+dnl Cache $ACLOCAL_FLAGS
+AC_CACHE_CHECK([for aclocal flags], ac_cv_linc_aclocal_flags,[
+   ac_cv_linc_aclocal_flags="$ACLOCAL_FLAGS"
+])
+ACLOCAL="$ACLOCAL $ac_cv_linc_aclocal_flags"
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
