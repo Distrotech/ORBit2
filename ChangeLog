@@ -1,3 +1,10 @@
+2004-05-14  Fernando Herrera  <fherrera@onirica.com>
+
+	* src/idl-compiler/orbit-idl-c-backend.c: (out_for_pass):
+	 clobber LC_ALL because cpp tranlates some strings in some 
+	locales during dep files generation that makes compilation
+	fails. Fixes bug #142546.
+
 2004-05-08  Frank Rehberger  <frehberg@gnome-de.org>
 
 	* src/orb/orb-core/iop-profiles.c (IOP_start_profiles): orbit
