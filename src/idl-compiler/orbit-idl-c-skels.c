@@ -215,7 +215,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
   }
 
   fprintf(ci->fh, "{\nint *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
-  fprintf(ci->fh, "_pobj = _ORBIT_servant->_private;\n");
+  fprintf(ci->fh, "_pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT(_ORBIT_servant);\n");
   fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
   fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
 

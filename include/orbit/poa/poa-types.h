@@ -33,7 +33,7 @@ typedef struct {
 } ORBit_POAObject;
 
 #define ORBIT_SERVANT_TO_ORB(servant) \
-  (((PortableServer_POA)ORBIT_SERVANT_TO_POAOBJECT(servant)->poa)->orb )
+  (((PortableServer_POA)ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant)->poa)->orb)
 
 typedef struct ORBit_POAInvocation ORBit_POAInvocation;
 
@@ -96,9 +96,18 @@ typedef struct {
   (PortableServer_ClassInfo*) 						\
   ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )	\
 )
-#define ORBIT_SERVANT_TO_POAOBJECT(servant) (				\
-  (ORBit_POAObject*) 							\
-  ( ((PortableServer_ServantBase *)(servant))->_private )		\
+#define ORBIT_SERVANT_TO_POAOBJECT_LIST(servant) (                      \
+  (GSList *)                                                            \
+  ( ((PortableServer_ServantBase *)(servant))->_private )               \
+)
+#define ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(servant) (                 \
+  (GSList **)                                                           \
+  ( &((PortableServer_ServantBase *)(servant))->_private )              \
+)
+#define ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant) (                               \
+  ( (PortableServer_ServantBase *)(servant) )->_private == NULL ? NULL :          \
+    (ORBit_POAObject *)                                                           \
+    ( ( (GSList *)( (PortableServer_ServantBase *)(servant) )->_private )->data ) \
 )
 #define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant,major) 			\
   ( ((PortableServer_ServantBase *)(servant))->vepv[major] )

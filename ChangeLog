@@ -1,5 +1,13 @@
 2001-06-25  Mark McLoughlin <mark@skynet.ie>
 
+	* include/orbit/poa/poa-types.h,
+	  src/idl-compiler/orbit-idl-c-skels.c,
+	  src/orb/poa/poa-servants.c,
+	  src/orb/poa/poa.c : make MULT_ID work by having a list of
+	POAObjects in the servant's '_private' member.
+
+2001-06-25  Mark McLoughlin <mark@skynet.ie>
+
 	* include/orbit/poa/poa.h: add string_to_ObjectId etc.
 
 	* src/orb/poa/poa.c: make root POA have non default

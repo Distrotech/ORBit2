@@ -206,7 +206,7 @@ PortableServer_POA_set_servant(PortableServer_POA _obj,
 			       CORBA_Environment * ev)
 {
   if(p_servant)
-    _obj->default_pobj = ((PortableServer_ServantBase *)p_servant)->_private;
+    _obj->default_pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT(p_servant);
   else
     _obj->default_pobj = NULL;
 }
@@ -229,7 +229,7 @@ PortableServer_POA_activate_object(PortableServer_POA _obj,
     }
 	
   if((_obj->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
-     (ORBIT_SERVANT_TO_POAOBJECT(servant) != 0))
+     (ORBIT_SERVANT_TO_POAOBJECT_LIST(servant) != 0))
     {
       CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
 			  ex_PortableServer_POA_ServantAlreadyActive,
@@ -270,7 +270,7 @@ PortableServer_POA_activate_object_with_id(PortableServer_POA _obj,
       return;
     }
   if((_obj->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
-     (ORBIT_SERVANT_TO_POAOBJECT(servant) != 0))
+     (ORBIT_SERVANT_TO_POAOBJECT_LIST(servant) != 0))
     {
       CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
 			  ex_PortableServer_POA_ServantAlreadyActive,
@@ -375,7 +375,7 @@ PortableServer_POA_servant_to_id(PortableServer_POA _obj,
     (_obj->p_id_uniqueness == PortableServer_UNIQUE_ID);
   int policy_ok =
     (defserv || (retain && (unique || implicit)));
-  ORBit_POAObject *pobj = ORBIT_SERVANT_TO_POAOBJECT(servant);
+  ORBit_POAObject *pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant);
 
   g_return_val_if_fail(p_servant != NULL, NULL);
 
@@ -417,7 +417,7 @@ PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
 					CORBA_Environment *ev)
 {
   PortableServer_ServantBase *servant = p_servant;
-  ORBit_POAObject *pobj = ORBIT_SERVANT_TO_POAOBJECT(servant);
+  ORBit_POAObject *pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant);
   int retain =
     (_obj->p_servant_retention == PortableServer_RETAIN);
   int implicit =
@@ -1670,11 +1670,12 @@ ORBit_POA_activate_object(PortableServer_POA poa,
 			  PortableServer_ServantBase *servant, 
 			  CORBA_Environment *ev) 
 {
+    GSList **obj_list;
+
     g_assert( pobj->servant == 0 );	/* must not be already active */
     g_assert( (poa->life_flags & ORBit_LifeF_DeactivateDo) == 0 );
     g_assert( pobj->use_cnt == 0 );
     /* XXX: above should be an exception? */
-    g_assert( servant->_private == 0 );	/* its POAObject */
     {
 	PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
 	if ( ci->vepvmap==0 ) {
@@ -1688,10 +1689,8 @@ ORBit_POA_activate_object(PortableServer_POA poa,
 #  endif
     }
     pobj->servant = servant;
-    if ( pobj->object_id==0 /* this occurs for the default servant */
-      || poa->p_id_uniqueness == PortableServer_UNIQUE_ID ) {
-        servant->_private = pobj;
-    }
+    obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(servant);
+    *obj_list = g_slist_append(*obj_list,pobj);
 #if 0
     ORBit_RootObject_duplicate(pobj);
 #endif
@@ -1710,6 +1709,7 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 			     CORBA_boolean is_cleanup)
 {
     PortableServer_ServantBase	*serv = pobj->servant;
+    GSList                      **obj_list;
 
     /* this fnc is also called for the default servant in NON_RETAIN */
     /* g_assert( poa->servant_retention == PortableServer_RETAIN ); */
@@ -1728,7 +1728,8 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 	return;
     }
     pobj->servant = 0;
-    serv->_private = 0;
+    obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(serv);
+    *obj_list = g_slist_remove(*obj_list,pobj);
 
     if ( (pobj->life_flags & ORBit_LifeF_DoEtherealize)!=0 ) {
 	CORBA_Environment env, *ev = &env;
@@ -2041,6 +2042,8 @@ ORBit_POA_ServantManager_use_servant
  CORBA_Environment *ev)
 {
   PortableServer_ServantBase *retval;
+  GSList                     **obj_list;
+
   if(poa->p_servant_retention == PortableServer_RETAIN)
     {
       POA_PortableServer_ServantActivator *sm;
@@ -2051,10 +2054,23 @@ ORBit_POA_ServantManager_use_servant
       retval = epv->incarnate(sm, oid, poa, ev);
       if ( retval )
 	{
-	  g_assert( retval->_private == 0 );
-	  retval->_private = irec->pobj;
+
+	  /* XXX: two POAs sharing servant and having
+	   *      different uniqueness policies ??
+	   *  see note 11.3.5.1
+	   */
+	  if((poa->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
+             (ORBIT_SERVANT_TO_POAOBJECT_LIST(retval) != 0))
+	    {
+	      CORBA_exception_set_system(ev,
+					 ex_CORBA_OBJ_ADAPTER,
+					 CORBA_COMPLETED_NO);
+	      return NULL;
+            }
+
+	  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(retval);
+	  *obj_list = g_slist_append(*obj_list,irec->pobj);
 	  irec->pobj->servant = retval;
-	  /* XXX: handle MULT_ID case */
 	}
     }
   else
@@ -2069,8 +2085,20 @@ ORBit_POA_ServantManager_use_servant
       if ( retval )
 	{
 	  irec->doUnuse = 1;
-	  g_assert( retval->_private == 0 );
-	  retval->_private = irec->pobj;
+	  /* XXX:  Is this right?
+	   *       Is it the same as above? 
+	   */
+	  if((poa->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
+             (ORBIT_SERVANT_TO_POAOBJECT_LIST(retval) != 0))
+	    {
+	      CORBA_exception_set_system(ev,
+					 ex_CORBA_OBJ_ADAPTER,
+					 CORBA_COMPLETED_NO);
+	      return NULL;
+            }
+
+	  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(retval);
+	  *obj_list = g_slist_append(*obj_list,irec->pobj);
 	  irec->pobj->servant = retval;
 	}
     }
@@ -2091,14 +2119,15 @@ ORBit_POA_ServantManager_unuse_servant
   POA_PortableServer_ServantLocator *sm;
   POA_PortableServer_ServantLocator__epv *epv;
   PortableServer_ServantBase *serv = servant;
+  GSList **obj_list;
 
   g_assert(poa->p_servant_retention == PortableServer_NON_RETAIN);
 
   sm = (POA_PortableServer_ServantLocator *)poa->servant_manager;
   epv = sm->vepv->PortableServer_ServantLocator_epv;
-	
-  g_assert( serv->_private == irec->pobj);
-  serv->_private = NULL;
+
+  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(serv);	
+  *obj_list = g_slist_remove(*obj_list,irec->pobj);
   epv->postinvoke(sm, oid, poa, opname, cookie, servant, ev);
 }
 
