@@ -87,6 +87,7 @@ PortableServer_ServantBase__epv Simple_base_epv = {NULL, simple_finalize, NULL};
 #include "contextServer.c"
 #include "deadReference.c"
 #include "pingServer.c"
+#include "derivedServer.c"
 
 typedef struct {
 	POA_test_TestFactory baseServant;
@@ -98,8 +99,10 @@ typedef struct {
 	test_ArrayServer     arrayServerRef;
 	test_AnyServer       anyServerRef;
 	test_ContextServer   contextServerRef;
+	test_DerivedServer   derivedServerRef;
 	GSList              *pingPongServerRefs;
 } test_TestFactory_Servant;
+
 
 static test_BasicServer
 TestFactory_getBasicServer (PortableServer_Servant servant,
@@ -172,6 +175,15 @@ TestFactory_getContextServer (PortableServer_Servant servant,
 	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
 
 	return CORBA_Object_duplicate (this->contextServerRef, ev);
+}
+
+static test_DerivedServer
+TestFactory_getDerivedServer (PortableServer_Servant servant,
+			      CORBA_Environment     *ev)
+{
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate (this->derivedServerRef, ev);
 }
 
 static test_PingPongServer
@@ -260,6 +272,7 @@ test_TestFactory__fini (PortableServer_Servant  servant,
 	CORBA_Object_release (this->arrayServerRef, ev);
 	CORBA_Object_release (this->anyServerRef, ev);
 	CORBA_Object_release (this->contextServerRef, ev);
+	CORBA_Object_release (this->derivedServerRef, ev);
 
 	for (l = this->pingPongServerRefs; l; l = l->next)
 		CORBA_Object_release (l->data, ev);
@@ -287,7 +300,7 @@ static POA_test_TestFactory__epv TestFactory_epv = {
 	TestFactory_getContextServer,
 	TestFactory_segv,
 	NULL,                         /* getBaseServer                */
-	NULL,                         /* getDerivedServer             */
+	TestFactory_getDerivedServer,
 	NULL,                         /* getDerivedServerAsBaseServer */
 	NULL,                         /* getDerivedServerAsB2         */
 	NULL,                         /* createTransientObj           */
@@ -374,6 +387,9 @@ test_TestFactory__init (PortableServer_Servant servant,
 
 	this->contextServerRef = create_object (
 		poa, SIMPLE_SERVANT_NEW (ContextServer), ev);
+
+	this->derivedServerRef = create_object (
+		poa, SIMPLE_SERVANT_NEW (DerivedServer), ev);
 
 	this->pingPongServerRefs = NULL;
 

@@ -1,5 +1,11 @@
 2003-07-31  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/server.c
+	(TestFactory_getDerivedServer): impl.
+	(test_TestFactory__init): upd.
+
+	* test/everything/derivedServer.c: add.
+
 	* src/orb/orb-core/corba-loc.c (ORBit_corbaloc_from):
 	invert ssl_info NULL check's sense, remove redundant
 	braces / inits. Add a 'break' so we don't drop through
