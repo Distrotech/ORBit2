@@ -64,11 +64,12 @@ static void
 linc_source_remove (LINCConnection *cnx, gboolean unref)
 {
   if(cnx->tag) {
-    g_assert (g_source_remove(cnx->tag));
+    guint thetag = cnx->tag;
+    cnx->tag = 0;
+    g_source_remove(thetag);
     if (unref) 
       g_object_unref (G_OBJECT (cnx));
   }
-  cnx->tag = 0;
 }
 
 static void
@@ -162,7 +163,7 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
     case LINC_DISCONNECTED:
 /*      g_warning ("Linc disconnected tag %d fd '%d'",
 	cnx->tag, cnx->fd);*/
-      linc_source_remove (cnx, TRUE);
+      linc_source_remove (cnx, FALSE);
       if (cnx->fd >= 0)
         close(cnx->fd);
       cnx->fd = -1;
