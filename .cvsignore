@@ -8,3 +8,4 @@ Makefile
 Makefile.in
 configure
 config.h.in
+obj
