@@ -670,6 +670,7 @@ ORBit_imodule_get_typecode (GHashTable *typecodes,
 		retval = CORBA_ORB_create_array_tc (NULL,
 				IDL_INTEGER (IDL_LIST (sizer).data).value,
 				subtc, &env);
+		retval->c_align = subtc->c_align;
 		CORBA_Object_release ((CORBA_Object) subtc, NULL);
 
 		for (sizer = IDL_LIST (sizer).prev; sizer; sizer = IDL_LIST (sizer).prev) {
@@ -677,6 +678,7 @@ ORBit_imodule_get_typecode (GHashTable *typecodes,
 			retval = CORBA_ORB_create_array_tc (NULL,
 					IDL_INTEGER (IDL_LIST (sizer).data).value,
 					subtc, &env);
+			retval->c_align = subtc->c_align;
 			CORBA_Object_release ((CORBA_Object) subtc, NULL);
 		}
 
