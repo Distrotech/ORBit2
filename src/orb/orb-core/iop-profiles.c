@@ -585,7 +585,7 @@ IOP_shutdown_profiles (GSList *profiles)
 void
 IOP_generate_profiles (CORBA_Object obj)
 {
-	CORBA_ORB      orb;
+	CORBA_ORB orb;
 	ORBit_OAObject adaptor_obj;
 
 	g_assert (obj && (obj->profile_list == NULL) && obj->orb);
