@@ -242,7 +242,12 @@ module test {
 	};
 
 	interface PingPongServer {
-		long pingPong (in PingPongServer replyTo, in long idx);
+		oneway void opOneWay (in long l);
+		long        pingPong (in PingPongServer replyTo,
+				      in long idx);
+		void        set      (in PingPongServer reg,
+				      in string         name);
+		Object      get      (in string         name);
 	};
 };
 
