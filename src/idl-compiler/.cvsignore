@@ -1,0 +1,5 @@
+.libs
+.debs
+Makefile
+Makefile.in
+orbit-idl
