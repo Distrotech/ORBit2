@@ -26,20 +26,20 @@ ArrayServer_opLongArray(PortableServer_Servant _servant,
 						CORBA_Environment * ev) {
   int i;
   test_LongArray_slice *retn;
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	g_assert(inArg[i]==constants_SEQ_LONG_IN[i]);
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	g_assert(inoutArg[i]==constants_SEQ_LONG_INOUT_IN[i]);
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	inoutArg[i] = constants_SEQ_LONG_INOUT_OUT[i];
   
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	outArg[i] = constants_SEQ_LONG_OUT[i];
 	
   retn = test_LongArray__alloc();
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	retn[i] = constants_SEQ_LONG_RETN[i];
       
   return retn; 
@@ -54,23 +54,23 @@ ArrayServer_opStrArray(PortableServer_Servant _servant,
 					   CORBA_Environment * ev){
   int i;
   test_StrArray_slice *retn;
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	g_assert(strcmp(inArg[i],constants_SEQ_STRING_IN[i])==0);
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	g_assert(strcmp(inoutArg[i],constants_SEQ_STRING_INOUT_IN[i])==0);
 
-  for(i=0;i<constants_SEQLEN;i++){
+  for(i=0;i<test_SequenceLen;i++){
 	CORBA_free(inoutArg[i]);
 	inoutArg[i] = CORBA_string_dup(constants_SEQ_STRING_INOUT_OUT[i]);
   }
 
   *outArg = test_StrArray__alloc();
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	(*outArg)[i] = CORBA_string_dup(constants_SEQ_STRING_OUT[i]);
   
   retn = test_StrArray__alloc();
-  for(i=0;i<constants_SEQLEN;i++)
+  for(i=0;i<test_SequenceLen;i++)
 	retn[i] = CORBA_string_dup(constants_SEQ_STRING_RETN[i]);
   
   return retn;  

@@ -156,6 +156,13 @@ TestFactory_createPingPongServer (PortableServer_Servant servant,
 	return CORBA_Object_duplicate (obj, ev);
 }
 
+static void
+TestFactory_noOp (PortableServer_Servant  servant,
+		  CORBA_Environment      *ev)
+{
+	/* do nothing, fast */
+}
+
 static test_DeadReferenceObj
 TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 				    CORBA_Environment      *ev)
@@ -246,7 +253,8 @@ static POA_test_TestFactory__epv TestFactory_epv = {
 	NULL,                         /* getDerivedServerAsB2         */
 	NULL,                         /* createTransientObj           */
 	TestFactory_createDeadReferenceObj,
-	TestFactory_createPingPongServer
+	TestFactory_createPingPongServer,
+	TestFactory_noOp
 };
 
 static POA_test_TestFactory__vepv TestFactory_vepv = {

@@ -40,10 +40,7 @@ giop_connection_list_add (GIOPConnection *cnx)
 	g_warning ("Add '%s'", giop_cnx_descr (cnx));
 	g_assert (cnx->parent.was_initiated);
 #endif
-
-	cnx_list.list = g_list_prepend (
-		cnx_list.list, 
-		g_object_ref (G_OBJECT (cnx)));
+	cnx_list.list = g_list_prepend (cnx_list.list, cnx);
 }
 
 static void
@@ -94,12 +91,17 @@ giop_connection_real_state_changed (LINCConnection      *cnx,
 
 	switch (status) {
 	case LINC_DISCONNECTED:
-		LINC_MUTEX_LOCK (gcnx->incoming_mutex);
-		if (gcnx->incoming_msg) {
-			giop_recv_buffer_unuse (gcnx->incoming_msg);
-			gcnx->incoming_msg = NULL;
+		if (!gcnx->incoming_mutex ||
+		    g_mutex_trylock (gcnx->incoming_mutex)) {
+			/* FIXME: this is broken because
+			   linc_connection_read does a (bogus)
+			   state_changed call on an EOF read */
+			if (gcnx->incoming_msg) {
+				giop_recv_buffer_unuse (gcnx->incoming_msg);
+				gcnx->incoming_msg = NULL;
+			}
+			LINC_MUTEX_UNLOCK (gcnx->incoming_mutex);
 		}
-		LINC_MUTEX_UNLOCK (gcnx->incoming_mutex);
 		giop_recv_list_zap (gcnx);
 		break;
 	default:
@@ -264,7 +266,7 @@ giop_connection_remove_by_orb (gpointer match_orb_data)
 
 	LINC_MUTEX_UNLOCK (cnx_list.lock);
 
-	for (sl = to_close; sl; sl = sl->next) {
+	for (sl= to_close; sl; sl = sl->next) {
 		GIOPConnection *cnx = sl->data;
 
 		giop_connection_close (cnx);

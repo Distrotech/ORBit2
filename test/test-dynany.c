@@ -22,7 +22,7 @@
 #define CHECK_OBJECT_NOT_EXIST(ev) \
 	do { \
 		g_assert ((ev)->_major == CORBA_SYSTEM_EXCEPTION && \
-		          !strcmp ((ev)->_id, "IDL:CORBA/OBJECT_NOT_EXIST:1.0")); \
+		          !strcmp ((ev)->_id, ex_CORBA_OBJECT_NOT_EXIST)); \
 		CORBA_exception_free (ev); \
 	} while (0)
 

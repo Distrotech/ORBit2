@@ -9,6 +9,8 @@
 //   in the "orb.idl" interface supplied by every ORB and that can be
 //   brought into an IDL compilation by "#include <orb.idl>".
 
+#pragma prefix "omg.org"
+
 module CORBA {
 
 // The following forward references list *all* the interfaces and valuetypes
