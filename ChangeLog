@@ -1,3 +1,13 @@
+2004-01-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_copy_value_core): 
+	fetch the union tag only after pre-aligning correctly,
+	vicious PPC snafu; thanks to Jeroen Zwartepoorte for
+	his patience.
+
+	* test/everything/everything.idl: add a double
+	to the VariableLengthUnion - causing grief on PPC.
+
 2004-01-15  Mark McLoughlin  <mark@skynet.ie>
 
 	* Version 2.9.5

@@ -213,7 +213,7 @@ module test {
 	case 1: long x;
 	default: long w;
 	case 2: string y;
-	case 3: 
+	case 3: double j;
 	case 4: boolean z;
 	case 5: VariableLengthStruct a;
 	case 6: StrSeq b;
