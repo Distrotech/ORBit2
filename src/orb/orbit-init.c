@@ -26,7 +26,7 @@ ORBit_init_internals (CORBA_ORB          orb,
 	ORBit_RootObject_release (poa_current);
 
 	gettimeofday (&t, NULL);
-	srand (t.tv_sec ^ t.tv_usec ^ getpid ());
+	srand (t.tv_sec ^ t.tv_usec ^ getpid () ^ getuid ());
 }
 
 const char  *orbit_version       = ORBIT_VERSION;

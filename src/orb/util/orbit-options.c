@@ -45,14 +45,14 @@ ORBit_option_set (const ORBit_option *option,
 		*(gint *)option->arg = atoi (val);	
 		break;
 	case ORBIT_OPTION_STRING: {
-		gchar **str_arg = (char **)option->arg;
+		gchar **str_arg = (char **) option->arg;
 
 		if (*str_arg)
 			g_free (*str_arg);
 
-		*str_arg = g_strdup(val);
-		}
+		*str_arg = g_strdup (val);
 		break;
+	}
 	default:
 		g_assert_not_reached ();
 		break;
@@ -178,7 +178,7 @@ ORBit_option_command_line_parse (int                 *argc,
 			tmpstr++;
 
                 strncpy (name, tmpstr, sizeof (name) - 1);
-                name [sizeof (name) - 1] = '\0';
+		tmpstr [sizeof (name) - 1] = '\0';
 
                 tmpstr = strchr (name, '=');
                 if (tmpstr)
@@ -193,7 +193,7 @@ ORBit_option_command_line_parse (int                 *argc,
 			continue;
 		}
 
-		erase [i] = 1;
+		erase [i] = TRUE;
 		numargs--;
 
 		if (option->type == ORBIT_OPTION_NONE || tmpstr) {
@@ -203,13 +203,13 @@ ORBit_option_command_line_parse (int                 *argc,
 	}
 
         for (i = j = 1; i < *argc; i++) {
-		if (erase [i] == 1)
+		if (erase [i])
                         continue;
 
 		if (j < numargs)
 			argv [j++] = argv [i];
  		else
-			argv [j++] = '\0';
+			argv [j++] = "";
         }
 
         *argc = numargs;
