@@ -502,6 +502,33 @@ CORBA_ORB_get_service_information (CORBA_ORB                  orb,
 				   CORBA_ServiceInformation **service_information,
 				   CORBA_Environment         *ev)
 {
+	/* FIXME: 
+         * see http://mail.gnome.org/archives/orbit-list/2003-May/msg00093.html
+
+	 * Assigning NULL to parameter service_information is not
+	 * compliant to CORBA spec. This operation is part of pseudo
+	 * interface and must react like operation of true remote
+	 * interface. The question is what value it should point to in
+	 * case CORBA_FALSE is returned to caller.
+
+	 4.2.2 Getting Service Information
+	 4.2.2.1 get_service_information
+
+	 boolean get_service_information (in ServiceType service_type;
+	                                  out ServiceInformation service_information;);
+
+         * The get_service_information operation is used to obtain
+         * information about CORBA facilities and services that are
+         * supported by this ORB. The service type for which
+         * information is being requested is passed in as the in
+         * parameter service_type, the values defined by constants in
+         * the CORBA module. If service information is available for
+         * that type, that is returned in the out parameter
+         * service_information, and the operation returns the value
+         * TRUE. If no information for the requested services type is
+         * available, the operation returns FALSE (i.e., the service
+         * is not supported by this ORB).
+	 */	
 	*service_information = NULL;
 
 	return CORBA_FALSE;
