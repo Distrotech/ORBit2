@@ -5,6 +5,8 @@
 #include <gmodule.h>
 #include <glib/garray.h>
 
+#include "orb-core-private.h"
+
 ORBit_IInterface *
 ORBit_iinterface_from_idl (IDL_tree idl)
 {
@@ -209,8 +211,8 @@ add_if_unique (GPtrArray  *strings,
 
 /* FIXME: this should be called only once at
    ORB init time really */
-static char **
-get_typelib_paths (void)
+char **
+ORBit_get_typelib_paths (void)
 {
 	const char *path;
 	int         i;
@@ -329,7 +331,7 @@ ORBit_small_load_typelib (const char *libname)
 		char   **paths;
 		int      i;
 
-		paths = get_typelib_paths ();
+		paths = ORBit_get_typelib_paths ();
 
 		for (i = 0; paths && paths [i]; i++) {
 			fname = g_strconcat (

@@ -43,4 +43,6 @@ void     ORBit_trace_typecode (const CORBA_TypeCode tc);
 void     ORBit_trace_value    (gconstpointer       *val,
 			       CORBA_TypeCode       tc);
 
+char   **ORBit_get_typelib_paths (void);
+
 #endif

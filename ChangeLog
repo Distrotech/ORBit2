@@ -1,3 +1,8 @@
+2001-08-11  Michael Meeks  <michael@ximian.com>
+
+	* test/typelib-dump.c (list_libs): impl.
+	(main): list installed type libraries.
+
 2001-08-11  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/poa/orbit-poa.h,
@@ -7,6 +12,11 @@
 	(ORBit_POA_create_object): make static. Remove
 	 unused asDefault arg.
 	(ORBit_POAObject ORBit_POA_okey_to_obj): kill unused.
+
+2001-08-10  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-typelib.c
+	(ORBit_get_typelib_paths): expose internaly.
 
 2001-08-10  Michael Meeks  <michael@ximian.com>
 
