@@ -1,3 +1,9 @@
+2003-07-29  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (link_mutex_is_locked): substantially
+	disable it except for GLIBC systems that have sensible
+	pthreads impls.
+
 2003-07-15  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c (queue_free): re-order to
