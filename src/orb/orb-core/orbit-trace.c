@@ -57,11 +57,11 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 #ifdef DEBUG_TRACE
 	fprintf (stderr, "\ntrace '%s' %p align %d, (size %d)\n",
 		 TC_CORBA_TCKind->subnames [tc->kind], *val,
-		 ORBit_find_alignment (tc),
+		 tc->c_align,
 		 ORBit_gather_alloc_info (tc));
 #endif
 
-	*val = ALIGN_ADDRESS (*val, ORBit_find_alignment (tc));
+	*val = ALIGN_ADDRESS (*val, tc->c_align);
 
 	switch (tc->kind) {
 
@@ -129,7 +129,7 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		discrim = *val;
 		subtc = ORBit_get_union_tag (tc, &discrim, FALSE);
 		for (i = 0; i < tc->sub_parts; i++) {
-			al = MAX (al, ORBit_find_alignment (tc->subtypes [i]));
+			al = MAX (al, tc->subtypes [i]->c_align);
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes [i]));
 		}
 		body = ALIGN_ADDRESS (subval, al);

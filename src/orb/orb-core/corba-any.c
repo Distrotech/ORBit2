@@ -3,20 +3,6 @@
 #include "orb-core-private.h"
 #include <string.h>
 
-/*
- * FIXME: remove this
- */
-inline gint
-ORBit_find_alignment (CORBA_TypeCode tc)
-{
-	if (tc->c_align == -1)
-		g_error ("Don't know the alignment for %s %d\n",
-			 tc->name ? tc->name : "anonymous",
-			 tc->kind);
-
-	return tc->c_align;
-}
-
 size_t
 ORBit_gather_alloc_info(CORBA_TypeCode tc)
 {
@@ -53,10 +39,10 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
     int i, sum;
 
     for(sum = i = 0; i < tc->sub_parts; i++) {
-      sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc->subtypes[i])));
+      sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, tc->subtypes[i]->c_align));
       sum += ORBit_gather_alloc_info(tc->subtypes[i]);
     }
-    sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc)));
+    sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, tc->c_align));
 
     return sum;
     }
@@ -67,16 +53,16 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
     align = 1;
     for(prev = prevalign = i = 0; i < tc->sub_parts; i++) {
       prevalign = align;
-      align = ORBit_find_alignment(tc->subtypes[i]);
+      align = tc->subtypes[i]->c_align;
       if(align > prevalign)
 	n = i;
 
       prev = MAX(prev, ORBit_gather_alloc_info(tc->subtypes[i]));
     }
     if(n >= 0)
-      sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc->subtypes[n])));
+      sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, tc->subtypes[n]->c_align));
     sum += prev;
-    sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc)));
+    sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, tc->c_align));
     return sum;
     }
   case CORBA_tk_wstring:
@@ -181,7 +167,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		break;
 	case CORBA_tk_except:
 	case CORBA_tk_struct:
-		*val = ALIGN_ADDRESS (*val, ORBit_find_alignment(tc));
+		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		for(i = 0; i < tc->sub_parts; i++)
 			ORBit_marshal_value (buf, val, tc->subtypes[i]);
 		break;
@@ -194,7 +180,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		ORBit_marshal_value (buf, val, tc->discriminator);
 		subtc = ORBit_get_union_tag (tc, &discrim, FALSE);
 		for (i=0; i < tc->sub_parts; i++) {
-			al = MAX (al, ORBit_find_alignment (tc->subtypes[i]));
+			al = MAX (al, tc->subtypes[i]->c_align);
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 		}
 		body = *val = ALIGN_ADDRESS (*val, al);
@@ -254,7 +240,8 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 			giop_send_buffer_append (buf, val, tc->length);
 			break;
 		default: {
-			int align = ORBit_find_alignment (tc->subtypes[0]);
+			int align = tc->subtypes[0]->c_align;
+
 	  		for(i = 0; i < tc->length; i++) {
 				ORBit_marshal_value (buf, val, tc->subtypes[0]);
 	
@@ -561,7 +548,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
     break;
   case CORBA_tk_except:
   case CORBA_tk_struct:
-    *val = ALIGN_ADDRESS(*val, ORBit_find_alignment(tc));
+    *val = ALIGN_ADDRESS(*val, tc->c_align);
     for(i = 0; i < tc->sub_parts; i++)
       {
 	if(ORBit_demarshal_value(tc->subtypes[i], val, buf, dup_strings, orb))
@@ -573,12 +560,12 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       gpointer		discrim, body;
       CORBA_TypeCode	subtc;
       int			sz = 0, al = 1;
-      discrim = *val = ALIGN_ADDRESS(*val, ORBit_find_alignment(tc));
+      discrim = *val = ALIGN_ADDRESS(*val, tc->c_align);
       if(ORBit_demarshal_value(tc->discriminator, val, buf, dup_strings, orb))
 	return TRUE;
       subtc = ORBit_get_union_tag(tc, (gconstpointer*)&discrim, FALSE);
       for(i = 0; i < tc->sub_parts; i++) {
-	al = MAX(al, ORBit_find_alignment(tc->subtypes[i]));
+	al = MAX(al, tc->subtypes[i]->c_align);
 	sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
       }
       body = *val = ALIGN_ADDRESS(*val, al);
@@ -831,8 +818,8 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
     break;
   case CORBA_tk_struct:
   case CORBA_tk_except:
-    *val = ALIGN_ADDRESS(*val, ORBit_find_alignment(tc));
-    *newval = ALIGN_ADDRESS(*newval, ORBit_find_alignment(tc));
+    *val = ALIGN_ADDRESS(*val, tc->c_align);
+    *newval = ALIGN_ADDRESS(*newval, tc->c_align);
     for(i = 0; i < tc->sub_parts; i++) {
       ORBit_copy_value_core(val, newval, tc->subtypes[i]);
     }
@@ -840,7 +827,7 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
   case CORBA_tk_union:
     {
       CORBA_TypeCode utc = ORBit_get_union_tag(tc, (gconstpointer *)val, FALSE);
-      gint	union_align = ORBit_find_alignment(tc);
+      gint	union_align = tc->c_align;
       size_t	union_size = ORBit_gather_alloc_info(tc);
 
       /* need to advance val,newval by size of union, not just
@@ -1009,8 +996,8 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	case CORBA_tk_except: {
 		int i;
 
-		*a = ALIGN_ADDRESS (*a, ORBit_find_alignment (tc));
-		*b = ALIGN_ADDRESS (*b, ORBit_find_alignment (tc));
+		*a = ALIGN_ADDRESS (*a, tc->c_align);
+		*b = ALIGN_ADDRESS (*b, tc->c_align);
 
 		for (i = 0; i < tc->sub_parts; i++)
 			if (!ORBit_value_equivalent (a, b, tc->subtypes [i], ev))
@@ -1045,7 +1032,7 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	}
 
 	case CORBA_tk_union: {
-		gint   union_align = ORBit_find_alignment (tc);
+		gint   union_align = tc->c_align;
 		size_t union_size = ORBit_gather_alloc_info (tc);
 
 		CORBA_TypeCode utc_a = ORBit_get_union_tag (

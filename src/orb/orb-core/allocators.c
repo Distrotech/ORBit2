@@ -222,7 +222,7 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
   case CORBA_tk_struct:
     for(i = 0; i < tc->sub_parts; i++) {
       subtc = tc->subtypes[i];
-      mem = ALIGN_ADDRESS(mem, ORBit_find_alignment(subtc));
+      mem = ALIGN_ADDRESS(mem, subtc->c_align);
       mem = ORBit_freekids_via_TypeCode_T(subtc, mem);
     }
     retval = mem;
@@ -234,7 +234,7 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
       gconstpointer cmem = mem;
       subtc = ORBit_get_union_tag(tc, &cmem, TRUE);
       for(i = 0; i < tc->sub_parts; i++) {
-	al = MAX(al, ORBit_find_alignment(tc->subtypes[i]));
+	al = MAX(al, tc->subtypes[i]->c_align);
 	sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
       }
       mem = ALIGN_ADDRESS(cmem, al);
@@ -273,10 +273,9 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
     break;
   default:
     {
-      gulong length, align;
+      gulong length;
       length = ORBit_gather_alloc_info (tc);
-      align  = ORBit_find_alignment (tc);
-      retval = ALIGN_ADDRESS(mem, align) + length;
+      retval = ALIGN_ADDRESS(mem, tc->c_align) + length;
     }
     break;
   }
