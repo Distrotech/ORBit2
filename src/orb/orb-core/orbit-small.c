@@ -530,8 +530,12 @@ orbit_small_demarshal (CORBA_Object           obj,
 	    GIOP_LOCATION_FORWARD) {
 		
 		*cnx = ORBit_handle_location_forward (recv_buffer, obj);
-		tprintf (" Exception: forward");
-
+		tprintf (" Exception: forward (%p)", *cnx);
+		if (!*cnx) {
+			CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
+						   CORBA_COMPLETED_MAYBE);
+			return MARSHAL_SYS_EXCEPTION_INCOMPLETE;
+		}
 		return MARSHAL_RETRY;
 	} else {
 		ORBit_handle_exception_array (
@@ -642,7 +646,6 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 		goto clean_out;
 	}
 
-	giop_recv_buffer_unuse (recv_buffer);
 	recv_buffer = giop_recv_buffer_get (&mqe);
 
 	switch (orbit_small_demarshal (obj, &cnx, recv_buffer, ev,
