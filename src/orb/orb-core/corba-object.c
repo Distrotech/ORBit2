@@ -23,18 +23,20 @@ static GMutex *object_lock = NULL;
 static guint
 g_CORBA_Object_hash (gconstpointer key)
 {
-	/*      "type_id" is not mandatory (might be ""), therefor it
-	 *      is not appropriate for comparison & hashing  */
+	/* type_id is not reliable: cf. corbaloc */
 
-/* 	guint        retval; */
+	/*	guint        retval;
+		CORBA_Object obj = (gpointer) key;
+		
+		retval = obj->type_qid;
+		
+		g_assert (obj->object_key != NULL);
+		retval ^= IOP_ObjectKey_hash (obj->object_key);
+		
+		return retval; 
+	*/
+	
 	CORBA_Object obj = (gpointer) key;
-
-/* 	retval = obj->type_qid; */
-
-/* 	g_assert (obj->object_key != NULL); */
-/* 	retval ^= IOP_ObjectKey_hash (obj->object_key); */
-
-/* 	return retval; */
 
 	g_assert (obj->object_key != NULL);
         return IOP_ObjectKey_hash (obj->object_key);
