@@ -13,4 +13,9 @@ extern SSL_CTX *linc_ssl_ctx;
 
 #endif /* LINC_SSL_SUPPORT */
 
+struct sockaddr *linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
+					     const char            *hostname,
+					     const char            *service,
+					     socklen_t             *saddr_len);
+
 #endif /* _LINC_PRIVATE_H */

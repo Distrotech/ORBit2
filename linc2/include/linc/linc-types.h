@@ -12,7 +12,8 @@ typedef enum {
 	LINC_CONNECTION_NONBLOCKING = 1 << 1
 } LINCConnectionOptions;
 
-typedef struct _LincWatch LincWatch;
+typedef struct _LincWatch        LincWatch;
+typedef struct _LINCProtocolInfo LINCProtocolInfo;
 
 #ifdef G_THREADS_ENABLED
 

@@ -32,33 +32,109 @@
 #include <linux/irda.h>
 #endif
 
-static void af_unix_destroy(int fd, const char *host_info, const char *serv_info);
+static void af_unix_destroy  (int                     fd, 
+			      const char             *host_info,
+			      const char             *serv_info);
+static void tcp_setup        (int                     fd,
+			      LINCConnectionOptions   cnx_flags);
+static int  sys_getaddrinfo  (const char             *nodename,
+			      const char             *servname,
+			      const struct addrinfo  *hints,
+			      struct addrinfo       **res);
+static int  sys_getnameinfo  (const struct sockaddr  *sa,
+			      socklen_t               sa_len,
+			      char                   *host,
+			      size_t                  hostlen,
+			      char                   *serv,
+			      size_t                  servlen,
+			      int                     flags);
+
+#ifdef AF_INET
+static struct sockaddr * linc_protocol_get_sockaddr_ipv4 (
+				 const LINCProtocolInfo *proto,
+				 const char             *hostname,
+				 const char             *portnum,
+				 socklen_t              *saddr_len);
+#endif /* AF_INET */
+
+#ifdef AF_INET6
+static struct sockaddr * linc_protocol_get_sockaddr_ipv6 (
+				 const LINCProtocolInfo *proto,
+				 const char             *hostname,
+				 const char             *service,
+				 socklen_t              *saddr_len);
+#endif /* AF_INET6 */
+
+#ifdef AF_UNIX
+static struct sockaddr * linc_protocol_get_sockaddr_unix (
+				 const LINCProtocolInfo *proto,
+				 const char             *dummy,
+				 const char             *portnum,
+				 socklen_t              *saddr_len);
+#endif /* AF_UNIX */
+
 #ifdef AF_IRDA
-static int irda_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
-static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
-			    char *host, size_t hostlen, char *serv, size_t servlen,
-			    int flags);
+static int  irda_getaddrinfo (const char             *nodename,
+			      const char             *servname,
+			      const struct addrinfo  *hints,
+			      struct addrinfo      **res);
+static int  irda_getnameinfo (const struct sockaddr *sa,
+			      socklen_t              sa_len,
+			      char                  *host,
+			      size_t                 hostlen,
+			      char                  *serv,
+			      size_t                 servlen,
+			      int                    flags);
+
+static struct sockaddr * linc_protocol_get_sockaddr_irda (
+				 const LINCProtocolInfo *proto,
+				 const char             *hostname,
+				 const char             *service,
+				 socklen_t              *saddr_len);
 #endif /* AF_IRDA */
-static void tcp_setup(int fd, LINCConnectionOptions cnx_flags);
-static int sys_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
-static int sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
-			    char *host, size_t hostlen, char *serv, size_t servlen,
-			    int flags);
 
 static LINCProtocolInfo protocol_ents[] = {
 #if defined(AF_INET)
-  {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, tcp_setup, NULL, sys_getaddrinfo /* also covers IPv6 & UNIX */, sys_getnameinfo},
+	{ "IPv4", AF_INET,
+	sizeof (struct sockaddr_in),
+	IPPROTO_TCP, 0, 
+	tcp_setup, NULL, 
+	sys_getaddrinfo,
+	sys_getnameinfo,
+	linc_protocol_get_sockaddr_ipv4
+	},
 #endif
 #if defined(AF_INET6)
-  {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0, tcp_setup, NULL, sys_getaddrinfo, sys_getnameinfo},
+	{ "IPv6", AF_INET6, 
+	sizeof (struct sockaddr_in6),
+	IPPROTO_TCP, 0, 
+	tcp_setup, NULL, 
+	sys_getaddrinfo, 
+	sys_getnameinfo,
+	linc_protocol_get_sockaddr_ipv6
+	},
 #endif
 #ifdef AF_UNIX
-  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, NULL, af_unix_destroy, sys_getaddrinfo, sys_getnameinfo},
+	{ "UNIX", AF_UNIX,
+	sizeof (struct sockaddr_un),
+	0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND,
+	NULL, af_unix_destroy, 
+	sys_getaddrinfo, 
+	sys_getnameinfo,
+	linc_protocol_get_sockaddr_unix
+	},
 #endif
 #ifdef AF_IRDA
-  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, LINC_PROTOCOL_NEEDS_BIND, NULL, NULL, irda_getaddrinfo, irda_getnameinfo},
+	{ "IrDA",AF_IRDA,
+	sizeof (struct sockaddr_irda), 
+	0, LINC_PROTOCOL_NEEDS_BIND,
+	NULL, NULL,
+	irda_getaddrinfo,
+	irda_getnameinfo,
+	linc_protocol_get_sockaddr_irda
+	},
 #endif
-  {NULL}
+	{ NULL }
 };
 
 LINCProtocolInfo * const
@@ -163,8 +239,138 @@ linc_getnameinfo (const struct sockaddr *sa,
 	return rv;
 }
 
+#ifdef AF_INET
+static struct sockaddr *
+linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
+				 const char             *hostname,
+				 const char             *portnum,
+				 socklen_t              *saddr_len)
+{
+	struct sockaddr_in *saddr;
+	struct hostent     *host;
+
+	g_assert (proto->family == AF_INET);
+	g_assert (hostname);
+
+	if (!portnum)
+		portnum = "0";
+
+	saddr = g_new0 (struct sockaddr_in, 1);
+
+	*saddr_len = sizeof (struct sockaddr_in);
+
+#ifdef HAVE_SOCKADDR_SA_LEN
+	saddr->sin_len    = *saddr_len;
+#endif /* HAVE_SOCKADDR_SA_LEN */
+
+	saddr->sin_family = AF_INET;
+	saddr->sin_port   = htons (atoi (portnum));
+
+	host = gethostbyname (hostname);
+	if (!host) {
+		g_free (saddr);
+		return NULL;
+	}
+
+	memcpy (&saddr->sin_addr, host->h_addr, sizeof (struct in_addr));
+
+	return (struct sockaddr *)saddr;
+}
+#endif /* AF_INET */
+
+#ifdef AF_INET6
+static struct sockaddr *
+linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
+				 const char             *hostname,
+				 const char             *service,
+				 socklen_t              *saddr_len)
+{
+	g_assert (proto->family == AF_INET6);
+
+	return NULL;
+}
+#endif /* AF_INET6 */
+
+#ifdef AF_UNIX
+static struct sockaddr *
+linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
+				 const char             *dummy,
+				 const char             *path,
+				 socklen_t              *saddr_len)
+{
+	struct sockaddr_un *saddr;
+	int                 pathlen;
+	char                buf[64], *actual_path;
+
+	g_assert (proto->family == AF_UNIX);
+
+	if (!path) {
+		struct timeval t;
+		gettimeofday (&t, NULL);
+		g_snprintf (buf, sizeof (buf),
+			    "%s/linc-%x%x", linc_tmpdir,
+			     rand(), (guint)(t.tv_sec^t.tv_usec));
+#ifdef DEBUG
+		if (g_file_test (buf, G_FILE_TEST_EXISTS))
+			g_warning ("'%s' already exists !", buf);
+#endif
+		actual_path = buf;
+		}
+	else 
+		actual_path = (char *)path;
+
+	pathlen = strlen (actual_path);
+
+	if (pathlen >= sizeof (saddr->sun_path))
+		return NULL;
+
+	saddr = g_new0 (struct sockaddr_un, 1);
+
+	*saddr_len = sizeof (struct sockaddr_in) - sizeof (saddr->sun_path) + pathlen;
+
+#ifdef HAVE_SOCKADDR_SA_LEN
+	saddr->sun_len    = *saddr_len;
+#endif /* HAVE_SOCKADDR_SA_LEN */
+
+	saddr->sun_family =  AF_UNIX;
+	strncpy (saddr->sun_path, actual_path, sizeof (saddr->sun_path) - 1);
+	saddr->sun_path[sizeof (saddr->sun_path) - 1] = '\0';
+
+	return (struct sockaddr *)saddr;
+}
+#endif /* AF_UNIX */
+
+#ifdef AF_IRDA
+static struct sockaddr *
+linc_protocol_get_sockaddr_irda (const LINCProtocolInfo *proto,
+				 const char             *hostname,
+				 const char             *service,
+				 socklen_t              *saddr_len)
+{
+	g_assert (proto->family == AF_IRDA);
+
+	return NULL;
+}
+#endif /* AF_IRDA */
+
+struct sockaddr *
+linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
+			    const char             *hostname,
+			    const char             *service,
+			    socklen_t              *saddr_len)
+		   
+{
+	if (proto && proto->get_sockaddr)
+		return proto->get_sockaddr (proto, hostname, service, saddr_len);
+
+	return NULL;
+}
+
 int
-linc_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
+linc_getaddrinfo (const char             *nodename,
+		  const char             *servname,
+		  const struct addrinfo  *hints,
+		  struct addrinfo       **res)
 {
   int i, rv = EAI_NONAME, tmprv;
   gboolean keep_going;
@@ -411,41 +617,26 @@ irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 }
 #endif
 
-#include <sys/time.h>
 static int
-sys_getaddrinfo(const char *nodename, const char *servname,
-		const struct addrinfo *hints, struct addrinfo **res)
+sys_getaddrinfo (const char             *nodename,
+		 const char             *servname,
+		 const struct addrinfo  *hints,
+		 struct addrinfo       **res)
 {
-  int retval;
-#if 0
-  struct timeval tvend, tvstart;
+	int retval;
 
-  gettimeofday(&tvstart, NULL);
-#endif
+	if (!nodename && !servname && hints)
+		servname = "0";
 
-  if(!nodename && !servname && hints)
-    servname = "0";
-  errno = 0;
-  retval = getaddrinfo(nodename, servname, hints, res);
+	errno = 0;
+
+	retval = getaddrinfo (nodename, servname, hints, res);
 #ifdef DEBUG
-  if (errno)
-	  perror ("In getaddrinfo ");
-#endif
-#if 0
-  gettimeofday(&tvend, NULL);
-
-  if(tvend.tv_usec < tvstart.tv_usec)
-    {
-      tvend.tv_usec += 1000000;
-      tvend.tv_sec -= 1;
-    }
-  tvend.tv_sec -= tvstart.tv_sec;
-  tvend.tv_usec -= tvstart.tv_usec;
-  g_message("getaddrinfo(%s,%s, fam %d) took %ld.%06ld\n",
-	    nodename, servname, hints->ai_family, tvend.tv_sec, tvend.tv_usec);
+	if (errno)
+		perror ("In getaddrinfo ");
 #endif
 
-  return retval;
+	return retval;
 }
 
 static int

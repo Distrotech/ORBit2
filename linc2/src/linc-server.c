@@ -9,6 +9,8 @@
 #include <linc/linc-server.h>
 #include <linc/linc-connection.h>
 
+#include "linc-private.h"
+
 #undef DEBUG
 
 enum {
@@ -188,142 +190,148 @@ linc_server_handle (LINCServer *cnx)
 }
 
 gboolean
-linc_server_setup(LINCServer *cnx, const char *proto_name, 
-		  const char *local_host_info, const char *local_serv_info,
-		  LINCConnectionOptions create_options)
+linc_server_setup (LINCServer            *cnx,
+		   const char            *proto_name,
+		   const char            *local_host_info,
+		   const char            *local_serv_info,
+		   LINCConnectionOptions  create_options)
 {
-  GIOChannel *gioc;
-  int fd, n;
-  const LINCProtocolInfo * proto;
-  struct addrinfo *ai, hints = {0};
-  char hnbuf[NI_MAXHOST], servbuf[256];
+	const LINCProtocolInfo *proto;
+	GIOChannel             *gioc;
+	int                     fd, n;
+	struct sockaddr        *saddr;
+	socklen_t               saddr_len;
+	char                    hnbuf[NI_MAXHOST];
+	char                    servbuf[256];
 
 #if !LINC_SSL_SUPPORT
-  if(create_options & LINC_CONNECTION_SSL)
-     return FALSE;
+	if (create_options & LINC_CONNECTION_SSL)
+		return FALSE;
 #endif
 
-  proto = linc_protocol_find(proto_name);
-  if(!proto) {
+	proto = linc_protocol_find (proto_name);
+	if (!proto) {
 #ifdef DEBUG
-    fprintf (stderr, "Can't find proto '%s'\n", proto_name);
+		fprintf (stderr, "Can't find proto '%s'\n", proto_name);
 #endif
-    return FALSE;
-  }
+		return FALSE;
+	}
 
-  hints.ai_flags = AI_PASSIVE;
-  hints.ai_family = proto->family;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = proto->stream_proto_num;
-  if(!local_host_info)
-    {
-      local_host_info = hnbuf;
-      if (gethostname(hnbuf, sizeof(hnbuf)))
-        perror ("gethostname failed!");
-    }
-#ifdef DEBUG
-  errno = 0;
-#endif
+	if (!local_host_info) {
+		local_host_info = hnbuf;
+		if (gethostname (hnbuf, sizeof (hnbuf)))
+			perror ("gethostname failed!");
+	}
 
  address_in_use:
 
-  if(linc_getaddrinfo(local_host_info, local_serv_info, &hints, &ai)) {
-#ifdef DEBUG
-    fprintf (stderr, "Can't get_addrinfo proto '%s' '%s'\n",
-	     local_host_info, local_serv_info);
-      perror ("inside linc_getaddrinfo");
-#endif
-    return FALSE;
-  }
-#ifdef DEBUG
-    if (errno)
-      perror ("error inside linc_getaddrinfo");
-    else
-      fprintf (stderr, "Got get_addrinfo proto '%s' '%s'\n",
-	       local_host_info, local_serv_info);
-#endif
+	saddr = linc_protocol_get_sockaddr (proto, local_host_info, 
+					    local_serv_info, &saddr_len);
 
-  fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
-  if(fd < 0)
-  {
-      freeaddrinfo(ai);
+	if (!saddr) {
 #ifdef DEBUG
-      fprintf (stderr, "socket (%d, %d, %d) failed\n",
-	       proto->family, SOCK_STREAM, proto->stream_proto_num);
+		fprintf (stderr, "Can't get_sockaddr proto '%s' '%s'\n",
+			 local_host_info,
+			 local_serv_info ? local_serv_info : "(null)");
 #endif
-      return FALSE;
-    }
-  {
-    static const int oneval = 1;
-    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof(oneval));
-  }
+		return FALSE;
+	}
+
+	fd = socket (proto->family, SOCK_STREAM, 
+		     proto->stream_proto_num);
+	if (fd < 0) {
+		g_free (saddr);
+#ifdef DEBUG
+		fprintf (stderr, "socket (%d, %d, %d) failed\n",
+			 proto->family, SOCK_STREAM, 
+			 proto->stream_proto_num);
+#endif
+		return FALSE;
+	}
+
+	{
+	static const int oneval = 1;
+
+	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof (oneval));
+	}
     
-  n = 0;
-  errno = 0;
-  if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
-     || local_serv_info)
-    n = bind(fd, ai->ai_addr, ai->ai_addrlen);
+	n = 0;
+	errno = 0;
 
-  if (n && errno == EADDRINUSE) {
+	if ((proto->flags & LINC_PROTOCOL_NEEDS_BIND) || local_serv_info)
+		n = bind (fd, saddr, saddr_len);
+
+	if (n && errno == EADDRINUSE) {
 #ifdef DEBUG
-    perror ("bind failed, retrying.");
+		perror ("bind failed, retrying.");
 #endif
-    goto address_in_use; /* mostly for collisions on random Unix socket names */
-  }
+		goto address_in_use;
+	}
 
-  if(!n)
-    n = listen(fd, 10);
+	if (!n)
+		n = listen (fd, 10);
 #ifdef DEBUG
-  else {
-      fprintf (stderr, "Errno: %d (0x%x)\n", errno, errno);
-      perror ("bind really failed");
-  }
+	else {
+		fprintf (stderr, "Errno: %d (0x%x)\n", errno, errno);
+		perror ("bind really failed");
+	}
 #endif
 
-  /* If we get EINUSE we should loop to getaddrinfo ? */
+	/*
+	 * FIXME: If we get EINUSE we should loop to getaddrinfo ?
+	 */
 
-  if(!n)
-    n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
+	if (!n) {
+		g_free (saddr);
+		n = getsockname (fd, saddr, &saddr_len);
+	}
 #ifdef DEBUG
-  else
-      perror ("getsockname failed");
+	else
+		perror ("listen failed");
 #endif
-  if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
-		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-    {
-      freeaddrinfo(ai);
+
+	if (linc_getnameinfo (saddr, saddr_len, hnbuf, 
+			      sizeof(hnbuf), servbuf, sizeof(servbuf), 
+			      NI_NUMERICSERV)) {
+
+		g_free (saddr);
 #ifdef DEBUG
-      fprintf (stderr, "linc_getnameinfo '%s' failed.\n", servbuf);
+		fprintf (stderr, "linc_getnameinfo '%s' failed.\n", servbuf);
 #endif
-      return FALSE;
-    }
-  freeaddrinfo(ai);
+		return FALSE;
+	}
 
-  if(n)
-    {
-      close(fd);
+	g_free (saddr);
+
+	if (n) {
+		close(fd);
 #ifdef DEBUG
-      perror ("get_sockname failed");
+		perror ("get_sockname failed");
 #endif
-      return FALSE;
-    }
+		return FALSE;
+	}
 
-  cnx->proto = proto;
-  cnx->fd = fd;
-  if((create_options & LINC_CONNECTION_NONBLOCKING))
-    {
-      gioc = g_io_channel_unix_new(fd);
-      g_assert (cnx->tag == NULL);
-      cnx->tag = linc_io_add_watch (
-	      gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-	      linc_server_handle_io, cnx);
-      g_io_channel_unref(gioc);
-    }
-  cnx->create_options = create_options;
-  cnx->local_host_info = g_strdup(hnbuf);
-  cnx->local_serv_info = g_strdup(servbuf);
+	cnx->proto = proto;
+	cnx->fd = fd;
 
-  return TRUE;
+	if ((create_options & LINC_CONNECTION_NONBLOCKING)) {
+		gioc = g_io_channel_unix_new (fd);
+
+		g_assert (cnx->tag == NULL);
+
+		cnx->tag = linc_io_add_watch (
+				gioc, 
+				G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+				linc_server_handle_io, cnx);
+
+		g_io_channel_unref(gioc);
+	}
+
+	cnx->create_options = create_options;
+	cnx->local_host_info = g_strdup (hnbuf);
+	cnx->local_serv_info = g_strdup (servbuf);
+
+	return TRUE;
 }
 
 static void
