@@ -962,9 +962,7 @@ testMisc (test_TestFactory   factory,
 
 	d_print ("Testing Misc bits...\n");
 
-	/* Non existant method invoke - only for remote */
-	/* FIXME: should not work in local case either ! */
-	if (!factory->adaptor_obj) {
+	if (!in_proc) {
 		/* Invoke a BasicServer method on a TestFactory */
 		foo = test_BasicServer__get_foo (factory, ev);
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
@@ -1043,6 +1041,17 @@ testMisc (test_TestFactory   factory,
 	g_assert (ctx != CORBA_OBJECT_NIL);
 	CORBA_Object_release ((CORBA_Object) ctx, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* Check that various bonobo hooks work */
+	if (in_proc) {
+		g_assert (ORBit_small_get_servant (factory));
+		g_assert (ORBit_small_get_connection_status (factory) ==
+			  ORBIT_CONNECTION_IN_PROC);
+	} else {
+		g_assert (!ORBit_small_get_servant (factory));
+		g_assert (ORBit_small_get_connection_status (factory) ==
+			  ORBIT_CONNECTION_CONNECTED);
+	}
 }
 
 static int done = 0;
@@ -1172,16 +1181,32 @@ testAsync (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
+static void
+broken_cb (LINCConnection *connection, gboolean *broken)
+{
+	*broken = TRUE;
+}
+
 void
 testSegv (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
 	d_print ("Testing Fatal invocations ...\n");
 	if (!in_proc) {
+		gboolean broken = FALSE;
+
+		g_assert (ORBit_small_listen_for_broken (
+			factory, G_CALLBACK (broken_cb), &broken) ==
+			  ORBIT_CONNECTION_CONNECTED);;
+
 		test_TestFactory_segv (factory, "do it!", ev); 
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/COMM_FAILURE:1.0"));
 		CORBA_exception_free (ev);
+
+		g_assert (ORBit_small_get_connection_status (factory) ==
+			  ORBIT_CONNECTION_DISCONNECTED);
+		g_assert (broken);
 	}
 }
 
