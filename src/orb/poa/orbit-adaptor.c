@@ -71,16 +71,20 @@ ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 	adaptor = ORBit_adaptor_find (orb, objkey);
 
 	if (!adaptor || !objkey) {
-		CORBA_Environment ev;
+		CORBA_Environment env;
+
+		CORBA_exception_init (&env);
 
 		tprintf ("Error: failed to find adaptor or objkey for "
 			 "object while invoking method '%s'",
 			 giop_recv_buffer_get_opname (recv_buffer));
 		
 		CORBA_exception_set_system (
-			&ev, ex_CORBA_OBJECT_NOT_EXIST, 
+			&env, ex_CORBA_OBJECT_NOT_EXIST, 
 			CORBA_COMPLETED_NO);
-		ORBit_recv_buffer_return_sys_exception (recv_buffer, &ev);
+		ORBit_recv_buffer_return_sys_exception (recv_buffer, &env);
+
+		CORBA_exception_free (&env);
 
 	} else {
 		dprintf (MESSAGES, "p %d: handle request '%s'\n",
