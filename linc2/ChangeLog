@@ -1,5 +1,14 @@
 2003-05-21  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-connection.c (linc_connection_io_handler):
+	drop the lock over the handle_input emission.
+	(linc_connection_state_changed_T): split out from
+	(linc_connection_state_changed): here & upd.
+	Add a _T suffix to lots of methods that assume the
+	lock is held.
+	(linc_connection_exec_disconnect): clean.
+	(linc_connection_read): take / release the cnx. lock.
+
 	* src/linc.c (linc_in_io_thread): fix horrors.
 	(linc_object_unref): use it instead of the same hack;
 	thanks to Alex L.
