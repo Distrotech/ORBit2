@@ -1,3 +1,19 @@
+2001-07-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c 
+	(_ORBit_object_get_connection): rename to
+	(ORBit_object_get_connection): this & re-order slightly.
+	(CORBA_Object_non_existent): local objects always exist,
+	even if we havn't bothered remoting them yet => no
+	connection.
+
+	* include/orbit/orb-core/corba-object.h: kill macro
+	(ORBit_object_get_connection): somewhat confusing.
+
+	* test/everything/client.c (testIInterface): add
+	CORBA_Object_non_existent and CORBA_Object_is_nil
+	regression tests.
+
 2001-07-17  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-main.c (main): make
