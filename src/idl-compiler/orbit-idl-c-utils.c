@@ -345,7 +345,7 @@ orbit_cbe_get_const(IDL_tree tree)
     g_string_printf(tmpstr, "%s", IDL_BOOLEAN(tree).value?"CORBA_TRUE":"CORBA_FALSE");
     break;
   case IDLN_CHAR:
-    g_string_printf(tmpstr, "'%s'", IDL_CHAR(tree).value);
+    g_string_printf(tmpstr, "'\\x%X'", *(unsigned char *)IDL_CHAR(tree).value);
     break;
   case IDLN_FLOAT:
     g_string_printf(tmpstr, "%f", IDL_FLOAT(tree).value);

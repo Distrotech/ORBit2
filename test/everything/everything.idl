@@ -21,6 +21,7 @@
 #pragma prefix "orbit"
 
 module test {
+	const char CONST_CHAR_NL = '\x0A';
 	const char CONST_CHAR = 't';
 	const short CONST_SHORT = 0x1234;
 	const long CONST_LONG = 0x12345678;
