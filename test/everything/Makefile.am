@@ -36,6 +36,12 @@ included_src = \
 	arrayServer.c    \
 	anyServer.c
 
+# FIXME: regression test this properly ...
+# orbittypelibdir = $(libdir)/orbit
+# orbittypelib_LTLIBRARIES = Everything_module.la
+#
+# Everything_module_la_SOURCES = everything-imodule.c
+
 server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
 server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 

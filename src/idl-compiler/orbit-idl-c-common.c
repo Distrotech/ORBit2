@@ -41,7 +41,8 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
   fprintf(ci->fh, "#define ORBIT_IDL_C_COMMON\n");
   fprintf(ci->fh, "#define %s_COMMON\n", ci->c_base_name);
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
-  fprintf(ci->fh, "#include <orbit/GIOP/giop.h>\n");
+  if (!rinfo->small)
+    fprintf(ci->fh, "#include <orbit/GIOP/giop.h>\n");
   fprintf(ci->fh, "static const CORBA_unsigned_long ORBit_zero_int = 0;\n");
 
   cc_output_typecodes(tree->tree, ci);
@@ -158,16 +159,22 @@ cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 }
 
 static void
-cc_output_alloc_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+cc_output_alloc_interface (IDL_tree       tree,
+			   OIDL_Run_Info *rinfo,
+			   OIDL_C_Info   *ci)
 {
-  char *id;
+	char *id;
 
-  cc_output_allocs(IDL_INTERFACE(tree).body, rinfo, ci);
+	cc_output_allocs (IDL_INTERFACE (tree).body, rinfo, ci);
 
-  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
+	id = IDL_ns_ident_to_qstring (
+		IDL_IDENT_TO_NS (IDL_INTERFACE (tree).ident), "_", 0);
 
-  fprintf(ci->fh, "CORBA_unsigned_long %s__classid = 0;\n", id);
-  g_free(id);
+	fprintf (ci->fh, "#ifndef ORBIT_IDL_C_IMODULE\n");
+	fprintf (ci->fh, "CORBA_unsigned_long %s__classid = 0;\n", id);
+	fprintf (ci->fh, "#endif\n");
+
+	g_free (id);
 }
 
 static void
@@ -914,6 +921,10 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 		for (m = i->methods; m; m = m->next)
 			cc_small_output_method_bits (m->data, id, ci);
 
+		fprintf (of, "#ifdef ORBIT_IDL_C_IMODULE\n");
+		fprintf (of, "static\n");
+		fprintf (of, "#endif\n");
+
 		fprintf (of, "ORBit_IMethod %s__imethods [] = {\n", id);
 
 		for (m = i->methods; m; m = m->next)
@@ -931,6 +942,9 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 
 		fprintf (of, "\"IDL:CORBA/Object:1.0\"\n};");
 
+		fprintf (of, "#ifdef ORBIT_IDL_C_IMODULE\n");
+		fprintf (of, "static\n");
+		fprintf (of, "#endif\n");
 		fprintf (of, "ORBit_IInterface %s__itype = {\n", id);
 		fprintf (of, "TC_%s,", id);
 		fprintf (of, "{%d, %d, %s__imethods, FALSE},\n",

@@ -46,14 +46,6 @@ module ORBit {
 		sequence<string>     base_interfaces;
 	};
 
-	typedef long IModuleVersion;
-	typedef sequence<IInterface> IInterfaces;
-
-	struct IModule {
-		IModuleVersion       version;
-		IInterfaces          interfaces;
-	};
-
 	exception NoIInterface {};
 }; /* module ORBit */
 
