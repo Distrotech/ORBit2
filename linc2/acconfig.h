@@ -11,3 +11,4 @@
  */
 #undef socklen_t
 #undef HAVE_SOCKADDR_SA_LEN
+#undef HAVE_INET_PTON

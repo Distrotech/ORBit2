@@ -112,6 +112,12 @@ AC_CHECK_FUNCS(poll basename)
 AC_CHECK_FUNC(res_init,,[AC_CHECK_LIB(resolv,res_init)])
 AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
+have_inet_pton=no
+AC_CHECK_FUNC(inet_pton,,)
+if test x"$ac_cv_func_inet_pton" = "xyes" ; then
+	have_inet_pton=yes
+        AC_DEFINE(HAVE_INET_PTON)
+fi
 
 # AC_CHECK_TYPE doesn't work here.
 AC_MSG_CHECKING([for socklen_t])
@@ -207,3 +213,11 @@ linc-config
 ],[case "$CONFIG_FILES" in
 *linc-config*) chmod +x linc-config;;
 esac])
+
+echo "linc configuration:
+
+	Source code location:	${srcdir}
+	Compiler:		${CC} 
+
+	IPv6 can do raw addrs:  ${have_inet_pton}
+"

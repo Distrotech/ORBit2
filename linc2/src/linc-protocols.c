@@ -283,17 +283,20 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 	saddr->sin_family = AF_INET;
 	saddr->sin_port   = htons (atoi (portnum));
 
-	LINC_RESOLV_SET_IPV6;
-	if (!(_res.options & RES_INIT))
-		res_init();
+	if ((saddr->sin_addr.s_addr = inet_addr (hostname)) == INADDR_NONE) {
 
-	host = gethostbyname (hostname);
-	if (!host ||
-	    !ipv4_addr_from_addr (&saddr->sin_addr,
-				  (guint8 *)host->h_addr_list [0],
-				  host->h_length)) {
-		g_free (saddr);
-		return NULL;
+		LINC_RESOLV_SET_IPV6;
+		if (!(_res.options & RES_INIT))
+			res_init();
+		
+		host = gethostbyname (hostname);
+		if (!host ||
+		    !ipv4_addr_from_addr (&saddr->sin_addr,
+					  (guint8 *)host->h_addr_list [0],
+					  host->h_length)) {
+			g_free (saddr);
+			return NULL;
+		}
 	}
 
 	return (struct sockaddr *) saddr;
@@ -339,6 +342,10 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 
 	saddr->sin6_family = AF_INET6;
 	saddr->sin6_port = htons (atoi (portnum));
+#ifdef HAVE_INET_PTON
+	if (inet_pton (AF_INET6, hostname, &saddr->sin6_addr) > 0)
+		return (struct sockaddr *)saddr;
+#endif
 
 	if (!(_res.options & RES_INIT))
 		res_init();
