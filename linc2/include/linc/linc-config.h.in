@@ -1,8 +1,15 @@
 #ifndef LINC_CONFIG_H
 #define LINC_CONFIG_H 1
 
+#undef LINC_SSL_SUPPORT
+#undef LINC_ENABLE_THREADSAFE
+
 #if @LINC_SSL_SUPPORT@
 #define LINC_SSL_SUPPORT 1
+#endif
+
+#if @LINC_ENABLE_THREADSAFE@
+#define LINC_ENABLE_THREADSAFE 1
 #endif
 
 #endif
