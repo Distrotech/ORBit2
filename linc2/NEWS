@@ -1,3 +1,11 @@
+Version 0.1.11
+
+	* Bug fixes
+		+ handle connection death in mid write (Michael)
+		+ setup state before emitting 'broken' (Michael)
+		+ fix IOVEC_LIMIT calculation (Laszlo Peter)
+		+ FreeBSD build fixes (Kristian Rietveld, Theo Van Klaveren
+
 Version 0.1.7 -> 0.1.10
 
 	* Featurelets (Michael)
