@@ -99,6 +99,7 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   }
 
   g_free (obj->type_id);
+  g_free (obj->oki);
 
   IOP_delete_profiles (&obj->profile_list);
   IOP_delete_profiles (&obj->forward_locations);

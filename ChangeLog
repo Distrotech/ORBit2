@@ -1,5 +1,16 @@
 2001-08-08  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/orbit-small.c
+	(load_module): unload module, if not needed.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): free object key.
+
+	* test/everything/client.c
+	(testString): free ior.
+	
+2001-08-08  Mark McLoughlin <mark@skynet.ie>
+
 	* test/everything/client.c
 	(testIInterface): free iinterface.
 
