@@ -2,7 +2,6 @@
 
 #include "orbit-idl3.h"
 
-#if 0
 void
 orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 {
@@ -53,7 +52,6 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 
   g_string_free(attrname, TRUE);
 }
-#endif
 
 #define INDENT_INCREMENT_1 2
 #define INDENT_INCREMENT_2 4
@@ -87,7 +85,10 @@ orbit_idl_print_node(IDL_tree node, int indent_level)
     return;
   }
 
-  g_print("[%d] ", IDL_NODE_REFS(node));
+  g_print("%p [%d] ", node, IDL_NODE_REFS(node));
+
+  if(IDL_tree_is_recursive(node, NULL))
+    g_print("(R) ");
 
   switch(IDL_NODE_TYPE(node)) {
 
@@ -105,13 +106,6 @@ orbit_idl_print_node(IDL_tree node, int indent_level)
 
   case IDLN_GENTREE:
     g_print("GENTREE:\n");
-#if 0
-    /* Changed in libIDL.  But don't need it here anyway. */
-    orbit_idl_print_node(IDL_GENTREE(node).data, indent_level + INDENT_INCREMENT_1);
-    do_indent(indent_level + INDENT_INCREMENT_1);
-    g_print("children:\n");
-    orbit_idl_print_node(IDL_GENTREE(node).children, indent_level + INDENT_INCREMENT_2);
-#endif
     break;
 
   case IDLN_INTEGER:

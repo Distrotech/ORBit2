@@ -1,5 +1,5 @@
 
-bin_PROGRAMS=orbit-idl
+bin_PROGRAMS=orbit-idl t
 
 INCLUDES=-I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(GLIB_CFLAGS) \
@@ -24,3 +24,11 @@ orbit_idl_SOURCES = \
 	orbit-idl-c-stubs.c \
 	orbit-idl-c-typecode.c \
 	orbit-idl-c-utils.c \
+	orbit-idl-marshal.c \
+	orbit-idl3.h \
+	orbit-idl-marshal.h
+
+t_SOURCES=t.c orbit-idl-utils.c
+t_LDADD = \
+	$(top_builddir)/libIDL/libIDL.la \
+	$(GLIB_LIBS) $(POPT_LIBS) -lm
