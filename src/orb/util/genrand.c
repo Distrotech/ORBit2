@@ -44,7 +44,7 @@ ORBit_genuid_init (ORBitGenUidType type)
 
 	glib_prng = g_rand_new ();
 	g_get_current_time (&time);
-	g_rand_set_seed (glib_prng, time.tv_sec ^ time.tv_usec);
+	g_rand_set_seed (glib_prng, (time.tv_sec << 20) ^ time.tv_usec);
 
 	genuid_type = type;
 
