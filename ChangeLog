@@ -1,5 +1,14 @@
 2001-10-31  Mark McLoughlin  <mark@skynet.ie>
 
+	* include/orbit/orb-core/corba-ir.h:
+	* include/orbit/orb-core/corba-nvlist-type.h:
+	* include/orbit/orb-core/orb-defs.h:
+	* include/orbit/util/os-feature-alloca.h:
+	* include/orbit/util/thread-safety.h
+	* src/orb/util/genrand.h: remove unused headers.
+
+2001-10-31  Mark McLoughlin  <mark@skynet.ie>
+
 	* configure.in: version 2.3.96.
 
 2001-10-31  Mark McLoughlin  <mark@skynet.ie>
