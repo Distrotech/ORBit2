@@ -1096,3 +1096,101 @@ ORBit_small_get_iinterface (CORBA_Object       opt_object,
 
 	return retval;
 }
+
+#if 0
+static void
+add_if_unique (GPtrArray  *strings,
+	       const char *new_str)
+{
+	int i, len;
+
+	len = strlen (new_str);
+	for (i = 0; i < strings->len; i++)
+		if (!strncmp (strings, new_str, len))
+			return;
+
+	g_ptr_array_add (
+		strings, g_strconcat (new_str, "/lib/orbit", NULL));
+}
+
+/* FIXME: this should be called only once at
+   ORB init time really */
+static guchar **
+get_typlib_paths (void)
+{
+	const char *path;
+	int         i;
+	GPtrArray  *paths;
+
+	paths = g_ptr_array_sized_new (8);
+
+	if ((path = getenv ("ORBIT_TYPELIB_PATH"))) {
+		guchar **strv;
+
+		strv = g_strsplit (path, ":", -1);
+		for (i = 0; strv && strv [i]; i++)
+			add_if_unique (strv [i]);
+		g_strfreev (strv);
+	}
+
+	if ((path = getenv ("GNOME_PATH"))) {
+		guchar **strv;
+
+		strv = g_strsplit (path, ":", -1);
+		for (i = 0; strv && strv [i]; i++)
+			add_if_unique (strv [i]);
+		g_strfreev (strv);
+	}
+
+	return g_ptr_array_free (paths, FALSE);
+}
+#endif
+gboolean
+ORBit_small_load_typelib (const char *libname)
+{
+#if 0
+	guchar **paths;
+	int      i;
+
+	paths = get_typelib_paths ();
+
+	for (i = 0; paths && paths [i]; i++) {
+		char *fname = g_strconcat (
+			paths [i], "/", libname, "_module", NULL);
+
+		if (g_file_test (fname, G_FILE_TEST_IS_REGULAR |
+				 G_FILE_TEST_EXISTS)) {
+			GModule *handle;
+			ORBit_IModule *module;
+
+			if (!(handle = g_module_open (fname, G_MODULE_BIND_LAZY)))
+				g_warning ("Can't load type library '%s': %s",
+					   fname, g_module_error ());
+
+			else if (!g_module_symbol (handle, "orbit_imodule_data",
+						   (gpointer *)&module))
+				g_warning ("type library '%s' has no stored types", fname);
+			
+			else {
+				int i;
+				g_warning ("Loaded %d interfaces serial %d",
+					   module->version, module->interfaces->_length);
+
+				for (i = 0; i < module->interfaces->_length; i++) {
+					ORBit_IInterface *idata;
+
+					idata = module->interfaces->_buffer [i];
+
+					g_warning ("Type '%s'", idata->tc->repo_id);
+				}
+				/* FIXME: Leak the handle */
+			}
+		}
+
+		g_free (fname);
+	}
+
+	g_strfreev (paths);
+#endif
+	return TRUE;
+}
