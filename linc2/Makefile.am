@@ -5,9 +5,9 @@ m4data_DATA=linc.m4
 
 EXTRA_DIST =        \
 	linc.m4     \
+	linc.spec   \
 	HACKING     \
 	MAINTAINERS
-	
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA=linc.pc

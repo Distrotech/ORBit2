@@ -1,3 +1,8 @@
+2001-10-24  Ross Golder  <rossg@durban.golder.org>
+
+	* Makefile.am (EXTRA_DIST): Added spec file, and removed
+	floating tab
+
 2001-10-25  Michael Meeks  <michael@ximian.com>
 
 	* AUTHORS: update,
