@@ -1,3 +1,7 @@
+2001-12-15  Ross Golder  <rossg@golder.org>
+
+	* ORBit.spec.in: updated shared library directory.
+
 2001-12-14  Roland Juelich <rj@atecom.com>
 
 	* src/orb/orb-core/corba-orb.c: add ORBIIOPIPName
@@ -1282,7 +1286,7 @@
 
 	* configure.in (AC_OUTPUT): generate orbit2-config
 
-2001-10-16  Ross Golder  <rossg@durban.golder.org>
+2001-10-16  Ross Golder  <rossg@golder.org>
 
 	* orbit-config.in: replaced with orbit2-config.in
 	* orbit2-config.in: use pkg-config ORBit2 for --cflags
