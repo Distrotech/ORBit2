@@ -17,7 +17,7 @@ noinst_PROGRAMS=test1 \
 	test-any-client test-any-server \
 	test-dynany test-mem test-performance test-giop test-corbaloc
 
-TESTS = test-dynany test-mem test-performance test-giop
+TESTS = test-dynany test-mem test-performance test-giop test-corbaloc
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
