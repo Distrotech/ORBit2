@@ -14,8 +14,10 @@ pthread_mutexattr_t linc_mutex_attrs;
 void
 linc_init(void)
 {
+#ifdef LINC_THREADSAFE
   pthread_mutexattr_init(&linc_mutex_attrs);
   pthread_mutexattr_settype(&linc_mutex_attrs, PTHREAD_MUTEX_RECURSIVE);
+#endif
   if (!g_thread_supported()) g_thread_init (NULL);
 
   g_type_init();
