@@ -1,3 +1,3 @@
 
 all:
-	(cd $(top_builddir)/include; make)
+	(cd $(top_builddir)/include; $(MAKE))
