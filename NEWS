@@ -1,3 +1,17 @@
+ORBit2-2.5.1
+
+	* bug fixes
+		+ relocated make check (Michael)
+		+ memory corruption in imodule service (Michael)
+		+ wierd autoconf missing -I (James Henstridge)
+		+ always set ev on exceptions (Michael)
+		+ enum typedef problem (Mark)
+		+ autoconf / build fixage (Thomas Vander Stichele)
+		+ name service init fix (Marion Schuenemann)
+	* featurelets (Michael)
+		+ non-platform specific generated code
+		+ add threaded test client
+
 ORBit2-2.5.0
 
 	* bug fixes
