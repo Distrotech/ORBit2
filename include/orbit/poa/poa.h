@@ -3,7 +3,6 @@
 
 #include <orbit/poa/poa-defs.h>
 #include <orbit/poa/poa-types.h>
-#include <orbit/poa/poa-policy.h>
 
 typedef struct {
   void *_private;

@@ -1,3 +1,69 @@
+2002-01-14  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-policy-type.h,
+	  src/orb/orb-core/corba-policy.c: kill ORBit_Policy_(set|get)
+
+	* include/orbit/poa/orbit-adaptor.h: (ORBit_adaptor_setup): add.
+
+	* include/orbit/poa/poa-types.h:
+	(ORBit_vepvmap_init): kill.
+	Kill init_vepvmap and vepvlen ClassInfo members.
+	Enable vepvmap cache by default. Add next member to
+	ORBit_POAObject_type to replace servant->_private GSList.
+	Kill unused macros.
+
+	* include/orbit/poa/poa.h: don't include poa-policy.h.
+
+	* include/orbit/poa/portableserver-poa-type.h: kill poa_rand_len
+	POA struct member.
+
+	* src/idl-compiler/orbit-idl-c-skels.c:
+	(cbe_skel_interface_print_vepvmap_initializer): kill.
+	(cbe_skel_interface_print_vepvmap_line), (cbe_skel_do_interface):
+	initialise the vepvmap in servant init. No need for init_vepvmap method.
+	
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_destroy): s/poa/adaptor/.
+
+	* src/orb/poa/orbit-adaptor.c: (ORBit_adaptor_setup): move here from
+	poa.c - all adaptor's keys should be the same.
+
+	* src/orb/poa/orbit-poa.h:
+	* src/orb/poa/poa-manager.c: (ORBit_POAManager_new),
+	(ORBit_POAManager_register_poa), (ORBit_POAManager_unregister_poa): kill
+	unneeded ev args. Move ownership of the poa_manager reference into poa.c
+	where it belongs.
+
+	* src/orb/poa/poa-policy.c: set the policy structs directly. Kill okey
+	randomness policy.
+
+	* src/orb/poa/poa-servants.c: use poa_execption macros.
+
+	* src/orb/poa/poa.c:
+	(check_object_inuse): impl instead of hacking traverse_cb.
+	(ORBit_POA_object_id_lookup): rename from ORBit_POA_oid_to_obj, removing
+	crackness in the process.
+	(ORBit_POA_remove_child): kill unneeded ev arg.
+	(ORBit_POA_destroy): cleanup.
+	(traverse_cb): rationalise. Kill unneeded TraverseInfo members.
+	(ORBit_POA_deactivate): upd.
+	(ORBit_POA_free_fn): check members are allocated before freeing.
+	(ORBit_POA_set_policy): update fro policy changes.
+	(ORBit_POA_set_policies): set defaults here, use poa_exception macros.
+	(ORBit_POA_new): big cleanup.
+	(ORBit_POA_activate_object): don't init vepvpmap here. Update for
+	servant pobj list changes.
+	(ORBit_POA_deactivate_object): ditto.
+	(ORBit_POAObject_handle_request): use policy checking macros.
+	(ORBit_POA_object_key_lookup): impl.
+	(ORBit_POA_handle_request): use ORBit_POA_object_key_lookup and
+	return_exception.
+	(ORBit_POA_ServantManager_use_servant),
+	(ORBit_POA_ServantManager_unuse_servant): big cleanup and update for
+	servant pobj list change.
+
+	* test/everything/server.c: (TestFactory_getStructServerIOR): use
+	global_orb.
+
 2002-01-09  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.3.102
