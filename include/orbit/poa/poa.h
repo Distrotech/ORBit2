@@ -72,8 +72,6 @@ typedef struct {
 struct ORBit_POAInvocation {
   ORBit_POAInvocation*                prev;
   ORBit_POAObject*                    pobj;
-  PortableServer_ObjectId*            object_id;
-  char                                doUnuse;
 };
 
 #include <orbit/poa/portableserver-poa-type.h>
