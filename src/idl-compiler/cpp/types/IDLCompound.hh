@@ -21,54 +21,24 @@
  *
  *  Purpose:	IDL compiler type representation
  *
- *  Remarks:
- *    It is convention that the C struct is available by reference as "_cstruct"
- *    in the writeCPPStructPacker/Unpacker() contexts.
  *
  */
 
 
+#ifndef ORBITCPP_TYPES_IDLCOMPOUND
+#define ORBITCPP_TYPES_IDLCOMPOUND
 
-
-#ifndef ORBITCPP_TYPES
-#define ORBITCPP_TYPES
-
-
-
-
-#include "error.hh"
 #include "language.hh"
-#include "types.hh"
-#include "types/IDLType.hh"
-#include "types/IDLAny.hh"
-#include "types/IDLVoid.hh"
-#include "types/IDLString.hh"
-#include "types/IDLBoolean.hh"
-#include "types/IDLSequence.hh"
-#include "types/IDLObject.hh"
-#include "types/IDLTypeCode.hh"
-#include "types/IDLStruct.hh"
-#include "types/IDLEnum.hh"
-#include "types/IDLUnion.hh"
-#include "types/IDLException.hh"
 
-class IDLTypedef;
-
-class IDLTypeParser
+// Structured types -----------------------------------------------------------
+class IDLCompound : public IDLScope
 {
-public:
-	IDLTypeParser(IDLCompilerState& state)
-		: m_state(state) {}
-	~IDLTypeParser();
-	IDLType *parseTypeSpec(IDLScope &scope, IDL_tree typespec);
-	IDLType *parseDcl(IDL_tree dcl,IDLType *typespec, string &id);
 
-protected:
-	IDLCompilerState& m_state;
-	vector<IDLType *> m_anonymous_types;
+public:
+	IDLCompound(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
+		: IDLScope(id,node,parentscope) {}
+
+	void writeCPackingCode(ostream &header,Indent &indent,ostream &module,Indent &mod_indent);
 };
 
-
-
-
-#endif //ORBITCPP_TYPES
+#endif //ORBITCPP_TYPES_IDLCOMPOUND

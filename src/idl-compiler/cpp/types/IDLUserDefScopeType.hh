@@ -21,54 +21,36 @@
  *
  *  Purpose:	IDL compiler type representation
  *
- *  Remarks:
- *    It is convention that the C struct is available by reference as "_cstruct"
- *    in the writeCPPStructPacker/Unpacker() contexts.
  *
  */
 
 
+#ifndef ORBITCPP_TYPES_IDLUSERDEFSCOPETYPE
+#define ORBITCPP_TYPES_IDLUSERDEFSCOPETYPE
 
-
-#ifndef ORBITCPP_TYPES
-#define ORBITCPP_TYPES
-
-
-
-
-#include "error.hh"
 #include "language.hh"
-#include "types.hh"
-#include "types/IDLType.hh"
-#include "types/IDLAny.hh"
-#include "types/IDLVoid.hh"
-#include "types/IDLString.hh"
-#include "types/IDLBoolean.hh"
-#include "types/IDLSequence.hh"
-#include "types/IDLObject.hh"
-#include "types/IDLTypeCode.hh"
-#include "types/IDLStruct.hh"
-#include "types/IDLEnum.hh"
-#include "types/IDLUnion.hh"
-#include "types/IDLException.hh"
+#include "IDLType.hh"
 
-class IDLTypedef;
-
-class IDLTypeParser
+class IDLUserDefScopeType
+: public IDLScope,
+  public IDLType
 {
 public:
-	IDLTypeParser(IDLCompilerState& state)
-		: m_state(state) {}
-	~IDLTypeParser();
-	IDLType *parseTypeSpec(IDLScope &scope, IDL_tree typespec);
-	IDLType *parseDcl(IDL_tree dcl,IDLType *typespec, string &id);
+	IDLUserDefScopeType(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
+		: IDLScope(id,node,parentscope) {}
 
-protected:
-	IDLCompilerState& m_state;
-	vector<IDLType *> m_anonymous_types;
+	string getNSScopedCTypeName() const {
+		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
+	}
+
+	string getNSScopedCPPTypeName() const {
+		return getQualifiedCPPIdentifier();
+	}
+	
+	bool isType() {
+		return true;
+	}
 };
 
+#endif //ORBITCPP_TYPES_IDLUSERDEFSCOPETYPE
 
-
-
-#endif //ORBITCPP_TYPES

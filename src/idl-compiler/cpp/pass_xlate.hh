@@ -32,14 +32,18 @@
 
 
 
-
+#include "pass.hh"
+#include "pass_idl_it.hh"
+#include "types/IDLEnum.hh"
+#include "types/IDLStruct.hh"
+#include "types/IDLUnion.hh"
+#include "types/IDLException.hh"
 #include <libIDL/IDL.h>
 #include <iostream>
 #include <vector>
 #include <set>
 #include <string>
-#include "pass.hh"
-#include "pass_idl_it.hh"
+
 
 
 

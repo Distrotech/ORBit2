@@ -32,6 +32,8 @@ INCLUDES =                                    \
 
 if ENABLE_CPP
 
+SUBDIRS = types
+
 noinst_LTLIBRARIES = libidl-cpp.la
 
 headers = \
@@ -62,6 +64,6 @@ modules = \
 libidl_cpp_la_SOURCES = \
 	$(headers) $(modules)
 
-libidl_cpp_la_LIBADD = -lstdc++
+libidl_cpp_la_LIBADD = -lstdc++ types/libidl-cpp-types.la
 
 endif
