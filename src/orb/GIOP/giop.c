@@ -87,7 +87,6 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 
 	giop_dump (stderr, (guint8 *)recv_buffer, sizeof (GIOPMsgHeader), 0);
 
-	giop_dump (stderr, recv_buffer->message_body,
-		   recv_buffer->msg.header.message_size -
-		   sizeof (GIOPMsgHeader), sizeof (GIOPMsgHeader));
+	giop_dump (stderr, recv_buffer->message_body + 12,
+		   recv_buffer->msg.header.message_size, 12);
 }
