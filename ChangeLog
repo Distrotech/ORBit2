@@ -1,3 +1,10 @@
+2002-07-01  Murray Cumming  <murrayc@usa.net>
+ 
+ 	* src/idl-compiler/orbit-idl3-types.h:
+ 	Applied Felix Breuer's "namespace -> ns" patch, and added
+ 	comment to code so that it won't be reverted again. The C++
+ 	keyword "namespace" was being used as a struct field name.
+	
 2002-06-27  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_zap):
