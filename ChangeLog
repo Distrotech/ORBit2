@@ -1,3 +1,8 @@
+2001-08-06  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_getepv): put back.
+
 2001-08-04  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/orbit-adaptor.c
