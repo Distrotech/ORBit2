@@ -218,6 +218,19 @@ queue_free (LinkConnection *cnx)
 	cnx->priv->write_queue = NULL;
 }
 
+static void
+dispatch_callbacks_drop_lock (LinkConnection *cnx)
+{
+	GSList *callbacks;
+
+	callbacks = cnx->idle_broken_callbacks;
+	cnx->idle_broken_callbacks = NULL;
+
+	CNX_UNLOCK (cnx);
+	link_connection_emit_broken (cnx, callbacks);
+	CNX_LOCK (cnx);
+}
+
 /*
  * link_connection_class_state_changed:
  * @cnx: a #LinkConnection
@@ -290,16 +303,9 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 
 			if (cnx->idle_broken_callbacks) {
 				if (!link_thread_io ()) {
-					GSList *callbacks;
-
 					d_printf ("Immediate broken callbacks at immediately\n");
-
-					callbacks = cnx->idle_broken_callbacks;
-					cnx->idle_broken_callbacks = NULL;
-
-					CNX_UNLOCK (cnx);
-					link_connection_emit_broken (cnx, callbacks);
-					CNX_LOCK (cnx);
+				
+					dispatch_callbacks_drop_lock (cnx);
 				} else {
 					d_printf ("Queuing broken callbacks at idle\n");
 
@@ -581,8 +587,14 @@ link_connection_try_reconnect (LinkConnection *cnx)
 	d_printf ("Try for reconnection on %p: %d\n",
 		  cnx, cnx->inhibit_reconnect);
 
-	while (cnx->inhibit_reconnect)
-		link_wait ();
+	while (cnx->inhibit_reconnect) {
+		if (g_main_context_acquire (NULL)) {
+			d_printf ("Dispatch callbacks in 'main' (mainloop owning) thread\n");
+			dispatch_callbacks_drop_lock (cnx);
+			g_main_context_release (NULL);
+		} else 
+			link_wait ();
+	}
 
 	if (cnx->status != LINK_DISCONNECTED)
 		g_warning ("trying to re-connect connected cnx.");
