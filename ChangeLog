@@ -1,3 +1,8 @@
+2001-08-10  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/test.sh: trash /tmp/orbit-$USER before
+	we start ...
+
 2001-08-09  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/Makefile.am: add orbit-typelib.c
