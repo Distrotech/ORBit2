@@ -1,5 +1,10 @@
 2002-11-21  Dan Mills  <thunder@ximian.com>
 
+	* configure.in: fix two typoes:  pango -> linc, and change spaces
+	to a tab in the IFS assignment.
+
+2002-11-21  Dan Mills  <thunder@ximian.com>
+
 	* configure.in: fix gtk-doc version check.
 
 2002-11-02  Michael Meeks  <michael@ximian.com>
