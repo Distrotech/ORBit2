@@ -512,6 +512,7 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		next = l->next;
 
 		if (ent->cnx == cnx) {
+			g_warning ("leak buffer %p ?", ent->buffer);
 			ent->buffer = NULL;
 #ifdef ORBIT_THREADED
 			notify = g_slist_prepend (notify, ent);
@@ -763,8 +764,10 @@ handle_reply (GIOPRecvBuffer *buf)
 
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-		if (ent->u.unthreaded.cb)
+		if (ent->u.unthreaded.cb) {
 			ent->u.unthreaded.cb (ent);
+			giop_recv_buffer_unuse (buf);
+		}
 #endif
 	} else {
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);

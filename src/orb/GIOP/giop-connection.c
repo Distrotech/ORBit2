@@ -147,8 +147,10 @@ giop_connection_dispose (GObject *obj)
 
 	giop_connection_list_remove (cnx);
 
-	if (G_OBJECT_CLASS (parent_class)->dispose)
-		G_OBJECT_CLASS (parent_class)->dispose (obj);
+	g_assert (cnx->incoming_msg == NULL);
+
+	if (((GObjectClass *)parent_class)->dispose)
+		((GObjectClass *)parent_class)->dispose (obj);
 }
 
 static void

@@ -379,6 +379,11 @@ typedef enum {
 	MARSHAL_CLEAN
 } DeMarshalRetType;
 
+typedef enum {
+	RECV_BUFFER_RELEASE,
+	RECV_BUFFER_KEEP
+} DeMarshalRecvRelease;
+
 static DeMarshalRetType
 orbit_small_demarshal (CORBA_Object           obj,
 		       GIOPConnection       **cnx,
@@ -386,7 +391,8 @@ orbit_small_demarshal (CORBA_Object           obj,
 		       CORBA_Environment     *ev,
 		       gpointer               ret,
 		       ORBit_IMethod         *m_data,
-		       gpointer              *args)
+		       gpointer              *args,
+		       DeMarshalRecvRelease   recv_release)
 {
 	gpointer        data, p;
 	CORBA_TypeCode  tc;
@@ -514,8 +520,9 @@ orbit_small_demarshal (CORBA_Object           obj,
 		if (trace_have_out)
 			tprintf (" )");
 	}
-	
-	giop_recv_buffer_unuse (recv_buffer);
+
+	if (recv_release == RECV_BUFFER_RELEASE)
+		giop_recv_buffer_unuse (recv_buffer);
 
 	return MARSHAL_CLEAN;
 
@@ -526,11 +533,16 @@ orbit_small_demarshal (CORBA_Object           obj,
 		*cnx = ORBit_handle_location_forward (recv_buffer, obj);
 		tprintf (" Exception: forward");
 
+		if (recv_release == RECV_BUFFER_RELEASE)
+			giop_recv_buffer_unuse (recv_buffer);
+
 		return MARSHAL_RETRY;
 	} else {
 		ORBit_handle_exception_array (
 			recv_buffer, ev, &m_data->exceptions, obj->orb);
-		giop_recv_buffer_unuse (recv_buffer);
+
+		if (recv_release == RECV_BUFFER_RELEASE)
+			giop_recv_buffer_unuse (recv_buffer);
 
 #ifdef G_ENABLE_DEBUG
 		if (_orbit_debug_flags & ORBIT_DEBUG_TRACES) {
@@ -605,7 +617,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	}
 
 	switch (orbit_small_demarshal (obj, &cnx, &mqe, ev,
-				       ret, m_data, args))
+				       ret, m_data, args,
+				       RECV_BUFFER_RELEASE))
 	{
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		completion_status = CORBA_COMPLETED_YES;
@@ -1002,7 +1015,7 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 			     CORBA_Environment    *ev)
 {
 	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, &aqe->mqe, ev,
-				       ret, aqe->m_data, args)) {
+				       ret, aqe->m_data, args, RECV_BUFFER_KEEP)) {
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		aqe->completion_status = CORBA_COMPLETED_YES;
 		dprintf (MESSAGES, "Sys exception completed on id 0x%x\n\n",
