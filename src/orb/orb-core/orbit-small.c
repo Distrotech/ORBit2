@@ -471,6 +471,8 @@ orbit_small_demarshal (CORBA_Object           obj,
 			dump_arg (a, tc);
 
 			if (a->flags & ORBit_I_ARG_OUT)
+				/* this may read (&discard) uninitialized memory,
+				 * see 'foo' below. This is for simplicity. */
 				arg = *(gpointer *)args [i];
 			else
 				arg = args [i];
@@ -505,7 +507,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 				} else if (a->flags & ORBit_I_ARG_INOUT) {
 					ORBit_freekids_via_TypeCode (tc, arg);
 					do_demarshal_value (recv_buffer, &arg, tc, orb);
-				} else
+				} else /* 'foo' - don't use the bogus 'arg' contents */
 					*(gpointer *)args [i] = p = ORBit_demarshal_arg (
 						recv_buffer, tc, obj->orb);
 
