@@ -20,8 +20,9 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
 
   cmi.ci = ci;
   cmi.last_tail_align = 1;
-  cmi.curptr_loaded = FALSE;
   cmi.endian_swap_pass = TRUE;
+
+  c_demarshal_load_curptr(&cmi);
 
   if(in_skels) {
     cmi.alloc_on_stack = TRUE;
@@ -38,7 +39,6 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
   fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
   c_demarshal_generate(node, &cmi);
   fprintf(ci->fh, "} else {\n");
-  cmi.curptr_loaded = FALSE;
   cmi.last_tail_align = 1;
   cmi.endian_swap_pass = FALSE;
   c_demarshal_generate(node, &cmi);
@@ -82,19 +82,13 @@ c_demarshal_update_curptr(OIDL_Marshal_Node *node, char *sizestr, OIDL_C_Marshal
 static void
 c_demarshal_load_curptr(OIDL_C_Marshal_Info *cmi)
 {
-  if(!cmi->curptr_loaded) {
-    fprintf(cmi->ci->fh, "_ORBIT_curptr = GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur;\n");
-    cmi->curptr_loaded = TRUE;
-  }
+  fprintf(cmi->ci->fh, "_ORBIT_curptr = GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur;\n");
 }
 
 static void
 c_demarshal_store_curptr(OIDL_C_Marshal_Info *cmi)
 {
-  if(cmi->curptr_loaded) {
-    fprintf(cmi->ci->fh, "GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur = _ORBIT_curptr;\n");
-    cmi->curptr_loaded = FALSE;
-  }
+  fprintf(cmi->ci->fh, "GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur = _ORBIT_curptr;\n");
 }
 
 static void
@@ -102,7 +96,6 @@ c_demarshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   /* do we need to generate an alignment space? */
   if(node->iiop_head_align > cmi->last_tail_align) {
-    c_demarshal_load_curptr(cmi);
     fprintf(cmi->ci->fh, "_ORBIT_curptr = ALIGN_ADDRESS(_ORBIT_curptr, %d);\n", node->iiop_head_align);
   }
 
@@ -117,8 +110,6 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   ctmp = oidl_marshal_node_valuestr(node);
 
   c_demarshal_alignfor(node, cmi);
-
-  c_demarshal_load_curptr(cmi);
 
   if(cmi->endian_swap_pass
      && (node->u.datum_info.datum_size > 1)) {
@@ -192,7 +183,6 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     GString *tmpstr, *tmpstr2;
 
     c_demarshal_alignfor(node->u.loop_info.contents, cmi);
-    c_demarshal_load_curptr(cmi);
 
     tmpstr = g_string_new(NULL);
     tmpstr2 = g_string_new(NULL);
@@ -269,7 +259,6 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   char *ctmp;
 
   c_demarshal_store_curptr(cmi);
-
   ctmp = oidl_marshal_node_valuestr(node);
 
   switch(node->u.complex_info.type) {
@@ -289,6 +278,8 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     break;
   }
 
+  c_demarshal_load_curptr(cmi);
+
   g_free(ctmp);
 }
 
@@ -302,7 +293,6 @@ c_demarshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
     ctmp = oidl_marshal_node_valuestr(node);
 
-    c_demarshal_load_curptr(cmi);
 
     c_demarshal_alignfor(node, cmi);
 
