@@ -1,13 +1,25 @@
 // File: GIOP.idl
-// From CORBA 2.3: Chapter 15, General Inter-ORB Protocol
+// From CORBA 3.0: Chapter 15, General Inter-ORB Protocol
+
+// To compiler this for 
 
 #ifndef _GIOP_IDL_
 #define _GIOP_IDL_
 
-#include <IIOP.idl>
+#ifdef _PRE_3_0_COMPILER_ 
+#include <IOP.idl>
 
 #pragma prefix "omg.org"
+#else
+import ::IOP;
+#endif // _PRE_3_0_COMPILER_
+
 module GIOP {                   // IDL extended for version 1.1 and 1.2
+
+#ifndef _PRE_3_0_COMPILER_ 
+    typeprefix GIOP "omg.org";
+#endif // _PRE_3_0_COMPILER_
+
     struct Version {                            
         octet           major;
         octet           minor;
@@ -17,22 +29,17 @@ module GIOP {                   // IDL extended for version 1.1 and 1.2
     //       be available for V1.0 and V1.1
     typedef sequence<octet> Principal;
 
-#ifndef GIOP_1_1
-    // GIOP 1.0
-    enum MsgType_1_0{                       // rename from MsgType
-        Request,            Reply,          CancelRequest,
-        LocateRequest,      LocateReply,
-        CloseConnection,    MessageError
-        };
-#else
     // GIOP 1.1
-    enum MsgType_1_1{
+    enum MsgType_1_1 {
         Request,            Reply,          CancelRequest,
         LocateRequest,      LocateReply,
         CloseConnection,    MessageError,                  
         Fragment            // GIOP 1.1 addition
     };
-#endif
+
+    typedef GIOP::MsgType_1_1 MsgType_1_2;
+    typedef GIOP::MsgType_1_1 MsgType_1_3;
+
     
     // GIOP 1.0 
     struct MessageHeader_1_0 {// Renamed from MessageHeader
@@ -53,7 +60,10 @@ module GIOP {                   // IDL extended for version 1.1 and 1.2
     };
 
     // GIOP 1.2
-    typedef MessageHeader_1_1 MessageHeader_1_2;                
+    typedef MessageHeader_1_1 MessageHeader_1_2;
+
+    // GIOP 1.3
+    typedef MessageHeader_1_1 MessageHeader_1_3;                
 
     // GIOP 1.0
     struct RequestHeader_1_0 {
@@ -100,7 +110,10 @@ module GIOP {                   // IDL extended for version 1.1 and 1.2
         IOP::ServiceContextList     service_context;    // 1.2 change
     };
 
-#ifndef GIOP_1_2            
+    // GIOP 1.3
+    typedef RequestHeader_1_2 RequestHeader_1_3;
+
+#ifndef GIOP_1_2
     // GIOP 1.0 and 1.1
     enum ReplyStatusType_1_0 {// Renamed from ReplyStatusType
         NO_EXCEPTION,
@@ -129,11 +142,15 @@ module GIOP {                   // IDL extended for version 1.1 and 1.2
         LOCATION_FORWARD_PERM,              // new value for 1.2
         NEEDS_ADDRESSING_MODE               // new value for 1.2
     };                  
+
     struct ReplyHeader_1_2 {
         unsigned long               request_id;
         ReplyStatusType_1_2         reply_status;
-        IOP:ServiceContextList      service_context;    // 1.2 change
+        IOP::ServiceContextList     service_context;    // 1.2 change
     };
+
+    // GIOP 1.3
+    typedef ReplyHeader_1_2 ReplyHeader_1_3;
 #endif // GIOP_1_2
 
     struct SystemExceptionReplyBody {
@@ -161,6 +178,9 @@ module GIOP {                   // IDL extended for version 1.1 and 1.2
             unsigned long           request_id;
             TargetAddress           target;
     };
+
+    // GIOP 1.3
+    typedef LocateRequestHeader_1_2 LocateRequestHeader_1_3;
 
 #ifndef GIOP_1_2
     // GIOP 1.0 and 1.1
@@ -193,12 +213,19 @@ module GIOP {                   // IDL extended for version 1.1 and 1.2
     struct LocateReplyHeader_1_2 {
         unsigned long               request_id;
         LocateStatusType_1_2        locate_status;
-        };
+    };
+
+    // GIOP 1.3
+    typedef LocateReplyHeader_1_2 LocateReplyHeader_1_3;
 #endif // GIOP_1_2
 
     // GIOP 1.2
     struct FragmentHeader_1_2 {
         unsigned long               request_id;
     };
+
+    // GIOP 1.3
+    typedef FragmentHeader_1_2 FragmentHeader_1_3;
+
 };
 #endif // _GIOP_IDL_

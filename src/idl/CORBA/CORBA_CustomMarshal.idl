@@ -1,3 +1,8 @@
 // File: CORBA_CustomMarshal.idl
-// CORBA 2.3, Chapter 5
+// CORBA 3.0, Chapter 5
+// depends on CORBA_Stream.idl
 
+	abstract valuetype CustomMarshal {
+		void marshal   (in DataOutputStream os);
+		void unmarshal (in DataInputStream  is);
+	};

@@ -29,7 +29,7 @@ G_BEGIN_DECLS
 #define ORBIT_ALIGNOF_CORBA_FIXED  MAX (    ORBIT_ALIGNOF_CORBA_SHORT,   \
 					    ORBIT_ALIGNOF_CORBA_STRUCT);
 
-typedef CORBA_char              *CORBA_ORBid;
+/* typedef CORBA_char              *CORBA_ORBid; */
 typedef struct CORBA_any_struct  CORBA_any;
 
 typedef struct {

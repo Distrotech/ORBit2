@@ -1,5 +1,5 @@
 // File: CORBA_Object.idl
-// CORBA 2.3, Chapter 4
+// CORBA 3.0, Chapter 4
 
     //PIDL
     struct NamedValue { 
@@ -53,5 +53,19 @@
         Object set_policy_overrides(
             in PolicyList           policies,
             in SetOverrideType      set_add
+        ) raises(InvalidPolicies);
+
+        Policy get_client_policy(
+            in PolicyType           type
         );
+
+        PolicyList get_policy_overrides(
+            in PolicyTypeSeq        types
+        );
+
+        boolean validate_connection(
+            out PolicyList          inconsistent_policies
+        );
+
+        Object get_component ();
     };

@@ -1,5 +1,5 @@
 // File: CORBA_ORB_init.idl
-// CORBA 2.3, Chapter 4
+// CORBA 3.0, Chapter 4
 
 // Note: This PIDL does not compile. Don't even try.
 //       It defines an operation not in an interface, which is illegal. 

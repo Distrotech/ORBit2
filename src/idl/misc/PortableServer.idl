@@ -1,12 +1,16 @@
 // File: PortableServer.idl
-// CORBA 2.3, Chapter 11
+// CORBA 3.0, Chapter 11
 
-#ifndef _PORTABLESERVER_IDL_
-#define _PORTABLESERVER_IDL_
+#ifndef _PORTABLE_SERVER_IDL_
+#define _PORTABLE_SERVER_IDL_
 
+#ifdef _PRE_3_0_COMPILER_ 
 #pragma prefix "omg.org"
 
 #include <orb.idl>
+#else
+import ::CORBA;
+#endif // _PRE_3_0_COMPILER_
 
 // Most IDL compilers don't accept the "native" keyword in application IDL 
 //    files. In order to compile an IDL (really PIDL) file that has it, the 
@@ -15,17 +19,24 @@
 //    definition that results in valid IDL, even if it doesn't yield
 //    useful stubs and skeletons. Of course, PIDL never results in
 //    the standard stubs so that's not a problem.
-#ifndef __ORBIT_IDL__
+//
+// Set the variable _MASK_NATIVE_ in the IDL compiler to enable it to
+// parse this file.
+
+#ifdef _MASK_NATIVE_
 #define native typedef long
-#endif
+#endif // _MASK_NATIVE_
 
 module PortableServer {
-#   pragma version PortableServer 2.3
 
-    interface POA;                          // forward declaration
+#ifndef _PRE_3_0_COMPILER_ 
+    typeprefix PortableServer "omg.org";
+#endif // _PRE_3_0_COMPILER_
+
+    local interface POA;                          // forward declaration
     typedef sequence<POA> POAList; 
     native Servant;
-    typedef sequence<octet> ObjectId;
+    typedef CORBA::OctetSeq ObjectId;
     exception ForwardRequest {
         CORBA::Object forward_reference;
     };
@@ -41,9 +52,10 @@ module PortableServer {
     
     enum ThreadPolicyValue {
         ORB_CTRL_MODEL,
-        SINGLE_THREAD_MODEL
+        SINGLE_THREAD_MODEL,
+	MAIN_THREAD_MODEL
     };
-        interface ThreadPolicy : CORBA::Policy {
+    local interface ThreadPolicy : CORBA::Policy {
         readonly attribute ThreadPolicyValue value;
     };
     
@@ -51,7 +63,7 @@ module PortableServer {
         TRANSIENT,
         PERSISTENT
     };
-        interface LifespanPolicy : CORBA::Policy {
+    local interface LifespanPolicy : CORBA::Policy {
         readonly attribute LifespanPolicyValue value;
     };
     
@@ -59,7 +71,7 @@ module PortableServer {
         UNIQUE_ID,
         MULTIPLE_ID
     };
-        interface IdUniquenessPolicy : CORBA::Policy {
+    local interface IdUniquenessPolicy : CORBA::Policy {
         readonly attribute IdUniquenessPolicyValue value;
     };
     
@@ -67,7 +79,7 @@ module PortableServer {
         USER_ID,
         SYSTEM_ID
     };
-    interface IdAssignmentPolicy : CORBA::Policy {
+    local interface IdAssignmentPolicy : CORBA::Policy {
         readonly attribute IdAssignmentPolicyValue value;
     };
     
@@ -75,7 +87,7 @@ module PortableServer {
         IMPLICIT_ACTIVATION,
         NO_IMPLICIT_ACTIVATION
     };
-    interface ImplicitActivationPolicy : CORBA::Policy {
+    local interface ImplicitActivationPolicy : CORBA::Policy {
         readonly attribute ImplicitActivationPolicyValue value;
     };
     
@@ -83,7 +95,7 @@ module PortableServer {
         RETAIN,
         NON_RETAIN
     };
-    interface ServantRetentionPolicy : CORBA::Policy {
+    local interface ServantRetentionPolicy : CORBA::Policy {
         readonly attribute ServantRetentionPolicyValue value;
     };
     
@@ -92,12 +104,12 @@ module PortableServer {
         USE_DEFAULT_SERVANT,
         USE_SERVANT_MANAGER
     };
-    interface RequestProcessingPolicy : CORBA::Policy {
+    local interface RequestProcessingPolicy : CORBA::Policy {
         readonly attribute RequestProcessingPolicyValue value;
     };
     
     // POAManager interface
-    interface POAManager {
+    local interface POAManager {
         exception AdapterInactive{};
         enum State {HOLDING, ACTIVE, DISCARDING, INACTIVE};
         void activate()             raises(AdapterInactive);
@@ -109,20 +121,31 @@ module PortableServer {
                                 in boolean wait_for_completion)
                                     raises(AdapterInactive);
         State get_state();
+        string get_id();
     };
     
+    // PoaManagerFactory
+    local interface POAManagerFactory {
+        typedef sequence<POAManager> POAManagerSeq;
+        exception ManagerAlreadyExists {};
+        POAManager create_POAManager(
+	    in string id,
+	    in CORBA::PolicyList policies
+	) raises(ManagerAlreadyExists, CORBA::PolicyError);
+        POAManagerSeq list();
+        POAManager find( in string id);
+    };
+
     // AdapterActivator interface
-    interface AdapterActivator {
-#       pragma version AdapterActivator 2.3
+    local interface AdapterActivator {
         boolean unknown_adapter(in POA parent, 
                                 in string name);
     };
     
     // ServantManager interface
-    interface ServantManager{ };
+    local interface ServantManager{ };
     
-    interface ServantActivator : ServantManager {
-#       pragma version ServantActivator 2.3
+    local interface ServantActivator : ServantManager {
         Servant incarnate (     in ObjectId oid,
                                 in POA      adapter)
                                     raises (ForwardRequest);
@@ -133,8 +156,7 @@ module PortableServer {
                                 in boolean  remaining_activations);
     };
     
-    interface ServantLocator : ServantManager {
-#       pragma version ServantLocator 2.3
+    local interface ServantLocator : ServantManager {
         native  Cookie;
         Servant preinvoke(      in ObjectId oid,
                                 in POA      adapter,
@@ -150,8 +172,7 @@ module PortableServer {
                                 in Servant  the_servant );
     };
     
-    interface POA {
-#       pragma version POA 2.3
+    local interface POA {
         exception AdapterAlreadyExists {};
         exception AdapterNonExistent {};
         exception InvalidPolicy {unsigned short index;};
@@ -198,55 +219,58 @@ module PortableServer {
         
         // Servant Manager registration:
         ServantManager  get_servant_manager()    
-                                    raises (WrongPolicy);
+	  raises (WrongPolicy);
         void            set_servant_manager(in      ServantManager imgr)
-                                    raises (WrongPolicy);
+	  raises (WrongPolicy);
         
         // operations for the USE_DEFAULT_SERVANT policy
         Servant         get_servant() raises (NoServant, WrongPolicy);
         void            set_servant( in Servant      p_servant) 
-                                    raises (WrongPolicy);
+	  raises (WrongPolicy);
         
         // object activation and deactivation
         ObjectId        activate_object(in Servant p_servant)
-                                    raises (ServantAlreadyActive, WrongPolicy);
+	  raises (ServantAlreadyActive, WrongPolicy);
         void activate_object_with_id(in ObjectId    id,
                                      in Servant     p_servant)
-                                    raises (ServantAlreadyActive, 
-                                            ObjectAlreadyActive,  
-                                            WrongPolicy);
+	  raises (ServantAlreadyActive, 
+		  ObjectAlreadyActive,  
+		  WrongPolicy);
         void deactivate_object(      in ObjectId oid) 
-                                    raises (ObjectNotActive, WrongPolicy);
+	  raises (ObjectNotActive, WrongPolicy);
         
         // reference creation operations
         CORBA::Object create_reference (    in CORBA::RepositoryId intf)
-                                    raises (WrongPolicy);
+	  raises (WrongPolicy);
         CORBA::Object create_reference_with_id (
                                     in ObjectId             oid,
-                                    in CORBA::RepositoryId  intf)
-                                    raises (WrongPolicy);
+                                    in CORBA::RepositoryId  intf);
         
         // Identity mapping operations:
         ObjectId servant_to_id(     in Servant              p_servant) 
-                                    raises (ServantNotActive, WrongPolicy);
+	  raises (ServantNotActive, WrongPolicy);
         CORBA::Object servant_to_reference(in Servant              p_servant) 
 	  raises (ServantNotActive, WrongPolicy);
         Servant reference_to_servant(in CORBA::Object              reference)
-                                    raises(ObjectNotActive, WrongPolicy);
+	  raises(ObjectNotActive, WrongAdapter, WrongPolicy);
         ObjectId reference_to_id(   in CORBA::Object               reference)
-                                    raises (WrongAdapter, WrongPolicy);
+	  raises (WrongAdapter, WrongPolicy);
         Servant id_to_servant(      in ObjectId             oid)
-                                    raises (ObjectNotActive, WrongPolicy);
+	  raises (ObjectNotActive, WrongPolicy);
         CORBA::Object id_to_reference(     in ObjectId             oid)
-                                        raises (ObjectNotActive, WrongPolicy);
+	  raises (ObjectNotActive, WrongPolicy);
+
+        readonly attribute CORBA::OctetSeq id;
+        readonly attribute POAManagerFactory the_POAManagerFactory;
     };
     
     // Current interface
-    interface Current : CORBA::Current {
-#       pragma version Current 2.3
+    local interface Current : CORBA::Current {
         exception   NoContext { };
         POA         get_POA()       raises (NoContext);
         ObjectId    get_object_id() raises (NoContext);
+        CORBA::Object      get_reference() raises (NoContext);
+        Servant     get_servant()   raises (NoContext);
     };
 };
-#endif // _PORTABLESERVER_IDL_
+#endif // _PORTABLE_SERVER_IDL_

@@ -1,13 +1,13 @@
 // File CORBA_ORB.idl    
-// CORBA 2.3, Chapter 4
+// CORBA 3.0, Chapter 4
     
     typedef sequence <Request> RequestSeq; 
 
     native AbstractBase;
 
     typedef unsigned short ServiceType;
-    typedef unsigned long ServiceOption;
-    typedef unsigned long ServiceDetailType;
+    typedef unsigned long  ServiceOption;
+    typedef unsigned long  ServiceDetailType;
 
     const ServiceType Security = 1;
 
@@ -23,13 +23,19 @@
 
     native ValueFactory;
 
+    typedef string ORBid;
+
+    // frehberg@gnome-de.org 
+    exception WrongTransaction {};
+
     interface ORB {                 // PIDL
-#pragma version ORB 2.3
 
         typedef string ObjectId;
         typedef sequence <ObjectId> ObjectIdList; 
 
         exception InvalidName {}; 
+
+        ORBid id();
 
         string object_to_string (
             in Object                   obj
@@ -67,7 +73,7 @@
 
         void get_next_response(
             out Request                 req
-        ); // raises(WrongTransaction);
+        ) raises (WrongTransaction);
 
         // Service information operations
 
@@ -154,7 +160,7 @@
             in Identifier               name,
             in ValueModifier            type_modifier,
             in TypeCode                 concrete_base,
-            in ValueMemberSeq          members
+            in ValueMemberSeq           members
         );
 
         TypeCode create_value_box_tc (
@@ -175,6 +181,29 @@
         TypeCode create_abstract_interface_tc(
             in RepositoryId             id,
             in Identifier               name
+        );
+
+        TypeCode create_local_interface_tc(
+            in RepositoryId             id,
+            in Identifier               name
+        );
+
+        TypeCode create_component_tc (
+            in RepositoryId             id,
+            in Identifier               name
+        );
+
+        TypeCode create_home_tc (
+            in RepositoryId             id,
+            in Identifier               name
+        );
+
+        TypeCode create_event_tc (
+            in RepositoryId             id,
+            in Identifier               name,
+            in ValueModifier            type_modifier,
+            in TypeCode                 concrete_base,
+            in ValueMemberSeq           members
         );
 
         // Thread related operations
@@ -205,7 +234,7 @@
 
         ValueFactory register_value_factory(
             in RepositoryId             id,
-            in ValueFactory             factory
+            in ValueFactory             _factory
         );
 
         void unregister_value_factory(
@@ -213,5 +242,12 @@
 
         ValueFactory lookup_value_factory(
             in RepositoryId             id);
+
+        // Portable Interceptor related operations
+
+        void register_initial_reference(
+            in ObjectId                 id,
+            in Object                   obj
+        ) raises (InvalidName);
     }; 
 

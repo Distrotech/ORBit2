@@ -1,12 +1,21 @@
 // File: SendingContext.idl
-// CORBA 2.3, Chapter 5
+// CORBA 2.5.1, Chapter 5
 
 #ifndef _SENDING_CONTEXT_IDL_
 #define _SENDING_CONTEXT_IDL_
 
+#ifdef _PRE_3_0_COMPILER_ 
 #include <orb.idl>
+#pragma prefix "omg.org"
+#else
+import ::CORBA;
+#endif // _PRE_3_0_COMPILER_
 
 module SendingContext {
+
+#ifndef _PRE_3_0_COMPILER_ 
+    typeprefix SendingContext "omg.org";
+#endif // _PRE_3_0_COMPILER_
 
     interface RunTime {}; // so that we can provide more 
                           // sending context run time

@@ -1,5 +1,5 @@
 // File: CORBA_NVList.idl
-// CORBA 2.3, Chapter 7
+// CORBA 3.0, Chapter 7
 
     interface NVList { // PIDL
         void add_item (
