@@ -33,72 +33,12 @@
 class IDLTypeCode : public IDLInterface
 {
 public:
-	IDLTypeCode()
-		: IDLInterface("TypeCode",NULL,NULL) {
-	}
+	IDLTypeCode ();
 
-	string getCTypeName() const {
-		return "CORBA_TypeCode";
-	}
-	string getNSScopedCTypeName() const {
-		return getCTypeName();
-	}
-	
-	virtual string getQualifiedIDLIdentifier(IDLScope const *up_to = NULL,
-											 IDLScope const *assumed_base = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA::TypeCode";
-	}
-	virtual string getQualifiedCIdentifier(IDLScope const *up_to = NULL,
-										   IDLScope const *assumed_base = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA_TypeCode";
-	}
-	virtual string getQualifiedCPPIdentifier(IDLScope const *up_to = NULL,
-											 IDLScope const *assumed_base = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA::TypeCode";
-	}
-	
-	virtual string getQualifiedCPPStub(IDLScope const *up_to = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA::TypeCode";
-	}
-
-
-  virtual string getCPP_ptr() const {
-		return "CORBA::TypeCode_ptr";
-	}
-	virtual string getCPP_var() const {
-		return "CORBA::TypeCode_var";
-	}
-	virtual string getCPP_mgr() const {
-		return "CORBA::TypeCode_mgr";
-	}
-	virtual string getCPP_out() const {
-		return "CORBA::TypeCode_out";
-	}
-
-	virtual string getQualifiedCPP_ptr(IDLScope const *up_to = NULL) const {
-		return "CORBA::TypeCode_ptr";
-	}
-	virtual string getQualifiedCPP_var(IDLScope const *up_to = NULL) const {
-		return "CORBA::TypeCode_var";
-	}
-	virtual string getQualifiedCPP_mgr(IDLScope const *up_to = NULL) const {
-		return "CORBA::TypeCode_mgr";
-	}
-	virtual string getQualifiedCPP_out(IDLScope const *up_to = NULL) const {
-		return "CORBA::TypeCode_out";
-	}
-
-	void
-	writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,bool passthru,
-								  IDLTypedef const *activeTypedef = NULL) const {
-		ostr << indent << "return reinterpret_cast< " << getNSScopedCTypeName() << ">(_retval);" << endl;		
-	}
-
-
+	string get_idl_typename () const;
+	string get_c_typename   () const;
+	string get_cpp_typename () const;
 };
 
 #endif //ORBITCPP_TYPES_IDLTYPECODE
+

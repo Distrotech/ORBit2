@@ -77,14 +77,16 @@ void
 IDLString::stub_impl_arg_pre (ostream        &ostr,
 			      Indent         &indent,
 			      const string   &cpp_id,
-			      IDL_param_attr  direction) const
+			      IDL_param_attr  direction,
+			      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
 string
 IDLString::stub_impl_arg_call (const string   &cpp_id,
-			       IDL_param_attr  direction) const
+			       IDL_param_attr  direction,
+			       const IDLTypedef *active_typedef) const
 {
 	string retval;
 
@@ -106,9 +108,10 @@ IDLString::stub_impl_arg_call (const string   &cpp_id,
 	
 void
 IDLString::stub_impl_arg_post (ostream        &ostr,
-			     Indent         &indent,
-			     const string   &cpp_id,
-			     IDL_param_attr  direction) const
+			       Indent         &indent,
+			       const string   &cpp_id,
+			       IDL_param_attr  direction,
+			       const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -124,7 +127,8 @@ IDLString::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 	
 void
 IDLString::stub_impl_ret_pre (ostream &ostr,
-			      Indent  &indent) const
+			      Indent  &indent,
+			      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -132,7 +136,8 @@ IDLString::stub_impl_ret_pre (ostream &ostr,
 void
 IDLString::stub_impl_ret_call (ostream      &ostr,
 			       Indent       &indent,
-			       const string &c_call_expression) const
+			       const string &c_call_expression,
+			       const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "char *_retval = " << c_call_expression
 	     << ';' << endl;
@@ -140,7 +145,8 @@ IDLString::stub_impl_ret_call (ostream      &ostr,
 
 void
 IDLString::stub_impl_ret_post (ostream &ostr,
-			     Indent  &indent) const
+			       Indent  &indent,
+			       const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval;" << endl;
 }
@@ -171,16 +177,18 @@ IDLString::skel_decl_arg_get (const string     &c_id,
 
 void
 IDLString::skel_impl_arg_pre (ostream        &ostr,
-			    Indent         &indent,
-			    const string   &c_id,
-			    IDL_param_attr  direction) const
+			      Indent         &indent,
+			      const string   &c_id,
+			      IDL_param_attr  direction,
+			      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
 string
 IDLString::skel_impl_arg_call (const string   &c_id,
-			       IDL_param_attr  direction) const
+			       IDL_param_attr  direction,
+			       const IDLTypedef *active_typedef) const
 {
 	string retval;
 	
@@ -204,7 +212,8 @@ void
 IDLString::skel_impl_arg_post (ostream        &ostr,
 			       Indent         &indent,
 			       const string   &c_id,
-			       IDL_param_attr  direction) const
+			       IDL_param_attr  direction,
+			       const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -220,7 +229,8 @@ IDLString::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 
 void
 IDLString::skel_impl_ret_pre (ostream &ostr,
-			      Indent  &indent) const
+			      Indent  &indent,
+			      const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "char *_retval = 0"
 	     << ';' << endl;
@@ -228,8 +238,9 @@ IDLString::skel_impl_ret_pre (ostream &ostr,
 
 void
 IDLString::skel_impl_ret_call (ostream      &ostr,
-			     Indent       &indent,
-			     const string &cpp_call_expression) const
+			       Indent       &indent,
+			       const string &cpp_call_expression,
+			       const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "_retval = " << cpp_call_expression
 	     << ';' << endl;
@@ -237,20 +248,27 @@ IDLString::skel_impl_ret_call (ostream      &ostr,
 
 void
 IDLString::skel_impl_ret_post (ostream &ostr,
-			     Indent  &indent) const
+			       Indent  &indent,
+			       const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval;" << endl;
 }
 
 
 string
-IDLString::get_cpp_member_typename () const
+IDLString::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
 	return "CORBA::String_mgr";
 }
 
 string
-IDLString::member_decl_arg_get () const
+IDLString::get_c_member_typename (const IDLTypedef *active_typedef) const
+{
+	return "char*";
+}
+
+string
+IDLString::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	return "const char *";
 }
@@ -258,7 +276,8 @@ IDLString::member_decl_arg_get () const
 void
 IDLString::member_impl_arg_copy (ostream      &ostr,
 				 Indent       &indent,
-				 const string &cpp_id) const
+				 const string &cpp_id,
+				 const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_id << " = _par_" << cpp_id
 	     << ';' << endl;
@@ -268,7 +287,8 @@ void
 IDLString::member_pack_to_c_pre  (ostream      &ostr,
 				  Indent       &indent,
 				  const string &cpp_id,
-				  const string &c_id) const
+				  const string &c_id,
+				  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -277,7 +297,8 @@ void
 IDLString::member_pack_to_c_pack (ostream      &ostr,
 				  Indent       &indent,
 				  const string &cpp_id,
-				  const string &c_id) const
+				  const string &c_id,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_id << " = "
 	     << "CORBA::string_dup (" << cpp_id << ")"
@@ -288,7 +309,8 @@ void
 IDLString::member_pack_to_c_post (ostream      &ostr,
 				  Indent       &indent,
 				  const string &cpp_id,
-				  const string &c_id) const
+				  const string &c_id,
+				  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -297,7 +319,8 @@ void
 IDLString::member_unpack_from_c_pre  (ostream      &ostr,
 				      Indent       &indent,
 				      const string &cpp_id,
-				      const string &c_id) const
+				      const string &c_id,
+				      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -306,17 +329,19 @@ void
 IDLString::member_unpack_from_c_pack (ostream      &ostr,
 				      Indent       &indent,
 				      const string &cpp_id,
-				      const string &c_id) const
+				      const string &c_id,
+				      const IDLTypedef *active_typedef) const
 {
 	ostr << cpp_id << " = CORBA::string_dup (" << c_id << ")"
 	     << ';' << endl;
 }
 
 void
-IDLString::member_unpack_from_c_post  (ostream      &ostr,
-				       Indent       &indent,
-				       const string &cpp_id,
-				       const string &c_id) const
+IDLString::member_unpack_from_c_post (ostream      &ostr,
+				      Indent       &indent,
+				      const string &cpp_id,
+				      const string &c_id,
+				      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }

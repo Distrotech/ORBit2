@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -25,418 +26,383 @@
  */
 
 #include "IDLArray.hh"
-#include "error.hh"
-#include "pass.hh"
-#include "pass_xlate.hh"
-#include <strstream>
 
-void
-IDLArray::writeInitCode(ostream &ostr, Indent &indent, string const &ident) const {
-	if(m_elementType.isVariableLength()){
-		// write the initialisation code
-		char *dimItVar = new char[2];
-		dimItVar[0] = 'a';
-		dimItVar[1] = '\0';
+#include "IDLTypedef.hh"
 
-		string dimsStr;
-		for(const_iterator it = begin(); it != end(); it++){
-			ostr
-			<< indent++ << "for (CORBA::ULong " << dimItVar << "=0;"<<dimItVar<<"<"<< *it << ";"<<dimItVar<<"++){" << endl;
-			dimsStr += string("[")+dimItVar+"]";
-			dimItVar[0]++;
-		}
-		delete[] dimItVar;
-	
-		m_elementType.writeInitCode(ostr,indent,ident+dimsStr);
-	
-		for(const_iterator it = begin(); it != end(); it++){
-			ostr
-			<< --indent << "}" << endl;
-		}
-	}
-}
-
-void
-IDLArray::writeCPPDeepCopyCode(ostream &ostr, Indent &indent, string const &ident,string const &target) const {
-	char *dimItVar = new char[2];
-	dimItVar[0] = 'a';
-	dimItVar[1] = '\0';
-	
-	string dimsStr;
-	for(const_iterator it = begin(); it != end(); it++){
-		ostr
-		<< indent++ << "for (CORBA::ULong " << dimItVar << "=0;"<<dimItVar<<"<"<< *it << ";"<<dimItVar<<"++){" << endl;
-		dimsStr += string("[")+dimItVar+"]";
-		dimItVar[0]++;
-	}
-	delete[] dimItVar;
-	
-	m_elementType.writeCPPDeepCopyCode(ostr,indent,ident+dimsStr,target+dimsStr);
-	
-	for(const_iterator it = begin(); it != end(); it++){
-		ostr
-			<< --indent << "}" << endl;
-	}
-}
-
-void
-IDLArray::writeCDeepCopyCode(ostream &ostr, Indent &indent, string const &ident,string const &target) const {
-	char *dimItVar = new char[2];
-	dimItVar[0] = 'a';
-	dimItVar[1] = '\0';
-	
-	string dimsStr;
-	for(const_iterator it = begin(); it != end(); it++){
-		ostr
-		<< indent++ << "for (CORBA_unsigned_long " << dimItVar << "=0;"<<dimItVar<<"<"<< *it << ";"<<dimItVar<<"++){" << endl;
-		dimsStr += string("[")+dimItVar+"]";
-		dimItVar[0]++;
-	}
-	delete[] dimItVar;
-	
-	m_elementType.writeCDeepCopyCode(ostr,indent,ident+dimsStr,target+dimsStr);
-	
-	for(const_iterator it = begin(); it != end(); it++){
-		ostr
-			<< --indent << "}" << endl;
+IDLArray::IDLArray (IDLType const &element_type,
+		    string const  &id,
+		    IDL_tree       node,
+		    IDLScope      *parentscope = 0) :
+	IDLElement  (id, node, parentscope),
+	m_element_type (element_type)
+{
+	for (IDL_tree curdim = IDL_TYPE_ARRAY (node).size_list;
+	     curdim; curdim = IDL_LIST (curdim).next)
+	{
+		m_dims.push_back (IDL_INTEGER (IDL_LIST (curdim).data).value);
 	}
 }
 
 
 void
-IDLArray::getCPPMemberDeclarator(string const &id,string &typespec,string &dcl,
-							IDLTypedef const *activeTypedef = NULL) const {
-	if( activeTypedef ) {
-		typespec = activeTypedef->getQualifiedCPPIdentifier(activeTypedef->getRootScope());
-		dcl = id;
-	}
-	else {
-		m_elementType.getCPPMemberDeclarator(id, typespec, dcl, activeTypedef);
-		strstream dcl_str;
-		for(const_iterator it = begin(); it != end(); it++){
-			 dcl_str << "[" << *it << "]";
-		}
-		dcl += string(dcl_str.str(), dcl_str.pcount());
-	}
-}
+IDLArray::typedef_decl_write (ostream          &ostr,
+			      Indent           &indent,
+			      const IDLTypedef &target,
+			      const IDLTypedef *active_typedef = 0) const
+{
+#warning "WRITE ME"
+	// Create array typedef
+	ostr << indent << "typedef "
+	     << m_element_type.get_cpp_member_typename ()
+	     << ' ' << target.get_cpp_identifier ();
 
-void
-IDLArray::writeTypedef(ostream &ostr,Indent &indent,IDLCompilerState &state,
-					   IDLElement &dest,IDLScope const &scope,
-					   IDLTypedef const *activeTypedef = NULL) const {
-
-	string typespec,dcl,str_static="";
-	m_elementType.getCPPMemberDeclarator("",typespec,dcl);
-	ostr
-	<< indent << "typedef " << typespec + dcl << ' '
-	<< dest.getCPPIdentifier();
-
-	int i=0;
+	// Write dimensions
+	for (const_iterator i = begin (); i != end (); i++)
+		ostr << '[' << *i << ']';
+	ostr << ';' << endl;
 	
-	for(const_iterator it = begin(); it != end(); it++){
-	  i++;
-		ostr << "[" << *it << "]";
-	}
-	ostr << ";" << endl;
+
+	// Create slice typedef
+	ostr << indent << "typedef "
+	     << m_element_type.get_cpp_member_typename ()
+	     << ' ' << target.get_cpp_identifier () << "_slice";
+
+	// An array slice is all the dims except the first one
+	for (const_iterator i = ++begin (); i != end (); i++)
+		ostr << '[' << *i << ']';
+	ostr << ';' << endl;
 	
-	ostr
-	<< indent << "typedef " << typespec + dcl << ' '
-	<< dest.getCPPIdentifier() << "_slice";
+}
 
-	const_iterator it = begin();
-	for(++it; it != end(); ++it){  // an array slice is the all the dims except
-	  ostr << "[" << *it << "]"; //   the first one
-	}
-	ostr << ";" << endl;
-
-	if( scope.getTopLevelInterface() )
-		str_static = "static ";
-	ostr
-	<< indent << str_static << "inline "
-	<< dest.getCPPIdentifier() << "_slice *"
-	<< dest.getCPPIdentifier() << "_alloc() {\n";
-
+string
+IDLArray::stub_decl_arg_get (const string     &cpp_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	g_assert (active_typedef);
 	
-	string allocfunc = idlGetCast(IDL_IMPL_C_NS_NOTUSED  +
-								  dest.getQualifiedCIdentifier()+"__alloc()",
-								  dest.getCPPIdentifier() +"_slice *");
-	ostr
-	<< ++indent << dest.getCPPIdentifier() << "_slice *array =" << allocfunc << ";\n";
-	writeInitCode(ostr,indent,"array");
-	// and return the array
-	ostr
-	  << indent << "return array;\n";
+	string retval;
+
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		retval = "const " + active_typedef->get_cpp_typename () + 
+			" " + cpp_id;	
+		break;
+	case IDL_PARAM_INOUT:
+		retval = active_typedef->get_cpp_typename () + 
+			" " + cpp_id;	
+		break;
+	case IDL_PARAM_OUT:
+		retval = active_typedef->get_cpp_typename () + 
+			"_out " + cpp_id;	
+		break;
+	}
+
+	return retval;
+}
+
+void
+IDLArray::stub_impl_arg_pre (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &cpp_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef = 0) const
+{
+	if (!m_element_type.conversion_required ())
+		return;
 	
-	ostr
-	<< --indent  << "}\n\n";
+	// Create C array
+	ostr << indent << m_element_type.get_c_member_typename ()
+	     << " _c_" << cpp_id;
 
-	ostr
-	<< indent++ << str_static << "inline void "
-	<< dest.getCPPIdentifier() << "_copy("<< dest.getCPPIdentifier() << "_slice *dest, "
-	<< dest.getCPPIdentifier() << "_slice const *source) {\n";
-	writeCPPDeepCopyCode(ostr,indent,"dest","source");		
-	ostr
-	<< --indent  << "}\n\n";
+	// Write dimensions
+	for (const_iterator i = begin (); i != end (); i++)
+		ostr << '[' << *i << ']';
+	ostr << ';' << endl;
 
-	ostr
-	<< indent << str_static << "inline "
-	<< dest.getCPPIdentifier() << "_slice *"
-	<< dest.getCPPIdentifier() << "_dup("<< dest.getCPPIdentifier() << "_slice const * target) {\n";
-	ostr
-	<< ++indent << dest.getCPPIdentifier() << "_slice *array = "
-	<< dest.getCPPIdentifier() << "_alloc();" << endl;
-	ostr
-	<< indent << dest.getCPPIdentifier() << "_copy(array,target);" << endl;
+	// Fill C array
+	int depth = 0;
+	string array_pos;
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
+		array_pos += "[";
+		array_pos += iterator_name;
+		array_pos += "]";
+
+		// FIXME: What iterator type should we use to be safe
+		// with big dimensions? gsize?
+		ostr << indent
+		     << "for (int " << iterator_name << " = 0; "
+		     << iterator_name << " < " << *i << "; "
+		     << iterator_name << "++)" << endl;
+		ostr << indent++ << "{" << endl;
+
+		g_free (iterator_name);
+	}
+
+	string c_member = "_c_" + cpp_id + array_pos;
+	string cpp_member = cpp_id + array_pos;
+	m_element_type.member_pack_to_c_pre  (ostr, indent, cpp_member, c_member);
+	m_element_type.member_pack_to_c_pack (ostr, indent, cpp_member, c_member);
+	m_element_type.member_pack_to_c_post (ostr, indent, cpp_member, c_member);
+
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		ostr << --indent << "}" << endl;
+	}
 	
-	ostr
-	  << indent << "return array;\n";
+#warning "WRITE ME"
+}
 	
-	ostr
-	<< --indent  << "}\n\n";
+string
+IDLArray::stub_impl_arg_call (const string   &cpp_id,
+			      IDL_param_attr  direction,
+			      const IDLTypedef *active_typedef = 0) const
+{
+#warning "WRITE ME"
 
+	if (!m_element_type.conversion_required ())
+		return cpp_id;	
+}
 	
-	ostr
-	<< indent << str_static << "inline "
-	<< "void "
-	<< dest.getCPPIdentifier() << "_free(" << dest.getCPPIdentifier() << "_slice *a) {\n";
-	ostr
-	<< ++indent << "CORBA_free(a);\n";
-	ostr
-	<< --indent  << "}\n\n";
+void
+IDLArray::stub_impl_arg_post (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef = 0) const
+{
+#warning "WRITE ME"
+	if (!m_element_type.conversion_required ())
+		return;
+}
 
-	int length = 1;
-	for(it = begin(); it != end(); it++)
-		length *= *it;
 
-	if (!isVariableLength()){
-		ostr
-		<< indent << "typedef "IDL_IMPL_NS "::ArrayFixed_var< "
-		<< dest.getCPPIdentifier() << "_slice," << length << " > "
-		<< dest.getCPPIdentifier() << "_var;" << endl << endl;
 
-		ostr
-		<< indent << "typedef " << dest.getCPPIdentifier() << " "
-		<< dest.getCPPIdentifier() << "_out;" << endl << endl;
-		
-		ostr
-		<< indent << "typedef "IDL_IMPL_NS "::ArrayFixed_forany< "
-		<< dest.getCPPIdentifier() << "_slice," << length << " > "
-		<< dest.getCPPIdentifier() << "_forany;" << endl << endl;
-	} else {
-		ostr
-		<< indent << "typedef "IDL_IMPL_NS "::ArrayVariable_var< "
-		<< dest.getCPPIdentifier() << "_slice," << length << " > "
-		<< dest.getCPPIdentifier() << "_var;" << endl << endl;
-		ostr
-		<< indent << "typedef "IDL_IMPL_NS "::ArrayVariable_out< "
-		<< dest.getCPPIdentifier() << "_slice," << length << " > "
-		<< dest.getCPPIdentifier() << "_out;" << endl << endl;
-		
-		ostr
-		<< indent << "typedef "IDL_IMPL_NS "::ArrayVariable_forany< "
-		<< dest.getCPPIdentifier() << "_slice," << length << " > "
-		<< dest.getCPPIdentifier() << "_forany;" << endl << endl;
-	}	
 
-	ostr
-	<< indent << "typedef " IDL_IMPL_NS "::ArrayProperties< "
-	<< dest.getQualifiedCPPIdentifier() << "_slice," << length << " > "
-	<< dest.getCPPIdentifier() << "Props;" << endl << endl;
+string
+IDLArray::stub_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+	g_assert (active_typedef);
 	
-	if( state.m_array_list.doesArrayTypeExist(*this) == false ) {
-		ORBITCPP_MEMCHECK( new IDLWriteArrayProps(*this,dest,state,*state.m_pass_xlate) );
-		ORBITCPP_MEMCHECK( new IDLWriteArrayAnyFuncs(*this,dest,state,*state.m_pass_xlate) );
+	return active_typedef->get_cpp_typename () + "_slice *";
+}
+	
+void
+IDLArray::stub_impl_ret_pre (ostream          &ostr,
+			     Indent           &indent,
+			     const IDLTypedef *active_typedef = 0) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::stub_impl_ret_call (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_call_expression,
+			      const IDLTypedef *active_typedef = 0) const
+{
+	g_assert (active_typedef);
+	
+	ostr << indent << active_typedef->get_c_typename () << "_slice *_retval = "
+	     << c_call_expression << ";" << endl;
+}
+
+void
+IDLArray::stub_impl_ret_post (ostream          &ostr,
+			      Indent           &indent,
+			      const IDLTypedef *active_typedef = 0) const
+{
+#warning "WRITE ME"
+	if (!m_element_type.conversion_required ())
+	{
+		ostr << indent << "return _retval;" << endl;
+		return;
 	}
 }
+	
 
-void
-IDLArray::getCPPStructCtorDeclarator(string const &id,string &typespec,string &dcl,
-										IDLTypedef const *activeTypedef = NULL) const {
-	getCPPMemberDeclarator(id, typespec, dcl, activeTypedef);
-	typespec = "const " + typespec;
-	dcl = "_par_" + dcl;
-}
 
-void
-IDLArray::writeCPPStructCtor(ostream &ostr,Indent &indent,string const &id,
-								IDLTypedef const *activeTypedef = NULL) const {
-	if(activeTypedef) {
-		ostr
-		<< indent << activeTypedef->getQualifiedCPPIdentifier() << "_copy("
-		<< id << ", _par_" << id << ");" << endl;
+
+string
+IDLArray::skel_decl_arg_get (const string     &c_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	g_assert (active_typedef);
+	
+	string retval;
+
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		retval = "const " + active_typedef->get_c_typename () + 
+			" " + c_id;	
+		break;
+	case IDL_PARAM_INOUT:
+		retval = active_typedef->get_c_typename () + 
+			" " + c_id;	
+		break;
+	case IDL_PARAM_OUT:
+		retval = active_typedef->get_c_typename () + "_slice" +
+			" **" + c_id;	
+		break;
 	}
-	else
-		writeCPPDeepCopyCode(ostr,indent, id, "_par_"+id);
+
+	return retval;
 }
 
 void
-IDLArray::writeCPPStructPacker(ostream &ostr,Indent &indent,string const &id,
-								  IDLTypedef const *activeTypedef = NULL) const {
-	if( activeTypedef ) {
-		ostr
-		<< indent << activeTypedef->getQualifiedCPPIdentifier() << "_copy("
-		<< idlGetCast("_cstruct."+id,activeTypedef->getQualifiedCPPIdentifier() + "_slice*")
-		<< ", " << id << ");" << endl;
-	}
-	else {
-		string typespec, dcl;
-		m_elementType.getCPPMemberDeclarator("",typespec,dcl);
-		typespec += dcl;
-		writeCPPDeepCopyCode(ostr, indent, "("+idlGetCast("_cstruct."+id, typespec+"*")+")", id );
-	}
+IDLArray::skel_impl_arg_pre (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &c_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
-
+	
+string
+IDLArray::skel_impl_arg_call (const string     &c_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+	if (!m_element_type.conversion_required ())
+		return c_id;
+}
+	
 void
-IDLArray::writeCPPStructUnpacker(ostream &ostr,Indent &indent,string const &id,
-									IDLTypedef const *activeTypedef = NULL) const {
-	if( activeTypedef ) {
-		ostr
-		<< indent << activeTypedef->getQualifiedCPPIdentifier() << "_copy("
-		<< id << ", "
-		<< idlGetCast("_cstruct."+id,activeTypedef->getQualifiedCPPIdentifier() + "_slice*")
-		<< ");" << endl;
-	}
-	else {
-		string typespec, dcl;
-		m_elementType.getCPPMemberDeclarator("",typespec,dcl);
-		typespec += dcl;
-		writeCPPDeepCopyCode(ostr, indent, id,
-				"("+idlGetCast("_cstruct."+id, typespec+"*")+")" );
-	}
+IDLArray::skel_impl_arg_post (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 
-void
-IDLArray::writeUnionModifiers(ostream &ostr,Indent &indent, string const &id, string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const{
-	string typespec,dcl;
-	getCPPStubDeclarator(IDL_PARAM_IN,"param",typespec,dcl,activeTypedef);
-	ostr
-	<< indent << "void " << id << "(" << typespec << " " << dcl << "){" << endl;
-	ostr
-	<< ++indent << "_clear_member();" << endl	
-	<< indent << "_d(" << discriminatorVal << ");" << endl;
 
-	ostr << indent << activeTypedef->getNSScopedCTypeName() << " const &_tmp = reinterpret_cast< "
-		 << activeTypedef->getNSScopedCTypeName() << " const &>(param);" << endl;
 
-	writeCDeepCopyCode(ostr,indent,"m_target._u."+id,"_tmp");
-
-	ostr
-	<< --indent << "}" << endl << endl;	
+string
+IDLArray::skel_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 void
-IDLArray::writeUnionAccessors(ostream &ostr,Indent &indent, string const &id, string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const{
-	string typespec,dcl;
-	g_assert(activeTypedef);
-	getCPPStubDeclarator(IDL_PARAM_IN,"",typespec,dcl,activeTypedef);
-	ostr
-	<< indent << typespec << dcl << "_slice *" << id << "() const {" << endl;
-	ostr << indent << activeTypedef->getNSScopedCPPTypeName() << "_slice const *_tmp = reinterpret_cast< "
-		 << activeTypedef->getNSScopedCPPTypeName() << "_slice const *>(m_target._u." << id << ");" << endl;
-	ostr	
-	<< ++indent << "return _tmp;" << endl;
-	ostr
-	<< --indent << "}" << endl << endl;
+IDLArray::skel_impl_ret_pre (ostream          &ostr,
+			     Indent           &indent,
+			     const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 void
-IDLArray::writeUnionReferents(ostream &ostr,Indent &indent, string const &id, string const &discriminatorVal,
-							IDLTypedef const *activeTypedef = NULL) const{
-	string typespec,dcl;
-	g_assert(activeTypedef);
-	getCPPStubDeclarator(IDL_PARAM_IN,"",typespec,dcl,activeTypedef);
-	ostr
-	<< indent << activeTypedef->getNSScopedCPPTypeName()<< "_slice *" << id << "() {" << endl;
-	ostr
-	<< ++indent << activeTypedef->getNSScopedCPPTypeName() << "_slice *_tmp = reinterpret_cast< "
-	<< activeTypedef->getNSScopedCPPTypeName() << "_slice *>(m_target._u." << id << ");" << endl;
-	ostr	
-	<< indent << "return _tmp;" << endl;
-	ostr
-	<< --indent << "}" << endl << endl;
-}
-
-// stub stuff
-void
-IDLArray::getCPPStubDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl,
-							  IDLTypedef const *activeTypedef=NULL) const {
-	typespec = attr == IDL_PARAM_IN ? "const " : "";
-	typespec += activeTypedef ?
-		activeTypedef->getQualifiedCPPIdentifier() : getTypeName();
-	if (attr == IDL_PARAM_OUT) typespec += "_out";
-	dcl = id;
-}
-
-
-void
-IDLArray::getCSkelDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl,
-							IDLTypedef const *activeTypedef = NULL) const {
-	g_assert(activeTypedef);
-	typespec = attr == IDL_PARAM_IN ? "const " : "";
-	typespec += activeTypedef->getNSScopedCTypeName();
-	dcl = id;
-	if( attr == IDL_PARAM_OUT && isVariableLength()) {
-		typespec += "_slice";
-		dcl = "**" + dcl;
-	}
+IDLArray::skel_impl_ret_call (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_call_expression,
+			      const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 void
-IDLArray::getCPPStubReturnDeclarator(string const &id,string &typespec,string &dcl,
-									 IDLTypedef const *activeTypedef = NULL) const {
-	g_assert(activeTypedef);
-	typespec = activeTypedef->getQualifiedCPPIdentifier() + "_slice";
-	dcl = "*" + id;
-}
-
-void
-IDLArray::getCSkelReturnDeclarator(string const &id,string &typespec,string &dcl,
-								  IDLTypedef const *activeTypedef = NULL) const {
-	g_assert(activeTypedef);
-	typespec = activeTypedef->getNSScopedCTypeName() + "_slice";
-	dcl = "*" + id;
+IDLArray::skel_impl_ret_post (ostream          &ostr,
+			    Indent           &indent,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 
 string
-IDLArray::getCPPStubParameterTerm(IDL_param_attr attr,string const &id,
-								   IDLTypedef const *activeTypedef = NULL) const {
-	string typespec,dcl;
-	getCSkelDeclarator(attr,"",typespec,dcl,activeTypedef);
-	
-	string term;
-	if(!isVariableLength()){
-	  term = idlGetCast(id,typespec+dcl+"_slice *&");
-	} else {
-	  term = idlGetCast((attr == IDL_PARAM_OUT ? "&"+id+".ptr()" : id),
-	  					(attr == IDL_PARAM_OUT ? typespec+dcl : typespec+dcl+"_slice *&"));
-	}
-	return term;
+IDLArray::get_cpp_member_typename (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 string
-IDLArray::getCPPSkelParameterTerm(IDL_param_attr attr,string const &id,
-								   IDLTypedef const *activeTypedef = NULL) const {
-	string typespec,dcl;
-	getCPPStubDeclarator(attr,"",typespec,dcl,activeTypedef);
-	string term;
+IDLArray::get_c_member_typename (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
 
-	// we can't use the foo_out type for marshalling - instead use a
-	// foo_slice *&
-	if(attr == IDL_PARAM_OUT)
-	  typespec = activeTypedef ?
-		activeTypedef->getQualifiedCPPIdentifier() : getTypeName();
-	
-	if(!isVariableLength()){
-	  term = idlGetCast(id,typespec + "_slice *&");
-	} else {
-	  term = idlGetCast((attr == IDL_PARAM_OUT ? "*" : "") + id,
-						typespec + "_slice *&");
-	}
-	
-	return term;
+string
+IDLArray::member_decl_arg_get (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_impl_arg_copy (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_pack_to_c_pre  (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &c_id,
+			       const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_pack_to_c_pack (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &c_id,
+			       const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_pack_to_c_post (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &c_id,
+			       const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_unpack_from_c_pre  (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const string     &c_id,
+				   const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_unpack_from_c_pack (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const string     &c_id,
+				   const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLArray::member_unpack_from_c_post  (ostream          &ostr,
+				      Indent           &indent,
+				      const string     &cpp_id,
+				      const string     &c_id,
+				      const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 

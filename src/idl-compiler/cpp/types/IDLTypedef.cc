@@ -58,28 +58,34 @@ IDLTypedef::stub_decl_arg_get (const string     &cpp_id,
 }
 
 void
-IDLTypedef::stub_impl_arg_pre (ostream        &ostr,
-			       Indent         &indent,
-			       const string   &cpp_id,
-			       IDL_param_attr  direction) const
+IDLTypedef::stub_impl_arg_pre (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       IDL_param_attr    direction,
+			       const IDLTypedef *active_typedef) const
 {
-	m_alias.stub_impl_arg_pre (ostr, indent, cpp_id, direction);
+	m_alias.stub_impl_arg_pre (ostr, indent, cpp_id, direction,
+				   active_typedef ? active_typedef : this);
 }
-	
+
 string
-IDLTypedef::stub_impl_arg_call (const string   &cpp_id,
-				IDL_param_attr  direction) const
+IDLTypedef::stub_impl_arg_call (const string     &cpp_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef) const
 {
-	return m_alias.stub_impl_arg_call (cpp_id, direction);
+	return m_alias.stub_impl_arg_call (cpp_id, direction,
+					   active_typedef ? active_typedef : this);
 }
 	
 void
-IDLTypedef::stub_impl_arg_post (ostream        &ostr,
-				Indent         &indent,
-				const string   &cpp_id,
-				IDL_param_attr  direction) const
+IDLTypedef::stub_impl_arg_post (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef) const
 {
-	m_alias.stub_impl_arg_post (ostr, indent, cpp_id, direction);
+	m_alias.stub_impl_arg_post (ostr, indent, cpp_id, direction,
+				    active_typedef ? active_typedef : this);
 }
 
 
@@ -92,25 +98,31 @@ IDLTypedef::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 }
 	
 void
-IDLTypedef::stub_impl_ret_pre (ostream &ostr,
-			       Indent  &indent) const
+IDLTypedef::stub_impl_ret_pre (ostream          &ostr,
+			       Indent           &indent,
+			       const IDLTypedef *active_typedef) const
 {
-	m_alias.stub_impl_ret_pre (ostr, indent);
+	m_alias.stub_impl_ret_pre (ostr, indent,
+				   active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::stub_impl_ret_call (ostream      &ostr,
-				Indent       &indent,
-				const string &c_call_expression) const
+IDLTypedef::stub_impl_ret_call (ostream          &ostr,
+				Indent           &indent,
+				const string     &c_call_expression,
+				const IDLTypedef *active_typedef) const
 {
-	m_alias.stub_impl_ret_call (ostr, indent, c_call_expression);
+	m_alias.stub_impl_ret_call (ostr, indent, c_call_expression,
+				   active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::stub_impl_ret_post (ostream &ostr,
-				Indent  &indent) const
+IDLTypedef::stub_impl_ret_post (ostream          &ostr,
+				Indent           &indent,
+				const IDLTypedef *active_typedef) const
 {
-	m_alias.stub_impl_ret_post (ostr, indent);
+	m_alias.stub_impl_ret_post (ostr, indent,
+				   active_typedef ? active_typedef : this);
 }
 	
 
@@ -129,25 +141,31 @@ void
 IDLTypedef::skel_impl_arg_pre (ostream        &ostr,
 			       Indent         &indent,
 			       const string   &c_id,
-			       IDL_param_attr  direction) const
+			       IDL_param_attr  direction,
+			       const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_arg_pre (ostr, indent, c_id, direction);
+	m_alias.skel_impl_arg_pre (ostr, indent, c_id, direction,
+				   active_typedef ? active_typedef : this);
 }
 	
 string
-IDLTypedef::skel_impl_arg_call (const string   &c_id,
-				IDL_param_attr  direction) const
+IDLTypedef::skel_impl_arg_call (const string     &c_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef) const
 {
-	return m_alias.skel_impl_arg_call (c_id, direction);
+	return m_alias.skel_impl_arg_call (c_id, direction,
+					   active_typedef ? active_typedef : this);
 }
 	
 void
-IDLTypedef::skel_impl_arg_post (ostream        &ostr,
-				Indent         &indent,
-				const string   &c_id,
-				IDL_param_attr  direction) const
+IDLTypedef::skel_impl_arg_post (ostream          &ostr,
+				Indent           &indent,
+				const string     &c_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_arg_pre (ostr, indent, c_id, direction);
+	m_alias.skel_impl_arg_pre (ostr, indent, c_id, direction,
+				   active_typedef ? active_typedef : this);
 }
 
 
@@ -160,99 +178,126 @@ IDLTypedef::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 }
 
 void
-IDLTypedef::skel_impl_ret_pre (ostream &ostr,
-			       Indent  &indent) const
+IDLTypedef::skel_impl_ret_pre (ostream          &ostr,
+			       Indent           &indent,
+			       const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_ret_pre (ostr, indent);
+	m_alias.skel_impl_ret_pre (ostr, indent,
+				   active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::skel_impl_ret_call (ostream      &ostr,
-				Indent       &indent,
-				const string &cpp_call_expression) const
+IDLTypedef::skel_impl_ret_call (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_call_expression,
+				const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_ret_call (ostr, indent, cpp_call_expression);
+	m_alias.skel_impl_ret_call (ostr, indent, cpp_call_expression,
+				    active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::skel_impl_ret_post (ostream &ostr,
-				Indent  &indent) const
+IDLTypedef::skel_impl_ret_post (ostream          &ostr,
+				Indent           &indent,
+				const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_ret_pre (ostr, indent);
+	m_alias.skel_impl_ret_pre (ostr, indent,
+				   active_typedef ? active_typedef : this);
 }
 
 
 
 string
-IDLTypedef::get_cpp_member_typename () const
+IDLTypedef::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
-	return m_alias.get_cpp_member_typename ();
+	return m_alias.get_cpp_member_typename (active_typedef ? active_typedef : this);
 }
 
 string
-IDLTypedef::member_decl_arg_get () const
+IDLTypedef::get_c_member_typename (const IDLTypedef *active_typedef) const
 {
-	return m_alias.member_decl_arg_get ();
+	return m_alias.get_cpp_member_typename (active_typedef ? active_typedef : this);
+}
+
+string
+IDLTypedef::member_decl_arg_get (const IDLTypedef *active_typedef) const
+{
+	return m_alias.member_decl_arg_get (active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_impl_arg_copy (ostream      &ostr,
-				  Indent       &indent,
-				  const string &cpp_id) const
+IDLTypedef::member_impl_arg_copy (ostream          &ostr,
+				  Indent           &indent,
+				  const string     &cpp_id,
+				  const IDLTypedef *active_typedef) const
 {
-	m_alias.member_impl_arg_copy (ostr, indent, cpp_id);
+	m_alias.member_impl_arg_copy (ostr, indent, cpp_id,
+				      active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_pack_to_c_pre  (ostream      &ostr,
-				   Indent       &indent,
-				   const string &cpp_id,
-				   const string &c_id) const
+IDLTypedef::member_pack_to_c_pre  (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const string     &c_id,
+				   const IDLTypedef *active_typedef) const
 {
-	m_alias.member_pack_to_c_pre (ostr, indent, cpp_id, c_id);
+	m_alias.member_pack_to_c_pre (ostr, indent, cpp_id, c_id,
+				      active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_pack_to_c_pack (ostream      &ostr,
-				   Indent       &indent,
-				   const string &cpp_id,
-				   const string &c_id) const
+IDLTypedef::member_pack_to_c_pack (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const string     &c_id,
+				   const IDLTypedef *active_typedef) const
 {
-	m_alias.member_pack_to_c_pack (ostr, indent, cpp_id, c_id);
+	m_alias.member_pack_to_c_pack (ostr, indent, cpp_id, c_id,
+				       active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_pack_to_c_post (ostream      &ostr,
-				   Indent       &indent,
-				   const string &cpp_id,
-				   const string &c_id) const
+IDLTypedef::member_pack_to_c_post (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const string     &c_id,
+				   const IDLTypedef *active_typedef) const
 {
-	m_alias.member_pack_to_c_post (ostr, indent, cpp_id, c_id);
+	m_alias.member_pack_to_c_post (ostr, indent, cpp_id, c_id,
+				       active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_unpack_from_c_pre  (ostream      &ostr,
-				       Indent       &indent,
-				       const string &cpp_id,
-				       const string &c_id) const
+IDLTypedef::member_unpack_from_c_pre  (ostream          &ostr,
+				       Indent           &indent,
+				       const string     &cpp_id,
+				       const string     &c_id,
+				       const IDLTypedef *active_typedef) const
 {
-	m_alias.member_unpack_from_c_pre (ostr, indent, cpp_id, c_id);
+	m_alias.member_unpack_from_c_pre (ostr, indent, cpp_id, c_id,
+					  active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_unpack_from_c_pack (ostream      &ostr,
-				       Indent       &indent,
-				       const string &cpp_id,
-				       const string &c_id) const
+IDLTypedef::member_unpack_from_c_pack (ostream          &ostr,
+				       Indent           &indent,
+				       const string     &cpp_id,
+				       const string     &c_id,
+				       const IDLTypedef *active_typedef) const
 {
-	m_alias.member_unpack_from_c_pack (ostr, indent, cpp_id, c_id);
+	m_alias.member_unpack_from_c_pack (ostr, indent, cpp_id, c_id,
+					   active_typedef ? active_typedef : this);
 }
 
 void
-IDLTypedef::member_unpack_from_c_post  (ostream      &ostr,
-					Indent       &indent,
-					const string &cpp_id,
-					const string &c_id) const
+IDLTypedef::member_unpack_from_c_post (ostream          &ostr,
+				       Indent           &indent,
+				       const string     &cpp_id,
+				       const string     &c_id,
+				       const IDLTypedef *active_typedef) const
 {
-	m_alias.member_unpack_from_c_post (ostr, indent, cpp_id, c_id);
+	m_alias.member_unpack_from_c_post (ostr, indent, cpp_id, c_id,
+					   active_typedef ? active_typedef : this);
 }
+
