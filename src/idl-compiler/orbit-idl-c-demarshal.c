@@ -15,12 +15,6 @@ static void c_demarshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *c
 static void c_demarshal_generate_alloc(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 
 void
-c_demarshalling_generate_vars(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels, gboolean subfunc)
-{
-  /* */
-}
-
-void
 c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels, gboolean subfunc)
 {
   OIDL_C_Marshal_Info cmi;
@@ -215,7 +209,7 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       fprintf(cmi->ci->fh, "iiop_byteswap((guchar *)&(%s), _ORBIT_curptr, %d);\n", ctmp, node->u.datum_info.datum_size);
     else {
       fprintf(cmi->ci->fh, "(*((guint%d *)&(%s))) = ", n, ctmp);
-      fprintf(cmi->ci->fh, "GUINT%d_SWAP_LE_BE(*((guint%d *)_ORBIT_curptr));",
+      fprintf(cmi->ci->fh, "GUINT%d_SWAP_LE_BE(*((guint%d *)_ORBIT_curptr));\n",
 	      n, n);
     }
   } else {
@@ -446,7 +440,9 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       switch(tmi->mtype)
 	{
 	case MARSHAL_FUNC:
-	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, &(%s), %s, ev);\n", ctmp2, ctmp, do_dup);
+	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, %s(%s), %s, ev);\n", ctmp2,
+		  (node->flags & MN_ISSLICE)?"":"&",
+		  ctmp, do_dup);
 	  break;
 	case MARSHAL_ANY:
 	  fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s);\n", ctmp);
