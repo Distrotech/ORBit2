@@ -42,6 +42,7 @@ static gboolean cl_disable_stubs = FALSE,
 static int cl_idlwarnlevel = 2;
 static int cl_debuglevel = 0;
 static int cl_is_pidl = 0;
+static int cl_output_version = 0;
 static int cl_enable_small = 1;
 static int cl_enable_old_style = 0;
 static int cl_enable_small_stubs = 0;
@@ -110,6 +111,7 @@ static const
 struct poptOption options[] = {
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_cpp_callback_options, 0, NULL, NULL},
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_libIDL_callback_options, 0, NULL, NULL},
+  {"version", 'v', POPT_ARG_NONE, &cl_output_version, 0, "Output compiler version and serial", NULL},
   {"lang", 'l', POPT_ARG_STRING, &cl_output_lang, 0, "Output language (default is C)", NULL},
   {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4", NULL},
   {"idlwarnlevel", '\0', POPT_ARG_INT, &cl_idlwarnlevel, 0, "IDL warning level 0 to 4, default is 2", NULL},
@@ -158,6 +160,12 @@ int main(int argc, const char *argv[])
     		poptBadOption(pcon, POPT_BADOPTION_NOALIAS),
 		poptStrerror(rc));
     exit(0);
+  }
+
+  if (cl_output_version) {
+	  fprintf (stderr, "orbit-idl %s - serial %d\n\n",
+		   VERSION, ORBIT_CONFIG_SERIAL);
+	  exit (0);
   }
 
   if (cl_enable_old_style)
