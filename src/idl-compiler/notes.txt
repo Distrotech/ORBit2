@@ -1,0 +1,64 @@
+	TODOs
+
+Passes: Stubs, skeletons, common, header, skelimpl
+
+All these are done with the C backend in mind.
+
+-skelimpl:
+	You get an IDL_tree, you do as you please.
+
+-stubs:
+	The only real task is to produce the stubs themselves.
+
+	Figure out a better short-circuit mechanism?
+
+	See misc.
+
+	Information needed per-operation:
+		Optimized marshalling & demarshalling info
+
+		List of required checks (e.g. we shouldn't have
+		to check for user exceptions in a routine that can't
+		raise any) and outputs.
+
+-skels:
+	Produce the skels themselves.
+
+	Produce the opname -> skel routine. (needs fixing for correctness)
+
+	Produce the POA stuff.
+
+	Information needed per-operation:
+		Optimized demarshalling & marshalling info
+
+		List of required checks (e.g. we shouldn't have
+		to check for user exceptions in a routine that can't
+		raise any).
+
+-common:
+	For each type, produce the alloc & free (maybe allocbuf) routines.
+
+	TypeCodes (should be able to reuse existing, mostly).
+
+-header:
+	Output types.
+
+	Output POA stuff (epvs, vepvs, servants).
+
+	Output stub prototypes.
+
+All:
+	Normalized type info?
+
+Misc:
+	Decisions on whether to use a separate marshalling routine for a type,
+	or to inline the functionality. (refcount?)
+
+	Combining little piece marshalling into a temporary buffer.
+
+	Using register variables (e.g. instead of buf->cur when demarshalling).
+
+	Better checking of clashes between builtins and IDL-compiler-produced.
+
+	Redo GET_ATOM to not use a useless function pointer... (byteswap
+	macros instead perhaps, or direct call to IIOP endian).
