@@ -408,11 +408,17 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
 
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
+      if(is_skels)
+	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
+      else
+	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
       sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
       break;
     case IDL_PARAM_IN:
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_IN);
+      if(is_skels)
+	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_IN) - 1, 0);
+      else
+	sub->nptrs = oidl_param_numptrs(curparam, DATA_IN);
       break;
     default:
       g_error("Weird param direction for in pass.");
@@ -464,10 +470,16 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels)
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
       sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
+      if(is_skels)
+	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
+      else
+	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
       break;
     case IDL_PARAM_OUT:
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_OUT);
+      if(is_skels)
+	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_OUT) - 1, 0);
+      else
+	sub->nptrs = oidl_param_numptrs(curparam, DATA_OUT);
       break;
     default:
       g_error("Weird param direction for out pass.");

@@ -231,6 +231,7 @@ orbit_cbe_get_typename(IDL_tree tree)
     }
     break;
   case IDLN_INTERFACE:
+  case IDLN_FORWARD_DCL:
     retval = orbit_cbe_get_typename(IDL_INTERFACE(tree).ident);
     g_string_assign(tmpstr, retval); g_free(retval); retval = NULL;
     break;
@@ -261,19 +262,20 @@ static void
 orbit_cbe_param_printptrs(FILE *of, IDL_tree param, IDL_ParamRole role)
 {
   int i, n;
+  IDL_tree p2;
 
   if(param == NULL)
     return;
 
-  param = orbit_cbe_get_typespec(param);
-  n = oidl_param_numptrs(param, role);
+  p2 = orbit_cbe_get_typespec(param);
+  n = oidl_param_numptrs(p2, role);
 
 #if 0
-  if(IDL_NODE_TYPE(param) == IDLN_TYPE_ARRAY
+  if(IDL_NODE_TYPE(p2) == IDLN_TYPE_ARRAY
      && ((role == DATA_OUT) || (role == DATA_RETURN))) {
     if(role == DATA_RETURN)
       fprintf(of, "_slice*");
-    else if(!cbe_type_is_fixed_length(param)) /* && role == DATA_OUT */
+    else if(!cbe_type_is_fixed_length(p2)) /* && role == DATA_OUT */
       fprintf(of, "_slice*");
   }
 #endif
@@ -346,7 +348,7 @@ orbit_cbe_op_write_proto(FILE *of,
 	g_error("Unknown IDL_PARAM type");
       }
 
-      orbit_cbe_param_printptrs(of, IDL_OP_DCL(op).op_type_spec, r);
+      orbit_cbe_param_printptrs(of, IDL_PARAM_DCL(parm).param_type_spec, r);
     }
 
     fprintf(of, " %s, ", IDL_IDENT(IDL_PARAM_DCL(parm).simple_declarator).str);

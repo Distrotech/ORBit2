@@ -19,6 +19,8 @@ c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
   OIDL_C_Marshal_Info cmi;
 
+  if(!node) return;
+
   cmi.ci = ci;
   cmi.last_tail_align = 1;
 

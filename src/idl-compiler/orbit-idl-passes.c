@@ -92,6 +92,17 @@ oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
   case IDLN_INTERFACE:
     oidl_pass_tmpvars(IDL_INTERFACE(tree).body, dummy, is_out);
     break;
+  case IDLN_EXCEPT_DCL:
+    {
+      OIDL_Except_Info *ei = tree->data;
+      int ctr = 0;
+
+      if(is_out)
+	orbit_idl_tmpvars_assign(ei->demarshal, &ctr);
+      else
+	orbit_idl_tmpvars_assign(ei->marshal, &ctr);
+    }
+    break;
   case IDLN_OP_DCL:
     {
       OIDL_Op_Info *oi;
@@ -148,6 +159,15 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
   case IDLN_INTERFACE:
     oidl_pass_run_for_ops(IDL_INTERFACE(tree).body, func, is_out);
     break;
+  case IDLN_EXCEPT_DCL:
+    {
+      OIDL_Except_Info *ei = tree->data;
+      if(is_out)
+	func(ei->demarshal, NULL);
+      else
+	func(ei->marshal, NULL);
+    }
+    break;
   case IDLN_OP_DCL:
     {
       OIDL_Op_Info *oi = (OIDL_Op_Info *)tree->data;
@@ -183,67 +203,82 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
   }  
 }
 
-static void
-oidl_pass_set_alignment_datum(OIDL_Marshal_Node *node)
+static guint8
+oidl_get_tree_alignment(IDL_tree tree)
 {
   guint8 itmp;
 
-  if(node->tree) {
-    /* find arch alignments */
-    switch(IDL_NODE_TYPE(node->tree)) {
-    case IDLN_TYPE_INTEGER:
-      switch(IDL_TYPE_INTEGER(node->tree).f_type) {
-      case IDL_INTEGER_TYPE_SHORT:
+  /* find arch alignments */
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_TYPE_INTEGER:
+    switch(IDL_TYPE_INTEGER(tree).f_type) {
+    case IDL_INTEGER_TYPE_SHORT:
 #if ALIGNOF_CORBA_SHORT != ALIGNOF_CORBA_UNSIGNED_SHORT
 #error "unsigned alignment is different from signed"
 #endif
-	itmp = ALIGNOF_CORBA_SHORT;
-	break;
-      case IDL_INTEGER_TYPE_LONG:
+      itmp = ALIGNOF_CORBA_SHORT;
+      break;
+    case IDL_INTEGER_TYPE_LONG:
 #if ALIGNOF_CORBA_LONG != ALIGNOF_CORBA_UNSIGNED_LONG
 #error "unsigned alignment is different from signed"
 #endif
-	itmp = ALIGNOF_CORBA_LONG;
-	break;
-      case IDL_INTEGER_TYPE_LONGLONG:
+      itmp = ALIGNOF_CORBA_LONG;
+      break;
+    case IDL_INTEGER_TYPE_LONGLONG:
 #if ALIGNOF_CORBA_LONG_LONG != ALIGNOF_CORBA_UNSIGNED_LONG_LONG
 #error "unsigned alignment is different from signed"
 #endif
-	itmp = ALIGNOF_CORBA_LONG_LONG;
-	break;
-      default:
-	g_error("Weird integer type");
-	break;
-      }
-      break;
-    case IDLN_TYPE_FLOAT:
-      switch(IDL_TYPE_FLOAT(node->tree).f_type) {
-      case IDL_FLOAT_TYPE_FLOAT:
-	itmp = ALIGNOF_CORBA_FLOAT;
-	break;
-      case IDL_FLOAT_TYPE_DOUBLE:
-	itmp = ALIGNOF_CORBA_DOUBLE;
-	break;
-      case IDL_FLOAT_TYPE_LONGDOUBLE:
-	itmp = ALIGNOF_CORBA_LONG_DOUBLE;
-	break;
-      default:
-	g_error("Weird float type");
-	break;
-      }
-      break;
-    case IDLN_TYPE_OCTET:
-    case IDLN_TYPE_CHAR:
-      itmp = ALIGNOF_CORBA_CHAR;
-      break;
-    case IDLN_TYPE_BOOLEAN:
-      itmp = ALIGNOF_CORBA_BOOLEAN;
+      itmp = ALIGNOF_CORBA_LONG_LONG;
       break;
     default:
-      g_error("Don't know how to get alignment of a %s datum", IDL_tree_type_names[IDL_NODE_TYPE(node->tree)]);
+      g_error("Weird integer type");
       break;
     }
+    break;
+  case IDLN_TYPE_ENUM:
+    itmp = ALIGNOF_CORBA_LONG;
+    break;
+  case IDLN_TYPE_FLOAT:
+    switch(IDL_TYPE_FLOAT(tree).f_type) {
+    case IDL_FLOAT_TYPE_FLOAT:
+      itmp = ALIGNOF_CORBA_FLOAT;
+      break;
+    case IDL_FLOAT_TYPE_DOUBLE:
+      itmp = ALIGNOF_CORBA_DOUBLE;
+      break;
+    case IDL_FLOAT_TYPE_LONGDOUBLE:
+      itmp = ALIGNOF_CORBA_LONG_DOUBLE;
+      break;
+    default:
+      g_error("Weird float type");
+      break;
+    }
+    break;
+  case IDLN_TYPE_OCTET:
+  case IDLN_TYPE_CHAR:
+    itmp = ALIGNOF_CORBA_CHAR;
+    break;
+  case IDLN_TYPE_BOOLEAN:
+    itmp = ALIGNOF_CORBA_BOOLEAN;
+    break;
+  case IDLN_IDENT:
+    itmp = oidl_get_tree_alignment(orbit_cbe_get_typespec(tree));
+    break;
+  default:
+    g_error("Don't know how to get alignment of a %s datum", IDL_tree_type_names[IDL_NODE_TYPE(tree)]);
+    break;
+  }
 
+  return itmp;
+}
+
+static void
+oidl_pass_set_alignment_datum(OIDL_Marshal_Node *node)
+{
+  if(node->tree) {
+    guint8 itmp;
+
+    itmp = oidl_get_tree_alignment(node->tree);
     node->arch_head_align = node->arch_tail_align = itmp; /* I don't think there's any cases where these aren't equal */
   } else
     node->arch_head_align = node->arch_tail_align = node->u.datum_info.datum_size;
