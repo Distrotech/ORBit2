@@ -43,6 +43,7 @@ static int cl_idlwarnlevel = 2;
 static int cl_debuglevel = 0;
 static gboolean cl_showcpperrors;
 static char *cl_output_lang = "c";
+static char *cl_backend_dir = ORBITLIBDIR;
 
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
 static GString *cl_cpp_args;
@@ -110,6 +111,7 @@ struct poptOption options[] = {
   {"nocommon", '\0', POPT_ARG_NONE, &cl_disable_common, 0, "Don't output common", NULL},
   {"noheaders", '\0', POPT_ARG_NONE, &cl_disable_headers, 0, "Don't output headers", NULL},
   {"skeleton-impl", '\0', POPT_ARG_NONE, &cl_enable_skeleton_impl, 0, "Don't output headers", NULL},
+  {"backenddir", '\0', POPT_ARG_STRING, &cl_backend_dir, 0, "Override IDL backend library directory", "DIR"},
   {"c-output-formatter", '\0', POPT_ARG_STRING, &c_output_formatter, 0, "Program to use to format output (normally, indent)", "PROGRAM"},
   POPT_AUTOHELP
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
@@ -157,6 +159,7 @@ int main(int argc, char *argv[])
     |(cl_enable_skeleton_impl?OUTPUT_SKELIMPL:0);
   rinfo.output_formatter = c_output_formatter;
   rinfo.output_language = cl_output_lang;
+  rinfo.backend_directory = cl_backend_dir;
 
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {

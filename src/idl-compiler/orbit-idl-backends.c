@@ -34,7 +34,7 @@ static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
   {NULL, NULL}
 };
 
-OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
+OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang,const char* backend_dir)
 {
   int i;
   int ret;
@@ -51,7 +51,7 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
 
   ctmp = alloca(sizeof("orbit-idl--backend") + strlen(lang));
   sprintf(ctmp, "orbit-idl-%s-backend", lang);
-  fname = g_module_build_path(ORBITLIBDIR, ctmp);
+  fname = g_module_build_path(backend_dir, ctmp);
   g_assert(fname);
   gmod = g_module_open(fname, G_MODULE_BIND_LAZY);
 
