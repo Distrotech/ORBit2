@@ -651,7 +651,7 @@ ORBit_demarshal_arg (GIOPRecvBuffer *buf,
 {
 	gpointer retval, val;
 
-	retval = val = ORBit_alloc_tcval (tc, 1);
+	retval = val = ORBit_alloc_by_tc (tc);
 
 	ORBit_demarshal_value (tc, &val, buf, dup_strings, orb);
 
@@ -671,7 +671,7 @@ ORBit_demarshal_any (GIOPRecvBuffer *buf,
 	if (ORBit_decode_CORBA_TypeCode (&retval->_type, buf))
 		return TRUE;
 
-	val = retval->_value = ORBit_alloc_tcval (retval->_type, 1);
+	val = retval->_value = ORBit_alloc_by_tc (retval->_type);
 	if (ORBit_demarshal_value (retval->_type, &val,
 				   buf, dup_strings, orb))
 		return TRUE;
@@ -695,18 +695,11 @@ CORBA_any__freekids (gpointer mem, gpointer dat)
 	return t + 1;
 }
 
+
 CORBA_any *
 CORBA_any__alloc (void)
 {
-	CORBA_any *retval = ORBit_alloc (
-		sizeof (CORBA_any), 1, 
-		&CORBA_any__freekids);
-
-	/* FIXME: do we need to do this for small ? */
-	/* Make things easier on stubs */
-	memset (retval, 0, sizeof (CORBA_any));
-
-	return retval;
+	return ORBit_alloc_by_tc (TC_CORBA_any);
 }
 
 void
@@ -893,7 +886,7 @@ ORBit_copy_value (gconstpointer value, CORBA_TypeCode tc)
 {
 	gpointer retval, newval;
 
-	retval = newval = ORBit_alloc_tcval (tc, 1);
+	retval = newval = ORBit_alloc_by_tc (tc);
 	ORBit_copy_value_core (&value, &newval, tc);
 
 	return retval;

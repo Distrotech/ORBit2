@@ -1,5 +1,49 @@
 2001-11-20  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-typecode.c
+	(CORBA_TypeCode__freekids): kill.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_alloc),
+	(ORBit_small_invoke_adaptor): upd.
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_copy_value, ORBit_demarshal_arg): alloc_by_tc.
+	(CORBA_any__freekids): kill.
+
+	* src/orb/dynamic/dynany.c (dynany_any_new_default),
+	(dynany_sequence_realloc_to),
+	(DynamicAny_DynStruct_get_members),
+	(DynamicAny_DynSequence_get_elements): alloc_by_tc
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_alloc_by_tc): impl.
+
+	* src/orb/orb-core/corba-any.c
+	(CORBA_any__alloc): do it with _alloc_by_tc.
+
+	* src/orb/orbit-init.c: include our own header.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_IOP_ServiceContextList_demarshal): warning fix.
+
+	* src/orb/orb-core/corba-env.c
+	(CORBA_exception__alloc): upd.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object__freekids): kill.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_alloc_kidfnc): rename to 
+	(ORBit_alloc_with_free_fn): this
+
+	* src/orb/orb-core/corba-any.c
+	(CORBA_any__alloc): upd.
+
+	* include/orbit/orb-core/allocators.h: kill the
+	ORBit_alloc macro.
+
+2001-11-20  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-string.c
 	(CORBA_string_alloc, CORBA_string_dup): use alloc_string.
 	(CORBA_string__freekids): kill, unused.

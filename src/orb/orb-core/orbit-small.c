@@ -39,7 +39,7 @@
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
 {
-	return ORBit_alloc_tcval (tc, 1);
+	return ORBit_alloc_by_tc (tc);
 }
 
 gpointer
@@ -668,7 +668,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			break;
 		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-				retval = ORBit_alloc_tcval (tc, 1);
+				retval = ORBit_alloc_by_tc (tc);
 				break;
 			} /* drop through */
 		default:
@@ -740,7 +740,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-					scratch [i] = ORBit_alloc_tcval (tc, 1);
+					scratch [i] = ORBit_alloc_by_tc (tc);
 					break;
 				} /* drop through */
 			default:

@@ -491,12 +491,6 @@ ORBit_demarshal_object (CORBA_Object   *obj,
 	return FALSE;
 }
 
-gpointer
-CORBA_Object__freekids (gpointer mem, gpointer dat)
-{
-	return mem + sizeof (CORBA_Object);
-}
-
 CORBA_boolean
 CORBA_Object_is_a (CORBA_Object       obj,
 		   const CORBA_char  *logical_type_id,

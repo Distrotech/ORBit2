@@ -32,8 +32,8 @@ gpointer ORBit_alloc_tcval (CORBA_TypeCode tc,
 
     Below, some magic values of the fnc ptr are defined.
 **/
-typedef gpointer (*ORBit_free_kidvals) (gpointer mem,
-					gpointer func_data);
+typedef gpointer (*ORBit_Mem_free_fn) (gpointer mem,
+				       gpointer func_data);
 
 #define ORBIT_MEMHOW_HOW(how)      ((how) & 0x3)
 #define ORBIT_MEMHOW_ELEMENTS(how) ((how) >> 2)
@@ -48,8 +48,8 @@ typedef enum {
 
 typedef struct ORBit_Memprefix {
 	union {
-		CORBA_TypeCode     tc;
-		ORBit_free_kidvals free_fn;
+		CORBA_TypeCode    tc;
+		ORBit_Mem_free_fn free_fn;
 	} u;
 	ORBitMemHow how;
 } ORBit_MemPrefix;
@@ -57,21 +57,15 @@ typedef struct ORBit_Memprefix {
 void     ORBit_free   (gpointer mem);
 void     ORBit_free_T (gpointer mem);
 
-CORBA_char *ORBit_alloc_string (size_t             string_length);
-gpointer    ORBit_alloc_simple (size_t             block_size);
-gpointer    ORBit_alloc_kidfnc (size_t             element_size,
-				guint              num_elements,
-				ORBit_free_kidvals free_fn);
+CORBA_char *ORBit_alloc_string       (size_t string_length);
+gpointer    ORBit_alloc_simple       (size_t block_size);
+gpointer    ORBit_alloc_by_tc        (CORBA_TypeCode tc);
+gpointer    ORBit_alloc_with_free_fn (size_t element_size,
+				      guint  num_elements,
+				      ORBit_Mem_free_fn free_fn);
 
-#define  ORBit_alloc(sz, len, fnc) \
-                            ORBit_alloc_kidfnc ((sz), (len), (fnc))
-
-/* NB. freekids functions never do any locking ! */
-gpointer CORBA_sequence__freekids      (gpointer mem, gpointer data);
-gpointer CORBA_Object__freekids        (gpointer mem, gpointer data);
-gpointer CORBA_TypeCode__freekids      (gpointer mem, gpointer data);
-/* except this one */
-gpointer ORBit_freekids_via_TypeCode   (CORBA_TypeCode tc, gpointer mem);
+gpointer CORBA_any__freekids         (gpointer mem, gpointer dat);
+gpointer ORBit_freekids_via_TypeCode (CORBA_TypeCode tc, gpointer mem);
 
 #endif /* ORBIT2_INTERNAL_API */
 

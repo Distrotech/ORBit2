@@ -112,20 +112,6 @@ DEF_TC_BASIC(long_double, ORBIT_ALIGNOF_CORBA_LONG_DOUBLE);
 DEF_TC_BASIC(long_long, ORBIT_ALIGNOF_CORBA_LONG_LONG);
 DEF_TC_BASIC(unsigned_long_long, ORBIT_ALIGNOF_CORBA_LONG_LONG);
 
-gpointer
-CORBA_TypeCode__freekids (gpointer mem, gpointer dat)
-{
-	CORBA_TypeCode t, *tp;
-
-	tp = mem;
-	t = *tp;
-
-	ORBit_RootObject_release_T (t);
-
-	return tp + 1;
-}
-
-
 static void
 tc_enc_tk_objref(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {

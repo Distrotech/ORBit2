@@ -44,7 +44,7 @@ CORBA_exception__freekids (gpointer mem, gpointer dat)
 CORBA_Environment *
 CORBA_exception__alloc (void)
 {
-	CORBA_Environment *retval = ORBit_alloc (
+	CORBA_Environment *retval = ORBit_alloc_with_free_fn (
 		sizeof (CORBA_Environment), 1, 
 		CORBA_exception__freekids);
 

@@ -71,7 +71,7 @@ giop_IOP_ServiceContextList_demarshal (GIOPRecvBuffer         *buf,
 {
 	return ORBit_demarshal_value (
 		TC_IOP_ServiceContextList,
-		(gconstpointer *)&value, buf, TRUE, NULL);
+		(gpointer *)&value, buf, TRUE, NULL);
 }
 
 static void
