@@ -1,3 +1,8 @@
+2002-05-13  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/orb-cpp/orbitcpp_sequence.hh: Release C buffers and mark new
+	buffers to be released later by CORBA_free
+
 2002-05-13  Murray Cumming  <murrayc@usa.net>
 
 	* test/cpp: Added Gergo's structs tests. That's all of them now.
