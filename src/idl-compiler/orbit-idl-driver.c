@@ -69,7 +69,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   otree.tree = tree;
 
   orbit_idl_tree_populate(otree.tree);
-  orbit_idl_do_passes(otree.tree);
+  orbit_idl_do_passes(otree.tree, rinfo);
 
   binfo->op_output(&otree, rinfo);
 
@@ -84,6 +84,7 @@ static void orbit_idl_op_populate(IDL_tree tree)
 
   setme->in = orbit_idl_marshal_populate_in(tree);
   setme->out = orbit_idl_marshal_populate_out(tree);
+  setme->counter = 0;
 
   tree->data = setme;
 }

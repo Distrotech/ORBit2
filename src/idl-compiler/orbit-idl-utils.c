@@ -55,11 +55,10 @@ static const char * const nodenames[] = {
   "DATUM",
   "LOOP",
   "SWITCH",
+  "CASE",
   "COMPLEX",
-  "UPDATE",
   "CONST",
   "SET",
-  "ALLOCATE",
   NULL
 };
 
@@ -397,8 +396,6 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
   }
 
   g_print("(%s %p): [", nodenames[tree->type], tree);
-  if(tree->flags & MN_POINTER_VAR)
-    g_print("POINTER_VAR ");
   if(tree->flags & MN_INOUT)
     g_print("INOUT ");
   if(tree->flags & MN_NSROOT)
@@ -411,6 +408,14 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("ISSEQ ");
   if(tree->flags & MN_ISSTRING)
     g_print("ISSTRING ");
+  if(tree->flags & MN_LOOPED)
+    g_print("LOOPED ");
+  if(tree->flags & MN_COALESCABLE)
+    g_print("COALESCABLE ");
+  if(tree->flags & MN_ENDIAN_DEPENDANT)
+    g_print("ENDIAN_DEPENDANT ");
+  if(tree->flags & MN_DEMARSHAL_UPDATE_AFTER)
+    g_print("DEMARSHAL_UPDATE_AFTER ");
   g_print("]\n");
 
   switch(tree->type) {
@@ -439,8 +444,6 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
 	g_print("\n");
       }
     }
-    break;
-  case MARSHAL_ALLOCATE:
     break;
   case MARSHAL_SWITCH:
     {
@@ -472,11 +475,6 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     }
     break;
   case MARSHAL_COMPLEX:
-    break;
-  case MARSHAL_UPDATE:
-    do_indent(indent_level + INDENT_INCREMENT_1);
-    g_print("update amount:\n");
-    oidl_marshal_node_dump(tree->u.update_info.amount, indent_level + INDENT_INCREMENT_2);
     break;
   case MARSHAL_CONST:
     do_indent(indent_level + INDENT_INCREMENT_1);
@@ -562,9 +560,6 @@ orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
       orbit_idl_node_foreach(node->u.case_info.contents, func, user_data);
     }
     break;
-  case MARSHAL_UPDATE:
-    orbit_idl_node_foreach(node->u.update_info.amount, func, user_data);
-    break;
   case MARSHAL_SET:
     {
       GSList *ltmp;
@@ -617,4 +612,234 @@ IDL_tree_traverse_parents(IDL_tree p,
 	IDL_tree_traverse_helper(p, f, func_data, visited_nodes);
 
 	g_hash_table_destroy(visited_nodes);
+}
+
+/* For use by below function */
+static const int * const
+orbit_cbe_get_typeoffsets_table (void)
+{
+  static int typeoffsets[IDLN_LAST];
+  static gboolean initialized = FALSE;
+  
+  if (!initialized) {
+    int i;
+
+    for (i = 0; i < IDLN_LAST; ++i)
+      typeoffsets[i] = -1;
+
+    typeoffsets[IDLN_FORWARD_DCL] = 8; /* (same as objref) */
+    typeoffsets[IDLN_TYPE_INTEGER] = 0;
+    typeoffsets[IDLN_TYPE_FLOAT] = 0;
+    typeoffsets[IDLN_TYPE_FIXED] = 3;
+    typeoffsets[IDLN_TYPE_CHAR] = 5;
+    typeoffsets[IDLN_TYPE_WIDE_CHAR] = 6;
+    typeoffsets[IDLN_TYPE_STRING] = 12;
+    typeoffsets[IDLN_TYPE_WIDE_STRING] = 13;
+    typeoffsets[IDLN_TYPE_BOOLEAN] = 4;
+    typeoffsets[IDLN_TYPE_OCTET] = 7;
+    typeoffsets[IDLN_TYPE_ANY] = 16;
+    typeoffsets[IDLN_TYPE_OBJECT] = 9;
+    typeoffsets[IDLN_TYPE_TYPECODE] = 9;
+    typeoffsets[IDLN_TYPE_ENUM] = 8;
+    typeoffsets[IDLN_TYPE_SEQUENCE] = 14;
+    typeoffsets[IDLN_TYPE_ARRAY] = 15;
+    typeoffsets[IDLN_TYPE_STRUCT] = 10;
+    typeoffsets[IDLN_TYPE_UNION] = 11;
+    typeoffsets[IDLN_NATIVE] = 15; /* no pointers ever, same as fixed array */
+    typeoffsets[IDLN_INTERFACE] = 9; /* (same as objref) */
+    
+    initialized = TRUE;
+  }
+  
+  return typeoffsets;
+}
+
+
+/*******
+	This is a rather hairy function. Its purpose is to output the
+	required number of *'s that indicate the amount of indirection
+	for input, output, & input-output parameters, and return
+	values.  We do this by having a table of the number of *'s for
+	each type and purpose (nptrrefs_required), taken from 19.20
+	of the CORBA 2.2 spec, and then having a table that translates
+	from the IDLN_* enums into an index into nptrrefs_required (typeoffsets)
+
+ *******/
+gint
+oidl_param_numptrs(IDL_tree param, IDL_ParamRole role)
+{
+  const int * const typeoffsets = orbit_cbe_get_typeoffsets_table ();
+  const int nptrrefs_required[][4] = {
+    {0,1,1,0} /* float */,
+    {0,1,1,0} /* double */,
+    {0,1,1,0} /* long double */,
+    {1,1,1,0} /* fixed_d_s 3 */, 
+    {0,1,1,0} /* boolean */,
+    {0,1,1,0} /* char */,
+    {0,1,1,0} /* wchar */,
+    {0,1,1,0} /* octet */,
+    {0,1,1,0} /* enum */,
+    {0,1,1,0} /* objref */,
+    {1,1,1,0} /* fixed struct 10 */,
+    {1,1,1,0} /* fixed union */,
+    {0,1,1,0} /* string */,
+    {0,1,1,0} /* wstring */,
+    {1,1,2,1} /* sequence */,
+    {0,0,0,0} /* fixed array */,
+    {1,1,2,1} /* any 16 */
+  };
+  int retval = 0;
+
+  if(!param) /* void */
+    return 0;
+
+  /* Now, how do we use this table? :) */
+  param = orbit_cbe_get_typespec(param);
+
+  g_assert(param);
+
+  switch(IDL_NODE_TYPE(param))
+    {
+    case IDLN_TYPE_STRUCT:
+    case IDLN_TYPE_UNION:
+      if(((role == DATA_RETURN) || (role == DATA_OUT))
+	 && !orbit_cbe_type_is_fixed_length(param))
+	retval++;
+
+      break;
+    case IDLN_TYPE_ARRAY:
+      if(!orbit_cbe_type_is_fixed_length(param) && role == DATA_OUT)
+	retval++;
+      break;
+    default:
+      break;
+    }
+
+  g_assert(typeoffsets[IDL_NODE_TYPE(param)] >= 0);
+
+  switch(role) {
+  case DATA_IN: role = 0; break;
+  case DATA_INOUT: role = 1; break;
+  case DATA_OUT: role = 2; break;
+  case DATA_RETURN: role = 3; break;
+  }
+
+  retval+=nptrrefs_required[typeoffsets[IDL_NODE_TYPE(param)]][role];
+
+  return retval;
+}
+
+
+/* This is fixed length as far as memory allocation & CORBA goes, not as far as "can we bulk-marshal it?" goes.
+ *   Memory allocation fixed == nothing to free in this node
+ */
+gboolean
+orbit_cbe_type_is_fixed_length(IDL_tree ts)
+{
+  gboolean is_fixed = TRUE;
+  IDL_tree curitem;
+
+  ts = orbit_cbe_get_typespec(ts);
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_FLOAT:
+  case IDLN_TYPE_INTEGER:
+  case IDLN_TYPE_ENUM:
+  case IDLN_TYPE_CHAR:
+  case IDLN_TYPE_WIDE_CHAR:
+  case IDLN_TYPE_OCTET:
+  case IDLN_TYPE_BOOLEAN:
+    return TRUE;
+    break;
+  case IDLN_TYPE_SEQUENCE:
+  case IDLN_TYPE_STRING:
+  case IDLN_TYPE_WIDE_STRING:
+  case IDLN_TYPE_OBJECT:
+  case IDLN_FORWARD_DCL:
+  case IDLN_INTERFACE:
+  case IDLN_TYPE_ANY:
+  case IDLN_NATIVE:
+  case IDLN_TYPE_TYPECODE:
+    return FALSE;
+    break;
+  case IDLN_TYPE_UNION:
+    for(curitem = IDL_TYPE_UNION(ts).switch_body; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      is_fixed &= orbit_cbe_type_is_fixed_length(IDL_LIST(IDL_CASE_STMT(IDL_LIST(curitem).data).element_spec).data);
+    }
+    return is_fixed;
+    break;
+  case IDLN_EXCEPT_DCL:
+  case IDLN_TYPE_STRUCT:
+    for(curitem = IDL_TYPE_STRUCT(ts).member_list; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      is_fixed &= orbit_cbe_type_is_fixed_length(IDL_LIST(curitem).data);
+    }
+    return is_fixed;
+    break;
+  case IDLN_TYPE_ARRAY:
+    return orbit_cbe_type_is_fixed_length(IDL_TYPE_DCL(IDL_get_parent_node(ts, IDLN_TYPE_DCL, NULL)).type_spec);
+    break;
+  case IDLN_TYPE_DCL:
+    return orbit_cbe_type_is_fixed_length(IDL_TYPE_DCL(ts).type_spec);
+    break;
+  case IDLN_IDENT:
+  case IDLN_LIST:
+    return orbit_cbe_type_is_fixed_length(IDL_NODE_UP(ts));
+    break;
+  case IDLN_MEMBER:
+    return orbit_cbe_type_is_fixed_length(IDL_MEMBER(ts).type_spec);
+    break;
+  default:
+    g_warning("I'm not sure if type %s is fixed-length", IDL_tree_type_names[IDL_NODE_TYPE(ts)]);
+    return FALSE;
+  }
+}
+
+IDL_tree
+orbit_cbe_get_typespec(IDL_tree node)
+{
+  if(node == NULL)
+    return NULL;
+
+  switch(IDL_NODE_TYPE(node)) {
+  case IDLN_TYPE_INTEGER:
+  case IDLN_TYPE_FLOAT:
+  case IDLN_TYPE_FIXED:
+  case IDLN_TYPE_CHAR:
+  case IDLN_TYPE_WIDE_CHAR:
+  case IDLN_TYPE_STRING:
+  case IDLN_TYPE_WIDE_STRING:
+  case IDLN_TYPE_BOOLEAN:
+  case IDLN_TYPE_OCTET:
+  case IDLN_TYPE_ANY:
+  case IDLN_TYPE_OBJECT:
+  case IDLN_TYPE_ENUM:
+  case IDLN_TYPE_SEQUENCE:
+  case IDLN_TYPE_ARRAY:
+  case IDLN_TYPE_STRUCT:
+  case IDLN_TYPE_UNION:
+  case IDLN_EXCEPT_DCL:
+  case IDLN_FORWARD_DCL:
+  case IDLN_INTERFACE:
+  case IDLN_NATIVE:
+  case IDLN_TYPE_TYPECODE:
+    return node;
+    break;
+  case IDLN_TYPE_DCL:
+    return orbit_cbe_get_typespec(IDL_TYPE_DCL(node).type_spec);
+    break;
+  case IDLN_PARAM_DCL:
+    return orbit_cbe_get_typespec(IDL_PARAM_DCL(node).param_type_spec);
+    break;
+  case IDLN_MEMBER:
+    return orbit_cbe_get_typespec(IDL_MEMBER(node).type_spec);
+    break;
+  case IDLN_LIST:
+  case IDLN_IDENT:
+    return orbit_cbe_get_typespec(IDL_get_parent_node(node, IDLN_ANY, NULL));
+    break;
+  default:
+    g_warning("Unhandled node type %s!", IDL_tree_type_names[IDL_NODE_TYPE(node)]);
+    return NULL;
+  }
 }

@@ -54,23 +54,21 @@ typedef enum { MARSHAL_DATUM = 0,
 	       MARSHAL_SWITCH = 2,
 	       MARSHAL_CASE = 3,
 	       MARSHAL_COMPLEX = 4,
-	       MARSHAL_UPDATE = 5,
-	       MARSHAL_CONST = 6,
-	       MARSHAL_SET = 7,
-	       MARSHAL_ALLOCATE = 8,
+	       MARSHAL_CONST = 5,
+	       MARSHAL_SET = 6
 } OIDL_Marshal_Node_Type;
 
 typedef enum {
-  MN_POINTER_VAR = 1<<0,
-  MN_INOUT = 1<<1, /* Needs freeing before alloc */
-  MN_NSROOT = 1<<2, /* Don't go to parents for variable naming */
-  MN_NEED_TMPVAR = 1<<3, /* Need a temporary variable to hold this value */
-  MN_NOMARSHAL = 1<<4, /* This is used by other vars, but not actually marshalled */
-  MN_ISSEQ = 1<<5, /* for MARSHAL_LOOP only - we need to do foo._buffer before tacking on [v1] */
-  MN_ISSTRING = 1<<6, /* for MARSHAL_LOOP only */
-  MN_LOOPED = 1<<7, /* This variable is looped over */
-  MN_COALESCABLE = 1<<8, /* You can coalesce multiple sequential instances of this type into one encode/decode operation */
-  MN_ENDIAN_DEPENDANT = 1<<9
+  MN_INOUT = 1<<0, /* Needs freeing before alloc */
+  MN_NSROOT = 1<<1, /* Don't go to parents for variable naming */
+  MN_NEED_TMPVAR = 1<<2, /* Need a temporary variable to hold this value */
+  MN_NOMARSHAL = 1<<3, /* This is used by other vars, but not actually marshalled */
+  MN_ISSEQ = 1<<4, /* for MARSHAL_LOOP only - we need to do foo._buffer before tacking on [v1] */
+  MN_ISSTRING = 1<<5, /* for MARSHAL_LOOP only */
+  MN_LOOPED = 1<<6, /* This variable is looped over */
+  MN_COALESCABLE = 1<<7, /* You can coalesce multiple sequential instances of this type into one encode/decode operation */
+  MN_ENDIAN_DEPENDANT = 1<<8,
+  MN_DEMARSHAL_UPDATE_AFTER = 1<<9
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {
@@ -106,12 +104,11 @@ struct _OIDL_Marshal_Node {
     struct {
       GSList *subnodes;
     } set_info;
-    struct {
-    } allocate_info;
   } u;
   OIDL_Marshal_Node_Flags flags;
   guint8 arch_head_align, arch_tail_align;
   guint8 iiop_head_align, iiop_tail_align;
+  guint8 nptrs;
 };
 
 /* Handling an IDLN_ATTR_DCL:
@@ -125,6 +122,7 @@ typedef struct {
 } OIDL_Attr_Info;
 typedef struct {
   OIDL_Marshal_Node *in, *out;
+  int counter;
 } OIDL_Op_Info;
 
 typedef struct {
@@ -136,13 +134,11 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang);
 /* genmarshal */
 OIDL_Marshal_Node *orbit_idl_marshal_populate_in(IDL_tree tree);
 OIDL_Marshal_Node *orbit_idl_marshal_populate_out(IDL_tree tree);
-gboolean orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node);
-void orbit_idl_tmpvars_assign(OIDL_Marshal_Node *top, int *counter);
 char *oidl_marshal_node_fqn(OIDL_Marshal_Node *node);
-void orbit_idl_collapse_sets(OIDL_Marshal_Node *node);
+char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node);
 
 /* passes */
-void orbit_idl_do_passes(IDL_tree tree);
+void orbit_idl_do_passes(IDL_tree tree, OIDL_Run_Info *rinfo);
 
 /* Utils */
 void orbit_idl_attr_fake_ops(IDL_tree attr);
@@ -153,7 +149,11 @@ IDL_tree orbit_idl_get_array_type(IDL_tree tree);
 char *orbit_idl_member_get_name(IDL_tree tree);
 void orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data);
 void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
-gboolean oidl_node_aggregatable_p(OIDL_Marshal_Node *node);
+
+typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
+gint oidl_param_numptrs(IDL_tree param, IDL_ParamRole role);
+gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
+IDL_tree orbit_cbe_get_typespec(IDL_tree node);
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
 

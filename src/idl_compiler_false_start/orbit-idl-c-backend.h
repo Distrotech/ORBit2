@@ -30,13 +30,13 @@ void c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
 void c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
 
 /* utils */
-typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
 void orbit_cbe_write_typespec(FILE *of, IDL_tree tree);
 char * orbit_cbe_get_typename(IDL_tree tree);
 void orbit_cbe_op_write_proto(FILE *of, IDL_tree op, const char *nom_prefix, gboolean for_epv);
 IDL_tree orbit_cbe_get_typespec(IDL_tree node);
 void orbit_cbe_write_const(FILE *of, IDL_tree tree);
 void orbit_cbe_write_const_node(FILE *of, OIDL_Marshal_Node *node);
+char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node);
 gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 
 #endif
