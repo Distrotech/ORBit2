@@ -1,5 +1,12 @@
 2003-09-30  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):
+	get the pobj->use_cnt tracking right.
+
+	* src/orb/GIOP/giop.c (scan_socket_dir): actually
+	use the string comparison to use the sort order,
+	not the directory order.
+
 	* test/everything/server.c
 	(TestFactory_createLifeCycleServer): impl
 	* test/everything/lifeCycle.c: add module.

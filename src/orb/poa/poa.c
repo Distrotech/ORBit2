@@ -1155,10 +1155,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 						
 				poa->held_requests = g_slist_prepend (
 					poa->held_requests, recv_buffer);
-				
-				POA_UNLOCK (poa);
-				ORBit_RootObject_release (poa);
-				return;
+				goto clean_out;
 			} else
 				CORBA_exception_set_system (
 					ev, ex_CORBA_TRANSIENT,
@@ -1216,12 +1213,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		}
 	}
 
-	pobj->use_cnt++;
-	LINK_MUTEX_LOCK (poa->orb->lock);
-	poa->orb->current_invocations =
-		g_slist_prepend (poa->orb->current_invocations, pobj);
-	LINK_MUTEX_UNLOCK (poa->orb->lock);
-	
 	if (ev->_major == CORBA_NO_EXCEPTION && !pobj->servant)
 		CORBA_exception_set_system (
 			ev, ex_CORBA_OBJECT_NOT_EXIST, 
@@ -1232,6 +1223,12 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		goto clean_out;
 	}
 
+	pobj->use_cnt++;
+	LINK_MUTEX_LOCK (poa->orb->lock);
+	poa->orb->current_invocations =
+		g_slist_prepend (poa->orb->current_invocations, pobj);
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
+	
 	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
 
 	if (klass->impl_finder)
@@ -1260,28 +1257,26 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		}
 	}
 
-	if (ev->_major != CORBA_NO_EXCEPTION) {
+	if (ev->_major != CORBA_NO_EXCEPTION)
 		return_exception (recv_buffer, m_data, ev);
-		goto clean_out;
+
+	else {
+		POA_UNLOCK (poa);
+
+		if (recv_buffer) {
+			struct ORBit_POA_invoke_data invoke_data;
+			
+			invoke_data.small_skel = small_skel;
+			invoke_data.imp        = imp;
+			
+			ORBit_small_invoke_adaptor ((ORBit_OAObject) pobj, recv_buffer,
+						    m_data, &invoke_data, ev);
+		} else
+			small_skel (pobj->servant, ret, args, ctx, ev, imp);
+		
+		POA_LOCK (poa);
 	}
 
-	POA_UNLOCK (poa);
-
-	if (recv_buffer) {
-		struct ORBit_POA_invoke_data invoke_data;
-
-		invoke_data.small_skel = small_skel;
-		invoke_data.imp        = imp;
-
-		ORBit_small_invoke_adaptor (
-			(ORBit_OAObject) pobj, recv_buffer,
-			m_data, &invoke_data, ev);
-	} else
-		small_skel (pobj->servant, ret, args, ctx, ev, imp);
-
-	POA_LOCK (poa);
-
- clean_out:
 	if (recv_buffer)
 		CORBA_exception_free (ev);
 
@@ -1309,6 +1304,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	if (pobj->life_flags & ORBit_LifeF_NeedPostInvoke)
 		ORBit_POAObject_post_invoke (pobj);             
 
+ clean_out:
 	POA_UNLOCK (poa);
 	ORBit_RootObject_release (poa);
 }

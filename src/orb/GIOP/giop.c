@@ -96,7 +96,7 @@ scan_socket_dir (const char *dir, const char *prefix)
 		}
 		
 		/* Sort into some repeatable order */
-		if (!cur_dir || strcmp (cur_dir, name)) {
+		if (!cur_dir || strcmp (cur_dir, name) > 0) {
 			g_free (cur_dir);
 			cur_dir = name;
 		} else
