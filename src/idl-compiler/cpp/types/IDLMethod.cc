@@ -45,12 +45,14 @@ IDLMethod::stub_arglist_get () const
 {
 	string retval = "";
 
+	ParameterList::const_iterator back = m_parameterinfo.end ();
+	back--;
 	for (ParameterList::const_iterator i = m_parameterinfo.begin ();
 	     i != m_parameterinfo.end (); i++)
 	{
 		retval += i->type->stub_decl_arg_get (i->id, i->direction);
 
-		if (i != --m_parameterinfo.end ())
+		if (i != back)
 			retval += ',';
 	}
 
@@ -233,11 +235,13 @@ IDLMethod::skel_do_call (ostream &ostr,
 	// Create argument list
 	string argument_list;
 		
+	ParameterList::const_iterator back = m_parameterinfo.end ();
+	back--;
 	for (ParameterList::const_iterator i = m_parameterinfo.begin ();
 	     i != m_parameterinfo.end (); i++)
 	{
 		argument_list += i->type->skel_impl_arg_call (i->id, i->direction);
-		if (i != --m_parameterinfo.end ())
+		if (i != back)
 			argument_list += ", ";
 	}
 
