@@ -1,3 +1,34 @@
+2001-08-18  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump version to 0.1.3
+
+	* src/linc.c (linc_mutex_attrs): kill.
+	(linc_init): kill pthread specific bits, take
+	gboolean 'init_threads'
+	(linc_mutex_new): impl. to hide conditional mess.
+
+	* src/linc-server.c (linc_server_accept_connection):
+	split out of
+	(linc_server_handle_io): here & update locking.
+
+2001-08-17  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_init): use g_thread
+	stuff straight - no need for a recursive mutex - set
+	to NULL if threads not initialized.
+
+	* include/linc: homogenise header guard style, add
+	G_BEGIN/END_DECLS
+
+	* include/linc/linc-types.h:
+	s/LINC_THREADSAFE/G_THREADS_ENABLED/ kill whacked out
+	threading macro overload.
+	(LINC_MUTEX_[UN]LOCK): don't inexplicably steal
+	chunks of the O_ namespace.
+	kill extreme strangeness with defining wierd system bits.
+
+	* Revert Mark's patch.
+
 2001-08-18  Mark McLoughlin <mark@skynet.ie>
 
 	* configure.in: added --enable-linc-threadsafe

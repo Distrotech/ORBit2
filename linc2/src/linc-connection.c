@@ -1,13 +1,12 @@
-#include "config.h"
-#ifdef LINC_SSL_SUPPORT
-/* So we can check if we need to retry */
-#include <openssl/bio.h>
-#endif
-#include "linc-private.h"
-#include <linc/linc-connection.h>
+#include <config.h>
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+
+#include "linc-private.h"
+#include <linc/linc-config.h>
+#include <linc/linc-connection.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -257,6 +256,8 @@ linc_connection_state_changed (LINCConnection      *cnx,
 		klass->state_changed(cnx, status);
 }
 
+/* FIXME: the linc_main_iteration stuff here
+   looks like a deadlock / re-enterancy hell */
 int
 linc_connection_read (LINCConnection *cnx, guchar *buf,
 		      int len, gboolean block_for_full_read)

@@ -1,11 +1,15 @@
-#ifndef LINC_CONNECTION_H
-#define LINC_CONNECTION_H 1
+#ifndef _LINC_CONNECTION_H_
+#define _LINC_CONNECTION_H_
 
-#include <glib-object.h>
-#include <linc/linc-types.h>
-#include <linc/linc-protocol.h>
+#include <glib/gmacros.h>
+
+G_BEGIN_DECLS
 
 #include <sys/uio.h>
+#include <netdb.h>
+
+#include <linc/linc-types.h>
+#include <linc/linc-protocol.h>
 
 #ifdef LINC_SSL_SUPPORT
 #include <openssl/ssl.h>
@@ -86,4 +90,6 @@ int      linc_connection_writev   (LINCConnection *cnx, struct iovec *vecs,
 void     linc_connection_state_changed (LINCConnection *cnx,
 					LINCConnectionStatus status);
 
-#endif
+G_END_DECLS
+
+#endif /* _LINC_CONNECTION_H */
