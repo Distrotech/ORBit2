@@ -1,4 +1,9 @@
-2002-10-10  Roland Juelich <rj@atecom.com>
+2002-01-17  Laszlo Peter  <laca@ireland.sun.com>
+
+	* src/linc-connection.c (write_data): fix writev loop conditions
+	when nvecs > WRITEV_IOVEC_LIMIT.
+
+2002-01-10  Roland Juelich <rj@atecom.com>
 
 	* src/linc-source.c (linc_io_add_watch): create our own
 	LincWatch and pass the channel on to 
