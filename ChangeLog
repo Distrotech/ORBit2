@@ -1,5 +1,11 @@
 2002-05-31  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/services/imodule/orbit-imodule-utils.[ch]:
+	* src/services/imodule/orbit-imodule.[ch]:
+	Don't use a global has of TypeCodes.
+
+2002-05-31  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/services/imodule/*: added runtime IDL->IInterfaces
 	service.
 

@@ -68,7 +68,8 @@ ORBit_iinterface_fill_base_itypes (IDL_tree               node,
 }
 
 static void
-ORBit_iinterface_fill_iargs (IDL_tree     tree,
+ORBit_iinterface_fill_iargs (GHashTable  *typecodes,
+			     IDL_tree     tree,
 			     ORBit_IArgs *ret_iargs)
 {
 	IDL_tree sub;
@@ -95,6 +96,7 @@ ORBit_iinterface_fill_iargs (IDL_tree     tree,
 		parm = IDL_LIST (sub).data;
 
 		iarg->tc = ORBit_imodule_get_typecode (
+				typecodes, 
 				IDL_PARAM_DCL (parm).param_type_spec);
 
 		switch (IDL_PARAM_DCL (parm).attr) {
@@ -135,7 +137,8 @@ ORBit_iinterface_fill_iargs (IDL_tree     tree,
 }
 
 static void
-ORBit_iinterface_fill_contexts (IDL_tree         tree,
+ORBit_iinterface_fill_contexts (GHashTable      *typecodes,
+				IDL_tree         tree,
 				ORBit_IContexts *ret_contexts)
 {
 	g_return_if_fail (tree != NULL);
@@ -163,7 +166,8 @@ ORBit_iinterface_fill_contexts (IDL_tree         tree,
 }
 
 static void
-ORBit_iinterface_fill_exceptinfo (IDL_tree      tree,
+ORBit_iinterface_fill_exceptinfo (GHashTable   *typecodes,
+				  IDL_tree      tree,
 				  ORBit_ITypes *ret_itypes)
 {
 	g_return_if_fail (tree != NULL);
@@ -186,12 +190,14 @@ ORBit_iinterface_fill_exceptinfo (IDL_tree      tree,
 		for (curitem = IDL_OP_DCL (tree).raises_expr, i = 0; curitem;
 		     curitem = IDL_LIST (curitem).next, i++)
 			ret_itypes->_buffer [i] =
-				ORBit_imodule_get_typecode (IDL_LIST (curitem).data);
+				ORBit_imodule_get_typecode (
+					typecodes, IDL_LIST (curitem).data);
 	}
 }
 
 static void
-ORBit_iinterface_fill_method (IDL_tree       tree,
+ORBit_iinterface_fill_method (GHashTable    *typecodes,
+			      IDL_tree       tree,
 			      ORBit_IMethod *ret_imethod)
 {
 	char *method;
@@ -200,14 +206,16 @@ ORBit_iinterface_fill_method (IDL_tree       tree,
 	g_return_if_fail (IDL_NODE_TYPE (tree) == IDLN_OP_DCL);
 	g_return_if_fail (ret_imethod != NULL);
 
-	ORBit_iinterface_fill_iargs (tree, &ret_imethod->arguments);
-
-	ORBit_iinterface_fill_contexts (tree, &ret_imethod->contexts);
-
-	ORBit_iinterface_fill_exceptinfo (tree, &ret_imethod->exceptions);
+	ORBit_iinterface_fill_iargs (
+			typecodes, tree, &ret_imethod->arguments);
+	ORBit_iinterface_fill_contexts (
+			typecodes, tree, &ret_imethod->contexts);
+	ORBit_iinterface_fill_exceptinfo (
+			typecodes, tree, &ret_imethod->exceptions);
 
 	if (IDL_OP_DCL (tree).op_type_spec)
 		ret_imethod->ret = ORBit_imodule_get_typecode (
+					typecodes,
 					IDL_OP_DCL (tree).op_type_spec);
 	else
 		ret_imethod->ret = CORBA_OBJECT_NIL;
@@ -236,7 +244,8 @@ ORBit_iinterface_fill_method (IDL_tree       tree,
 }
 
 static void
-ORBit_iinterface_from_interface (Interface        *iface,
+ORBit_iinterface_from_interface (GHashTable       *typecodes,
+				 Interface        *iface,
 				 ORBit_IInterface *ret_iiface)
 {
 	InterfaceTraverseInfo  iti;
@@ -260,7 +269,8 @@ ORBit_iinterface_from_interface (Interface        *iface,
 
 	for (m = iface->methods, i = 0; m; m = m->next, i++)
 		ORBit_iinterface_fill_method (
-			m->data, &ret_iiface->methods._buffer [i]);
+			typecodes, m->data,
+			&ret_iiface->methods._buffer [i]);
 
 	ici.cur_node = iface->tree;
 	ici.parents  = 0;
@@ -333,7 +343,9 @@ ORBit_imodule_fake_attribute_ops (IDL_tree  attr,
 }
 
 static GSList *
-ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
+ORBit_iinterface_build_interfaces (GHashTable *typecodes,
+				   GSList     *list,
+				   IDL_tree    tree)
 {
 	if (!tree)
 		return list;
@@ -341,14 +353,14 @@ ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
 	switch (IDL_NODE_TYPE (tree)) {
 	case IDLN_MODULE:
 		list = ORBit_iinterface_build_interfaces (
-			list, IDL_MODULE (tree).definition_list);
+			typecodes, list, IDL_MODULE (tree).definition_list);
 		break;
 	case IDLN_LIST: {
 		IDL_tree sub;
 
 		for (sub = tree; sub; sub = IDL_LIST (sub).next)
 			list = ORBit_iinterface_build_interfaces (
-				list, IDL_LIST (sub).data);
+				typecodes, list, IDL_LIST (sub).data);
 		}
 		break;
 	case IDLN_ATTR_DCL: {
@@ -362,9 +374,11 @@ ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
 			ORBit_imodule_fake_attribute_ops (
 				tree, IDL_LIST (sub).data, &get_op, &set_op);
 	
-			list = ORBit_iinterface_build_interfaces (list, get_op);
+			list = ORBit_iinterface_build_interfaces (
+						typecodes, list, get_op);
 			if (set_op)
-				list = ORBit_iinterface_build_interfaces (list, set_op);
+				list = ORBit_iinterface_build_interfaces (
+						typecodes, list, set_op);
 		}
 		}
 		break;
@@ -372,11 +386,12 @@ ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
 		Interface *i = g_new0 (Interface, 1);
 
 		i->tree = tree;
-		i->tc   = ORBit_imodule_get_typecode (tree);
+		i->tc   = ORBit_imodule_get_typecode (typecodes, tree);
 
 		list = g_slist_append (list, i);
 
-		list = ORBit_iinterface_build_interfaces (list, IDL_INTERFACE (tree).body);
+		list = ORBit_iinterface_build_interfaces (
+				typecodes, list, IDL_INTERFACE (tree).body);
 		}
 		break;
 	case IDLN_OP_DCL: {
@@ -395,13 +410,15 @@ ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
 	case IDLN_FORWARD_DCL:
 		/* Load the types into the typecode hash */
 		CORBA_Object_release (
-			(CORBA_Object) ORBit_imodule_get_typecode (tree), NULL);
+			(CORBA_Object) ORBit_imodule_get_typecode (
+						typecodes, tree), NULL);
 		break;
 	case IDLN_TYPE_DCL: {
 		CORBA_TypeCode type;
 		IDL_tree       l;
 
-		type = ORBit_imodule_get_typecode (IDL_TYPE_DCL (tree).type_spec);
+		type = ORBit_imodule_get_typecode (
+				typecodes, IDL_TYPE_DCL (tree).type_spec);
 
 		for (l = IDL_TYPE_DCL (tree).dcls;  l; l = IDL_LIST (l).next) {
 			IDL_tree dcl;
@@ -411,11 +428,12 @@ ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
 			if (IDL_NODE_TYPE (dcl) == IDLN_IDENT)
 				CORBA_Object_release (
 					(CORBA_Object) ORBit_imodule_create_alias_typecode (
-										dcl, type), NULL);
+									typecodes, dcl, type), NULL);
 
 			else /* IDLN_TYPE_ARRAY */
 				CORBA_Object_release (
-					(CORBA_Object) ORBit_imodule_get_typecode (dcl), NULL);
+					(CORBA_Object) ORBit_imodule_get_typecode (
+								typecodes, dcl), NULL);
 		}
 
 		CORBA_Object_release ((CORBA_Object) type, NULL);
@@ -437,20 +455,23 @@ ORBit_iinterface_build_interfaces (GSList *list, IDL_tree tree)
 ORBit_IInterface *
 ORBit_iinterface_from_tree (IDL_tree tree)
 {
+	GHashTable       *typecodes;
 	ORBit_IInterface *retval;
 	GSList           *list;
 
 	g_return_val_if_fail (tree != NULL, NULL);
 
-	list = ORBit_iinterface_build_interfaces (NULL, tree);
+	typecodes = ORBit_imodule_new_typecodes ();
+
+	list = ORBit_iinterface_build_interfaces (typecodes, NULL, tree);
 
 	retval = ORBit_IInterface__alloc ();
 
-	ORBit_iinterface_from_interface (list->data, retval);
+	ORBit_iinterface_from_interface (typecodes, list->data, retval);
 
 	ORBit_iinterface_free_interfaces (list);
 
-	ORBit_imodule_cleanup_typecodes ();
+	ORBit_imodule_free_typecodes (typecodes);
 
 	return retval;
 }
@@ -464,13 +485,16 @@ ORBit_iinterface_from_tree (IDL_tree tree)
 ORBit_IInterfaces *
 ORBit_iinterfaces_from_tree (IDL_tree tree)
 {
+	GHashTable        *typecodes;
 	ORBit_IInterfaces *retval;
 	GSList            *list, *l;
 	int                count, i;
 
 	g_return_val_if_fail (tree != NULL, NULL);
 
-	list = ORBit_iinterface_build_interfaces (NULL, tree);
+	typecodes = ORBit_imodule_new_typecodes ();
+
+	list = ORBit_iinterface_build_interfaces (typecodes, NULL, tree);
 
 	count = g_slist_length (list);
 
@@ -482,11 +506,12 @@ ORBit_iinterfaces_from_tree (IDL_tree tree)
 	retval->_release = CORBA_TRUE;
 
 	for (l = list, i = 0; l; l = l->next, i++)
-		ORBit_iinterface_from_interface (l->data, &retval->_buffer [i]);
+		ORBit_iinterface_from_interface (
+			typecodes, l->data, &retval->_buffer [i]);
 
 	ORBit_iinterface_free_interfaces (list);
 
-	ORBit_imodule_cleanup_typecodes ();
+	ORBit_imodule_free_typecodes (typecodes);
 
 	return retval;
 }

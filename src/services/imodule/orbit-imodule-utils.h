@@ -26,6 +26,7 @@
 #define __ORBIT_IMODULE_UTILS_H__
 
 #include <glib/gmacros.h>
+#include <glib/ghash.h>
 #include <libIDL/IDL.h>
 
 G_BEGIN_DECLS
@@ -35,15 +36,20 @@ typedef struct {
 	IDL_tree set_op;
 } ORBit_imodule_fakeops;
 
-CORBA_TypeCode   ORBit_imodule_get_typecode          (IDL_tree tree);
-void             ORBit_imodule_cleanup_typecodes     (void);
-CORBA_TypeCode   ORBit_imodule_create_alias_typecode (IDL_tree       tree,
-						      CORBA_TypeCode original_type);
-IDL_tree         ORBit_imodule_get_typespec          (IDL_tree tree);
-gboolean         ORBit_imodule_type_is_fixed_length  (IDL_tree tree);
-void             ORBit_imodule_traverse_parents      (IDL_tree tree,
-						      GFunc    callback,
-						      gpointer user_data);
+GHashTable      *ORBit_imodule_new_typecodes         (void);
+void             ORBit_imodule_free_typecodes        (GHashTable     *typecodes);
+
+CORBA_TypeCode   ORBit_imodule_get_typecode          (GHashTable     *typecodes,
+						      IDL_tree        tree);
+CORBA_TypeCode   ORBit_imodule_create_alias_typecode (GHashTable     *typecodes,
+						      IDL_tree        tree,
+						      CORBA_TypeCode  original_type);
+
+IDL_tree         ORBit_imodule_get_typespec          (IDL_tree        tree);
+gboolean         ORBit_imodule_type_is_fixed_length  (IDL_tree        tree);
+void             ORBit_imodule_traverse_parents      (IDL_tree        tree,
+						      GFunc           callback,
+						      gpointer        user_data);
 
 G_END_DECLS
 
