@@ -51,6 +51,6 @@ gpointer ORBit_RootObject_duplicate (gpointer obj);
 void     ORBit_RootObject_release   (gpointer obj);
 void     ORBit_RootObject_release_T (gpointer obj);
 
-O_MUTEX_DEFINE_EXTERN(ORBit_RootObject_lifecycle_lock);
+extern GMutex *ORBit_RootObject_lifecycle_lock;
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef ALLOCATORS_H
-#define ALLOCATORS_H 1
+#ifndef _ALLOCATORS_H_
+#define _ALLOCATORS_H_
 
 #define PTR_TO_MEMINFO(x) (((ORBit_mem_info *)(x)) - 1)
 #define MEMINFO_TO_PTR(x) ((gpointer)((x) + 1))
@@ -72,7 +72,6 @@ extern gpointer ORBit_alloc_core(size_t block_size,
 extern void ORBit_free(gpointer mem);
 extern void ORBit_free_T(gpointer mem);
 
-
 gpointer ORBit_alloc_simple(size_t block_size);
 gpointer ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
 				   ORBit_free_kidvals free_fnc);
@@ -90,5 +89,7 @@ gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
 gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
 gpointer ORBit_freekids_via_TypeCode_T(CORBA_TypeCode tc, gpointer mem);
 
-void CORBA_free(gpointer mem);
-#endif
+void CORBA_free (gpointer mem);
+
+#endif /* _ALLOCATORS_H_ */
+

@@ -9,31 +9,74 @@
 #undef DEBUG
 
 /* A list of GIOPMessageQueueEntrys */
-O_MUTEX_DEFINE_STATIC(giop_queued_messages_lock);
-static GList *giop_queued_messages;
+static GList  *giop_queued_messages;
+static GMutex *giop_queued_messages_lock = NULL;
 
 /* A list of incoming requests */
-static GList *incoming_recv_buffer_list;
-O_MUTEX_DEFINE_STATIC(incoming_recv_buffer_list_lock);
-#ifdef ORBIT_THREADED
-O_CONDVAR_DEFINE_STATIC(incoming_recv_buffer_list_condvar);
-#endif
+static GList  *incoming_recv_buffer_list;
+static GMutex *incoming_recv_buffer_list_lock = NULL;
 
-static void giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf,
-					       GIOPConnection *cnx);
-static void giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx);
+static GCond  *incoming_recv_buffer_list_condvar = NULL;
 
-void
-giop_recv_buffer_init(void)
+static void
+giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
-  O_MUTEX_INIT(incoming_recv_buffer_list_lock);
+  GList *ltmp;
+  GIOPMessageQueueEntry *ent;
+
+#ifdef DEBUG
+  fprintf (stderr, "Giop recv_list push: ");
+  giop_dump_recv (buf);
+#endif
+
+  buf->connection = cnx;
+  switch(buf->msg.header.message_type)
+    {
+    case GIOP_REPLY:
+    case GIOP_LOCATEREPLY:
+      LINC_MUTEX_LOCK (giop_queued_messages_lock);
+      for(ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next)
+	{
+	  GIOPMessageQueueEntry *tmpent = ltmp->data;
+	  if(tmpent->msg_type == buf->msg.header.message_type
+	     && tmpent->request_id == giop_recv_buffer_get_request_id (buf))
+	    {
+	      ent = tmpent;
+	      break;
+	    }
+	}
+      if(ent)
+	{
+	  ent->buffer = buf;
 #ifdef ORBIT_THREADED
-#if 0
-  O_MUTEX_INIT(incoming_recv_buffer_list_condvar_lock);
+	  pthread_cond_signal(&ent->condvar);
 #endif
-  pthread_cond_init(&incoming_recv_buffer_list_condvar, NULL);
+	}
+      else
+	{
+	  /*
+	    the stub may have already sent the request but not gotten to
+	    the giop_recv_buffer_use_reply() part of things yet.
+	    Race condition probably best fixed by having the stub set up
+	    waiting for a reply BEFORE sending the request.
+	  */
+	  giop_recv_buffer_unuse(buf);
+	  g_error("This is a known bug that hasn't yet been fixed because the"
+		  " most obvious solution involves creating other bugs. "
+		  "Please make noise so this gets fixed.");
+	}
+      LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+      break;
+    default:
+      LINC_MUTEX_LOCK (incoming_recv_buffer_list_lock);
+      incoming_recv_buffer_list = g_list_prepend (
+	      incoming_recv_buffer_list, buf);
+      LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
+#ifdef ORBIT_THREADED
+      pthread_cond_signal(&incoming_recv_buffer_list_condvar);
 #endif
-  O_MUTEX_INIT(giop_queued_messages_lock);
+      break;
+    }
 }
 
 static gboolean
@@ -454,6 +497,17 @@ giop_recv_buffer_demarshal(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
+static void
+giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
+				    GIOPConnection *cnx)
+{
+	/* Drop fragmented packets on the floor for now */
+	g_warning ("Dropping a fragmented packed on the floor !");
+	buf->connection = cnx;
+	buf->end = buf->message_body + buf->msg.header.message_size;
+	giop_recv_buffer_unuse (buf);
+}
+
 GIOPMessageInfo
 giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth, GIOPConnection *cnx)
 {
@@ -515,13 +569,13 @@ giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state,
       if(giop_recv_buffer_demarshal(buf))
 	goto msg_error;
       if(buf->msg.header.message_type == GIOP_FRAGMENT)
-	giop_recv_buffer_handle_fragmented(buf, cnx);
+	giop_recv_buffer_handle_fragmented (buf, cnx);
       else
 	giop_recv_list_push(buf, cnx);
       break;
     case GIOP_MSG_AWAITING_FRAGMENTS:
       retval = GIOP_MSG_COMPLETE;
-      giop_recv_buffer_handle_fragmented(buf, cnx);
+      giop_recv_buffer_handle_fragmented (buf, cnx);
       break;
     }
 
@@ -534,15 +588,16 @@ giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state,
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_buf(gboolean is_auth)
+giop_recv_buffer_use_buf (gboolean is_auth)
 {
-  GIOPRecvBuffer *retval = NULL;
+	GIOPRecvBuffer *retval = NULL;
 
-  retval = g_new0(GIOPRecvBuffer, 1);
+	retval = g_new0 (GIOPRecvBuffer, 1);
 
-  giop_recv_buffer_state_change(retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
+	giop_recv_buffer_state_change (
+		retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
 
-  return retval;
+	return retval;
 }
 
 GIOPRecvBuffer *
@@ -594,7 +649,7 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 		return;
 
 	if (buf->free_body) {
-		g_free(buf->message_body);
+		g_free (buf->message_body);
 		buf->message_body = NULL;
 	}
 
@@ -602,24 +657,28 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 	case GIOP_1_0:
 		break;
 	case GIOP_1_1:
-		switch(buf->msg.header.message_type) {
+		switch (buf->msg.header.message_type) {
 		case GIOP_REPLY:
-			giop_IOP_ServiceContextList_free (&buf->msg.u.reply_1_1.service_context);
+			giop_IOP_ServiceContextList_free (
+				&buf->msg.u.reply_1_1.service_context);
 			break;
 		case GIOP_REQUEST:
-			giop_IOP_ServiceContextList_free (&buf->msg.u.request_1_1.service_context);
+			giop_IOP_ServiceContextList_free (
+				&buf->msg.u.request_1_1.service_context);
 			break;
 		default:
 			break;
 		}
 		break;
 	case GIOP_1_2:
-		switch(buf->msg.header.message_type) {
+		switch (buf->msg.header.message_type) {
 		case GIOP_REPLY:
-			giop_IOP_ServiceContextList_free (&buf->msg.u.reply_1_2.service_context);
+			giop_IOP_ServiceContextList_free (
+				&buf->msg.u.reply_1_2.service_context);
 			break;
 		case GIOP_REQUEST:
-			giop_IOP_ServiceContextList_free (&buf->msg.u.request_1_2.service_context);
+			giop_IOP_ServiceContextList_free (
+				&buf->msg.u.request_1_2.service_context);
 			break;
 		default:
 			break;
@@ -633,91 +692,29 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 }
 
 void
-giop_recv_list_zap(GIOPConnection *cnx)
+giop_recv_list_zap (GIOPConnection *cnx)
 {
-  GList *ltmp;
-  GIOPMessageQueueEntry *ent;
+	GList *ltmp;
+	GIOPMessageQueueEntry *ent;
 
-  O_MUTEX_LOCK(giop_queued_messages_lock);
-  for(ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next)
-    {
-      GIOPMessageQueueEntry *tmpent = ltmp->data;
-      if(tmpent->cnx == cnx)
-	{
-	  ent = tmpent;
-	  break;
+	LINC_MUTEX_LOCK (giop_queued_messages_lock);
+
+	for (ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next) {
+		GIOPMessageQueueEntry *tmpent = ltmp->data;
+		if(tmpent->cnx == cnx) {
+			ent = tmpent;
+			break;
+		}
 	}
-    }
-  if(ent)
-    {
-      ent->buffer = NULL;
+
+	if (ent) {
+		ent->buffer = NULL;
 #ifdef ORBIT_THREADED
-      pthread_cond_signal(&ent->condvar);
-#endif
-    }
-
-  O_MUTEX_UNLOCK(giop_queued_messages_lock);
-}
-
-static void
-giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
-{
-  GList *ltmp;
-  GIOPMessageQueueEntry *ent;
-
-#ifdef DEBUG
-  fprintf (stderr, "Giop recv_list push: ");
-  giop_dump_recv (buf);
-#endif
-
-  buf->connection = cnx;
-  switch(buf->msg.header.message_type)
-    {
-    case GIOP_REPLY:
-    case GIOP_LOCATEREPLY:
-      O_MUTEX_LOCK(giop_queued_messages_lock);
-      for(ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next)
-	{
-	  GIOPMessageQueueEntry *tmpent = ltmp->data;
-	  if(tmpent->msg_type == buf->msg.header.message_type
-	     && tmpent->request_id == giop_recv_buffer_get_request_id (buf))
-	    {
-	      ent = tmpent;
-	      break;
-	    }
-	}
-      if(ent)
-	{
-	  ent->buffer = buf;
-#ifdef ORBIT_THREADED
-	  pthread_cond_signal(&ent->condvar);
+		pthread_cond_signal(&ent->condvar);
 #endif
 	}
-      else
-	{
-	  /*
-	    the stub may have already sent the request but not gotten to
-	    the giop_recv_buffer_use_reply() part of things yet.
-	    Race condition probably best fixed by having the stub set up
-	    waiting for a reply BEFORE sending the request.
-	  */
-	  giop_recv_buffer_unuse(buf);
-	  g_error("This is a known bug that hasn't yet been fixed because the"
-		  " most obvious solution involves creating other bugs. "
-		  "Please make noise so this gets fixed.");
-	}
-      O_MUTEX_UNLOCK(giop_queued_messages_lock);
-      break;
-    default:
-      O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
-      incoming_recv_buffer_list = g_list_prepend(incoming_recv_buffer_list,
-						 buf);
-      O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
-#ifdef ORBIT_THREADED
-      pthread_cond_signal(&incoming_recv_buffer_list_condvar);
-#endif
-      break;
-    }
+
+	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 }
 
 CORBA_unsigned_long
@@ -772,206 +769,213 @@ giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 }
 
 void
-giop_recv_list_destroy_queue_entry(GIOPMessageQueueEntry *ent)
+giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 {
-  O_MUTEX_LOCK(giop_queued_messages_lock);
-  giop_queued_messages = g_list_remove(giop_queued_messages, ent);
-  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+	LINC_MUTEX_LOCK (giop_queued_messages_lock);
+	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
+	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
 #ifdef ORBIT_THREADED
-  pthread_cond_destroy(&ent->condvar);
-  O_MUTEX_DESTROY(ent->condvar_lock);
+	/* FIXME: Fix this mess */
+	pthread_cond_destroy(&ent->condvar);
+	LINC_MUTEX_DESTROY(ent->condvar_lock);
 #endif
 }
 
 void
 giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
-				 GIOPConnection *cnx,
-				 CORBA_unsigned_long msg_type,
-				 CORBA_unsigned_long request_id)
+				 GIOPConnection        *cnx,
+				 CORBA_unsigned_long    msg_type,
+				 CORBA_unsigned_long    request_id)
 {
-  
 #ifdef ORBIT_THREADED
-  O_MUTEX_INIT(ent->condvar_lock);
-  pthread_cond_init(&ent->condvar, NULL);
-  O_MUTEX_LOCK(ent->condvar_lock);
+	/* FIXME: fix this mess */
+	LINC_MUTEX_INIT (ent->condvar_lock);
+	pthread_cond_init(&ent->condvar, NULL);
+	LINC_MUTEX_LOCK (ent->condvar_lock);
 #endif
 
-  ent->cnx = cnx;
-  ent->msg_type = msg_type;
-  ent->request_id = request_id;
+	ent->cnx = cnx;
+	ent->msg_type = msg_type;
+	ent->request_id = request_id;
 
-  O_MUTEX_LOCK(giop_queued_messages_lock);
-  giop_queued_messages = g_list_prepend(giop_queued_messages, ent);
-  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+	LINC_MUTEX_LOCK   (giop_queued_messages_lock);
+	giop_queued_messages = g_list_prepend(giop_queued_messages, ent);
+	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-  ent->buffer = NULL;
+	ent->buffer = NULL;
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
-		     gboolean block_for_reply)
+giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
 {
 #ifdef ORBIT_THREADED
-  pthread_cond_wait (&ent->condvar, &ent->condvar_lock);
-  O_MUTEX_UNLOCK (ent->condvar_lock);
+	/* FIXME: fix this mess */
+	pthread_cond_wait (&ent->condvar, &ent->condvar_lock);
+	LINC_MUTEX_UNLOCK (ent->condvar_lock);
 #else
-  linc_main_iteration (block_for_reply);
-  if (block_for_reply) {
-      while (!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
 	linc_main_iteration (block_for_reply);
-  }
+	if (block_for_reply) {
+		while (!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
+			linc_main_iteration (block_for_reply);
+	}
 #endif
 
-  giop_recv_list_destroy_queue_entry (ent);
+	giop_recv_list_destroy_queue_entry (ent);
 
-  return ent->buffer;
+	return ent->buffer;
 }
 
 static GIOPRecvBuffer *
-giop_recv_list_pop_T(void)
+giop_recv_list_pop_T (void)
 {
-  GIOPRecvBuffer *retval = NULL;
+	GIOPRecvBuffer *retval = NULL;
 
-  if(incoming_recv_buffer_list)
-    {
-      retval = incoming_recv_buffer_list->data;
-      incoming_recv_buffer_list = g_list_remove(incoming_recv_buffer_list,
-						retval);
-    }
+	if (incoming_recv_buffer_list) {
+		retval = incoming_recv_buffer_list->data;
+		incoming_recv_buffer_list = g_list_remove (
+			incoming_recv_buffer_list, retval);
+	}
 
-  return retval;
+	return retval;
 }
 
 static GIOPRecvBuffer *
-giop_recv_list_pop(void)
+giop_recv_list_pop (void)
 {
-  GIOPRecvBuffer *retval;
-  O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
-  retval = giop_recv_list_pop_T();
-  O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
-  return retval;
+	GIOPRecvBuffer *retval;
+
+	LINC_MUTEX_LOCK   (incoming_recv_buffer_list_lock);
+	retval = giop_recv_list_pop_T ();
+	LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
+
+	return retval;
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use(void)
+giop_recv_buffer_use (void)
 {
-  GIOPRecvBuffer *retval = NULL;
+	GIOPRecvBuffer *retval = NULL;
 
 #ifdef ORBIT_THREADED
-  O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
-  retval = giop_recv_list_pop_T();
-  if(!retval)
-    {
-      pthread_cond_wait(&incoming_recv_buffer_list_condvar,
-			&incoming_recv_buffer_list_lock);
-      retval = giop_recv_list_pop_T();
-    }
-  O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
+	/* FIXME: fix this mess */
+	LINC_MUTEX_LOCK   (incoming_recv_buffer_list_lock);
+	retval = giop_recv_list_pop_T();
+	if (!retval) {
+		pthread_cond_wait (&incoming_recv_buffer_list_condvar,
+				   &incoming_recv_buffer_list_lock);
+		retval = giop_recv_list_pop_T();
+	}
+	LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
 #else
-  while(!(retval = giop_recv_list_pop()))
-    linc_main_iteration(TRUE);
+	while (!(retval = giop_recv_list_pop ()))
+		linc_main_iteration (TRUE);
 #endif
 
-  return retval;
-}
-
-static void
-giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf, GIOPConnection *cnx)
-{
-	/* Drop fragmented packets on the floor for now */
-	g_warning ("Dropping a fragmented packed on the floor !");
-	buf->connection = cnx;
-	buf->end = buf->message_body + buf->msg.header.message_size;
-	giop_recv_buffer_unuse (buf);
+	return retval;
 }
 
 GIOPMessageInfo
-giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth,
-			   GIOPConnection *cnx)
+giop_recv_buffer_data_read (GIOPRecvBuffer *buf,
+			    int             n,
+			    gboolean        is_auth,
+			    GIOPConnection *cnx)
 {
-  GIOPMessageBufferState new_state;
+	GIOPMessageBufferState new_state;
 
-  buf->left_to_read -= n;
-  buf->cur += n;
+	buf->left_to_read -= n;
+	buf->cur += n;
 
-  if(buf->left_to_read)
-    return GIOP_MSG_UNDERWAY;
+	if (buf->left_to_read)
+		return GIOP_MSG_UNDERWAY;
 
-  switch(buf->state)
-    {
-    case GIOP_MSG_READING_HEADER:
-      new_state = GIOP_MSG_READING_BODY;
-      break;
-    case GIOP_MSG_READING_BODY:
-      if(buf->msg.header.flags & GIOP_FLAG_FRAGMENTED)
-	new_state = GIOP_MSG_AWAITING_FRAGMENTS;
-      else
-	new_state = GIOP_MSG_READY;
-      break;
-    default:
-      new_state = 0;
-      g_assert_not_reached();
-      break;
-    }
+	switch (buf->state) {
+	case GIOP_MSG_READING_HEADER:
+		new_state = GIOP_MSG_READING_BODY;
+		break;
 
-  return giop_recv_buffer_state_change(buf, new_state, is_auth, cnx);
+	case GIOP_MSG_READING_BODY:
+		if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED)
+			new_state = GIOP_MSG_AWAITING_FRAGMENTS;
+		else
+			new_state = GIOP_MSG_READY;
+		break;
+
+	default:
+		new_state = 0;
+		g_assert_not_reached ();
+		break;
+	}
+
+	return giop_recv_buffer_state_change (
+		buf, new_state, is_auth, cnx);
 }
 
 guint
-giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
+giop_recv_buffer_reply_status (GIOPRecvBuffer *buf)
 {
-  switch(buf->msg.header.version[1])
-    {
-    case 0:
-      return buf->msg.u.reply_1_0.reply_status;
-      break;
-    case 1:
-      return buf->msg.u.reply_1_1.reply_status;
-      break;
-    case 2:
-      return buf->msg.u.reply_1_2.reply_status;
-      break;
-    }
+	switch(buf->msg.header.version [1]) {
+	case 0:
+		return buf->msg.u.reply_1_0.reply_status;
+		break;
+	case 1:
+		return buf->msg.u.reply_1_1.reply_status;
+		break;
+	case 2:
+		return buf->msg.u.reply_1_2.reply_status;
+		break;
+	}
 
-  return 0;
+	return 0;
 }
 
 ORBit_ObjectKey*
-giop_recv_buffer_get_objkey(GIOPRecvBuffer *buf)
+giop_recv_buffer_get_objkey (GIOPRecvBuffer *buf)
 {
-  switch(buf->msg.header.version[1])
-    {
-    case 0:
-      return &buf->msg.u.request_1_0.object_key;
-      break;
-    case 1:
-      return &buf->msg.u.request_1_1.object_key;
-      break;
-    case 2:
-      g_assert(buf->msg.u.request_1_2.target._d == GIOP_KeyAddr);
-      return &buf->msg.u.request_1_2.target._u.object_key;
-      break;
-    }
+	switch(buf->msg.header.version [1]) {
+	case 0:
+		return &buf->msg.u.request_1_0.object_key;
+		break;
+	case 1:
+		return &buf->msg.u.request_1_1.object_key;
+		break;
+	case 2:
+		g_assert (buf->msg.u.request_1_2.target._d == GIOP_KeyAddr);
+		return &buf->msg.u.request_1_2.target._u.object_key;
+		break;
+	}
 
-  return NULL;
+	return NULL;
 }
 
 char *
-giop_recv_buffer_get_opname(GIOPRecvBuffer *buf)
+giop_recv_buffer_get_opname (GIOPRecvBuffer *buf)
 {
-  switch(buf->msg.header.version[1])
-    {
-    case 0:
-      return buf->msg.u.request_1_0.operation;
-      break;
-    case 1:
-      return buf->msg.u.request_1_1.operation;
-      break;
-    case 2:
-      return buf->msg.u.request_1_2.operation;
-      break;
-    }
+	switch(buf->msg.header.version [1]) {
+	case 0:
+		return buf->msg.u.request_1_0.operation;
+		break;
+	case 1:
+		return buf->msg.u.request_1_1.operation;
+		break;
+	case 2:
+		return buf->msg.u.request_1_2.operation;
+		break;
+	}
 
-  return NULL;
+	return NULL;
+}
+
+void
+giop_recv_buffer_init (void)
+{
+	incoming_recv_buffer_list_lock = linc_mutex_new ();
+
+#ifdef ORBIT_THREADED
+	if (g_thread_supported () &&
+	    orbit_thread_processing_init == ORBIT_REQUEST_PROCESS_THREADED)
+		incoming_recv_buffer_list_condvar_lock = g_cond_new ();
+#endif
+
+	giop_queued_messages_lock = linc_mutex_new ();
 }

@@ -1,60 +1,65 @@
 #include <ctype.h>
-#include <orbit/orbit.h>
 #include <string.h>
+#include <popt.h>
+
+#include <orbit/orbit.h>
+
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
 #include "orbhttp.h"
-#include <popt.h>
 
 static void
-CORBA_ORB_release_fn(ORBit_RootObject robj)
+CORBA_ORB_release_fn (ORBit_RootObject robj)
 {
-  CORBA_ORB orb = (CORBA_ORB)robj;
+	CORBA_ORB orb = (CORBA_ORB)robj;
 
-  g_ptr_array_free (orb->adaptors, TRUE);
-  g_hash_table_destroy (orb->initial_refs);
+	g_ptr_array_free (orb->adaptors, TRUE);
+	g_hash_table_destroy (orb->initial_refs);
 
-  g_free (orb);
+	g_free (orb);
 }
 
+GMutex *ORBit_RootObject_lifecycle_lock = NULL;
+
 static void
-ORBit_locks_initialize(void)
+ORBit_locks_initialize (void)
 {
-  O_MUTEX_INIT(ORBit_RootObject_lifecycle_lock);
+	ORBit_RootObject_lifecycle_lock = linc_mutex_new ();
 }
 
 CORBA_ORB
-CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
-	       CORBA_Environment *ev)
+CORBA_ORB_init (int *argc, char **argv,
+		CORBA_ORBid orb_identifier,
+		CORBA_Environment *ev)
 {
-  static CORBA_ORB retval = NULL;
-  static ORBit_RootObject_Interface orb_if = {
-    ORBIT_ROT_ORB,
-    CORBA_ORB_release_fn
-  };
+	static CORBA_ORB retval = NULL;
+	static ORBit_RootObject_Interface orb_if = {
+		ORBIT_ROT_ORB,
+		CORBA_ORB_release_fn
+	};
 
-  if(retval)
-    return (CORBA_ORB)CORBA_Object_duplicate((CORBA_Object)retval, ev);
+	if (retval)
+		return (CORBA_ORB) CORBA_Object_duplicate (
+			(CORBA_Object) retval, ev);
 
-  giop_init();
+	giop_init ();
 
-#ifdef ORBIT_THREADSAFE
-  ORBit_locks_initialize();
-#endif  
+	ORBit_locks_initialize ();
 
-  retval = g_new0(struct CORBA_ORB_type, 1);
+	retval = g_new0 (struct CORBA_ORB_type, 1);
 
-  ORBit_RootObject_init(&retval->root_object, &orb_if);
-  /* released by CORBA_ORB_destroy */
-  ORBit_RootObject_duplicate(retval);
+	ORBit_RootObject_init (&retval->root_object, &orb_if);
+	/* released by CORBA_ORB_destroy */
+	ORBit_RootObject_duplicate (retval);
 
-  ORBit_genrand_init(&retval->genrand);
-  retval->default_giop_version = GIOP_LATEST;
+	ORBit_genrand_init (&retval->genrand);
+	retval->default_giop_version = GIOP_LATEST;
 
-  retval->adaptors = g_ptr_array_new();
-  ORBit_init_internals(retval, ev);
+	retval->adaptors = g_ptr_array_new ();
+	ORBit_init_internals (retval, ev);
 
-  return (CORBA_ORB) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
+	return (CORBA_ORB) CORBA_Object_duplicate (
+		(CORBA_Object) retval, ev);
 }
 
 CORBA_char *

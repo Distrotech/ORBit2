@@ -7,126 +7,43 @@
 #include <sys/uio.h>
 
 #define GIOP_CHUNK_ALIGN 8
-#define GIOP_CHUNK_SIZE (GIOP_CHUNK_ALIGN*256)
+#define GIOP_CHUNK_SIZE (GIOP_CHUNK_ALIGN * 256)
 
 static GSList *send_buffer_list;
-O_MUTEX_DEFINE_STATIC(send_buffer_list_lock);
-O_MUTEX_DEFINE_STATIC(request_id_lock);
-static const char giop_zero_buf[GIOP_CHUNK_ALIGN*10] = {0};
+static GMutex *send_buffer_list_lock = NULL;
 
-static void giop_send_buffer_append_real(GIOPSendBuffer *buf, gconstpointer mem, gulong len);
+static const char giop_zero_buf [GIOP_CHUNK_ALIGN * 10] = {0};
 
 void
-giop_send_buffer_init(void)
+giop_send_buffer_init (void)
 {
-  O_MUTEX_INIT(send_buffer_list_lock);
-  O_MUTEX_INIT(request_id_lock);
+	send_buffer_list_lock = linc_mutex_new ();
 }
-
-CORBA_unsigned_long
-giop_get_request_id(void)
-{
-  CORBA_unsigned_long retval;
-  static CORBA_unsigned_long ctr = 0;
-
-  O_MUTEX_LOCK(request_id_lock);
-  retval = ctr++;
-  O_MUTEX_UNLOCK(request_id_lock);
-
-  return retval;
-}
-
-GIOPSendBuffer *
-giop_send_buffer_use(GIOPVersion giop_version)
-{
-  GIOPSendBuffer *retval;
-
-  O_MUTEX_LOCK(send_buffer_list_lock);
-  if(send_buffer_list)
-    {
-      GSList *ltmp;
-      ltmp = send_buffer_list;
-      send_buffer_list = g_slist_remove_link(send_buffer_list, ltmp);
-      O_MUTEX_UNLOCK(send_buffer_list_lock);
-
-      retval = ltmp->data;
-      g_slist_free_1(ltmp);
-      retval->num_used = retval->indirect_left = retval->num_indirects_used = 0;
-    }
-  else
-    {
-      O_MUTEX_UNLOCK(send_buffer_list_lock);
-
-      retval = g_new0(GIOPSendBuffer, 1);
-
-      memcpy(retval->msg.header.magic, "GIOP", 4);
-      retval->msg.header.flags = GIOP_FLAG_ENDIANNESS;
-      retval->num_alloced = 8;
-      retval->iovecs = g_new(struct iovec, 8);
-    }
-
-  memcpy(retval->msg.header.version, giop_version_ids[giop_version], 2);
-  retval->giop_version = giop_version;
-  g_assert(sizeof(retval->msg.header) == 12);
-  giop_send_buffer_append_real(retval, (guchar *)&retval->msg.header, 12);
-  retval->msg.header.message_size = 0;
-  retval->header_size = 12;
-
-  return retval;
-}
-
-#if 0
-static void
-giop_IOP_ServiceContextList_marshal(GIOPSendBuffer *buf, const IOP_ServiceContextList *service_context)
-{
-  guint i, n;
-
-  n = service_context->_length;
-
-  giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-  giop_send_buffer_append(buf, &service_context->_length, sizeof(service_context->_length));
-
-  for(i = 0; i < n; i++)
-    {
-      giop_send_buffer_align(buf, sizeof(IOP_ServiceId));
-      giop_send_buffer_append(buf, &service_context->_buffer[i].context_id, sizeof(IOP_ServiceId));
-    }
-}
-
-static void
-giop_CORBA_sequence_octet_marshal(GIOPSendBuffer *buf, const CORBA_sequence_octet *seq)
-{
-  giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-  giop_send_buffer_append(buf, &seq->_length, sizeof(CORBA_unsigned_long));
-  giop_send_buffer_append(buf, seq->_buffer,
-			  seq->_length);
-}
-#endif
 
 /* Marshal it at compile time so we don't have to do it over and over. This just stores codeset info to say that
      we only speak UTF-8/UTF-16 */
-static const CORBA_unsigned_long iop_service_context_data[] = {
-  1 /* num_contexts */,
-  1 /* ServiceId for CodeSets */,
-  12 /* length of encapsulation: 4 endianness+align, 4 charset_id, 4 wcharset_id */,
+static const CORBA_unsigned_long iop_service_context_data [] = {
+	1 /* num_contexts */,
+	1 /* ServiceId for CodeSets */,
+	12 /* length of encapsulation: 4 endianness+align, 4 charset_id, 4 wcharset_id */,
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
-  0x01010101 /* start of encapsulation */,
+	0x01010101 /* start of encapsulation */,
 #else
-  0,
+	0,
 #endif
-  0x05010001, /* UTF-8 */
-  0x00010109 /* UTF-16 */
+	0x05010001, /* UTF-8 */
+	0x00010109 /* UTF-16 */
 };
 
 static const GIOP_AddressingDisposition giop_1_2_target_type = GIOP_KeyAddr;
 
 GIOPSendBuffer *
-giop_send_buffer_use_request(GIOPVersion giop_version,
-			     CORBA_unsigned_long request_id,
-			     CORBA_boolean response_expected,
-			     const CORBA_sequence_CORBA_octet *objkey,
-			     const struct iovec *operation_vec,
-			     const struct iovec *principal_vec)
+giop_send_buffer_use_request (GIOPVersion giop_version,
+			      CORBA_unsigned_long request_id,
+			      CORBA_boolean response_expected,
+			      const CORBA_sequence_CORBA_octet *objkey,
+			      const struct iovec *operation_vec,
+			      const struct iovec *principal_vec)
 {
   GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
   struct iovec zerovec;
@@ -208,16 +125,10 @@ giop_send_buffer_use_reply(GIOPVersion giop_version,
   return buf;
 }
 
-#if 0
-/* We never send this */
 GIOPSendBuffer *
-giop_send_buffer_use_cancel_request(void);
-#endif
-
-GIOPSendBuffer *
-giop_send_buffer_use_locate_request(GIOPVersion giop_version,
-				    CORBA_unsigned_long request_id,
-				    const CORBA_sequence_CORBA_octet *objkey)
+giop_send_buffer_use_locate_request (GIOPVersion giop_version,
+				     CORBA_unsigned_long request_id,
+				     const CORBA_sequence_CORBA_octet *objkey)
 {
   GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
 
@@ -262,63 +173,64 @@ giop_send_buffer_use_locate_reply(GIOPVersion giop_version,
 }
 
 GIOPSendBuffer *
-giop_send_buffer_use_close_connection(GIOPVersion giop_version)
+giop_send_buffer_use_close_connection (GIOPVersion giop_version)
 {
-  GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
+	GIOPSendBuffer *buf = giop_send_buffer_use (giop_version);
 
-  buf->msg.header.message_type = GIOP_CLOSECONNECTION;  
+	buf->msg.header.message_type = GIOP_CLOSECONNECTION;  
   
-  return buf;
+	return buf;
 }
 
 GIOPSendBuffer *
-giop_send_buffer_use_message_error(GIOPVersion giop_version)
+giop_send_buffer_use_message_error (GIOPVersion giop_version)
 {
-  GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
+	GIOPSendBuffer *buf = giop_send_buffer_use (giop_version);
 
-  buf->msg.header.message_type = GIOP_MESSAGEERROR;  
+	buf->msg.header.message_type = GIOP_MESSAGEERROR;  
   
-  return buf;
+	return buf;
 }
 
 void
-giop_send_buffer_unuse(GIOPSendBuffer *buf)
+giop_send_buffer_unuse (GIOPSendBuffer *buf)
 {
-  O_MUTEX_LOCK(send_buffer_list_lock);
-  send_buffer_list = g_slist_prepend(send_buffer_list, buf);
-  O_MUTEX_UNLOCK(send_buffer_list_lock);
+	LINC_MUTEX_LOCK (send_buffer_list_lock);
+	send_buffer_list = g_slist_prepend (send_buffer_list, buf);
+	LINC_MUTEX_UNLOCK (send_buffer_list_lock);
 }
 
 static void
-giop_send_buffer_append_real(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
+giop_send_buffer_append_real (GIOPSendBuffer *buf,
+			      gconstpointer   mem,
+			      gulong          len)
 {
-  register gulong num_used;
-  register const guchar *lastptr;
+	register gulong num_used;
+	register const guchar *lastptr;
 
-  g_assert(mem);
+	g_assert (mem);
 
-  lastptr = buf->lastptr;
-  num_used = buf->num_used;
-  if(num_used && mem == lastptr)
-    {
-      buf->iovecs[num_used-1].iov_len += len;
-    }
-  else
-    {
-      if(num_used >= buf->num_alloced)
-	{
-	  buf->num_alloced = MAX(buf->num_alloced, 4)*2;
-	  buf->iovecs = g_realloc(buf->iovecs, buf->num_alloced * sizeof(struct iovec));
+	lastptr = buf->lastptr;
+	num_used = buf->num_used;
+	if(num_used && mem == lastptr)
+		buf->iovecs[num_used-1].iov_len += len;
+
+	else {
+		if(num_used >= buf->num_alloced) {
+			buf->num_alloced = MAX (buf->num_alloced, 4) * 2;
+			buf->iovecs = g_realloc (buf->iovecs,
+						 buf->num_alloced *
+						 sizeof (struct iovec));
+		}
+
+		buf->iovecs [num_used].iov_base = (gpointer) mem;
+		buf->iovecs [num_used].iov_len = len;
+		buf->num_used = num_used + 1;
 	}
 
-      buf->iovecs[num_used].iov_base = (gpointer)mem;
-      buf->iovecs[num_used].iov_len = len;
-      buf->num_used = num_used + 1;
-    }
+	buf->msg.header.message_size += len;
 
-  buf->msg.header.message_size += len;
-
-  buf->lastptr = ((const guchar *)mem) + len;
+	buf->lastptr = ((const guchar *) mem) + len;
 }
 
 /*
@@ -376,6 +288,7 @@ giop_send_buffer_append_copy (GIOPSendBuffer *buf,
 	buf->indirect      += len;
 	buf->indirect_left -= len;
 }
+
 
 void
 giop_send_buffer_append (GIOPSendBuffer *buf,
@@ -475,20 +388,65 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 }
 
 int
-giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx)
+giop_send_buffer_write (GIOPSendBuffer *buf, GIOPConnection *cnx)
 {
 	int retval;
 
 	if (buf->giop_version >= GIOP_1_2)
 		giop_send_buffer_align (buf, 8); /* Do tail align */
 
-	O_MUTEX_LOCK (cnx->outgoing_mutex);
+	LINC_MUTEX_LOCK (cnx->outgoing_mutex);
 
 	retval = linc_connection_writev (
 		(LINCConnection *) cnx, buf->iovecs,
 		buf->num_used, buf->msg.header.message_size + buf->header_size);
 
-	O_MUTEX_UNLOCK (cnx->outgoing_mutex);
+	LINC_MUTEX_UNLOCK (cnx->outgoing_mutex);
+
+	return retval;
+}
+
+
+GIOPSendBuffer *
+giop_send_buffer_use (GIOPVersion giop_version)
+{
+	GIOPSendBuffer *retval;
+
+	LINC_MUTEX_LOCK (send_buffer_list_lock);
+	if (send_buffer_list) {
+		GSList *ltmp;
+
+		ltmp = send_buffer_list;
+		send_buffer_list = g_slist_remove_link (
+			send_buffer_list, ltmp);
+
+		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
+
+		retval = ltmp->data;
+		g_slist_free_1 (ltmp);
+		retval->num_used = retval->indirect_left = 0;
+		retval->num_indirects_used = 0;
+	} else {
+		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
+
+		retval = g_new0 (GIOPSendBuffer, 1);
+
+		memcpy (retval->msg.header.magic, "GIOP", 4);
+		retval->msg.header.flags = GIOP_FLAG_ENDIANNESS;
+		retval->num_alloced = 8;
+		retval->iovecs = g_new (struct iovec, 8);
+	}
+
+	memcpy (retval->msg.header.version,
+		giop_version_ids [giop_version], 2);
+	retval->giop_version = giop_version;
+
+	g_assert (sizeof (retval->msg.header) == 12);
+	giop_send_buffer_append_real (
+		retval, (guchar *)&retval->msg.header, 12);
+
+	retval->msg.header.message_size = 0;
+	retval->header_size = 12;
 
 	return retval;
 }
