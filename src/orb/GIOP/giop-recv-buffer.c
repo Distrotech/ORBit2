@@ -1,6 +1,7 @@
 #include <config.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "giop-private.h"
 #include <orbit/GIOP/giop-types.h>
@@ -792,7 +793,7 @@ handle_reply (GIOPRecvBuffer *buf)
 	} else {
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-		g_warning ("We received an unexpected message:");
+		g_warning ("We received an unexpected reply:");
 		giop_dump_recv (buf);
 		giop_recv_buffer_unuse(buf);
 	}
@@ -880,8 +881,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		    !buf->left_to_read) { /* odd error case ? */
 			/* FIXME: we hit this _far_ too much, this is a common
 			   path instead of an unusual incidental */
-/*			g_warning ("Died on read %d %ld",
-			n, buf->left_to_read); */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 			g_object_unref ((GObject *) cnx);
@@ -958,9 +957,12 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				   buf->msg.header.message_type);
 			giop_dump_recv (buf);
 		}
-		/* drop through */
+		giop_recv_buffer_unuse (buf);
+		break;
+
 	case GIOP_CLOSECONNECTION:
 		giop_recv_buffer_unuse (buf);
+		linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 		break;
 
 	default:

@@ -1,6 +1,14 @@
 2001-11-09  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): close the
+	connection on a GIOP_CLOSECONNECTION - shock.
+
+	* HACKING: update.
+
+2001-11-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
 	(handle_reply): split out of
 	(giop_recv_list_push): here, kill and fold into
 	(giop_connection_handle_input): here & simplify.
