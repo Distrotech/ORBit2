@@ -24,17 +24,20 @@ SSL_METHOD *linc_ssl_method;
 SSL_CTX    *linc_ssl_ctx;
 #endif
 
-/**
- * linc_set_threaded:
- * @threaded: whether to do locking
- * 
- *   This routine turns threading on or off for the whole
- * ORB, it should be called (TRUE) if threading is desired
- * before any of the ORB initialization occurs.
- **/
+gboolean
+linc_get_threaded (void)
+{
+	return linc_threaded;
+}
+
+/*
+ * Deprecated.
+ */
 void
 linc_set_threaded (gboolean threaded)
 {
+	g_warning ("linc_set_threaded is deprecated");
+
 	if (linc_mutex_new_called)
 		g_error ("You need to set this before using the ORB");
 	linc_threaded = threaded;
@@ -153,8 +156,7 @@ linc_main_loop_run (void)
 /**
  * linc_mutex_new:
  * 
- * Creates a mutes, iff threads are supported, initialized and
- * linc_set_threaded has been called.
+ * Creates a mutes, iff threads are supported and initialized.
  * 
  * Return value: a new GMutex, or NULL if one is not required.
  **/

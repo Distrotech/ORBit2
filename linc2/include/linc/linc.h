@@ -17,6 +17,7 @@
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 #include <linc/linc-server.h>
+#include <linc/linc-source.h>
 
 G_BEGIN_DECLS
 
@@ -26,6 +27,7 @@ GMutex    *linc_object_get_mutex (void);
 gpointer   linc_object_ref       (GObject *object);
 void       linc_object_unref     (GObject *object);
 
+/* Deprecated */
 void       linc_set_threaded     (gboolean       threaded);
 void       linc_init             (gboolean       init_threads);
 
