@@ -1,5 +1,12 @@
 2002-04-30  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/idl-compiler/cpp/pass_xlate.cc (doInterface): 
+	(doException): don't do --container.end() to get an iterator
+	pointing to the last item, use a temporary instead
+
+	* src/idl-compiler/cpp/types/IDLMethod.cc (skel_do_call): 
+	(stub_arglist_get): ditto
+
 	* src/orb-cpp/orbitcpp_poa.cc: Use new Sequence class
 
 	* src/orb-cpp/orbitcpp_typecode.hh: Comment out *Member classes

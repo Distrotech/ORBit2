@@ -509,6 +509,8 @@ IDLPassXlate::doException (IDL_tree  node,
 		// Create member init constructor
 		
 		string constructor_args;
+		IDLException::const_iterator back = except.end ();
+		back--;
 		for (IDLException::const_iterator i = except.begin ();
 		     i != except.end (); i++)
 		{
@@ -518,7 +520,7 @@ IDLPassXlate::doException (IDL_tree  node,
 			constructor_args += " _par_";
 			constructor_args += member.get_cpp_identifier ();
 
-			if (i != --except.end ())
+			if (i != back)
 				constructor_args += ", ";
 		}
 
@@ -654,11 +656,13 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	if (iface.m_bases.size ())
 	{
 		m_header << " : ";
+		IDLInterface::BaseList::const_iterator back = iface.m_bases.end ();
+		back--;
 		for (IDLInterface::BaseList::const_iterator i = iface.m_bases.begin ();
 		     i != iface.m_bases.end (); i++)
 		{
 			m_header << "public " << (*i)->get_cpp_typename ();
-			if (i != --iface.m_bases.end ())
+			if (i != back)
 				m_header << ", ";
 		}
 	}
