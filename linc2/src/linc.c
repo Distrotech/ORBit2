@@ -413,7 +413,7 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 void
 link_set_io_thread (gboolean io_in_thread)
 {
-	LinkCommand *cmd = g_new0 (LinkCommand, 1);
+	LinkCommand cmd = { 0 };
 
 #ifdef G_ENABLE_DEBUG
 	g_warning ("FIXME: guard from double entry");
@@ -422,9 +422,9 @@ link_set_io_thread (gboolean io_in_thread)
 	if (link_is_io_in_thread)
 		return;
 
-	cmd->type = LINK_COMMAND_SET_IO_THREAD;
+	cmd.type = LINK_COMMAND_SET_IO_THREAD;
 
-	link_exec_command (cmd);
+	link_exec_command (&cmd);
 }
 
 static void
