@@ -1609,54 +1609,62 @@ IOP_profile_demarshal(GIOPRecvBuffer *buf, CORBA_ORB orb)
 }
 
 gboolean
-ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
-		    char **ret_type_id, GSList **ret_profiles)
+ORBit_demarshal_IOR (CORBA_ORB        orb,
+		     GIOPRecvBuffer  *buf,
+		     gchar          **ret_type_id,
+		     GSList         **ret_profiles)
 {
-  GSList *profiles = NULL;
-  char *type_id;
-  CORBA_unsigned_long len, num_profiles;
-  int i;
+	CORBA_unsigned_long  num_profiles;
+	CORBA_unsigned_long  len;
+	GSList              *profiles = NULL;
+	gchar               *type_id;
+	int                  i;
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    goto errout;
-  len = *(CORBA_unsigned_long *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    len = GUINT32_SWAP_LE_BE(len);
-  buf->cur += 4;
-  if((buf->cur + len) > buf->end
-     || (buf->cur + len) < buf->cur)
-    goto errout;
-  type_id = buf->cur;
-  buf->cur += len;
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    goto errout;
-  num_profiles = *(CORBA_unsigned_long *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    num_profiles = GUINT32_SWAP_LE_BE(num_profiles);
-  buf->cur += 4;
-  if(!strcmp(type_id, "") && num_profiles == 0)
-    type_id = NULL;
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+	if ((buf->cur + 4) > buf->end)
+		return TRUE;
 
-  for(i = 0; i < num_profiles; i++)
-    {
-      IOP_Profile_info *profile;
-      profile = IOP_profile_demarshal(buf, orb);
-      if(profile)
-	profiles = g_slist_append(profiles, profile);
-      else
-	  goto errout;
-    }
+	len = *(CORBA_unsigned_long *)buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		len = GUINT32_SWAP_LE_BE (len);
+	buf->cur += 4;
 
-  *ret_profiles = profiles;
-  if(ret_type_id)
-    *ret_type_id = type_id;
-  return FALSE;
+	if (len < 0 || (buf->cur + len) > buf->end)
+		return TRUE;
 
- errout:
-  IOP_delete_profiles (orb, &profiles);
-  return TRUE;
+	type_id = buf->cur;
+
+	buf->cur = ALIGN_ADDRESS (buf->cur + len, 4);
+	if ((buf->cur + 4) > buf->end)
+		return TRUE;
+
+	num_profiles = *(CORBA_unsigned_long *)buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		num_profiles = GUINT32_SWAP_LE_BE (num_profiles);
+	buf->cur += 4;
+
+	if (!type_id [0] && num_profiles == 0)
+		return FALSE;
+
+	for (i = 0; i < num_profiles; i++) {
+		IOP_Profile_info *profile;
+
+		profile = IOP_profile_demarshal (buf, orb);
+		if (profile)
+			profiles = g_slist_append (profiles, profile);
+		else {
+			IOP_delete_profiles (orb, &profiles);
+			return TRUE;
+		}
+	}
+
+	if (ret_profiles)
+		*ret_profiles = profiles;
+
+	if (ret_type_id)
+		*ret_type_id = type_id;
+
+	return FALSE;
 }
 
 static void
