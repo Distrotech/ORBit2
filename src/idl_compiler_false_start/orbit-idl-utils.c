@@ -356,6 +356,8 @@ oidl_marshal_tree_dump(IDL_tree tree, int indent_level)
 {
   IDL_tree node;
 
+  if(!tree) return;
+
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
