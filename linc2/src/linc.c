@@ -194,15 +194,17 @@ linc_object_ref (GObject *object)
 void
 linc_object_unref (GObject *object)
 {
+	gboolean last_ref;
+
 	LINC_MUTEX_LOCK   (linc_lifecycle_mutex);
 
-	g_object_unref (object);
-
-	/* FIXME: we need to do our own ref counting here
-	 * so finalization doesn't happen whilst holding
-	 * this lock ! can't use these methods until then */
+	if (!(last_ref = (object->ref_count == 1)))
+		g_object_unref (object);
 
 	LINC_MUTEX_UNLOCK (linc_lifecycle_mutex);
+
+	if (last_ref) /* take it outside the guard */
+		g_object_unref (object);
 }
 
 GMainLoop *
