@@ -1,3 +1,7 @@
+2005-01-12  Jules Colding  <colding@omesc.com>
+
+	* src/idl-compiler/orbit-idl-main.c (main): Fix print of passes.
+
 2005-01-01  Jules Colding  <colding@omesc.com>
 
 	* src/idl-compiler/orbit-idl-c-skelimpl.c (cbe_ski_do_list): Fix the former 
