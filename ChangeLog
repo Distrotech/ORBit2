@@ -1,3 +1,12 @@
+2003-05-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_stub_pre_get_epv) 
+	(ORBit_stub_post_invoke): impl. to get this
+	out of the stubs.
+
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(cs_output_stub): use the new stub methods.
+
 2003-05-23  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-server.c
