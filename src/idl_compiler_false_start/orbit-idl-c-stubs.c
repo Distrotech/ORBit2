@@ -116,6 +116,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
 
+  if(oi->out_stubs) /* Lame hack to ensure we get _ORBIT_retval available */
+    cs_stub_alloc_tmpvars(oi->out_stubs, ci);
+
   /* Check if we can do a direct call, and if so, do it */
   {
     IDL_tree curitem;
@@ -127,8 +130,12 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 				 "_", 0);
     fprintf(ci->fh, "if(_obj->servant && _obj->vepv && %s__classid)\n{\n",
 	    id);
+    fprintf(ci->fh, "int *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
+    fprintf(ci->fh, "_pobj = ORBIT_OBJECT_KEY(_obj->servant)->object;\n");
+    fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
+    fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
     fprintf(ci->fh, "%s((POA_%s__epv *)_obj->vepv[%s__classid])->%s(_obj->servant, ",
-	    IDL_OP_DCL(tree).op_type_spec?"return ":"",
+	    IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval = ":"",
 	    id, id, IDL_IDENT(IDL_OP_DCL(tree).ident).str);
     g_free(id);
     for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
@@ -141,7 +148,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "ev);\n");
 
-    fprintf(ci->fh, "%s\n}\n", IDL_OP_DCL(tree).op_type_spec?"":"return;");
+    fprintf(ci->fh, "if(_use_count) { if(!(--(*_use_count))) _death_func(_use_count, _user_data); }\n");
+    fprintf(ci->fh, "return %s;\n}\n", IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval":"");
   }
 
   fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
@@ -192,12 +200,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "{ /* demarshalling */\n");
 
-    if(oi->out_stubs) {
+    if(oi->out_stubs)
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
 
-      cs_stub_alloc_tmpvars(oi->out_stubs, ci);
-    }
-	
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
