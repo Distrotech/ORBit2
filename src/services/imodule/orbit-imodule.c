@@ -99,6 +99,9 @@ ORBit_iinterface_fill_iargs (GHashTable  *typecodes,
 				typecodes, 
 				IDL_PARAM_DCL (parm).param_type_spec);
 
+		iarg->name = CORBA_string_dup(
+				 IDL_STRING (IDL_PARAM_DCL(parm).simple_declarator).value);
+
 		switch (IDL_PARAM_DCL (parm).attr) {
 		case IDL_PARAM_IN:
 			iarg->flags = ORBit_I_ARG_IN;
