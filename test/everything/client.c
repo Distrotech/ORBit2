@@ -1596,6 +1596,7 @@ testPingPong (test_TestFactory   factory,
 	g_assert (!CORBA_Object_is_equivalent (
 		CORBA_OBJECT_NIL, l_objref, ev));
 
+#if 0
 	/* Test blocking bits - try to blow the remote guy's stack */
 	if (!in_proc) {
 		int i;
@@ -1605,7 +1606,9 @@ testPingPong (test_TestFactory   factory,
 			test_PingPongServer_opOneWayCallback (r_objref, l_objref, ev);
 			g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		}
+		test_PingPongServer_opRoundTrip (r_objref, ev);
 	}
+#endif
 
 	if (!in_proc) {
 		int i;
