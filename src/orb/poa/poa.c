@@ -1427,25 +1427,28 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
 }
 
 PortableServer_POA
-ORBit_POA_setup_root(CORBA_ORB orb, CORBA_Environment *ev)
+ORBit_POA_setup_root (CORBA_ORB orb, CORBA_Environment *ev)
 {
-  PortableServer_POA poa;
-  CORBA_Policy policybuf[1];
-  CORBA_PolicyList policies = {1,1,(CORBA_Object *)policybuf,CORBA_FALSE};
+	PortableServer_POA poa;
+	CORBA_Policy       policybuf[1];
+	CORBA_PolicyList   policies = {1, 1, (CORBA_Object *)policybuf, CORBA_FALSE};
 
-  /* The only non-default policy used by the RootPOA is IMPLICIT ACTIVATION */
+	/*
+	 * The only non-default policy used by 
+	 * the RootPOA is IMPLICIT ACTIVATION.
+	 */
+	policies._buffer[0] = (CORBA_Policy)
+		PortableServer_POA_create_implicit_activation_policy (
+							NULL,
+							PortableServer_IMPLICIT_ACTIVATION,
+							ev);
 
-  policies._buffer[0] = 
-	(CORBA_Policy)PortableServer_POA_create_implicit_activation_policy(NULL,
-									   PortableServer_IMPLICIT_ACTIVATION,
-									   ev);
 
-
-  poa = ORBit_POA_new(orb, "RootPOA", CORBA_OBJECT_NIL, &policies, ev);
+	poa = ORBit_POA_new (orb, "RootPOA", CORBA_OBJECT_NIL, &policies, ev);
  
-  CORBA_Policy_destroy( policies._buffer[0], ev );
+	CORBA_Policy_destroy (policies._buffer[0], ev);
 
-  return poa;
+	return poa;
 }
 
 static gboolean
