@@ -1,0 +1,45 @@
+<!-- ##### SECTION Title ##### -->
+LINCServer
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### MACRO LINC_IS_SERVER ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### FUNCTION linc_server_setup ##### -->
+<para>
+
+</para>
+
+@cnx: 
+@proto_name: 
+@local_host_info: 
+@local_serv_info: 
+@create_options: 
+@Returns: 
+
+
+<!-- ##### FUNCTION linc_server_handle ##### -->
+<para>
+
+</para>
+
+@cnx: 
+
+
