@@ -1,3 +1,10 @@
+2001-09-19  Darin Adler  <darin@bentspoon.com>
+
+	* src/orb/orb-core/Makefile.am: Fix build by mentioning the
+	generated header file explicitly as a target. Otherwise, the
+	dependencies trigger the default orbit-idl compile rule,
+	which uses the wrong flags.
+
 2001-09-19  Mark McLoughlin <mark@skynet.ie>
 
 	Implement orbitrc option handling.
