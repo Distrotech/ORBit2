@@ -401,7 +401,7 @@ giop_mainloop_handle_input (GIOChannel     *source,
 }
 
 static void
-giop_request_handler_fn (gpointer data, gpointer user_data)
+giop_request_handler_thread (gpointer data, gpointer user_data)
 {
 	gboolean done;
 	GIOPThread *tdata = data;
@@ -464,7 +464,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 		/* Setup thread pool for incoming requests */
 		giop_thread_pool = g_thread_pool_new
-			(giop_request_handler_fn, NULL, -1, FALSE, NULL);
+			(giop_request_handler_thread, NULL, -1, FALSE, NULL);
 		giop_pool_hash_lock = link_mutex_new ();
 		giop_pool_hash = g_hash_table_new (NULL, NULL);
 	}
@@ -574,9 +574,6 @@ giop_shutdown (void)
 		g_main_loop_quit (giop_main_loop);
 
 	if (giop_thread_safe ()) {
-		if (!giop_thread_self ()->wake_context)
-			g_error ("Must shutdown ORB from main thread");
-
 		if (giop_main_source) {
 			g_source_destroy (giop_main_source);
 			g_source_unref (giop_main_source);
