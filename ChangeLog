@@ -1,3 +1,10 @@
+2002-09-20  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/Makefile.am:
+	* test/poa/Makefile.am:
+	* test/inhibit/Makefile.am: add $(ORBIT_LIBS)
+	to LDADD.
+
 2002-09-17  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/orbit-idl-backend.c (orbit_idl_backend_output):
