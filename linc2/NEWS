@@ -1,3 +1,8 @@
+Version 1.0.1
+
+	* fixes
+		+ nasty blocking accept call (Michael)
+
 Version 0.7.1
 
 	* fixes
