@@ -258,3 +258,8 @@ executed to do the marshaling for each method.
 suggest that ORBit2 is ~20% slower than ORBit stable, it will be
 possible ( in a totaly binary compatible fashion ) to tweak and
 optimize the marshal / de-marshal process to make it arbitarily fast.
+
+* Where can I find out more about CORBA ?
+
+	See the OMG website at http://www.omg.org. Alternatively read
+the ORBit headers, and pseudo IDL available in ORBit2/src/idl/.
