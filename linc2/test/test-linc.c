@@ -1,10 +1,35 @@
 #include <stdio.h>
+#include <linc/linc.h>
 #include "linc-private.h"
 
 gboolean broken;
 
 #define SYS_SOCKET_BUFFER_MAX (512 * 1024)
 #define BUFFER_MAX 1024
+
+static void
+test_protos (void)
+{
+	LINCProtocolInfo *info;
+
+	info = linc_protocol_all ();
+
+	fprintf (stderr, "Available protocols: {\n");
+
+	while (info && info->name) {
+		fprintf (stderr, "\t'%8s': %2d, %3d, %2d, 0x%.4x [%c%c%c%c%c]\n",
+			 info->name, info->family, info->addr_len,
+			 info->stream_proto_num, info->flags,
+			 info->setup ?        's' : '-',
+			 info->destroy ?      'd' : '-',
+			 info->get_sockaddr ? 'a' : '-',
+			 info->get_sockinfo ? 'i' : '-',
+			 info->is_local ?     'l' : '-');
+		info++;
+	}
+	
+	fprintf (stderr, " }\n");
+}
 
 static void
 init_tmp (void)
@@ -260,6 +285,7 @@ main (int argc, char **argv)
 	linc_init (FALSE);
 	init_tmp ();
 
+	test_protos ();
 	test_broken ();
 	test_blocking ();
 
