@@ -1,3 +1,9 @@
+2002-11-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_handle_exception_array): ensure we always
+	exit with an exception set, even with odd wire data.
+
 2002-11-11  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.4.4
