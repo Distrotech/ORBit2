@@ -1,4 +1,6 @@
-INCLUDES=-I$(top_srcdir)/src/orbit-idl-compiler -I$(top_srcdir) @GLIB_CFLAGS@
+INCLUDES=-I$(top_srcdir)/src/orbit-idl-compiler -I$(top_srcdir) \
+	-I$(top_srcdir)/src -I$(top_builddir) -I$(top_builddir)/src \
+	@GLIB_CFLAGS@
 
 lib_LIBRARIES=liborbit-c-backend.a
 
