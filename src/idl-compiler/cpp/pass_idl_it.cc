@@ -177,6 +177,12 @@ void IDLIteratingPass::doDefinitionList(IDL_tree list,IDLScope &scope) {
 		case IDLN_FORWARD_DCL:
 			doForwardDcl(IDL_LIST(list).data,scope);
 			break;
+		case IDLN_SRCFILE:
+		        //Do nothing - otherwise we'd throw an unxpected node exception.
+		        //What does IDLN_SRCFILE actually mean? We seem to get it as the first node, so maybe it's like a root node..
+		        //murrayc.
+		        break;
+
 			ORBITCPP_DEFAULT_CASE(IDL_LIST(list).data)
 		}
 		list = IDL_LIST(list).next;
