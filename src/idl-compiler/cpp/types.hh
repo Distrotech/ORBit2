@@ -169,7 +169,7 @@ public:
 	}
 
 	string getNSScopedCTypeName() const {
-		return IDL_IMPL_C_NS "::" + getCTypeName();
+		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
 	}
 	string getNSScopedCPPTypeName() const { 
 		return getQualifiedCPPIdentifier();
@@ -183,7 +183,7 @@ public:
 		: IDLScope(id,node,parentscope) {}
 
 	string getNSScopedCTypeName() const {
-		return IDL_IMPL_C_NS "::" + getCTypeName();
+		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
 	}
 
 	string getNSScopedCPPTypeName() const { 
@@ -532,7 +532,7 @@ public:
 		return  getQualifiedCIdentifier(getRootScope());
 	} 
 	string getNSScopedCTypeName() const { 
-		return IDL_IMPL_C_NS "::" + getCTypeName(); 
+		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
 	} 
 	string getNSScopedCPPTypeName() const { 
 		return getQualifiedCPPIdentifier();

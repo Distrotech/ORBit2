@@ -39,7 +39,7 @@ IDLPassStubs::runPass() {
 	<< indent << "#ifndef __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_STUBS" << endl
 	<< indent << "#define __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_STUBS" << endl
 	<< indent << endl << endl
-	<< indent << "#include <strings.h>" << endl
+	<< indent << "#include <string.h>" << endl
 	<< indent << "#include \"" << m_state.m_basename << IDL_CPP_HEADER_EXT"\"" << endl
 	<< indent << endl << endl
 	<< indent << "// Stub declaration ------------------------------------" << endl
