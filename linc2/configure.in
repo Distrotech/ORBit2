@@ -3,9 +3,9 @@ AC_INIT(configure.in)
 
 AC_PREREQ(2.12) # required version of autoconf
 
-LINC_MAJOR_VERSION=0
-LINC_MINOR_VERSION=7
-LINC_MICRO_VERSION=1
+LINC_MAJOR_VERSION=1
+LINC_MINOR_VERSION=1
+LINC_MICRO_VERSION=0
 LINC_VERSION=$LINC_MAJOR_VERSION.$LINC_MINOR_VERSION.$LINC_MICRO_VERSION
 AC_SUBST(LINC_MAJOR_VERSION)
 AC_SUBST(LINC_MINOR_VERSION)
@@ -229,4 +229,7 @@ echo "linc configuration:
 	Compiler:		${CC} 
 
 	IPv6 can do raw addrs:  ${have_inet_pton}
+
+	This is the Development branch of linc, if
+you want something more stable checkout -r gnome-2-2.
 "

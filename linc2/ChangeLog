@@ -1,5 +1,7 @@
 2003-01-09  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: bump version to 1.1.0
+
 	* Branch for gnome-2-2
 
 2002-12-28  Michael Meeks  <michael@ximian.com>
