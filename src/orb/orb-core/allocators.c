@@ -34,9 +34,9 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		CORBA_any *pval = mem;
 		if (pval->_release)
 			ORBit_free_T (pval->_value);
-		pval->_value = 0;
+		pval->_value = NULL;
 		ORBit_RootObject_release_T (pval->_type);
-		pval->_type = 0;
+		pval->_type = NULL;
 		retval = (guchar *) (pval + 1);
 		break;
 	}
@@ -45,7 +45,7 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		CORBA_Object *pval = mem;
 
 		ORBit_RootObject_release_T (*pval);
-		*pval = 0;
+		*pval = NULL;
 		retval = ((guchar *)mem) + sizeof (*pval);
 		break;
 	}
@@ -53,7 +53,7 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		CORBA_Principal *pval = mem;
 		if (pval->_release)
 			ORBit_free_T (pval->_buffer);
-		pval->_buffer = 0;
+		pval->_buffer = NULL;
 		retval = (guchar *)(pval + 1);
 		break;
 	}

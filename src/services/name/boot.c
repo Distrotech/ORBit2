@@ -18,7 +18,7 @@ signal_handler(int signo){
   }
 }
 
-static char *opt_corbaloc_key = 0;
+static char *opt_corbaloc_key = NULL;
 
 static const struct poptOption TheOptions[] = {
     { "key", 0, POPT_ARG_STRING, &opt_corbaloc_key, 0, 
@@ -27,7 +27,7 @@ static const struct poptOption TheOptions[] = {
     ORBIT_POPT_TABLE,
 #endif
     POPT_AUTOHELP
-    { 0 }
+    { NULL }
 };
 
 int
@@ -48,13 +48,13 @@ main (int argc, char *argv[])
   	act.sa_mask    = empty_mask;
   	act.sa_flags   = 0;
   
-  	sigaction(SIGINT,  &act, 0);
-  	sigaction(SIGHUP,  &act, 0);
-  	sigaction(SIGSEGV, &act, 0);
-  	sigaction(SIGABRT, &act, 0);
+  	sigaction(SIGINT,  &act, NULL);
+  	sigaction(SIGHUP,  &act, NULL);
+  	sigaction(SIGSEGV, &act, NULL);
+  	sigaction(SIGABRT, &act, NULL);
   
   	act.sa_handler = SIG_IGN;
-  	sigaction(SIGPIPE, &act, 0);
+  	sigaction(SIGPIPE, &act, NULL);
   }
 
   CORBA_exception_init (&ev);

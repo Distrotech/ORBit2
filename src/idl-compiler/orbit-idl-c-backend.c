@@ -31,7 +31,7 @@ orbit_idl_output_c (IDL_tree       tree,
     if(!isalnum((guchar)ci.c_base_name[i])) ci.c_base_name[i] = '_';
   }
 
-  ci.ext_dcls = g_string_new(0);
+  ci.ext_dcls = g_string_new(NULL);
 
   ci.do_impl_hack = 1;
   ci.do_skel_defs = rinfo->do_skel_defs;

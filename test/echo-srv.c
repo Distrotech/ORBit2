@@ -113,14 +113,14 @@ echo_srv_finish_object(CORBA_Environment *ev)
 		printf("object_release failed: %d\n", ev->_major);
 		exit(1);
 	}
-	the_echo_client = 0;
+	the_echo_client = NULL;
 	PortableServer_POA_deactivate_object(the_poa, the_objid, ev);
 	if ( ev->_major ) {
 		printf("deactivate_object failed: %d\n", ev->_major);
 		exit(1);
 	}
 	CORBA_free(the_objid);
-	the_objid = 0;
+	the_objid = NULL;
 	POA_Echo__fini(&poa_echo_servant, ev);
 	if ( ev->_major ) {
 		printf("object__fini failed: %d\n", ev->_major);
@@ -137,5 +137,5 @@ echo_srv_finish_poa(CORBA_Environment *ev)
 		printf("POA release failed: %d\n", ev->_major);
 		exit(1);
 	}
-	the_poa = 0;
+	the_poa = NULL;
 }
