@@ -186,7 +186,8 @@ ORBit_small_get_iinterface (CORBA_Object       opt_object,
 
 static void
 add_if_unique (GPtrArray  *strings,
-	       const char *new_str)
+	       const char *new_str,
+	       gboolean base_path)
 {
 	int i, len;
 
@@ -200,7 +201,9 @@ add_if_unique (GPtrArray  *strings,
 
 	g_ptr_array_add (
 		strings,
-		g_strconcat (new_str, "/lib/orbit-2.0", NULL));
+		base_path ? 
+		  g_strconcat (new_str, "/lib/orbit-2.0", NULL) : 
+    		  g_strdup(new_str));
 }
 
 /* FIXME: this should be called only once at
@@ -221,7 +224,7 @@ ORBit_get_typelib_paths (void)
 
 		strv = g_strsplit (path, ":", -1);
 		for (i = 0; strv && strv [i]; i++)
-			add_if_unique (paths, strv [i]);
+			add_if_unique (paths, strv [i], FALSE);
 		g_strfreev (strv);
 	}
 
@@ -230,7 +233,7 @@ ORBit_get_typelib_paths (void)
 
 		strv = g_strsplit (path, ":", -1);
 		for (i = 0; strv && strv [i]; i++)
-			add_if_unique (paths, strv [i]);
+			add_if_unique (paths, strv [i], TRUE);
 		g_strfreev (strv);
 	}
 
