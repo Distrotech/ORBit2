@@ -783,6 +783,7 @@ concat_frags (GList *list)
 	guchar *ptr;
 	gulong length = 0;
 	gulong initial_length;
+	gulong initial_offset;
 	GIOPRecvBuffer *head;
 
 	head = list->data;
@@ -794,10 +795,16 @@ concat_frags (GList *list)
 		length += buf->end - buf->cur;
 	}
 
+	initial_offset = (head->cur - head->message_body);
 	initial_length = (head->end - head->cur);
+
+	length += initial_offset - 12; /* include what we read of the header */
+
 	g_assert (head->free_body);
 	alloc_buffer (head, head->message_body, length);
+	head->msg.header.message_size = length;
 	head->left_to_read = 0;
+	head->cur = head->message_body + initial_offset;
 
 	ptr = head->cur + initial_length;
 
@@ -1049,7 +1056,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				break;
 
 			case GIOP_MSG_READING_BODY: {
-				
+
 				dprintf (GIOP, "Incoming IIOP body:\n");
 
 				buf->cur = buf->message_body + 12;
