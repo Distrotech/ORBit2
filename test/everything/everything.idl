@@ -79,9 +79,9 @@ module test {
 		void remove();
 	};
 
-	struct FixedLengthStruct {
+	typedef struct FixedLengthStruct {
 		short a;
-	};
+	} DummyStruct;
   
 	struct VariableLengthStruct {
 		string a;
@@ -112,7 +112,6 @@ module test {
 		StrSeqSeq theSeq;
 	};
 
-
 	interface SequenceServer {
 		StrSeq opStrSeq(in StrSeq inArg, inout StrSeq inoutArg, out StrSeq outArg);
 		BoundedStructSeq opBoundedStructSeq(in BoundedStructSeq inArg,
@@ -120,13 +119,13 @@ module test {
 						    out BoundedStructSeq outArg);
 	};
   
-	enum AnEnum { 
+	typedef enum AnEnum { 
 		ENUM_IN,
  		ENUM_INOUT_IN,
 		ENUM_INOUT_OUT,
 		ENUM_OUT,
 		ENUM_RETN
-	};
+	} DummyEnum;
 
 	exception SimpleException {
 	};
