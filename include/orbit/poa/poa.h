@@ -84,12 +84,7 @@ void PortableServer_ServantBase__init(PortableServer_Servant p_servant,
 void PortableServer_ServantBase__fini(PortableServer_Servant p_servant,
 				      CORBA_Environment *ev);
 void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
-#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) {                       \
-  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci);  \
-}
-#define ORBIT_SERVANT_TO_CLASSINFO(servant) (                           \
-  (PortableServer_ClassInfo*)                                           \
-  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )      \
-)
+void ORBit_POAObject_post_invoke(    ORBit_POAObject *obj);
+
 
 #endif

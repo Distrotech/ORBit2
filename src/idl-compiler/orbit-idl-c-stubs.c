@@ -143,11 +143,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "POA_%s__epv *_epv=(POA_%s__epv*)ORBIT_STUB_GetEpv(_obj,%s__classid);\n",
 	    id, id, id);
-    fprintf(ci->fh, "int *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
-    fprintf(ci->fh, "_pobj = ORBIT_STUB_GetPoaObj(_obj);\n");
-    fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
-    fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
-    fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj, invoke_rec);\n");
+    fprintf(ci->fh, "ORBit_POAInvocation _invoke_rec;\n");
+    fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj, _invoke_rec);\n");
     fprintf(ci->fh, "%s _epv->%s(ORBIT_STUB_GetServant(_obj), ",
 	    IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval = ":"",
 	    IDL_IDENT(IDL_OP_DCL(tree).ident).str);
@@ -162,8 +159,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "ev);\n");
 
-    fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, invoke_rec);\n");
-    fprintf(ci->fh, "if(_use_count) { if(!(--(*_use_count))) _death_func(_use_count, _user_data); }\n");
+    fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, _invoke_rec);\n");
     fprintf(ci->fh, "return %s;\n}\n", IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval":"");
   }
 
