@@ -29,6 +29,7 @@ static gboolean     orbit_use_usocks        = TRUE;
 static gboolean     orbit_use_irda          = FALSE;
 static gboolean     orbit_use_ssl           = FALSE;
 static gboolean     orbit_use_genuid_simple = FALSE;
+static gboolean     orbit_allow_local       = FALSE;
 static char        *orbit_ipsock            = NULL;
 static char        *orbit_ipname            = NULL;
 static char        *orbit_debug_options     = NULL;
@@ -36,7 +37,11 @@ static char        *orbit_debug_options     = NULL;
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
 {
-	LINCProtocolInfo *info;
+	LINCProtocolInfo     *info;
+	LINCConnectionOptions create_options = 0;
+
+	if (orbit_allow_local)
+		create_options |= LINC_CONNECTION_LOCAL_ONLY;
 
 	for (info = linc_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
@@ -44,9 +49,11 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 		if (!ORBit_proto_use (info->name))
 			continue;
 
-		server = giop_server_new (orb->default_giop_version,
-					  info->name, orbit_ipname,
-					  orbit_ipsock, 0, orb);
+		server = giop_server_new (
+			orb->default_giop_version, info->name,
+			orbit_ipname, orbit_ipsock,
+			create_options, orb);
+
 		if (server) {
 			orb->servers = g_slist_prepend (orb->servers, server);
 
@@ -56,7 +63,8 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 
 				server = giop_server_new (
 					orb->default_giop_version, info->name,
-					NULL, NULL, LINC_CONNECTION_SSL, orb);
+					NULL, NULL, LINC_CONNECTION_SSL | create_options,
+					orb);
 
 				if (server)
 					orb->servers = g_slist_prepend (orb->servers, server);
@@ -1222,20 +1230,21 @@ ORBit_proto_use (const char *name)
 }
 
 static ORBit_option orbit_supported_options[] = {
-	{"ORBid",           ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL}, /* FIXME: huh?          */
- 	{"ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname},
- 	{"ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock},
-	{"ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4},
-	{"ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6},
-	{"ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
-	{"ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
-	{"ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda},
-	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
-	{"ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple},
-	{"ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options},
-	{NULL,              0,                    NULL},
+	{ "ORBid",           ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
+ 	{ "ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname },
+ 	{ "ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock },
+	{ "ORBAllowLocal",   ORBIT_OPTION_BOOLEAN, &orbit_allow_local },
+	{ "ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
+	{ "ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },
+	{ "ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
+	{ "ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
+	{ "ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda },
+	{ "ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl },
+	{ "ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
+	{ "ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options },
+	{ NULL,              0,                    NULL },
 };
