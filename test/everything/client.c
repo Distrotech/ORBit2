@@ -35,6 +35,8 @@
 #  define d_print(a) g_print(a)
 #endif
 
+CORBA_ORB orb;
+
 void testConst()
 {
   d_print("Testing constants...\n");
@@ -82,10 +84,18 @@ void testString(test_TestFactory factory,
 {
   test_BasicServer objref;
   const CORBA_char *in;
+  CORBA_char *ior;
   CORBA_char *inout, *out, *retn; 
+
   d_print("Testing strings...\n");
-  objref = test_TestFactory_getBasicServer(factory,ev);
+
+  ior = test_TestFactory_getBasicServerIOR (factory,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  objref = CORBA_ORB_string_to_object (orb, ior, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert(objref != CORBA_OBJECT_NIL);
+
   in = constants_STRING_IN;
   inout = CORBA_string_dup(constants_STRING_INOUT_IN);
   retn = test_BasicServer_opString(objref,in,&inout,&out,ev);
@@ -838,7 +848,6 @@ run_tests (test_TestFactory   factory,
 int main(int argc, char *argv[])
 {
   CORBA_Environment ev;
-  CORBA_ORB orb;
   test_TestFactory factory;
 
 /*  g_mem_set_vtable (glib_mem_profiler_table);*/
