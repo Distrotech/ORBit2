@@ -35,11 +35,30 @@ GIOPRecvBuffer *giop_recv_buffer_use_buf(gboolean is_auth);
 GIOPRecvBuffer *giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf);
 GIOPRecvBuffer *giop_recv_buffer_use_encaps(guchar *mem, gulong len);
 
-GIOPRecvBuffer *giop_recv_buffer_use_reply(CORBA_unsigned_long request_id, gboolean block_for_reply);
-GIOPRecvBuffer *giop_recv_buffer_use_locate_reply(CORBA_unsigned_long request_id, gboolean block_for_reply);
+GIOPRecvBuffer *giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply);
+GIOPRecvBuffer *giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply);
 GIOPRecvBuffer *giop_recv_buffer_use(void);
 void giop_recv_buffer_unuse(GIOPRecvBuffer *buf);
 GIOPMessageInfo giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth);
 GIOPMessageInfo giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth);
+extern inline guint giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
+{
+  switch(buf->msg.header.version[1])
+    {
+    case 0:
+      return buf->msg.u.reply_1_0.reply_status;
+      break;
+    case 1:
+      return buf->msg.u.reply_1_1.reply_status;
+      break;
+    case 2:
+      return buf->msg.u.reply_1_2.reply_status;
+      break;
+    }
+
+  return 0;
+}
+CORBA_unsigned_long giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf);
+char *giop_recv_buffer_get_opname(GIOPRecvBuffer *buf);
 
 #endif

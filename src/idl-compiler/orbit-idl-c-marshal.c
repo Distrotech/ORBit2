@@ -76,7 +76,7 @@ c_marshal_append(OIDL_C_Marshal_Info *cmi, OIDL_Marshal_Node *node, char *itemst
     addrof = TRUE;
 
   if(indirect && cmi->alloc_on_stack)
-     fprintf(cmi->ci->fh, "{ guchar *_ORBIT_t; _ORBIT_t = alloca(%s); memcpy(_ORBIT_t, %s(%s), %s);\n", sizestr, addrof?"&":"",
+     fprintf(cmi->ci->fh, "{ guchar *_ORBIT_t; _ORBIT_t = g_alloca(%s); memcpy(_ORBIT_t, %s(%s), %s);\n", sizestr, addrof?"&":"",
 	     itemstr, sizestr);
 
   if(indirect && !cmi->alloc_on_stack) {

@@ -205,7 +205,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
   }
 
   fprintf(ci->fh, "{\nint *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
-  fprintf(ci->fh, "_pobj = ORBIT_OBJECT_KEY(_ORBIT_servant->_private)->object;\n");
+  fprintf(ci->fh, "_pobj = _ORBIT_servant->_private;\n");
   fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
   fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
 
@@ -226,8 +226,8 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "{ /* marshalling */\n");
     fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
 
-    fprintf(ci->fh, "_ORBIT_send_buffer = giop_send_reply_buffer_use(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer)->connection, NULL, "
-	    "_ORBIT_recv_buffer->message.u.request.request_id, ev->_major);\n");
+    fprintf(ci->fh, "_ORBIT_send_buffer = giop_send_buffer_use_reply(_ORBIT_recv_buffer->connection->giop_version,"
+	    "giop_recv_buffer_get_request_id(_ORBIT_recv_buffer), ev->_major);\n");
 
     fprintf(ci->fh, "if(_ORBIT_send_buffer) {\n");
     fprintf(ci->fh, "if (ev->_major == CORBA_NO_EXCEPTION) {\n");
@@ -258,7 +258,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "} else\n");
     fprintf(ci->fh, "ORBit_send_system_exception(_ORBIT_send_buffer, ev);\n");
 
-    fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
+    fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer, _ORBIT_recv_buffer->connection);\n");
     fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
     fprintf(ci->fh, "}\n");
 
@@ -671,7 +671,7 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_C_Info *ci)
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
   fprintf(ci->fh, "static ORBitSkeleton get_skel_%s(POA_%s *servant,\nGIOPRecvBuffer *_ORBIT_recv_buffer,\ngpointer *impl)\n", id, id);
   fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "gchar *opname = _ORBIT_recv_buffer->message.u.request.operation;\n\n");
+  fprintf(ci->fh, "gchar *opname = giop_recv_buffer_get_opname(_ORBIT_recv_buffer);\n\n");
 
   iti.ci = ci;
   iti.oplist = NULL;

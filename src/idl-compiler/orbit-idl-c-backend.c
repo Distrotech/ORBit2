@@ -15,7 +15,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
   char *ctmp;
   OIDL_C_Info ci;
 
-  ci.base_name = g_strdup(g_basename(rinfo->input_filename));
+  ci.base_name = g_path_get_basename(rinfo->input_filename);
   ctmp = strrchr(ci.base_name, '.');
   g_assert(ctmp);
   *ctmp = '\0';
@@ -67,8 +67,10 @@ out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
   char *ctmp;
   char *cmdline;
 
-  basein = alloca(strlen(input_filename) + sizeof("-skelimpl.c"));
-  strcpy(basein, g_basename(input_filename));
+  basein = g_alloca(strlen(input_filename) + sizeof("-skelimpl.c"));
+  ctmp = g_path_get_basename(input_filename);
+  strcpy(basein, ctmp);
+  g_free(ctmp);
 
   ctmp = strrchr(basein, '.');
 
@@ -99,7 +101,7 @@ out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
 
   strcat(basein, tack_on);
 
-  cmdline = alloca(strlen(rinfo->output_formatter) + strlen(basein) 
+  cmdline = g_alloca(strlen(rinfo->output_formatter) + strlen(basein) 
 		   + sizeof(" > "));
   sprintf(cmdline, "%s > %s", rinfo->output_formatter, basein);
   return popen(cmdline, "w");

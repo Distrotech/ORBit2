@@ -11,6 +11,7 @@
 
 static GSList *send_buffer_list;
 O_MUTEX_DEFINE_STATIC(send_buffer_list_lock);
+O_MUTEX_DEFINE_STATIC(request_id_lock);
 
 static const char giop_zero_buf[GIOP_CHUNK_ALIGN] = {0};
 
@@ -18,6 +19,20 @@ void
 giop_send_buffer_init(void)
 {
   O_MUTEX_INIT(send_buffer_list_lock);
+  O_MUTEX_INIT(request_id_lock);
+}
+
+CORBA_unsigned_long
+giop_get_request_id(void)
+{
+  CORBA_unsigned_long retval;
+  static CORBA_unsigned_long ctr = 0;
+
+  O_MUTEX_LOCK(request_id_lock);
+  retval = ctr++;
+  O_MUTEX_UNLOCK(request_id_lock);
+
+  return retval;
 }
 
 GIOPSendBuffer *

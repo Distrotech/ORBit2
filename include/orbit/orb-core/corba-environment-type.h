@@ -6,7 +6,7 @@
 
 #if !defined(_CORBA_Environment_defined)
 #define _CORBA_Environment_defined 1
-   typedef struct CORBA_Environment_type *CORBA_Environment;
+   typedef struct CORBA_Environment_type CORBA_Environment;
 #endif
 
 struct CORBA_Environment_type {

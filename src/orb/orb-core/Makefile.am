@@ -65,7 +65,9 @@ $(OPS_IDLOUT) runidl_ops: corba-ops.idl $(IDL)
 	$(IDL) --nocommon \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
 	for I in $(OPS_IDLOUT); do \
-		sed -e 's,XXXis_a,_is_a,g' -e 's,XXis_a,is_a,g' -e 's,X,_,g' $$I > $$I.out; mv $$I.out $$I; \
+		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I; \
 	done
+	sed -e "s,Z,_,g" corba-ops-skels.c > corba-ops-skels.c.out
+	mv corba-ops-skels.c.out corba-ops-skels.c
 
 BUILT_SOURCES=$(IDLOUT) $(POA_IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)
