@@ -227,6 +227,7 @@ Makefile
 orbit2-config
 ORBit-2.0.pc
 ORBit-CosNaming-2.0.pc
+ORBit-imodule-2.0.pc
 ORBit.spec
 src/Makefile
 src/idl-compiler/Makefile
