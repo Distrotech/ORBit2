@@ -580,97 +580,114 @@ IOP_generate_profiles (CORBA_Object obj)
  */
 
 static void
-IOP_component_free(IOP_Component_info *c)
+IOP_component_free (IOP_Component_info *c)
 {
-  switch(c->component_type)
-    {
-    case IOP_TAG_GENERIC_SSL_SEC_TRANS:
-      g_free(((IOP_TAG_GENERIC_SSL_SEC_TRANS_info*)c)->service);
-      break;
-    case IOP_TAG_COMPLETE_OBJECT_KEY:
-      break;
-    case IOP_TAG_SSL_SEC_TRANS:
-      break;
-    case IOP_TAG_CODE_SETS:
-      break;
-    default:
-      g_free(((IOP_UnknownProfile_info*)c)->data._buffer);
-      break;
-    }
-  g_free(c);
+	switch (c->component_type) {
+	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
+		g_free (((IOP_TAG_GENERIC_SSL_SEC_TRANS_info *)c)->service);
+		break;
+	case IOP_TAG_COMPLETE_OBJECT_KEY: {
+		IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = 
+			(IOP_TAG_COMPLETE_OBJECT_KEY_info *)c;
+
+		if (coki->object_key)
+			ORBit_free_T (coki->object_key);
+		coki->object_key = NULL;
+
+		break;
+		}
+	case IOP_TAG_SSL_SEC_TRANS:
+		break;
+	case IOP_TAG_CODE_SETS:
+		break;
+	default:
+		g_free (((IOP_UnknownProfile_info*)c)->data._buffer);
+		break;
+	}
+
+	g_free(c);
 }
 
 static void
-IOP_components_free(GSList *components)
+IOP_components_free (GSList *components)
 {
-  g_slist_foreach(components, (GFunc)IOP_component_free, NULL);
+	g_slist_foreach (components, (GFunc)IOP_component_free, NULL);
 }
 
 static void
 IOP_TAG_MULTIPLE_COMPONENTS_free (IOP_Profile_info *p)
 {
-  IOP_TAG_MULTIPLE_COMPONENTS_info *info = (IOP_TAG_MULTIPLE_COMPONENTS_info *) p;
+	IOP_TAG_MULTIPLE_COMPONENTS_info *info = (IOP_TAG_MULTIPLE_COMPONENTS_info *)p;
 
-  IOP_components_free (info->components);
+	IOP_components_free (info->components);
 }
 
 static void
 IOP_TAG_INTERNET_IOP_free (IOP_Profile_info *p)
 {
-  IOP_TAG_INTERNET_IOP_info *info = (IOP_TAG_INTERNET_IOP_info *) p;
+	IOP_TAG_INTERNET_IOP_info *info = (IOP_TAG_INTERNET_IOP_info *)p;
 
-  IOP_components_free (info->components);
-  g_free (info->host);
+	IOP_components_free (info->components);
+	g_free (info->host);
+
+	if (info->object_key)
+		ORBit_free_T (info->object_key);
+	info->object_key = NULL;
 }
 
 static void
 IOP_TAG_GENERIC_IOP_free (IOP_Profile_info *p)
 {
-  IOP_TAG_GENERIC_IOP_info *info = (IOP_TAG_GENERIC_IOP_info *) p;
+	IOP_TAG_GENERIC_IOP_info *info = (IOP_TAG_GENERIC_IOP_info *)p;
 
-  IOP_components_free (info->components);
-  g_free (info->proto);
-  g_free (info->host);
-  g_free (info->service);
+	IOP_components_free (info->components);
+	g_free (info->proto);
+	g_free (info->host);
+	g_free (info->service);
 }
 
 static void
 IOP_TAG_ORBIT_SPECIFIC_free (IOP_Profile_info *p)
 {
-  IOP_TAG_ORBIT_SPECIFIC_info *info = (IOP_TAG_ORBIT_SPECIFIC_info *) p;
+	IOP_TAG_ORBIT_SPECIFIC_info *info = (IOP_TAG_ORBIT_SPECIFIC_info *)p;
 
-  g_free(info->unix_sock_path);
+	g_free (info->unix_sock_path);
+
+	if (info->object_key)
+		ORBit_free_T (info->object_key);
+	info->object_key = NULL;
 }
 
 static void
 IOP_UnknownProfile_free (IOP_Profile_info *p)
 {
-  IOP_UnknownProfile_info *info = (IOP_UnknownProfile_info *) p;
+	IOP_UnknownProfile_info *info = (IOP_UnknownProfile_info *)p;
 
-  g_free (info->data._buffer);
+	g_free (info->data._buffer);
 }
 
 static void
 IOP_profile_free (IOP_Profile_info *p)
 {
-  switch (p->profile_type) {
-    case IOP_TAG_INTERNET_IOP:
-      IOP_TAG_INTERNET_IOP_free (p);
-      break;
-    case IOP_TAG_MULTIPLE_COMPONENTS:
-      IOP_TAG_MULTIPLE_COMPONENTS_free (p);
-      break;
-    case IOP_TAG_GENERIC_IOP:
-      IOP_TAG_GENERIC_IOP_free (p);
-      break;
-    case IOP_TAG_ORBIT_SPECIFIC:
-      IOP_TAG_ORBIT_SPECIFIC_free (p);
-      break;
-    default:
-      IOP_UnknownProfile_free (p);
-      break;
-  }
-  g_free (p);
+	switch (p->profile_type) {
+	case IOP_TAG_INTERNET_IOP:
+		IOP_TAG_INTERNET_IOP_free (p);
+		break;
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+		IOP_TAG_MULTIPLE_COMPONENTS_free (p);
+		break;
+	case IOP_TAG_GENERIC_IOP:
+		IOP_TAG_GENERIC_IOP_free (p);
+		break;
+	case IOP_TAG_ORBIT_SPECIFIC:
+		IOP_TAG_ORBIT_SPECIFIC_free (p);
+		break;
+	default:
+		IOP_UnknownProfile_free (p);
+		break;
+	}
+
+	g_free (p);
 }
 
 /*
@@ -1047,18 +1064,21 @@ IOP_TAG_GENERIC_SSL_SEC_TRANS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
 }
 
 static IOP_Component_info *
-IOP_TAG_COMPLETE_OBJECT_KEY_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
+IOP_TAG_COMPLETE_OBJECT_KEY_demarshal (IOP_ComponentId id,
+				       GIOPRecvBuffer *buf)
 {
-  IOP_TAG_COMPLETE_OBJECT_KEY_info *retval;
-  ORBit_ObjectKey                  *objkey;
+	IOP_TAG_COMPLETE_OBJECT_KEY_info *retval;
+	ORBit_ObjectKey                  *objkey;
   
-  objkey = IOP_ObjectKey_demarshal(buf);
-  if(!objkey)
-    return NULL;
-  retval = g_new(IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
-  retval->parent.component_type = id;
-  retval->object_key = objkey;
-  return (IOP_Component_info *)retval;
+	objkey = IOP_ObjectKey_demarshal (buf);
+	if(!objkey)
+		return NULL;
+
+	retval = g_new (IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
+	retval->parent.component_type = id;
+	retval->object_key            = objkey;
+
+	return (IOP_Component_info *)retval;
 }
 
 static gboolean
@@ -1401,8 +1421,6 @@ IOP_TAG_GENERIC_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
   giop_recv_buffer_unuse(buf);
   return NULL;
 }
-
-
 
 static IOP_Profile_info *
 IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
