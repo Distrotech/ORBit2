@@ -2,6 +2,7 @@
 #include "orbit-idl-c-backend.h"
 
 #include <string.h>
+#include <ctype.h>
 
 /* #define DO_CPP */
 

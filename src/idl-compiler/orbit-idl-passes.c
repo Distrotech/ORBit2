@@ -726,12 +726,13 @@ oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node)
 
   if(!node) return;
 
-  if(node->up
-     && (node->up->flags & MN_DEMARSHAL_CORBA_ALLOC))
-    node->flags |= MN_DEMARSHAL_CORBA_ALLOC;
+  if(node->up)
+    node->flags |= node->up->flags & (MN_DEMARSHAL_CORBA_ALLOC|MN_DEMARSHAL_USER_MOD);
 
   switch(node->type) {
   case MARSHAL_LOOP:
+    if((node->flags & MN_ISSTRING) && !(node->flags & MN_DEMARSHAL_USER_MOD))
+      node->flags &= ~MN_DEMARSHAL_CORBA_ALLOC;
     oidl_pass_set_corba_alloc(node->u.loop_info.loop_var);
     oidl_pass_set_corba_alloc(node->u.loop_info.length_var);
     oidl_pass_set_corba_alloc(node->u.loop_info.contents);
