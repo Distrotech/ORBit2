@@ -454,9 +454,15 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
        && (IDL_NODE_TYPE(tts) != IDLN_TYPE_ENUM)
        && (IDL_NODE_TYPE(tts) != IDLN_TYPE_STRING)
        && (IDL_NODE_TYPE(tts) != IDLN_TYPE_WIDE_STRING)) {
-      fprintf(ci->fh, "extern %s%s* %s__alloc(void);\n", ctmp,
-	      (IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"",
-	      ctmp);
+      if((IDL_NODE_TYPE(tts) == IDLN_EXCEPT_DCL
+	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_STRUCT)
+	 && !IDL_TYPE_STRUCT(tts).member_list) {
+	fprintf(ci->fh, "#define %s__alloc() NULL\n", ctmp);
+      } else {
+	fprintf(ci->fh, "extern %s%s* %s__alloc(void);\n", ctmp,
+		(IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"",
+		ctmp);
+      }
       fprintf(ci->fh,
 	      "extern gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings); /* ORBit internal use */\n",
 	      ctmp);
