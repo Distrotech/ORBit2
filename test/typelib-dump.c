@@ -1,8 +1,12 @@
 #include <config.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include <orbit/orbit.h>
+
+#include "../src/orb/orb-core/orb-core-private.h"
 
 static void
 dump_tc (CORBA_TypeCode tc, int ident)
@@ -54,6 +58,42 @@ dump_iface (ORBit_IInterface *iface)
 	printf ("\n\n");
 }
 
+static void
+list_libs (void)
+{
+	int    i;
+	char **paths;
+
+	printf ("Installed type libraries:\n\n");
+
+	paths = ORBit_get_typelib_paths ();
+
+	for (i = 0; paths && paths [i]; i++) {
+		DIR *dh;
+		struct dirent *de;
+
+		dh = opendir (paths [i]);
+
+		if (!dh)
+			continue;
+
+		printf ("%s:\n\n", paths [i]);
+        
+		for (de = readdir (dh); de; de = readdir (dh)) {
+			char *p, *str = g_strdup (de->d_name);
+			if ((p = strstr (str, "_module.la"))) {
+				*p = '\0';
+				printf ("\t%s\n", str);
+			}
+			g_free (str);
+		}
+
+		closedir (dh);
+	}
+
+	g_strfreev (paths);
+}
+
 int
 main (int argc, char *argv [])
 {
@@ -62,7 +102,12 @@ main (int argc, char *argv [])
 	CORBA_sequence_CORBA_TypeCode   *tcs;
 	CORBA_sequence_ORBit_IInterface *ifaces;
 
-	name = argv [1];
+	if (argc < 2) {
+		list_libs ();
+		return 0;
+	}
+
+	name = argv [argc - 1];
 
 	if (!ORBit_small_load_typelib (name))
 		g_error ("Can't find typelib of name '%s' in path", name);
