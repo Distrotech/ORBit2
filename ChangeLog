@@ -1,3 +1,8 @@
+2003-07-03  Frank Rehberger  <Frank.Rehberger@web.de>
+
+	* src/orb/orb-core/corba-context.c (ORBit_Context_demarshal): fix
+	for #116338
+
 2003-07-02  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval): prevent
