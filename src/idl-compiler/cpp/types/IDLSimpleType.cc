@@ -335,7 +335,11 @@ IDLSimpleType::member_pack_to_c (ostream      &ostr,
 				 const string &c_id,
 				 const IDLTypedef *active_typedef) const
 {
-	ostr << indent << c_id << " = " << cpp_id << ';' << endl;
+	string c_type = active_typedef ?
+		active_typedef->get_c_typename () : get_fixed_c_typename ();
+	
+	ostr << indent << c_id << " = "
+	     << "(" << c_type << ")" << cpp_id << ';' << endl;
 }
 
 void
@@ -345,5 +349,9 @@ IDLSimpleType::member_unpack_from_c (ostream      &ostr,
 				     const string &c_id,
 				     const IDLTypedef *active_typedef) const
 {
-	ostr << indent << cpp_id << " = " << c_id << ';' << endl;
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_fixed_cpp_typename ();
+
+	ostr << indent << cpp_id << " = "
+	     << "(" << cpp_type << ")" << c_id << ';' << endl;
 }
