@@ -1,3 +1,24 @@
+2003-10-02  Alexander Larsson  <alexl@redhat.com>
+
+	* include/orbit/GIOP/giop-types.h:
+	* include/orbit/GIOP/giop.h:
+	* src/orb/GIOP/giop.c: (giop_thread_new), (giop_thread_key_add_T),
+	(giop_thread_key_release_T), (giop_thread_free),
+	(giop_thread_self), (giop_thread_key_add),
+	(giop_thread_key_release), (giop_thread_request_push_key),
+	(giop_request_handler_fn), (giop_init):
+	Allow GIOPThreads to have several keys.
+	Don't leak some GIOPThread contents.
+	
+	* src/orb/poa/orbit-adaptor.c:
+	* include/orbit/poa/orbit-adaptor.h:
+	Add ORBIT_THREAD_HINT_ON_CONTEXT to case to fix warning.
+	Fix recursion in ORBit_ObjectAdaptor_set_thread_hint
+	Implement ORBit_ObjectAdaptor_object_bind_to_current_thread.
+	
+	* src/orb/poa/poa.c: (ORBit_POA_handle_request):
+	Add comment about thread binding.
+
 2003-09-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):

@@ -1487,6 +1487,10 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 				
 				switch (adaptor->thread_hint) {
 				case ORBIT_THREAD_HINT_PER_OBJECT:
+					/* Note: If the user bound this object to a specific
+					 * thread this thread will be called, otherwise a
+					 * new thread will be created for handling requests
+					 * to the object. */
 					pool_push_request_for_T (pobj, &pobj, &recv_buffer);
 					break;
 

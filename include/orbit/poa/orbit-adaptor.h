@@ -27,6 +27,9 @@ void            ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adapto
 						      va_list             args);
 ORBitThreadHint ORBit_ObjectAdaptor_get_thread_hint  (ORBit_ObjectAdaptor adaptor);
 
+void            ORBit_ObjectAdaptor_object_bind_to_current_thread (CORBA_Object obj);
+
+
 #ifdef ORBIT2_INTERNAL_API
 
 void                ORBit_handle_locate_request     (CORBA_ORB          orb, 
