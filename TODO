@@ -34,6 +34,10 @@ TODO:
 	  on TypeCodes, so we can blat things quickly with memcpy
 	  in a generic way - eg. sequences of octets.
 
+	+ we need to implement 'wait for completion' on
+	  shutdown so that we can activate async unrefs in
+	  bonobo.
+
 * Dragons:
 	+ giop_recv_buffer.c (giop_connection_handle_input)
 	  manages to go through the error condition a whole
