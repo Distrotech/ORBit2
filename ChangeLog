@@ -23,12 +23,6 @@
 
 2001-12-07  Mark McLoughlin  <mark@skynet.ie>
 
-	reviewed by: <delete if not using a buddy>
-
-	* src/orb/orb-core/corba-typecode.c: (CDR_get):
-
-2001-12-07  Mark McLoughlin  <mark@skynet.ie>
-
 	* src/orb/orb-core/corba-typecode.c: (CDR_get):
 	do byteswap if neccessary.
 
