@@ -1,3 +1,10 @@
+2002-10-16  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(cbe_small_flatten_args): use _args[i] =...;
+	initialization instead of array init, to make
+	HP/UX happy.
+
 2002-10-14  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/poa/orbit-adaptor.c: (ORBit_handle_request): init
