@@ -2116,6 +2116,32 @@ testNonExistent (test_TestFactory factory, CORBA_Environment *ev)
 }
 
 static void
+testWithException (test_TestFactory factory, CORBA_Environment *ev)
+{
+	int old_flags;
+	CORBA_Object objref;
+
+	CORBA_exception_set (ev, CORBA_SYSTEM_EXCEPTION,
+			     ex_CORBA_OBJECT_NOT_EXIST, NULL);
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	old_flags = ORBit_small_flags;
+	ORBit_small_flags |= ORBIT_SMALL_FORCE_GENERIC_MARSHAL;
+
+	CORBA_exception_set (ev, CORBA_SYSTEM_EXCEPTION,
+			     ex_CORBA_OBJECT_NOT_EXIST, NULL);
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	ORBit_small_flags = old_flags;
+}
+
+static void
 run_tests (test_TestFactory   factory, 
 	   gboolean           thread_tests,
 	   CORBA_Environment *ev)
@@ -2160,6 +2186,7 @@ run_tests (test_TestFactory   factory,
 			testPolicy (factory, thread_tests, ev);
 		}
 		testMisc (factory, ev);
+		testWithException (factory, ev);
 		testLifeCycle (factory, ev);
 	}
 	

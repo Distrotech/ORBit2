@@ -248,7 +248,7 @@ ORBit_small_handle_request (ORBit_OAObject     adaptor_obj,
 	 		    CORBA_Environment *ev)
 {
 	adaptor_obj->interface->handle_request (adaptor_obj, opname, ret, 
-					      args, ctx, recv_buffer, ev);
+						args, ctx, recv_buffer, ev);
 }
 
 gboolean

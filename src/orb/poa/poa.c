@@ -2590,21 +2590,27 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 					 methods->_buffer[method_index].flags))) {
 		
 		/* Unwound PreCall
-		   ++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );	    \
-		   (obj)->orb->current_invocations =                           \
-		   g_slist_prepend ((obj)->orb->current_invocations,   \
-		   (obj)->adaptor_obj);               \
+		   POA_LOCK (((ORBit_POAObject)(obj)->adaptor_obj)->poa);
+		   ++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );
+		   POA_UNLOCK (((ORBit_POAObject)(obj)->adaptor_obj)->poa);
+		   (obj)->orb->current_invocations =
+		   g_slist_prepend ((obj)->orb->current_invocations,
+		   (obj)->adaptor_obj);
 		*/
-
+		
+		CORBA_exception_init (ev);
 		skel_impl (servant, ret, args, ctx, ev, method_impl);
 
 		/* Unwound PostCall
-		   (obj)->orb->current_invocations =                                                      \
-		   g_slist_remove ((obj)->orb->current_invocations, pobj);                        \
-		   --(((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt);                                    \
-		   if (((ORBit_POAObject)(obj)->adaptor_obj)->life_flags & ORBit_LifeF_NeedPostInvoke)    \
-		   ORBit_POAObject_post_invoke (((ORBit_POAObject)(obj)->adaptor_obj));           \
+		   (obj)->orb->current_invocations =
+		   g_slist_remove ((obj)->orb->current_invocations, pobj);
+		   POA_LOCK (((ORBit_POAObject)(obj)->adaptor_obj)->poa);
+		   --(((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt);
+		   if (((ORBit_POAObject)(obj)->adaptor_obj)->life_flags & ORBit_LifeF_NeedPostInvoke)
+			ORBit_POAObject_post_invoke (((ORBit_POAObject)(obj)->adaptor_obj));
+		   POA_UNLOCK (((ORBit_POAObject)(obj)->adaptor_obj)->poa);
 		*/
+
 	} else
 		ORBit_small_invoke_stub_n
 			(obj, methods, method_index,

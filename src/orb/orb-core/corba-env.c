@@ -106,7 +106,7 @@ CORBA_exception_set (CORBA_Environment   *ev,
 		     void                *param)
 {
 	CORBA_exception_free(ev);
-  
+
 	ev->_major = major;
 	if (major != CORBA_NO_EXCEPTION) {
 		ev->_id = CORBA_string_dup (except_repos_id);
