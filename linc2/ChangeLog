@@ -1,3 +1,7 @@
+2002-02-11  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: Version 0.1.18
+
 2002-02-11  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: update OpenSSL check, and default to no
