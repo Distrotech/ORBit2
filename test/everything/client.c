@@ -26,7 +26,7 @@
 #include "everything.h"
 #include "constants.h"
 
-#undef TIMING_RUN
+#define TIMING_RUN
 #undef BIG_STUBS
 
 #ifdef TIMING_RUN
@@ -851,7 +851,7 @@ run_tests (test_TestFactory   factory,
   int i;
 
 #ifdef TIMING_RUN
-  for(i=0;i<1000;i++){
+  for(i=0;i<100;i++){
 #else
   for(i=0;i<1;i++){
 #endif
@@ -938,6 +938,8 @@ int main(int argc, char *argv[])
   }
 
   run_tests (factory, &ev, FALSE);
+
+  sleep (1000);
   
   CORBA_Object_release(factory, &ev);
   g_assert(ev._major == CORBA_NO_EXCEPTION);
