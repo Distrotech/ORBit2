@@ -1,5 +1,11 @@
 2002-02-06  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/util/genrand.c
+	(genuid_rand_device): handle EINTR, EAGAIN,
+	and short reads.
+
+2002-02-06  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_invoke_stub): make trace debugging
 	more meaningfull in-proc.

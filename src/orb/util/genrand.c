@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <errno.h>
 
 #include <glib.h>
 #include <linc/linc.h>
@@ -66,11 +67,24 @@ ORBit_genuid_fini (void)
 static gboolean
 genuid_rand_device (guchar *buffer, int length)
 {
-	if (read (dev_urandom_fd, buffer, length) < length) {
-		close (dev_urandom_fd);
-		dev_urandom_fd = -1;
+	int n;
 
-		return FALSE;
+	for (; length > 0; ) {
+		n = read (dev_urandom_fd, buffer, length);
+
+		if (n < 0) {
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			else {
+				close (dev_urandom_fd);
+				dev_urandom_fd = -1;
+
+				return FALSE;
+			}  
+		}
+
+		length -= n;
+		buffer += n;
 	}
 
 	return TRUE;
