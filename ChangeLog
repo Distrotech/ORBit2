@@ -1,4 +1,21 @@
+2003-03-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_run):
+	add a nasty hack to not do a linc_mainloop in the 
+	threaded case, since that causes acute problems.
+
+	* test/everything/test.sh: add --threaded test.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_dispose): 
+	(giop_connection_init): bin outgoing_mutex, move this
+	into linc for easier cross thread output task transfer.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_write): ditto.
+
 2003-03-30  Richard Kinder <r_kinder@yahoo.com>
+
         * src/orb/orb-core/corba-context.c: Code cleanups. Remove gboolean
         return value from free_child since it is never used. Clean up some
         unused user_data arguments to g_slist_foreach and

@@ -418,17 +418,6 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 	if (buf->giop_version >= GIOP_1_2)
 		giop_send_buffer_align (buf, 8); /* Do tail align */
 
-	LINC_MUTEX_LOCK (cnx->outgoing_mutex);
-
-	{
-		LINCConnection *lcnx = (LINCConnection *) cnx;
-		/* FIXME: need an option to turn this off ? */
-		if (lcnx->options & LINC_CONNECTION_NONBLOCKING) {
-			while (lcnx->status == LINC_CONNECTING)
-				linc_main_iteration (TRUE);
-		}
-	}
-
 	retval = linc_connection_writev (
 		(LINCConnection *) cnx, buf->iovecs,
 		buf->num_used, 
@@ -438,8 +427,6 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 		retval = 0;
 
 	/* FIXME: we need to flag the connection disconnected on fatal error */
-
-	LINC_MUTEX_UNLOCK (cnx->outgoing_mutex);
 
 	return retval;
 }
