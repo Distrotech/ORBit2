@@ -6,3 +6,4 @@ Makefile.in
 *.la
 *.lo
 dynamic-defs.h
+*-imodule.c
