@@ -5,6 +5,7 @@
 #include <orbit/orbit-config.h>
 #include <orbit/util/basic_types.h>
 #include <orbit/util/thread-safety.h>
+#include <orbit/util/orbit-genrand.h>
 
 /* Align a value upward to a boundary, expressed as a number of bytes.
    E.g. align to an 8-byte boundary with argument of 8.  */
