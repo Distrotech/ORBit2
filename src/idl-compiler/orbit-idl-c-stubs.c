@@ -117,7 +117,10 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
   fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
   if(!IDL_OP_DCL(tree).f_oneway)
-    fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
+    {
+      fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
+      fprintf(ci->fh, "GIOPMessageQueueEntry _ORBIT_mqe;\n");
+    }
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
   fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
 
@@ -199,7 +202,13 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   c_marshalling_generate(oi->in_stubs, ci, TRUE);
 
-  fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer, _cnx)) goto _ORBIT_system_exception;\n");
+  if(!IDL_OP_DCL(tree).f_oneway)
+    {
+      fprintf(ci->fh, "giop_recv_list_setup_queue_entry(&_ORBIT_mqe, GIOP_REPLY, _ORBIT_request_id);\n");
+      fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer, _cnx)) { giop_recv_list_destroy_queue_entry(&_ORBIT_mqe); goto _ORBIT_system_exception; }\n");
+    }
+  else
+    fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer, _cnx)) goto _ORBIT_system_exception;\n");
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_MAYBE;\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
   fprintf(ci->fh, "}\n");
@@ -213,7 +222,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     if(oi->out_stubs)
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
 
-    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_buffer_use_reply(_cnx, _ORBIT_request_id, TRUE);\n");
+    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_buffer_get(&_ORBIT_mqe, _cnx, TRUE);\n");
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
     fprintf(ci->fh, "_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");

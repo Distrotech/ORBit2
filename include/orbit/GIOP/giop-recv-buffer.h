@@ -21,8 +21,8 @@ typedef struct {
   GIOPRecvBuffer *buffer;
   CORBA_unsigned_long msg_type, request_id;
 #ifdef ORBIT_THREADED
-  O_MUTEX_DEFINE(*condvar_lock);
-  O_CONDVAR_DEFINE(*condvar);
+  O_MUTEX_DEFINE(condvar_lock);
+  O_CONDVAR_DEFINE(condvar);
 #endif
 } GIOPMessageQueueEntry;
 
@@ -44,9 +44,14 @@ struct _GIOPRecvBuffer {
 GIOPRecvBuffer *giop_recv_buffer_use_buf(gboolean is_auth);
 GIOPRecvBuffer *giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf);
 GIOPRecvBuffer *giop_recv_buffer_use_encaps(guchar *mem, gulong len);
+void giop_recv_list_destroy_queue_entry(GIOPMessageQueueEntry *ent);
+void giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
+				      CORBA_unsigned_long msg_type,
+				      CORBA_unsigned_long request_id);
+GIOPRecvBuffer *giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
+				     GIOPConnection *cnx,
+				     gboolean block_for_reply);
 
-GIOPRecvBuffer *giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply);
-GIOPRecvBuffer *giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply);
 GIOPRecvBuffer *giop_recv_buffer_use(void);
 void giop_recv_buffer_unuse(GIOPRecvBuffer *buf);
 GIOPMessageInfo giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth, GIOPConnection *cnx);
