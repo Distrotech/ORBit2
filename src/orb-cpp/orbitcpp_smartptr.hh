@@ -645,6 +645,25 @@ namespace _orbitcpp {
 			return *this;
 		}
 
+		T_slice& operator[] (CORBA::UShort index) {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
+		const T_slice& operator[] (CORBA::UShort index) const {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
+
+		T_slice& operator[] (CORBA::Short index) {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
+		const T_slice& operator[] (CORBA::Short index) const {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
+
+
 		T_slice& operator[] (CORBA::ULong index) {
 			g_assert (m_data);
 			return m_data[index];
@@ -655,16 +674,26 @@ namespace _orbitcpp {
 			return m_data[index];
 	  	}
 
+		T_slice& operator[] (CORBA::Long index) {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
+		const T_slice& operator[] (CORBA::Long index) const {
+			g_assert (m_data);
+			return m_data[index];
+	  	}
 
-#if !(defined(__GNUC__) && (__GNUC__ >= 3))
 		operator T_slice*& () {
+			return out();
+		}
+		
+		operator const T_slice* () const {
 			return m_data;
 		}
 		
-		operator T_slice* const& () const {
+		operator const T_slice* () {
 			return m_data;
 		}
-#endif
 		
 		// parameter passing conversion
 		T_slice const *in() const {

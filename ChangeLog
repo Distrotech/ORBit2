@@ -1,11 +1,17 @@
+2002-05-15  Diego Sevilla Ruiz  <dsevilla@um.es>
+
+	* src/orb-cpp/orbitcpp_smartptr.hh: Again, conversion operators
+	revised as for the suggestion of Kenneth Chiu
+	<chiuk@cs.indiana.edu>. No warnings regarding operators.
+	Also, added operator[] for all CORBA types which can be within an
+	array index, just to avoid ambiguities. No warnings now.
+
 2002-05-13  Diego Sevilla Ruiz  <dsevilla@um.es>
 
 	* src/orb-cpp/orbitcpp_smartptr.hh: Generated correct conversion
 	operators for ArrayVariable_var. In some cases, this causes gcc to
 	show warnings, but these are normal (it happens the same in TAO,
 	for example).
-	Generated correct T_slice*& conversion operator. I has not to call
-	out(), the ArrayVariable_out constructor is in charge of this.
 
 	* src/idl-compiler/cpp/types/IDLInterface.cc (member_pack_to_c):
 	Use the .in() call explcitly to avoid g++2.95 fooling about the
