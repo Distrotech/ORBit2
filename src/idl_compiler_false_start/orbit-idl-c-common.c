@@ -232,9 +232,14 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
     if(IDL_CASE_STMT(cs).labels) {
       for(sub2 = IDL_CASE_STMT(cs).labels; sub2; sub2 = IDL_LIST(sub2).next) {
-	fprintf(ci->fh, "case ");
-	orbit_cbe_write_const(ci->fh, IDL_LIST(sub2).data);
-	fprintf(ci->fh, ":\n");
+	if(IDL_LIST(sub2).data) {
+	  fprintf(ci->fh, "case ");
+	  orbit_cbe_write_const(ci->fh, IDL_LIST(sub2).data);
+	  fprintf(ci->fh, ":\n");
+	} else {
+	  hit_default = TRUE;
+	  fprintf(ci->fh, "default:\n");
+	}
       }
     } else {
       hit_default = TRUE;
