@@ -542,7 +542,6 @@ ORBit_POA_set_policies (PortableServer_POA      poa,
 	CORBA_unsigned_long i;
 
 	poa->p_thread              = PortableServer_SINGLE_THREAD_MODEL;
-/*	poa->p_thread              = PortableServer_ORB_CTRL_MODEL; */
 	poa->p_lifespan            = PortableServer_TRANSIENT;
 	poa->p_id_uniqueness       = PortableServer_UNIQUE_ID;
 	poa->p_id_assignment       = PortableServer_SYSTEM_ID;
@@ -1197,17 +1196,20 @@ local_main_handle (gpointer data)
 
 /* Utter hack ... */
 static void
-queue_request (ORBit_POAObject  pobj,
-	       GIOPRecvBuffer  *recv_buffer)
+queue_request (ORBit_POAObject *pobj,
+	       GIOPRecvBuffer **recv_buffer)
 {
 	LocalClosure *lc;
 
 	lc = g_new0 (LocalClosure, 1);
 
-	lc->pobj = pobj;
-	lc->recv_buffer = recv_buffer;
+	lc->pobj = *pobj;
+	lc->recv_buffer = *recv_buffer;
 
 	g_idle_add (local_main_handle, lc);
+
+	*pobj = NULL;
+	*recv_buffer = NULL;
 }
 
 static void
@@ -1247,29 +1249,39 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 			&env, ex_CORBA_OBJECT_NOT_EXIST, 
 			CORBA_COMPLETED_NO);
 	else {
-		if (giop_threaded ()) {
-			switch (poa->p_thread) {
+		switch (poa->p_thread) {
 			case PortableServer_SINGLE_THREAD_MODEL:
-				queue_request (pobj, recv_buffer);
+				if (giop_threaded ())
+					queue_request (&pobj, &recv_buffer);
 				break;
 			case PortableServer_ORB_CTRL_MODEL: {
 				ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
 
-				if (adaptor->thread_hint == ORBIT_THREAD_HINT_NONE)
-					queue_request (pobj, recv_buffer);
-				else {
-					g_warning ("Binning incoming requests in threaded mode");
-					giop_recv_buffer_unuse (recv_buffer);
-				}
+				switch (adaptor->thread_hint)
+				    {
+					case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
+						/* FIXME: we need to lookup the
+						   method name, and cf. the oneway flag */
+					case ORBIT_THREAD_HINT_ALL_AT_IDLE:
+						queue_request (&pobj, &recv_buffer);
+						break;
+					case ORBIT_THREAD_HINT_NONE:
+						if (giop_threaded ())
+							queue_request (&pobj, &recv_buffer);
+						break;
+					default:
+						g_warning ("Binning incoming requests in threaded mode");
+						giop_recv_buffer_unuse (recv_buffer);
+						recv_buffer = NULL;
+						pobj = NULL;
+						break;
+				    }
 				break;
-			}
+				}
 			default:
 				g_assert_not_reached ();
 				break;
 			}
-			recv_buffer = NULL;
-			pobj = NULL;
-		}
 	}
 
  send_sys_ex:
