@@ -1,3 +1,9 @@
+2004-05-30  Christophe Saout  <christophe@saout.de>
+
+	* src/services/imodule/orbit-imodule-utils.c
+	(ORBit_imodule_get_typecode): set c_align in nested array
+	typecodes that are not handled by ORBit_imodule_find_c_align.
+
 2004-05-17  Michael Meeks  <michael@ximian.com>
 
 	* ORBit-2.0.pc.in: prune pkgconfig cruft.
