@@ -3,7 +3,7 @@ dnl Test for ORBit2, and define ORBIT_CFLAGS and ORBIT_LIBS
 dnl
 AC_DEFUN(AM_PATH_ORBIT2,
 [dnl 
-dnl Get the cflags and libraries from the orbit-config script
+dnl Get the cflags and libraries from the orbit2-config script
 dnl
 AC_ARG_WITH(orbit-prefix,[  --with-orbit-prefix=PFX   Prefix where ORBIT is installed (optional)],
             orbit_config_prefix="$withval", orbit_config_prefix="")
@@ -30,17 +30,18 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
   if test x$orbit_config_exec_prefix != x ; then
      orbit_config_args="$orbit_config_args --exec-prefix=$orbit_config_exec_prefix"
      if test x${ORBIT_CONFIG+set} != xset ; then
-        ORBIT_CONFIG=$orbit_config_exec_prefix/bin/orbit-config
+        ORBIT_CONFIG=$orbit_config_exec_prefix/bin/orbit2-config
      fi
   fi
   if test x$orbit_config_prefix != x ; then
      orbit_config_args="$orbit_config_args --prefix=$orbit_config_prefix"
      if test x${ORBIT_CONFIG+set} != xset ; then
-        ORBIT_CONFIG=$orbit_config_prefix/bin/orbit-config
+        ORBIT_CONFIG=$orbit_config_prefix/bin/orbit2-config
      fi
   fi
 
-  AC_PATH_PROG(ORBIT_CONFIG, orbit-config, no)
+  AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+  AC_PATH_PROG(ORBIT_CONFIG, orbit2-config, no)
   min_orbit_version=ifelse([$1], , 2.3.0, $1)
   AC_MSG_CHECKING(for ORBit - version >= $min_orbit_version)
   no_orbit=""
@@ -49,11 +50,12 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
   else
     ORBIT_CFLAGS=`$ORBIT_CONFIG $orbit_config_args --cflags`
     ORBIT_LIBS=`$ORBIT_CONFIG $orbit_config_args --libs`
-    orbit_config_major_version=`$ORBIT_CONFIG $orbit_config_args --version | \
+    ORBIT_VERSION=`$PKG_CONFIG --modversion ORBit-2.0`
+    orbit_config_major_version=`echo $ORBIT_VERSION | \
 	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    orbit_config_minor_version=`$ORBIT_CONFIG $orbit_config_args --version | \
+    orbit_config_minor_version=`echo $ORBIT_VERSION | \
 	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    orbit_config_micro_version=`$ORBIT_CONFIG $orbit_config_args --version | \
+    orbit_config_micro_version=`echo $ORBIT_VERSION | \
 	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
     if test "x$enable_orbittest" = "xyes" ; then
       ac_save_CFLAGS="$CFLAGS"
@@ -62,7 +64,7 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
       LIBS="$ORBIT_LIBS $LIBS"
 dnl
 dnl Now check if the installed ORBIT is sufficiently new. (Also sanity
-dnl checks the results of orbit-config to some extent
+dnl checks the results of orbit2-config to some extent
 dnl
       rm -f conf.orbittest
       AC_TRY_RUN([
@@ -89,16 +91,16 @@ main ()
       (orbit_minor_version != $orbit_config_minor_version) ||
       (orbit_micro_version != $orbit_config_micro_version))
     {
-      printf("\n*** 'orbit-config --version' returned %d.%d.%d, but ORBit (%d.%d.%d)\n", 
+      printf("\n*** 'pkg-config --version ORBit-2.0' returned %d.%d.%d, but ORBit (%d.%d.%d)\n", 
              $orbit_config_major_version, $orbit_config_minor_version, $orbit_config_micro_version,
              orbit_major_version, orbit_minor_version, orbit_micro_version);
-      printf ("*** was found! If orbit-config was correct, then it is best\n");
+      printf ("*** was found! If orbit2-config was correct, then it is best\n");
       printf ("*** to remove the old version of ORBit. You may also be able to fix the error\n");
       printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
       printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
       printf("*** required on your system.\n");
-      printf("*** If orbit-config was wrong, set the environment variable ORBIT_CONFIG\n");
-      printf("*** to point to the correct copy of orbit-config, and remove the file config.cache\n");
+      printf("*** If orbit2-config was wrong, set the environment variable ORBIT_CONFIG\n");
+      printf("*** to point to the correct copy of orbit2-config, and remove the file config.cache\n");
       printf("*** before re-running configure\n");
     } 
 #if defined (ORBIT_MAJOR_VERSION) && defined (ORBIT_MINOR_VERSION) && defined (ORBIT_MICRO_VERSION)
@@ -129,10 +131,10 @@ main ()
         printf("*** ORBit is always available from ftp://ftp.orbit.org.\n");
         printf("***\n");
         printf("*** If you have already installed a sufficiently new version, this error\n");
-        printf("*** probably means that the wrong copy of the orbit-config shell script is\n");
+        printf("*** probably means that the wrong copy of the orbit2-config shell script is\n");
         printf("*** being found. The easiest way to fix this is to remove the old version\n");
         printf("*** of ORBit, but you can also set the ORBIT_CONFIG environment to point to the\n");
-        printf("*** correct copy of orbit-config. (In this case, you will have to\n");
+        printf("*** correct copy of orbit2-config. (In this case, you will have to\n");
         printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
         printf("*** so that the correct libraries are found at run-time))\n");
       }
@@ -150,10 +152,10 @@ main ()
   else
      AC_MSG_RESULT(no)
      if test "$ORBIT_CONFIG" = "no" ; then
-       echo "*** The orbit-config script installed by ORBIT could not be found"
+       echo "*** The orbit2-config script installed by ORBIT could not be found"
        echo "*** If ORBit was installed in PREFIX, make sure PREFIX/bin is in"
        echo "*** your path, or set the ORBIT_CONFIG environment variable to the"
-       echo "*** full path to orbit-config."
+       echo "*** full path to orbit2-config."
      else
        if test -f conf.orbittest ; then
         :
@@ -182,7 +184,7 @@ main ()
         [ echo "*** The test program failed to compile or link. See the file config.log for the"
           echo "*** exact error that occured. This usually means ORBIT was incorrectly installed"
           echo "*** or that you have moved ORBit since it was installed. In the latter case, you"
-          echo "*** may want to edit the orbit-config script: $ORBIT_CONFIG" ])
+          echo "*** may want to edit the orbit2-config script: $ORBIT_CONFIG" ])
           CFLAGS="$ac_save_CFLAGS"
           LIBS="$ac_save_LIBS"
        fi
@@ -192,7 +194,7 @@ main ()
      ifelse([$3], , :, [$3])
   fi
 
-  AC_PATH_PROG(ORBIT_IDL, orbit-idl, ifelse([$3], , :, [$3]))
+  AC_PATH_PROG(ORBIT_IDL, orbit-idl-2, ifelse([$3], , :, [$3]))
   AC_SUBST(ORBIT_CFLAGS)
   AC_SUBST(ORBIT_LIBS)
   AC_SUBST(ORBIT_IDL)
