@@ -91,11 +91,11 @@ string idlTranslateConstant(IDL_tree const constant,IDLScope const &scope) {
 			if (!cns) throw IDLExUnknownIdentifier(constant,idlGetQualIdentifier(constant));
 			return cns->getQualifiedCPPIdentifier();
 		case IDLN_UNARYOP: {
-			char op;
+			char op = ' ';
 			switch (IDL_UNARYOP(constant).op) {
 				case IDL_UNARYOP_PLUS: op = '+'; break;
 				case IDL_UNARYOP_MINUS: op = '-'; break;
-				case IDL_UNARYOP_COMPLEMENT: op = '~'; 
+				case IDL_UNARYOP_COMPLEMENT: op = '~'; break;
 			}
 			return string("(") + op + idlTranslateConstant(IDL_UNARYOP(constant).operand,scope) + ")";
 		}

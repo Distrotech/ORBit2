@@ -1,3 +1,21 @@
+2001-12-11  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/cpp/main.cc: hook the backend in
+	via orbit_idl_output_cpp - nasty hack.
+
+	* src/idl-compiler/orbit-idl-backends.c: decl. and use
+	it here - ug.
+
+	* src/idl-compiler/Makefile.am: add cpp backend.
+
+	* src/idl-compiler/cpp/Makefile.am: cleanup.
+
+2001-12-11  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/cpp: Merge in the orbitcpp work
+
+	* src/orb-cpp: Merge in the orbitcpp work
+
 2001-12-10  jacob berkman  <jacob@ximian.com>
 
 	* src/orb/GIOP/Makefile.am (libGIOP_la_SOURCES): add giop-debug.h

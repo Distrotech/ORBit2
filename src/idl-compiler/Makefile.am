@@ -1,3 +1,5 @@
+SUBDIRS = cpp
+
 bin_PROGRAMS=orbit-idl-2
 
 orbitlibdir=$(libdir)/orbit-idl
@@ -8,14 +10,17 @@ INCLUDES =                                    \
 	 -I$(top_srcdir)                      \
 	-I$(top_srcdir)/include               \
 	-DORBITLIBDIR="\"$(orbitlibdir)\""    \
-	-DDEBUG                               \
 	-DVERSION=\"$(ORBIT_VERSION)\"        \
 	-DORBIT2_INTERNAL_API                 \
 	$(WARN_CFLAGS)                        \
 	$(ORBIT_IDL_CFLAGS)
 
+# FIXME: this should be conditional
+CPP_BACKEND_LIBS = cpp/libidl-cpp.la
+
 orbit_idl_2_LDADD =                          \
 	-lpopt -lm                           \
+	$(CPP_BACKEND_LIBS)		     \
 	$(ORBIT_IDL_LIBS)
 
 orbit_idl_2_SOURCES=orbit-idl-main.c \

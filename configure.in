@@ -47,6 +47,9 @@ ACLOCAL="$ACLOCAL $ac_cv_orbit_aclocal_flags"
 
 dnl Checks for programs.
 AC_PROG_CC
+
+dnl FIXME: we need to have a conditional C++ build here 
+AC_PROG_CXX
 AC_PROG_INSTALL
 
 dnl --enable-comile-warnings
@@ -233,6 +236,7 @@ ORBit-CosNaming-2.0.pc
 ORBit.spec
 src/Makefile
 src/idl-compiler/Makefile
+src/idl-compiler/cpp/Makefile
 src/idl/Makefile
 src/idl/CORBA/Makefile
 src/idl/CORBA_PIDL/Makefile
@@ -245,6 +249,7 @@ src/orb/GIOP/Makefile
 src/orb/orb-core/Makefile
 src/orb/dynamic/Makefile
 src/orb/poa/Makefile
+src/orb-cpp/Makefile
 src/services/Makefile
 src/services/name/Makefile
 include/Makefile
