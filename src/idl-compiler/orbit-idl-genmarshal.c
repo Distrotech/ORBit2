@@ -329,11 +329,21 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
   case IDLN_EXCEPT_DCL:
     {
       IDL_tree curitem;
-      retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
-
-      for(curitem = IDL_TYPE_STRUCT(tree).member_list; curitem; curitem = IDL_LIST(curitem).next) {
-	retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes,
-						     marshal_populate(IDL_LIST(curitem).data, retval, is_out, pi));
+      IDL_tree ident = IDL_NODE_TYPE(tree)==IDLN_TYPE_STRUCT 
+        ? IDL_TYPE_STRUCT(tree).ident : IDL_EXCEPT_DCL(tree).ident;
+      gboolean isRecur = IDL_tree_is_recursive( tree, /*hasRecur*/NULL);
+      if ( isRecur ) {
+	  retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+     	  retval->u.complex_info.type = CX_CORBA_ANY;	// XXXX
+    	  retval->tree = tree;
+	  g_error("Recursive type not yet supported (%s).", 
+	    IDL_IDENT(ident).str);
+      } else {
+	  retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
+	  for(curitem = IDL_TYPE_STRUCT(tree).member_list; curitem; curitem = IDL_LIST(curitem).next) {
+	    retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes,
+							 marshal_populate(IDL_LIST(curitem).data, retval, is_out, pi));
+	  }
       }
     }
     retval->tree = tree;
