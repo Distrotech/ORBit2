@@ -1,5 +1,9 @@
 2004-02-04  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.9.7
+
+2004-02-04  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop.c (wakeup_mainloop): handle EAGAIN
 	on wakeup pipe more elegantly, downgrade g_error.
 
