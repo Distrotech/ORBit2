@@ -25,3 +25,4 @@ ior
 typelib-dump
 test-mem
 test-performance
+test-giop
