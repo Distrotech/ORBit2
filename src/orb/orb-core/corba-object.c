@@ -34,11 +34,6 @@ g_CORBA_Object_equal (gconstpointer a, gconstpointer b)
 	CORBA_Object _obj = (CORBA_Object) a;
 	CORBA_Object other_object = (CORBA_Object) b;
 
-	if(_obj == other_object)
-		return TRUE;
-	if(!(_obj && other_object))
-		return FALSE;
-
 	g_assert (_obj->object_key && other_object->object_key);
 
 	if (!IOP_ObjectKey_equal (_obj->object_key, other_object->object_key))
@@ -70,6 +65,7 @@ ORBit_register_objref (CORBA_Object obj)
 		objrefs = g_hash_table_new (
 			g_CORBA_Object_hash, g_CORBA_Object_equal);
 
+	g_assert (obj->object_key != NULL);
 	g_assert (obj->profile_list != NULL);
 
 	g_hash_table_insert (objrefs, obj, obj);
@@ -349,6 +345,16 @@ CORBA_Object_is_equivalent (CORBA_Object       obj,
 			    CORBA_Object       other_object,
 			    CORBA_Environment *ev)
 {
+	if (obj == other_object)
+		return TRUE;
+
+	if (!(obj && other_object))
+		return FALSE;
+
+	/* local - have never been exposed; but not both local */
+	if (!obj->object_key || !other_object->object_key)
+		return FALSE;
+
 	return g_CORBA_Object_equal (obj, other_object);
 }
 
