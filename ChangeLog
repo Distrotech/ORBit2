@@ -1,3 +1,10 @@
+2001-09-10  Mark McLoughlin <mark@skynet.ie>
+
+	* test/ior-decode.c: fixup object key handling.
+
+	* include/orbit/GIOP/giop-server.h,
+	  src/orb/GIOP/giop-server.c: minor tidying.
+	
 2001-09-09  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c

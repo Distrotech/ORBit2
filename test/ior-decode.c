@@ -20,7 +20,7 @@ print_objkey (ORBit_ObjectKey *objkey)
 }
 
 static void
-print_components(GSList *components)
+print_components(CORBA_Object obj, GSList *components)
 {
   GSList *ltmp;
   for(ltmp = components; ltmp; ltmp = ltmp->next)
@@ -31,9 +31,8 @@ print_components(GSList *components)
 	{
 	case IOP_TAG_COMPLETE_OBJECT_KEY:
 	  {
-	    IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = ltmp->data;
 	    printf("    IOP_TAG_COMPLETE_OBJECT_KEY: object_key ");
-	    print_objkey(coki->object_key);
+	    print_objkey(obj->object_key);
 	    printf("\n");
 	  }
 	  break;
@@ -119,9 +118,9 @@ int main(int argc, char *argv[])
 	    printf(" %s:%d\n",
 		   iiop->host, iiop->port);
 	    printf("    object_key ");
-	    print_objkey(iiop->object_key);
+	    print_objkey(obj->object_key);
 	    printf("\n");
-	    print_components(iiop->components);
+	    print_components(obj, iiop->components);
 	  }
 	  break;
 	case IOP_TAG_GENERIC_IOP:
@@ -132,14 +131,14 @@ int main(int argc, char *argv[])
 	    printf("[%s] %s:%s\n",
 		   giop->proto,
 		   giop->host, giop->service);
-	    print_components(giop->components);
+	    print_components(obj, giop->components);
 	  }
 	  break;
 	case IOP_TAG_MULTIPLE_COMPONENTS:
 	  {
 	    IOP_TAG_MULTIPLE_COMPONENTS_info *mci = ltmp->data;
 	    printf("IOP_TAG_MULTIPLE_COMPONENTS:\n");
-	    print_components(mci->components);
+	    print_components(obj, mci->components);
 	  }
 	  break;
 	case IOP_TAG_ORBIT_SPECIFIC:
@@ -148,7 +147,7 @@ int main(int argc, char *argv[])
 	    printf("IOP_TAG_ORBIT_SPECIFIC: usock %s IPv6 port %d\n",
 		   osi->unix_sock_path, osi->ipv6_port);
 	    printf("    object_key ");
-	    print_objkey(osi->object_key);
+	    print_objkey(obj->object_key);
 	    printf("\n");
 	  }
 	  break;
