@@ -1,3 +1,8 @@
+2002-01-17  Murray Cumming  <murrayc@usa.net>
+
+	* The orb-cpp headers are now installed in the orbit-2.0/orbit
+	directory, instead of the orb directory. 
+
 2002-01-16  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_stubs.cc

@@ -7,7 +7,7 @@ INCLUDES = \
 	$(WARN_CFLAGS) \
 	$(ORBIT_CFLAGS)
 
-liborbitcppincludedir = $(includedir)/orb
+liborbitcppincludedir = $(includedir)/orbit-2.0/orbit/orb-cpp
 
 liborbitcppinclude_HEADERS = \
 			orbitcpp.hh \

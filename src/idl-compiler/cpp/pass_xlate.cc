@@ -42,7 +42,7 @@ IDLPassXlate::runPass() {
 	<< indent << "#define __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
 	<< endl << endl
 	<< indent << "#include <strings.h>" << endl
-	<< indent << "#include <orb/orbitcpp.hh>" << endl
+	<< indent << "#include <orbit/orb-cpp/orbitcpp.hh>" << endl
 	<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
 	indent++;
 	m_header
