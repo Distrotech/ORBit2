@@ -1,3 +1,10 @@
+Version 0.5.0
+
+	* fixes
+		+ add linc-cleanup-sockets to clean
+		  stale sockets from /tmp/orbit-$USER
+		+ g_type_init doesn't turn debug on
+
 Version 0.1.22
 
 	* fixes
