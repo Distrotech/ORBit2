@@ -112,9 +112,9 @@ orbit_idl_backend_output (OIDL_Run_Info *rinfo,
 
 	context.tree      = tree;
 	context.filename  = rinfo->input_filename;
-	context.do_stubs  = rinfo->enabled_passes & OUTPUT_STUBS;
-	context.do_skels  = rinfo->enabled_passes & OUTPUT_SKELS;
-	context.do_common = rinfo->enabled_passes & OUTPUT_COMMON;
+	context.do_stubs  = (rinfo->enabled_passes & OUTPUT_STUBS ? 1 : 0);
+	context.do_skels  = (rinfo->enabled_passes & OUTPUT_SKELS ? 1 : 0);
+	context.do_common = (rinfo->enabled_passes & OUTPUT_COMMON ? 1 : 0);
 
 	return func (&context);
 }

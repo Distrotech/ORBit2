@@ -234,6 +234,15 @@ BasicServer_getObject (PortableServer_Servant  servant,
 		return CORBA_OBJECT_NIL;
 }
 
+static void
+BasicServer_testBoolString (PortableServer_Servant  servant,
+			    CORBA_boolean	    inBool,
+			    const char             *inArg,
+			    char                  **inoutArg,
+			    CORBA_Environment      *ev)
+{
+}
+
 
 POA_test_BasicServer__epv BasicServer_epv = {
 	NULL,
@@ -253,6 +262,7 @@ POA_test_BasicServer__epv BasicServer_epv = {
 	BasicServer_testLargeStringSeq,
 	BasicServer_getObjectCount,
 	BasicServer_getObject,
+	BasicServer_testBoolString,
 };
 
 PortableServer_ServantBase__epv BasicServer_base_epv = {NULL, simple_finalize, NULL};

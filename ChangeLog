@@ -1,3 +1,13 @@
+2004-08-19  Magnus Therning  <magnus@therning.org>
+
+	* src/idl-compiler/orbit-idl-backend.c: fix
+	bit-field assignments.
+
+2004-08-10  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/basicServer.c
+	(BasicServer_testBoolString): impl.
+
 2004-06-23  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.10.3
