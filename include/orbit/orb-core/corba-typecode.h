@@ -5,6 +5,9 @@
 #include <orbit/orb-core/corba-any-type.h>
 #include <orbit/orb-core/orbit-object.h>
 
+#define CORBA_tk_recursive -1
+#define CORBA_tk_last (CORBA_tk_abstract_interface + 1)
+
 struct CORBA_TypeCode_struct {
 	struct ORBit_RootObject_struct parent;
 	CORBA_unsigned_long kind;
