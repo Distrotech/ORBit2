@@ -1,3 +1,11 @@
+2002-08-15  Darren Kenny  <Darren.Kenny@Sun.COM>
+
+	* src/orb/orb-core/corba-object.c
+	(get_small_skel_CORBA_Object): upd. to '_is_a'
+	(CORBA_Object__imethods): update _is_a,
+	get_interface->_interface, non_existent -> _non_existent
+	to comply with the spec and interop with Java.
+
 2002-08-07  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-headers.c
