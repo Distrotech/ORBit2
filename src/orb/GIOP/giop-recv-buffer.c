@@ -1176,7 +1176,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 					dprintf (ERRORS, "broken incoming length data\n");
 					goto msg_error;
 				}
-				do_giop_dump (stderr, buf->cur, buf->msg.header.message_size, 0);
+				do_giop_dump (stderr, buf->cur, buf->msg.header.message_size, 12);
 
 				buf->state = GIOP_MSG_READY;
 
