@@ -1,3 +1,16 @@
+2005-02-02  Tor Lillqvist  <tml@novell.com>
+
+	Make test-dynany work on Windows:
+
+	* src/orb/dynamic/dynany.c (MAKE_DYNANY_INSERT): For identical
+	reasons as the below change to the IDL compiler, take a local copy
+	of function parameter before passing its address to
+	dynany_insert().
+
+	(dynany_get_value): Take the alignment of preceding fields and the
+	field itself into account when calculating the address of a field
+	in a CORBA_tk_struct or except.
+
 2005-02-01  Tor Lillqvist  <tml@novell.com>
 
 	* src/idl-compiler/orbit-idl-c-utils.c (orbit_cbe_flatten_ref):

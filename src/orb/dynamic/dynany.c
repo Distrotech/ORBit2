@@ -513,8 +513,11 @@ dynany_get_value (DynAny *dynany, CORBA_Environment *ev)
 			int i;
 			/* FIXME: could cache for efficiency */
 			value = any->_value;
-			for (i = 0; i < dynany->idx; i++)
+			value = ALIGN_ADDRESS (value, tc->subtypes [0]->c_align);
+			for (i = 0; i < dynany->idx; i++) {
 				value = DYNANY_GET_OFFSET (value, 1, tc->subtypes [i]);
+				value = ALIGN_ADDRESS (value, tc->subtypes [i+1]->c_align);
+			}
 			break;
 		}
 
@@ -884,6 +887,7 @@ DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,		\
 			       CORBA_Environment *ev)				\
 {										\
 	DynAny  *dynany;							\
+	struct { CORBA_##ctype value; } copy_of_value = {value};		\
 										\
 	o_return_if_fail (obj != NULL);						\
 										\
@@ -894,7 +898,7 @@ DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,		\
 	if (dynany_type_mismatch (dynany, TC_CORBA_##ctype, ev))		\
 		return;								\
 										\
-	dynany_insert (dynany, TC_CORBA_##ctype, &value, ev);		       	\
+	dynany_insert (dynany, TC_CORBA_##ctype, &copy_of_value.value, ev);	\
 										\
 	return;									\
 }
