@@ -57,13 +57,27 @@ AC_SUBST(LINC_LIBS)
 AC_SUBST(LINC_CFLAGS)
 
 dnl Check for OpenSSL libraries
-_save_ldflags="$LDFLAGS"
 
-if test x$ssl_dir != x ; then
-   LDFLAGS="$_save_ldflags -L$ssl_dir/lib"
-fi
 
-AC_CHECK_LIB(ssl,SSL_new,
+enable_openssl=false
+try_openssl=false
+LINC_SSL_SUPPORT=0
+
+AC_ARG_WITH(ssl,
+	[--{with,without}-openssl   Compile with OpenSSL support or without it],
+	if test "x$withval" = xyes; then
+		try_openssl=true
+	fi
+)
+
+if $try_openssl; then
+	_save_ldflags="$LDFLAGS"
+
+	if test x$ssl_dir != x ; then
+	   LDFLAGS="$_save_ldflags -L$ssl_dir/lib"
+	fi
+
+	AC_CHECK_LIB(ssl,SSL_new,
              [ LINC_SSL_SUPPORT=1 
                SSL_LIBS="-lssl -lcrypto"
                if test x$ssl_dir != x ; then
@@ -72,9 +86,9 @@ AC_CHECK_LIB(ssl,SSL_new,
                fi ],,
              "-lcrypto")
 
-LDFLAGS="$_save_ldflags"
+	LDFLAGS="$_save_ldflags"
+fi
 
-LINC_SSL_SUPPORT=0
 AC_SUBST(LINC_SSL_SUPPORT)
 AC_SUBST(SSL_LIBS)
 AC_SUBST(SSL_CFLAGS)
