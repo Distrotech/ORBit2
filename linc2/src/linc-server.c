@@ -244,6 +244,7 @@ linc_server_setup (LINCServer            *cnx,
 	struct sockaddr        *saddr;
 	socklen_t               saddr_len;
 	char                    hnbuf[NI_MAXHOST];
+	const char             *local_host;
 	char                   *service, *hostname;
 
 #if !LINC_SSL_SUPPORT
@@ -257,21 +258,24 @@ linc_server_setup (LINCServer            *cnx,
 		return FALSE;
 	}
 
-	if (!local_host_info) {
-		local_host_info = hnbuf;
-		if (gethostname (hnbuf, sizeof (hnbuf)))
+	if (local_host_info)
+		local_host = local_host_info;
+	else {
+		local_host = hnbuf;
+		if (gethostname (hnbuf, sizeof (hnbuf))) {
+			hnbuf[0] = '\0';
 			perror ("gethostname failed!");
+		}
 	}
 
  address_in_use:
 
-	saddr = linc_protocol_get_sockaddr (proto, local_host_info, 
-					    local_serv_info, &saddr_len);
+	saddr = linc_protocol_get_sockaddr (
+		proto, local_host, local_serv_info, &saddr_len);
 
 	if (!saddr) {
 		d_printf ("Can't get_sockaddr proto '%s' '%s'\n",
-			 local_host_info,
-			 local_serv_info ? local_serv_info : "(null)");
+			  local_host, local_serv_info ? local_serv_info : "(null)");
 		return FALSE;
 	}
 
@@ -343,7 +347,13 @@ linc_server_setup (LINCServer            *cnx,
 	}
 
 	cnx->create_options  = create_options;
-	cnx->local_host_info = hostname;
+
+	if (local_host_info) {
+		g_free (hostname);
+		cnx->local_host_info = g_strdup (local_host_info);
+	} else
+		cnx->local_host_info = hostname;
+
 	cnx->local_serv_info = service;
 
 	d_printf ("Created a new server fd (%d) '%s', '%s', '%s'\n",
