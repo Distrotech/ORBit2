@@ -66,6 +66,12 @@ IDLAttribGetter::get_c_methodname () const
 		"__get_" + attr.get_c_identifier ();
 }
 
+string
+IDLAttribGetter::skel_get_cpp_methodname () const
+{
+	return "_skel__get_" + get_cpp_methodname ();
+}
+
 namespace
 {
 	static IDLVoid void_type;
@@ -113,4 +119,10 @@ IDLAttribSetter::get_c_methodname () const
 {
 	return parent_interface.get_c_typename () +
 		"__set_" + attr.get_c_identifier ();
+}
+
+string
+IDLAttribSetter::skel_get_cpp_methodname () const
+{
+	return "_skel__set_" + get_cpp_methodname ();
 }

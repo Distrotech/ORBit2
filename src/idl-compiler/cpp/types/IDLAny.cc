@@ -38,7 +38,7 @@ IDLAny::get_cpp_typename () const
 string
 IDLAny::get_c_typename () const
 {
-	return "CORBA_Any*";
+	return "CORBA_any*";
 }
 
 bool
@@ -174,7 +174,7 @@ IDLAny::skel_impl_arg_pre (ostream          &ostr,
 			   IDL_param_attr    direction,
 			   const IDLTypedef *active_typedef) const
 {
-	ostr << indent << get_cpp_typename () << "cpp_" << c_id << " = "
+	ostr << indent << get_cpp_typename () << " cpp_" << c_id << " = "
 	     << "::CORBA::Any::_orbitcpp_wrap (" << c_id << ");"
 	     << endl;
 }
@@ -232,7 +232,7 @@ IDLAny::skel_impl_ret_post (ostream          &ostr,
 	ostr << indent << get_c_typename () << " c_ret;" << endl;
 	ostr << indent << "CORBA_any__copy (c_ret, cpp_ret->_orbitcpp_cobj ());" << endl;
 	ostr << indent << "delete cpp_ret;" << endl;
-	ostr << indent << "return c_ret" << endl;
+	ostr << indent << "return c_ret;" << endl;
 }
 
 

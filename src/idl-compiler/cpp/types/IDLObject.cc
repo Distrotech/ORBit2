@@ -48,3 +48,9 @@ IDLObject::get_cpp_typename () const
 {
 	return "::CORBA::Object";
 }
+
+string
+IDLObject::get_cpp_stub_typename () const
+{
+    return get_cpp_typename ();
+}

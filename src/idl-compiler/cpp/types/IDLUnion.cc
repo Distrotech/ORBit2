@@ -151,7 +151,7 @@ IDLUnion::skel_decl_arg_get (const string     &c_id,
 {
 	cerr << "IDLUnion::skel_decl_arg_get" << endl;
 
-	return get_c_typename () + " " + c_id;
+	return "const " + get_c_typename () + "* " + c_id;
 	
 	
 #warning "WRITE ME"

@@ -184,9 +184,9 @@ public:
 				    const IDLTypedef *active_typedef = 0) const;
 	
 public:
-	string get_cpp_stub_identifier () const;
-	string get_cpp_stub_typename () const;
-	string get_cpp_stub_method_prefix () const;
+	virtual string get_cpp_stub_identifier () const;
+	virtual string get_cpp_stub_typename () const;
+	virtual string get_cpp_stub_method_prefix () const;
 
 	string get_cpp_poa_identifier () const;
 	string get_cpp_poa_typename () const;

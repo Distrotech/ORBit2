@@ -53,13 +53,13 @@ w: currently working on stuff related to it, might work
 
 TYPE		IN	OUT	INOUT	Ret	Ex	Attrib	Array	Struct	Seq	Union
 
-Simple		Y	Y	Y	Y	Y	Y	Y	Y	w	-
-String		Y	Y	Y	y	Y	y	Y	Y	w	-
+Simple		Y	Y	Y	Y	Y	Y	Y	Y	y	-
+String		Y	Y	Y	y	Y	y	Y	Y	y	-
 Enums		Y	Y	Y	Y	y	y	y	y	w	-
-Object		Y	Y	Y	Y	Y	y	Y	Y	w-
+Object		Y	Y	Y	Y	Y	y	Y	Y	y	-
 Array/fixed	Y	Y	Y	Y	Y	y	y	Y	-	-
 Array/var	Y	Y	Y	Y	Y	y	y	Y	-	-
-Struct/fixed	Y	Y	Y	Y	Y	y	Y	Y	w	-
-Struct/var	Y	Y	Y	Y	Y	y	Y	Y	w	-
+Struct/fixed	Y	Y	Y	Y	Y	y	Y	Y	y	-
+Struct/var	Y	Y	Y	Y	Y	y	Y	Y	y	-
 Sequence	w	w	w	w	w	w	w	w	-	-
 Union		-	-	-	-	-	-	-	-	-	-

@@ -37,7 +37,7 @@ IDLSimpleType::const_decl_write (ostream          &ostr,
 				 const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "const " << get_fixed_cpp_typename ()
-	     << cpp_id << " = " << value
+	     << " " << cpp_id << " = " << value
 	     << ';' << endl;
 }
 
@@ -216,7 +216,7 @@ IDLSimpleType::skel_impl_arg_call (const string   &c_id,
 		retval = "*" + c_id;
 		break;
 	case IDL_PARAM_OUT:
-		retval = get_fixed_cpp_typename () + "_out (" + c_id + ")";
+		retval = get_fixed_cpp_typename () + "_out (*" + c_id + ")";
 		break;
 	}
 	

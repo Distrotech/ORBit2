@@ -239,4 +239,5 @@ namespace CORBA {
 	extern TypeCode_ptr _tc_wstring;
 }
 
+
 #endif		/* __ORBITCPP_TYPECODE_HH */

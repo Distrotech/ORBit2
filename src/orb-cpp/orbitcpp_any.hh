@@ -74,7 +74,7 @@ namespace CORBA {
 			return const_cast<CORBA_any*> (&m_target);
 		}
 		
-		static Any _orbitcpp_wrap (CORBA_any *c_any);
+		static Any _orbitcpp_wrap (const CORBA_any *c_any);
 		
 		void insert_simple(CORBA::TypeCode_ptr, void*, Boolean v_copy = CORBA_TRUE);
 		void insert_simple(CORBA::TypeCode_ptr tc,const void* in,Boolean v_copy = CORBA_TRUE) {

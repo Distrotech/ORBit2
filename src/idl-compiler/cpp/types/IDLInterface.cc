@@ -602,32 +602,6 @@ IDLInterface::create_smartptr (ostream &ostr,
 	     << indent++ << '{' << endl;
 	ostr << "return m_target;" << endl
 	     << --indent << '}' << endl;
-
-#if 0 // FIXME: Is this necessary?
-	// Commented out
-	ostr << indent << "// operator CORBA::Object * () " << endl
-	     << indent++ << "// {" << endl;
-	ostr << indent << "// return reinterpret_cast<CORBA::Object*>(m_target);"
-	     << --indent << "// }" << endl;
-
-
-	IDLInterface::BaseList::const_iterator
-	first, last = iface.m_allbases.end();
-
-	for (first = iface.m_allbases.begin();first != last;first++) {
-		m_header
-		<< indent << "//operator " << (*first)->getQualifiedCPPStub() << " *() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
-	}
-	
-	m_header
-	<< indent <<"// These shouldn't be necessary, but gcc 2.95.2 barfs without them"<<endl;
-	for (first = iface.m_allbases.begin();first != last;first++) {
-		m_header
-		<< indent << "//operator " << (*first)->getQualifiedCPP_var() << "() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
-	}
-	m_header
-		<< --indent << "};" << endl;
-#endif
 }
 
 void

@@ -162,6 +162,12 @@ IDLMethod::stub_do_post (ostream &ostr,
 }
 
 string
+IDLMethod::skel_get_cpp_methodname () const
+{
+	return "_skel_" + get_cpp_methodname ();
+}
+
+string
 IDLMethod::skel_ret_get () const
 {
 	return m_returntype->skel_decl_ret_get ();
@@ -187,17 +193,7 @@ IDLMethod::skel_arglist_get () const
 string
 IDLMethod::skel_decl_proto () const
 {
-	return skel_ret_get () + " _skel_" + get_cpp_methodname () +
-		" (" + skel_arglist_get () + ")";
-}
-
-string
-IDLMethod::skel_decl_impl () const
-{
-	string skel_name = parent_interface.get_cpp_poa_method_prefix ();
-
-	return skel_ret_get () + " " + skel_name + "::" +
-		"_skel_" + get_cpp_methodname () +
+	return skel_ret_get () + " " + skel_get_cpp_methodname () +
 		" (" + skel_arglist_get () + ")";
 }
 

@@ -48,3 +48,9 @@ IDLTypeCode::get_cpp_typename () const
 {
 	return "::CORBA::TypeCode";
 }
+
+string
+IDLTypeCode::get_cpp_stub_typename () const
+{
+    return get_cpp_typename ();
+}

@@ -391,7 +391,7 @@ IDLSequence::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 		return active_typedef->get_cpp_typename () + "_var";
 
 	const string seq_typename = m_element_type.get_seq_typename (m_length);
-	return IDL_IMPL_NS "::Sequence_var< " + seq_typename + ">";
+	return IDL_IMPL_NS "::Sequence_var< " + seq_typename + " >";
 }
 
 string
@@ -450,7 +450,7 @@ IDLSequence::member_pack_to_c (ostream          &ostr,
 			       const string     &c_id,
 			       const IDLTypedef *active_typedef) const
 {
-	ostr << indent << cpp_id << "._orbitcpp_pack (" << c_id << ");" << endl;
+	ostr << indent << cpp_id << "->_orbitcpp_pack (" << c_id << ");" << endl;
 }
 
 void
@@ -460,5 +460,5 @@ IDLSequence::member_unpack_from_c  (ostream          &ostr,
 				    const string     &c_id,
 				    const IDLTypedef *active_typedef) const
 {
-	ostr << indent << cpp_id << "._orbitcpp_unpack (" << c_id << ");" << endl;
+	ostr << indent << cpp_id << "->_orbitcpp_unpack (" << c_id << ");" << endl;
 }

@@ -40,8 +40,9 @@ public:
 	string skel_decl_proto () const;
 	string skel_decl_impl () const;
 
-	string get_cpp_methodname () const ;
-	string get_c_methodname () const;
+	string get_cpp_methodname      () const ;
+	string get_c_methodname        () const;
+	string skel_get_cpp_methodname () const;
 };
 
 class IDLAttribSetter: public IDLMethod
@@ -53,8 +54,9 @@ public:
 	string skel_decl_proto () const;
 	string skel_decl_impl () const;
 
-	string get_cpp_methodname () const ;
-	string get_c_methodname () const;
+	string get_cpp_methodname      () const ;
+	string get_c_methodname        () const;
+	string skel_get_cpp_methodname () const;
 };
 
 #endif //ORBITCPP_TYPES_IDLATTRIBACCESOR

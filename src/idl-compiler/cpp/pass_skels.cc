@@ -82,8 +82,12 @@ IDLPassSkels::create_method_skel (const IDLInterface &iface,
 				  const IDLInterface &of,
 				  const IDLMethod    &method)
 {
+	string skel_name = iface.get_cpp_poa_method_prefix () + "::"
+		+ method.skel_get_cpp_methodname ();
+
 	// print header
-	m_module << mod_indent << method.skel_decl_impl () << endl
+	m_module << mod_indent << method.skel_ret_get () << " "
+		 << skel_name << " (" + method.skel_arglist_get () + ")" << endl
 		 << mod_indent++ << "{" << endl;
 
 	// inherited => call up base "passthru"

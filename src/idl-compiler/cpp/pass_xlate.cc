@@ -100,9 +100,9 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 		if (scope.getTopLevelInterface ())
 			m_header << "static ";
 		
-		m_header << "const CORBA::TypeCode_ptr "
+		m_header << "const ::CORBA::TypeCode_ptr "
 			 << "_tc_" << td.get_cpp_identifier () << " = " 
-			 << "(CORBA::TypeCode_ptr)TC_" << td.get_c_typename ()
+			 << "(::CORBA::TypeCode_ptr)TC_" << td.get_c_typename ()
 			 << ';' << endl << endl;
 	}
 }
@@ -458,7 +458,7 @@ IDLPassXlate::union_create_internal (const IDLUnion &un)
 	// Destructor
 	m_header << --indent << "public: " << endl;
 	m_header << ++indent << "~" << un.get_cpp_identifier ()
-		 << ";" << endl << endl;
+		 << " ();" << endl << endl;
 	
 	m_module << mod_indent << un.get_cpp_method_prefix ()
 		 << "::~" << un.get_cpp_identifier () << " ()" << endl

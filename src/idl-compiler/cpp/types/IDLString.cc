@@ -50,7 +50,7 @@ IDLString::typedef_decl_write (ostream          &ostr,
 	string target_id = target.get_cpp_identifier ();
 	
 	ostr << indent << "typedef char * " << target_id << ';' << endl;	
-	ostr << indent << "typedef ::CORBA::string_var " << target_id << "_var;" << endl;
+	ostr << indent << "typedef ::CORBA::String_var " << target_id << "_var;" << endl;
 }
 
 string
@@ -69,7 +69,7 @@ IDLString::stub_decl_arg_get (const string     &cpp_id,
 		retval = "char *&" + cpp_id;
 		break;
 	case IDL_PARAM_OUT:
-		retval = "CORBA::String_out " + cpp_id;
+		retval = "::CORBA::String_out " + cpp_id;
 		break;
 	}
 
@@ -204,7 +204,7 @@ IDLString::skel_impl_arg_call (const string   &c_id,
 		retval = "*" + c_id;
 		break;
 	case IDL_PARAM_OUT:
-		retval = "CORBA::String_out (*" + c_id + ")";
+		retval = "::CORBA::String_out (*" + c_id + ")";
 		break;
 	}
 

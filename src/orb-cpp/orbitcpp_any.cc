@@ -49,7 +49,7 @@ CORBA::Any::free ()
 
 
 CORBA::Any
-CORBA::Any::_orbitcpp_wrap (CORBA_any *c_any)
+CORBA::Any::_orbitcpp_wrap (const CORBA_any *c_any)
 {
 	CORBA::Any cpp_any;
 

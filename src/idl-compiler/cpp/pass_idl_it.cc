@@ -40,7 +40,10 @@ void IDLIteratingPass::doException(IDL_tree node,IDLScope &scope) {
 
 void IDLIteratingPass::doTypedef(IDL_tree node,IDLScope &scope)
 {
-	handle_node (IDL_TYPE_DCL (node).type_spec, scope);
+	try {
+		handle_node (IDL_TYPE_DCL (node).type_spec, scope);
+	} catch (IDLExUnexpectedNodeType &e) {
+	}
 }
 
 
@@ -149,11 +152,9 @@ void IDLIteratingPass::handle_node (IDL_tree node, IDLScope &scope)
 	case IDLN_TYPE_UNION:
 		doUnion (node, scope);
 		break;
-#if 0 //!!!
 	case IDLN_NATIVE:
 		doNative (node, scope);
 		break;			
-#endif
 	case IDLN_ATTR_DCL:
 		doAttribute (node, scope);
 		break;

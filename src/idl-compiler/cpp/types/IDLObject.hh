@@ -38,6 +38,8 @@ public:
 	string get_idl_typename () const;
 	string get_c_typename   () const;
 	string get_cpp_typename () const;
+
+	string get_cpp_stub_typename () const;
 };
 
 #endif //ORBITCPP_TYPES_IDLOBJECT

@@ -67,8 +67,9 @@ public:
 
 	string skel_ret_get     () const;
 	string skel_arglist_get () const;
-	virtual string skel_decl_proto  () const;
-	virtual string skel_decl_impl   () const;
+	string skel_decl_proto  () const;
+
+	virtual string skel_get_cpp_methodname () const;
 
 	void skel_do_pre  (ostream &ostr, Indent &indent) const;
 	void skel_do_call (ostream &ostr, Indent &indent) const;

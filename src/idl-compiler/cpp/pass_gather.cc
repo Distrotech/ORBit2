@@ -105,14 +105,11 @@ IDLPassGather::doUnion(IDL_tree node,IDLScope &scope) {
 
 
 
-#if 0 //!!!
-
 
 void 
 IDLPassGather::doNative(IDL_tree node,IDLScope &scope) {
 	ORBITCPP_NYI("native")
 }
-#endif
 
 
 
