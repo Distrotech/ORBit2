@@ -1,3 +1,13 @@
+2003-07-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-loc.c (ORBit_corbaloc_from):
+	invert ssl_info NULL check's sense, remove redundant
+	braces / inits. Add a 'break' so we don't drop through
+	to the next case by mistake.
+
+	* test/everything/client.c (testIsA): hammer _is_a
+	on the 'diamond of death'.
+
 2003-07-30  Frank Rehberger  <Frank.Rehberger@xtradyne.de>
 
 	* src/orb/orb-core/corba-object.c (g_CORBA_Object_hash): use

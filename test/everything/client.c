@@ -434,10 +434,34 @@ static void
 testIsA (test_TestFactory   factory, 
 	 CORBA_Environment *ev)
 {
+	test_DerivedServer ds;
+ 
+	d_print ("Testing is_a ...\n");
+
 	g_assert (CORBA_Object_is_a (factory, "IDL:CORBA/Object:1.0", ev));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (CORBA_Object_is_a (factory, "IDL:omg.org/CORBA/Object:1.0", ev));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/*
+	ds = test_TestFactory_getDerivedServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	g_assert (CORBA_Object_is_a (ds, "IDL:orbit/test/DerivedServer:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (ds, "IDL:orbit/test/C1:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (ds, "IDL:orbit/test/B1:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (ds, "IDL:orbit/test/B2:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (ds, "IDL:orbit/test/BaseServer:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (factory, "IDL:CORBA/Object:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release (ds, ev);
+	*/
 }
 
 static void
