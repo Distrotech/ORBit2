@@ -1,5 +1,9 @@
 2004-01-09  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.9.3
+
+2004-01-09  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_invoke_stub): add performance
 	comment and pass method flags in.
