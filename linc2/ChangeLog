@@ -1,4 +1,9 @@
+2003-03-25  Michael Meeks  <michael@ximian.com>
+
+	* Version 1.1.0
+
 2003-03-18  Shailesh Mittal  <shailesh.mittal@wipro.com>
+
 	* configure.in:
 	  Added checks for getaddrinfo() and getnameinfo().
 
