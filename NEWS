@@ -1,4 +1,16 @@
-Version 2.3.110
+ORBit2-2.4.0
+
+	* bug fixes
+		+ orbit-idl-2 knows its name (Michael)
+
+	* featurelets
+		+ bin-compat fiddling (Michael)
+		+ accelerated object hashing (Michael)
+		+ orbhttp clean (Richard Kinder)
+		+ allow fast call disabling (Michael)
+		+ shrink stubs yet further (Michael)
+
+ORBit2-2.3.110
 
 	* leak fixes (Michael)
 		+ async code
@@ -9,7 +21,7 @@ Version 2.3.110
 		+ us timestamp printing
 		+ ellipsize long strings
 
-Version 2.3.109
+ORBit2-2.3.109
 
 	* Bug fixes
 		+ accept NULL async callbacks (Michael)
@@ -17,7 +29,7 @@ Version 2.3.109
 		+ Java interop fix (Mark)
 		+ IDL compiler more type friendly (Gergo)
 
-Version 2.3.108
+ORBit2-2.3.108
 
 	* Bug fixes
 		+ fixed array marshaling (Gergo Erdi, Michael)
@@ -32,14 +44,14 @@ Version 2.3.108
 		+ IDL compiler header guards (Murray Cumming)
 		+ more regression tests (Michael)
 
-Version 2.3.107
+ORBit2-2.3.107
 
 	* Marshal and de-marshal code sets component correctly (Mark)
 	* TypeCode portability fix (Laca)
 	* spec file re-write (Greg Leblanc)
 	* Check recv buffer is correctly aligned (Dou Wen)
 
-Version 2.3.106
+ORBit2-2.3.106
 
 	* Support enum declaration within a union decl (Mark)
 	* G_BEGIN_DECLise the headers (Sam Couter)
@@ -48,7 +60,7 @@ Version 2.3.106
 	* Forte compiler workaround (Mark)
 	* autogen fixes (Jacob)
 
-Version 2.3.105
+ORBit2-2.3.105
 
 	* Changes
 		+ object debugging (Michael)
@@ -61,7 +73,7 @@ Version 2.3.105
 		+ context removing bug (Michael)
 		+ various Any comparing bugs (Michael, Mark)
 
-Version 2.3.104
+ORBit2-2.3.104
 
 	* runtime GIOP debugging (Mark)	
 	* union, any and floats regression tests (Mark)
@@ -69,7 +81,7 @@ Version 2.3.104
 	* orb-core code cleanups (Mark)
 	* removing deprecated glib functions (Shivram U)
 
-Version 2.3.103
+ORBit2-2.3.103
 
 	* Changes
 		+ big POA cleanup (Mark)
@@ -84,7 +96,7 @@ Version 2.3.103
 		+ fix screwy idl compiler output (Xiong Jiang)
 		+ bomb out if alingment checks fail (Mark)
 
-Version 2.3.102
+ORBit2-2.3.102
 
 	* Changes
 		+ re-enterancy various (Michael)
@@ -92,7 +104,7 @@ Version 2.3.102
 		+ performance regression test (Michael, Mark)
 		+ fixed regression tests (Michael)
 
-Version 2.3.101
+ORBit2-2.3.101
 
 	* Features
 		+ configurable non-blocking IO with the new linc (Michael)
@@ -109,7 +121,7 @@ Version 2.3.101
 		+ IOP profile fixage (Roland Juelich, Marl)
 		+ spec fixage (Ross Golder)
 
-Version 2.3.100
+ORBit2-2.3.100
 
 	* Bugs
 		+ more regression tests (Michael)
@@ -122,7 +134,7 @@ Version 2.3.100
 		+ any de-marshaling byteswaps (Mark)
 		+ build fixage (Jacob)
 
-Version 2.3.99
+ORBit2-2.3.99
 
 	* Features
 		* Speedups (Michael)
