@@ -1,3 +1,14 @@
+2001-10-23  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_state_change): re-format to make pretty.
+	(giop_recv_buffer_handle_fragmented): return GIOP_MSG_INVALID
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_handle_input): drasticaly simplify crack
+	smoking flow control, release cnx->incoming_mutex much
+	earlier	to avoid deadlock.
+
 2001-10-18  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-orb-type.h

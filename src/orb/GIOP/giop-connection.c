@@ -122,6 +122,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 	int n;
 	GIOPMessageInfo info;
+	GIOPRecvBuffer *inbuf;
 
 	g_object_ref ((GObject *) cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
@@ -148,36 +149,43 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		info = giop_recv_buffer_data_read (
 			cnx->incoming_msg, n, cnx->parent.is_auth, cnx);
 
-		if (info != GIOP_MSG_UNDERWAY) {
-			if (info == GIOP_MSG_COMPLETE) {
-				if (cnx->incoming_msg &&
-				    cnx->incoming_msg->msg.header.message_type == GIOP_REQUEST) {
-					ORBit_handle_request (cnx->orb_data, cnx->incoming_msg);
-					giop_recv_buffer_unuse (cnx->incoming_msg);
-				}
-			}
-			cnx->incoming_msg = NULL;
-			if (info == GIOP_MSG_INVALID) {
-				/* Zap it for badness.
-				   XXX We should probably handle oversized
-				   messages more graciously XXX */
-				giop_connection_close (cnx);
-				if (!cnx->parent.was_initiated) {
-					/* If !was_initiated, then
-					   a refcount owned by a GIOPServer
-					   must be released */
-					g_object_unref (G_OBJECT (cnx));
-					goto out;
-				}
-			}
-		}
-	} while (cnx && cnx->incoming_msg);
+	} while (cnx->incoming_msg && info == GIOP_MSG_UNDERWAY);
 
- out:
-	if (cnx) {
-		LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
-		g_object_unref ((GObject *) cnx);
+	inbuf = cnx->incoming_msg;
+	cnx->incoming_msg = NULL;
+	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+
+	switch (info) {
+	case GIOP_MSG_COMPLETE:
+		if (inbuf && inbuf->msg.header.message_type == GIOP_REQUEST) {
+			ORBit_handle_request (cnx->orb_data, inbuf);
+			giop_recv_buffer_unuse (inbuf);
+		}
+		/* FIXME: we need to move the giop_recv_list_push code
+		 * here, and put all the msg handling into the same
+		 * switch so people have a chance of understanding what
+		 * is going on. */
+		break;
+
+	case GIOP_MSG_INVALID:
+		/* Zap it for badness.
+		 * XXX We should probably handle oversized
+		 * messages more graciously XXX */
+		giop_connection_close (cnx);
+
+		if (!cnx->parent.was_initiated)
+			/* If !was_initiated, then
+			   a refcount owned by a GIOPServer
+			   must be released */
+			g_object_unref (G_OBJECT (cnx));
+		break;
+
+	case GIOP_MSG_UNDERWAY:
+		g_assert_not_reached ();
+		break;
 	}
+
+	g_object_unref ((GObject *) cnx);
 
 	return TRUE;
 }
