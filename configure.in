@@ -58,7 +58,7 @@ if test "$enable_debug" = "yes"; then
   ORBIT_DEBUG_CFLAGS="-DG_ENABLE_DEBUG"
 else
   if test "x$enable_debug" = "xno"; then
-    ORBIT_DEBUG_FLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS"
+    ORBIT_DEBUG_CFLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS"
   else
     ORBIT_DEBUG_CFLAGS=""
   fi
