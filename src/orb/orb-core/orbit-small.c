@@ -499,7 +499,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 						CORBA_Object_release (*(gpointer *)arg, ev);
 					else if (tc->kind == CORBA_tk_string ||
 						 tc->kind == CORBA_tk_wstring)
-						CORBA_free (*(gpointer *) arg);
+						ORBit_free (*(gpointer *) arg);
 				}
 				/* drop through */
 			case BASE_TYPES:
@@ -904,15 +904,15 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			break;
 		case CORBA_tk_string:
 		case CORBA_tk_wstring:
-			CORBA_free (*(char **) retval);
+			ORBit_free (*(char **) retval);
 			break;
 		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-				CORBA_free (retval);
+				ORBit_free (retval);
 				break;
 			} /* drop through */
 		default:
-			CORBA_free (pretval);
+			ORBit_free (pretval);
 			break;
 		}
 	}
@@ -940,7 +940,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				break;
 			case CORBA_tk_string:
 			case CORBA_tk_wstring:
-				CORBA_free (*(char **) args [i]);
+				ORBit_free (*(char **) args [i]);
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
@@ -950,7 +950,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				}
 				/* drop through */
 			default:
-				CORBA_free (args [i]);
+				ORBit_free (args [i]);
 				break;
 			}
 		} else if (ev->_major == CORBA_NO_EXCEPTION) { /* Out */
@@ -963,10 +963,10 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				break;
 			case CORBA_tk_string:
 			case CORBA_tk_wstring:
-				CORBA_free (*(char **) scratch [i]);
+				ORBit_free (*(char **) scratch [i]);
 				break;
 			default:
-				CORBA_free (scratch [i]);
+				ORBit_free (scratch [i]);
 				break;
 			}
 		}
@@ -1224,6 +1224,32 @@ ORBit_small_listen_for_broken (CORBA_Object obj,
 			ret = get_status (LINC_CONNECTION (connection));
 			g_signal_connect (G_OBJECT (connection),
 					  "broken", fn, user_data);
+		} else
+			ret = ORBIT_CONNECTION_DISCONNECTED;
+	}
+
+	return ret;
+}
+
+ORBitConnectionStatus
+ORBit_small_unlisten_for_broken (CORBA_Object obj,
+				 GCallback    fn)
+{
+	ORBitConnectionStatus ret;
+
+	if (ORBit_small_get_servant (obj))
+		ret = ORBIT_CONNECTION_IN_PROC;
+	else {
+		GIOPConnection *connection;
+
+		connection = ORBit_object_get_connection (obj);
+
+		if (connection) {
+			ret = get_status (LINC_CONNECTION (connection));
+			g_signal_handlers_disconnect_matched (
+				G_OBJECT (connection), 
+				G_SIGNAL_MATCH_FUNC,
+				0, 0, NULL, fn, NULL);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}

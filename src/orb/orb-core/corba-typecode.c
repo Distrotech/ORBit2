@@ -62,9 +62,10 @@ typedef enum {
 } TkType;
 
 typedef struct {
-	TkType type;
+	TkType                type;
 	CORBA_TypeCodeEncoder encoder;
 	CORBA_TypeCodeDecoder decoder;
+	CORBA_TypeCode        basic_type;
 } TkInfo;
 
 #define DEF_TC_BASIC(nom, c_align)                                      \
@@ -769,37 +770,36 @@ ORBit_tk_to_name (CORBA_unsigned_long tk)
 	}
 }
 
-
 static const TkInfo tk_info[CORBA_tk_last]= {
-	{TK_EMPTY, NULL, NULL}, /* tk_null */
-	{TK_EMPTY, NULL, NULL}, /* tk_void */
-	{TK_EMPTY, NULL, NULL}, /* tk_short */
-	{TK_EMPTY, NULL, NULL}, /* tk_long */
-	{TK_EMPTY, NULL, NULL}, /* tk_ushort */
-	{TK_EMPTY, NULL, NULL}, /* tk_ulong */
-	{TK_EMPTY, NULL, NULL}, /* tk_float */
-	{TK_EMPTY, NULL, NULL}, /* tk_double */
-	{TK_EMPTY, NULL, NULL}, /* tk_boolean */
-	{TK_EMPTY, NULL, NULL}, /* tk_char */
-	{TK_EMPTY, NULL, NULL}, /* tk_octet */
-	{TK_EMPTY, NULL, NULL}, /* tk_any */
-	{TK_EMPTY, NULL, NULL}, /* tk_TypeCode */
-        {TK_EMPTY, NULL, NULL}, /* tk_Principal */
-	{TK_COMPLEX, tc_enc_tk_objref, tc_dec_tk_objref}, /* tk_objref */
-	{TK_COMPLEX, tc_enc_tk_struct, tc_dec_tk_struct}, /* tk_struct */
-        {TK_COMPLEX, tc_enc_tk_union, tc_dec_tk_union}, /* tk_union */
-        {TK_COMPLEX, tc_enc_tk_enum, tc_dec_tk_enum}, /* tk_enum */
-        {TK_SIMPLE, tc_enc_tk_string, tc_dec_tk_string}, /* tk_string */
-        {TK_COMPLEX, tc_enc_tk_sequence, tc_dec_tk_sequence}, /* tk_sequence */
-        {TK_COMPLEX, tc_enc_tk_array, tc_dec_tk_array}, /* tk_array */
-        {TK_COMPLEX, tc_enc_tk_alias, tc_dec_tk_alias}, /* tk_alias */
-        {TK_COMPLEX, tc_enc_tk_except, tc_dec_tk_except}, /* tk_except */
-        {TK_EMPTY, NULL, NULL}, /* tk_longlong */
-        {TK_EMPTY, NULL, NULL}, /* tk_ulonglong */
-        {TK_EMPTY, NULL, NULL}, /* tk_longdouble */
-        {TK_EMPTY, NULL, NULL}, /* tk_wchar */
-	{TK_SIMPLE, tc_enc_tk_wstring, tc_dec_tk_wstring}, /* tk_wstring */
-	{TK_SIMPLE, tc_enc_tk_fixed, tc_dec_tk_fixed} /* tk_fixed */
+	{ TK_EMPTY, NULL, NULL, TC_null }, /* tk_null */
+	{ TK_EMPTY, NULL, NULL, TC_void }, /* tk_void */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_short }, /* tk_short */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_long }, /* tk_long */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_unsigned_short }, /* tk_ushort */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_unsigned_long }, /* tk_ulong */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_float }, /* tk_float */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_double }, /* tk_double */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_boolean }, /* tk_boolean */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_char }, /* tk_char */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_octet }, /* tk_octet */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_any }, /* tk_any */
+	{ TK_EMPTY, NULL, NULL, TC_CORBA_TypeCode }, /* tk_TypeCode */
+        { TK_EMPTY, NULL, NULL, TC_CORBA_Principal }, /* tk_Principal */
+	{ TK_COMPLEX, tc_enc_tk_objref, tc_dec_tk_objref }, /* tk_objref */
+	{ TK_COMPLEX, tc_enc_tk_struct, tc_dec_tk_struct }, /* tk_struct */
+        { TK_COMPLEX, tc_enc_tk_union, tc_dec_tk_union }, /* tk_union */
+        { TK_COMPLEX, tc_enc_tk_enum, tc_dec_tk_enum }, /* tk_enum */
+        { TK_SIMPLE, tc_enc_tk_string, tc_dec_tk_string }, /* tk_string */
+        { TK_COMPLEX, tc_enc_tk_sequence, tc_dec_tk_sequence }, /* tk_sequence */
+        { TK_COMPLEX, tc_enc_tk_array, tc_dec_tk_array }, /* tk_array */
+        { TK_COMPLEX, tc_enc_tk_alias, tc_dec_tk_alias }, /* tk_alias */
+        { TK_COMPLEX, tc_enc_tk_except, tc_dec_tk_except }, /* tk_except */
+        { TK_EMPTY, NULL, NULL, TC_CORBA_long_long}, /* tk_longlong */
+        { TK_EMPTY, NULL, NULL, TC_CORBA_unsigned_long_long }, /* tk_ulonglong */
+        { TK_EMPTY, NULL, NULL, TC_CORBA_long_double }, /* tk_longdouble */
+        { TK_EMPTY, NULL, NULL, TC_CORBA_wchar }, /* tk_wchar */
+	{ TK_SIMPLE, tc_enc_tk_wstring, tc_dec_tk_wstring}, /* tk_wstring */
+	{ TK_SIMPLE, tc_enc_tk_fixed, tc_dec_tk_fixed} /* tk_fixed */
 };
 
 const ORBit_RootObject_Interface ORBit_TypeCode_epv = {
@@ -815,7 +815,6 @@ tc_dec (CORBA_TypeCode  *t,
 	guint               tmp_index;
 	const TkInfo       *info;
 	CORBA_TCKind        kind;
-	CORBA_TypeCode      tc;
 	GIOPRecvBuffer     *encaps;
 	TCRecursionNode    *node;
 	CORBA_unsigned_long lkind;
@@ -858,38 +857,47 @@ tc_dec (CORBA_TypeCode  *t,
 	node = g_new (TCRecursionNode, 1);
 	node->index = ctx->current_idx + get_rptr(c) - 4; /* -4 for the TCKind */
 	info = &tk_info [kind];
-	
-	tc = g_new0 (struct CORBA_TypeCode_struct, 1);
-	ORBit_RootObject_init (&tc->parent, &ORBit_TypeCode_epv);
-	ORBit_RootObject_duplicate (tc);
 
-	tc->kind = kind;
+	if (info->type == TK_EMPTY)
+		node->tc = info->basic_type;
 
-	switch (info->type) {
+	else {
+		CORBA_TypeCode      tc;
 
-	case TK_EMPTY:
-		break;
+		tc = g_new0 (struct CORBA_TypeCode_struct, 1);
 
-	case TK_COMPLEX:
-		tmp_index = ctx->current_idx;
-		ctx->current_idx += get_rptr (c) + 4;
-		/* NB. the encaps buffer is for data validation */
-		encaps = giop_recv_buffer_use_encaps_buf (c);
-		info->decoder (tc, encaps, ctx);
-		ctx->current_idx = tmp_index;
-		giop_recv_buffer_unuse (encaps);
-		break;
+		ORBit_RootObject_init (&tc->parent, &ORBit_TypeCode_epv);
+		ORBit_RootObject_duplicate (tc);
 
-	case TK_SIMPLE:
-		info->decoder (tc, c, ctx);
-		break;
+		tc->kind = kind;
+
+		switch (info->type) {
+
+		case TK_EMPTY:
+			g_assert_not_reached ();
+			break;
+
+		case TK_COMPLEX:
+			tmp_index = ctx->current_idx;
+			ctx->current_idx += get_rptr (c) + 4;
+			/* NB. the encaps buffer is for data validation */
+			encaps = giop_recv_buffer_use_encaps_buf (c);
+			info->decoder (tc, encaps, ctx);
+			ctx->current_idx = tmp_index;
+			giop_recv_buffer_unuse (encaps);
+			break;
+			
+		case TK_SIMPLE:
+			info->decoder (tc, c, ctx);
+			break;
+		}
+
+		tc->c_align = ORBit_TC_find_c_alignment (tc);
+		node->tc = tc;
 	}
 
-	node->tc = tc;
+	*t = node->tc;
 	ctx->prior_tcs = g_slist_prepend (ctx->prior_tcs, node);
-	*t = tc;
-
-	tc->c_align = ORBit_TC_find_c_alignment (tc);
 
 	return FALSE;
 }

@@ -1368,7 +1368,7 @@ IOP_TAG_ORBIT_SPECIFIC_demarshal (IOP_ProfileId   p,
 
  errout:
 	if (retval) {
-		CORBA_free (retval->object_key);
+		ORBit_free (retval->object_key);
 		g_free (retval->unix_sock_path);
 		g_free (retval);
 	}
@@ -1587,7 +1587,7 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
     {
       IOP_components_free(retval->components);
       g_free(retval->host);
-      CORBA_free(retval->object_key);
+      ORBit_free(retval->object_key);
 
       g_free(retval);
     }

@@ -227,6 +227,7 @@ module test {
 	};
 
 	interface AnyServer {
+		any opAnyStrSeq();
 		any opAnyLong(in any inArg, inout any inoutArg, out any outArg);
 		any opAnyString(in any inArg, inout any inoutArg, out any outArg);
 		any opAnyStruct(in any inArg, inout any inoutArg, out any outArg);

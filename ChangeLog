@@ -1,3 +1,35 @@
+2001-11-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c: populate tk_info
+	with CORBA_TypeCodes for the empty case, so we don't
+	have to alloc / free them continualy.
+	(tc_dec): re-vamp to use faster basic type path.
+
+	* src/orb/orb-core/orbit-small.c: s/CORBA_free/ORBit_free/
+
+	* src/orb/orb-core/iop-profiles.c: ditto.
+
+	* src/orb/orb-core/corba-string.c
+	(CORBA_string__freekids): use ORBit_free
+
+	* src/orb/orb-core/corba-nvlist.c
+	(ORBit_NamedValue_free): use ORBit_free.
+	(CORBA_NVList_free_memory): ditto.
+
+	* test/everything/client.c (dummy_cb): impl.
+	(testSegv): upd. to test unlisten.
+	(testAnyStrSeq): add
+	(main): call it.
+
+	* test/everything/everything.idl: add method.
+
+	* test/everything/anyServer.c
+	(AnyServer_opAnyStrSeq): forward port
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_unlisten_for_broken): impl. sigh, there
+	had to be something to break the API freeze.
+
 2001-10-31  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-ir.h:
