@@ -10,9 +10,9 @@
 #endif
 
 struct CORBA_Environment_type {
-	CORBA_char *_id;
-	CORBA_unsigned_long _major;
-	CORBA_any _any;
+	CORBA_char          *_id;
+	CORBA_unsigned_long  _major;
+	CORBA_any            _any;
 };
 
 #endif

@@ -1,8 +1,7 @@
-orbcoreincludedir=$(includedir)/orbit-2.0/orbit/orb-core
-orbcoreinclude_HEADERS= \
+orbcoreincludedir =$(includedir)/orbit-2.0/orbit/orb-core
+
+orbcoreinclude_HEADERS =		\
 	corba-environment-type.h	\
-	corba-ir.h			\
-	corba-nvlist-type.h		\
 	corba-nvlist.h			\
 	corba-object-type.h		\
 	corba-orb-type.h		\
@@ -10,7 +9,6 @@ orbcoreinclude_HEADERS= \
 	corba-pobj.h			\
 	corba-typecode-type.h		\
 	orb-core.h			\
-	orb-defs.h			\
 	orb-types.h			\
 	orbit-object.h			\
 	orbit-small.h			\

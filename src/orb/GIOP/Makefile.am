@@ -1,6 +1,7 @@
-INCLUDES =                          \
-	-I$(top_srcdir)/include     \
-	-I$(top_builddir)/include   \
+INCLUDES =				\
+	-I$(top_srcdir)/include		\
+	-I$(top_builddir)/include	\
+	-DORBIT2_INTERNAL_API		\
 	$(ORBIT_CFLAGS)
 
 noinst_LTLIBRARIES=libGIOP.la

@@ -3,12 +3,14 @@
 
 #include <orbit/poa/orbit-adaptor.h>
 
-struct PortableServer_POAManager_type {
-  struct ORBit_RootObject_struct parent;
+#ifdef ORBIT2_INTERNAL_API
 
-  GSList *poa_collection;
-  PortableServer_POAManager_State state;
-  CORBA_ORB orb;
+struct PortableServer_POAManager_type {
+	struct ORBit_RootObject_struct    parent;
+
+	GSList                           *poa_collection;
+	PortableServer_POAManager_State   state;
+	CORBA_ORB                         orb;
 };
 
 struct PortableServer_POA_type {
@@ -42,5 +44,7 @@ struct PortableServer_POA_type {
 
 	int poa_rand_len;
 };
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

@@ -24,19 +24,21 @@ typedef enum {
 
 typedef struct ORBit_RootObject_struct *ORBit_RootObject;
 
-typedef void (* ORBit_RootObject_DestroyFunc)(ORBit_RootObject obj);
+typedef void (* ORBit_RootObject_DestroyFunc) (ORBit_RootObject obj);
 
 typedef struct _ORBit_RootObject_Interface {
-  ORBit_RootObject_Type type;
-  ORBit_RootObject_DestroyFunc destroy;
+	ORBit_RootObject_Type        type;
+	ORBit_RootObject_DestroyFunc destroy;
 } ORBit_RootObject_Interface;
 
 struct ORBit_RootObject_struct {
-  const ORBit_RootObject_Interface * interface;
+	const ORBit_RootObject_Interface *interface;
   int refs;
 };
 
 #define ORBIT_REFCOUNT_STATIC -10
+
+#ifdef ORBIT2_INTERNAL_API
 
 /* Used to determine whether the refcount is valid or not */
 #define ORBIT_REFCOUNT_MAX (1<<20)
@@ -53,5 +55,7 @@ void     ORBit_RootObject_release     (gpointer obj);
 void     ORBit_RootObject_release_T   (gpointer obj);
 
 extern GMutex *ORBit_RootObject_lifecycle_lock;
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

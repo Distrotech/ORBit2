@@ -6,6 +6,8 @@
 #include <orbit/GIOP/giop-server.h>
 #include <netdb.h>
 
+#ifdef ORBIT2_INTERNAL_API
+
 #define GIOP_TYPE_CONNECTION            (giop_connection_get_type ())
 #define GIOP_TYPE_IS_CONNECTION(type)   (G_TYPE_FUNDAMENTAL (type) == GIOP_TYPE_CONNECTION)
 #define GIOP_CONNECTION(object)	        (GIOP_IS_CONNECTION (object) ? ((GIOPConnection*) (object)) : \
@@ -42,5 +44,7 @@ GIOPConnection *giop_connection_initiate(const char *proto_name,
 					 GIOPVersion giop_version);
 void giop_connection_remove_by_orb (gpointer        match_orb_data);
 void giop_connection_close         (GIOPConnection *cnx);
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

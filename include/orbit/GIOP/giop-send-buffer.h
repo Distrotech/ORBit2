@@ -4,6 +4,8 @@
 #include <orbit/GIOP/giop-types.h>
 #include <orbit/GIOP/giop-connection.h>
 
+#ifdef ORBIT2_INTERNAL_API
+
 typedef struct {
   gulong size;
   guchar *ptr;
@@ -59,5 +61,7 @@ int giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx);
 CORBA_unsigned_long giop_get_request_id(void);
 
 void giop_dump_send (GIOPSendBuffer *send_buffer);
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

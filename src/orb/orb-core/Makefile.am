@@ -2,13 +2,14 @@ noinst_LTLIBRARIES=liborb-core.la
 
 TYPELIB_DIR=$(libdir)/orbit
 
-INCLUDES =                                         \
-	-I.                                        \
-	-I$(srcdir)                                \
-	-I$(top_srcdir)/include                    \
-	-I$(top_builddir)/include                  \
-	-I$(top_builddir)/include/orbit/orb-core   \
-	-DORBIT_TYPELIB_DIR=\""$(TYPELIB_DIR)"\"   \
+INCLUDES =						\
+	-I.						\
+	-I$(srcdir)					\
+	-I$(top_srcdir)/include				\
+	-I$(top_builddir)/include			\
+	-I$(top_builddir)/include/orbit/orb-core	\
+	-DORBIT_TYPELIB_DIR=\""$(TYPELIB_DIR)"\"	\
+	-DORBIT2_INTERNAL_API				\
 	$(ORBIT_CFLAGS)
 
 main_src = \

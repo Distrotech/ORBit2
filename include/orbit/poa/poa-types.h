@@ -3,15 +3,20 @@
 
 #include <orbit/poa/orbit-adaptor.h>
 
-#define ORBit_LifeF_NeedPostInvoke      (1<<0)
-#define ORBit_LifeF_DoEtherealize       (1<<1)
-#define ORBit_LifeF_IsCleanup           (1<<2)
-#define ORBit_LifeF_DeactivateDo        (1<<4)
-#define ORBit_LifeF_Deactivating        (1<<5)
-#define ORBit_LifeF_Deactivated         (1<<6)
-#define ORBit_LifeF_DestroyDo           (1<<8)
-#define ORBit_LifeF_Destroying          (1<<9)
-#define ORBit_LifeF_Destroyed           (1<<10)
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+
+typedef void (*ORBit_vepvmap_init)(ORBit_VepvIdx *map);
+
+typedef struct {
+	ORBit_impl_finder        relay_call;
+	ORBit_small_impl_finder  small_relay_call;
+	const char              *class_name;
+	CORBA_unsigned_long     *class_id;
+	ORBit_vepvmap_init       init_vepvmap;
+	ORBit_VepvIdx*           vepvmap;
+	int                      vepvlen;
+	ORBit_IInterface        *idata;
+} PortableServer_ClassInfo;
 
 struct ORBit_POAObject_type {
 	struct ORBit_OAObject_type     base;
@@ -28,27 +33,21 @@ struct ORBit_POAObject_type {
 	guint16                        use_cnt;
 };
 
-typedef void (*ORBit_vepvmap_init)(ORBit_VepvIdx *map);
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
-typedef struct {
-  ORBit_impl_finder       relay_call;
-  ORBit_small_impl_finder small_relay_call;
-  const char             *class_name;
-  CORBA_unsigned_long    *class_id;
-  ORBit_vepvmap_init      init_vepvmap;
-  ORBit_VepvIdx*          vepvmap;
-  int                     vepvlen;
-  ORBit_IInterface       *idata;
-} PortableServer_ClassInfo;
+#ifdef ORBIT2_INTERNAL_API
+
+#define ORBit_LifeF_NeedPostInvoke      (1<<0)
+#define ORBit_LifeF_DoEtherealize       (1<<1)
+#define ORBit_LifeF_IsCleanup           (1<<2)
+#define ORBit_LifeF_DeactivateDo        (1<<4)
+#define ORBit_LifeF_Deactivating        (1<<5)
+#define ORBit_LifeF_Deactivated         (1<<6)
+#define ORBit_LifeF_DestroyDo           (1<<8)
+#define ORBit_LifeF_Destroying          (1<<9)
+#define ORBit_LifeF_Destroyed           (1<<10)
 
 
-#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) { 			\
-  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci);	\
-}
-#define ORBIT_SERVANT_TO_CLASSINFO(servant) ( 				\
-  (PortableServer_ClassInfo*) 						\
-  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )	\
-)
 #define ORBIT_SERVANT_TO_POAOBJECT_LIST(servant) (                      \
   (GSList *)                                                            \
   ( ((PortableServer_ServantBase *)(servant))->_private )               \
@@ -62,39 +61,45 @@ typedef struct {
     (ORBit_POAObject)                                                             \
     ( ( (GSList *)( (PortableServer_ServantBase *)(servant) )->_private )->data ) \
 )
-#define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant,major) 			\
-  ( ((PortableServer_ServantBase *)(servant))->vepv[major] )
 
+#endif /* ORBIT2_INTERNAL_API */
+
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+
+#define ORBIT_SERVANT_TO_CLASSINFO(servant) ( 				\
+  (PortableServer_ClassInfo*) 						\
+  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )	\
+)
+
+#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) { 			\
+  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci);	\
+}
+
+#define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant, major)				\
+	( ((PortableServer_ServantBase *)(servant))->vepv [major] )
+ 
 #ifdef ORBIT_BYPASS_MAPCACHE
-#define ORBIT_POAOBJECT_TO_EPVIDX(pobj,clsid) \
-  ( (pobj)->vepvmap_cache[(clsid)] )
+#define ORBIT_POAOBJECT_TO_EPVIDX(pobj, clsid) 					\
+	( (pobj)->vepvmap_cache [(clsid)] )
 #else
-#define ORBIT_POAOBJECT_TO_EPVIDX(pobj,clsid) \
-  ( ORBIT_SERVANT_TO_CLASSINFO((pobj)->servant)->vepvmap[(clsid)] )
+#define ORBIT_POAOBJECT_TO_EPVIDX(pobj, clsid)					\
+	( ORBIT_SERVANT_TO_CLASSINFO ((pobj)->servant)->vepvmap [(clsid)] )
 #endif
-#define ORBIT_POAOBJECT_TO_EPVPTR(pobj,clsid) \
-  ORBIT_SERVANT_MAJOR_TO_EPVPTR((pobj)->servant, \
-    ORBIT_POAOBJECT_TO_EPVIDX((pobj),(clsid)) )
 
-#define ORBIT_SERVANT_TO_EPVIDX(servant,clsid) \
-  ( ORBIT_SERVANT_TO_CLASSINFO(servant)->vepvmap[(clsid)] )
-
-#define ORBIT_SERVANT_TO_EPVPTR(servant,clsid) \
-  ORBIT_SERVANT_MAJOR_TO_EPVPTR((servant), \
-    ORBIT_SERVANT_TO_EPVIDX((servant),(clsid)) )
-
-#define ORBIT_STUB_GetPoaObj(x) ((ORBit_POAObject)(((CORBA_Object)x)->adaptor_obj))
+#define ORBIT_POAOBJECT_TO_EPVPTR(pobj, clsid)					\
+		ORBIT_SERVANT_MAJOR_TO_EPVPTR ((pobj)->servant,			\
+		ORBIT_POAOBJECT_TO_EPVIDX ((pobj), (clsid)) )
 
 #define ORBIT_STUB_IsBypass(obj, classid) \
 		(((CORBA_Object)obj)->adaptor_obj && \
 		((CORBA_Object)obj)->adaptor_obj->interface->adaptor_type == ORBIT_ADAPTOR_POA && \
 		((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant && classid)
 
+#define ORBIT_STUB_GetEpv(obj, clsid) \
+		ORBIT_POAOBJECT_TO_EPVPTR(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj), (clsid))
+
 #define ORBIT_STUB_GetServant(obj) \
 		(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant)
-
-#define ORBIT_STUB_GetEpv(obj,clsid) \
-		ORBIT_POAOBJECT_TO_EPVPTR(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj), (clsid))
 
 #ifdef ORBIT_IN_PROC_COMPLIANT
 #define ORBIT_STUB_PreCall(obj) {                                   \
@@ -115,5 +120,7 @@ typedef struct {
 #define ORBIT_STUB_PreCall(x)
 #define ORBIT_STUB_PostCall(x)
 #endif
+
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
 #endif

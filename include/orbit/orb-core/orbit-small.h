@@ -13,12 +13,15 @@ typedef struct {
 	CORBA_sequence_CORBA_TypeCode types;
 } ORBit_IModule;
 
+
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);
 gpointer       ORBit_small_allocbuf    (CORBA_TypeCode      tc,
 					CORBA_unsigned_long length);
 void           ORBit_small_freekids    (CORBA_TypeCode      tc,
 					gpointer            p,
 					gpointer            d);
+
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 void           ORBit_small_invoke_stub (CORBA_Object        object,
 					ORBit_IMethod      *m_data,
@@ -27,11 +30,17 @@ void           ORBit_small_invoke_stub (CORBA_Object        object,
 					CORBA_Context       ctx,
 					CORBA_Environment  *ev);
 
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
+#ifdef ORBIT2_INTERNAL_API
+
 void           ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 					   GIOPRecvBuffer    *recv_buffer,
 					   ORBit_IMethod     *m_data,
 					   gpointer           data,
 					   CORBA_Environment *ev);
+
+#endif /* ORBIT2_INTERNAL_API */
 
 /* Type library work */
 CORBA_char       *ORBit_small_get_type_id         (CORBA_Object       object,

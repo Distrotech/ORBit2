@@ -110,11 +110,6 @@ CORBA_boolean
 #define PortableServer_RefCount_ServantBase__is_a 			\
 			PortableServer_ServantBase__is_a
 
-void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
-PortableServer_ClassInfo *ORBit_classinfo_lookup(const char *type_id);
-void ORBit_POAObject_post_invoke(ORBit_POAObject obj);
-
-
 PortableServer_ObjectId *PortableServer_string_to_ObjectId(CORBA_char *str,
                                                            CORBA_Environment *nv);
 
@@ -126,5 +121,18 @@ CORBA_char *PortableServer_ObjectId_to_string(PortableServer_ObjectId *oid,
 
 CORBA_wchar *PortableServer_ObjectId_to_wstring(PortableServer_ObjectId *oid,
                                                 CORBA_Environment *ev);
+
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+
+void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
+
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
+#ifdef ORBIT2_INTERNAL_API
+
+PortableServer_ClassInfo *ORBit_classinfo_lookup(const char *type_id);
+void ORBit_POAObject_post_invoke(ORBit_POAObject obj);
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

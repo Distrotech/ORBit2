@@ -1,6 +1,8 @@
 #ifndef __ORBIT_ADAPTOR_H__
 #define __ORBIT_ADAPTOR_H__
 
+#ifdef ORBIT2_INTERNAL_API
+
 void                ORBit_handle_request            (CORBA_ORB          orb, 
 						     GIOPRecvBuffer    *recv_buffer);
 
@@ -22,10 +24,16 @@ void                ORBit_OAObject_invoke           (ORBit_OAObject     adaptor_
 						     CORBA_Context      ctx,
 						     gpointer           data,
 						     CORBA_Environment *ev);
+#endif /* ORBIT2_INTERNAL_API */
 
 /*
  * ORBit_OAObject
  */
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+
+#ifndef ORBIT2_INTERNAL_API
+#define GIOPRecvBuffer void
+#endif
 
 typedef gboolean            (*ORBitStateCheckFunc) (ORBit_OAObject     adaptor_obj);
 
@@ -69,9 +77,13 @@ struct ORBit_OAObject_type {
 	ORBit_OAObject_Interface       interface;
 };
 
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
 /*
  * ORBit_ObjectAdaptor
  */
+
+#ifdef ORBIT2_INTERNAL_API
 
 typedef struct ORBit_ObjectAdaptor_type *ORBit_ObjectAdaptor;
 typedef CORBA_sequence_CORBA_octet       ORBit_AdaptorKey;
@@ -87,5 +99,7 @@ struct ORBit_ObjectAdaptor_type {
 
 	ORBit_AdaptorKey               adaptor_key;
 };
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif /* __ORBIT_ADAPTOR_H__ */

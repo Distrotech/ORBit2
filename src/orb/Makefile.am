@@ -2,9 +2,13 @@ SUBDIRS=include orb-core util GIOP poa dynamic
 
 lib_LTLIBRARIES=libORBit-2.la
 
-INCLUDES=-I. -I$(srcdir) -I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	-DORBIT_VERSION=\"@ORBIT_VERSION@\" \
+INCLUDES =					\
+	-I.					\
+	-I$(srcdir)				\
+	-I$(top_srcdir)/include			\
+	-I$(top_builddir)/include		\
+	-DORBIT_VERSION=\"@ORBIT_VERSION@\"	\
+	-DORBIT2_INTERNAL_API			\
 	$(ORBIT_CFLAGS)
 
 libORBit_2_la_SOURCES=orbit-init.c orbit-init.h

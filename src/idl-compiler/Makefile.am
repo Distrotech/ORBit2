@@ -10,6 +10,7 @@ INCLUDES =                                    \
 	-DORBITLIBDIR="\"$(orbitlibdir)\""    \
 	-DDEBUG                               \
 	-DVERSION=\"$(ORBIT_VERSION)\"        \
+	-DORBIT2_INTERNAL_API                 \
 	$(ORBIT_IDL_CFLAGS)
 
 orbit_idl_2_LDADD =                          \

@@ -1,15 +1,17 @@
 noinst_LTLIBRARIES=liborb-poa.la
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl-2
-INCLUDES =                                         \
-	-I$(top_srcdir)/include                    \
-	-I$(top_builddir)/include                  \
-	-I$(top_builddir)/src/orb/orb-core         \
-	-I$(top_srcdir)/src/orb/orb-core           \
-	-I$(top_builddir)/include/orbit/poa        \
-	-I$(top_srcdir)/include/orbit/orb-core     \
-	-I$(top_builddir)/include/orbit/orb-core   \
-	-I$(top_srcdir)/src/orb/poa                \
+
+INCLUDES =						\
+	-I$(top_srcdir)/include				\
+	-I$(top_builddir)/include			\
+	-I$(top_builddir)/src/orb/orb-core		\
+	-I$(top_srcdir)/src/orb/orb-core		\
+	-I$(top_builddir)/include/orbit/poa		\
+	-I$(top_srcdir)/include/orbit/orb-core		\
+	-I$(top_builddir)/include/orbit/orb-core	\
+	-I$(top_srcdir)/src/orb/poa			\
+	-DORBIT2_INTERNAL_API				\
 	$(ORBIT_CFLAGS)
 
 POA_IDLOUT=poa-defs-common.c

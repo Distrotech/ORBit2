@@ -53,6 +53,8 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 #endif
 #endif
 
+#ifdef ORBIT2_INTERNAL_API
+
 struct CORBA_ORB_type {
 	struct ORBit_RootObject_struct  root_object;
 	GIOPVersion                     default_giop_version;
@@ -65,5 +67,7 @@ struct CORBA_ORB_type {
 	ORBit_genrand                   genrand;
 	guint                           life_flags;
 };
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

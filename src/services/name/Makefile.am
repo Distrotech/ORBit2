@@ -18,10 +18,10 @@ libORBitservicesinclude_HEADERS = 					\
 libORBitCosNaming_2_la_LDFLAGS = \
 	-version-info $(LT_VERSION)
 
-INCLUDES =                           \
-	-I.                          \
-	-I$(top_builddir)/include    \
-	-I$(top_srcdir)/include      \
+INCLUDES =				\
+	-I.				\
+	-I$(top_builddir)/include	\
+	-I$(top_srcdir)/include		\
 	$(ORBIT_NAME_CFLAGS)
 
 CosNaming_built = 							\

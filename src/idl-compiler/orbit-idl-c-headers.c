@@ -110,94 +110,114 @@ static void ch_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci, gboolean do_alloc);
 
 static void
-ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+ch_output_types (IDL_tree       tree,
+		 OIDL_Run_Info *rinfo,
+		 OIDL_C_Info   *ci)
 {
-  if(!tree) return;
+	if (!tree)
+		return;
 
-  switch(IDL_NODE_TYPE(tree)) {
-  case IDLN_EXCEPT_DCL:
-    {
-      char *id;
-      id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_EXCEPT_DCL(tree).ident), "_", 0);
-      fprintf(ci->fh, "#define ex_%s \"%s\"\n", id,
-	      IDL_IDENT(IDL_EXCEPT_DCL(tree).ident).repo_id);
-      fprintf(ci->fh, "gboolean _ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev);\n", id);
-      fprintf(ci->fh, "void _ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev);\n", id);
-      g_free(id);
-      ch_output_type_struct(tree, rinfo, ci);
-    }
-    break;
-  case IDLN_FORWARD_DCL:
-  case IDLN_INTERFACE:
-    ch_output_interface(tree, rinfo, ci);
-    break;
-  case IDLN_TYPE_STRUCT:
-    ch_output_type_struct(tree, rinfo, ci);
-    break;
-  case IDLN_TYPE_ENUM:
-    ch_output_type_enum(tree, rinfo, ci);
-    break;
-  case IDLN_TYPE_DCL:
-    ch_output_type_dcl(tree, rinfo, ci);
-    break;
-  case IDLN_TYPE_UNION:
-    ch_output_type_union(tree, rinfo, ci);
-    break;
-  case IDLN_CODEFRAG:
-    ch_output_codefrag(tree, rinfo, ci);
-    break;
-  case IDLN_SRCFILE:
-    {
-      if (rinfo->onlytop) {
-	char *idlfn = IDL_SRCFILE(tree).filename;
-	if ( IDL_SRCFILE(tree).seenCnt==0 
-	     && !IDL_SRCFILE(tree).isTop 
-	  && !IDL_SRCFILE(tree).wasInhibit ) {
-	  char *hfn = g_path_get_basename(idlfn), *htail;
-	  htail = strrchr(hfn,'.');
-	  g_assert( htail && strlen(htail)>=2 );
-	  htail[1] = 'h';
-	  htail[2] = 0;
-	  fprintf(ci->fh, "#include \"%s\"\n", hfn);
-            g_free(hfn);
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_EXCEPT_DCL: {
+		char *id;
+
+		id = IDL_ns_ident_to_qstring (
+			IDL_IDENT_TO_NS (IDL_EXCEPT_DCL (tree).ident), "_", 0);
+
+		fprintf (ci->fh, "#define ex_%s \"%s\"\n",
+				id, IDL_IDENT (IDL_EXCEPT_DCL (tree).ident).repo_id);
+
+		if (!rinfo->small) {
+			fprintf (ci->fh, "gboolean _ORBIT_%s_demarshal (GIOPRecvBuffer *_ORBIT_recv_buffer,"
+					 " CORBA_Environment *ev);\n", id);
+
+			fprintf (ci->fh, "void _ORBIT_%s_marshal (GIOPSendBuffer *_ORBIT_send_buffer,"
+					 " CORBA_Environment *ev);\n", id);
+		}
+
+		g_free (id);
+
+		ch_output_type_struct (tree, rinfo, ci);
+		}
+		break;
+	case IDLN_FORWARD_DCL:
+	case IDLN_INTERFACE:
+		ch_output_interface (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_STRUCT:
+		ch_output_type_struct (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_ENUM:
+		ch_output_type_enum (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_DCL:
+		ch_output_type_dcl (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_UNION:
+		ch_output_type_union (tree, rinfo, ci);
+		break;
+	case IDLN_CODEFRAG:
+		ch_output_codefrag (tree, rinfo, ci);
+		break;
+	case IDLN_SRCFILE: {
+		if (rinfo->onlytop) {
+			char *idlfn = IDL_SRCFILE (tree).filename;
+
+			if (!IDL_SRCFILE (tree).seenCnt &&
+			    !IDL_SRCFILE(tree).isTop    &&
+			    !IDL_SRCFILE(tree).wasInhibit) {
+				gchar *hfn, *htail;
+
+				hfn   = g_path_get_basename (idlfn);
+				htail = strrchr (hfn,'.');
+
+				g_assert (htail && strlen (htail) >= 2);
+
+				htail [1] = 'h';
+				htail [2] = 0;
+
+				fprintf (ci->fh, "#include \"%s\"\n", hfn);
+
+				g_free (hfn);
+			}
+
+		fprintf (ci->fh, "/* from IDL source file \"%s\" "
+				 "(seen %d, isTop %d, wasInhibit %d) */ \n", 
+					idlfn,
+					IDL_SRCFILE (tree).seenCnt,
+					IDL_SRCFILE (tree).isTop,
+					IDL_SRCFILE (tree).wasInhibit);
+		}
+		}
+		break;
+	case IDLN_CONST_DCL:
+		ch_output_const_dcl (tree, rinfo, ci);
+		break;
+	case IDLN_NATIVE:
+		ch_output_native (tree, rinfo, ci);
+		break;
+	default:
+		break;
 	}
-        fprintf(ci->fh, "/* from IDL source file \"%s\" (seen %d, isTop %d, wasInhibit %d) */ \n", 
-		idlfn, IDL_SRCFILE(tree).seenCnt, IDL_SRCFILE(tree).isTop,
-		IDL_SRCFILE(tree).wasInhibit);
-      }
-    }
-    break;
-  case IDLN_CONST_DCL:
-    ch_output_const_dcl(tree, rinfo, ci);
-    break;
-  case IDLN_NATIVE:
-    ch_output_native(tree, rinfo, ci);
-    break;
-  default:
-    break;
-  }
 
-  switch(IDL_NODE_TYPE(tree)) {
-  case IDLN_MODULE:
-    ch_output_types(IDL_MODULE(tree).definition_list, rinfo, ci);
-    return;
-    break;
-  case IDLN_LIST:
-    {
-      IDL_tree sub;
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_MODULE:
+		ch_output_types (IDL_MODULE (tree).definition_list, rinfo, ci);
+		break;
+	case IDLN_LIST: {
+		IDL_tree sub;
 
-      for(sub = tree; sub; sub = IDL_LIST(sub).next) {
-	ch_output_types(IDL_LIST(sub).data, rinfo, ci);
-      }
-    }
-    return;
-    break;
-  case IDLN_INTERFACE:
-    ch_output_types(IDL_INTERFACE(tree).body, rinfo, ci);
-    break;
-  default:
-    break;
-  }
+		for (sub = tree; sub; sub = IDL_LIST (sub).next) {
+			ch_output_types (IDL_LIST (sub).data, rinfo, ci);
+		}
+		}
+		break;
+	case IDLN_INTERFACE:
+		ch_output_types (IDL_INTERFACE (tree).body, rinfo, ci);
+		break;
+	default:
+		break;
+	}
 }
 
 static void
