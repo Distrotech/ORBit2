@@ -577,10 +577,21 @@ IOP_start_profiles (CORBA_ORB orb)
 	}
 
 	{
+		const CORBA_sequence_CONV_FRAME_CodeSetId empty_conv_codesets
+			= {0L,     /* _maximum */  
+			   0L,     /* _length  */
+			   NULL,   /* _buffer  */
+			   FALSE}; /* _release */  
 		IOP_TAG_CODE_SETS_info *csets;
 
 		csets = g_new0 (IOP_TAG_CODE_SETS_info, 1);
 		csets->parent.component_type = IOP_TAG_CODE_SETS;
+
+		csets->data.ForCharData.native_code_set = IOP_PROFILES_CODE_SET_UTF8;
+		csets->data.ForCharData.conversion_code_sets = empty_conv_codesets;
+		csets->data.ForCharData.native_code_set = IOP_PROFILES_CODE_SET_UTF16;
+		csets->data.ForCharData.conversion_code_sets = empty_conv_codesets;
+
 		mci->components = g_slist_append (mci->components, csets);
 	}
 
@@ -638,8 +649,22 @@ IOP_component_free (IOP_Component_info *c)
 		}
 	case IOP_TAG_SSL_SEC_TRANS:
 		break;
-	case IOP_TAG_CODE_SETS:
-		break;
+	case IOP_TAG_CODE_SETS: {
+		IOP_TAG_CODE_SETS_info  *csets = (IOP_TAG_CODE_SETS_info*)c;
+		CORBA_sequence_CONV_FRAME_CodeSetId *conv_codesets;
+		
+		conv_codesets 
+			= &(csets->data.ForCharData.conversion_code_sets);
+		if (conv_codesets->_buffer) 
+			ORBit_free_T (conv_codesets->_buffer);
+
+		conv_codesets 
+			= &(csets->data.ForWcharData.conversion_code_sets);
+		if (conv_codesets->_buffer) 
+			ORBit_free_T (conv_codesets->_buffer);
+                break;
+	        }
+
 	default:
 		g_free (((IOP_UnknownProfile_info*)c)->data._buffer);
 		break;
@@ -781,9 +806,13 @@ CodeSetComponent_marshal (GIOPSendBuffer *buf,
 	/* native_code_set */
 	giop_send_buffer_append_aligned (buf, &native_code_set, 4);
 
-	if (opt_conversion_code_sets)
-		g_error ("Unimplemented as yet");
-	else {
+	if (opt_conversion_code_sets && opt_conversion_code_sets->_buffer) {
+		CORBA_unsigned_long length = opt_conversion_code_sets->_length;
+		giop_send_buffer_append_aligned (buf, &length, 4);
+		giop_send_buffer_append (buf,
+					 opt_conversion_code_sets->_buffer,
+					 length * sizeof(CORBA_unsigned_long));
+	} else {
 		CORBA_unsigned_long length = 0;
 		giop_send_buffer_append_aligned (buf, &length, 4);
 	}	
@@ -796,12 +825,17 @@ IOP_TAG_CODE_SETS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 {
 	/* To get these magic numbers see the 'OSF Character
 	   and Codeset Registry'; ftp.opengroup.org/pub/code_set_registry */
-	CORBA_unsigned_long utf8_key  = 0x05010001;
-	CORBA_unsigned_long utf16_key = 0x00010109;
+	/* CORBA_unsigned_long utf8_key  = 0x05010001; */
+	/* CORBA_unsigned_long utf16_key = 0x00010109; */
+	IOP_TAG_CODE_SETS_info *csets = (IOP_TAG_CODE_SETS_info*) ci;
 
 	/* Marshal a CodeSetComponentInfo structure */
-	CodeSetComponent_marshal (buf, utf8_key, NULL);
-	CodeSetComponent_marshal (buf, utf16_key, NULL);
+	CodeSetComponent_marshal (buf,
+				  csets->data.ForCharData.native_code_set,
+				  &(csets->data.ForCharData.conversion_code_sets));
+	CodeSetComponent_marshal (buf,
+				  csets->data.ForWcharData.native_code_set,
+				  &(csets->data.ForWcharData.conversion_code_sets));
 }
 
 static void
@@ -1136,8 +1170,7 @@ IOP_TAG_COMPLETE_OBJECT_KEY_demarshal (IOP_ComponentId id,
 
 static gboolean
 CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
-			    CORBA_unsigned_long *native_code_set,
-			    CORBA_sequence_CORBA_unsigned_long **opt_conversion_code_sets)
+			    CONV_FRAME_CodeSetComponent *component)
 {
 	CORBA_unsigned_long sequence_length;
 
@@ -1146,9 +1179,10 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 	if (buf->cur + 8 > buf->end)
 		return FALSE;
 
-	*native_code_set = *(CORBA_unsigned_long *)buf->cur;
+	component->native_code_set = *(CORBA_unsigned_long *)buf->cur;
 	if (giop_msg_conversion_needed (buf))
-		*native_code_set = GUINT32_SWAP_LE_BE (*native_code_set);
+		component->native_code_set 
+			= GUINT32_SWAP_LE_BE (component->native_code_set);
 	buf->cur += 4;
 
 	sequence_length = *(CORBA_unsigned_long *)buf->cur;
@@ -1156,13 +1190,25 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 		sequence_length = GUINT32_SWAP_LE_BE (sequence_length);
 	buf->cur += 4;
 
-	if (sequence_length > 0) {
-		dprintf (OBJECTS, "Ignoring incoming code_sets component");
+       if (buf->cur + sequence_length * 4 > buf->end)
+               return FALSE;
 
-		if (buf->cur + sequence_length * 4 <= buf->end)
-			buf->cur += sequence_length * 4;
-		else
-			return FALSE;
+	if (sequence_length > 0) {
+		int i;
+		dprintf (OBJECTS, "Ignoring incoming code_sets component");
+		component->conversion_code_sets._maximum = sequence_length;
+		component->conversion_code_sets._length  = sequence_length;
+		component->conversion_code_sets._release = TRUE;
+		component->conversion_code_sets._buffer  =
+			CORBA_sequence_CORBA_unsigned_long_allocbuf (sequence_length);
+		for (i=0; i<sequence_length; ++i) {
+			component->conversion_code_sets._buffer [i] = 
+				*(CORBA_unsigned_long *)buf->cur;
+			if (giop_msg_conversion_needed (buf))
+				component->conversion_code_sets._buffer [i] 
+					= GUINT32_SWAP_LE_BE (component->conversion_code_sets._buffer [i]);
+			buf->cur += 4;
+		}
 	}
 	
 	return TRUE;
@@ -1172,21 +1218,32 @@ static IOP_Component_info *
 IOP_TAG_CODE_SETS_demarshal (IOP_ComponentId  id,
 			     GIOPRecvBuffer  *buf)
 {
+	const CORBA_sequence_CONV_FRAME_CodeSetId empty_conv_codesets
+		= {0L,     /* _maximum */  
+		   0L,     /* _length  */
+		   NULL,   /* _buffer  */
+		   FALSE}; /* _release */  
 	IOP_TAG_CODE_SETS_info *retval;
-	CORBA_unsigned_long     dummy;
 	GIOPRecvBuffer         *encaps;
-
 	encaps = giop_recv_buffer_use_encaps_buf (buf);
 	if (!encaps)
 		return NULL;
   
 	retval = g_new (IOP_TAG_CODE_SETS_info, 1);
 	retval->parent.component_type = id;
+	retval->data.ForCharData.native_code_set       = 0L;
+	retval->data.ForCharData.conversion_code_sets  = empty_conv_codesets;
+	retval->data.ForWcharData.native_code_set      = 0L;
+	retval->data.ForWcharData.conversion_code_sets = empty_conv_codesets;
 
 	/* We don't care about the data much */
-	if (!CodeSetComponent_demarshal (encaps, &dummy, NULL) ||
-	    !CodeSetComponent_demarshal (encaps, &dummy, NULL)) {
+	if (!CodeSetComponent_demarshal (encaps, &(retval->data.ForCharData)) ||
+	    !CodeSetComponent_demarshal (encaps, &(retval->data.ForWcharData))) {
 		giop_recv_buffer_unuse (encaps);
+		if (retval->data.ForCharData.conversion_code_sets._buffer) 
+			ORBit_free_T (retval->data.ForCharData.conversion_code_sets._buffer);
+		if (retval->data.ForWcharData.conversion_code_sets._buffer) 
+			ORBit_free_T (retval->data.ForWcharData.conversion_code_sets._buffer);
 		g_free (retval);
 		return NULL;
 	}
