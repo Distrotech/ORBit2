@@ -56,7 +56,7 @@ TYPE		IN	OUT	INOUT	Ret	Ex	Attrib	Array	Struct	Seq	Union
 Simple		Y	Y	Y	Y	Y	Y	Y	Y	Y	-
 String		Y	Y	Y	y	Y	y	Y	Y	Y	-
 Enums		Y	Y	Y	Y	y	y	y	y	y	-
-Object		Y	Y	Y	Y	Y	y	Y	Y	w	-
+Object		Y	Y	Y	Y	Y	y	Y	Y	Y	-
 Array/fixed	Y	Y	Y	Y	Y	y	y	Y	-	-
 Array/var	Y	Y	Y	Y	Y	y	y	Y	-	-
 Struct/fixed	Y	Y	Y	Y	Y	y	Y	Y	w	-

@@ -55,7 +55,7 @@ namespace _orbitcpp {
 		
     public:
 		// Empty constructor
-		SequenceBase (size_t max = 0):
+		explicit SequenceBase (size_t max = 0):
 			_max (max),
 			_length (0),
 			_buffer (max ? new value_t[max] : 0),
@@ -172,7 +172,7 @@ namespace _orbitcpp {
 		
     public:
 		// Empty constructor
-		UnboundedSequence (size_t max = 0):
+		explicit UnboundedSequence (size_t max = 0):
 			Super (max)
 			{
 			}
