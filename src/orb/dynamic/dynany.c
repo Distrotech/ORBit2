@@ -137,8 +137,9 @@ struct _DynAny {
  * children use their parent simply to deregister themselfs;
  */
 static void
-dynany_invalidate (DynAny *d,
-		   gboolean invalidate_cur)
+dynany_invalidate (DynAny  *d,
+		   gboolean invalidate_cur,
+		   gboolean lock)
 {
 	if (invalidate_cur) {
 		if (d->parent) {
@@ -148,13 +149,17 @@ dynany_invalidate (DynAny *d,
 			g_assert (!d->any->_release);
 		}
 
-		if (d->any->_release) 
-			ORBit_free (d->any);
+		if (d->any->_release) {
+			if (lock)
+				ORBit_free (d->any);
+			else
+				ORBit_free_T (d->any);
+		}
 		d->any = NULL;
 	}
 
 	while (d->children)
-		dynany_invalidate (d->children->data, TRUE);
+		dynany_invalidate (d->children->data, TRUE, lock);
 }
 
 #define GET_DYNANY(obj) ((DynAny *)((struct DynamicAny_DynAny_type *)(obj))->data)
@@ -168,10 +173,10 @@ DynamicAny_DynAny_release_fn (ORBit_RootObject robj)
 
 	dynany = GET_DYNANY (robj);
 
-	dynany_invalidate (dynany, FALSE);
+	dynany_invalidate (dynany, FALSE, FALSE);
 
 	if (dynany->any)
-		ORBit_free (dynany->any);
+		ORBit_free_T (dynany->any);
 
 	g_slist_free (dynany->children);
 
@@ -708,7 +713,7 @@ DynamicAny_DynAny_from_any (DynamicAny_DynAny  obj,
 		return;
 	}
 
-	dynany_invalidate (dynany, TRUE);
+	dynany_invalidate (dynany, TRUE, TRUE);
 	
 	ORBit_free (dynany->any);
 
@@ -1415,7 +1420,7 @@ DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
 		return;
 	}
 
-	dynany_invalidate (dynany, FALSE);
+	dynany_invalidate (dynany, FALSE, TRUE);
 
 	for (i = 0; i < value->_length; i++) {
 		DynamicAny_NameValuePair current = value->_buffer [i];
@@ -1675,7 +1680,7 @@ DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence   obj,
 		}
 	}
 
-	dynany_invalidate (dynany, FALSE);
+	dynany_invalidate (dynany, FALSE, TRUE);
 
 	dest = s->_buffer;
 	for (i = 0; i < value->_length; i++) {
@@ -1758,7 +1763,7 @@ DynamicAny_DynSequence_set_length (DynamicAny_DynSequence   obj,
 			DynAny *child = l->data;
 
 			if (child->parent_idx >= length)
-				dynany_invalidate (child, TRUE);
+				dynany_invalidate (child, TRUE, TRUE);
 		}
 
 		if (length == 0 ||

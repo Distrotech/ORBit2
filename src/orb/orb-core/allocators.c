@@ -42,7 +42,7 @@ ORBit_alloc_core(size_t block_size,
 }
 
 void
-ORBit_free(gpointer mem)
+ORBit_free_T(gpointer mem)
 {
   ORBit_MemHow how, howcode, reps;
   gpointer     prefix, x;
@@ -73,8 +73,8 @@ ORBit_free(gpointer mem)
       ORBit_MemPrefix_TypeCode	*pre = prefix;
       CORBA_TypeCode			tc = pre->tc;
       for (idx = 0, x = mem; idx < reps; idx++)
-	x = ORBit_freekids_via_TypeCode(tc, x);
-      ORBit_RootObject_release(tc);
+	x = ORBit_freekids_via_TypeCode_T(tc, x);
+      ORBit_RootObject_release_T(tc);
       g_free(prefix);
       return;
     }
@@ -98,6 +98,15 @@ ORBit_free(gpointer mem)
   g_assert_not_reached();
 }
 
+void
+ORBit_free(gpointer mem)
+{
+  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+
+  ORBit_free_T (mem);
+
+  O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
+}
 
 gpointer
 ORBit_alloc_simple(size_t block_size)
@@ -167,7 +176,8 @@ ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
     arrays of things were allocated.
 **/
 gpointer
-ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
+ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
+			       gpointer       mem)
 {
   int i;
   guchar *retval = NULL;
@@ -178,9 +188,9 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     {
       CORBA_any *pval = mem;
       if(pval->_release)
-	ORBit_free(pval->_value);
+	ORBit_free_T(pval->_value);
       pval->_value = 0;
-      ORBit_RootObject_release(pval->_type);
+      ORBit_RootObject_release_T(pval->_type);
       pval->_type = 0;
       retval = (guchar *)(pval + 1);
     }
@@ -189,7 +199,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
   case CORBA_tk_objref:
     {
       CORBA_Object	*pval = mem;
-      ORBit_RootObject_release(*pval);
+      ORBit_RootObject_release_T(*pval);
       *pval = 0;
       retval = ((guchar *)mem) + sizeof(*pval);
     }
@@ -198,7 +208,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     {
       CORBA_Principal *pval = mem;
       if(pval->_release)
-	ORBit_free(pval->_buffer);
+	ORBit_free_T(pval->_buffer);
       pval->_buffer = 0;
       retval = (guchar *)(pval + 1);
     }
@@ -208,7 +218,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     for(i = 0; i < tc->sub_parts; i++) {
       subtc = tc->subtypes[i];
       mem = ALIGN_ADDRESS(mem, ORBit_find_alignment(subtc));
-      mem = ORBit_freekids_via_TypeCode(subtc, mem);
+      mem = ORBit_freekids_via_TypeCode_T(subtc, mem);
     }
     retval = mem;
     break;
@@ -223,7 +233,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
 	sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
       }
       mem = ALIGN_ADDRESS(cmem, al);
-      ORBit_freekids_via_TypeCode(subtc, mem);
+      ORBit_freekids_via_TypeCode_T(subtc, mem);
       /* the end of the body (subtc) may not be the
        * same as the end of the union */
       retval = ((guchar *)mem) + sz;
@@ -233,7 +243,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
   case CORBA_tk_string:
     {
       CORBA_char **pval = mem;
-      ORBit_free(*pval);
+      ORBit_free_T(*pval);
       *pval = 0;
       retval = (guchar *)mem + sizeof(*pval);
     }
@@ -242,19 +252,19 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     {
       CORBA_sequence_CORBA_octet *pval = mem;
       if(pval->_release)
-	ORBit_free(pval->_buffer);
+	ORBit_free_T(pval->_buffer);
       pval->_buffer = 0;
       retval = (guchar *)mem + sizeof(*pval);
     }
     break;
   case CORBA_tk_array:
     for(i = 0; i < tc->length; i++) {
-      mem = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
+      mem = ORBit_freekids_via_TypeCode_T(tc->subtypes[0], mem);
     }
     retval = mem;
     break;
   case CORBA_tk_alias:
-    retval = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
+    retval = ORBit_freekids_via_TypeCode_T(tc->subtypes[0], mem);
     break;
   default:
     {
@@ -265,4 +275,18 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     break;
   }
   return (gpointer)retval;
+}
+
+gpointer
+ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
+{
+  gpointer ret;
+
+  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+
+  ret = ORBit_freekids_via_TypeCode_T (tc, mem);
+
+  O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
+
+  return ret;
 }

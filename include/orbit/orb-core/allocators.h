@@ -70,6 +70,7 @@ extern gpointer ORBit_alloc_core(size_t block_size,
 				 guint8 align);
 
 extern void ORBit_free(gpointer mem);
+extern void ORBit_free_T(gpointer mem);
 
 
 gpointer ORBit_alloc_simple(size_t block_size);
@@ -82,10 +83,11 @@ gpointer ORBit_alloc_tcval(CORBA_TypeCode tc, guint nelements);
 #define CORBA_sequence_set_release(s,r) (s)->_release = r
 #define CORBA_sequence_get_release(s) (s)->_release
 
+/* NB. freekids functions never do any locking ! */
 gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
 gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
 gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
-void CORBA_free(gpointer mem);
 gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
 
+void CORBA_free(gpointer mem);
 #endif

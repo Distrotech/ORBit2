@@ -572,7 +572,7 @@ static void
 ORBit_POACurrent_free_fn(ORBit_RootObject obj_in)
 {
   PortableServer_Current poacur = (PortableServer_Current)obj_in;
-  ORBit_RootObject_release(poacur->orb);
+  ORBit_RootObject_release_T(poacur->orb);
   poacur->orb = NULL;
   g_free(poacur);
 }
@@ -1191,11 +1191,11 @@ static void
 ORBit_POA_free_fn(ORBit_RootObject obj_in)
 {
     PortableServer_POA poa = (PortableServer_POA) obj_in;
-    ORBit_RootObject_release (poa->orb);
+    ORBit_RootObject_release_T (poa->orb);
     g_hash_table_destroy (poa->oid_to_obj_map);
     g_hash_table_destroy (poa->child_poas);
-    CORBA_free (poa->name);
-    CORBA_free (poa->poa_key._buffer);
+    ORBit_free_T (poa->name);
+    ORBit_free_T (poa->poa_key._buffer);
     poa->orb = NULL;
     g_free (poa);
 }
@@ -1502,7 +1502,7 @@ ORBit_POAObject_release_cb(ORBit_RootObject robj)
     pobj->life_flags = ORBit_LifeF_Destroyed;
 
   ((PortableServer_ObjectId *)pobj->object_id)->_release = CORBA_TRUE;
-  CORBA_free(pobj->object_id);
+  ORBit_free_T(pobj->object_id);
 
   ORBit_RootObject_release_T(poa);
 }
