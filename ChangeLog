@@ -1,3 +1,13 @@
+2001-07-06  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-object.h,
+	  include/orbit/poa/poa-types.h,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/poa/orbit-poa.h,
+	  src/orb/poa/poa.c: make an object reference's
+	profile_list only be generated when it is about to
+	be externalised.
+
 2001-07-04  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c

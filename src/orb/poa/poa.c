@@ -450,8 +450,13 @@ PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
   int policy_ok = (retain && (unique || implicit));
 
   if ( retain && unique && pobj )
-    /* pobj!=NULL --> servant active */
-    return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
+    {
+    /* pobj != NULL --> object activated */
+    if ( pobj->objref != NULL )
+      return pobj->objref;
+    else
+      return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
+    }
   else if ( retain && implicit && (!unique || pobj==0) )
     {
       pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, /*isDef*/FALSE, ev);
@@ -593,9 +598,14 @@ PortableServer_POA_id_to_reference(PortableServer_POA _obj,
 				   CORBA_Environment * ev)
 {
   ORBit_POAObject *pobj;
+
   pobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/1, ev);
   if ( ev->_major )
     return NULL;	/* may raise WrongPolicy or ObjectNotActive */
+
+  if ( pobj->objref != NULL )
+    return pobj->objref;
+
   return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
 }
 
@@ -949,17 +959,6 @@ ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
 		       randlen);
 }
 
-IOP_ObjectKey_info *
-IOP_ObjectKey_copy(IOP_ObjectKey_info *oki)
-{
-  guint len;
-
-  len = G_STRUCT_OFFSET(IOP_ObjectKey_info, object_key_data._buffer)
-    + oki->object_key._length;
-
-  return g_memdup(oki, len);
-}
-
 IOP_ObjectKey_info*
 ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
 			/*in*/const PortableServer_ObjectId *oid)
@@ -1024,137 +1023,6 @@ ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
   retval->object_key_vec.iov_base = &retval->object_key_data;
   retval->object_key_vec.iov_len = sizeof(guint32) + rlen;
   return retval;
-}
-
-CORBA_Object
-ORBit_POA_oid_to_ref(PortableServer_POA poa,
-		     const PortableServer_ObjectId *oid,
-		     const CORBA_RepositoryId intf,
-		     CORBA_Environment *ev)
-{
-  GSList *profiles, *ltmp;
-  CORBA_ORB orb;
-  gboolean need_objkey_component;
-  IOP_TAG_INTERNET_IOP_info *iiop = NULL;
-  IOP_ObjectKey_info *oki = NULL;
-  IOP_TAG_ORBIT_SPECIFIC_info *osi = NULL;
-  IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
-
-  g_assert( oid && intf );
-
-  orb = poa->poa_manager->orb;
-
-  need_objkey_component = FALSE;
-  oki = ORBit_POA_oid_to_okey(poa, oid);
-  for(profiles = NULL, ltmp = orb->servers; ltmp; ltmp = ltmp->next)
-    {
-      LINCServer *serv = ltmp->data;
-
-      if(!osi
-	 && (!strcmp(serv->proto->name, "UNIX")
-	     || (!strcmp(serv->proto->name, "IPv6")
-		 && !(serv->create_options & LINC_CONNECTION_SSL))))
-	{
-	  osi = g_new0(IOP_TAG_ORBIT_SPECIFIC_info, 1);
-	  osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
-	  osi->oki = IOP_ObjectKey_copy(oki);
-	}
-      if(!strcmp(serv->proto->name, "UNIX")
-	 && !osi->unix_sock_path)
-	osi->unix_sock_path = g_strdup(serv->local_serv_info);
-      else if(!strcmp(serv->proto->name, "IPv6")
-	      && !(serv->create_options & LINC_CONNECTION_SSL))
-	osi->ipv6_port = atoi(serv->local_serv_info);
-
-      if(!strcmp(serv->proto->name, "IPv4"))
-	{
-	  if(!iiop)
-	    {
-	      iiop = g_new0(IOP_TAG_INTERNET_IOP_info, 1);
-	      iiop->host = g_strdup(serv->local_host_info);
-	      profiles = g_slist_append(profiles, iiop);
-	    }
-
-	  if(serv->create_options & LINC_CONNECTION_SSL)
-	    {
-	      IOP_TAG_SSL_SEC_TRANS_info *sslsec;
-	      sslsec = g_new0(IOP_TAG_SSL_SEC_TRANS_info, 1);
-	      sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
-	      /* integrity & confidentiality */
-	      sslsec->target_supports = sslsec->target_requires = 2|4;
-	      sslsec->port = atoi(serv->local_serv_info);
-	      iiop->components = g_slist_append(iiop->components, sslsec);
-	    }
-	  else
-	    {
-	      g_assert(!iiop->port);
-	      iiop->port = atoi(serv->local_serv_info);
-	      iiop->oki = IOP_ObjectKey_copy(oki);
-	      iiop->iiop_version = orb->default_giop_version;
-	    }
-	}
-      else
-	{
-	  GSList *ltmp2;
-	  IOP_TAG_GENERIC_IOP_info *giop;
-
-	  for(giop = NULL, ltmp2 = profiles; ltmp2; ltmp2 = ltmp2->next)
-	    {
-	      IOP_TAG_GENERIC_IOP_info *giopt;
-
-	      giopt = ltmp2->data;
-	      if(giopt->parent.profile_type == IOP_TAG_GENERIC_IOP
-		 && strcmp(giopt->proto, serv->proto->name))
-		{
-		  giop = giopt;
-		  break;
-		}
-	    }
-	  if(!giop)
-	    {
-	      giop = g_new0(IOP_TAG_GENERIC_IOP_info, 1);
-	      giop->parent.profile_type = IOP_TAG_GENERIC_IOP;
-	      giop->iiop_version = orb->default_giop_version;
-	      giop->proto = g_strdup(serv->proto->name);
-	      giop->host = g_strdup(serv->local_host_info);
-	      profiles = g_slist_append(profiles, giop);
-	    }
-	  if(serv->create_options & LINC_CONNECTION_SSL)
-	    {
-	      IOP_TAG_GENERIC_SSL_SEC_TRANS_info *sslsec;
-	      sslsec = g_new0(IOP_TAG_GENERIC_SSL_SEC_TRANS_info, 1);
-	      sslsec->parent.component_type = IOP_TAG_GENERIC_SSL_SEC_TRANS;
-	      sslsec->service = g_strdup(serv->local_serv_info);
-	      giop->components = g_slist_append(giop->components, sslsec);
-	    }
-	  else
-	    {
-	      g_assert(!giop->service);
-	      giop->service = g_strdup(serv->local_serv_info);
-	    }
-	  need_objkey_component = TRUE;
-	}
-    }
-
-  if(osi)
-    profiles = g_slist_append(profiles, osi);
-
-  if(need_objkey_component)
-    {
-      mci = g_new0(IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
-      mci->parent.profile_type = IOP_TAG_MULTIPLE_COMPONENTS;
-      if(need_objkey_component)
-	{
-	  IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
-	  coki = g_new0(IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
-	  coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
-	  coki->oki = IOP_ObjectKey_copy(oki);
-	  mci->components = g_slist_append(mci->components, coki);
-	}
-      profiles = g_slist_append(profiles, mci);
-    }
-
-  return ORBit_objref_find(orb, intf, profiles);
 }
 
 ORBit_POAObject *
@@ -1603,21 +1471,32 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
 		     const CORBA_RepositoryId intf,
 		     CORBA_Environment *ev)
 {
-  const char *type_id = intf;
-  CORBA_Object	objref;
-  g_assert( pobj );
-  if(!intf)
+  PortableServer_ObjectId *oid;
+  IOP_ObjectKey_info      *oki;
+  CORBA_Object            objref;
+  const char              *type_id = intf;
+
+  g_assert( pobj && pobj->objref == NULL );
+
+  if(!type_id)
     {
       g_assert( pobj->servant );
       type_id = ORBIT_SERVANT_TO_CLASSINFO(pobj->servant)->class_name;
     }
 
-  objref = ORBit_POA_oid_to_ref(poa, pobj->object_id, (char *)type_id, ev);
-  if ( ev->_major )
-    return NULL;
+  g_assert(type_id);
+
+  oid = pobj->object_id;
+  oki = ORBit_POA_oid_to_okey(poa, oid);
+
+  objref = ORBit_objref_new(poa->poa_manager->orb, type_id, NULL);
+
+  objref->oki = oki;
 
   /* released by CORBA_Object_release */
   objref->pobj = ORBit_RootObject_duplicate(pobj);
+
+  pobj->objref = ORBit_RootObject_duplicate(objref);
 
   return objref;
 }
