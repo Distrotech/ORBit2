@@ -76,6 +76,59 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
 
   tmpstr = g_string_new("");
 
+#if 1
+  for(curnode = node; curnode; curnode = curnode->up) {
+    new_did_append = FALSE;
+
+    if(curnode->up
+       && !(curnode->flags & MN_NSROOT)) {
+      switch(curnode->up->type) {
+      case MARSHAL_LOOP:
+	if(curnode == curnode->up->u.loop_info.contents) {
+	  ctmp = oidl_marshal_node_fqn(curnode->up->u.loop_info.loop_var);
+	  
+	  if(did_append) {
+	    g_string_prepend_c(tmpstr, '.');
+	    did_append = FALSE;
+	  }
+
+	  g_string_prepend_c(tmpstr, ']');
+	  g_string_prepend(tmpstr, ctmp);
+	  g_string_prepend_c(tmpstr, '[');
+	  g_free(ctmp);
+	  if(curnode->up->flags & MN_ISSEQ) {
+	    g_string_prepend(tmpstr, "._buffer");
+	    did_append = FALSE;
+	  }
+	}
+	break;
+      default:
+	break;
+      }
+    }
+    if(curnode->name) {
+      if(did_append)
+	g_string_prepend_c(tmpstr, '.');
+
+      nptrs += curnode->nptrs;
+      
+      for(i = 0; i < curnode->nptrs; i++)
+	g_string_prepend_c(tmpstr, ')');
+
+      g_string_prepend(tmpstr, curnode->name);
+
+      for(i = 0; i < curnode->nptrs; i++)
+	g_string_prepend_c(tmpstr, '*');
+
+      new_did_append = TRUE;
+
+      did_append = new_did_append;
+    }
+
+    if(curnode->flags & MN_NSROOT)
+      break;
+  }
+#else
   for(curnode = node; curnode; curnode = curnode->up) {
     new_did_append = FALSE;
 
@@ -125,6 +178,7 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
     if(curnode->flags & MN_NSROOT)
       break;
   }
+#endif
 
   for(i = 0; i < nptrs; i++)
     g_string_prepend_c(tmpstr, '(');
@@ -391,7 +445,7 @@ OIDL_Marshal_Node *
 orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
 {
   OIDL_Marshal_Node *retval;
-  IDL_tree curitem, curparam;
+  IDL_tree curitem, curparam, ts;
   OIDL_Populate_Info pi;
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
@@ -413,12 +467,15 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
     sub = marshal_populate(curparam, retval, is_skels, &pi);
     g_hash_table_destroy(pi.visited);
 
+    ts = orbit_cbe_get_typespec(curparam);
+
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
-      if(is_skels)
+      if(is_skels) {
 	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
-      else
+      } else {
 	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
+      }
       sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
       break;
     case IDL_PARAM_IN:
@@ -458,7 +515,7 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels)
     if(!rvnode) goto out1;
 
     rvnode->nptrs = oidl_param_numptrs(IDL_OP_DCL(tree).op_type_spec, DATA_RETURN);
-    rvnode->flags |= MN_NEED_TMPVAR;
+    rvnode->flags |= MN_NEED_TMPVAR|MN_DEMARSHAL_CORBA_ALLOC;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, rvnode);
 
