@@ -19,7 +19,7 @@
   (( ((gulong)(this)) + (((gulong)(boundary)) -1)) & (~(((gulong)(boundary))-1)))
 
 #define ALIGN_ADDRESS(this, boundary) \
-  ((gpointer)ALIGN_ADDRESS(this, boundary))
+  ((gpointer)ALIGN_VALUE(this, boundary))
 
 gulong ORBit_wchar_strlen(CORBA_wchar *wstr);
 

@@ -42,7 +42,8 @@ typedef enum
   GIOP_LOCATEREPLY,
   GIOP_CLOSECONNECTION,
   GIOP_MESSAGEERROR,
-  GIOP_FRAGMENT
+  GIOP_FRAGMENT,
+  GIOP_NUM_MSG_TYPES
 } GIOPMsgType;
 
 typedef enum
@@ -276,5 +277,7 @@ typedef struct {
 #endif
 
 #define giop_endian_conversion_needed(to_endianness) ((to_endianness&GIOP_FLAG_LITTLE_ENDIAN)!=GIOP_FLAG_ENDIANNESS)
+
+#define GIOP_MSG(x) ((GIOPMsg *)(x))
 
 #endif
