@@ -48,6 +48,8 @@ typedef struct {
 	gchar                  *remote_serv_info;
 
 	LinkConnectionPrivate  *priv;
+
+	GSList                 *idle_broken_callbacks;
 } LinkConnection;
 
 typedef struct {
@@ -127,6 +129,15 @@ void           link_connection_set_max_buffer    (LinkConnection *cnx,
 LinkWriteOpts *link_write_options_new            (gboolean        block_on_write);
 /* Space for future expansion: timeout, individual msg. buffering constraints etc. */
 void           link_write_options_free           (LinkWriteOpts  *write_opts);
+
+
+typedef void (*LinkBrokenCallback) (LinkConnection *, gpointer user_data);
+void           link_connection_add_broken_cb     (LinkConnection    *cnx,
+						  LinkBrokenCallback fn,
+						  gpointer           user_data);
+void           link_connection_remove_broken_cb  (LinkConnection    *cnx,
+						  LinkBrokenCallback opt_fn,
+						  gpointer           opt_user_data);
 
 G_END_DECLS
 

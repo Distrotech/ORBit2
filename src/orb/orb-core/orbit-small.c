@@ -1292,7 +1292,9 @@ ORBit_small_listen_for_broken (CORBA_Object obj,
 
 		if (cnx) {
 			ret = get_status (cnx);
-			g_signal_connect (cnx, "broken", fn, user_data);
+			link_connection_add_broken_cb
+				(LINK_CONNECTION (cnx),
+				 (LinkBrokenCallback)fn, user_data);
 			giop_connection_unref (cnx);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
@@ -1320,17 +1322,10 @@ ORBit_small_unlisten_for_broken_full (CORBA_Object obj,
 		cnx = ORBit_object_get_connection (obj);
 
 		if (cnx) {
-			GSignalMatchType t = 0;
-
 			ret = get_status (cnx);
-			if (fn)
-				t |= G_SIGNAL_MATCH_FUNC;
-			if (user_data)
-				t |= G_SIGNAL_MATCH_DATA;
-
-			g_signal_handlers_disconnect_matched
-				(cnx, t, 0, 0, NULL,
-				 G_CALLBACK (fn), user_data);
+			link_connection_remove_broken_cb
+				(LINK_CONNECTION (cnx),
+				 (LinkBrokenCallback)fn, user_data);
 			giop_connection_unref (cnx);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;

@@ -216,3 +216,4 @@ giop_connections_shutdown (void)
 		g_warning ("Wierd; new connections opened while shutting down");
 #endif
 }
+

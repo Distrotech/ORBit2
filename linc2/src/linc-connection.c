@@ -109,12 +109,32 @@ link_close_fd (LinkConnection *cnx)
 }
 
 typedef struct {
-	guchar       *data;
+	LinkBrokenCallback fn;
+	gpointer           user_data;
+} BrokenCallback;
 
-	struct iovec *vecs;
-	int           nvecs;
-	struct iovec  single_vec;
-} QueuedWrite;
+static gboolean
+link_connection_broken_idle (gpointer data)
+{
+	LinkConnection *cnx = data;
+	GSList *l, *callbacks;
+
+	CNX_LOCK (cnx);
+	callbacks = cnx->idle_broken_callbacks;
+	cnx->idle_broken_callbacks = NULL;
+	CNX_UNLOCK (cnx);
+
+	for (l = callbacks; l; l = l->next) {
+		BrokenCallback *bc = l->data;
+		bc->fn (cnx, l->data);
+		g_free (bc);
+	}
+	g_slist_free (callbacks);
+
+	link_connection_unref (cnx);
+
+	return FALSE;
+}
 
 /*
  * link_connection_class_state_changed:
@@ -180,6 +200,9 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 			CNX_UNLOCK (cnx);
 			g_signal_emit (cnx, signals [BROKEN], 0);
 			CNX_LOCK (cnx);
+
+			link_connection_ref_T (cnx);
+			g_idle_add (link_connection_broken_idle, cnx);
 		}
 		break;
 	}
@@ -236,6 +259,14 @@ calc_size (struct iovec *src_vecs,
 
 	return total_size;
 }
+
+typedef struct {
+	guchar       *data;
+
+	struct iovec *vecs;
+	int           nvecs;
+	struct iovec  single_vec;
+} QueuedWrite;
 
 static void
 queue_flattened_T_R (LinkConnection *cnx,
@@ -993,9 +1024,14 @@ link_connection_dispose (GObject *obj)
 static void
 link_connection_finalize (GObject *obj)
 {
+	GSList *l;
 	LinkConnection *cnx = (LinkConnection *)obj;
 
 	link_close_fd (cnx);
+
+	for (l = cnx->idle_broken_callbacks; l; l = l->next)
+		g_free (l->data);
+	g_slist_free (cnx->idle_broken_callbacks);
 
 	g_free (cnx->remote_host_info);
 	g_free (cnx->remote_serv_info);
@@ -1108,7 +1144,7 @@ link_connection_io_handler (GIOChannel  *gioc,
 	LinkConnection      *cnx = data;
 	LinkConnectionClass *klass;
 
-	d_printf ("linc_connection_io_handler fd %d, 0x%x\n",
+	d_printf ("link_connection_io_handler fd %d, 0x%x\n",
 		  cnx->priv->fd, condition);
 
 	CNX_LOCK (cnx);
@@ -1233,4 +1269,48 @@ link_connections_move_io_T (gboolean to_io_thread)
 		LinkConnection *cnx = l->data;
 		link_watch_move_io (cnx->priv->tag, to_io_thread);
 	}
+}
+
+void
+link_connection_add_broken_cb (LinkConnection    *cnx,
+			       LinkBrokenCallback fn,
+			       gpointer           user_data)
+{
+	BrokenCallback *bc = g_new0 (BrokenCallback, 1);
+
+	g_return_if_fail (fn != NULL);
+
+	bc->fn = fn;
+	bc->user_data = user_data;
+
+	cnx->idle_broken_callbacks = g_slist_prepend (cnx->idle_broken_callbacks, bc);
+}
+
+static gboolean
+broken_callback_match (BrokenCallback    *bc,
+		       LinkBrokenCallback fn,
+		       gpointer           user_data)
+{
+	return ( (!fn || bc->fn == fn) &&
+		 (!user_data || bc->user_data == user_data) );
+}
+
+void
+link_connection_remove_broken_cb (LinkConnection    *cnx,
+				  LinkBrokenCallback opt_fn,
+				  gpointer           opt_user_data)
+{
+	GSList *l, *next;
+
+	CNX_LOCK (cnx);
+
+	for (l = cnx->idle_broken_callbacks; l; l = next) {
+		next = l->next;
+		if (broken_callback_match (l->data, opt_fn, opt_user_data))
+			cnx->idle_broken_callbacks =
+				g_slist_delete_link (cnx->idle_broken_callbacks,
+						     l->data);
+	}	
+
+	CNX_UNLOCK (cnx);
 }
