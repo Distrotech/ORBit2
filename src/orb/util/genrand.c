@@ -93,39 +93,56 @@ genrand_openssl (guchar *buffer, int length)
 }
 #endif
 
-#define HEADER_SIZE (sizeof (gulong) + sizeof (genuid_pid))
-
 static void
-genuid_simple (guchar *buffer, int length)
+xor_buffer (guchar *buffer, int length)
 {
-	static glong  s = 0x6b842128;
-	static gulong inc = 0;
-	glong         i, t;
-	GTimeVal      time;
+	static glong   s = 0x6b842128;
+	glong          i, t;
+	GTimeVal       time;
 
 	g_get_current_time (&time);
 
 	t = time.tv_sec ^ time.tv_usec;
-	inc++;
 
-	memcpy (buffer, &inc, sizeof (inc));
-	memcpy (buffer + sizeof (inc), &genuid_pid, sizeof (genuid_pid));
-
-	for (i = HEADER_SIZE; i < length; i++)
-		buffer [i] = (guchar) (s ^ (t << i));
+	for (i = 0; i < length; i++)
+		buffer [i] ^= (guchar) (s ^ (t << i));
 
 	s ^= t;
 }
 
 static void
+genuid_simple (guchar *buffer, int length)
+{
+	static guint32 inc = 0;
+
+	g_assert (length >= 8);
+
+	p_memzero (buffer, length);
+
+	inc++;
+
+	memcpy (buffer, &inc, 4);
+	memcpy (buffer + 4, &genuid_pid, 4);
+
+	xor_buffer (buffer, length);
+}
+
+static void
 genuid_glib_pseudo (guchar *buffer, int length)
 {
-	int i;
+	static guint32 inc = 0;
+	int            i;
 
-	genuid_simple (buffer, length);
+	inc++;
 
-	for (i = HEADER_SIZE; i < length; i++)
+	for (i = 0; i < length; i++) {
 		buffer [i] = g_rand_int_range (glib_prng, 0, 255);
+
+		if (i < sizeof (guint32))
+			buffer [i] ^= ((guchar *) inc) [i];
+	}
+
+	xor_buffer (buffer, length);
 }
 
 void
