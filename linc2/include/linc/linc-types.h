@@ -25,6 +25,9 @@ typedef enum {
   LINC_CONNECTION_NONBLOCKING = 1<<1
 } LINCConnectionOptions;
 
+/* Make Slowaris happy */
+#include <sys/time.h>
+
 #ifdef LINC_THREADSAFE
 
 #include <pthread.h>
