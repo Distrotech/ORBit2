@@ -30,6 +30,7 @@
 int
 main (int argc, char *argv[])
 {
+	FILE *iorfile;
 	CORBA_Environment ev;
 	CORBA_ORB orb;
 	Echo echo_client = CORBA_OBJECT_NIL;
@@ -47,7 +48,13 @@ main (int argc, char *argv[])
 	echo_client = echo_srv_start_object(&ev);
 	retval = CORBA_ORB_object_to_string(orb, echo_client, &ev);
 	g_assert(ev._major == CORBA_NO_EXCEPTION);
-	fprintf(stdout, "%s\n", retval); fflush(stdout);
+
+	iorfile = fopen ("echo-server.iorfile", "w");
+	fprintf(iorfile, "%s\n", retval);
+	fclose(iorfile);
+
+	fprintf(stdout, "%s\n", retval);
+
 	CORBA_free(retval);
 
 	CORBA_ORB_run (orb, &ev);

@@ -22,17 +22,28 @@
 #include <string.h>
 
 #include <stdlib.h>
-#include <unistd.h>
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#  include <arpa/inet.h>
-#endif
-#include <netdb.h>
+
+#ifdef HAVE_WINSOCK2_H
+#  include <winsock2.h>
+#  ifndef _WINSOCKAPI_
+#    define _WINSOCKAPI_
+#  endif
+#else /* !HAVE_WINSOCK2_H */
+#  ifdef HAVE_SYS_SOCKET_H
+#    include <sys/socket.h>
+#  endif
+#  ifdef HAVE_NETINET_IN_H
+#    include <netinet/in.h>
+#  endif
+#  ifdef HAVE_ARPA_INET_H
+#    include <arpa/inet.h>
+#  endif
+#  include <netdb.h>
+#endif /* !HAVE_WINSOCK2_H */
+
 #include <fcntl.h> 
 #include <errno.h>
 #ifdef HAVE_SYS_TIME_H
@@ -42,6 +53,7 @@
 #  include <sys/select.h>
 #endif
 #include <string.h>
+
 
 #define CHECK_URI(str) \
 (!strncmp(str, "IOR:", strlen("IOR:")) \
@@ -542,8 +554,6 @@ orbHTTPConnectAttempt(struct in_addr ia, int port)
     
 #ifdef _WINSOCKAPI_
     {
-	long levents = FD_READ | FD_WRITE | FD_ACCEPT |
-		       FD_CONNECT | FD_CLOSE ;
 	int rv = 0 ;
 	u_long one = 1;
 

@@ -21,35 +21,49 @@ else
     echo "Running with socketdir: '$ORBIT_TMPDIR'";
 fi
 
-for params in '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --ORBCorbaloc=1'  \
-              '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --ORBCorbaloc=1'  \
-              '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --thread-tests'	\
-	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --thread-tests'	\
-	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1'		\
-	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0'		\
-	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --thread-safe'	\
-	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --thread-safe'	\
-	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --gen-imodule'	\
-	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --gen-imodule'
-do
+run_test() {
+    
+    echo testing with $1
 
-    ./server $params &
+    ./server $1 &
 
     until test -s iorfile; do sleep 1; done
 
-    if ./client $params; then
+    if ./client $1; then
 	echo "============================================================="
-	echo "Test passed with params: $params"
+	echo "Test passed with params: $1"
 	echo "============================================================="
 	rm iorfile
     else
         echo "============================================================="
-	echo "Test failed with params: $params"
+	echo "Test failed with params: $1"
 	echo "  if this is an IPv4 test, can you ping `hostname` ?"
         echo "============================================================="
 	kill $!
+	test x"$DONT_EXIT" = x && exit 1
 	rm iorfile
-	exit 1
     fi
+}
 
+for params in '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --ORBCorbaloc=1' \
+              '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --thread-tests'	 \
+	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0'		 \
+	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --thread-safe'	 \
+	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --gen-imodule'
+do
+
+    run_test "$params"
 done
+
+# Don't run the Unix domain socket tests on Windows
+if test x"$WINDIR" = x; then
+    for params in '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --ORBCorbaloc=1' \
+		  '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --thread-tests'  \
+		  '--ORBIIOPIPv4=0 --ORBIIOPUSock=1'		     \
+		  '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --thread-safe'   \
+		  '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --gen-imodule'
+    do
+
+	run_test "$params"
+    done
+fi

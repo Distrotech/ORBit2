@@ -61,7 +61,7 @@ typedef struct {
 } TkInfo;
 
 #define DEF_TC_BASIC(nom, c_align)                                      \
-	const struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = {  \
+	struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = {	\
 		{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},           \
 		CORBA_tk_##nom,                                         \
 		0, 0, c_align,						\
@@ -78,13 +78,13 @@ typedef struct {
 #define CORBA_tk_unsigned_short CORBA_tk_ushort
 #define CORBA_tk_long_double CORBA_tk_longdouble
 
-const struct CORBA_TypeCode_struct TC_null_struct = {
+struct CORBA_TypeCode_struct TC_null_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
 	CORBA_tk_null, 0, 0, -1, 0, 0, NULL,
 	CORBA_OBJECT_NIL, "null", "IDL:omg.org/CORBA/Null:1.0"
 };
 
-const struct CORBA_TypeCode_struct TC_void_struct = {
+struct CORBA_TypeCode_struct TC_void_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
 	CORBA_tk_void, 0, 0, -1, 0, 0, NULL,
 	CORBA_OBJECT_NIL, "void", "IDL:omg.org/CORBA/void:1.0"
@@ -1070,7 +1070,7 @@ static const TkInfo tk_info[CORBA_tk_last]= {
 	{ TK_SIMPLE, tc_enc_tk_fixed, tc_dec_tk_fixed} /* tk_fixed */
 };
 
-const ORBit_RootObject_Interface ORBit_TypeCode_epv = {
+ORBit_RootObject_Interface ORBit_TypeCode_epv = {
 	ORBIT_ROT_TYPECODE,
 	ORBit_TypeCode_free_fn
 };

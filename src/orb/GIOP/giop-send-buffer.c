@@ -2,7 +2,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include "giop-private.h"
-#include <sys/uio.h>
+#ifdef HAVE_SYS_UIO_H
+#  include <sys/uio.h>
+#endif
 #include <orbit/GIOP/giop.h>
 #include "../util/orbit-purify.h"
 

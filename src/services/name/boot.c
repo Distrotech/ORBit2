@@ -2,14 +2,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
+#ifdef HAVE_SYSLOG_H
+#  include <syslog.h>
+#endif
 #include <signal.h>
 #include <popt.h>
 #include "CosNaming_impl.h"
 
 static void
 signal_handler(int signo){
+#ifdef HAVE_SYSLOG
   syslog(LOG_ERR,"Receveived signal %d\nshutting down.", signo);
+#endif
   switch(signo) {
     case SIGSEGV:
 	abort();
@@ -38,8 +42,12 @@ main (int argc, char *argv[])
   CosNaming_NamingContext context;
   const char*		progname = "orbit-name-server";
   
+#ifdef HAVE_SYSLOG
   openlog(progname, LOG_NDELAY | LOG_PID, LOG_DAEMON);
   syslog(LOG_INFO,"starting");
+#endif
+
+#ifdef HAVE_SIGACTION
   {
   	sigset_t empty_mask;
   	struct sigaction act;
@@ -56,6 +64,17 @@ main (int argc, char *argv[])
   	act.sa_handler = SIG_IGN;
   	sigaction(SIGPIPE, &act, NULL);
   }
+#else
+  signal(SIGINT, signal_handler);
+#ifdef SIGHUP
+  signal(SIGHUP, signal_handler);
+#endif
+  signal(SIGSEGV, signal_handler);
+  signal(SIGABRT, signal_handler);
+#ifdef SIGPIPE
+  signal(SIGPIPE, SIG_IGN);
+#endif
+#endif
 
   CORBA_exception_init (&ev);
   orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
@@ -111,6 +130,8 @@ main (int argc, char *argv[])
   /* Don't release until done (dont know why) */
   CORBA_Object_release (context, &ev);
 
+#ifdef HAVE_SYSLOG
   syslog(LOG_INFO, "exiting");
+#endif
   return 0;
 }

@@ -2387,7 +2387,7 @@ main (int argc, char *argv [])
 	test_TestFactory   factory;
 	ORBit_IInterfaces *interfaces = NULL;
 	gboolean           gen_imodule = FALSE;
-	const char        *orb_name;
+	char              *orb_name;
 	int                i;
 
 	CORBA_exception_init (ev);

@@ -53,6 +53,9 @@ main (int argc, char *argv[]) {
 		return 1;
 	}
 
+	if (argv[1][0] == '$')
+	  argv[1] = getenv (argv[1]+1);
+
 	/* read (optional) number of iterations from command line as
 	 * second argument (100) */    
 	if(argc == 3)

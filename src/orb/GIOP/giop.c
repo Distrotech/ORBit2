@@ -1,17 +1,30 @@
 #include <config.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <utime.h>
+#ifdef HAVE_UTIME_H
+#  include <utime.h>
+#else
+#  ifdef HAVE_SYS_UTIME_H
+#    include <sys/utime.h>
+#  endif
+#endif
 
 #include "giop-private.h"
 #include "giop-debug.h"
 #include <orbit/util/orbit-genrand.h>
+
+#ifdef G_OS_WIN32
+#include <io.h>
+#define mkdir(path, mode) _mkdir (path)
+#endif
 
 /* FIXME: need to clean this up at shutdown */
 static int      corba_wakeup_fds[2];
@@ -43,7 +56,7 @@ test_safe_socket_dir (const char *dirname)
 		return FALSE;
 	}
 	
-#ifndef __CYGWIN__
+#ifndef G_PLATFORM_WIN32
 	if (statbuf.st_uid != getuid ()) {
 		S_PRINT (("Owner of %s is not the current user\n", dirname));
 		return FALSE;
@@ -90,7 +103,7 @@ scan_socket_dir (const char *dir, const char *prefix)
 
 		/* Check it's credentials */
 		if (!test_safe_socket_dir (name)) {
-			dprintf (GIOP, "DOS attack with '%s'", name);
+			dprintf (GIOP, "DOS attack with '%s'\n", name);
 			g_free (name);
 			continue;
 		}
@@ -128,7 +141,7 @@ giop_tmpdir_init (void)
 
 		safe_dir = scan_socket_dir (tmp_root, dirname);
 		if (safe_dir) {
-			dprintf (GIOP, "Have safe dir '%s'", safe_dir);
+			dprintf (GIOP, "Have safe dir '%s'\n", safe_dir);
 			link_set_tmpdir (safe_dir);
 			break;
 		}
@@ -161,7 +174,9 @@ giop_tmpdir_init (void)
 				break;
 
 			case ENOMEM:
+#ifdef ELOOP
 			case ELOOP:
+#endif
 			case ENOSPC:
 			case ENOTDIR:
 			case ENOENT:
@@ -404,9 +419,9 @@ giop_thread_request_push_key (gpointer  key,
 		tdata = new_tdata;
 		if (key)
 			giop_thread_key_add_T (tdata, key);
-		dprintf (GIOP, "Create new thread %p for op", tdata);
+		dprintf (GIOP, "Create new thread %p for op\n", tdata);
 	} else
-		dprintf (GIOP, "Re-use thread %p for op", tdata);
+		dprintf (GIOP, "Re-use thread %p for op\n", tdata);
 
 	giop_thread_request_push (tdata, poa_object, recv_buffer);
 
@@ -442,7 +457,11 @@ giop_mainloop_handle_input (GIOChannel     *source,
 	char c;
 	GIOPThread *tdata = giop_thread_self ();
 
+#ifdef HAVE_WINSOCK2_H
+	recv (WAKEUP_POLL, &c, sizeof (c), 0);
+#else
 	read (WAKEUP_POLL, &c, sizeof (c));
+#endif
 
 	LINK_MUTEX_LOCK (tdata->lock);
 	while (!giop_thread_queue_empty_T (tdata)) {
@@ -465,7 +484,7 @@ giop_request_handler_thread (gpointer data, gpointer user_data)
 
 	g_private_set (giop_tdata_private, tdata);
 
-	dprintf (GIOP, "Thread %p woken to handle request", tdata);
+	dprintf (GIOP, "Thread %p woken to handle request\n", tdata);
 
 	do {
 		giop_thread_queue_process (tdata);
@@ -485,7 +504,7 @@ giop_request_handler_thread (gpointer data, gpointer user_data)
 
 	} while (!done);
 
-	dprintf (GIOP, "Thread %p returning to pool", tdata);
+	dprintf (GIOP, "Thread %p returning to pool\n", tdata);
 
 	giop_thread_free (tdata);
 	g_private_set (giop_tdata_private, NULL);
@@ -513,10 +532,17 @@ giop_init (gboolean thread_safe, gboolean blank_wire_data)
 		giop_main_thread = tdata = giop_thread_new (
 			g_main_context_default ()); /* main thread */
 
-		if (pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
+		if (link_pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
-		fcntl (WAKEUP_WRITE, F_SETFL, O_NONBLOCK);
 
+#ifdef HAVE_WINSOCK2_H
+		{
+			u_long yes = 1;
+			ioctlsocket (WAKEUP_WRITE, FIONBIO, &yes);
+		}
+#else
+		fcntl (WAKEUP_WRITE, F_SETFL, O_NONBLOCK);
+#endif
 		giop_main_source = link_source_create_watch (
 			g_main_context_default (), WAKEUP_POLL,
 			NULL, (G_IO_IN | G_IO_PRI),
@@ -542,8 +568,15 @@ wakeup_mainloop (void)
 {
 	char c = 'A'; /* magic */
 	int  res;
+#ifdef HAVE_WINSOCK2_H
+	if ((res = send (WAKEUP_WRITE, &c, sizeof (c), 0)) == SOCKET_ERROR) {
+		res = -1;
+		link_map_winsock_error_to_errno ();
+	}
+#else
 	while ((res = write (WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
 	       errno == EINTR );
+#endif
 	if (res < 0 && errno == EAGAIN)
 		return;
 	if (res < 0)
@@ -566,7 +599,7 @@ giop_invoke_async (GIOPMessageQueueEntry *ent)
 {
 	GIOPRecvBuffer *buf = ent->buffer;
 
-	dprintf (GIOP, "About to invoke %p:%p (%d) (%p:%p)",
+	dprintf (GIOP, "About to invoke %p:%p (%d) (%p:%p)\n",
 		 ent, ent->async_cb, giop_thread_io(),
 		 ent->src_thread, giop_main_thread);
 
@@ -626,8 +659,13 @@ giop_shutdown (void)
 		}
 
 		if (WAKEUP_WRITE >= 0) {
+#ifdef HAVE_WINSOCK2_H
+			closesocket (WAKEUP_WRITE);
+			closesocket (WAKEUP_POLL);
+#else
 			close (WAKEUP_WRITE);
 			close (WAKEUP_POLL);
+#endif
 			WAKEUP_WRITE = -1;
 			WAKEUP_POLL = -1;
 		}

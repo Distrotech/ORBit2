@@ -222,7 +222,7 @@ ORBit_get_typelib_paths (void)
 	if ((path = g_getenv ("ORBIT_TYPELIB_PATH"))) {
 		char **strv;
 
-		strv = g_strsplit (path, ":", -1);
+		strv = g_strsplit (path, G_SEARCHPATH_SEPARATOR_S, -1);
 		for (i = 0; strv && strv [i]; i++)
 			add_if_unique (paths, strv [i], FALSE);
 		g_strfreev (strv);
@@ -231,7 +231,7 @@ ORBit_get_typelib_paths (void)
 	if ((path = g_getenv ("GNOME2_PATH"))) {
 		char **strv;
 
-		strv = g_strsplit (path, ":", -1);
+		strv = g_strsplit (path, G_SEARCHPATH_SEPARATOR_S, -1);
 		for (i = 0; strv && strv [i]; i++)
 			add_if_unique (paths, strv [i], TRUE);
 		g_strfreev (strv);

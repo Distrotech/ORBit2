@@ -44,6 +44,7 @@ static void do_exit(int arg)
 int
 main (int argc, char *argv[])
 {
+	FILE *iorfile;
 	PortableServer_ObjectId objid = {0, sizeof("myFoo"), "myFoo"};
 	PortableServer_POA poa;
 
@@ -82,6 +83,10 @@ main (int argc, char *argv[])
 	}
 
 	retval = CORBA_ORB_object_to_string(orb, empty_client, &ev);
+
+	iorfile = fopen ("empty-server.iorfile", "w");
+	fprintf(iorfile, "%s\n", retval);
+	fclose(iorfile);
 
 	g_print("%s\n", retval); fflush(stdout);
 

@@ -25,10 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 
 /*** App-specific servant structures ***/
 

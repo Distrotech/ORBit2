@@ -2,12 +2,18 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <orbit/orbit.h>
 
 #include "orbit-init.h"
 #include "poa/orbit-poa.h"
 #include "orb-core/orb-core-private.h"
+
+#ifdef G_OS_WIN32
+#  define getuid() 0
+#endif
 
 void
 ORBit_init_internals (CORBA_ORB          orb,
@@ -16,7 +22,7 @@ ORBit_init_internals (CORBA_ORB          orb,
 	PortableServer_POA       root_poa;
 	PortableServer_Current   poa_current;
 	DynamicAny_DynAnyFactory dynany_factory;
-	struct timeval           t;
+	GTimeVal                 t;
 
 	root_poa = ORBit_POA_setup_root (orb, ev);
 	ORBit_set_initial_reference (orb, "RootPOA", root_poa);
@@ -31,7 +37,7 @@ ORBit_init_internals (CORBA_ORB          orb,
 	ORBit_RootObject_release (dynany_factory);
 
 	/* need to srand for linc's node creation */
-	gettimeofday (&t, NULL);
+	g_get_current_time (&t);
 	srand (t.tv_sec ^ t.tv_usec ^ getpid () ^ getuid ());
 }
 
