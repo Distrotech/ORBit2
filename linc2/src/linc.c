@@ -56,7 +56,7 @@ linc_init (gboolean init_threads)
 	if (!linc_threaded && init_threads)
 		linc_threaded = TRUE;
 
-	g_type_init_with_debug_flags (G_TYPE_DEBUG_OBJECTS);
+	g_type_init ();
 
 	/*
 	 * Linc's raison d'etre is for ORBit2 and Bonobo
