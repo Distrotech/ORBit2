@@ -606,13 +606,16 @@ ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
       if (rinfo->small)
         {
-	  char *tc;
+	  char *tc, *member_type;
 	  
 	  tc = orbit_cbe_get_typecode_name (
 		  orbit_cbe_get_typespec (tree));
+	  member_type = orbit_cbe_type_is_builtin (IDL_TYPE_SEQUENCE (tree).simple_type_spec) ?
+	      ctmp + strlen ("CORBA_") : ctmp;
 
-	  fprintf (ci->fh, "#define CORBA_sequence_%s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n",
-		   orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp, tc);
+	  fprintf (ci->fh, "#define CORBA_sequence_%s_allocbuf(l) "
+		   "((%s*)ORBit_small_allocbuf (%s, (l)))\n",
+		   member_type, member_type, tc);
 
 	  g_free (tc);
        }
@@ -663,8 +666,18 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
       fprintf (ci->fh, "#define %s__freekids(m,d) ORBit_small_freekids (%s,(m),(d))\n", ctmp, tc);
 
       if ( IDL_NODE_TYPE(tts) == IDLN_TYPE_SEQUENCE )
-	fprintf (ci->fh, "#define %s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n", ctmp, tc);
-
+      {
+	char *member_type = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tts).simple_type_spec);
+	char *member_name = orbit_cbe_type_is_builtin (IDL_TYPE_SEQUENCE (tts).simple_type_spec) ?
+	  member_type + strlen ("CORBA_") : member_type;
+	
+	fprintf (ci->fh, "#define %s_allocbuf(l) "
+		 "((%s*)ORBit_small_allocbuf (%s, (l)))\n",
+		 ctmp, member_name, tc);
+	
+	g_free (member_type);
+      }
+	
       g_free (tc);
   } else if(do_alloc) {
     gboolean extern_alloc = FALSE;
