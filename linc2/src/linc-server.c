@@ -196,6 +196,10 @@ link_server_handle_io (GIOChannel  *gioc,
 	LinkConnection *connection = NULL;
 
 	if (!(condition & LINK_IN_CONDS)) {
+		/*
+		 * This call to g_warning was changed from g_error to avoid
+		 * a program crash. See bug #126209.
+		 */
 		g_warning ("error condition on server fd is %#x", condition);
 		return TRUE;
 	}	
