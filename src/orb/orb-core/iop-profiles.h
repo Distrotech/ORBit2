@@ -65,6 +65,10 @@ typedef struct {
 
 typedef struct {
   IOP_Component_info parent;
+} IOP_TAG_CODE_SETS_info;
+
+typedef struct {
+  IOP_Component_info parent;
 
   CORBA_sequence_CORBA_octet data;
 } IOP_UnknownComponent_info;
