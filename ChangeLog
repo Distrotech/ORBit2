@@ -1,5 +1,10 @@
 2002-04-30  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/orb-cpp/orbitcpp_poa.cc: Use new Sequence class
+
+	* src/orb-cpp/orbitcpp_typecode.hh: Comment out *Member classes
+	for now
+
 	* src/orb-cpp/orbitcpp_sequence.hh: New implementation
 
 2002-04-30  Diego Sevilla Ruiz  <dsevilla@um.es>
