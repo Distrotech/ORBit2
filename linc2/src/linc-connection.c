@@ -9,86 +9,55 @@
 #include <fcntl.h>
 #include <errno.h>
 
-static void linc_connection_real_state_changed (LINCConnection      *cnx,
-						LINCConnectionStatus status);
-static void linc_connection_dispose            (GObject             *obj);
-static void linc_connection_class_init         (LINCConnectionClass *klass);
-
-GType
-linc_connection_get_type(void)
-{
-  static GType object_type = 0;
-
-  if (!object_type)
-    {
-      static const GTypeInfo object_info =
-      {
-        sizeof (LINCConnectionClass),
-        (GBaseInitFunc) NULL,
-        (GBaseFinalizeFunc) NULL,
-        (GClassInitFunc) linc_connection_class_init,
-        NULL,           /* class_finalize */
-        NULL,           /* class_data */
-        sizeof (LINCConnection),
-        0,              /* n_preallocs */
-        (GInstanceInitFunc) NULL,
-      };
-      
-      object_type = g_type_register_static (G_TYPE_OBJECT,
-                                            "LINCConnection",
-                                            &object_info,
-					    0);
-    }  
-
-  return object_type;
-}
-
 static GObjectClass *parent_class = NULL;
 
-static void
-linc_connection_class_init (LINCConnectionClass *klass)
-{
-  GObjectClass *object_class = (GObjectClass *)klass;
-
-  object_class->dispose = linc_connection_dispose;
-  klass->state_changed = linc_connection_real_state_changed;
-  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(klass)));
-}
+enum {
+	BROKEN,
+	LAST_SIGNAL
+};
+static guint linc_connection_signals [LAST_SIGNAL];
 
 static void
 linc_source_remove (LINCConnection *cnx, gboolean unref)
 {
-  if(cnx->tag) {
-    LincWatch *thewatch = cnx->tag;
-    cnx->tag = NULL;
-    linc_io_remove_watch (thewatch);
-    if (unref) 
-      g_object_unref (G_OBJECT (cnx));
-  }
+	if (cnx->tag) {
+		LincWatch *thewatch = cnx->tag;
+		cnx->tag = NULL;
+		linc_io_remove_watch (thewatch);
+		if (unref) 
+			g_object_unref (G_OBJECT (cnx));
+	}
 }
 
 static void
 linc_connection_dispose (GObject *obj)
 {
-  LINCConnection *cnx = (LINCConnection *)obj;
+	LINCConnection *cnx = (LINCConnection *)obj;
 
-  linc_source_remove (cnx, FALSE);
-  g_free(cnx->remote_host_info);
-  cnx->remote_host_info = NULL;
-  g_free(cnx->remote_serv_info);
-  cnx->remote_serv_info = NULL;
-  if (cnx->gioc)
-    g_io_channel_unref (cnx->gioc);
-  cnx->gioc = NULL;
-  if(cnx->fd >= 0)
-    close(cnx->fd);
-  cnx->fd = -1;
-  if(parent_class->dispose)
-    parent_class->dispose(obj);
+	linc_source_remove (cnx, FALSE);
+
+	g_free (cnx->remote_host_info);
+	cnx->remote_host_info = NULL;
+
+	g_free (cnx->remote_serv_info);
+	cnx->remote_serv_info = NULL;
+
+	if (cnx->gioc)
+		g_io_channel_unref (cnx->gioc);
+	cnx->gioc = NULL;
+
+	if (cnx->fd >= 0)
+		close (cnx->fd);
+	cnx->fd = -1;
+
+	if (parent_class->dispose)
+		parent_class->dispose (obj);
 }
 
 static gboolean
-linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer data)
+linc_connection_connected (GIOChannel  *gioc,
+			   GIOCondition condition,
+			   gpointer     data)
 {
   LINCConnection *cnx = data;
   int rv, n;
@@ -134,7 +103,8 @@ linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer dat
 }
 
 static void
-linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus status)
+linc_connection_real_state_changed (LINCConnection      *cnx,
+				    LINCConnectionStatus status)
 {
   switch(status)
     {
@@ -163,10 +133,11 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
     case LINC_DISCONNECTED:
 /*      g_warning ("Linc disconnected tag %d fd '%d'",
 	cnx->tag, cnx->fd);*/
-      linc_source_remove (cnx, FALSE);
+      linc_source_remove (cnx, TRUE);
       if (cnx->fd >= 0)
         close(cnx->fd);
       cnx->fd = -1;
+      g_signal_emit (G_OBJECT (cnx), linc_connection_signals [BROKEN], 0);
       break;
     }
 
@@ -174,33 +145,33 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
 }
 
 gboolean
-linc_connection_from_fd(LINCConnection *cnx, int fd,
-			const LINCProtocolInfo *proto,
-			const char *remote_host_info,
-			const char *remote_serv_info,
-			gboolean was_initiated,
-			LINCConnectionStatus status,
-			LINCConnectionOptions options)
+linc_connection_from_fd (LINCConnection *cnx, int fd,
+			 const LINCProtocolInfo *proto,
+			 const char *remote_host_info,
+			 const char *remote_serv_info,
+			 gboolean was_initiated,
+			 LINCConnectionStatus status,
+			 LINCConnectionOptions options)
 {
   cnx->fd = fd;
-  cnx->gioc = g_io_channel_unix_new(fd);
+  cnx->gioc = g_io_channel_unix_new (fd);
   cnx->was_initiated = was_initiated;
   cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
   cnx->remote_host_info = g_strdup(remote_host_info);
   cnx->remote_serv_info = g_strdup(remote_serv_info);
   cnx->options = options;
+
   if(proto->setup)
-    proto->setup(fd, options);
+    proto->setup (fd, options);
 
 #ifdef LINC_SSL_SUPPORT
-  if(options & LINC_CONNECTION_SSL)
-    {
-      cnx->ssl = SSL_new(linc_ssl_ctx);
-      SSL_set_fd(cnx->ssl, fd);
-    }
+  if (options & LINC_CONNECTION_SSL) {
+      cnx->ssl = SSL_new (linc_ssl_ctx);
+      SSL_set_fd (cnx->ssl, fd);
+  }
 #endif
 
-  linc_connection_state_changed(cnx, status);
+  linc_connection_state_changed (cnx, status);
 
   return TRUE;
 }
@@ -208,10 +179,10 @@ linc_connection_from_fd(LINCConnection *cnx, int fd,
 /* This will just create the fd, do the connect and all, and then call
    linc_connection_from_fd */
 gboolean
-linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
-			 const char *remote_host_info,
-			 const char *remote_serv_info,
-			 LINCConnectionOptions options)
+linc_connection_initiate (LINCConnection *cnx, const char *proto_name,
+			  const char *remote_host_info,
+			  const char *remote_serv_info,
+			  LINCConnectionOptions options)
 {
   struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0,
 				NULL, NULL, NULL};
@@ -246,8 +217,9 @@ linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
   if(rv && errno != EINPROGRESS)
     goto out;
 
-  retval = linc_connection_from_fd(cnx, fd, proto, remote_host_info,
-				   remote_serv_info, TRUE, rv?LINC_CONNECTING:LINC_CONNECTED, options);
+  retval = linc_connection_from_fd (
+	  cnx, fd, proto, remote_host_info,
+	  remote_serv_info, TRUE, rv?LINC_CONNECTING:LINC_CONNECTED, options);
  out:
   if(!cnx)
     {
@@ -260,18 +232,20 @@ linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
 }
 
 void
-linc_connection_state_changed(LINCConnection *cnx, LINCConnectionStatus status)
+linc_connection_state_changed (LINCConnection      *cnx,
+			       LINCConnectionStatus status)
 {
-  LINCConnectionClass *klass;
+	LINCConnectionClass *klass;
 
-  klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS(cnx);
+	klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS (cnx);
 
-  if(klass->state_changed)
-    klass->state_changed(cnx, status);
+	if (klass->state_changed)
+		klass->state_changed(cnx, status);
 }
 
 int
-linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_for_full_read)
+linc_connection_read (LINCConnection *cnx, guchar *buf,
+		      int len, gboolean block_for_full_read)
 {
   int n;
   int written = 0;
@@ -331,7 +305,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 }
 
 int
-linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
+linc_connection_write (LINCConnection *cnx, const guchar *buf, gulong len)
 {
   int n;
 
@@ -389,7 +363,8 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 }
 
 int
-linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulong total_size)
+linc_connection_writev (LINCConnection *cnx, struct iovec *vecs,
+			int nvecs, gulong total_size)
 {
   register int n, fd, vecs_left;
   register struct iovec *vptr;
@@ -448,4 +423,54 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
     }
 
   return 0;
+}
+
+static void
+linc_connection_class_init (LINCConnectionClass *klass)
+{
+	GObjectClass *object_class = (GObjectClass *) klass;
+
+	object_class->dispose = linc_connection_dispose;
+
+	klass->state_changed  = linc_connection_real_state_changed;
+	klass->broken         = NULL;
+
+	linc_connection_signals [BROKEN] =
+		g_signal_new ("broken",
+			      G_TYPE_FROM_CLASS (object_class),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (LINCConnectionClass, broken),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
+	parent_class = g_type_class_ref (
+		g_type_parent (G_TYPE_FROM_CLASS (klass)));
+}
+
+GType
+linc_connection_get_type (void)
+{
+	static GType object_type = 0;
+
+	if (!object_type) {
+		static const GTypeInfo object_info = {
+			sizeof (LINCConnectionClass),
+			(GBaseInitFunc) NULL,
+			(GBaseFinalizeFunc) NULL,
+			(GClassInitFunc) linc_connection_class_init,
+			NULL,           /* class_finalize */
+			NULL,           /* class_data */
+			sizeof (LINCConnection),
+			0,              /* n_preallocs */
+			(GInstanceInitFunc) NULL,
+		};
+      
+		object_type = g_type_register_static (G_TYPE_OBJECT,
+						      "LINCConnection",
+						      &object_info,
+						      0);
+	}  
+
+	return object_type;
 }
