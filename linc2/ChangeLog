@@ -1,3 +1,11 @@
+2001-09-18  Jens Finke <jens@gnome.org>
+
+	* linc.spec.in: New file.
+	
+	* Makefile.am (EXTRA_DIST): Added linc.spec and linc.spec.in.
+
+	* configure.in (AC_OUTPUT): Create linc.spec.
+
 2001-09-13  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-protocols.c (linc_protocol_get_sockinfo_ipv46):

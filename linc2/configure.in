@@ -172,6 +172,7 @@ AC_DEFINE_UNQUOTED(WRITEV_IOVEC_LIMIT, $WRITEV_IOVEC_LIMIT)
 
 AC_OUTPUT([
 linc.pc
+linc.spec
 Makefile
 src/Makefile
 include/Makefile
