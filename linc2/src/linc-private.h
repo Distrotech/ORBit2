@@ -2,10 +2,7 @@
 #define LINC_PRIVATE_H 1
 
 #include "config.h"
-#include <linc/linc-config.h>
-#include <linc/linc-types.h>
-
-extern GMainLoop *linc_loop;
+#include <linc/linc.h>
 
 #if LINC_SSL_SUPPORT
 #include <openssl/ssl.h>
