@@ -1,5 +1,9 @@
 2003-07-15  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/util/orbit-options.c
+	(ORBit_option_command_line_parse): fix warning,
+	bin redundant commenting.
+
 	* Version 2.7.3
 
 2003-07-15  Michael Meeks  <michael@ximian.com>

@@ -173,6 +173,33 @@ link_source_add (LinkConnection *cnx,
 		 cnx->priv->fd, condition);
 }
 
+typedef struct {
+	guchar       *data;
+
+	struct iovec *vecs;
+	int           nvecs;
+	struct iovec  single_vec;
+} QueuedWrite;
+
+static void
+queued_write_free (QueuedWrite *qw)
+{
+	g_free (qw->data);
+	g_free (qw);
+}
+
+static void
+queue_free (LinkConnection *cnx)
+{
+	GList *l;
+
+	for (l = cnx->priv->write_queue; l; l = l->next)
+		queued_write_free (l->data);
+
+	g_list_free (cnx->priv->write_queue);
+	cnx->priv->write_queue = NULL;
+}
+
 /*
  * link_connection_class_state_changed:
  * @cnx: a #LinkConnection
@@ -319,14 +346,6 @@ calc_size (struct iovec *src_vecs,
 	return total_size;
 }
 
-typedef struct {
-	guchar       *data;
-
-	struct iovec *vecs;
-	int           nvecs;
-	struct iovec  single_vec;
-} QueuedWrite;
-
 static void
 queue_flattened_T_R (LinkConnection *cnx,
 		     struct iovec   *src_vecs,
@@ -372,25 +391,6 @@ queue_flattened_T_R (LinkConnection *cnx,
 		cmd->condition = (LINK_ERR_CONDS | LINK_IN_CONDS | G_IO_OUT);
 		link_exec_command (&cmd->cmd);
 	}
-}
-
-static void
-queued_write_free (QueuedWrite *qw)
-{
-	g_free (qw->data);
-	g_free (qw);
-}
-
-static void
-queue_free (LinkConnection *cnx)
-{
-	GList *l;
-
-	for (l = cnx->priv->write_queue; l; l = l->next)
-		queued_write_free (l->data);
-
-	g_list_free (cnx->priv->write_queue);
-	cnx->priv->write_queue = NULL;
 }
 
 static void
