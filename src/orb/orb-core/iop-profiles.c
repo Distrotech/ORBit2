@@ -688,8 +688,7 @@ IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   IOP_TAG_GENERIC_SSL_SEC_TRANS_info *ssli = (IOP_TAG_GENERIC_SSL_SEC_TRANS_info *)ci;
 
   len = strlen(ssli->service) + 1;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
   giop_send_buffer_append(buf, ssli->service, 4);
 }
 
@@ -729,8 +728,7 @@ IOP_components_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   GSList *cur;
 
   len = g_slist_length(components);
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
 
   for(cur = components; cur; cur = cur->next)
     {
@@ -745,7 +743,7 @@ IOP_components_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 	case IOP_TAG_SSL_SEC_TRANS:
 	  /* Help out with putting an encaps thing on the wire */
 	  lenptr = (CORBA_unsigned_long *)
-	    giop_send_buffer_append_indirect(buf, &len, 4);
+	    giop_send_buffer_append_aligned(buf, &len, 4);
 	  len = buf->msg.header.message_size;
 	  giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
 	  break;
@@ -784,8 +782,7 @@ IOP_TAG_INTERNET_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 
   giop_send_buffer_append(buf, giop_version_ids[iiop->iiop_version], 2);
   len = strlen(iiop->host) + 1;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
   giop_send_buffer_append(buf, iiop->host, len);
 
   giop_send_buffer_align(buf, 2);
@@ -805,18 +802,15 @@ IOP_TAG_GENERIC_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 
   giop_send_buffer_append(buf, giop_version_ids[giop->iiop_version], 2);
   len = strlen(giop->proto) + 1;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
   giop_send_buffer_append(buf, giop->proto, len);
 
   len = strlen(giop->host) + 1;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
   giop_send_buffer_append(buf, giop->host, len);
 
   len = strlen(giop->service) + 1;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
   giop_send_buffer_append(buf, giop->service, len);
 
   IOP_components_marshal(obj, buf, giop->components);
@@ -840,8 +834,7 @@ IOP_TAG_ORBIT_SPECIFIC_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   IOP_TAG_ORBIT_SPECIFIC_info *osi = (IOP_TAG_ORBIT_SPECIFIC_info*)profile;
 
   len = strlen(osi->unix_sock_path) + 1;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &len, 4);
+  giop_send_buffer_append_aligned(buf, &len, 4);
   giop_send_buffer_append(buf, osi->unix_sock_path, len);
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &osi->ipv6_port, 2);
@@ -863,11 +856,9 @@ IOP_profile_marshal( CORBA_Object obj, GIOPSendBuffer *buf, gpointer *p )
   IOP_Profile_info    *profile = (IOP_Profile_info *)p;
   CORBA_unsigned_long *seqlen, dumb;
 
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append(buf, &profile->profile_type, 4);
+  giop_send_buffer_append_aligned(buf, &profile->profile_type, 4);
   seqlen = (CORBA_unsigned_long *)
-    giop_send_buffer_append_indirect(buf, &dumb, 4);
-  *seqlen = 0;
+    giop_send_buffer_append_aligned(buf, NULL, 4);
 
   dumb = buf->msg.header.message_size;
   switch(profile->profile_type)

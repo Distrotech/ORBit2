@@ -133,7 +133,7 @@ giop_send_buffer_use_request(GIOPVersion giop_version,
 
   if(!principal_vec)
     {
-      zerovec.iov_base = giop_zero_buf;
+      zerovec.iov_base = (gpointer) giop_zero_buf;
       zerovec.iov_len = sizeof(CORBA_unsigned_long);
       principal_vec = &zerovec;
     }
@@ -319,92 +319,171 @@ giop_send_buffer_append_real(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
   buf->lastptr = ((const guchar *)mem) + len;
 }
 
-void
-giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
+/*
+ * get_next_indirect:
+ * @buf: the recv buffer with an exhausted indirect.
+ * @for_size_hint: for very large buffers specify this
+ * so we don't allocate too much. If this is non 0 then
+ * buf->indirect will contain at least this much space.
+ * 
+ * Pulls in the next indirect block into buf, and
+ * sets up @buf->indirect_left, and @buf->indirect
+ * to be correct.
+ */
+static void
+get_next_indirect (GIOPSendBuffer *buf, gulong for_size_hint)
 {
-  if(len <= 32)
-    giop_send_buffer_append_indirect(buf, mem, len);
-  else
-    giop_send_buffer_append_real(buf, mem, len);
-}
+	gulong max = buf->num_indirects_used;
 
-guchar *
-giop_send_buffer_append_indirect(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
-{
-  register guchar *indirect;
-  register gulong indirect_left;
-  register guchar *retval;
+	if (max >= buf->num_indirects_alloced) {
+		gulong new_size;
 
-  indirect = buf->indirect;
-  indirect_left = buf->indirect_left;
+		buf->num_indirects_alloced++;
+		buf->indirects = g_realloc (
+			buf->indirects, buf->num_indirects_alloced * sizeof (GIOPIndirectChunk));
 
-  while(indirect_left < len)
-    {
-      register gulong num_indirects_used = buf->num_indirects_used;
+		if (for_size_hint) {
+			new_size = (for_size_hint + 7) & ~7;
+			if (new_size < GIOP_CHUNK_SIZE)
+				new_size = GIOP_CHUNK_SIZE;
+		} else
+			new_size = GIOP_CHUNK_SIZE;
 
-      if(num_indirects_used >= buf->num_indirects_alloced)
-	{
-	  register gulong new_size;
-
-	  buf->num_indirects_alloced++;
-	  buf->indirects = g_realloc(buf->indirects, buf->num_indirects_alloced*sizeof(GIOPIndirectChunk));
-	  new_size = (len + 7) & ~7;
-	  if(GIOP_CHUNK_SIZE > new_size)
-	    new_size = GIOP_CHUNK_SIZE;
-	  buf->indirects[num_indirects_used].size = new_size;
-	  buf->indirects[num_indirects_used].ptr = g_malloc(new_size);
+		buf->indirects [max].size = new_size;
+		buf->indirects [max].ptr = g_malloc (new_size);
 	}
 
-      indirect = buf->indirects[num_indirects_used].ptr;
-      indirect_left = buf->indirects[num_indirects_used].size;
-      buf->num_indirects_used = num_indirects_used + 1;
-    }
+	buf->indirect = buf->indirects [max].ptr;
+	buf->indirect_left = buf->indirects [max].size;
+	buf->num_indirects_used = max + 1;
+}
 
-  retval = indirect;
-  if(mem)
-    memcpy(indirect, mem, len);
-  else
-    memset(indirect, 0, len);
-  giop_send_buffer_append_real(buf, indirect, len);
+static void
+giop_send_buffer_append_copy (GIOPSendBuffer *buf,
+			      gconstpointer   mem,
+			      gulong          len)
+{
+	/* FIXME: should we fill up the full indirects ? */
+	if (buf->indirect_left < len)
+		get_next_indirect (buf, len);
 
-  buf->indirect = indirect + len;
-  buf->indirect_left = indirect_left - len;
+	memcpy (buf->indirect, mem, len);
 
-  return retval;
+	giop_send_buffer_append_real (buf, buf->indirect, len);
+	
+	buf->indirect      += len;
+	buf->indirect_left -= len;
 }
 
 void
-giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary)
+giop_send_buffer_append (GIOPSendBuffer *buf,
+			 gconstpointer   mem,
+			 gulong          len)
 {
-  register gulong align_amt, ms;
+	if (len <= 32)
+		giop_send_buffer_append_copy (buf, mem, len);
+	else
+		giop_send_buffer_append_real (buf, mem, len);
+}
 
-  /* 1. Figure out how much to align by */
-  ms = buf->msg.header.message_size + buf->header_size;
-  align_amt = ALIGN_VALUE(ms, boundary) - ms;
+/**
+ * giop_send_buffer_align:
+ * @buf: the buffer
+ * @boundary: the boundary.
+ * 
+ * Appends memory to the SendBuffer to align it to a boundary
+ * of size @boundary bytes - if neccessary.
+ **/
+void
+giop_send_buffer_align (GIOPSendBuffer *buf, gulong boundary)
+{
+	gulong align_amt, ms;
 
-  /* 2. Do the alignment */
-  if(align_amt)
-    {
-      if(buf->lastptr == buf->indirect)
-	giop_send_buffer_append_indirect(buf, NULL, align_amt);
-      else
-	giop_send_buffer_append(buf, giop_zero_buf, align_amt);
-    }
+	/* 1. Figure out how much to align by */
+	ms = buf->msg.header.message_size + buf->header_size;
+	align_amt = ALIGN_VALUE(ms, boundary) - ms;
+
+	/* 2. Do the alignment */
+	if (align_amt) {
+
+		if (buf->indirect_left < align_amt) {
+			align_amt -= buf->indirect_left;
+			get_next_indirect (buf, 0);
+		}
+#ifdef ORBIT_PURIFY
+		memset (buf->indirect, 0, align_amt);
+#endif
+		giop_send_buffer_append_real (buf, buf->indirect, align_amt);
+
+		buf->indirect      += align_amt;
+		buf->indirect_left -= align_amt;
+	}
+}
+
+/**
+ * giop_send_buffer_append_aligned:
+ * @buf: the buffer
+ * @mem: the memory pointer
+ * @align_len: the alignment and length of @mem.
+ * 
+ * This routine alignes the send buffer to a byte boundary
+ * of size @align_len, and writes align_len bytes of memory
+ * pointed to by @mem to the buffer, or simply expands the
+ * buffer if mem is NULL by that much.
+ * 
+ * Return value: a pointer to the beggining of the 
+ * contiguous space available for @mem
+ **/
+guchar *
+giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
+				 gconstpointer   mem,
+				 gulong          align_len)
+{
+	guchar *indirect;
+	gulong  indirect_left;
+
+	/* FIXME: could make this more efficient by in-lining the align
+	   more aggressively here */
+	giop_send_buffer_align (buf, align_len);
+  
+	if (buf->indirect_left < align_len) {
+		g_assert (buf->indirect_left == 0);
+		get_next_indirect (buf, 0);
+	}
+
+	indirect = buf->indirect;
+	indirect_left = buf->indirect_left;
+
+	if (mem)
+		memcpy (indirect, mem, align_len);
+#ifdef ORBIT_PURIFY
+	else
+		memset (indirect, 0, align_len);
+#endif
+
+	giop_send_buffer_append_real (buf, indirect, align_len);
+	
+	buf->indirect      += align_len;
+	buf->indirect_left -= align_len;
+	
+	return indirect;
 }
 
 int
 giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx)
 {
-  int retval;
-  if(buf->giop_version >= GIOP_1_2)
-    /* Do tail align */
-    giop_send_buffer_align(buf, 8);
+	int retval;
 
-  O_MUTEX_LOCK(cnx->outgoing_mutex);
+	if (buf->giop_version >= GIOP_1_2)
+		giop_send_buffer_align (buf, 8); /* Do tail align */
 
-  retval = linc_connection_writev((LINCConnection *)cnx, buf->iovecs, buf->num_used, buf->msg.header.message_size + buf->header_size);
+	O_MUTEX_LOCK (cnx->outgoing_mutex);
 
-  O_MUTEX_UNLOCK(cnx->outgoing_mutex);
+	retval = linc_connection_writev (
+		(LINCConnection *) cnx, buf->iovecs,
+		buf->num_used, buf->msg.header.message_size + buf->header_size);
 
-  return retval;
+	O_MUTEX_UNLOCK (cnx->outgoing_mutex);
+
+	return retval;
 }

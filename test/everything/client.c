@@ -922,6 +922,8 @@ int main(int argc, char *argv[])
     int size;
     char ior[1024];
     FILE *infile = fopen("iorfile","rb");
+    if (!infile)
+	    g_error ("Start the server before running the client");
     size = fread(ior,1,1024,infile);
     fclose(infile);
     ior[size] = '\0';   /* insure that string is terminated correctly */

@@ -155,7 +155,7 @@ ORBit_objref_find(CORBA_ORB orb, const char *type_id, GSList *profiles)
 }
 
 void
-ORBit_start_servers( CORBA_ORB orb )
+ORBit_start_servers (CORBA_ORB orb)
 {
   LINCProtocolInfo *info;
 
@@ -384,13 +384,12 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
   GSList *cur;
   char *typeid;
 
-  giop_send_buffer_align(buf, 4);
   if(obj)
     typeid = obj->type_id;
   else
     typeid = "";
   type_len = strlen(typeid) + 1;
-  giop_send_buffer_append_indirect(buf, &type_len, 4);
+  giop_send_buffer_append_aligned (buf, &type_len, 4);
   giop_send_buffer_append(buf, typeid, type_len);
   if(obj)
     {
@@ -401,8 +400,7 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
     }
   else
     num_profiles = 0;
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append_indirect(buf, &num_profiles, 4);
+  giop_send_buffer_append_aligned(buf, &num_profiles, 4);
 
 #ifdef DEBUG
   fprintf (stderr, "Marshal object '%p'\n", obj);

@@ -327,9 +327,8 @@ ORBit_Context_marshal(CORBA_Context ctx, const ORBit_ContextMarshalItem *mlist,
   int i;
   CORBA_unsigned_long *real_nitems, ltmp;
 
-  giop_send_buffer_align(buf, sizeof(nitems));
   real_nitems = (gpointer)
-    giop_send_buffer_append_indirect(buf, &nitems, sizeof(nitems));
+    giop_send_buffer_append_aligned (buf, &nitems, sizeof(nitems));
   if(!ctx->mappings)
     {
       *real_nitems = 0;
@@ -345,15 +344,13 @@ ORBit_Context_marshal(CORBA_Context ctx, const ORBit_ContextMarshalItem *mlist,
 	continue;
 
       /* Key */
-      giop_send_buffer_align(buf, sizeof(mlist[i].len));
-      giop_send_buffer_append(buf, &mlist[i].len, sizeof(mlist[i].len));
+      giop_send_buffer_append_aligned(buf, &mlist[i].len, sizeof(mlist[i].len));
       giop_send_buffer_append(buf, mlist[i].str, mlist[i].len);
       (*real_nitems)++;
 
       /* Value */
       ltmp = strlen(value) + 1;
-      giop_send_buffer_align(buf, sizeof(ltmp));
-      giop_send_buffer_append_indirect(buf, &ltmp, sizeof(ltmp));
+      giop_send_buffer_append_aligned(buf, &ltmp, sizeof(ltmp));
       giop_send_buffer_append(buf, value, ltmp);
       (*real_nitems)++;
     }

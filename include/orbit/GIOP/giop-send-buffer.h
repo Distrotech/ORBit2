@@ -50,7 +50,9 @@ GIOPSendBuffer *giop_send_buffer_use_message_error(GIOPVersion giop_version);
 
 void giop_send_buffer_unuse(GIOPSendBuffer *buf);
 void giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len);
-guchar *giop_send_buffer_append_indirect(GIOPSendBuffer *buf, gconstpointer mem, gulong len);
+guchar *giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
+					 gconstpointer   mem,
+					 gulong          align_len);
 void giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary);
 
 int giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx);
