@@ -30,7 +30,7 @@ void orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, O
 
 void orbit_output_typecode(OIDL_C_Info *ci, IDL_tree ts);
 
-void c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
+void c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean on_stack);
 void c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels);
 
 /* utils */

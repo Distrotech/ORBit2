@@ -156,6 +156,7 @@ IDL_tree orbit_idl_get_array_type(IDL_tree tree);
 char *orbit_idl_member_get_name(IDL_tree tree);
 void orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data);
 void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
+gboolean orbit_cbe_type_contains_complex(IDL_tree ts);
 
 typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
 gint oidl_param_numptrs(IDL_tree param, IDL_ParamRole role);

@@ -156,7 +156,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "_ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE;\n");
   fprintf(ci->fh, "if(!_ORBIT_send_buffer) goto _ORBIT_system_exception;");
 
-  c_marshalling_generate(oi->in_stubs, ci);
+  c_marshalling_generate(oi->in_stubs, ci, TRUE);
 
 #ifdef BACKWARDS_COMPAT_0_4
   fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
