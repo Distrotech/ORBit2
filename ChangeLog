@@ -1,3 +1,9 @@
+2003-03-14  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_destroy): give a different warning if
+	people unref but don't destroy the ORB.
+
 2003-02-11  Mark McLoughlin  <mark@skynet.ie>
 
 	* Makefile.am, ORBit-imodule-2.0.pc.in,

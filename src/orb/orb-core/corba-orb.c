@@ -1166,8 +1166,11 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
 #ifdef G_ENABLE_DEBUG
-			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
-				   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
+			if (((ORBit_RootObject)orb)->refs == 1 + leaked_adaptors)
+				g_warning ("CORBA_ORB_destroy: ORB unreffed but not _destroy'd");
+			else
+				g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
+					   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
 #endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
