@@ -311,26 +311,65 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	retval->adaptors = g_ptr_array_new ();
 	ORBit_init_internals (retval, ev);
+	/* FIXME, handle exceptions */ 
+
+	/* FIXME, define procedure for following initialization */ 
 
 	/* set user defined references */ 
 	if (orbit_naming_ref != NULL) {
-		ORBit_set_initial_reference (retval, 
-					     "NameService", 
-					     orbit_naming_ref);
+		CORBA_Object objref
+			= CORBA_ORB_string_to_object (retval,
+						      orbit_naming_ref, 
+						      ev);
+		
+		/* FIXME, should abort if invalid option, don't forget
+		 * to free resources allocated by ORB */ 
+		if (ev->_major != CORBA_NO_EXCEPTION) {
+			g_warning ("Option ORBNamingIOR has invalid object reference: %s", 
+				   orbit_naming_ref);
+			CORBA_exception_free (ev);
+		}
+		else
+		{
+			/* FIXME, test type of object for
+			 * IDL:omg.org/CosNaming/NamingContext using _is_a()
+			 * operation */ 
+			ORBit_set_initial_reference (retval, 
+						     "NameService", 
+						     objref);
+		}
 	}
 
 	{ 
-		gint i=0;
-		for (i=0; i<g_slist_length (orbit_initref_list); ++i) {
-			gchar** tuple 
-				= (gchar**) g_slist_nth_data (
+		CORBA_Object objref = CORBA_OBJECT_NIL;
+		gint i = 0;
+		for (i = 0; i < g_slist_length (orbit_initref_list); ++i) {
+			ORBit_OptionKeyValue *tuple 
+				= (ORBit_OptionKeyValue*) g_slist_nth_data (
 					orbit_initref_list, i);
+
+			g_assert (tuple != NULL);
+			g_assert (tuple->key   != (gchar*)NULL);
+			g_assert (tuple->value != (gchar*)NULL);
 			
-			
-			ORBit_set_initial_reference (retval, 
-						     tuple[0], 
-						     tuple[1]);
-			
+			objref=CORBA_ORB_string_to_object (retval,
+							   tuple->key, 
+							   ev);
+
+			/* FIXME, should abort if invalid option,
+			 * don't forget to free resources allocated by
+			 * ORB */ 
+			if (ev->_major != CORBA_NO_EXCEPTION) {
+				g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
+					   tuple->key, tuple->value);
+				CORBA_exception_free (ev);
+			}
+			else
+			{
+				ORBit_set_initial_reference (retval, 
+							     tuple->key, 
+							     objref);
+			}
 		}
 	}
 
@@ -615,12 +654,22 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 {
 	CORBA_Object objref;
 
-	if (!orb->initial_refs)
+	/* FIXME, verify identifier and raise exception for invalid
+	 * service names, valid names might be: NameService, RootPOA,
+	 * SecurityCurrent, PolicyCurrent, etc. */
+ 
+	if (!orb->initial_refs
+	    || (objref=g_hash_table_lookup (orb->initial_refs, identifier))==NULL)
 		return CORBA_OBJECT_NIL;
-
-	objref = g_hash_table_lookup (orb->initial_refs, identifier);
-
+	
 	return ORBit_RootObject_duplicate (objref);
+
+ raise_invalid_name:
+	CORBA_exception_set (ev,
+			     CORBA_USER_EXCEPTION,
+			     ex_CORBA_ORB_InvalidName,
+			     NULL);
+	return CORBA_OBJECT_NIL;
 }
 
 static CORBA_TypeCode
@@ -1177,6 +1226,8 @@ ORBit_set_initial_reference (CORBA_ORB  orb,
 		orb->initial_refs = g_hash_table_new (g_str_hash, g_str_equal);
 
 	if (g_hash_table_lookup (orb->initial_refs, identifier))
+               /* FIXME, release object before removing from hash-table,
+                   Frank 2003/06/22 */
 		g_hash_table_remove (orb->initial_refs, identifier);
 
 	g_hash_table_insert (orb->initial_refs,

@@ -54,24 +54,32 @@ ORBit_option_set (const ORBit_option *option,
 		break;
 	}
 	case ORBIT_OPTION_KEY_VALUE: {
-		fprintf (stderr, "");
 		GSList **list = (GSList**) option->arg;
 
 		/* split string into tuple */ 
-		gchar **str_vec=g_strsplit (val, "=", 2);
+		gchar **str_vec = g_strsplit (val, "=", 2);
 		
-		if (str_vec==NULL 
-		    || str_vec [0] == NULL
-		    || str_vec [1] == NULL)
+		if (!str_vec || !str_vec[0] || !str_vec[1])
 		{
-			g_warning ("key=value pair expected: %s", val);
-			if (str_vec!=NULL) g_strfreev (str_vec);
+			g_warning ("Option %s requieres key=value pair: %s", option->name, val);
+			if (str_vec) g_strfreev (str_vec);
 			break;
 		}
 		g_assert (str_vec[0] != NULL);
 		g_assert (str_vec[1] != NULL);
-		
-		*list = g_slist_append (*list, str_vec);
+
+		{
+			ORBit_OptionKeyValue *tuple 
+				= g_new0 (ORBit_OptionKeyValue, 1);
+
+			tuple->key   = g_strdup (str_vec[0]);
+			tuple->value = g_strdup (str_vec[1]);
+
+			*list = g_slist_append (*list, tuple);
+		}
+
+		g_strfreev (str_vec);
+
 		break;		
 	}
 	default:
@@ -202,7 +210,7 @@ ORBit_option_command_line_parse (int                 *argc,
 			option = NULL;
 			continue;
                 }
-		/* if this arguments starts with '-' the user did not
+		/* if this argument starts with '-' the user did not
 		 * specify option value as expected - go on with usual
 		 * processing */ 
 		else if (option && option->type != ORBIT_OPTION_NONE)

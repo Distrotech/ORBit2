@@ -1,3 +1,9 @@
+2003-06-22  Frank Rehberger <Frank.Rehberger@web.de>
+
+	* src/orb/util/orbit_optionss.h: introducing type ORBit_OptionKeyValue
+	* src/orb/orb-core/corba-orb.c:  bugfix in CORBA_init() of initial 
+	-ORBInitRef and -ORBNamingIOR option parsing 	
+	
 2003-06-22  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* docs/api/ORBit2-sections.txt: Created the orbit2-small section.
