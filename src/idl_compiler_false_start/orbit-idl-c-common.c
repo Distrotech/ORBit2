@@ -431,6 +431,7 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   cc_output_allocs(IDL_TYPE_SEQUENCE(tree).simple_type_spec, rinfo, ci);
 
   ctmp = orbit_cbe_get_typespec_str(tree);
+  ctmp2 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
 
   fprintf(ci->fh, "#if ");
   orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);
@@ -455,32 +456,21 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fprintf(ci->fh, "  return retval;\n}\n");
 
-  orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-  fprintf(ci->fh, "* %s_allocbuf(CORBA_unsigned_long len)\n", ctmp);
-  fprintf(ci->fh, "{\n");
-  orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-  fprintf(ci->fh, "* retval = ORBit_alloc(sizeof(");
-  orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-  fprintf(ci->fh, "), len, ");
   elements_are_fixed = orbit_cbe_type_is_fixed_length(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-  if(elements_are_fixed)
-    fprintf(ci->fh, "/*freekids*/NULL");
-  else {
-    ctmp2 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-    fprintf(ci->fh, "%s__freekids", ctmp2);
-    g_free(ctmp2);
-  }
-  fprintf(ci->fh, ");\n");
-  if(!elements_are_fixed) {
-    fprintf(ci->fh, "memset(retval, '\\0', sizeof(");
-    orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-    fprintf(ci->fh, ")*len);\n");
+  fprintf(ci->fh, "%s* %s_allocbuf(CORBA_unsigned_long len)\n", ctmp2, ctmp);
+      fprintf(ci->fh, "{\n%s* retval = ", ctmp2);
+  if(elements_are_fixed) {
+      fprintf(ci->fh, "ORBit_alloc_simple(sizeof(%s)*len);\n", ctmp2);
+  } else {
+      fprintf(ci->fh, "ORBit_alloc(sizeof(%s), len, %s__freekids);\n", 
+        ctmp2, ctmp2);
+      fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s)*len);\n", ctmp2);
   }
   fprintf(ci->fh, "return retval;\n");
-
   fprintf(ci->fh, "}\n");
 
   fprintf(ci->fh, "#endif\n\n");
 
   g_free(ctmp);
+  g_free(ctmp2);
 }
