@@ -248,7 +248,7 @@ IDLInterface::writeCPPSkelReturnMarshalCode (ostream          &ostr,
 					     bool              passthru,
 					     IDLTypedef const *activeTypedef = NULL) const
 {
-	ostr << indent << "return _retval;" << endl;
+	ostr << indent << "return _retval->_orbitcpp_get_c_object ();" << endl;
 }
 
 string
