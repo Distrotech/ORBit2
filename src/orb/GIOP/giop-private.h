@@ -6,7 +6,7 @@
 #include <orbit/GIOP/giop.h>
 #include <linc/linc.h>
 
-void giop_send_buffer_init     (void);
+void giop_send_buffer_init     (gboolean wipe);
 void giop_recv_buffer_init     (void);
 void giop_connection_list_init (void);
 

@@ -30,7 +30,7 @@ TESTS = poatest-basic01 \
 
 check_PROGRAMS = $(TESTS)
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la
+LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
 POATEST_IDLOUT = poatest.h poatest-common.c poatest-skels.c poatest-stubs.c
 

@@ -2,9 +2,11 @@ SUBDIRS = everything inhibit poa
 
 INCLUDES =                          \
 	-I$(top_srcdir)/include     \
+	-I$(top_srcdir)/src/orb     \
 	-I$(top_builddir)/include   \
 	-DORBIT2_INTERNAL_API       \
 	$(WARN_CFLAGS)              \
+	$(ORBIT_DEBUG_CFLAGS)       \
 	$(ORBIT_CFLAGS)
 
 bin_PROGRAMS=ior-decode-2 typelib-dump
@@ -12,11 +14,11 @@ noinst_PROGRAMS=test1 \
 	echo-client echo-server \
 	empty-client empty-server \
 	test-any-client test-any-server \
-	test-dynany test-mem test-performance
+	test-dynany test-mem test-performance test-giop
 
-TESTS = test-dynany test-mem test-performance
+TESTS = test-dynany test-mem test-performance test-giop
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la
+LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
 test_mem_SOURCES=test-mem.c
 
@@ -25,6 +27,10 @@ test_performance_SOURCES = 	\
 	test1.h			\
 	test1-skels.c		\
 	test1-common.c
+
+test_giop_SOURCES =		\
+	test-giop.c		\
+	test-giop-frag.h
 
 TEST_ANY_IDLOUT=test-any.h test-any-common.c test-any-stubs.c test-any-skels.c
 test_any_client_SOURCES=test-any-client.c $(TEST_ANY_IDLOUT)

@@ -891,22 +891,22 @@ DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,		\
 	return;									\
 }
 
-MAKE_DYNANY_INSERT (short,               short);
-MAKE_DYNANY_INSERT (long,                long);
-MAKE_DYNANY_INSERT (unsigned_short,      ushort);
-MAKE_DYNANY_INSERT (unsigned_long,       ulong);
-MAKE_DYNANY_INSERT (float,               float);
-MAKE_DYNANY_INSERT (double,              double);
-MAKE_DYNANY_INSERT (long_double,         longdouble);
-MAKE_DYNANY_INSERT (boolean,             boolean);
-MAKE_DYNANY_INSERT (char,                char);
-MAKE_DYNANY_INSERT (wchar,               wchar);
-MAKE_DYNANY_INSERT (octet,               octet);
-MAKE_DYNANY_INSERT (TypeCode,            typecode);
-MAKE_DYNANY_INSERT (Object,              reference);
+MAKE_DYNANY_INSERT (short,               short)
+MAKE_DYNANY_INSERT (long,                long)
+MAKE_DYNANY_INSERT (unsigned_short,      ushort)
+MAKE_DYNANY_INSERT (unsigned_long,       ulong)
+MAKE_DYNANY_INSERT (float,               float)
+MAKE_DYNANY_INSERT (double,              double)
+MAKE_DYNANY_INSERT (long_double,         longdouble)
+MAKE_DYNANY_INSERT (boolean,             boolean)
+MAKE_DYNANY_INSERT (char,                char)
+MAKE_DYNANY_INSERT (wchar,               wchar)
+MAKE_DYNANY_INSERT (octet,               octet)
+MAKE_DYNANY_INSERT (TypeCode,            typecode)
+MAKE_DYNANY_INSERT (Object,              reference)
 /* #ifdef HAVE_CORBA_LONG_LONG */
-MAKE_DYNANY_INSERT (long_long,           longlong); 
-MAKE_DYNANY_INSERT (unsigned_long_long,  ulonglong);
+MAKE_DYNANY_INSERT (long_long,           longlong) 
+MAKE_DYNANY_INSERT (unsigned_long_long,  ulonglong)
 /* #endif */
 
 #define MAKE_DYNANY_GET(ctype,tc,apiname)					\
@@ -934,25 +934,25 @@ DynamicAny_DynAny_get_##apiname (DynamicAny_DynAny  obj,			\
 	return value;								\
 }
 
-MAKE_DYNANY_GET (short,               TC_CORBA_short,              short);
-MAKE_DYNANY_GET (long,                TC_CORBA_long,               long);
-MAKE_DYNANY_GET (unsigned_short,      TC_CORBA_unsigned_short,     ushort);
-MAKE_DYNANY_GET (unsigned_long,       TC_CORBA_unsigned_long,      ulong);
-MAKE_DYNANY_GET (float,               TC_CORBA_float,              float);
-MAKE_DYNANY_GET (double,              TC_CORBA_double,             double);
-MAKE_DYNANY_GET (long_double,         TC_CORBA_long_double,        longdouble);
-MAKE_DYNANY_GET (boolean,             TC_CORBA_boolean,            boolean);
-MAKE_DYNANY_GET (char,                TC_CORBA_char,               char);
-MAKE_DYNANY_GET (wchar,               TC_CORBA_wchar,              wchar);
-MAKE_DYNANY_GET (octet,               TC_CORBA_octet,              octet);
-MAKE_DYNANY_GET (any *,               TC_CORBA_any,                any);
-MAKE_DYNANY_GET (TypeCode,            TC_CORBA_TypeCode,           typecode);
-MAKE_DYNANY_GET (Object,              TC_CORBA_Object,             reference);
-MAKE_DYNANY_GET (char *,              TC_CORBA_string,             string);
-MAKE_DYNANY_GET (wchar *,             TC_CORBA_wstring,            wstring);
+MAKE_DYNANY_GET (short,               TC_CORBA_short,              short)
+MAKE_DYNANY_GET (long,                TC_CORBA_long,               long)
+MAKE_DYNANY_GET (unsigned_short,      TC_CORBA_unsigned_short,     ushort)
+MAKE_DYNANY_GET (unsigned_long,       TC_CORBA_unsigned_long,      ulong)
+MAKE_DYNANY_GET (float,               TC_CORBA_float,              float)
+MAKE_DYNANY_GET (double,              TC_CORBA_double,             double)
+MAKE_DYNANY_GET (long_double,         TC_CORBA_long_double,        longdouble)
+MAKE_DYNANY_GET (boolean,             TC_CORBA_boolean,            boolean)
+MAKE_DYNANY_GET (char,                TC_CORBA_char,               char)
+MAKE_DYNANY_GET (wchar,               TC_CORBA_wchar,              wchar)
+MAKE_DYNANY_GET (octet,               TC_CORBA_octet,              octet)
+MAKE_DYNANY_GET (any *,               TC_CORBA_any,                any)
+MAKE_DYNANY_GET (TypeCode,            TC_CORBA_TypeCode,           typecode)
+MAKE_DYNANY_GET (Object,              TC_CORBA_Object,             reference)
+MAKE_DYNANY_GET (char *,              TC_CORBA_string,             string)
+MAKE_DYNANY_GET (wchar *,             TC_CORBA_wstring,            wstring)
 /* #ifdef HAVE_CORBA_LONG_LONG */
-MAKE_DYNANY_GET (long_long,           TC_CORBA_long_long,          longlong); 
-MAKE_DYNANY_GET (unsigned_long_long,  TC_CORBA_unsigned_long_long, ulonglong);
+MAKE_DYNANY_GET (long_long,           TC_CORBA_long_long,          longlong) 
+MAKE_DYNANY_GET (unsigned_long_long,  TC_CORBA_unsigned_long_long, ulonglong)
 /* #endif */
 
 /* 9.2.3.9 */
@@ -1853,7 +1853,7 @@ DynamicAny_DynSequence_get_elements_as_dyn_any (DynamicAny_DynSequence  obj,
 		subdyn = GET_DYNANY (&s->_buffer [i]);
 		src = subdyn->any->_value;
 
-		(DynamicAny_DynAny) retval->_buffer [i] = dynany_create (subtc, src, dynany, ev);
+		retval->_buffer [i] = (CORBA_Object) dynany_create (subtc, src, dynany, ev);
 	}
 
 	return retval;

@@ -280,6 +280,43 @@ ORBit_imodule_free_typecodes (GHashTable *typecodes)
 	g_hash_table_destroy (typecodes);
 }
 
+typedef struct {
+	CORBA_sequence_CORBA_TypeCode *sequence;
+	int                            iter;
+} TypecodesHashIter;
+
+static void
+typecodes_hash_foreach (const char        *repo_id,
+			CORBA_TypeCode     tc,
+			TypecodesHashIter *iter)
+{
+	g_assert (iter->iter < iter->sequence->_length);
+
+	iter->sequence->_buffer [iter->iter++] =
+		(CORBA_TypeCode) CORBA_Object_duplicate ((CORBA_Object) tc, NULL);
+}
+
+CORBA_sequence_CORBA_TypeCode *
+ORBit_imodule_get_typecodes_seq (GHashTable *typecodes)
+{
+	CORBA_sequence_CORBA_TypeCode *retval;
+	TypecodesHashIter              iter;
+
+	retval           = CORBA_sequence_CORBA_TypeCode__alloc ();
+	retval->_length  = retval->_maximum = g_hash_table_size (typecodes);
+	retval->_release = TRUE;
+	retval->_buffer  = CORBA_sequence_CORBA_TypeCode_allocbuf (retval->_length);
+
+	iter.sequence = retval;
+	iter.iter     = 0;
+
+	g_hash_table_foreach (typecodes, (GHFunc) typecodes_hash_foreach, &iter);
+
+	g_assert (iter.iter == retval->_length);
+
+	return retval;
+}
+
 IDL_tree
 ORBit_imodule_get_typespec (IDL_tree tree)
 {

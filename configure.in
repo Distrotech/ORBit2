@@ -16,7 +16,7 @@ AC_SUBST(LT_VERSION)
 
 ORBIT_MAJOR_VERSION=2
 ORBIT_MINOR_VERSION=4
-ORBIT_MICRO_VERSION=0
+ORBIT_MICRO_VERSION=3
 ORBIT_VERSION=$ORBIT_MAJOR_VERSION.$ORBIT_MINOR_VERSION.$ORBIT_MICRO_VERSION
 AC_SUBST(ORBIT_MAJOR_VERSION)
 AC_SUBST(ORBIT_MINOR_VERSION)
@@ -58,7 +58,7 @@ if test "$enable_debug" = "yes"; then
   ORBIT_DEBUG_CFLAGS="-DG_ENABLE_DEBUG"
 else
   if test "x$enable_debug" = "xno"; then
-    ORBIT_DEBUG_FLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS"
+    ORBIT_DEBUG_CFLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS"
   else
     ORBIT_DEBUG_CFLAGS=""
   fi
@@ -101,7 +101,7 @@ fi
 AC_PROG_AWK
 
 GLIB_REQUIRED=2.0.0
-LINC_REQUIRED=0.5.0
+LINC_REQUIRED=0.7.0
 LIBIDL_REQUIRED=0.7.4
 AC_SUBST(GLIB_REQUIRED)
 AC_SUBST(LINC_REQUIRED)
@@ -160,6 +160,22 @@ AC_CHECK_HEADER(popt.h,,AC_MSG_ERROR([Failed to find popt.h - you may have to ad
 dnl This generates warnings from autoconf...
 AC_C_BIGENDIAN
 
+
+dnl
+dnl   So many people with broken linking setups asked about this
+dnl it turned out to be necessary to check for this.
+dnl
+dofus_save_libs="$LIBS"
+LIBS="$ORBIT_LIBS $LIBS"
+AC_TRY_RUN([ #include <stdio.h>
+             main ()
+             {
+               return 0;
+             } ],,
+           AC_MSG_ERROR(Linking is badly borked on your system. Please ensure your library path is correct \
+	                Check config.log for details - check near the end of the log above 'failed program was'))
+LIBS="$dofus_save_libs"
+
 orig_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ORBIT_CFLAGS"
 AC_CHECK_ALIGNOF(CORBA_octet)
@@ -200,6 +216,7 @@ ORBit-CosNaming-2.0.pc
 ORBit.spec
 src/Makefile
 src/idl-compiler/Makefile
+src/idl-compiler/ORBit-idl-2.0.pc
 src/idl/Makefile
 src/idl/CORBA/Makefile
 src/idl/CORBA_PIDL/Makefile

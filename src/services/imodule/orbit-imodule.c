@@ -447,43 +447,31 @@ ORBit_iinterface_build_interfaces (GHashTable *typecodes,
 }
 
 /*
- * ORBit_iinterface_from_tree:
- * @tree:
+ * ORBit_iinterfaces_from_file:
+ * @tree: an %IDL_tree.
+ * @typecodes_ret: return location for typecodes sequence (optional)
  *
- * Return Value:
- */
-ORBit_IInterface *
-ORBit_iinterface_from_tree (IDL_tree tree)
-{
-	GHashTable       *typecodes;
-	ORBit_IInterface *retval;
-	GSList           *list;
-
-	g_return_val_if_fail (tree != NULL, NULL);
-
-	typecodes = ORBit_imodule_new_typecodes ();
-
-	list = ORBit_iinterface_build_interfaces (typecodes, NULL, tree);
-
-	retval = ORBit_IInterface__alloc ();
-
-	ORBit_iinterface_from_interface (typecodes, list->data, retval);
-
-	ORBit_iinterface_free_interfaces (list);
-
-	ORBit_imodule_free_typecodes (typecodes);
-
-	return retval;
-}
-
-/*
- * ORBit_iinterfaces_from_tree:
- * @tree:
+ * Traverses the IDL parse tree, @tree,  and returns a sequence of
+ * %ORBit_IInterface.  The output is equivalent to the static data
+ * that is output by the idl compiler using the --add-imodule switch.
+ * A sequence of %CORBA_TypeCode is returned through the @typecodes_ret
+ * parameter.
  *
- * Return Value:
+ * Both the return value and the typecodes sequence should be
+ * freed using CORBA_free().
+ *
+ * This method is intended for use by scripting language bindings
+ * so that they may invoke interface methods defined in the idl
+ * tree parsing the idl themselves or loading a typelib
+ * module. Use this instead of ORBit_iinterfaces_from_file if you
+ * also wish to have access to the IDL parse tree.
+ * 
+ * Return Value: A sequence of %ORBit_IInterface.
  */
+
 ORBit_IInterfaces *
-ORBit_iinterfaces_from_tree (IDL_tree tree)
+ORBit_iinterfaces_from_tree (IDL_tree                        tree,
+			     CORBA_sequence_CORBA_TypeCode **typecodes_ret)
 {
 	GHashTable        *typecodes;
 	ORBit_IInterfaces *retval;
@@ -511,6 +499,9 @@ ORBit_iinterfaces_from_tree (IDL_tree tree)
 
 	ORBit_iinterface_free_interfaces (list);
 
+	if (typecodes_ret)
+		*typecodes_ret = ORBit_imodule_get_typecodes_seq (typecodes);
+
 	ORBit_imodule_free_typecodes (typecodes);
 
 	return retval;
@@ -523,13 +514,29 @@ ORBit_iinterfaces_from_tree (IDL_tree tree)
 
 /*
  * ORBit_iinterfaces_from_file:
- * @path:
+ * @path: path to the idl file to parse
+ * @cpp_args: arguments to pass to the preprocessor (optional)
+ * @typecodes_ret: return location for typecodes sequence (optional)
  *
- * Return Value:
+ * Parses @path idl file and returns a sequence of %ORBit_IInterface.
+ * The output is equivalent to the static data that is output by
+ * the idl compiler using the --add-imodule switch. A sequence
+ * of %CORBA_TypeCode is returned through the @typecodes_ret parameter.
+ *
+ * Both the return value and the typecodes sequence should be
+ * freed using CORBA_free().
+ *
+ * This method is intended for use by scripting language bindings
+ * so that they may invoke interface methods defined in the idl
+ * file without parsing the idl themselves or loading a typelib
+ * module.
+ * 
+ * Return Value: A sequence of %ORBit_IInterface.
  */
 ORBit_IInterfaces *
-ORBit_iinterfaces_from_file (const char *path,
-			     const char *cpp_args)
+ORBit_iinterfaces_from_file (const char                     *path,
+			     const char                     *cpp_args,
+			     CORBA_sequence_CORBA_TypeCode **typecodes_ret)
 {
 	ORBit_IInterfaces *retval;
 	IDL_tree           tree;
@@ -543,7 +550,7 @@ ORBit_iinterfaces_from_file (const char *path,
 		return NULL;
 	}
 
-	retval = ORBit_iinterfaces_from_tree (tree);
+	retval = ORBit_iinterfaces_from_tree (tree, typecodes_ret);
 
 	return retval;
 }

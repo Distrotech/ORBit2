@@ -1,3 +1,582 @@
+2002-09-25  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/services/imodule/orbit-imodule-utils.[ch]:
+	(typecodes_hash_foreach), (ORBit_imodule_get_typecodes_seq):
+	impl converting a typecode hash into a sequence.
+
+	* src/services/imodule/orbit-imodule.[ch]:
+	(ORBit_iinterface_from_tree): kill. Its useless.
+	(ORBit_iinterfaces_from_tree): return a sequence of
+	typecodes. Add docs.
+	(ORBit_iinterfaces_from_file): ditto.
+
+	* test/everything/client.c: (main): upd and test the
+	typecodes sequence.
+
+	* test/everything/server.c: (get_server): upd.
+
+2002-09-24  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require linc >= 0.7.0
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_real_state_changed): remove
+	nasty locking silly workaround.
+
+2002-09-20  Mark McLoughlin  <mark@skynet.ie>
+
+	* ORBit.spec.in: remove name-client-2 and
+	orbit-name-server-2 since they are no longer
+	installed. Fixes #93643.
+
+2002-09-20  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/Makefile.am:
+	* test/poa/Makefile.am:
+	* test/inhibit/Makefile.am: add $(ORBIT_LIBS)
+	to LDADD.
+
+2002-09-17  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/orbit-idl-backend.c (orbit_idl_backend_output):
+	Warn if the specified idl compliler backend could not be found.
+
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
+	Re-implement the idl-compiler language backend loading.
+
+	* configure.in: add src/idl-compiler/ORBit-idl-2.0.pc.
+
+	* src/idl-compiler/orbit-idl-backend.[ch]: implement.
+
+	* src/idl-compiler/Makefile.am: remove orbit-idl-backends.c
+	from the build and add orbit-idl-backend.[ch]. Install
+	orbit-idl-backend.h into $(prefix)/include/orbit-2.0/orbit-idl,
+	install the pkg-config file into $(prefix)/lib/pkgconfig.
+
+	* src/idl-compiler/orbit-idl-backends.c: remove.
+
+	* src/idl-compiler/orbit-idl-c-backend.[ch]: (orbit_idl_output_c):
+	return a bool.
+
+	* src/idl-compiler/orbit-idl-driver.c: (orbit_idl_to_backend):
+	hardwire in the c backend and use the loader for anything else.
+	Also return a bool.
+
+	* src/idl-compiler/orbit-idl-main.c: don't define the backend
+	directory here.
+
+	* src/idl-compiler/orbit-idl2.h: kill OIDL_Backend_Info.
+
+	* src/idl-compiler/orbit-idl3-types.h: upd.
+
+	* src/idl-compiler/ORBit-idl-2.0.pc.in: add
+
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
+	Merged some stuff from orbit-cpp-cactus.
+
+	* include/orbit/orb-core/corba-typecode.h: include giop-basics.h
+	if we're using the headers internally.
+
+	* src/idl-compiler/Makefile.am: don't define -DDEBUG.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_TypeCode_allocate),
+	(CORBA_ORB_create_struct_tc), (CORBA_ORB_create_union_tc),
+	(CORBA_ORB_create_enum_tc), (CORBA_ORB_create_alias_tc),
+	(CORBA_ORB_create_exception_tc), (CORBA_ORB_create_interface_tc),
+	(CORBA_ORB_create_string_tc), (CORBA_ORB_create_wstring_tc),
+	(CORBA_ORB_create_fixed_tc), (CORBA_ORB_create_sequence_tc),
+	(CORBA_ORB_create_recursive_sequence_tc),
+	(CORBA_ORB_create_array_tc):
+	s/CORBA_TypeCode_allocate/ORBit_TypeCode_allocate/g
+
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/*: chop, chop - take 2: a year on,
+	remove all the non-small code again, except this time
+	a lot more cleanly. That's 6,000 lines of code we don't
+	have to maintain anymore :-)
+
+2002-08-23  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.4.3
+
+2002-08-23  Michael Meeks  <michael@ximian.com>
+	
+	* src/orb/orb-core/corba-any.c
+	(ORBit_demarshal_value): don't do expensive re-allocs
+	on every sequence from length 1 upwards, re-assuring
+	this works though, start with 4096 elements.
+
+2002-08-18  Havoc Pennington  <hp@pobox.com>
+
+	* autogen.sh: hardcode aclocal-1.4/automake-1.4 so that users with
+	both automake 1.6 and 1.4 installed get the right automake. Means
+	compilation from CVS will now require the latest automake 1.4
+	release, or manually creating symlinks called "automake-1.4" and
+	"aclocal-1.4"
+
+2002-08-16  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.4.2
+
+	* test/test-performance.c (test_copy): more
+	tests.
+
+2002-08-15  Darren Kenny  <Darren.Kenny@Sun.COM>
+
+	* src/orb/orb-core/corba-object.c
+	(get_small_skel_CORBA_Object): upd. to '_is_a'
+	(CORBA_Object__imethods): update _is_a,
+	get_interface->_interface, non_existent -> _non_existent
+	to comply with the spec and interop with Java.
+
+2002-08-07  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_type_alloc_and_tc): add missing '\n's spiking
+	build, thanks Jody.
+
+2002-08-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-object.c
+	(object_hash_dump): fix output.
+
+2002-08-05  Laurent Vivier  <Laurent.Vivier@bull.net>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_handle_exception_array): char cast.
+	(ORBit_small_unlisten_for_broken): add
+	G_CALLBACK cast on fn.
+
+	* src/orb/orb-core/orbit-debug.h: stubs
+	for unsupported vararg types.
+
+	* src/orb/orb-core/corba-orb.c: no static
+	after extern.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_freekids_via_TypeCode_T): char * cast.
+
+	* src/orb/dynamic/dynany.c
+	(MAKE_DYNANY_INSERT): prune redundant ';'s
+	(DynamicAny_DynSequence_get_elements_as_dyn_any): 
+	kill redundant cast.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_demarshal_request_1_1), 
+	(giop_recv_buffer_demarshal_request_1_2):
+	signedness string casts.
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_output_types): undefine before define.
+	(ch_type_alloc_and_tc): improve imodule output.
+	(ch_output_itypes): deal with empty imethods.
+
+	* *.[ch]: remove trailing ','s at end of enums
+	for AIX compiler.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_method): same - in compiler.
+	(cc_small_output_itypes): only output an itype if
+	it's non-empty (/used)
+
+2002-08-05  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-backend.h: 
+	use guint instead of guint8 for bitfields.
+
+	* src/orb/poa/poa.c
+	(ORBit_POAObject_object_to_objkey): switch
+	to guchar * pointer for arithmetic.
+
+2002-08-05  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.4.1
+
+	* src/services/name/Makefile.am: objects fix.
+
+2002-07-24  Michael Meeks  <michael@ximian.com>
+
+	* test/test-giop.c (run_test): upd.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_object_get_connection): pass the orb
+	into cnx initiate.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): upd.
+	(giop_connection_set_orb_n_ver): impl.
+
+	* src/orb/GIOP/giop-server.c
+	(giop_server_handle_create_connection): upd.
+
+2002-07-10  Brian Cameron  <Brian.Cameron@sun.com>
+
+	* src/services/name/Makefile.am
+	No longer install name-client-2 or orbit-name-server-2
+	since they are not used.
+
+2002-07-10  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: detect the dofus earlier and more
+	explicitely.
+
+2002-07-08  Martin Pool <mbp@samba.org>
+
+	* src/services/name/Makefile.am: update build rules
+	requiring CosNaming.h to be built first.
+
+2002-07-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c (ORBit_handle_request):
+	return a system exception if we can't find the method,
+	so the remote end won't just hang forever.
+
+	* src/orb/poa/poa.c (return_exception): split guts out.
+	(ORBit_recv_buffer_return_sys_exception): into here
+
+2002-07-01  Murray Cumming  <murrayc@usa.net>
+ 
+ 	* src/idl-compiler/orbit-idl3-types.h:
+ 	Applied Felix Breuer's "namespace -> ns" patch, and added
+ 	comment to code so that it won't be reverted again. The C++
+ 	keyword "namespace" was being used as a struct field name.
+	
+2002-06-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_zap):
+	always remove the stale ent from the list, and NULL the
+	dying cnx.
+	(giop_recv_buffer_get): check for a NULL ent's cnx.
+	(giop_connection_destroy_frags): impl.
+	(giop_recv_buffer_handle_fragmented): check that we
+	don't have an inconsistant 'fragments_follow' state.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_dispose): dispose the fragments.
+	
+	* src/orb/orb-core/orbit-small.c (async_recv_cb): treat
+	a NULL cnx, like the disconnection it is.
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_demarshal_value): do exponential growing of
+	sequences so we don't blow the memory - since we
+	find it hard to do pre-alloc bounds checking on
+	arbitrary sequence contents.
+	Free the sequence on failing to de-marshal.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_realloc_tcval): impl. for the above scheme.
+
+2002-06-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): update reporting
+	to make DEBUG=errors more useful.
+	(handle_reply): don't dump the reply.
+
+	* test/test-giop.c (test_mangling): impl.
+	(main): upd.
+	(test_incoming_mangler): randomly mangle passing data.
+
+	* src/orb/GIOP/giop-server.c: conditionalize
+	new_connection debug hook.
+
+2002-06-26  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (concat_frags):
+	propagate out of memory condition upwards.
+	(giop_connection_remove_frag): move buffer unuse here.
+	conditionalize debug hooks on a debug build.
+	(giop_connection_handle_input): close the connection
+	on out of bound input more aggressively.
+	(concat_frags): make sure head->end points at the
+	right bound.
+	(giop_recv_buffer_handle_fragmented): build the overall
+	length into the head message_size, and bounds check it
+	against MSG_SIZE_LIMIT.
+
+	* test/ior-decode.c (main): re-hash & expand.
+
+2002-06-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(alloc_buffer): 
+	(giop_recv_msg_reading_body): handle the out of
+	memory situation gracefully.
+
+2002-06-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c
+	(giop_tmpdir_init): update to new genuid
+	API, how did this get missed (!), dependency
+	problems it seems.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_init): upd.
+	(get_next_indirect): blank newly allocated
+	memory if giop_blank_wire_data is set.
+	(giop_send_buffer_use): blank indirects we
+	have already used.
+
+	* src/orb/GIOP/giop.c (giop_init): upd.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): pass flag to giop_init.
+
+	* src/orb/poa/poa.c
+	(PortableServer_POA__get_the_children): fix annoying
+	typedef warning type thing, needs an IDL compiler fix
+	really.
+
+2002-06-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c (ORBit_adaptor_setup),
+	(ORBit_adaptor_find): upd.
+
+	* src/orb/poa/poa.c (ORBit_POA_new_system_objid),
+	(ORBit_POA_create_object, ORBit_POA_object_key_lookup): upd.
+
+	* src/orb/util/genrand.c (ORBit_genuid_init):
+	always do simple init, fallback to /dev/random
+	if we don't have /dev/urandom, return a status.
+	(ORBit_genuid_fini): upd.
+	(ORBit_genuid_buffer): update to pass a role in.
+	(genuid_simple): upd.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): split out
+	(genuid_init): this, and trap some of the more heinous
+	error cases we can catch.
+
+	* test/test-giop.c (test_cookie): add.
+
+2002-06-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/util/genrand.c (ORBit_genuid_init):
+	prune bits out.
+
+	* src/orb/poa/poa.c (ORBit_POA_new_system_objid):
+	update arithmetic.
+
+2002-06-24  Michael Meeks  <michael@ximian.com>
+
+	* test/test-giop.c: fix the non-debugging build.
+
+2002-06-24  Gustavo Giráldez <gustavo.giraldez@gmx.net>
+
+	* src/orb/util/orbit-options.c
+	(ORBit_option_command_line_parse): fix '\0'
+	termination regression.
+
+2002-06-21  Michael Meeks  <michael@ximian.com>
+
+	* test/test-giop.c (run_test): add symmetry test.
+	(main): test things both ways around.
+
+2002-06-21  Michael Meeks  <michael@ximian.com>
+
+	* test/test-giop.c (test_spoof_callback),
+	(test_spoof_hook, test_spoofing): impl.
+	(run_test): impl.
+	(wait_for_disconnect): impl.
+	(run_test_hook_new_connection): impl.
+	(main): upd.
+
+	* src/orb/GIOP/giop-server.c
+	(giop_server_handle_create_connection): add a new
+	connection debugging hook.
+
+	* src/orb/GIOP/giop-recv-buffer.c (handle_reply):
+	validate the reply came from the right connection,
+	return TRUE/FALSE depending.
+	(giop_connection_handle_input): terminate connections
+	that do bad things to us.
+
+	* src/orb/orbit-init.c (ORBit_init_internals):
+	add a getuid to the srand.
+
+2002-06-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-typelib.c
+	(ORBit_get_typelib_paths): use GNOME2_PATH to be
+	consistant with the rest of the platform.
+	(ORBit_small_load_typelib): document.
+
+	* src/orb/util/orbit-options.c
+	(ORBit_option_command_line_parse): properly erase
+	arguments we chew, instead of nulling them via 
+	argv [j++] = '\0' - odd indeed. We decrement argc
+	anyway.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_string_to_object): only use the
+	orbhttp code if it's explicitely enabled with
+	--ORBHTTPIORs.
+
+	* src/orb/orb-core/orbhttp.c: brief review and
+	condemn as riddled with security holes, env. var
+	buffer overflows, dubious un-integrated socket
+	code etc. etc.
+
+2002-06-19  jacob berkman  <jacob@ximian.com>
+
+	* configure.in: fix obvious typo in debug cflags stuff
+
+2002-06-18  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/pingServer.c
+	(PingPongServer_opOneWayCallback): kill warning.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_use): paranoid checks on
+	the giop version we are passed
+
+2002-06-18  Alexander Larsson  <alla@lysator.liu.se>
+
+	* test/everything/client.c (testPingPong):
+	Initialize broken.
+
+2002-06-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(get_next_indirect): check the send buffer
+	for 8 byte alignment, thanks to Alex Larsson
+
+2002-06-17  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_start_servers): pass local only
+	create_options into linc_server_new
+	add "ORBLocalOnly" option.
+
+2002-06-13  Michael Meeks  <michael@ximian.com> &
+
+	* test/everything/client.c (testPingPong):
+	disable this test - ultimately oneways suck.
+	You can't block the event consumer, because you
+	deadlock, you can't block the event client
+	because you don't know when the server has a
+	full stack.
+
+2002-06-13  Michael Meeks  <michael@ximian.com> &
+	    Bill Haneman <bill.haneman@sun.com>
+
+	* test/everything/client.c (testPingPong):
+	add client limited stack smash test.
+
+	* test/everything/pingServer.c
+	(PingPongServer_opOneWayCallback): impl.
+	(PingPongServer_opRoundTrip): impl.
+
+2002-06-13  Bill Haneman <bill.haneman@sun.com>
+
+	* test/everything/Makefile.am: fix
+	DEPENDENCIES typo.
+
+2002-06-13  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/GIOP/giop-recv-buffer.c: (handle_reply):
+	don't use _orbit_debug_flags unles debugging
+	is switched on.
+
+2002-06-12  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_real_state_changed): fix a
+	logic silly.
+
+2002-06-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_destroy): don't print out debug
+	unless G_ENABLE_DEBUG is on.
+
+2002-06-10  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_init): upd.
+	(test_safe_socket_dir): impl.
+	(scan_socket_dir): impl.
+	(giop_tmpdir_init): impl.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): hoist random init up the
+	file so we can use it in the giop init.
+
+2002-06-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_init):
+	g_strdup_printf instead of snprintf.
+
+2002-06-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_list_add): remove bogus ref,
+	we've been leaking connection objects a lot it
+	seems.
+	(giop_connection_real_state_changed): add broken
+	lock handling, all because Mark added a status
+	change notification to linc_connection_read
+	[ that should go long term ].
+
+	* test/test-giop.c (test_fragments): upd.
+
+	* test/Makefile.am (INCLUDES): add some internals.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(handle_reply): add unexpected reply debug hook.
+	(giop_connection_get_frag): calm printout.
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_setup_debug_flags): add ORBIT_DEBUG_ERRORS,
+	so we don't spew stuff all the time.
+
+2002-06-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c
+	(CDR_get): remove impossible signedness wise
+	comparison.
+
+	* src/orb/orb-core/iop-profiles.c
+	(ORBit_demarshal_IOR): ditto.
+
+2002-06-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c: update
+	TC_null's name #84354
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_handle_fragmented): GIOP_FRAGMENTs
+	don't have message_id's we can get in the same way.
+	(concat_frags): fix mem copying.
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): more re-arrangement,
+	and death of sillies.
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): upd. frag_out to move
+	onto the next incoming buffer properly.
+
+2002-06-04  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_get_frag, giop_connection_add_frag),
+	(giop_connection_remove_frag): impl.
+	(alloc_buffer): split out of
+	(giop_recv_msg_reading_body): here.
+	(concat_frags): use it & impl.
+	(giop_recv_buffer_handle_fragmented): impl.
+	(giop_connection_handle_input): upd & fix nasty with
+	locking / leaking & msg_error path.
+
 2002-05-31  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/services/imodule/orbit-imodule-utils.[ch]:
@@ -104,6 +683,7 @@
 	here and version to orbit-idl-2 correctly.
 
 2002-05-24  Richard Kinder <r_kinder@yahoo.com>
+
 	* src/orb/orb-core/orbhttp.c: cleanup magic numbers, closes #78938
 
 2002-05-22  Michael Meeks  <michael@ximian.com>

@@ -1597,6 +1597,20 @@ testPingPong (test_TestFactory   factory,
 	g_assert (!CORBA_Object_is_equivalent (
 		CORBA_OBJECT_NIL, l_objref, ev));
 
+#if 0
+	/* Test blocking bits - try to blow the remote guy's stack */
+	if (!in_proc) {
+		int i;
+
+		d_print ("Testing client limiting of stack smash on remote server\n");
+		for (i = 0; i < 10000; i++) {
+			test_PingPongServer_opOneWayCallback (r_objref, l_objref, ev);
+			g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		}
+		test_PingPongServer_opRoundTrip (r_objref, ev);
+	}
+#endif
+
 	if (!in_proc) {
 		int i;
 		ORBitConnection *cnx = ORBit_small_get_connection (r_objref);
@@ -1610,7 +1624,7 @@ testPingPong (test_TestFactory   factory,
 			"the write has failed & that the connection is "
 			"now saturated ";
 		char *str;
-		gboolean broken;
+		gboolean broken = FALSE;
 
 		g_assert (cnx != NULL);
 		ORBit_connection_set_max_buffer (cnx, 10000);
@@ -1869,6 +1883,12 @@ main (int argc, char *argv [])
 	/* Tell linc we want a threaded ORB */
 	linc_set_threaded (TRUE);
 
+/* FIXME - make this work nicely sometime.
+	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (global_orb, &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
+*/
 	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
@@ -1877,8 +1897,14 @@ main (int argc, char *argv [])
 			gen_imodule = TRUE;
 
 	if (gen_imodule) {
-		interfaces = ORBit_iinterfaces_from_file ("everything.idl", NULL);
+		CORBA_sequence_CORBA_TypeCode *typecodes = NULL;
+
+		interfaces = ORBit_iinterfaces_from_file (
+				"everything.idl", NULL, &typecodes);
 		g_assert (interfaces != NULL);
+		g_assert (typecodes != NULL);
+
+		CORBA_free (typecodes);
 
 		init_iinterfaces (interfaces);
 	}
@@ -1924,7 +1950,7 @@ main (int argc, char *argv [])
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 
 		if (CORBA_Object_non_existent (factory, &ev))
-			g_error  ("Start the server before running the client");
+			g_error  ("Can't contact the server");
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 	}
 	run_tests (factory, &ev);

@@ -1,4 +1,5 @@
 #include "config.h"
+#include <string.h>
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
@@ -107,13 +108,12 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		retval = ORBit_freekids_via_TypeCode_T (
 			mem, tc->subtypes[0]);
 		break;
-	default:
-	{
+	default: {
 		gulong length;
 		length = ORBit_gather_alloc_info (tc);
-		retval = ALIGN_ADDRESS(mem, tc->c_align) + length;
-	}
+		retval = (guchar *) ALIGN_ADDRESS (mem, tc->c_align) + length;
 		break;
+	}
 	}
 	return retval;
 }
@@ -290,6 +290,34 @@ ORBit_alloc_tcval (CORBA_TypeCode tc,
 		ORBIT_MEMHOW_TYPECODE, num_elements);
 
 	return mem;
+}
+
+gpointer
+ORBit_realloc_tcval (gpointer       old,
+		     CORBA_TypeCode tc,
+		     guint          old_num_elements,
+		     guint          num_elements)
+{
+	guint element_size;
+	ORBit_MemPrefix *prefix;
+
+	g_assert (num_elements > old_num_elements);
+
+	if (!num_elements)
+		return NULL;
+
+	if (!(element_size = ORBit_gather_alloc_info (tc)))
+		return NULL;
+
+	prefix = g_realloc ((guchar *) old - LONG_PREFIX_LEN,
+			    LONG_PREFIX_LEN +
+			    element_size * num_elements);
+
+	memset ((guchar *) prefix + LONG_PREFIX_LEN +
+		old_num_elements * element_size,
+		0, (num_elements - old_num_elements) * element_size);
+
+	return (guchar *) prefix + LONG_PREFIX_LEN;
 }
 
 gpointer

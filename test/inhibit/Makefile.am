@@ -7,14 +7,14 @@ INCLUDES =                           \
 	$(WARN_CFLAGS)               \
 	$(ORBIT_CFLAGS)
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la
+LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
 FOO_IDLOUT=foo.h foo-stubs.c foo-skels.c foo-common.c
 BAA_IDLOUT=baa.h baa-stubs.c baa-skels.c baa-common.c
 
 test_inhibit_SOURCES=$(FOO_IDLOUT) $(BAA_IDLOUT) test-inhibit.c
 
-IDL_FLAGS=--showcpperrors
+IDL_FLAGS=--showcpperrors -I$(srcdir)
 IDL_FILES=foo.idl baa.idl
 include $(top_srcdir)/Makefile.shared
 

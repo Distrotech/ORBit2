@@ -1,3 +1,4 @@
+
 #include <config.h>
 #include <ctype.h>
 #include <string.h>
@@ -14,7 +15,7 @@
 #include "orbhttp.h"
 #include "orbit-debug.h"
 
-extern ORBit_option orbit_supported_options[];
+extern const ORBit_option orbit_supported_options[];
 
 #ifdef G_ENABLE_DEBUG
 OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
@@ -29,6 +30,8 @@ static gboolean     orbit_use_usocks        = TRUE;
 static gboolean     orbit_use_irda          = FALSE;
 static gboolean     orbit_use_ssl           = FALSE;
 static gboolean     orbit_use_genuid_simple = FALSE;
+static gboolean     orbit_local_only       = FALSE;
+static gboolean     orbit_use_http_iors     = FALSE;
 static char        *orbit_ipsock            = NULL;
 static char        *orbit_ipname            = NULL;
 static char        *orbit_debug_options     = NULL;
@@ -36,7 +39,11 @@ static char        *orbit_debug_options     = NULL;
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
 {
-	LINCProtocolInfo *info;
+	LINCProtocolInfo     *info;
+	LINCConnectionOptions create_options = 0;
+
+	if (orbit_local_only)
+		create_options |= LINC_CONNECTION_LOCAL_ONLY;
 
 	for (info = linc_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
@@ -44,9 +51,11 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 		if (!ORBit_proto_use (info->name))
 			continue;
 
-		server = giop_server_new (orb->default_giop_version,
-					  info->name, orbit_ipname,
-					  orbit_ipsock, 0, orb);
+		server = giop_server_new (
+			orb->default_giop_version, info->name,
+			orbit_ipname, orbit_ipsock,
+			create_options, orb);
+
 		if (server) {
 			orb->servers = g_slist_prepend (orb->servers, server);
 
@@ -56,7 +65,8 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 
 				server = giop_server_new (
 					orb->default_giop_version, info->name,
-					NULL, NULL, LINC_CONNECTION_SSL, orb);
+					NULL, NULL, LINC_CONNECTION_SSL | create_options,
+					orb);
 
 				if (server)
 					orb->servers = g_slist_prepend (orb->servers, server);
@@ -101,6 +111,28 @@ ORBit_genuid_type (void)
 }
 
 static void
+genuid_init (void)
+{
+	/* We treat the 'local_only' mode as a very special case */
+	if (orbit_local_only &&
+	    orbit_use_genuid_simple)
+		g_error  ("It is impossible to isolate one user from another "
+			  "with only simple cookie generation, you cannot "
+			  "explicitely enable this option and LocalOnly mode "
+			  "at the same time");
+
+	else if (!ORBit_genuid_init (ORBit_genuid_type ())) {
+
+		if (orbit_local_only)
+			g_error ("Failed to find a source of randomness good "
+				 "enough to insulate local users from each "
+				 "other. If you use Solaris you need /dev/random "
+				 "from the SUNWski package");
+	}
+}
+
+
+static void
 ORBit_service_list_free_ref (gpointer         key,
 			     ORBit_RootObject objref,
 			     gpointer         dummy)
@@ -138,6 +170,7 @@ ORBit_setup_debug_flags (void)
 		{ "timings",       ORBIT_DEBUG_TIMINGS },
 		{ "types",         ORBIT_DEBUG_TYPES },
 		{ "messages",      ORBIT_DEBUG_MESSAGES },
+		{ "errors",        ORBIT_DEBUG_ERRORS },
 		{ "objects",       ORBIT_DEBUG_OBJECTS },
 		{ "giop",          ORBIT_DEBUG_GIOP },
 		{ "refs",          ORBIT_DEBUG_REFS },
@@ -212,7 +245,10 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_setup_debug_flags ();
 #endif /* G_ENABLE_DEBUG */
 
-	giop_init ();
+	genuid_init ();
+	
+	giop_init (orbit_use_ipv4 || orbit_use_ipv6 ||
+		   orbit_use_irda || orbit_use_ssl);
 
 	ORBit_locks_initialize ();
 
@@ -223,7 +259,6 @@ CORBA_ORB_init (int *argc, char **argv,
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 	g_atexit (shutdown_orb);
 
-	ORBit_genuid_init (ORBit_genuid_type ());
 	retval->default_giop_version = GIOP_LATEST;
 
 	retval->adaptors = g_ptr_array_new ();
@@ -234,8 +269,8 @@ CORBA_ORB_init (int *argc, char **argv,
 
 CORBA_char *
 CORBA_ORB_object_to_string (CORBA_ORB          orb,
-			   const CORBA_Object  obj,
-			   CORBA_Environment  *ev)
+			    const CORBA_Object obj,
+			    CORBA_Environment *ev)
 {
 	GIOPSendBuffer *buf;
 	CORBA_octet     endianness = GIOP_FLAG_ENDIANNESS;
@@ -305,7 +340,10 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 	int                  i;
 
 	if (strncmp (string, "IOR:", 4)) {
-		if (strstr (string, "://")) {
+
+		if (orbit_use_http_iors &&
+		    strstr (string, "://")) {
+			/* FIXME: this code is a security hazard */
 			ior = orb_http_resolve (string);
 			if (!ior)
 				return CORBA_OBJECT_NIL;
@@ -486,7 +524,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 }
 
 static CORBA_TypeCode
-CORBA_TypeCode_allocate (void)
+ORBit_TypeCode_allocate (void)
 {
 	CORBA_TypeCode tc = g_new0 (struct CORBA_TypeCode_struct, 1);
 
@@ -505,7 +543,7 @@ CORBA_ORB_create_struct_tc (CORBA_ORB                    orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -588,7 +626,7 @@ CORBA_ORB_create_union_tc (CORBA_ORB                   orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 
 	if (!retval)
 		goto tc_alloc_failed;
@@ -657,7 +695,7 @@ CORBA_ORB_create_enum_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -695,7 +733,7 @@ CORBA_ORB_create_alias_tc (CORBA_ORB             orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 	
@@ -733,7 +771,7 @@ CORBA_ORB_create_exception_tc (CORBA_ORB                    orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -785,7 +823,7 @@ CORBA_ORB_create_interface_tc (CORBA_ORB                 orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -807,7 +845,7 @@ CORBA_ORB_create_string_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -828,7 +866,7 @@ CORBA_ORB_create_wstring_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -850,7 +888,7 @@ CORBA_ORB_create_fixed_tc (CORBA_ORB                   orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -873,7 +911,7 @@ CORBA_ORB_create_sequence_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -907,7 +945,7 @@ CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval=CORBA_TypeCode_allocate ();
+	retval=ORBit_TypeCode_allocate ();
 	if (retval)
 		goto tc_alloc_failed;
 
@@ -919,7 +957,7 @@ CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
 	retval->sub_parts = 1;
 	retval->length    = bound;
 
-	retval->subtypes [0] = CORBA_TypeCode_allocate ();
+	retval->subtypes [0] = ORBit_TypeCode_allocate ();
 
 	retval->subtypes [0]->kind          = CORBA_tk_recursive;
 	retval->subtypes [0]->recurse_depth = offset;
@@ -944,7 +982,7 @@ CORBA_ORB_create_array_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode tc;
 
-	tc = CORBA_TypeCode_allocate ();
+	tc = ORBit_TypeCode_allocate ();
 	if (!tc)
 		goto tc_alloc_failed;
 
@@ -1088,9 +1126,11 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa &&
 	    ((ORBit_RootObject) root_poa)->refs != 1) {
+#ifdef G_ENABLE_DEBUG
 		g_warning ("CORBA_ORB_destroy: Application still has %d "
 			   "refs to RootPOA.",
 			   ((ORBit_RootObject)root_poa)->refs - 1);
+#endif
 		CORBA_exception_set_system (
 			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 	}
@@ -1117,14 +1157,18 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 		}
 
 		if (leaked_adaptors) {
+#ifdef G_ENABLE_DEBUG
 			g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors", leaked_adaptors);
+#endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
 
 		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
+#ifdef G_ENABLE_DEBUG
 			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
 				   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
+#endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
@@ -1213,21 +1257,26 @@ ORBit_proto_use (const char *name)
 	return FALSE;
 }
 
-static ORBit_option orbit_supported_options[] = {
-	{"ORBid",           ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
-	{"ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL}, /* FIXME: huh?          */
- 	{"ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname},
- 	{"ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock},
-	{"ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4},
-	{"ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6},
-	{"ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
-	{"ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
-	{"ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda},
-	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
-	{"ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple},
-	{"ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options},
-	{NULL,              0,                    NULL},
+const ORBit_option orbit_supported_options[] = {
+	{ "ORBid",           ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
+ 	{ "ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname },
+ 	{ "ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock },
+	{ "ORBLocalOnly",    ORBIT_OPTION_BOOLEAN, &orbit_local_only },
+	/* warning: this option is a security risk unless used with LocalOnly */
+	{ "ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
+	{ "ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },
+	{ "ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
+	{ "ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
+	{ "ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda },
+	{ "ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl },
+	/* warning: this option is a security risk */
+	{ "ORBHTTPIORs",     ORBIT_OPTION_BOOLEAN, &orbit_use_http_iors },
+	/* warning: this option is a security risk */
+	{ "ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
+	{ "ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options },
+	{ NULL,              0,                    NULL },
 };

@@ -480,7 +480,7 @@ init_iinterfaces (ORBit_IInterfaces *interfaces)
 			gen_imodule = TRUE;
 
 	if (gen_imodule) {
-		interfaces = ORBit_iinterfaces_from_file ("everything.idl", NULL);
+		interfaces = ORBit_iinterfaces_from_file ("everything.idl", NULL, NULL);
 		g_assert (interfaces != NULL);
 
 		init_iinterfaces (interfaces);
