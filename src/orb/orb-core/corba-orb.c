@@ -410,9 +410,13 @@ CORBA_ORB_object_to_string (CORBA_ORB          orb,
 		return NULL;
 	}
 
-	/* FIXME, do nice integration */ 
 	if (orbit_use_corbaloc) {
-		return ORBit_object_to_corbaloc (obj, ev);
+		out = ORBit_object_to_corbaloc (obj, ev);
+		if (ev->_major == CORBA_NO_EXCEPTION)
+			return out;
+
+		CORBA_exception_free (ev);	
+		/* fall thru, common marshalling */ 
 	}
 	
 	buf = giop_send_buffer_use (orb->default_giop_version);
