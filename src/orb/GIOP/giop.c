@@ -666,6 +666,7 @@ first_valid_request (GIOPThread *tdata, gboolean *no_policy)
 	}
 
 	*no_policy = FALSE;
+	policy = g_queue_peek_head (tdata->invoke_policies);
 
 	for (l = tdata->request_queue; l; l = l->next) {
 		int i;
