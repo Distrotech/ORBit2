@@ -255,7 +255,15 @@ cbe_ski_do_op_dcl(CBESkelImplInfo *ski)
       fprintf(ski->of, "\n{\n");
       if(IDL_OP_DCL(op).op_type_spec) {
 	orbit_cbe_write_param_typespec(ski->of, ski->tree);
-	fprintf(ski->of, " retval;\n\nreturn retval;\n");
+	fprintf(ski->of, " retval;\n");
+	fprintf(ski->of, " /* ------   insert method code here   ------ */\n");
+	fprintf(ski->of, " /* ------ ---------- end ------------ ------ */\n");
+	fprintf(ski->of, "\nreturn retval;\n");
+      }
+      else
+      {	
+	fprintf(ski->of, " /* ------   insert method code here   ------ */\n");
+	fprintf(ski->of, " /* ------ ---------- end ------------ ------ */\n");
       }
       fprintf(ski->of, "}\n\n");
     } else /* PASS_PROTOS */
@@ -314,7 +322,15 @@ cbe_ski_do_inherited_op_dcl(CBESkelImplInfo *ski, IDL_tree current_interface)
       fprintf(ski->of, "\n{\n");
       if(IDL_OP_DCL(op).op_type_spec) {
 	orbit_cbe_write_param_typespec(ski->of, ski->tree);
-	fprintf(ski->of, " retval;\n\nreturn retval;\n");
+	fprintf(ski->of, " retval;\n");
+	fprintf(ski->of, " /* ------   insert method code here   ------ */\n");
+	fprintf(ski->of, " /* ------ ---------- end ------------ ------ */\n");
+	fprintf(ski->of, "\nreturn retval;\n");
+      }
+      else
+      {	
+	fprintf(ski->of, " /* ------   insert method code here   ------ */\n");
+	fprintf(ski->of, " /* ------ ---------- end ------------ ------ */\n");
       }
       fprintf(ski->of, "}\n\n");
     } else /* PASS_PROTOS */
@@ -419,6 +435,8 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     cbe_ski_do_list(&subski);
     IDL_tree_traverse_parents(ski->tree, (GFunc)&cbe_ski_do_inherited_methods,
     				ski);
+    fprintf(ski->of, "   /* ------ add private attributes here ------ */\n");
+    fprintf(ski->of, "   /* ------ ---------- end ------------ ------ */\n");
     fprintf(ski->of, "} impl_POA_%s;\n\n", id);
     break;
   case PASS_EPVS:
@@ -450,6 +468,13 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of, "newservant->servant.vepv = &impl_%s_vepv;\n", id);
     fprintf(ski->of, "newservant->poa = poa;\n");
     fprintf(ski->of, "POA_%s__init((PortableServer_Servant)newservant, ev);\n", id);
+    
+    fprintf(ski->of, "   /* Before servant is going to be activated all\n");
+    fprintf(ski->of, "    * private attributes must be initialized.  */\n"); 
+    fprintf(ski->of, "\n");
+    fprintf(ski->of, "   /* ------ init private attributes here ------ */\n");
+    fprintf(ski->of, "   /* ------ ---------- end ------------- ------ */\n");
+    fprintf(ski->of, "\n");
     fprintf(ski->of, "objid = PortableServer_POA_activate_object(poa, newservant, ev);\n");
     fprintf(ski->of, "CORBA_free(objid);\n");
     fprintf(ski->of, "retval = PortableServer_POA_servant_to_reference(poa, newservant, ev);\n");
@@ -459,6 +484,12 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of, "objid = PortableServer_POA_servant_to_id(servant->poa, servant, ev);\n");
     fprintf(ski->of, "PortableServer_POA_deactivate_object(servant->poa, objid, ev);\n");
     fprintf(ski->of, "CORBA_free(objid);\n");
+    fprintf(ski->of, "\n");
+    fprintf(ski->of, "   /* Now that object has been deactivated and no\n"); 
+    fprintf(ski->of, "    * further remote method call is delegated to \n");
+    fprintf(ski->of, "    * servant you may free your private attributes */\n");
+    fprintf(ski->of, "   /* ------ free private attributes here ------ */\n");
+    fprintf(ski->of, "   /* ------ ---------- end ------------- ------ */\n");
     fprintf(ski->of, "\nPOA_%s__fini((PortableServer_Servant)servant, ev);\n", id);
     fprintf(ski->of, "g_free(servant);\n}\n\n");
     subski.tree = IDL_INTERFACE(ski->tree).body;
