@@ -72,10 +72,44 @@ typedef struct {
 #include <orbit/poa/portableserver-poa-type.h>
 #include <orbit/poa/portableserver-current-type.h>
 
-void PortableServer_ServantBase__init(PortableServer_Servant p_servant,
-				      CORBA_Environment *ev);
-void PortableServer_ServantBase__fini(PortableServer_Servant p_servant,
-				      CORBA_Environment *ev);
+void PortableServer_ServantBase__init          (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+void PortableServer_ServantBase__fini          (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+
+void PortableServer_RefCountServantBase__init  (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+void PortableServer_RefCountServantBase__fini  (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+
+void PortableServer_ServantBase__add_ref       (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+void PortableServer_ServantBase__remove_ref    (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+
+void PortableServer_RefCountServantBase__add_ref    (PortableServer_Servant  servant,
+						     CORBA_Environment      *ev);
+void PortableServer_RefCountServantBase__remove_ref (PortableServer_Servant  servant,
+						     CORBA_Environment      *ev);
+
+PortableServer_POA 
+     PortableServer_ServantBase__default_POA   (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+CORBA_InterfaceDef 
+     PortableServer_ServantBase__get_interface (PortableServer_Servant  servant,
+						CORBA_Environment      *ev);
+CORBA_boolean
+     PortableServer_ServantBase__is_a          (PortableServer_Servant  servant,
+						const CORBA_char       *logical_type_id,
+						CORBA_Environment      *ev);
+
+#define PortableServer_RefCount_ServantBase__default_POA		\
+			PortableServer_ServantBase__default_POA
+#define PortableServer_RefCount_ServantBase__get_interface		\
+			PortableServer_ServantBase__get_interface
+#define PortableServer_RefCount_ServantBase__is_a 			\
+			PortableServer_ServantBase__is_a
+
 void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
 PortableServer_ClassInfo *ORBit_classinfo_lookup(const char *type_id);
 void ORBit_POAObject_post_invoke(ORBit_POAObject obj);

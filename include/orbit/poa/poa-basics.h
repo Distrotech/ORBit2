@@ -19,10 +19,21 @@ typedef struct ORBit_OAObject_type  *ORBit_OAObject;
 
 typedef struct {
 	void                *_private;
-	void               (*finalize)    (PortableServer_Servant  servant,
-					   CORBA_Environment      *ev);
-	PortableServer_POA (*default_POA) (PortableServer_Servant  servant,
-					   CORBA_Environment      *ev);
+	void               (*finalize)      (PortableServer_Servant,
+					     CORBA_Environment *);
+	PortableServer_POA (*default_POA)   (PortableServer_Servant,
+					     CORBA_Environment *);
+	void               (*add_ref)       (PortableServer_Servant,
+					     CORBA_Environment *);
+	void               (*remove_ref)    (PortableServer_Servant,
+					     CORBA_Environment *);
+	CORBA_InterfaceDef (*get_interface) (PortableServer_Servant,
+                                             CORBA_Environment *);
+	CORBA_boolean      (*is_a)          (PortableServer_Servant,
+					     const char *,
+					     CORBA_Environment *);
+	CORBA_boolean      (*non_existent)  (PortableServer_Servant,
+					     CORBA_Environment *);
 } PortableServer_ServantBase__epv;
 
 typedef PortableServer_ServantBase__epv *PortableServer_ServantBase__vepv;
@@ -31,6 +42,10 @@ typedef struct {
 	void                             *_private;
 	PortableServer_ServantBase__vepv *vepv;
 } PortableServer_ServantBase;
+
+typedef PortableServer_ServantBase__epv  PortableServer_RefCountServantBase__epv;
+typedef PortableServer_ServantBase__epv *PortableServer_RefCountServantBase__vepv;
+typedef PortableServer_ServantBase       PortableServer_RefCountServantBase;
 
 typedef gshort ORBit_VepvIdx;
 

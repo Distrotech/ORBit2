@@ -32,6 +32,27 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 #define CORBA_ORB_ObjectId__freekids CORBA_string__freekids
 #endif
 
+#if !defined(_CORBA_InterfaceDef_defined)
+#define _CORBA_InterfaceDef_defined 1
+#define CORBA_InterfaceDef__freekids CORBA_Object__freekids
+   typedef CORBA_Object CORBA_InterfaceDef;
+   extern CORBA_unsigned_long CORBA_InterfaceDef__classid;
+#if !defined(TC_IMPL_TC_CORBA_InterfaceDef_0)
+#define TC_IMPL_TC_CORBA_InterfaceDef_0 'c'
+#define TC_IMPL_TC_CORBA_InterfaceDef_1 'o'
+#define TC_IMPL_TC_CORBA_InterfaceDef_2 'r'
+#define TC_IMPL_TC_CORBA_InterfaceDef_3 'b'
+#define TC_IMPL_TC_CORBA_InterfaceDef_4 'a'
+#define TC_IMPL_TC_CORBA_InterfaceDef_5 '_'
+#define TC_IMPL_TC_CORBA_InterfaceDef_6 'd'
+#define TC_IMPL_TC_CORBA_InterfaceDef_7 'e'
+#define TC_IMPL_TC_CORBA_InterfaceDef_8 'f'
+#define TC_IMPL_TC_CORBA_InterfaceDef_9 's'
+   extern const struct CORBA_TypeCode_struct TC_CORBA_InterfaceDef_struct;
+#define TC_CORBA_InterfaceDef ((CORBA_TypeCode)&TC_CORBA_InterfaceDef_struct)
+#endif
+#endif
+
 struct CORBA_ORB_type {
 	struct ORBit_RootObject_struct  root_object;
 	GIOPVersion                     default_giop_version;
