@@ -1,3 +1,8 @@
+2001-07-13  Peter Williams  <peterw@ximian.com>
+
+	* configure.in (ACLOCAL): Preserve ACLOCAL_FLAGS in
+	ACLOCAL.
+
 2001-07-14  Martin Baulig  <baulig@suse.de>
 
 	* ORBit-2.0.pc.in (orbit_idl): New variable.
