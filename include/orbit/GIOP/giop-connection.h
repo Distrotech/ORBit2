@@ -24,8 +24,10 @@ G_BEGIN_DECLS
 struct _GIOPConnection {
 	LINCConnection  parent;
 
-	GIOPRecvBuffer *incoming_msg;
 	GMutex         *incoming_mutex;
+	GIOPRecvBuffer *incoming_msg;
+	GList          *incoming_frags;
+
 	GMutex         *outgoing_mutex;
 
 	GIOPVersion     giop_version;
@@ -37,18 +39,19 @@ typedef struct {
 	LINCConnectionClass parent_class;
 } GIOPConnectionClass;
 
-GType giop_connection_get_type (void) G_GNUC_CONST;
-
-GIOPConnection *giop_connection_initiate(const char *proto_name,
-					 const char *remote_host_info,
-					 const char *remote_serv_info,
-					 LINCConnectionOptions options,
-					 GIOPVersion giop_version);
-void giop_connection_remove_by_orb (gpointer        match_orb_data);
-void giop_connection_close         (GIOPConnection *cnx);
-void giop_connection_unref         (GIOPConnection *cnx);
+GType           giop_connection_get_type      (void) G_GNUC_CONST;
+GIOPConnection *giop_connection_initiate      (const char           *proto_name,
+					       const char           *remote_host_info,
+					       const char           *remote_serv_info,
+					       LINCConnectionOptions options,
+					       GIOPVersion           giop_version);
+void            giop_connection_remove_by_orb (gpointer              match_orb_data);
+void            giop_connection_close         (GIOPConnection       *cnx);
+void            giop_connection_unref         (GIOPConnection       *cnx);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 G_END_DECLS
 
