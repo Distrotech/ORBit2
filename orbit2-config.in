@@ -19,6 +19,12 @@ Known values for OPTION are:
   --help		display this help and exit
   --version		output version information
 
+  --use-service=SRVC    the service SRVC will be used
+  
+Known values for SRVC are:
+    
+    name                module CosNaming, interfaces LNameComponent, LName
+
 Known values for TARGET are:
 
     client		(calls glib-config)
@@ -84,6 +90,18 @@ while test $# -gt 0; do
 	the_flags="$the_flags `glib-config --cflags` -I@includedir@"
 	;;
 
+   --use-service=*)
+	case $optarg in
+	    name)
+		services="$services -lORBitname"
+		;;
+	    *)
+		usage
+		exit 1
+		;;
+	esac
+	;;
+
     *)
 	usage
 	exit 1
@@ -97,7 +115,7 @@ if $cflags; then
 fi
 
 if $libs; then
-    all_flags="$all_flags $the_libs"
+    all_flags="$all_flags $services $the_libs"
 fi
 
 if test -z "$all_flags" || test "x$all_flags" = "x "; then
