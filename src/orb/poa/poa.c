@@ -1169,7 +1169,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		}
 
 	LINC_MUTEX_LOCK (poa->orb->lock);
-	g_assert ((ORBit_POAObject)poa->orb->current_invocations->data == pobj);
+/*	g_assert ((ORBit_POAObject)poa->orb->current_invocations->data == pobj); */
 	poa->orb->current_invocations =
 		g_slist_remove (poa->orb->current_invocations, pobj);
 	LINC_MUTEX_UNLOCK (poa->orb->lock);

@@ -1,3 +1,10 @@
+2003-05-12  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):
+	bin current_invocations->data assertion; we can get
+	here without pushing the current invocation; was
+	hurting libbonoboui.
+
 2003-05-12  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* MAINTAINERS: Declare myself as documentation maintainer.
