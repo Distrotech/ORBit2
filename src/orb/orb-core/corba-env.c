@@ -73,17 +73,19 @@ CORBA_exception_init(CORBA_Environment *ev)
 }
 
 void
-CORBA_exception_free(CORBA_Environment *ev)
+CORBA_exception_free (CORBA_Environment *ev)
 {
-  if(ev->_major != CORBA_NO_EXCEPTION)
-    {
-      CORBA_free(ev->_id);
-      ev->_major = CORBA_NO_EXCEPTION;
-      CORBA_any__freekids(&ev->_any, NULL);
-      ev->_any._type = NULL;
-      ev->_any._value = NULL;
-      ev->_any._release = CORBA_FALSE;
-    }
+	if (ev->_major != CORBA_NO_EXCEPTION) {
+		ev->_major = CORBA_NO_EXCEPTION;
+
+		CORBA_free (ev->_id);
+		ev->_id = NULL;
+
+		CORBA_any__freekids (&ev->_any, NULL);
+		ev->_any._type = NULL;
+		ev->_any._value = NULL;
+		ev->_any._release = CORBA_FALSE;
+	}
 }
 
 CORBA_any *

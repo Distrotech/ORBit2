@@ -172,13 +172,16 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 	} else
 		my_repoid = NULL;
 
-	dprintf ("Received exception '%s'\n", my_repoid ? my_repoid : "<Null>");
-
 	reply_status = giop_recv_buffer_reply_status (rb);
+
+	dprintf ("Received exception %d: '%s'\n",
+		 reply_status, my_repoid ? my_repoid : "<Null>");
 
 	if (reply_status == CORBA_SYSTEM_EXCEPTION) {
 		CORBA_unsigned_long minor;
 
+		dprintf ("system exception\n");
+		
 		ev->_major = CORBA_SYSTEM_EXCEPTION;
 
 		rb->cur = ALIGN_ADDRESS (rb->cur, sizeof (minor));
@@ -198,30 +201,44 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 			completion_status = GUINT32_SWAP_LE_BE (completion_status);
 
 		new = CORBA_SystemException__alloc ();
-		new->minor=minor;
-		new->completed=completion_status;
+		new->minor = minor;
+		new->completed = completion_status;
 			
 		/* FIXME: check what should the repo ID be? */
 		CORBA_exception_set (ev, CORBA_SYSTEM_EXCEPTION,
 				     my_repoid, new);
+
+		dprintf ("system exception de-marshaled\n");
+		return;
+
 	} else if (reply_status == CORBA_USER_EXCEPTION) {
 		int i;
 
+		dprintf ("user exception\n");
+
 		for (i = 0; i < types->_length; i++) {
-			if(!strcmp (types->_buffer[i]->repo_id, my_repoid))
+			if (!strcmp (types->_buffer[i]->repo_id, my_repoid))
 				break;
 		}
 
-		if (!types) /* weirdness; they raised an exception that we don't
-			       know about */
-			CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
-						   CORBA_COMPLETED_MAYBE);
-		else {
-			gpointer data = ORBit_demarshal_arg (
+		if (!types || types->_length == 0) {
+			/* weirdness; they raised an exception that we don't
+			   know about */
+			CORBA_exception_set_system (
+				ev, ex_CORBA_MARSHAL,
+				CORBA_COMPLETED_MAYBE);
+		} else {
+			gpointer data;
+			
+			dprintf ("de-marshal user exception\n");
+
+			data = ORBit_demarshal_arg (
 				rb, types->_buffer [i], TRUE, orb);
+
 			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 					     types->_buffer [i]->repo_id, data);
 		}
+		return;
 	}
 	return;
   
@@ -231,9 +248,9 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 				    CORBA_COMPLETED_MAYBE);
 }
 
-void
-ORBit_small_send_user_exception (GIOPSendBuffer *send_buffer,
-				 CORBA_Environment *ev,
+static gboolean
+ORBit_small_send_user_exception (GIOPSendBuffer     *send_buffer,
+				 CORBA_Environment  *ev,
 				 const ORBit_ITypes *types)
 {
 	int i;
@@ -244,16 +261,17 @@ ORBit_small_send_user_exception (GIOPSendBuffer *send_buffer,
 	}
 
 	if (i >= types->_length) {
-		CORBA_Environment fakeev;
-
 		g_warning ("Some clown returned undeclared "
 			   "exception '%s' ", ev->_id);
 
-		CORBA_exception_init (&fakeev);
-		CORBA_exception_set_system (&fakeev, ex_CORBA_UNKNOWN,
-					    CORBA_COMPLETED_MAYBE);
-		ORBit_send_system_exception (send_buffer, &fakeev);
-		CORBA_exception_free (&fakeev);
+		CORBA_exception_free (ev);
+		CORBA_exception_set_system (
+			ev, ex_CORBA_UNKNOWN,
+			CORBA_COMPLETED_MAYBE);
+
+		giop_send_buffer_unuse (send_buffer);
+
+		return FALSE;
 	} else {
 		CORBA_unsigned_long len = strlen (ev->_id) + 1;
 
@@ -264,6 +282,8 @@ ORBit_small_send_user_exception (GIOPSendBuffer *send_buffer,
 
 		ORBit_marshal_arg (send_buffer, ev->_any._value,
 				   types->_buffer[i]);
+
+		return TRUE;
 	}
 }
 
@@ -463,7 +483,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 	giop_dump_recv (recv_buffer);
 
 	if (giop_recv_buffer_reply_status (recv_buffer) != GIOP_NO_EXCEPTION)
-		goto msg_exception;
+ 		goto msg_exception;
 
 	dprintf ("Demarshal ");
 
@@ -825,6 +845,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	if (has_context)
 		ORBit_Context_server_free (&ctx);
 
+ sys_exception:
 	send_buffer = giop_send_buffer_use_reply (
 		recv_buffer->connection->giop_version,
 		giop_recv_buffer_get_request_id (recv_buffer),
@@ -835,8 +856,14 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		return;
 
 	} else if (ev->_major == CORBA_USER_EXCEPTION) {
-		ORBit_small_send_user_exception (
-			send_buffer, ev, &m_data->exceptions);
+		if (!ORBit_small_send_user_exception (
+			send_buffer, ev, &m_data->exceptions)) {
+			/* Tried to marshal an unknown exception,
+			   so we throw a system exception next */
+			dprintf ("Re-sending an exception, this time %d: '%s'",
+				 ev->_major, ev->_id);
+			goto sys_exception;
+		}
 
 	} else if (ev->_major != CORBA_NO_EXCEPTION)
 		ORBit_send_system_exception (send_buffer, ev);
@@ -1024,6 +1051,13 @@ ORBit_small_get_type_id (CORBA_Object       object,
 	}
 }
 
+static ORBit_IInterface *
+shallow_copy_iinterface (const ORBit_IInterface *idata)
+{
+	/* FIXME: we deep copy for now - we should speed this up */
+	return ORBit_copy_value (idata, TC_ORBit_IInterface);
+}
+
 ORBit_IInterface *
 ORBit_small_get_iinterface (CORBA_Object       opt_object,
 			    const CORBA_char  *type_id,
@@ -1033,7 +1067,7 @@ ORBit_small_get_iinterface (CORBA_Object       opt_object,
 	PortableServer_ClassInfo *ci;
 
 	if ((ci = ORBit_classinfo_lookup (type_id))) {
-		retval = ci->idata;
+		retval = shallow_copy_iinterface (ci->idata);
 
 	} else if (opt_object) {
 		/* FIXME: first walk the object's data,

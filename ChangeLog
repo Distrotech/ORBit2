@@ -1,3 +1,25 @@
+2001-07-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (shallow_copy_iinterface): impl.
+	(ORBit_small_get_iinterface): use it.
+
+	* src/orb/orb-core/corba-object.c: update to mention exceptions
+	we fire on get_iinterface.
+
+	* src/orb/orb-core/corba-env.c (CORBA_exception_free): NULL
+	the exception id after freeing it, so we don't double free: doh !
+
+	* src/orb/orb-core/orbit-small.c (ORBit_handle_exception_array): 
+	robustify the 'fired an unknown exception' case.
+	(ORBit_small_send_user_exception): don't use a fakeev - use
+	the real one, since the exception type is grokked elsewhere,
+	return a boolean to indicate a re-marshal of a sys exception,
+	and free the send_buffer.
+	(ORBit_small_invoke_poa): upd to loopback on exception.
+
+	* test/everything/client.c (testIInterface): update tests
+	to go over the wire.
+
 2001-07-24  Martin Baulig  <baulig@suse.de>
 
 	The IDL compiler now creates a -imodule.c file which
