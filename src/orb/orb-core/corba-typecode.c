@@ -261,7 +261,7 @@ static void tc_enc(CORBA_TypeCode tc,
       break;
 
     case TK_COMPLEX:
-      tmp_index=ctx->current_idx;
+      tmp_index = ctx->current_idx;
       ctx->current_idx += get_wptr(c) + 4; /* +4 for the length */
 
       giop_send_buffer_align(c, sizeof(num));
@@ -459,7 +459,7 @@ CDR_get(GIOPRecvBuffer *buf, guchar *ptr, guint len, gboolean align)
 #define CDR_get_wchar(x, y) _CDR_get(x, y)
 
 static gboolean
-CDR_get_const_string(GIOPRecvBuffer *buf, guchar **ptr)
+CDR_get_const_string(GIOPRecvBuffer *buf, const guchar **ptr)
 {
   CORBA_unsigned_long len;
 
@@ -512,11 +512,6 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
       g_assert_not_reached();
     }
 
-#if 0
-  ORBit_debug(ORBIT_LOG_DOMAIN_TC, "codec->host_endian: %d, codec->data_endian: %d\n", c->host_endian, c->data_endian);
-  ORBit_debug(ORBIT_LOG_DOMAIN_TC, "kind: %d, CORBA_tk_last: %d\n", kind, CORBA_tk_last);
-#endif
-  
   g_assert(kind<CORBA_tk_last);
 
   node = g_new(TCRecursionNode, 1);

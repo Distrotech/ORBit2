@@ -488,23 +488,33 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 {
   char *ctmp, *fullname, *fullname_def, *ctmp2;
   IDL_tree tts;
-  gboolean separate_defs;
+  gboolean separate_defs, fake_if, fake_native;
 
   tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   ctmp2 = orbit_cbe_get_typespec_str(tts);
-  separate_defs = strcmp(ctmp, ctmp2)?TRUE:FALSE;
+  fake_if = (IDL_NODE_TYPE(tts) == IDLN_INTERFACE);
+  fake_native = (IDL_NODE_TYPE(tts) == IDLN_NATIVE);
+  if(fake_if)
+    {
+      g_free(ctmp2);
+      ctmp2 = g_strdup("CORBA_Object");
+    }
+  separate_defs = strcmp(ctmp, ctmp2);
   fullname = orbit_cbe_get_typespec_str(tree);
 
   if(separate_defs)
     {
       IDL_tree fake_seq;
 
+      if(fake_if)
+	tts = IDL_type_object_new();
       fake_seq = IDL_type_sequence_new(tts, NULL);
       IDL_NODE_UP(fake_seq) = IDL_NODE_UP(tree);
       ch_prep_sequence(fake_seq, ci);
       fullname_def = g_strdup_printf("CORBA_sequence_%s", ctmp2);
-      IDL_TYPE_SEQUENCE(fake_seq).simple_type_spec = NULL;
+      if(!fake_if)
+	IDL_TYPE_SEQUENCE(fake_seq).simple_type_spec = NULL;
       IDL_tree_free(fake_seq);
     }
   else

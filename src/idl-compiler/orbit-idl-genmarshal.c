@@ -255,6 +255,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent,
     break;
   case IDLN_TYPE_FLOAT:
     retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi);
+    retval->u.datum_info.needs_bswap = TRUE;
     switch(IDL_TYPE_FLOAT(tree).f_type) {
     case IDL_FLOAT_TYPE_FLOAT:
       retval->u.datum_info.datum_size = sizeof(CORBA_float);

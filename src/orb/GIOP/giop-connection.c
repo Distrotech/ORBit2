@@ -1,6 +1,7 @@
 #include "config.h"
 #include <orbit/GIOP/giop.h>
 #include <string.h>
+#include <unistd.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
 static void giop_connection_destroy    (GObject             *obj);

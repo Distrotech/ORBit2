@@ -379,10 +379,9 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 static void
 cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
 {
-#if 0
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_TYPE_SEQUENCE:
-    cc_alloc_prep_sequence(tree, ci);
+    cc_alloc_prep_sequence(tree, NULL, ci);
     break;
   case IDLN_EXCEPT_DCL:
   case IDLN_TYPE_STRUCT:
@@ -420,7 +419,6 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
   default:
     break;
   }
-#endif
 }
 
 /**
@@ -440,7 +438,10 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   ctmp = orbit_cbe_get_typespec_str(tree);
   ctmp2 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
 #endif
-  ctmp3 = orbit_cbe_get_typespec_str(tts);
+  if(IDL_NODE_TYPE(tts) == IDLN_INTERFACE)
+    ctmp3 = "CORBA_Object";
+  else
+    ctmp3 = orbit_cbe_get_typespec_str(tts);
   ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp3);
   ctmp2 = g_strdup(ctmp3);
 

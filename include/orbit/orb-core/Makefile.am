@@ -15,10 +15,20 @@ orbcoreinclude_HEADERS= \
 	orbit-object.h			\
 	corba-defs.h			\
 	corba-context.h			\
-	corba-context-type.h
+	corba-context-type.h		\
+	iop-defs.h			\
+	corba-object.h			\
+	corba-policy-type.h		\
+	corba-string.h			\
+	corba-environment.h		\
+	corba-any.h			\
+	orb-core-types.h		\
+	corba-typecode.h		\
+	allocators.h			\
+	corba-any-type.h
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-IDLOUT = corba-defs.h
+IDLOUT = corba-defs.h iop-defs.h
 
 $(IDLOUT) runidl: $(top_srcdir)/src/orb/orb-core/corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null

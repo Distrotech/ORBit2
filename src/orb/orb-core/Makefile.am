@@ -7,7 +7,7 @@ INCLUDES=-I. -I$(srcdir) \
 	@GLIB_CFLAGS@ \
 	@LINC_CFLAGS@
 
-liborb_core_la_SOURCES=\
+liborb_core_la_SOURCES= \
 	$(IOP_IDLOUT) \
 	$(IDLOUT) \
 	$(OPS_IDLOUT) \
@@ -33,7 +33,9 @@ IDLOUT=corba-defs-common.c
 IOP_IDLOUT=iop-defs-common.c
 OPS_IDLOUT=corba-ops-stubs.c corba-ops-common.c corba-ops.h corba-ops-skels.c
 
-$(IDLOUT) runidl: corba-defs.idl $(IDL)
+$(IDLOUT): runidl
+
+runidl: corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
 	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
 	--noskels --nodefskels --nostubs \
@@ -41,10 +43,13 @@ $(IDLOUT) runidl: corba-defs.idl $(IDL)
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl
 	for I in $(IDLOUT) corba-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
-	mv $$I.out $$I; done
-	mv -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h
+	mv $$I.out $$I; done; \
+	mv -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h; \
+	touch runidl
 
-$(IOP_IDLOUT) runidl_iop: iop-defs.idl $(IDL)
+$(IOP_IDLOUT): runidl_iop
+
+runidl_iop: iop-defs.idl $(IDL)
 	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
 	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
@@ -55,17 +60,22 @@ $(IOP_IDLOUT) runidl_iop: iop-defs.idl $(IDL)
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/iop-defs.idl
 	for I in $(IOP_IDLOUT) iop-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
-	mv $$I.out $$I; done
-	mv -f iop-defs.h $(top_builddir)/include/orbit/orb-core/iop-defs.h
+	mv $$I.out $$I; done; \
+	mv -f iop-defs.h $(top_builddir)/include/orbit/orb-core/iop-defs.h; \
+	touch runidl_iop
 
-$(OPS_IDLOUT) runidl_ops: corba-ops.idl $(IDL)
-	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
+$(OPS_IDLOUT): runidl_ops
+
+runidl_ops: corba-ops.idl $(IDL)
+	-(rm -f $(OPS_IDLOUT) || true) > /dev/null
 	$(IDL) \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
 	for I in $(OPS_IDLOUT); do \
 		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I; \
-	done
-	sed -e "s,Z,_,g" corba-ops-skels.c > corba-ops-skels.c.out
-	mv corba-ops-skels.c.out corba-ops-skels.c
+	done; \
+	sed -e "s,Z,_,g" corba-ops-skels.c > corba-ops-skels.c.out; \
+	mv corba-ops-skels.c.out corba-ops-skels.c; \
+	touch runidl_ops
 
 BUILT_SOURCES=$(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)
+CLEANFILES=$(BUILT_SOURCES) runidl_ops runidl_iop runidl

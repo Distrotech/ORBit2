@@ -12,7 +12,8 @@ struct PortableServer_POAManager_type {
 struct PortableServer_POA_type {
   struct ORBit_RootObject_struct parent;
 
-  guint life_flags;
+  guint16 use_cnt;
+  guint16 life_flags;
   int poaID;
   int next_sysid;
   PortableServer_ObjectId poa_key; /* poaID + rand_data */

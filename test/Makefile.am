@@ -29,17 +29,24 @@ $(srcdir)/test1.c: test1.h
 ior_decode_SOURCES=ior-decode.c
 ior_decode_LDADD=$(top_builddir)/src/orb/libORBit.la
 
-$(ECHO_IDLOUT): echo.idl $(IDL)
+$(ECHO_IDLOUT): echo_built
+
+echo_built: echo.idl $(IDL)
 	$(IDL) --showcpperrors $(srcdir)/echo.idl
 	touch echo_built
 
-$(EMPTY_IDLOUT): empty.idl $(IDL)
+$(EMPTY_IDLOUT): empty_built
+empty_built: empty.idl $(IDL)
 	$(IDL) --showcpperrors $(srcdir)/empty.idl
 	touch empty_built
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-$(IDLOUT): test1.idl $(IDL)
+$(IDLOUT): test1_built
+
+test1_built: test1.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
 	$(IDL) --showcpperrors $(srcdir)/test1.idl
+	touch test1_built
 
-CLEANFILES=echo_built empty_built
+BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT)
+CLEANFILES=echo_built empty_built test1_built $(BUILT_SOURCES)

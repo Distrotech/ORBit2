@@ -187,15 +187,20 @@ ORBit_handle_exception(GIOPRecvBuffer *rb, CORBA_Environment *ev,
 			     CORBA_COMPLETED_MAYBE);
 }
 
-GIOPConnection *
-ORBit_handle_location_forward(GIOPRecvBuffer *buf,
-			      CORBA_Object obj)
-{
-  return NULL;
-}
-
 void
 ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev)
 {
+  CORBA_unsigned_long len;
+  CORBA_SystemException *se = ev->_any._value;
+
   g_assert(ev->_major == CORBA_SYSTEM_EXCEPTION);
+
+  len = strlen(ev->_id) + 1;
+  giop_send_buffer_align(buf, sizeof(len));
+  giop_send_buffer_append_indirect(buf, &len, sizeof(len));
+  giop_send_buffer_append(buf, ev->_id, len);
+  
+  giop_send_buffer_align(buf, sizeof(se->minor));
+  giop_send_buffer_append(buf, &se->minor, sizeof(se->minor));
+  giop_send_buffer_append_indirect(buf, &se->completed, sizeof(se->completed));
 }
