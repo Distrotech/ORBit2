@@ -179,13 +179,17 @@ void IDLIteratingPass::doDefinitionList(IDL_tree list,IDLScope &scope) {
 			break;
 		case IDLN_SRCFILE:
 		        //Do nothing - otherwise we'd throw an unxpected node exception.
-		        //What does IDLN_SRCFILE actually mean? We seem to get it as the first node, so maybe it's like a root node..
+		        //What does IDLN_SRCFILE actually mean? We seem to get it as the first node, so maybe it's like a root node.
 		        //murrayc.
 		        break;
-
-			ORBITCPP_DEFAULT_CASE(IDL_LIST(list).data)
+		case IDLN_CODEFRAG:
+		        //Ignore this unless we think of some need for it. murrayc.
+			break;
+		ORBITCPP_DEFAULT_CASE(IDL_LIST(list).data)
 		}
+
 		list = IDL_LIST(list).next;
 	}
+
 	enumHook(list,scope);
 }
