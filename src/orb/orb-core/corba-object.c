@@ -366,50 +366,75 @@ CORBA_Object_non_existent(CORBA_Object _obj,
   return ORBit_object_get_connection(_obj)?CORBA_FALSE:CORBA_TRUE;
 }
 
+static inline gboolean
+IOP_ObjectKey_equal(IOP_ObjectKey_info *a, IOP_ObjectKey_info *b)
+{
+	if (a->object_key._length !=
+	    b->object_key._length)
+		return FALSE;
+	if (memcmp (a->object_key._buffer,
+		    b->object_key._buffer,
+		    a->object_key._length))
+		return FALSE;
+	return TRUE;
+}
+
 static gboolean
 IOP_Profile_equal(gpointer d1, gpointer d2)
 {
-  IOP_TAG_INTERNET_IOP_info *iiop1, *iiop2;
-  IOP_TAG_GENERIC_IOP_info *giop1, *giop2;
-  IOP_ProfileId t1, t2;
+	IOP_ProfileId t1, t2;
 
-  t1 = ((IOP_Profile_info *)d1)->profile_type;
-  t2 = ((IOP_Profile_info *)d2)->profile_type;
-  if(t1 != t2)
-    return FALSE;
+	t1 = ((IOP_Profile_info *)d1)->profile_type;
+	t2 = ((IOP_Profile_info *)d2)->profile_type;
 
-  switch(t1)
-    {
-    case IOP_TAG_INTERNET_IOP:
-      iiop1 = d1; iiop2 = d2;
-      if(iiop1->oki->object_key._length != iiop2->oki->object_key._length)
-	return FALSE;
-      if(iiop1->port != iiop2->port)
-	return FALSE;
-      if(memcmp(iiop1->oki->object_key._buffer,
-		iiop2->oki->object_key._buffer,
-		iiop1->oki->object_key._length))
-	return FALSE;
-      break;
-    case IOP_TAG_GENERIC_IOP:
-      giop1 = d1; giop2 = d2;
-      if(strcmp(giop1->proto, giop2->proto))
-	return FALSE;
-      if(strcmp(giop1->host, giop2->host))
-	return FALSE;
-      if(strcmp(giop1->service, giop2->service))
-	return FALSE;
-      if(memcmp(iiop1->oki->object_key._buffer,
-		iiop2->oki->object_key._buffer,
-		iiop1->oki->object_key._length))
-	return FALSE;
-      break;
-    default:
-      return FALSE;
-      break;
-    }
+	if(t1 != t2)
+		return FALSE;
 
-  return TRUE;
+	switch (t1) {
+	case IOP_TAG_INTERNET_IOP: {
+		IOP_TAG_INTERNET_IOP_info *iiop1 = d1;
+		IOP_TAG_INTERNET_IOP_info *iiop2 = d2;
+
+		if (iiop1->port != iiop2->port)
+			return FALSE;
+		if (!IOP_ObjectKey_equal (iiop1->oki, iiop2->oki))
+			return FALSE;
+		if (strcmp (iiop1->host, iiop2->host))
+			return FALSE;
+		break;
+	}
+
+	case IOP_TAG_GENERIC_IOP: {
+		IOP_TAG_GENERIC_IOP_info *giop1 = d1;
+		IOP_TAG_GENERIC_IOP_info *giop2 = d2;
+
+		if (strcmp (giop1->proto, giop2->proto))
+			return FALSE;
+		if (strcmp (giop1->host, giop2->host))
+			return FALSE;
+		if (strcmp (giop1->service, giop2->service))
+			return FALSE;
+		break;
+	}
+
+	case IOP_TAG_ORBIT_SPECIFIC: {
+		IOP_TAG_ORBIT_SPECIFIC_info *os1 = d1;
+		IOP_TAG_ORBIT_SPECIFIC_info *os2 = d2;
+
+		if (os1->ipv6_port != os2->ipv6_port)
+			return FALSE;
+		if (!IOP_ObjectKey_equal (os1->oki, os2->oki))
+			return FALSE;
+		if (strcmp (os1->unix_sock_path, os2->unix_sock_path))
+			return FALSE;
+		break;
+	}
+	default:
+		return FALSE;
+		break;
+	}
+
+	return TRUE;
 }
 
 static gboolean
@@ -1073,7 +1098,7 @@ IOP_TAG_ORBIT_SPECIFIC_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
 
   retval = g_new(IOP_TAG_ORBIT_SPECIFIC_info, 1);
   retval->parent.profile_type = p;
-  retval->unix_sock_path = g_malloc(len-1);
+  retval->unix_sock_path = g_malloc(len);
   memcpy(retval->unix_sock_path, buf->cur, len);
   buf->cur += len;
   buf->cur = ALIGN_ADDRESS(buf->cur, 2);
@@ -1108,7 +1133,6 @@ IOP_TAG_ORBIT_SPECIFIC_free (IOP_Profile_info *p)
 
   g_free(info->oki);
   g_free(info->unix_sock_path);
-  g_free(info);
 }
 
 static IOP_Profile_info *

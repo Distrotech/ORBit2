@@ -71,7 +71,7 @@ CORBA_Context_new(CORBA_Context parent, const char *name, CORBA_Environment *ev)
   if(parent)
     parent->children = g_slist_prepend(parent->children, retval);
 
-  return CORBA_Object_duplicate ((CORBA_Object) retval, ev);
+  return (CORBA_Context) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
 }
 
 void
@@ -218,8 +218,6 @@ CORBA_Context_get_values(CORBA_Context ctx,
 {
   char *ctmp;
   int wc_pos;
-
-  CORBA_ORB_create_list(CORBA_OBJECT_NIL, 0, values, ev);
 
   if(start_scope && *start_scope)
     {

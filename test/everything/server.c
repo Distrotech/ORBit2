@@ -169,6 +169,8 @@ create_object (PortableServer_POA poa,
 	g_assert (ORBIT_STUB_GetServant (object) == servant);
 	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
 
+	CORBA_free (objid);
+
 	return object;
 }
 
@@ -288,6 +290,8 @@ create_TestFactory (PortableServer_POA        poa,
 
 	g_assert (ORBIT_STUB_GetServant (object) == servant);
 	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
+
+	CORBA_free (objid);
 
 	return object;
 }

@@ -1,5 +1,30 @@
 2001-05-18  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-object.c
+	(IOP_TAG_ORBIT_SPECIFIC_demarshal): allocate the correct
+	buffer size for the sock_path.
+	(IOP_Profile_equal): fix bug in GIOP compare, and compare
+	on host for IOP, impl for ORBIT_SPECIFIC and re-order to
+	accelerate.
+	(IOP_ObjectKey_equal): split out.
+	(IOP_TAG_ORBIT_SPECIFIC_free): don't double free the profile
+	itself.
+
+	* src/orb/poa/poa.c (ORBit_POA_oid_to_ref): put the osi
+	profile on the profile list, and do this later, to ensure
+	that the ORBit specific profile is later than the GIOP
+	profile.
+
+	* test/everything/server.c (create_object): free the object id...
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_poa): fix misc.
+	leaks.
+
+	* src/orb/orb-core/corba-context.c (CORBA_Context_get_values): remove
+	redundant call to create_list.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop-server.c (giop_server_handle_new_connection): impl.
 	(giop_server_class_init): hook it up.
 

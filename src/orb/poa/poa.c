@@ -1007,22 +1007,6 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
     {
       LINCServer *serv = ltmp->data;
 
-      if(!osi
-	 && (!strcmp(serv->proto->name, "UNIX")
-	     || (!strcmp(serv->proto->name, "IPv6")
-		 && !(serv->create_options & LINC_CONNECTION_SSL))))
-	{
-	  osi = g_new0(IOP_TAG_ORBIT_SPECIFIC_info, 1);
-	  osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
-	  osi->oki = IOP_ObjectKey_copy(oki);
-	}
-      if(!strcmp(serv->proto->name, "UNIX")
-	 && !osi->unix_sock_path)
-	osi->unix_sock_path = g_strdup(serv->local_serv_info);
-      else if(!strcmp(serv->proto->name, "IPv6")
-	      && !(serv->create_options & LINC_CONNECTION_SSL))
-	osi->ipv6_port = atoi(serv->local_serv_info);
-
       if(!strcmp(serv->proto->name, "IPv4"))
 	{
 	  if(!iiop)
@@ -1091,6 +1075,23 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 	    }
 	  need_objkey_component = TRUE;
 	}
+
+      if(!osi
+	 && (!strcmp(serv->proto->name, "UNIX")
+	     || (!strcmp(serv->proto->name, "IPv6")
+		 && !(serv->create_options & LINC_CONNECTION_SSL))))
+	{
+	  osi = g_new0(IOP_TAG_ORBIT_SPECIFIC_info, 1);
+	  osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
+	  osi->oki = IOP_ObjectKey_copy(oki);
+	  profiles = g_slist_append(profiles, osi);
+	}
+      if(!strcmp(serv->proto->name, "UNIX")
+	 && !osi->unix_sock_path)
+	osi->unix_sock_path = g_strdup(serv->local_serv_info);
+      else if(!strcmp(serv->proto->name, "IPv6")
+	      && !(serv->create_options & LINC_CONNECTION_SSL))
+	osi->ipv6_port = atoi(serv->local_serv_info);
     }
 
   if(need_objkey_component)
@@ -1107,6 +1108,8 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 	}
       profiles = g_slist_append(profiles, mci);
     }
+
+  /* Ensure that any ORBit specific profiles are at the end */
 
   return ORBit_objref_find(orb, intf, profiles);
 }
