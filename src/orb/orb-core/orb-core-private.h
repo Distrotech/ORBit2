@@ -47,4 +47,6 @@ gboolean ORBit_demarshal_IOR( CORBA_ORB orb, GIOPRecvBuffer *buf,
 
 char   **ORBit_get_typelib_paths (void);
 
+gboolean ORBit_proto_use (const char *name);
+
 #endif

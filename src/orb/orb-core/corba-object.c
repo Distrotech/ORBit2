@@ -175,6 +175,9 @@ ORBit_start_servers (CORBA_ORB orb)
       GIOPServer *server;
       LINCConnectionOptions options = 0;
 
+      if (!ORBit_proto_use (info->name))
+        continue;
+
 #ifndef ORBIT_THREADED
       options |= LINC_CONNECTION_NONBLOCKING;
 #endif
@@ -186,6 +189,9 @@ ORBit_start_servers (CORBA_ORB orb)
           orb->servers = g_slist_prepend(orb->servers, server);
           if(!(info->flags & LINC_PROTOCOL_SECURE))
             {
+              if (!ORBit_proto_use ("SSL"))
+                continue;
+
               server = giop_server_new(orb->default_giop_version, info->name,
                                        NULL, NULL, LINC_CONNECTION_SSL, orb);
               if(server)
