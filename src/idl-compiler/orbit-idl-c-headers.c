@@ -427,9 +427,9 @@ ch_output_codefrag(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 		sizeof("#pragma include_defs")-1)) {
 	char *ctmp, *cte;
 	ctmp = ((char *)list->data) + sizeof("#pragma include_defs");
-	while(*ctmp && (isspace(*ctmp) || *ctmp == '"')) ctmp++;
+	while(*ctmp && (isspace((int)*ctmp) || *ctmp == '"')) ctmp++;
 	cte = ctmp;
-	while(*cte && !isspace(*cte) && *cte != '"') cte++;
+	while(*cte && !isspace((int)*cte) && *cte != '"') cte++;
 	*cte = '\0';
       fprintf(ci->fh, "#include <%s>\n", ctmp);
     } else

@@ -16,7 +16,9 @@ static GMutex *giop_queued_messages_lock = NULL;
 static GList  *incoming_recv_buffer_list;
 static GMutex *incoming_recv_buffer_list_lock = NULL;
 
+#ifdef ORBIT_THREADED
 static GCond  *incoming_recv_buffer_list_condvar = NULL;
+#endif
 
 static void
 giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
@@ -633,7 +635,6 @@ giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
     {
-      G_BREAKPOINT();
       return NULL;
     }
   ptr = buf->cur;

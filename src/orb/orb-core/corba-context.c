@@ -126,11 +126,11 @@ CORBA_Context_set_values(CORBA_Context ctx,
 }
 
 typedef struct {
-  CORBA_Context ctx;
-  CORBA_Identifier prop_name;
-  CORBA_NVList values;
-  CORBA_Environment *ev;
-  int len;
+	CORBA_Context      ctx;
+	const CORBA_char  *prop_name;
+	CORBA_NVList       values;
+	CORBA_Environment *ev;
+	int                len;
 } CTXSearchInfo;
 
 static gboolean
@@ -166,10 +166,12 @@ search_props(gpointer key, gpointer value, CTXSearchInfo *csi)
 }
 
 static void
-ctx_get_values(CORBA_Context ctx, CORBA_Flags op_flags,
-	       CORBA_Identifier prop_name, CORBA_NVList *values,
-	       gint is_wc,
-	       CORBA_Environment *ev)
+ctx_get_values (CORBA_Context      ctx,
+		CORBA_Flags        op_flags,
+		const CORBA_char  *prop_name,
+		CORBA_NVList      *values,
+		gint               is_wc,
+		CORBA_Environment *ev)
 {
   gboolean go_up = FALSE;
 

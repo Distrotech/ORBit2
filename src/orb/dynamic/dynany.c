@@ -1839,7 +1839,6 @@ DynamicAny_DynStruct_get_elements_as_dyn_any (DynamicAny_DynSequence obj,
 	subtc = dynany->any->_type->subtypes [0];
 
 	for (i = 0; i < s->_length; i++) {
-		DynamicAny_DynAny newdyn;
 		DynAny *subdyn;
 		gpointer src;
 
