@@ -1,3 +1,7 @@
+2002-05-13  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.109
+
 2002-05-07  Michael Meeks  <michael@ximian.com>
 
 	* src/services/name/orbit-name-server.c

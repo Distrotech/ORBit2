@@ -1,3 +1,10 @@
+Version 2.3.109
+
+	* Bug fixes
+		+ accept NULL async callbacks (Michael)
+		+ CosNaming mess fixups (Michael)
+		+ Java interop fix (Mark)
+
 Version 2.3.108
 
 	* Bug fixes
