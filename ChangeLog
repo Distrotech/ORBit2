@@ -1,3 +1,8 @@
+2001-06-28  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/util/basic_types.h: include glib/gunicode.h,
+	we require HEAD glib.
+
 2001-06-26  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-context.c,

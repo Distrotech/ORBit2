@@ -2,7 +2,7 @@
 #define BASIC_TYPES_H 1
 
 #include <glib.h>
-#include <gunicode.h>
+#include <glib/gunicode.h>
 
 enum { CORBA_FALSE=FALSE, CORBA_TRUE=TRUE };
 typedef gint16 CORBA_short;
