@@ -1,5 +1,8 @@
 2004-05-02  Frank Rehberger  <frehberg@gnome-de.org>
 
+	* src/orb/orb-core/corba-loc.c (corbaloc_profile_iiop): reference
+	constants defined for CSSIOP
+
 	* src/orb/orb-core/iop-defs.idl: add IIOP.idl and CORBA Security
 	Ineterop. attributes in files CSI.idl and CSIIOP.idl 
 

@@ -15,17 +15,6 @@
 
 #define OMG_LOCATOR "2809"
 
-#define NO_PROTECTION                1
-#define INTEGRITY                    2
-#define CONFIDENTIALITY              4
-#define DETECT_REPLAY                8
-#define DETECT_MISORDERING          16
-#define ESTABLISH_TRUST_IN_TARGET   32
-#define ESTABLISH_TRUST_IN_CLIENT   64
-#define NO_DELEGATION              128
-#define SIMPLE_DELEGATION          256
-#define COMPOSITE_DELEGATION       512
-
 /* does not preserve @profile string, inserts '\0' as seperator,
  * @return FALSE on failure and TRUE otherwise, on success restults
  * will be assigned to @ver and @host and @port, do not _free_
@@ -198,15 +187,15 @@ corbaloc_profile_iiop (gchar           *token,
 		
 		sslsec = g_new0 (IOP_TAG_SSL_SEC_TRANS_info, 1);     
 		sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
-		sslsec->target_supports =  /* NO_PROTECTION             | */
-			                   INTEGRITY                 |
-			                   CONFIDENTIALITY           |
-                                           DETECT_REPLAY             |
-			                   DETECT_MISORDERING        |
-                                           ESTABLISH_TRUST_IN_TARGET |
-			                   ESTABLISH_TRUST_IN_CLIENT;
-		sslsec->target_requires =  INTEGRITY                 |
-			                   CONFIDENTIALITY;
+		sslsec->target_supports =  /* CSIIOP_NoProtection          | */
+			                    CSIIOP_Integrity               |
+			                   CSIIOP_Confidentiality          |
+                                           CSIIOP_DetectReplay             |
+			                   CSIIOP_DetectMisordering        |
+                                           CSIIOP_EstablishTrustInTarget   |
+			                   CSIIOP_EstablishTrustInClient;
+		sslsec->target_requires =  CSIIOP_Integrity                |
+			                   CSIIOP_Confidentiality;
 		sslsec->port = port;
 
 		iiop->components = g_slist_append (
