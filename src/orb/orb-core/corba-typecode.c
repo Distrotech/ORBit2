@@ -451,26 +451,28 @@ ORBit_TypeCode_free_fn(ORBit_RootObject obj_in)
 }
 
 static gboolean
-CDR_get(GIOPRecvBuffer *buf, guchar *ptr, guint len, gboolean align)
+CDR_get (GIOPRecvBuffer *buf,
+	 guchar         *ptr,
+	 guint           len)
 {
-  if(align)
-    buf->cur = ALIGN_ADDRESS(buf->cur, len);
-  if((buf->cur + len) > buf->end
-     || (buf->cur + len) < buf->cur)
-    return TRUE;
-  memcpy(ptr, buf->cur, len);
-  buf->cur += len;
-  return FALSE;
+	buf->cur = ALIGN_ADDRESS (buf->cur, len);
+
+	if ((buf->cur + len) > buf->end ||
+	    (buf->cur + len) < buf->cur)
+		return TRUE;
+
+	memcpy (ptr, buf->cur, len);
+	buf->cur += len;
+
+	return FALSE;
 }
 
-#define _CDR_get(x, y) CDR_get(x, (guchar *)(y), sizeof(*(y)), TRUE)
-
-#define CDR_get_ulong(x, y) _CDR_get(x, y)
-#define CDR_get_ushort(x, y) _CDR_get(x, y)
-#define CDR_get_short(x, y) _CDR_get(x, y)
-#define CDR_get_ulong_long(x, y) _CDR_get(x, y)
-#define CDR_get_octet(x, y) _CDR_get(x, y)
-#define CDR_get_wchar(x, y) _CDR_get(x, y)
+#define CDR_get_ulong(x, y)       CDR_get(x, (guchar *)y, 4)
+#define CDR_get_ushort(x, y)      CDR_get(x, (guchar *)y, 2)
+#define CDR_get_short(x, y)       CDR_get(x, (guchar *)y, 2)
+#define CDR_get_ulong_long(x, y)  CDR_get(x, (guchar *)y, 8)
+#define CDR_get_octet(x, y)       CDR_get(x, (guchar *)y, 1)
+#define CDR_get_wchar(x, y)       CDR_get(x, (guchar *)y, 2)
 
 static gboolean
 CDR_get_const_string(GIOPRecvBuffer *buf, char **ptr)
