@@ -92,6 +92,10 @@ struct _LinkConnectionPrivate {
 	 * to avoid emitting another "broken" signal.
 	 */
 	gboolean     was_disconnected;
+#ifdef CONNECTION_DEBUG
+	guint64      total_read_bytes;
+	guint64      total_written_bytes;
+#endif
 };
 
 typedef struct {
@@ -102,6 +106,7 @@ typedef struct {
 #ifdef G_OS_WIN32
 	SOCKET	      socket;
 	int	      event_mask;
+	gboolean      write_would_have_blocked;
 #endif
 	GIOCondition  condition;
 	GIOFunc       callback;
@@ -204,5 +209,10 @@ void             link_unlock                (void);
 gboolean         link_is_locked             (void);
 void             link_servers_move_io_T     (gboolean to_io_thread);
 void             link_connections_move_io_T (gboolean to_io_thread);
+
+#ifdef G_OS_WIN32
+void		 link_win32_watch_set_write_wouldblock (LinkWatch    *watch,
+							gboolean      flag);
+#endif
 
 #endif /* _LINK_PRIVATE_H */

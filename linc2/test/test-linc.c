@@ -205,8 +205,6 @@ test_broken (void)
 
 #endif
 
-#ifndef G_OS_WIN32
-
 static GIOCondition
 knobble_watch (LinkWatch *watch, GIOCondition new_cond)
 {
@@ -235,8 +233,6 @@ blocking_cb (LinkConnection *cnx,
 	     gpointer        user_data)
 {
 	BlockingData *bd = user_data;
-
-	fprintf (stderr, "blocking_cb\n");
 
 	if (bd->status < 3)
 		fprintf (stderr, " buffer %ld\n", buffer_size);
@@ -366,8 +362,6 @@ test_blocking (void)
 
 	link_write_options_free (options);
 }
-
-#endif
 
 static void
 test_local_ipv4 (void)
@@ -562,9 +556,7 @@ main (int argc, char **argv)
 #ifdef HAVE_SYS_WAIT_H
 	test_broken ();
 #endif
-#ifndef G_OS_WIN32
 	test_blocking ();
-#endif
 	test_local ();
 	test_host ();
 
