@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <libIDL/IDL.h>
+#include <ORBitutil/basic_types.h>
+#define _ORBIT_H_	/* kludge - we only want ORBIT_SERIAL */
+#include <orb/orbit.h>
 
 typedef struct {
   char *cpp_args;
@@ -49,14 +52,17 @@ typedef struct _OIDL_Marshal_Node OIDL_Marshal_Node;
 typedef enum { MARSHAL_DATUM, MARSHAL_LOOP, MARSHAL_SWITCH,
 	       MARSHAL_COMPLEX, MARSHAL_UPDATE, MARSHAL_CONST, MARSHAL_SET,
 	       MARSHAL_ALLOCATE } OIDL_Marshal_Node_Type;
+
 typedef enum {
-  MN_POINTER_VAR,
-  MN_INOUT /* Needs freeing before alloc */
+  MN_POINTER_VAR = 1<<0,
+  MN_INOUT = 1<<1, /* Needs freeing before alloc */
+  MN_NSROOT = 1<<2, /* Don't go to parents for variable naming */
+  MN_NEED_TMPVAR = 1<<3, /* Need a temporary variable to hold this value */
+  MN_NOMARSHAL = 1<<4 /* This is used by other vars, but not actually marshalled */
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {
   OIDL_Marshal_Node *up;
-  int nrefs;
   char *name;
   IDL_tree tree;
   OIDL_Marshal_Node_Type type;
@@ -113,12 +119,19 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang);
 OIDL_Marshal_Node *orbit_idl_marshal_populate_in(IDL_tree tree);
 OIDL_Marshal_Node *orbit_idl_marshal_populate_out(IDL_tree tree);
 gboolean orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node);
+void orbit_idl_tmpvars_assign(OIDL_Marshal_Node *top, int *counter);
 
 /* passes */
 void orbit_idl_do_passes(IDL_tree tree);
 
 /* Utils */
 void orbit_idl_attr_fake_ops(IDL_tree attr);
+void oidl_marshal_tree_dump(IDL_tree tree, int indent_level);
+void oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level);
+void orbit_idl_print_node(IDL_tree node, int indent_level);
+IDL_tree orbit_idl_get_array_type(IDL_tree tree);
+char *orbit_idl_member_get_name(IDL_tree tree);
+void orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data);
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
 
