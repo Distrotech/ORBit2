@@ -1,5 +1,14 @@
 2001-10-13  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_demarshal_async): fix brokenness.
+
+	* test/everything/client.c (test_BasicServer_opStringA_cb),
+	(test_BasicServer_opStringA): impl async method with ret.
+	(testAsync): upd.
+
+2001-10-13  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop-recv-buffer.c: lots of debugging
 	instrumentation.
 

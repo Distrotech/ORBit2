@@ -1042,6 +1042,51 @@ test_BasicServer_opExceptionA (CORBA_Object       obj,
 		NULL, NULL, NULL, ev);
 }
 
+static void
+test_BasicServer_opStringA_cb (CORBA_Object          object,
+			       ORBit_IMethod        *m_data,
+			       ORBitAsyncQueueEntry *aqe,
+			       gpointer              user_data, 
+			       CORBA_Environment    *ev)
+{
+	CORBA_char  *inout_str = NULL, *out_str, *ret_str;
+	CORBA_char **out_str_shim = &out_str;
+
+	gpointer args[] = { NULL, &inout_str, &out_str_shim };
+	gpointer ret    = &ret_str;
+
+	/* Not a broken connection */
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	ORBit_small_demarshal_async (aqe, ret, args, ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  
+	g_assert (!strcmp (inout_str, constants_STRING_INOUT_OUT));
+	g_assert (!strcmp (out_str, constants_STRING_OUT));
+	g_assert (!strcmp (ret_str, constants_STRING_RETN));
+
+	done = 1;
+}
+
+static void
+test_BasicServer_opStringA (CORBA_Object       obj,
+			    const CORBA_char  *in_str,
+			    const CORBA_char  *inout_str,
+			    CORBA_Environment *ev)
+{
+	gpointer args[] = { &in_str, &inout_str, NULL };
+	ORBit_IMethod *m_data;
+
+	m_data = &test_BasicServer__iinterface.methods._buffer[3];
+	/* if this failed, we re-ordered the IDL ... */
+	g_assert (!strcmp (m_data->name, "opString"));
+
+	ORBit_small_invoke_async (
+		obj, m_data, test_BasicServer_opStringA_cb,
+		NULL, args, NULL, ev);
+}
+
+
 void
 testAsync (test_TestFactory   factory, 
 	   CORBA_Environment *ev)
@@ -1054,6 +1099,15 @@ testAsync (test_TestFactory   factory,
 			      
 	done = 0;
 	test_BasicServer_opExceptionA (objref, ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+	while (!done)
+		linc_main_iteration (TRUE);
+
+	done = 0;
+	test_BasicServer_opStringA (
+		objref, constants_STRING_IN,
+		constants_STRING_INOUT_IN, ev);
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
 	while (!done)

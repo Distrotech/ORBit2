@@ -1010,7 +1010,6 @@ struct _ORBitAsyncQueueEntry {
 	CORBA_Object            obj;
 	ORBitAsyncInvokeFunc    fn;
 	gpointer                user_data;
-	gpointer               *args;
 	ORBit_IMethod          *m_data;
 	CORBA_completion_status completion_status;
 };
@@ -1022,7 +1021,7 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 			     CORBA_Environment    *ev)
 {
 	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, &aqe->mqe, ev,
-				       NULL, aqe->m_data, aqe->args)) {
+				       ret, aqe->m_data, args)) {
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		aqe->completion_status = CORBA_COMPLETED_YES;
 		dprintf ("Sys exception completed on id 0x%x\n\n", aqe->mqe.request_id);
@@ -1103,7 +1102,7 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 {
 	CORBA_unsigned_long     request_id;
 	GIOPConnection         *cnx;
-	ORBitAsyncQueueEntry        *aqe = g_new (ORBitAsyncQueueEntry, 1);
+	ORBitAsyncQueueEntry   *aqe = g_new (ORBitAsyncQueueEntry, 1);
 
 	cnx = ORBit_object_get_connection (obj);
 
@@ -1137,7 +1136,6 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	aqe->obj = ORBit_RootObject_duplicate (obj);
 	/* FIXME: perenial ORBit_IMethod lifecycle issues */
 	aqe->m_data = /* ORBit_RootObject_duplicate */ (m_data);
-	aqe->args = args; /* NB. heavy allocation burden on async stubs */
 
  clean_out:
 	tprintf ("\n");
