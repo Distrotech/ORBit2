@@ -52,20 +52,25 @@ linc_connection_dispose (GObject *obj)
 
 	linc_source_remove (cnx);
 
-	g_free (cnx->remote_host_info);
-	cnx->remote_host_info = NULL;
-
-	g_free (cnx->remote_serv_info);
-	cnx->remote_serv_info = NULL;
-
-	if (cnx->gioc)
+	if (cnx->gioc) {
 		g_io_channel_unref (cnx->gioc);
-	cnx->gioc = NULL;
+		cnx->gioc = NULL;
+	}
+
+	parent_class->dispose (obj);
+}
+
+static void
+linc_connection_finalize (GObject *obj)
+{
+	LINCConnection *cnx = (LINCConnection *)obj;
+
+	g_free (cnx->remote_host_info);
+	g_free (cnx->remote_serv_info);
 
 	linc_close_fd (cnx);
 
-	if (parent_class->dispose)
-		parent_class->dispose (obj);
+	parent_class->finalize (obj);
 }
 
 #define ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
@@ -584,7 +589,8 @@ linc_connection_class_init (LINCConnectionClass *klass)
 {
 	GObjectClass *object_class = (GObjectClass *) klass;
 
-	object_class->dispose = linc_connection_dispose;
+	object_class->dispose  = linc_connection_dispose;
+	object_class->finalize = linc_connection_finalize;
 
 	klass->state_changed  = linc_connection_class_state_changed;
 	klass->broken         = NULL;

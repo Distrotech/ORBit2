@@ -44,8 +44,8 @@ typedef struct {
 
 	const LINCProtocolInfo *proto;
 
-	char *remote_host_info;
-	char *remote_serv_info;
+	char *remote_host_info; /* These are bogus fields */
+	char *remote_serv_info; /* These need removing sometime */
 
 #ifdef LINC_SSL_SUPPORT
 	SSL *ssl;
