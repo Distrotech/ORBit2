@@ -322,7 +322,7 @@ CORBA_Context_delete(CORBA_Context ctx, const CORBA_Flags del_flags,
 }
 
 void
-ORBit_Context_marshal(CORBA_Context ctx, ORBit_ContextMarshalItem *mlist,
+ORBit_Context_marshal(CORBA_Context ctx, const ORBit_ContextMarshalItem *mlist,
 		      CORBA_unsigned_long nitems, GIOPSendBuffer *buf)
 {
   int i;

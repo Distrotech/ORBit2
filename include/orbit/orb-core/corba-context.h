@@ -11,7 +11,7 @@ struct CORBA_Context_type {
   CORBA_Context parent_ctx;
 };
 
-void ORBit_Context_marshal(CORBA_Context ctx, ORBit_ContextMarshalItem *mlist,
+void ORBit_Context_marshal(CORBA_Context ctx, const ORBit_ContextMarshalItem *mlist,
 			   CORBA_unsigned_long nitems, GIOPSendBuffer *buf);
 gboolean ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
 				 GIOPRecvBuffer *recv_buffer);
