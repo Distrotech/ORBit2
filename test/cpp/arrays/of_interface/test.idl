@@ -1,0 +1,18 @@
+module Test
+{
+    interface IMember
+    {
+	void print_name ();
+    };
+
+    typedef IMember ObjArray[3];
+
+    interface IMaster
+    {
+	IMember  simple_ret ();
+	ObjArray array_ret  ();
+	
+	void simple_in (in IMember instance);
+	void array_in  (in ObjArray instances);
+    };
+};
