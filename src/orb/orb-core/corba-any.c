@@ -330,11 +330,7 @@ ORBit_get_union_tag (CORBA_TypeCode union_tc,
 		if (i == union_tc->default_index)
 			continue;
 
-		case_val = ORBit_get_union_switch (
-			union_tc->sublabels[i]._type,
-			(gconstpointer*)&union_tc->sublabels[i]._value, FALSE);
-
-		if (case_val == discrim_val) {
+		if (union_tc->sublabels [i] == discrim_val) {
 			retval = union_tc->subtypes[i];
 			break;
 		}
