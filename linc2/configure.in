@@ -141,4 +141,7 @@ src/Makefile
 include/Makefile
 include/linc/Makefile
 include/linc/linc-config.h
-])
+linc-config
+],[case "$CONFIG_FILES" in
+*linc-config*) chmod +x linc-config;;
+esac])
