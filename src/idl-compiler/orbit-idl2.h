@@ -27,6 +27,7 @@ typedef struct {
   char *output_language;
   char *input_filename;
   char *backend_directory;
+  gboolean onlytop;
 } OIDL_Run_Info;
 
 int orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo);

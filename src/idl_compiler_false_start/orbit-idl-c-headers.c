@@ -133,6 +133,25 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   case IDLN_CODEFRAG:
     ch_output_codefrag(tree, rinfo, ci);
     break;
+  case IDLN_SRCFILE:
+    {
+	char *idlfn = IDL_SRCFILE(tree).filename;
+	if ( IDL_SRCFILE(tree).seenCnt==0 
+	  && !IDL_SRCFILE(tree).isTop 
+	  && !IDL_SRCFILE(tree).wasInhibit ) {
+	    char *hfn = g_strdup(g_basename(idlfn)), *htail;
+	    htail = strrchr(hfn,'.');
+	    g_assert( htail && strlen(htail)>=2 );
+	    htail[1] = 'h';
+	    htail[2] = 0;
+	    fprintf(ci->fh, "#include \"%s\"\n", hfn);
+            g_free(hfn);
+	}
+        fprintf(ci->fh, "/* from IDL source file \"%s\" (seen %d, isTop %d, wasInhibit %d) */ \n", 
+	  idlfn, IDL_SRCFILE(tree).seenCnt, IDL_SRCFILE(tree).isTop,
+	  IDL_SRCFILE(tree).wasInhibit);
+    }
+    break;
   case IDLN_CONST_DCL:
     ch_output_const_dcl(tree, rinfo, ci);
     break;

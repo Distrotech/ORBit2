@@ -53,6 +53,8 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 			       &tree, &namespace,
 			       (rinfo->show_cpp_errors?IDLF_SHOW_CPP_ERRORS:0)
 			       |(rinfo->typecode_as_ident?0:IDLF_TYPECODES)
+			       |(rinfo->onlytop
+			         ?(IDLF_SRCFILES|IDLF_INHIBIT_INCLUDES):0)
 			       |IDLF_CODEFRAGS,
 			       rinfo->idl_warn_level);
   if(rinfo->debug_level > 1)
