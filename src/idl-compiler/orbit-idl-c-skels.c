@@ -297,13 +297,18 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Inf
   g_free(id);
 }
 
+typedef struct {
+	OIDL_C_Info *ci;
+	const char  *for_id;
+} CBESkelVEPVMapTraverseInfo;
+
 static void
-cbe_skel_interface_print_vepvmap_offsets (IDL_tree node, OIDL_C_Info *ci)
+cbe_skel_interface_print_vepvmap_offsets (IDL_tree node, CBESkelVEPVMapTraverseInfo *ti)
 {
 	char *id;
 	id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_INTERFACE (node).ident), "_", 0);
-	fprintf (ci->fh, "(CORBA_unsigned_long) %s__classid,\n", id);
-	fprintf (ci->fh, "ORBIT_VEPV_OFFSET (, %s_epv),\n", id);
+	fprintf (ti->ci->fh, "(CORBA_unsigned_long) %s__classid,\n", id);
+	fprintf (ti->ci->fh, "ORBIT_VEPV_OFFSET (POA_%s__vepv, %s_epv),\n", ti->for_id, id);
 	g_free (id);
 }
 
@@ -313,6 +318,7 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   char *id, *id2;
   IDL_tree curitem, pnt;
   int i;
+  CBESkelVEPVMapTraverseInfo ti;
 
   /* PIDL methods dont have normal skel functions. */
   for ( pnt=tree; pnt; pnt=IDL_NODE_UP(pnt) ) {
@@ -350,7 +356,8 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf (ci->fh, "   ORBit_skel_class_register (&class_info,\n");
   fprintf (ci->fh, "   servant, POA_%s__fini,\n", id);
   fprintf (ci->fh, "   ORBIT_VEPV_OFFSET (POA_%s__vepv, %s_epv),\n", id, id);
-  IDL_tree_traverse_parents_full (tree, (GFunc) cbe_skel_interface_print_vepvmap_offsets, ci, FALSE);
+  ti.for_id = id; ti.ci = ci;
+  IDL_tree_traverse_parents_full (tree, (GFunc) cbe_skel_interface_print_vepvmap_offsets, &ti, FALSE);
   fprintf (ci->fh, "   (CORBA_unsigned_long) 0);");
 
   fprintf(ci->fh, "}\n\n");

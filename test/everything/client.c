@@ -1862,6 +1862,45 @@ test_basic_server (test_TestFactory   factory,
 }
 
 static void
+testDerivedServer (test_TestFactory   factory, 
+		   CORBA_Environment *ev)
+{
+	CORBA_Object            obj;
+	PortableServer_ServantBase *servant;
+	PortableServer_ObjectId *oid;
+	ORBit_POAObject             pobj;
+	PortableServer_ServantBase__epv DerivedServer_base_epv = {NULL, simple_finalize, NULL};
+	POA_test_BasicServer__vepv      DerivedServer_vepv = { &DerivedServer_base_epv, NULL };
+
+	d_print ("Testing DerivedServer ...\n");
+
+	servant = SIMPLE_SERVANT_NEW (DerivedServer);
+	obj = create_object (global_poa, servant, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	g_assert (test_C1__classid != 0);
+	g_assert (test_B1__classid != 0);
+	g_assert (test_B2__classid != 0);
+	g_assert (test_DerivedServer__classid != 0);
+
+	pobj = obj->adaptor_obj;
+	g_assert (pobj->vepvmap_cache [test_DerivedServer__classid] != 0);
+	g_assert (pobj->vepvmap_cache [test_C1__classid] != 0);
+	g_assert (pobj->vepvmap_cache [test_B1__classid] != 0);
+	g_assert (pobj->vepvmap_cache [test_B2__classid] != 0);
+
+	CORBA_Object_release (obj, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	oid = PortableServer_POA_servant_to_id (global_poa, servant, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	PortableServer_POA_deactivate_object (global_poa, oid, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+	CORBA_free (oid);	
+}
+
+static void
 run_tests (test_TestFactory   factory, 
 	   gboolean           thread_tests,
 	   CORBA_Environment *ev)
@@ -1895,6 +1934,7 @@ run_tests (test_TestFactory   factory,
 		testTypeCode (factory, ev);
 		testContext (factory, ev);
 		testIInterface (factory, ev);
+		testDerivedServer (factory, ev);
 #ifndef TIMING_RUN
 		if (!thread_tests)
 			testAsync (factory, ev);
