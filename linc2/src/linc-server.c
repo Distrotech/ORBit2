@@ -186,7 +186,7 @@ linc_server_accept_connection (LINCServer      *server,
 		
 		g_object_unref (G_OBJECT (*connection));
 		*connection = NULL;
-
+		close (fd);
 		return FALSE;
 	}
 

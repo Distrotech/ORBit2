@@ -1,3 +1,9 @@
+2002-02-17  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_accept_connection):
+	close the fd in case linc_connection_from_fd might
+	fail some day.
+
 2002-02-11  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: Version 0.1.18
