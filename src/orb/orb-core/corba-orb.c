@@ -71,7 +71,10 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 	      if(server)
 		retval->servers = g_slist_prepend(retval->servers, server);
 	    }
+          fprintf (stderr, "ORB created giop server '%s'\n", info->name);
 	}
+      else
+        fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
     }
 
   retval->poas = g_ptr_array_new();

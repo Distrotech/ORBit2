@@ -3,6 +3,8 @@
 #include <string.h>
 #include "corba-ops.h"
 
+#define DEBUG
+
 static gboolean
 ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
 		    char **ret_type_id, GSList **ret_profiles);
@@ -180,6 +182,66 @@ IOP_component_find(GSList *list, IOP_ComponentId type, GSList **pos)
   return NULL;
 }
 
+static gchar *
+IOP_ObjectKey_dump (IOP_ObjectKey_info *oki)
+{
+	int i;
+	GString *str = g_string_sized_new (oki->object_key._length * 2 + 4);
+
+	for (i = 0; i < oki->object_key._length; i++)
+		g_string_printfa (str, "%2x", oki->object_key._buffer [i]);
+
+	return g_string_free (str, FALSE);
+}
+
+static G_GNUC_UNUSED gchar * 
+IOP_Profile_dump(gpointer p)
+{
+	IOP_ProfileId t;
+	char         *key = NULL;
+	GString      *str = g_string_sized_new (64);
+
+	t = ((IOP_Profile_info *)p)->profile_type;
+
+	switch (t) {
+	case IOP_TAG_INTERNET_IOP: {
+		IOP_TAG_INTERNET_IOP_info *iiop = p;
+		
+		key = IOP_ObjectKey_dump (iiop->oki);
+		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
+				 iiop->host, iiop->port, key);
+		break;
+	}
+	
+	case IOP_TAG_GENERIC_IOP: {
+		IOP_TAG_GENERIC_IOP_info *giop = p;
+		
+		g_string_printf (str, "P-GIOP %s:%s:%s",
+				 giop->proto, giop->service,
+				 giop->host);
+		break;
+	}
+	
+	case IOP_TAG_ORBIT_SPECIFIC: {
+		IOP_TAG_ORBIT_SPECIFIC_info *os = p;
+		
+		key = IOP_ObjectKey_dump (os->oki);
+		g_string_printf (str, "P-OS %s:0x%x '%s'",
+				 os->unix_sock_path, os->ipv6_port,
+				 key);
+		break;
+	}
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+	default:
+		g_string_printf (str, "P-<None>");
+		break;
+	}
+
+	g_free (key);
+	
+	return g_string_free (str, FALSE);
+}
+
 static gboolean
 IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
 		     GIOPVersion *iiop_version, char **proto,
@@ -191,6 +253,15 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
   IOP_TAG_GENERIC_IOP_info *giop;
 
   *ssl = FALSE;
+
+#ifdef DEBUG
+  {
+    char *str;
+    fprintf (stderr, "profile for object '%p' '%s'\n",
+	     obj, (str = IOP_Profile_dump (pi)));
+    g_free (str);
+  }
+#endif
 
   switch(pi->profile_type)
     {
@@ -392,18 +463,6 @@ IOP_ObjectKey_equal(IOP_ObjectKey_info *a, IOP_ObjectKey_info *b)
 	return TRUE;
 }
 
-static gchar *
-IOP_ObjectKey_dump (IOP_ObjectKey_info *oki)
-{
-	int i;
-	GString *str = g_string_sized_new (oki->object_key._length * 2 + 4);
-
-	for (i = 0; i < oki->object_key._length; i++)
-		g_string_printfa (str, "%2x", oki->object_key._buffer [i]);
-
-	return g_string_free (str, FALSE);
-}
-
 static gboolean
 IOP_Profile_equal(gpointer d1, gpointer d2,
 		  IOP_TAG_MULTIPLE_COMPONENTS_info *mci1,
@@ -492,54 +551,6 @@ IOP_Profile_equal(gpointer d1, gpointer d2,
 	}
 
 	return TRUE;
-}
-
-static gchar *
-IOP_Profile_dump(gpointer p)
-{
-	IOP_ProfileId t;
-	char         *key = NULL;
-	GString      *str = g_string_sized_new (64);
-
-	t = ((IOP_Profile_info *)p)->profile_type;
-
-	switch (t) {
-	case IOP_TAG_INTERNET_IOP: {
-		IOP_TAG_INTERNET_IOP_info *iiop = p;
-		
-		key = IOP_ObjectKey_dump (iiop->oki);
-		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
-				 iiop->host, iiop->port, key);
-		break;
-	}
-	
-	case IOP_TAG_GENERIC_IOP: {
-		IOP_TAG_GENERIC_IOP_info *giop = p;
-		
-		g_string_printf (str, "P-GIOP %s:%s:%s",
-				 giop->proto, giop->service,
-				 giop->host);
-		break;
-	}
-	
-	case IOP_TAG_ORBIT_SPECIFIC: {
-		IOP_TAG_ORBIT_SPECIFIC_info *os = p;
-		
-		key = IOP_ObjectKey_dump (os->oki);
-		g_string_printf (str, "P-OS %s:0x%x '%s'",
-				 os->unix_sock_path, os->ipv6_port,
-				 key);
-		break;
-	}
-	case IOP_TAG_MULTIPLE_COMPONENTS:
-	default:
-		g_string_printf (str, "P-<None>");
-		break;
-	}
-
-	g_free (key);
-	
-	return g_string_free (str, FALSE);
 }
 
 static IOP_TAG_MULTIPLE_COMPONENTS_info *
@@ -950,9 +961,11 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
   giop_send_buffer_align(buf, 4);
   giop_send_buffer_append_indirect(buf, &num_profiles, 4);
 
+  fprintf (stderr, "Marshal object '%p'\n", obj);
   if(obj)
     for(cur = obj->profile_list; cur; cur = cur->next)
       {
+        fprintf (stderr, "%s\n", IOP_Profile_dump (cur->data));
 	ORBit_marshal_profile(buf, cur->data);
       }
 }

@@ -1,5 +1,12 @@
 2001-05-30  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/Makefile.am: simplify makefile ugliness.
+
+	* test/Makefile.am (echo_built): fix recursive build
+	issue.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop-connection.c (giop_connection_initiate):
 	only ref the connection if we didn't just destroy it.
 
