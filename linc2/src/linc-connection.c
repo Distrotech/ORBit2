@@ -64,9 +64,27 @@ typedef struct {
 	struct iovec  single_vec;
 } QueuedWrite;
 
+/*
+ * NB. this method must be called only in the I/O thread, or
+ * at construction, and with the cnx lock held ...
+ */
 static void
-queue_signal (LINCConnection *cnx,
-	      glong           delta)
+linc_connection_state_changed_T (LINCConnection      *cnx,
+				 LINCConnectionStatus status)
+{
+	LINCConnectionClass *klass;
+
+	g_assert (CNX_IS_LOCKED (cnx));
+
+	klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS (cnx);
+
+	if (klass->state_changed)
+		klass->state_changed (cnx, status);
+}
+
+static void
+queue_signal_T (LINCConnection *cnx,
+		glong           delta)
 {
 	gulong old_size;
 	gulong new_size;
@@ -91,7 +109,7 @@ queue_signal (LINCConnection *cnx,
 
 	if (cnx->priv->max_buffer_bytes &&
 	    cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
-		linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+		linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
 
 	linc_object_unref (cnx);
 }
@@ -110,10 +128,10 @@ calc_size (struct iovec *src_vecs,
 }
 
 static void
-queue_flattened (LINCConnection *cnx,
-		 struct iovec   *src_vecs,
-		 int             nvecs,
-		 gboolean        update_poll)
+queue_flattened_T (LINCConnection *cnx,
+		   struct iovec   *src_vecs,
+		   int             nvecs,
+		   gboolean        update_poll)
 {
 	int     i;
 	guchar *p;
@@ -141,8 +159,7 @@ queue_flattened (LINCConnection *cnx,
 		  total_size, cnx->priv->fd);
 
 	cnx->priv->write_queue = g_list_append (cnx->priv->write_queue, qw);
-	queue_signal (cnx, total_size);
-
+	queue_signal_T (cnx, total_size);
 
 	if (update_poll) {
 		LINCCommandSetCondition *cmd;
@@ -319,7 +336,7 @@ linc_connection_from_fd (LINCConnection         *cnx,
 		SSL_set_fd (cnx->priv->ssl, fd);
 	}
 #endif
-	linc_connection_state_changed (cnx, status);
+	linc_connection_state_changed_T (cnx, status);
 
 	CNX_UNLOCK (cnx);
 
@@ -417,22 +434,14 @@ linc_connection_initiate (LINCConnection        *cnx,
  * @status: a #LINCConnectionStatus.
  *
  * A wrapper for the #LINCConnectionClass's state change method.
- *
- * NB. this method must be called only in the I/O thread, or
- * at construction, and with the cnx lock held ...
  */
 void
 linc_connection_state_changed (LINCConnection      *cnx,
 			       LINCConnectionStatus status)
 {
-	LINCConnectionClass *klass;
-
-	g_assert (CNX_IS_LOCKED (cnx));
-
-	klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS (cnx);
-
-	if (klass->state_changed)
-		klass->state_changed (cnx, status);
+	CNX_LOCK (cnx);
+	linc_connection_state_changed_T (cnx, status);
+	CNX_UNLOCK (cnx);
 }
 
 /**
@@ -455,12 +464,12 @@ linc_connection_read (LINCConnection *cnx,
 {
 	int bytes_read = 0;
 
-	g_assert (CNX_IS_LOCKED (cnx));
-
 	d_printf ("Read up to %d bytes from fd %d\n", len, cnx->priv->fd);
 
 	if (!len)
 		return 0;
+
+	CNX_LOCK (cnx);
 
 	if (cnx->status != LINC_CONNECTED)
 		goto fatal_error;
@@ -522,9 +531,11 @@ linc_connection_read (LINCConnection *cnx,
 	d_printf ("we read %d bytes\n", bytes_read);
 
  out:
+	CNX_UNLOCK (cnx);
 	return bytes_read;
 
  fatal_error:
+	CNX_UNLOCK (cnx);
 	return LINC_IO_FATAL_ERROR;
 }
 
@@ -574,7 +585,7 @@ linc_connection_read (LINCConnection *cnx,
 #endif
 
 static glong
-write_data (LINCConnection *cnx, QueuedWrite *qw)
+write_data_T (LINCConnection *cnx, QueuedWrite *qw)
 {
 	glong bytes_written = 0;
 
@@ -666,7 +677,7 @@ linc_connection_should_block (LINCConnection      *cnx,
 
 /* Always called in main thread */
 static void
-linc_connection_flush_write_queue (LINCConnection *cnx)
+linc_connection_flush_write_queue_T (LINCConnection *cnx)
 {
 	gboolean done_writes = TRUE;
 
@@ -674,7 +685,7 @@ linc_connection_flush_write_queue (LINCConnection *cnx)
 		glong        status;
 		QueuedWrite *qw = cnx->priv->write_queue->data;
 
-		status = write_data (cnx, qw);
+		status = write_data_T (cnx, qw);
 
 		d_printf ("Wrote queue %ld on fd %d\n", status, cnx->priv->fd);
 
@@ -683,14 +694,14 @@ linc_connection_flush_write_queue (LINCConnection *cnx)
 				(cnx->priv->write_queue, cnx->priv->write_queue);
 			queued_write_free (qw);
 
-			queue_signal (cnx, -status);
+			queue_signal_T (cnx, -status);
 			
 			done_writes = (cnx->priv->write_queue == NULL);
 
 		} else {
 			if (status == LINC_IO_FATAL_ERROR) {
 				d_printf ("Fatal error on queued write");
-				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+				linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
 				
 			} else {
 				d_printf ("Write blocked\n");
@@ -756,7 +767,7 @@ linc_connection_writev (LINCConnection       *cnx,
 	if (linc_get_threaded ()) {
 		d_printf ("Transfer output to main thread\n");
 		if (cnx->status == LINC_CONNECTING) {
-			queue_flattened (cnx, vecs, nvecs, TRUE);
+			queue_flattened_T (cnx, vecs, nvecs, TRUE);
 			CNX_UNLOCK (cnx);
 			return LINC_IO_QUEUED_DATA;
 		}
@@ -771,7 +782,7 @@ linc_connection_writev (LINCConnection       *cnx,
 	if (cnx->priv->write_queue) {
 		/* FIXME: we should really retry the write here, but we'll
 		 * get a POLLOUT for this lot at some stage anyway */
-		queue_flattened (cnx, vecs, nvecs, FALSE);
+		queue_flattened_T (cnx, vecs, nvecs, FALSE);
 		CNX_UNLOCK (cnx);
 		return LINC_IO_QUEUED_DATA;
 	}
@@ -780,11 +791,11 @@ linc_connection_writev (LINCConnection       *cnx,
 	qw.nvecs = nvecs;
 
  continue_write:
-	status = write_data (cnx, &qw);
+	status = write_data_T (cnx, &qw);
 
 	if (status == LINC_IO_QUEUED_DATA) {
 		if (linc_get_threaded ()) {
-			queue_flattened (cnx, qw.vecs, qw.nvecs, TRUE);
+			queue_flattened_T (cnx, qw.vecs, qw.nvecs, TRUE);
 			CNX_UNLOCK (cnx);
 			return LINC_IO_QUEUED_DATA;
 		}
@@ -795,7 +806,7 @@ linc_connection_writev (LINCConnection       *cnx,
 			 LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
 
 		if (!linc_connection_should_block (cnx, opt_write_opts)) {
-			queue_flattened (cnx, qw.vecs, qw.nvecs, FALSE);
+			queue_flattened_T (cnx, qw.vecs, qw.nvecs, FALSE);
 			CNX_UNLOCK (cnx);
 			return LINC_IO_QUEUED_DATA;
 
@@ -993,12 +1004,14 @@ linc_connection_io_handler (GIOChannel  *gioc,
 		
 		d_printf ("Handle input on fd %d\n", cnx->priv->fd);
 
+		CNX_UNLOCK (cnx);
 		klass->handle_input (cnx);
+		CNX_LOCK (cnx);
 	}
 
 	if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
 		d_printf ("IO Out - buffer space free ...\n");
-		linc_connection_flush_write_queue (cnx);
+		linc_connection_flush_write_queue_T (cnx);
 	}
 
 	if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
@@ -1016,22 +1029,22 @@ linc_connection_io_handler (GIOChannel  *gioc,
 					cnx->priv->tag,
 					LINC_ERR_CONDS | LINC_IN_CONDS);
 
-				linc_connection_state_changed (cnx, LINC_CONNECTED);
+				linc_connection_state_changed_T (cnx, LINC_CONNECTED);
 
 				if (cnx->priv->write_queue) {
 					d_printf ("Connected, with queued writes, start flush ...\n");
-					linc_connection_flush_write_queue (cnx);
+					linc_connection_flush_write_queue_T (cnx);
 				}
 			} else {
 				d_printf ("Error connecting %d %d %d on fd %d\n",
 					   rv, n, errno, cnx->priv->fd);
-				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+				linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
 			}
 			break;
 		case LINC_CONNECTED: {
 			if (condition & LINC_ERR_CONDS) {
 				d_printf ("Disconnect on err: %d\n", cnx->priv->fd);
-				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+				linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
 			}
 			break;
 		}
@@ -1065,9 +1078,7 @@ linc_connection_exec_disconnect (LINCCommandDisconnect *cmd)
 {
 	d_printf ("Exec defered disconnect on %p", cmd->cnx);
 
-	CNX_LOCK (cmd->cnx);
 	linc_connection_state_changed (cmd->cnx, LINC_DISCONNECTED);
-	CNX_UNLOCK (cmd->cnx);
 
 	linc_object_unref (cmd->cnx);
 	g_free (cmd);
