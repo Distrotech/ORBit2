@@ -1,3 +1,13 @@
+2003-10-23  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: release version 2.9.0.
+
+2003-10-23  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/everything/lifeCycle.c: add this from the
+	2.8.2 tarball. Michael must have forgotten to
+	CVS add it.
+
 2003-10-14  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POA_destroy_T_R):

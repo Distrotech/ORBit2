@@ -1,3 +1,10 @@
+ORBit2-2.9.0
+
+	* bug fixes
+		+ speed up child POA destruction (Michael)
+	* featurelets
+		+ allow objects to be bound to specific threads (Alex Larsson)
+
 ORBit2-2.8.0
 
 	* bug fixes
