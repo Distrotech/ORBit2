@@ -331,7 +331,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 		i, i, IDL_INTEGER(IDL_LIST(ttmp).data).value, i);
       }
       
-      fprintf(ci->fh, "%s__free(&((%s_slice *)mem)", ctmp, ctmp);
+      fprintf(ci->fh, "%s__free(&((%s_slice *)mem)", ctmp, tname);
       for(i = 0; i < n; i++)
 	fprintf(ci->fh, "[n%d]", i);
       fprintf(ci->fh, ", NULL, free_strings);\n");
@@ -366,9 +366,8 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	fprintf(ci->fh, "));\n");
 
 	curitem = IDL_TYPE_ARRAY(node).size_list;
-	fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s_slice * %" IDL_LL "d)", tname,
+	fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s_slice) * %" IDL_LL "d);\n", tname,
 		IDL_INTEGER(IDL_LIST(curitem).data).value);
-	fprintf(ci->fh, ");\n");
       }
 
       fprintf(ci->fh, "return retval;\n");
