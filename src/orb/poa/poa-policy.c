@@ -118,8 +118,9 @@ PortableServer_POA_create_okeyrand_policy(PortableServer_POA _obj,
 					  CORBA_Environment *ev)
 {
   ORBit_PortableServer_OkeyrandPolicy_t *rv;
-  rv = ORBit_Policy_new(ORBit_PortableServer_OKEYRAND_POLICY_ID,
-			poa_rand_len);
+  rv = (ORBit_PortableServer_OkeyrandPolicy_t *)
+    ORBit_Policy_new(ORBit_PortableServer_OKEYRAND_POLICY_ID,
+		     poa_rand_len);
   rv = g_realloc(rv, sizeof(ORBit_PortableServer_OkeyrandPolicy_t));
   rv->obj_rand_len = obj_rand_len;
   return (ORBit_PortableServer_OkeyrandPolicy)rv;

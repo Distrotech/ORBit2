@@ -205,12 +205,6 @@ CORBA_ORB_create_operation_list(CORBA_ORB _obj,
 }
 
 void
-CORBA_ORB_get_default_context(CORBA_ORB _obj, CORBA_Context * ctx,
-			      CORBA_Environment * ev)
-{
-}
-
-void
 CORBA_ORB_send_multiple_requests_oneway(CORBA_ORB _obj,
 					const CORBA_RequestSeq * req,
 					CORBA_Environment * ev)
@@ -236,6 +230,7 @@ void
 CORBA_ORB_get_next_response(CORBA_ORB _obj, CORBA_Request * req,
 			    CORBA_Environment * ev)
 {
+  *req = NULL;
 }
 
 CORBA_boolean

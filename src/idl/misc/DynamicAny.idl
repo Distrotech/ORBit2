@@ -34,7 +34,7 @@ module DynamicAny {
         void insert_float(  in float    value)      raises(TypeMismatch, InvalidValue);
         void insert_double( in double   value)      raises(TypeMismatch, InvalidValue);
         void insert_string( in string   value)      raises(TypeMismatch, InvalidValue);
-        void insert_reference(in Object value)      raises(TypeMismatch, InvalidValue);
+        void insert_reference(in CORBA::Object value)      raises(TypeMismatch, InvalidValue);
         void insert_typecode(in CORBA::TypeCode 
                                         value)      raises(TypeMismatch, InvalidValue);
         void insert_longlong(in long long value)    raises(TypeMismatch, InvalidValue);
@@ -46,7 +46,9 @@ module DynamicAny {
         void insert_wstring(in wstring  value)      raises(TypeMismatch, InvalidValue);
         void insert_any(    in any      value)      raises(TypeMismatch, InvalidValue);
         void insert_dyn_any(in DynAny   value)      raises(TypeMismatch, InvalidValue);
+#if 0
         void insert_val(    in ValueBase value)     raises(TypeMismatch, InvalidValue);
+#endif
 
         boolean         get_boolean()               raises(TypeMismatch, InvalidValue);
         octet           get_octet()                 raises(TypeMismatch, InvalidValue);
@@ -58,7 +60,7 @@ module DynamicAny {
         float           get_float()                 raises(TypeMismatch, InvalidValue);
         double          get_double()                raises(TypeMismatch, InvalidValue);
         string          get_string()                raises(TypeMismatch, InvalidValue);
-        Object          get_reference()             raises(TypeMismatch, InvalidValue);
+        CORBA::Object          get_reference()             raises(TypeMismatch, InvalidValue);
         CORBA::TypeCode get_typecode()              raises(TypeMismatch, InvalidValue);
         long long       get_longlong()              raises(TypeMismatch, InvalidValue);
         unsigned long long get_ulonglong()          raises(TypeMismatch, InvalidValue);
@@ -67,7 +69,9 @@ module DynamicAny {
         wstring         get_wstring()               raises(TypeMismatch, InvalidValue);
         any             get_any()                   raises(TypeMismatch, InvalidValue);
         DynAny          get_dyn_any()               raises(TypeMismatch, InvalidValue);
+#if 0
         ValueBase       get_val()                   raises(TypeMismatch, InvalidValue);
+#endif
 
         boolean         seek(in long index);
         void            rewind();

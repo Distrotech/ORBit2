@@ -72,9 +72,10 @@ extern gpointer ORBit_alloc_core(size_t block_size,
 extern void ORBit_free(gpointer mem);
 
 
-extern gpointer ORBit_alloc_simple(size_t block_size);
-extern gpointer ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
+gpointer ORBit_alloc_simple(size_t block_size);
+gpointer ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
 				   ORBit_free_kidvals free_fnc);
+gpointer ORBit_alloc_tcval(CORBA_TypeCode tc, guint nelements);
 
 #define ORBit_alloc(sz, len, fnc) ORBit_alloc_kidfnc( (sz), (len), (fnc))
 

@@ -14,5 +14,6 @@
 #include <orbit/orb-core/corba-object-type.h>
 #include <orbit/orb-core/corba-object.h>
 #include <orbit/orb-core/corba-policy-type.h>
+#include <orbit/orb-core/corba-context.h>
 
 #endif

@@ -17,5 +17,7 @@ gboolean ORBit_TypeCode_demarshal_value(CORBA_TypeCode tc,
 					GIOPRecvBuffer *buf,
 					gboolean dup_strings,
 					CORBA_ORB orb);
+gpointer ORBit_copy_value(gconstpointer value, CORBA_TypeCode tc);
+void CORBA_any__copy(CORBA_any *out, CORBA_any *in);
 
 #endif
