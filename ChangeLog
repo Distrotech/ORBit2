@@ -1,3 +1,7 @@
+2001-07-12  Darin Adler  <darin@bentspoon.com>
+
+	* include/orbit/poa/Makefile.am: Install poa-basics.h.
+
 2001-07-12  Mark McLoughlin <mark@skynet.ie>
 
 	* src/idl-compiler/orbit-idl-c-common.c,
