@@ -1,3 +1,9 @@
+2001-12-14  Roland Juelich <rj@atecom.com>
+
+	* src/orb/orb-core/corba-orb.c: add ORBIIOPIPName
+	and ORBIIOPIPSock options.
+	(ORBit_ORB_start_servers): use the arguments.
+
 2001-12-13  Sam Couter <sam@topic.com.au>
 
 	* configure.in: move type alignment test

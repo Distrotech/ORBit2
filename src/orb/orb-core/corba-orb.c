@@ -15,6 +15,17 @@
 
 extern ORBit_option orbit_supported_options[];
 
+/*
+ * Command line option handling.
+ */
+static gboolean     orbit_use_ipv4   = FALSE;
+static gboolean     orbit_use_ipv6   = FALSE; 
+static gboolean     orbit_use_usocks = TRUE;
+static gboolean     orbit_use_irda   = FALSE;
+static gboolean     orbit_use_ssl    = FALSE;
+static char        *orbit_ipsock     = NULL;
+static char        *orbit_ipname     = NULL;
+
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
 {
@@ -27,7 +38,8 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 			continue;
 
 		server = giop_server_new (orb->default_giop_version,
-					  info->name, NULL, NULL, 0, orb);
+					  info->name, orbit_ipname,
+					  orbit_ipsock, 0, orb);
 		if (server) {
 			orb->servers = g_slist_prepend (orb->servers, server);
 
@@ -1025,15 +1037,6 @@ ORBit_ORB_forw_bind (CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
 	g_warning("ORBit_ORB_forw_bind NYI");
 }
 
-/*
- * Command line option handling.
- */
-static gboolean     orbit_use_ipv4   = FALSE;
-static gboolean     orbit_use_ipv6   = FALSE; 
-static gboolean     orbit_use_usocks = TRUE;
-static gboolean     orbit_use_irda   = FALSE;
-static gboolean     orbit_use_ssl    = FALSE;
-
 gboolean
 ORBit_proto_use (const char *name)
 {
@@ -1054,6 +1057,8 @@ static ORBit_option orbit_supported_options[] = {
 	{"ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
 	{"ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
 	{"ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL}, /* FIXME: huh?          */
+ 	{"ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname},
+ 	{"ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock},
 	{"ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4},
 	{"ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6},
 	{"ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
