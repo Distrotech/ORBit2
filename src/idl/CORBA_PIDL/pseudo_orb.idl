@@ -75,15 +75,15 @@ module CORBA {
 //    valuetype and references to it even though "ValueBase" is a keyword
 
 // Forward references, alphabetically 
-    interface Context;                   // Chapter  7, CORBA_Context.idl
-	interface Interceptor;               // Chapter 21, CORBA_Interceptor.idl
-	interface MessageInterceptor;        // Chapter 21, CORBA_Interceptor.idl
-    interface NVList;                    // Chapter  7, CORBA_NVList.idl
-	interface Object;                    // Chapter  4, CORBA_Object.idl
-    interface ORB;                       // Chapter  4, CORBA_ORB.idl
-    interface Request;                   // Chapter  7, CORBA_Request.idl
-	interface RequestInterceptor;        // Chapter 21, CORBA_Interceptor.idl
-    interface ServerRequest;             // Chapter  8, CORBA_ServerRequest.idl
+  interface Context;                   // Chapter  7, CORBA_Context.idl
+  interface Interceptor;               // Chapter 21, CORBA_Interceptor.idl
+  interface MessageInterceptor;        // Chapter 21, CORBA_Interceptor.idl
+  interface NVList;                    // Chapter  7, CORBA_NVList.idl
+  interface Object;                    // Chapter  4, CORBA_Object.idl
+  interface ORB;                       // Chapter  4, CORBA_ORB.idl
+  interface Request;                   // Chapter  7, CORBA_Request.idl
+  interface RequestInterceptor;        // Chapter 21, CORBA_Interceptor.idl
+  interface ServerRequest;             // Chapter  8, CORBA_ServerRequest.idl
 
     typedef unsigned long Flags;
 
