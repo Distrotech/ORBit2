@@ -20,12 +20,12 @@ BUILT_SOURCES=$(DYNAMIC_IDLOUT)
 
 $(DYNAMIC_IDLOUT) runidl_dynamic: dynamic-defs.idl $(IDL)
 	-(rm -f $(DYNAMIC_IDLOUT) || true) > /dev/null
-	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) --noidata -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
 	-I$(top_srcdir)/src/orb/orb-core \
-	--noskels --nodefskels --nostubs \
+	--noskels --nodefskels --nostubs --noidata \
                 --showcpperrors $(top_srcdir)/src/orb/dynamic/dynamic-defs.idl
 	for I in $(DYNAMIC_IDLOUT); do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \

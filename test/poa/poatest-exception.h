@@ -25,6 +25,16 @@
 #include <orbit/orbit.h>
 
 /*
+ * FIXME FIXME
+ * idl compiler needs to be sorted.
+ */
+#undef CORBA_PolicyList__alloc
+#undef CORBA_PolicyList__freekids
+#define CORBA_PolicyList_allocbuf CORBA_sequence_CORBA_Object_allocbuf
+#define CORBA_PolicyList__alloc CORBA_sequence_CORBA_Object__alloc
+#define CORBA_PolicyList__freekids CORBA_sequence_CORBA_Object__freekids
+
+/*
  * knackered from bonobo-exception.h
  */
 #define POATEST_EX(ev)         ((ev) && (ev)->_major != CORBA_NO_EXCEPTION)
