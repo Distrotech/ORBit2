@@ -64,6 +64,7 @@ public:
 	}
 
 	// Container accessors
+        string getQualifiedForwarder () const;
 	void writeForwarder (ostream &header_ostr,
 			     Indent  &header_indent,
 			     ostream &impl_ostr,

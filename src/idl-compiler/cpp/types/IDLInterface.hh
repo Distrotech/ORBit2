@@ -141,6 +141,7 @@ public:
 					  IDLTypedef const *activeTypedef = NULL) const;
 
 	// Container accessors
+	string getQualifiedForwarder () const;
 	string getForwarder () const;
 	void writeForwarder (ostream &header_ostr,
 			     Indent  &header_indent,
