@@ -168,7 +168,7 @@ linc_io_add_watch (GIOChannel    *channel,
 	g_assert (source->poll_fds != NULL);
 
 	source = g_main_context_find_source_by_id (
-		NULL, w->linc_id);
+		linc_context, w->linc_id);
 	g_assert (source != NULL);
 	g_assert (source->poll_fds != NULL);
 
