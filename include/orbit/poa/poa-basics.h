@@ -1,6 +1,8 @@
 #ifndef _POA_BASICS_H_
 #define _POA_BASICS_H_ 1
 
+#include <glib.h>
+
 G_BEGIN_DECLS
 
 #if !defined(_PortableServer_Servant_defined)

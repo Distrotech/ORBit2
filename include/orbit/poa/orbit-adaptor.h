@@ -1,6 +1,8 @@
 #ifndef __ORBIT_ADAPTOR_H__
 #define __ORBIT_ADAPTOR_H__
 
+#include <glib.h>
+
 G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API

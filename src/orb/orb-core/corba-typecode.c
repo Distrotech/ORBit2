@@ -980,11 +980,14 @@ tc_dec (CORBA_TypeCode  *t,
 
 	kind = lkind;
 
-	g_assert (CLAMP (0, kind, CORBA_tk_last) == kind);
-
-	if (kind == CORBA_tk_recursive) {
+	if (lkind >= CORBA_tk_last) {
 		CORBA_long offset;
 		GSList    *l;
+
+		if (lkind != CORBA_tk_recursive) {
+			g_warning ("%s: invalid CORBA_TCKind, lkind=%lu", G_GNUC_FUNCTION, lkind);
+			return TRUE;
+		}
 
 		if (CDR_get_ulong (c, &offset))
 			return TRUE;
