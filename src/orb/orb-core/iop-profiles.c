@@ -485,16 +485,13 @@ IOP_start_profiles (CORBA_ORB orb)
 
 		ssl  = (serv->create_options & LINC_CONNECTION_SSL);
 
-		if (!osi && (uds || (ipv6 && !ssl))) {
+		if (!osi && uds) {
 			osi = g_new0 (IOP_TAG_ORBIT_SPECIFIC_info, 1);
 			osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
 		}
 
 		if (uds && !osi->unix_sock_path)
 			osi->unix_sock_path = g_strdup (serv->local_serv_info);
-
-		if (ipv6 && !ssl)
-			osi->ipv6_port = atoi (serv->local_serv_info);
 
 		if (ipv4) {
 			if (!iiop) {
@@ -527,7 +524,7 @@ IOP_start_profiles (CORBA_ORB orb)
 
 				giopt = l2->data;
 				if (giopt->parent.profile_type == IOP_TAG_GENERIC_IOP &&
-				    strcmp (giopt->proto, serv->proto->name)) {
+				   !strcmp (giopt->proto, serv->proto->name)) {
 					giop = giopt;
 					break;
 				}
