@@ -42,11 +42,11 @@ my_cosnaming_built: CosNaming.idl $(IDL)
 CLEANFILES=my_cosnaming_built
 
 DEPS = 	$(top_builddir)/src/orb/libORBit.la			\
-	libORBitCosNaming.la
+	libORBitCosNaming-2.la
 
 LDADDS = \
 	$(top_builddir)/src/orb/libORBit.la			\
-	libORBitCosNaming.la					\
+	libORBitCosNaming-2.la					\
 	@GLIB_LIBS@ 						\
 	-lm
 
