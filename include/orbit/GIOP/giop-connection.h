@@ -24,11 +24,8 @@ G_BEGIN_DECLS
 struct _GIOPConnection {
 	LINCConnection  parent;
 
-	GMutex         *incoming_mutex;
 	GIOPRecvBuffer *incoming_msg;
 	GList          *incoming_frags;
-
-	GMutex         *outgoing_mutex;
 
 	GIOPVersion     giop_version;
 

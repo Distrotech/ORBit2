@@ -101,12 +101,10 @@ giop_connection_real_state_changed (LINCConnection      *cnx,
 
 	switch (status) {
 	case LINC_DISCONNECTED:
-		LINC_MUTEX_LOCK (gcnx->incoming_mutex);
 		if (gcnx->incoming_msg) {
 			giop_recv_buffer_unuse (gcnx->incoming_msg);
 			gcnx->incoming_msg = NULL;
 		}
-		LINC_MUTEX_UNLOCK (gcnx->incoming_mutex);
 		giop_recv_list_zap (gcnx);
 		break;
 	default:
@@ -131,8 +129,7 @@ giop_connection_close (GIOPConnection *cnx)
 		giop_send_buffer_unuse (buf);
 	}
 
-	linc_connection_state_changed (
-		LINC_CONNECTION (cnx), LINC_DISCONNECTED);
+	linc_connection_disconnect (LINC_CONNECTION (cnx));
 }
 
 static void
@@ -141,11 +138,6 @@ giop_connection_dispose (GObject *obj)
 	GIOPConnection *cnx = (GIOPConnection *) obj;
 
 	giop_connection_close (cnx);
-
-	if (cnx->incoming_mutex) {
-		g_mutex_free (cnx->incoming_mutex);
-		cnx->incoming_mutex = NULL;
-	}
 
 	giop_connection_destroy_frags (cnx);
 
@@ -173,7 +165,6 @@ giop_connection_class_init (GIOPConnectionClass *klass)
 static void
 giop_connection_init (GIOPConnection *cnx)
 {
-	cnx->incoming_mutex = linc_mutex_new ();
 }
 
 GType

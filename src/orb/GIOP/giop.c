@@ -289,7 +289,6 @@ static int      corba_wakeup_fds[2];
 #define WAKEUP_POLL  corba_wakeup_fds [0]
 #define WAKEUP_WRITE corba_wakeup_fds [1]
 static GSource *giop_main_source = NULL;
-static GThread *giop_incoming_thread = NULL;
 static GIOPThread *giop_main_thread = NULL;
 
 static gboolean
@@ -315,7 +314,6 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 	if (threaded) {
 		GIOPThread *tdata;
-		GError     *error = NULL;
 
 		/* FIXME: should really cleanup with descructor */
 		giop_tdata_private = g_private_new (NULL);
@@ -332,16 +330,6 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 			giop_mainloop_handle_input, NULL);
 		
 		g_private_set (giop_tdata_private, tdata);
-
-		giop_incoming_thread =
-			g_thread_create_full (
-				giop_recv_thread_fn,
-				NULL, /* data */
-				0, TRUE, FALSE, 
-				G_THREAD_PRIORITY_NORMAL,
-				&error);
-		if (!giop_incoming_thread || error)
-			g_error ("Failed to create ORB worker thread");
 	}
 
 	giop_tmpdir_init ();
@@ -358,9 +346,10 @@ wakeup_mainloop (void)
 	char c = 'A'; /* magic */
 	int  res;
 	while ((res = write (WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
-	       errno == EAGAIN);
+	       (errno == EAGAIN || errno == EINTR));
 	if (res < 0)
-		g_error ("Failed to write to wakeup socket");
+		g_error ("Failed to write to GIOP wakeup socket %d 0x%x(%d) (%d)",
+			 res, errno, errno, WAKEUP_WRITE);
 }
 
 void
@@ -422,11 +411,6 @@ giop_shutdown (void)
 	if (giop_is_threaded) {
 		if (!giop_thread_self ()->wake_context)
 			g_error ("Must shutdown ORB from main thread");
-
-		if (giop_incoming_thread) {
-			g_thread_join (giop_incoming_thread);
-			giop_incoming_thread = NULL;
-		}
 
 		if (giop_main_source) {
 			g_source_destroy (giop_main_source);
