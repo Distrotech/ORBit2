@@ -42,7 +42,7 @@ main (int argc, char *argv[]) {
 	char buf[30];
 	int i;
 
-	int niters = 100;
+	int niters = 1000;
 
 	CORBA_exception_init(&ev);
 	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);

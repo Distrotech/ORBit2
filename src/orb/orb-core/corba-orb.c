@@ -196,15 +196,16 @@ static void
 ORBit_setup_debug_flags (void)
 {
 	static GDebugKey debug_keys[] = {
-		{ "traces",        ORBIT_DEBUG_TRACES },
-		{ "inproc_traces", ORBIT_DEBUG_INPROC_TRACES },
-		{ "timings",       ORBIT_DEBUG_TIMINGS },
-		{ "types",         ORBIT_DEBUG_TYPES },
-		{ "messages",      ORBIT_DEBUG_MESSAGES },
-		{ "errors",        ORBIT_DEBUG_ERRORS },
-		{ "objects",       ORBIT_DEBUG_OBJECTS },
-		{ "giop",          ORBIT_DEBUG_GIOP },
-		{ "refs",          ORBIT_DEBUG_REFS },
+		{ "traces",         ORBIT_DEBUG_TRACES },
+		{ "inproc_traces",  ORBIT_DEBUG_INPROC_TRACES },
+		{ "timings",        ORBIT_DEBUG_TIMINGS },
+		{ "types",          ORBIT_DEBUG_TYPES },
+		{ "messages",       ORBIT_DEBUG_MESSAGES },
+		{ "errors",         ORBIT_DEBUG_ERRORS },
+		{ "objects",        ORBIT_DEBUG_OBJECTS },
+		{ "giop",           ORBIT_DEBUG_GIOP },
+		{ "refs",           ORBIT_DEBUG_REFS },
+		{ "force_threaded", ORBIT_DEBUG_FORCE_THREADED }
 	};
 	const char *env_string;
 
@@ -279,6 +280,11 @@ CORBA_ORB_init (int *argc, char **argv,
 #ifdef G_ENABLE_DEBUG
 	ORBit_setup_debug_flags ();
 #endif /* G_ENABLE_DEBUG */
+
+	if (_orbit_debug_flags & ORBIT_DEBUG_FORCE_THREADED) {
+		g_warning ("-- Forced orb into threaded mode --");
+		threaded |= TRUE;
+	}
 
 	genuid_init ();
 

@@ -2,16 +2,17 @@
 #define __ORBIT_DEBUG_H__
 
 typedef enum {
-	ORBIT_DEBUG_NONE          = 0,
-	ORBIT_DEBUG_TRACES        = 1 << 0,
-	ORBIT_DEBUG_INPROC_TRACES = 1 << 1,
-	ORBIT_DEBUG_TIMINGS       = 1 << 2,
-	ORBIT_DEBUG_TYPES         = 1 << 3,
-	ORBIT_DEBUG_MESSAGES      = 1 << 4,
-	ORBIT_DEBUG_ERRORS        = 1 << 5,
-	ORBIT_DEBUG_OBJECTS       = 1 << 6,
-	ORBIT_DEBUG_GIOP          = 1 << 7,
-	ORBIT_DEBUG_REFS          = 1 << 8
+	ORBIT_DEBUG_NONE           = 0,
+	ORBIT_DEBUG_TRACES         = 1 << 0,
+	ORBIT_DEBUG_INPROC_TRACES  = 1 << 1,
+	ORBIT_DEBUG_TIMINGS        = 1 << 2,
+	ORBIT_DEBUG_TYPES          = 1 << 3,
+	ORBIT_DEBUG_MESSAGES       = 1 << 4,
+	ORBIT_DEBUG_ERRORS         = 1 << 5,
+	ORBIT_DEBUG_OBJECTS        = 1 << 6,
+	ORBIT_DEBUG_GIOP           = 1 << 7,
+	ORBIT_DEBUG_REFS           = 1 << 8,
+	ORBIT_DEBUG_FORCE_THREADED = 1 << 9
 } OrbitDebugFlags;
 
 #ifndef G_ENABLE_DEBUG

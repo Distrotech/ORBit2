@@ -1,3 +1,13 @@
+2003-05-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (handle_reply): 
+	re-work the code for a simpler, more readable flow,
+	and fix async/ent ownership silly.
+
+	* src/orb/orb-core/corba-orb.c (ORBit_setup_debug_flags): 
+	add 'force_threaded' debug option.
+	(CORBA_ORB_init): do the dirty bits.
+
 2003-05-14  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c (orbit_small_demarshal): 

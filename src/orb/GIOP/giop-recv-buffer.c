@@ -645,7 +645,8 @@ giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
 
 	LINC_MUTEX_LOCK   (giop_queued_messages_lock);
 #ifdef DEBUG
-	g_warning ("Push XX:%p:NULL - %d", ent, g_list_length (giop_queued_messages));
+	g_warning ("Push XX:%p:(%p) - %d", ent, ent->async_cb,
+		   g_list_length (giop_queued_messages));
 #endif
 	giop_queued_messages = g_list_prepend (giop_queued_messages, ent);
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
@@ -998,7 +999,7 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 {
 	GList                 *l;
 	gboolean               error;
-	GIOPMessageQueueEntry *ent = NULL;
+	GIOPMessageQueueEntry *ent;
 	CORBA_unsigned_long    request_id;
 
 	request_id = giop_recv_buffer_get_request_id (buf);
@@ -1011,46 +1012,13 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 		ent = l->data;
 
 		if (ent->request_id == request_id &&
-		    ent->msg_type == buf->msg.header.message_type) {
-
-			if (ent->cnx != buf->connection) {
-#ifdef G_ENABLE_DEBUG
-				if (giop_debug_hook_spoofed_reply)
-					giop_debug_hook_spoofed_reply (buf, ent);
-#endif
-				dprintf (ERRORS, "We received a bogus reply\n");
-
-				LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-
-				giop_recv_buffer_unuse (buf);
-				return TRUE;
-			} else {
-#ifdef DEBUG
-				g_warning ("Pop XX:%p:NULL - %d", ent, g_list_length (giop_queued_messages));
-#endif
-				giop_queued_messages = g_list_delete_link
-					(giop_queued_messages, l);
-				break;
-			}
-		}
+		    ent->msg_type == buf->msg.header.message_type)
+			break;
 	}
 
-	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+	ent = l ? l->data : NULL;
 
-	if (ent) {
-		ent_lock (ent);
-		ent->buffer = buf;
-
-		if (giop_threaded () && !ent->async_cb)
-			giop_thread_push_recv (ent);
-
-		ent_unlock (ent);
-
-		if (ent->async_cb)
-			giop_invoke_async (ent);
-
-	} else {
-
+	if (!ent) {
 		if (giop_recv_buffer_reply_status (buf) ==
 		    CORBA_SYSTEM_EXCEPTION) {
 			/*
@@ -1069,8 +1037,48 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 			error = TRUE;
 		}
 
-		giop_recv_buffer_unuse (buf);
+	} else if (ent->cnx != buf->connection) {
+#ifdef G_ENABLE_DEBUG
+		if (giop_debug_hook_spoofed_reply)
+			giop_debug_hook_spoofed_reply (buf, ent);
+#endif
+		dprintf (ERRORS, "We received a bogus reply\n");
+
+		error = TRUE;
+
+	} else {
+#ifdef DEBUG
+		g_warning ("Pop XX:%p:%p - %d",
+			   ent, ent->async_cb,
+			   g_list_length (giop_queued_messages));
+#endif
+		giop_queued_messages = g_list_delete_link
+			(giop_queued_messages, l);
 	}
+
+	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+	if (ent && !error) {
+		gboolean async = FALSE;
+
+		ent_lock (ent);
+		ent->buffer = buf;
+
+		if (giop_threaded () && !ent->async_cb)
+			giop_thread_push_recv (ent);
+
+		else if (ent->async_cb)
+			async = TRUE;
+
+		ent_unlock (ent);
+
+		if (async)
+			giop_invoke_async (ent);
+
+		buf = NULL;
+	}
+	
+	giop_recv_buffer_unuse (buf);
 
 	return error;
 }
