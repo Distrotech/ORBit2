@@ -200,7 +200,7 @@ add_if_unique (GPtrArray  *strings,
 
 	g_ptr_array_add (
 		strings,
-		g_strconcat (new_str, "/lib/orbit", NULL));
+		g_strconcat (new_str, "/lib/orbit-2.0", NULL));
 }
 
 /* FIXME: this should be called only once at
@@ -216,7 +216,7 @@ ORBit_get_typelib_paths (void)
 
 	g_ptr_array_add (paths, g_strdup (ORBIT_TYPELIB_DIR));
 
-	if ((path = getenv ("ORBIT_TYPELIB_PATH"))) {
+	if ((path = g_getenv ("ORBIT_TYPELIB_PATH"))) {
 		char **strv;
 
 		strv = g_strsplit (path, ":", -1);
@@ -225,7 +225,7 @@ ORBit_get_typelib_paths (void)
 		g_strfreev (strv);
 	}
 
-	if ((path = getenv ("GNOME_PATH"))) {
+	if ((path = g_getenv ("GNOME_PATH"))) {
 		char **strv;
 
 		strv = g_strsplit (path, ":", -1);

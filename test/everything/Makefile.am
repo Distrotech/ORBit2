@@ -41,7 +41,7 @@ included_src = \
 	structServer.c   \
 	unionServer.c
 
-orbittypelibdir = $(libdir)/orbit
+orbittypelibdir = $(libdir)/orbit-2.0
 orbittypelib_LTLIBRARIES = Everything_module.la
 
 Everything_module_la_LDFLAGS = \

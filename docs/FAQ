@@ -191,8 +191,70 @@ Now at least there is an ad-hoc shared standard.
 
 ** Why is a type based ORB better ?
 
-	
+	Firstly ABI reduction, in ORBit stable the API usage by the
+stubs was very considerable - many methods were called, and there was
+a considerable body of code in a stub or a skel.
+
+	With ORBit2 a stub looks like a bit like this:
+
+Bonobo_Unknown
+Bonobo_Unknown_queryInterface (Bonobo_Unknown     obj,
+                               const CORBA_char  *repoid,
+                               CORBA_Environment *ev)
+{
+        Bonobo_Unknown _ORBIT_retval;
+
+        ... local fast case ... else ...
+        { /* remote marshal */
+                gpointer _args[] = {
+                        (gpointer) & repoid
+                };
+
+                ORBit_small_invoke_stub (
+                        obj,
+			&Bonobo_Unknown__iinterface.methods._buffer[2],
+			&_ORBIT_retval, _args, NULL, ev);
+
+        }
+
+        return _ORBIT_retval;
+}
+
+	ie. we expose a single method call here
+'ORBit_small_invoke_stub'. This method is passed the object reference,
+the arguments in a normalized form ( as an array of gpointers ) a
+pointer to the return value, any CORBA_Context we might be using and
+the exception environent.
+
+	The skeleton is similar, unwinding a gpointer array of
+arguments and invoking the C method. NB. for language bindings, you
+can hook the a virtual invocation pointer on the servant to recieve a
+method type data pointer and handle the invocation fully yourself.
+
+	The indirection and allocation semantics of the argument
+passing, as well as the C CORBA semantics are lucidly documented in
+ORBit2/docs/internals/interface-indirection.gnumeric.
 
 ** Why is a type based ORB potentialy faster ?
 
+	Well - partly due to encapsulation. Encapsulation often
+carries a cost; in ORBit stable there are several layers. Even though
+the stubs and skels are substantialy unrolled, there are a
+considerable amount of method calls, and lots of wasteful indirection.
 
+	In ORBit2 we can hide an _extremely_ optimized, top to bottom
+to the wire generic marshaler behind ORBit_small_invoke_stub. This
+would be totaly private to the ORB, maintaining ORB encapsulation, but
+giving us buckets of room for optimization.
+
+	Secondarily, in ORBit stable the stubs and skels are massively
+unrolled, giving not only a size penalty but also a speed penalty in
+terms of the processors instruction cache (Icache). In contrast ORBit2
+maintains a far smaller Icached working set, since the generated code
+that is different per method is tiny, and the same generic code is
+executed to do the marshaling for each method.
+
+	Hence - although currently what performance tests we have
+suggest that ORBit2 is ~20% slower than ORBit stable, it will be
+possible ( in a totaly binary compatible fashion ) to tweak and
+optimize the marshal / de-marshal process to make it arbitarily fast.

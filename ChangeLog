@@ -1,3 +1,16 @@
+2001-10-26  Michael Meeks  <michael@ximian.com>
+
+	* docs/FAQ: add a first pass at a FAQ.
+
+	* src/orb/orb-core/orbit-typelib.c
+	(ORBit_get_typelib_paths): use g_getenv not getenv.
+
+	* test/everything/Makefile.am (orbittypelibdir):
+	install in orbit-2.0
+
+	* src/orb/orb-core/orbit-typelib.c (add_if_unique): 
+	use the orbit-2.0 directory for type libs.
+
 2001-10-23  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/orb-core/Makefile.am: reverse Michael's
