@@ -537,6 +537,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 	}
 	
 	giop_recv_buffer_unuse (recv_buffer);
+
 	return MARSHAL_CLEAN;
 
  msg_exception:
