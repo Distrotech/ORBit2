@@ -576,9 +576,13 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 		 << iface.get_cpp_poa_method_prefix () << "::" << "_this()" << endl
 		 << mod_indent++ << "{" << endl;
 
-	m_module << mod_indent << "PortableServer::POA_var rootPOA = _default_POA ();" << endl
-		 << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->servant_to_id (this);" << endl
-		 << mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference (oid);" << endl;
+	m_module << mod_indent << "PortableServer::POA_var rootPOA = _default_POA ();" << endl << endl;
+	m_module << mod_indent << "static bool activated = false;" << endl;
+	m_module << mod_indent << "PortableServer::ObjectId_var oid = "
+		 << "activated ? rootPOA->servant_to_id (this) : rootPOA->activate_object (this);" << endl;
+	m_module << mod_indent << "activated = true;" << endl << endl;
+	
+	m_module << mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference (oid);" << endl;
 	m_module << mod_indent << iface.get_cpp_typename_ptr () << " pDerived = "
 		 << stub_name << "::_orbitcpp_wrap (object->_orbitcpp_cobj (), true);" << endl;
 	m_module << mod_indent << "CORBA::release (object);" << endl

@@ -230,26 +230,23 @@ IDLInterface::stub_impl_arg_pre (ostream        &ostr,
 				 IDL_param_attr  direction,
 				 const IDLTypedef *active_typedef) const
 {
+	const string unwrap = cpp_id + " ? " + cpp_id + "->_orbitcpp_cobj () : CORBA_OBJECT_NIL";
+		
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
 		ostr << indent << "const " << get_c_typename () << " "
-		     << get_c_id (cpp_id)
-		     << " = " << cpp_id << "->_orbitcpp_cobj ();"
-		     << endl;
+		     << get_c_id (cpp_id) << " = " << unwrap << ";" << endl;
 		break;
 
 	case IDL_PARAM_INOUT:
 		ostr << indent << get_c_typename () << " "
-		     << get_c_id (cpp_id)
-		     << " = " << cpp_id << "->_orbitcpp_get_object ();"
-		     << endl;
+		     << get_c_id (cpp_id) << " = " << unwrap << ";" << endl;
 		break;
-
+		
 	case IDL_PARAM_OUT:
 		ostr << indent << get_c_typename () << " "
-		     << get_c_id (cpp_id)
-		     << " = " << "CORBA_OBJECT_NIL;"
+		     << get_c_id (cpp_id) << " = " << "CORBA_OBJECT_NIL;"
 		     << endl;
 		break;
 	}
