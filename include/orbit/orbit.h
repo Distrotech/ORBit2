@@ -13,5 +13,6 @@
 #include <orbit/orbit-types.h>
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orb-core.h>
+#include <orbit/poa/poa.h>
 
 #endif
