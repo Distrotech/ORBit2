@@ -85,6 +85,17 @@ gboolean linc_connection_initiate (LINCConnection       *cnx,
 				   const char           *remote_serv_info,
 				   LINCConnectionOptions options);
 
+LINCConnection *linc_connection_initiate_list (GType                 derived_type,
+					       const char           *proto_name,
+					       const char           *remote_host_info,
+					       const char           *remote_serv_info,
+					       LINCConnectionOptions options,
+					       const char           *first_property,
+					       ...);
+
+gpointer linc_connection_ref   (gpointer cnx);
+void     linc_connection_unref (gpointer cnx);
+
 typedef enum {
 	LINC_IO_OK = 0,
 	LINC_IO_FATAL_ERROR = -1,

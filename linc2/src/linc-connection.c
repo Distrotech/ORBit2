@@ -10,7 +10,7 @@
  *                 Sun Microsystems, Inc.
  */
 #include <config.h>
-
+#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -36,14 +36,61 @@ enum {
 static guint   signals [LAST_SIGNAL];
 static GMutex *cnx_lock = NULL;
 static GCond  *cnx_condition = NULL;
+static GList  *initiated_list = NULL;
 
-#define CNX_LOCK(cnx)      LINC_MUTEX_LOCK (cnx_lock)
-#define CNX_UNLOCK(cnx)    LINC_MUTEX_UNLOCK (cnx_lock)
+#define CNX_LOCK(cnx)      G_STMT_START { \
+	LINC_MUTEX_LOCK (cnx_lock); \
+	/* g_warning ("Lock"); */ \
+} G_STMT_END
+#define CNX_UNLOCK(cnx)    G_STMT_START { \
+	LINC_MUTEX_UNLOCK (cnx_lock); \
+	/* g_warning ("Unlock"); */ \
+} G_STMT_END
+
+#define CNX_LIST_LOCK()      CNX_LOCK(0);   /* for now */
+#define CNX_LIST_UNLOCK()    CNX_UNLOCK(0); /* for now */
+#define CNX_AND_LIST_LOCK(cnx)   CNX_LOCK(cnx);   /* for now */
+#define CNX_AND_LIST_UNLOCK(cnx) CNX_UNLOCK(cnx); /* for now */
 #define CNX_IS_LOCKED(cnx) linc_mutex_is_locked (cnx_lock)
 
 static gboolean linc_connection_io_handler (GIOChannel  *gioc,
 					    GIOCondition condition,
 					    gpointer     data);
+
+#define linc_connection_ref_T(cnx) g_object_ref (cnx)
+
+gpointer
+linc_connection_ref (gpointer cnx)
+{
+	CNX_AND_LIST_LOCK (cnx);
+	g_object_ref (cnx);
+	CNX_AND_LIST_UNLOCK (cnx);
+
+	return cnx;
+}
+
+void
+linc_connection_unref (gpointer cnx)
+{
+	gboolean tail_unref = FALSE;
+
+	g_return_if_fail (cnx != NULL);
+
+	CNX_AND_LIST_LOCK (cnx);
+
+	if (((GObject *)cnx)->ref_count > 1)
+		g_object_unref (cnx);
+
+	else { /* FIXME: only do if initiated ? */
+		initiated_list = g_list_remove (initiated_list, cnx);
+		tail_unref = TRUE;
+	}
+
+	CNX_AND_LIST_UNLOCK (cnx);
+
+	if (tail_unref)
+		g_object_unref (cnx);
+}
 
 static void
 linc_close_fd (LINCConnection *cnx)
@@ -64,10 +111,6 @@ typedef struct {
 	struct iovec  single_vec;
 } QueuedWrite;
 
-/*
- * NB. this method must be called only in the I/O thread, or
- * at construction, and with the cnx lock held ...
- */
 static void
 linc_connection_state_changed_T (LINCConnection      *cnx,
 				 LINCConnectionStatus status)
@@ -83,8 +126,8 @@ linc_connection_state_changed_T (LINCConnection      *cnx,
 }
 
 static void
-queue_signal_T (LINCConnection *cnx,
-		glong           delta)
+queue_signal_T_R (LINCConnection *cnx,
+		  glong           delta)
 {
 	gulong old_size;
 	gulong new_size;
@@ -96,8 +139,6 @@ queue_signal_T (LINCConnection *cnx,
 	old_size = cnx->priv->write_queue_bytes;
 	cnx->priv->write_queue_bytes += delta;
 	new_size = cnx->priv->write_queue_bytes;
-
-	linc_object_ref (cnx);
 
 	if (cnx->options & LINC_CONNECTION_BLOCK_SIGNAL) {
 		if (new_size == 0 ||
@@ -113,8 +154,6 @@ queue_signal_T (LINCConnection *cnx,
 	if (cnx->priv->max_buffer_bytes &&
 	    cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
 		linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
-
-	linc_object_unref (cnx);
 }
 
 static gulong
@@ -131,10 +170,10 @@ calc_size (struct iovec *src_vecs,
 }
 
 static void
-queue_flattened_T (LINCConnection *cnx,
-		   struct iovec   *src_vecs,
-		   int             nvecs,
-		   gboolean        update_poll)
+queue_flattened_T_R (LINCConnection *cnx,
+		     struct iovec   *src_vecs,
+		     int             nvecs,
+		     gboolean        update_poll)
 {
 	int     i;
 	guchar *p;
@@ -162,7 +201,7 @@ queue_flattened_T (LINCConnection *cnx,
 		  total_size, cnx->priv->fd);
 
 	cnx->priv->write_queue = g_list_append (cnx->priv->write_queue, qw);
-	queue_signal_T (cnx, total_size);
+	queue_signal_T_R (cnx, total_size);
 
 	if (update_poll) {
 		LINCCommandSetCondition *cmd;
@@ -171,7 +210,7 @@ queue_flattened_T (LINCConnection *cnx,
 
 		cmd = g_new (LINCCommandSetCondition, 1);
 		cmd->cmd.type = LINC_COMMAND_SET_CONDITION;
-		cmd->cnx = linc_object_ref (cnx);
+		cmd->cnx = linc_connection_ref_T (cnx);
 		cmd->condition = (LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
 		linc_exec_command (&cmd->cmd);
 	}
@@ -288,6 +327,43 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 	}
 }
 
+static void
+linc_connection_from_fd_T (LINCConnection         *cnx,
+			   int                     fd,
+			   const LINCProtocolInfo *proto,
+			   gchar                  *remote_host_info,
+			   gchar                  *remote_serv_info,
+			   gboolean                was_initiated,
+			   LINCConnectionStatus    status,
+			   LINCConnectionOptions   options)
+{
+	cnx->was_initiated = was_initiated;
+	cnx->is_auth       = (proto->flags & LINC_PROTOCOL_SECURE);
+	cnx->proto         = proto;
+	cnx->options       = options;
+	cnx->priv->fd      = fd;
+
+	cnx->remote_host_info = remote_host_info;
+	cnx->remote_serv_info = remote_serv_info;
+
+	d_printf ("Cnx from fd (%d) '%s', '%s', '%s'\n",
+		 fd, proto->name, 
+		 remote_host_info ? remote_host_info : "<Null>",
+		 remote_serv_info ? remote_serv_info : "<Null>");
+
+	if (proto->setup)
+		proto->setup (fd, options);
+
+#ifdef LINC_SSL_SUPPORT
+	if (options & LINC_CONNECTION_SSL) {
+		cnx->priv->ssl = SSL_new (linc_ssl_ctx);
+		SSL_set_fd (cnx->priv->ssl, fd);
+	}
+#endif
+	g_assert (CNX_IS_LOCKED (0));
+	linc_connection_state_changed_T (cnx, status);
+}
+
 /*
  * linc_connection_from_fd:
  * @cnx: a #LINCConnection.
@@ -318,34 +394,90 @@ linc_connection_from_fd (LINCConnection         *cnx,
 {
 	CNX_LOCK (cnx);
 
-	cnx->was_initiated = was_initiated;
-	cnx->is_auth       = (proto->flags & LINC_PROTOCOL_SECURE);
-	cnx->proto         = proto;
-	cnx->options       = options;
-	cnx->priv->fd      = fd;
-
-	cnx->remote_host_info = remote_host_info;
-	cnx->remote_serv_info = remote_serv_info;
-
-	d_printf ("Cnx from fd (%d) '%s', '%s', '%s'\n",
-		 fd, proto->name, 
-		 remote_host_info ? remote_host_info : "<Null>",
-		 remote_serv_info ? remote_serv_info : "<Null>");
-
-	if (proto->setup)
-		proto->setup (fd, options);
-
-#ifdef LINC_SSL_SUPPORT
-	if (options & LINC_CONNECTION_SSL) {
-		cnx->priv->ssl = SSL_new (linc_ssl_ctx);
-		SSL_set_fd (cnx->priv->ssl, fd);
-	}
-#endif
-	linc_connection_state_changed_T (cnx, status);
-
+	linc_connection_from_fd_T (cnx, fd, proto,
+				   remote_serv_info, remote_serv_info,
+				   was_initiated, status, options);
 	CNX_UNLOCK (cnx);
 
   	return TRUE;
+}
+
+/**
+ * linc_connection_initiate_list:
+ * @derived_type: a #LINCConnection derived type
+ * @proto_name: the name of the protocol to use.
+ * @host: protocol dependant host information.
+ * @service: protocol dependant service information(e.g. port number).
+ * @options: combination of #LINCConnectionOptions.
+ * @opt_construct_fn: optional constructor fn for new cnx's or NULL
+ * @user_data: optional user data for constructor
+ * 
+ * Looks up a connection in our cnx. list to see if we already
+ * have a matching connection; if so returns it, otherwise
+ * constructs a new cnx. and retursn that
+ * 
+ * Return value: an incremented cnx ref.
+ **/
+LINCConnection *
+linc_connection_initiate_list (GType                 derived_type,
+			       const char           *proto_name,
+			       const char           *remote_host_info,
+			       const char           *remote_serv_info,
+			       LINCConnectionOptions options,
+			       const char           *first_property,
+			       ...)
+{
+	va_list args;
+	GList *l;
+	gboolean initiated = TRUE;
+	LINCConnection *cnx = NULL;
+	const LINCProtocolInfo *proto;
+
+	va_start (args, first_property);
+
+	proto = linc_protocol_find (proto_name);
+
+	CNX_LIST_LOCK();
+
+	g_assert (CNX_IS_LOCKED (0));
+
+	for (l = initiated_list; l; l = l->next) {
+		LINCConnection *cnx = l->data;
+
+		if (cnx->proto == proto &&
+		    cnx->status != LINC_DISCONNECTED &&
+		    ((cnx->options & LINC_CONNECTION_SSL) == (options & LINC_CONNECTION_SSL)) &&
+		    !strcmp (remote_host_info, cnx->remote_host_info) &&
+		    !strcmp (remote_serv_info, cnx->remote_serv_info)) {
+			cnx = linc_connection_ref_T (cnx);
+			/* FIXME: pull last hit to head of list ? */
+			break;
+		}
+	}
+
+	if (!cnx) {
+		g_assert (CNX_IS_LOCKED (0));
+
+		cnx = LINC_CONNECTION
+			(g_object_new_valist (derived_type, first_property, args));
+
+		g_assert (CNX_IS_LOCKED (0));
+		if ((initiated = linc_connection_initiate
+				     (cnx, proto_name, remote_host_info,
+				      remote_serv_info, options)))
+			initiated_list = g_list_prepend (initiated_list, cnx);
+	}
+	
+	CNX_LIST_UNLOCK();
+
+	if (!initiated) {
+		linc_connection_unref (cnx);
+		cnx = NULL;
+	}
+
+	va_end (args);
+
+	return cnx;
 }
 
 /*
@@ -382,7 +514,6 @@ linc_connection_initiate (LINCConnection        *cnx,
 	if (!proto)
 		return FALSE;
 
-
 	saddr = linc_protocol_get_sockaddr (
 		proto, host, service, &saddr_len);
 
@@ -416,11 +547,13 @@ linc_connection_initiate (LINCConnection        *cnx,
 	d_printf ("initiate 'connect' on new fd %d [ %d; %d ]\n",
 		 fd, rv, errno);
 
-	retval = linc_connection_from_fd (
-		cnx, fd, proto, 
-		g_strdup (host), g_strdup (service),
-		TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
-		options);
+	g_assert (CNX_IS_LOCKED (0));
+	linc_connection_from_fd_T
+		(cnx, fd, proto, 
+		 g_strdup (host), g_strdup (service),
+		 TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
+		 options);
+	retval = TRUE;
 
  out:
 	if (!retval && fd >= 0) {
@@ -682,7 +815,7 @@ linc_connection_should_block (LINCConnection      *cnx,
 
 /* Always called in main thread */
 static void
-linc_connection_flush_write_queue_T (LINCConnection *cnx)
+linc_connection_flush_write_queue_T_R (LINCConnection *cnx)
 {
 	gboolean done_writes = TRUE;
 
@@ -699,7 +832,7 @@ linc_connection_flush_write_queue_T (LINCConnection *cnx)
 				(cnx->priv->write_queue, cnx->priv->write_queue);
 			queued_write_free (qw);
 
-			queue_signal_T (cnx, -status);
+			queue_signal_T_R (cnx, -status);
 			
 			done_writes = (cnx->priv->write_queue == NULL);
 
@@ -737,7 +870,7 @@ linc_connection_exec_set_condition (LINCCommandSetCondition *cmd)
 	CNX_LOCK (cmd->cnx);
 	linc_watch_set_condition (cmd->cnx->priv->tag, cmd->condition);
 	CNX_UNLOCK (cmd->cnx);
-	linc_object_unref (cmd->cnx);
+	linc_connection_unref (cmd->cnx);
 	g_free (cmd);
 }
 
@@ -766,12 +899,14 @@ linc_connection_writev (LINCConnection       *cnx,
 	int         status;
 
 	CNX_LOCK (cnx);
+	linc_connection_ref_T (cnx);
 
 	if (linc_get_threaded ()) {
 		d_printf ("Transfer output to main thread\n");
 		if (cnx->status == LINC_CONNECTING) {
-			queue_flattened_T (cnx, vecs, nvecs, TRUE);
+			queue_flattened_T_R (cnx, vecs, nvecs, TRUE);
 			CNX_UNLOCK (cnx);
+			linc_connection_unref (cnx);
 			return LINC_IO_QUEUED_DATA;
 		}
 	} else if (cnx->options & LINC_CONNECTION_NONBLOCKING)
@@ -779,14 +914,16 @@ linc_connection_writev (LINCConnection       *cnx,
 
 	if (cnx->status == LINC_DISCONNECTED) {
 		CNX_UNLOCK (cnx);
+		linc_connection_unref (cnx);
 		return LINC_IO_FATAL_ERROR;
 	}
 
 	if (cnx->priv->write_queue) {
 		/* FIXME: we should really retry the write here, but we'll
 		 * get a POLLOUT for this lot at some stage anyway */
-		queue_flattened_T (cnx, vecs, nvecs, FALSE);
+		queue_flattened_T_R (cnx, vecs, nvecs, FALSE);
 		CNX_UNLOCK (cnx);
+		linc_connection_unref (cnx);
 		return LINC_IO_QUEUED_DATA;
 	}
 
@@ -798,8 +935,9 @@ linc_connection_writev (LINCConnection       *cnx,
 
 	if (status == LINC_IO_QUEUED_DATA) {
 		if (linc_get_threaded ()) {
-			queue_flattened_T (cnx, qw.vecs, qw.nvecs, TRUE);
+			queue_flattened_T_R (cnx, qw.vecs, qw.nvecs, TRUE);
 			CNX_UNLOCK (cnx);
+			linc_connection_unref (cnx);
 			return LINC_IO_QUEUED_DATA;
 		}
 
@@ -809,8 +947,9 @@ linc_connection_writev (LINCConnection       *cnx,
 			 LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
 
 		if (!linc_connection_should_block (cnx, opt_write_opts)) {
-			queue_flattened_T (cnx, qw.vecs, qw.nvecs, FALSE);
+			queue_flattened_T_R (cnx, qw.vecs, qw.nvecs, FALSE);
 			CNX_UNLOCK (cnx);
+			linc_connection_unref (cnx);
 			return LINC_IO_QUEUED_DATA;
 
 		} else {
@@ -822,6 +961,7 @@ linc_connection_writev (LINCConnection       *cnx,
 		status = LINC_IO_OK;
 
 	CNX_UNLOCK (cnx);
+	linc_connection_unref (cnx);
 
 	return status;
 }
@@ -898,10 +1038,6 @@ static void
 linc_connection_class_init (LINCConnectionClass *klass)
 {
 	GObjectClass *object_class = (GObjectClass *) klass;
-
-	cnx_lock = linc_mutex_new();
-	if (cnx_lock)
-		cnx_condition = g_cond_new();
 
 	object_class->dispose  = linc_connection_dispose;
 	object_class->finalize = linc_connection_finalize;
@@ -995,9 +1131,8 @@ linc_connection_io_handler (GIOChannel  *gioc,
 	LINCConnection      *cnx = data;
 	LINCConnectionClass *klass;
 
-	linc_object_ref (cnx);
-
 	CNX_LOCK (cnx);
+	linc_connection_ref_T (cnx);
 
 	klass = (LINCConnectionClass *) G_TYPE_INSTANCE_GET_CLASS (
 		data, LINC_TYPE_CONNECTION, LINCConnection);
@@ -1014,7 +1149,7 @@ linc_connection_io_handler (GIOChannel  *gioc,
 
 	if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
 		d_printf ("IO Out - buffer space free ...\n");
-		linc_connection_flush_write_queue_T (cnx);
+		linc_connection_flush_write_queue_T_R (cnx);
 	}
 
 	if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
@@ -1036,7 +1171,7 @@ linc_connection_io_handler (GIOChannel  *gioc,
 
 				if (cnx->priv->write_queue) {
 					d_printf ("Connected, with queued writes, start flush ...\n");
-					linc_connection_flush_write_queue_T (cnx);
+					linc_connection_flush_write_queue_T_R (cnx);
 				}
 			} else {
 				d_printf ("Error connecting %d %d %d on fd %d\n",
@@ -1057,7 +1192,7 @@ linc_connection_io_handler (GIOChannel  *gioc,
 	}
 
 	CNX_UNLOCK (cnx);
-	linc_object_unref (cnx);
+	linc_connection_unref (cnx);
 
 	return TRUE;
 }
@@ -1083,7 +1218,7 @@ linc_connection_exec_disconnect (LINCCommandDisconnect *cmd)
 
 	linc_connection_state_changed (cmd->cnx, LINC_DISCONNECTED);
 
-	linc_object_unref (cmd->cnx);
+	linc_connection_unref (cmd->cnx);
 	g_free (cmd);
 }
 
@@ -1094,7 +1229,7 @@ linc_connection_disconnect (LINCConnection *cnx)
 
 	cmd = g_new (LINCCommandDisconnect, 1);
 	cmd->cmd.type = LINC_COMMAND_DISCONNECT;
-	cmd->cnx = linc_object_ref (cnx);
+	cmd->cnx = linc_connection_ref (cnx);
 
 	linc_exec_command ((LINCCommand *) cmd);
 }
@@ -1109,4 +1244,12 @@ linc_connection_wait_connected (LINCConnection *cnx)
 		linc_main_iteration (TRUE);
 
 	return cnx ? cnx->status : LINC_DISCONNECTED;
+}
+
+void
+_linc_connection_thread_init (gboolean thread)
+{
+	cnx_lock = linc_mutex_new ();
+	if (cnx_lock)
+		cnx_condition = g_cond_new();
 }

@@ -20,7 +20,6 @@ static gboolean linc_threaded = FALSE;
 static gboolean linc_mutex_new_called = FALSE;
 GMainLoop      *linc_loop = NULL;
 GMainContext   *linc_context = NULL;
-static GMutex  *linc_lifecycle_mutex = NULL;
 
 /* commands for the I/O loop */
 static GMutex  *linc_cmd_queue_lock = NULL;
@@ -187,8 +186,10 @@ linc_init (gboolean init_threads)
 	    !g_thread_supported ())
 		g_thread_init (NULL);
 
-	if (!linc_threaded && init_threads)
+	if (!linc_threaded && init_threads) {
 		linc_threaded = TRUE;
+		_linc_connection_thread_init (TRUE);
+	}
 
 	g_type_init ();
 
@@ -244,7 +245,6 @@ linc_init (gboolean init_threads)
 #endif
 
 	linc_cmd_queue_lock  = linc_mutex_new ();
-	linc_lifecycle_mutex = linc_mutex_new ();
 
 	if (init_threads) {
 		GError *error = NULL;
@@ -325,12 +325,6 @@ linc_mutex_new (void)
 	return NULL;
 }
 
-GMutex *
-linc_object_get_mutex (void)
-{
-	return linc_lifecycle_mutex;
-}
-
 /**
  * linc_main_idle_add:
  * @function: method to call at idle
@@ -358,71 +352,11 @@ linc_main_idle_add (GSourceFunc    function,
 	return id;
 }
 
-gpointer
-linc_object_ref (gpointer object)
-{
-	gpointer ret;
-
-	LINC_MUTEX_LOCK   (linc_lifecycle_mutex);
-
-	ret = g_object_ref (object);
-
-	LINC_MUTEX_UNLOCK (linc_lifecycle_mutex);
-
-	return ret;
-}
-
-static inline gboolean
-linc_fast_unref (GObject *object)
-{
-	gboolean last_ref;
-
-	LINC_MUTEX_LOCK   (linc_lifecycle_mutex);
-
-	if (!(last_ref = (object->ref_count == 1)))
-		g_object_unref (object);
-
-	LINC_MUTEX_UNLOCK (linc_lifecycle_mutex);
-
-	return last_ref;
-}
-
-
-static int
-linc_idle_unref (gpointer object)
-{
-	if (linc_fast_unref (object))
-		g_object_unref (object);
-	return FALSE;
-}
-
 gboolean
 linc_in_io_thread (void)
 {
 	return (!linc_io_thread ||
 		g_thread_self() == linc_io_thread);
-}
-
-void
-linc_object_unref (gpointer object)
-{
-	if (linc_fast_unref (object)) {
-		/* final unref outside the guard */
-		if (linc_lifecycle_mutex) {
-			if (linc_in_io_thread ())
-				g_object_unref (object);
-
-			else {
-				/* push to main linc thread */
-				linc_main_idle_add (
-					linc_idle_unref,
-					object);
-			}
-		} else {
-			/* only 1 thread anyway */
-			g_object_unref (object);
-		}
-	}
 }
 
 GMainLoop *
@@ -460,4 +394,26 @@ linc_shutdown (void)
 		g_thread_join (linc_io_thread);
 		linc_io_thread = NULL;
 	}
+}
+
+/* deprecated symbols */
+
+GMutex *
+linc_object_get_mutex (void)
+{
+	g_warning ("linc_object_get_mutex: deprecated");
+	return NULL;
+}
+gpointer
+linc_object_ref (gpointer object)
+{
+	g_warning ("linc_object_ref: deprecated");
+	
+	return g_object_ref (object);
+}
+void
+linc_object_unref (gpointer object)
+{
+	g_warning ("linc_object_unref: deprecated");
+	g_object_unref (object);
 }

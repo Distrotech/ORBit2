@@ -1,3 +1,23 @@
+2003-05-23  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c: add _R suffix to methods,
+	assuming a reference is held.
+	(linc_connection_from_fd_T): split from.
+	(linc_connection_from_fd): here.
+	(linc_connection_initiate): use it.
+	(linc_connection_class_init): don't create locks here
+	(_linc_connection_thread_init): do them here.
+
+	* src/linc.c (linc_init): use it.
+
+	* src/linc.c (linc_object_unref, linc_object_ref),
+	(linc_object_get_mutex): deprecated
+	(linc_idle_unref, linc_fast_unref): bin.
+
+	* src/linc-connection.c (linc_connection_unref) 
+	(linc_connection_ref): handle weak refs nicely.
+	(linc_connection_initiate_list): impl.
+
 2003-05-22  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c (queue_signal_T): drop lock
