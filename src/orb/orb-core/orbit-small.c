@@ -562,8 +562,8 @@ ORBit_small_invoke_stub_n (CORBA_Object        object,
 			   CORBA_Environment  *ev)
 {
 	if (index < 0 || index > methods->_length) {
-		dprintf (MESSAGES, "Cannot invoke OOB method (%ld,%ld)\n",
-			 index, methods->_length);
+		dprintf (MESSAGES, "Cannot invoke OOB method (%ld,%lu)\n",
+			 index, (gulong)methods->_length);
 		CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
 					    CORBA_COMPLETED_NO);
 
@@ -1290,8 +1290,9 @@ ORBit_small_listen_for_broken (CORBA_Object obj,
 }
 
 ORBitConnectionStatus
-ORBit_small_unlisten_for_broken (CORBA_Object obj,
-				 GCallback    fn)
+ORBit_small_unlisten_for_broken_full (CORBA_Object obj,
+				      GCallback    fn,
+				      gpointer     user_data)
 {
 	ORBitConnectionStatus ret;
 
@@ -1307,16 +1308,30 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 		cnx = ORBit_object_get_connection (obj);
 
 		if (cnx) {
+			GSignalMatchType t = 0;
+
 			ret = get_status (cnx);
-			g_signal_handlers_disconnect_matched (
-				cnx, G_SIGNAL_MATCH_FUNC,
-				0, 0, NULL, G_CALLBACK (fn), NULL);
+			if (fn)
+				t |= G_SIGNAL_MATCH_FUNC;
+			if (user_data)
+				t |= G_SIGNAL_MATCH_DATA;
+
+			g_signal_handlers_disconnect_matched
+				(cnx, t, 0, 0, NULL,
+				 G_CALLBACK (fn), user_data);
 			giop_connection_unref (cnx);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}
 
 	return ret;
+}
+
+ORBitConnectionStatus
+ORBit_small_unlisten_for_broken (CORBA_Object obj,
+				 GCallback    fn)
+{
+	return ORBit_small_unlisten_for_broken_full (obj, fn, NULL);
 }
 
 ORBitConnection *
