@@ -1,5 +1,9 @@
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):
+	only free exceptions iff we're not in proc, we
+	need to return them otherwise.
+
 	* src/orb/GIOP/giop-server.c (giop_server_new):
 	always pass non blocking flag.
 
