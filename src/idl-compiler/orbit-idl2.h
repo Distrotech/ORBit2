@@ -148,7 +148,7 @@ char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node);
 void orbit_idl_do_passes(IDL_tree tree, OIDL_Run_Info *rinfo);
 
 /* Utils */
-void orbit_idl_attr_fake_ops(IDL_tree attr);
+void orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns);
 void oidl_marshal_tree_dump(IDL_tree tree, int indent_level);
 void oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level);
 void orbit_idl_print_node(IDL_tree node, int indent_level);

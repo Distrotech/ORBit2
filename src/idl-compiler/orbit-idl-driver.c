@@ -26,7 +26,7 @@
 #include "orbit-idl2.h"
 #include <string.h>
 
-static void orbit_idl_tree_populate(IDL_tree tree);
+static void orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns);
 
 /****************
   orbit_idl_to_backend:
@@ -68,7 +68,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   otree.tree = tree;
 
-  orbit_idl_tree_populate(otree.tree);
+  orbit_idl_tree_populate(otree.tree, namespace);
   orbit_idl_do_passes(otree.tree, rinfo);
 
   binfo->op_output(&otree, rinfo);
@@ -104,7 +104,7 @@ static void orbit_idl_except_populate(IDL_tree tree)
 }
 
 static void
-orbit_idl_tree_populate(IDL_tree tree)
+orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns)
 {
   IDL_tree node;
 
@@ -113,33 +113,33 @@ orbit_idl_tree_populate(IDL_tree tree)
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
-      orbit_idl_tree_populate(IDL_LIST(node).data);
+      orbit_idl_tree_populate(IDL_LIST(node).data, ns);
     }
     break;
   case IDLN_MODULE:
-    orbit_idl_tree_populate(IDL_MODULE(tree).definition_list);
+    orbit_idl_tree_populate(IDL_MODULE(tree).definition_list, ns);
     break;
   case IDLN_INTERFACE:
-    orbit_idl_tree_populate(IDL_INTERFACE(tree).body);
+    orbit_idl_tree_populate(IDL_INTERFACE(tree).body, ns);
     break;
   case IDLN_OP_DCL:
-    orbit_idl_op_populate(tree);
+    orbit_idl_op_populate(tree, ns);
     break;
   case IDLN_EXCEPT_DCL:
-    orbit_idl_except_populate(tree);
+    orbit_idl_except_populate(tree, ns);
     break;
   case IDLN_ATTR_DCL:
     {
       IDL_tree curnode, attr_name;
 
-      orbit_idl_attr_fake_ops(tree);
+      orbit_idl_attr_fake_ops(tree, ns);
 
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
 	attr_name = IDL_LIST(curnode).data;
 
-	orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op1);
+	orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op1, ns);
 	if(((OIDL_Attr_Info *)attr_name->data)->op2)
-	  orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op2);
+	  orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op2, ns);
       }
     }
     break;

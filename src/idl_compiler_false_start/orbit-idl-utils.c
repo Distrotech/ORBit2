@@ -3,7 +3,7 @@
 #include "orbit-idl2.h"
 
 void
-orbit_idl_attr_fake_ops(IDL_tree attr)
+orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 {
   IDL_tree attr_name, ident, curnode, op1, op2;
   IDL_ns intf_ns;
@@ -12,7 +12,11 @@ orbit_idl_attr_fake_ops(IDL_tree attr)
 
   g_assert(attr && IDL_NODE_TYPE(attr) == IDLN_ATTR_DCL);
 
+#if 0
   intf_ns = IDL_IDENT_TO_NS(IDL_INTERFACE(IDL_get_parent_node(attr, IDLN_INTERFACE, NULL)).ident);
+#else
+  intf_ns = ns;
+#endif
 
   attrname = g_string_new(NULL);
 
