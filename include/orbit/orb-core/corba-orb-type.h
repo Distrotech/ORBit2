@@ -40,6 +40,13 @@ struct CORBA_ORB_type {
   GPtrArray *poas;
   gpointer poa_current;
   gpointer poa_current_invocations;
+  GHashTable *initial_refs;
 };
+
+typedef struct {
+  gpointer objref;
+  gboolean listme : 1;
+  gboolean free_name : 1; /* Might as well use up the space since it's here */
+} ORBit_InitialReference;
 
 #endif

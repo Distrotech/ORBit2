@@ -13,5 +13,6 @@ CORBA_ORB CORBA_ORB_init(int *argc, char **argv,
 /* ORBit extension */
 void CORBA_ORB_set_initial_reference(CORBA_ORB orb,
 				     CORBA_ORB_ObjectId identifier,
-				     CORBA_Object obj, CORBA_Environment *ev);
+				     ORBit_InitialReference *val,
+				     CORBA_Environment *ev);
 #endif

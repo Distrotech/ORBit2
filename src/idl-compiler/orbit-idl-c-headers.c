@@ -620,10 +620,10 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
       ctmp3 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tts).simple_type_spec);
       if(strcmp(ctmp2, ctmp3))
 	{
+	  fprintf(ci->fh, "#define %s__alloc() ((%s *)CORBA_sequence_%s__alloc())\n",
+		  ctmp, ctmp, ctmp2);
 	  if(IDL_NODE_TYPE(tree) != IDLN_IDENT)
 	    {
-	      fprintf(ci->fh, "#define %s__alloc() ((%s *)CORBA_sequence_%s__alloc())\n",
-		      ctmp, ctmp, ctmp2);
 	      fprintf(ci->fh, "#define %s_marshal(x,y,z) CORBA_sequence_%s_marshal((x),(y),(z))\n", ctmp, ctmp2);
 
 	      fprintf(ci->fh, "#define %s_demarshal(x,y,z,i) CORBA_sequence_%s_demarshal((x),(y),(z),(i))\n", ctmp, ctmp2);

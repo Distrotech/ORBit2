@@ -34,6 +34,7 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
   if(retval)
     return (CORBA_ORB)CORBA_Object_duplicate((CORBA_Object)retval, ev);
 
+  linc_init();
 #ifdef ORBIT_THREADSAFE
   ORBit_locks_initialize();
 #endif  
@@ -120,7 +121,7 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
 }
 
 CORBA_Object
-ORBA_ORB_string_to_object(CORBA_ORB _obj,
+CORBA_ORB_string_to_object(CORBA_ORB _obj,
 			  const CORBA_char * str,
 			  CORBA_Environment * ev)
 {
@@ -219,11 +220,34 @@ CORBA_ORB_get_service_information(CORBA_ORB _obj,
   return CORBA_FALSE;
 }
 
+static void
+servlist_add_id(gpointer key, gpointer value, gpointer data)
+{
+  CORBA_ORB_ObjectIdList *retval = data;
+
+  retval->_buffer[retval->_maximum++] = CORBA_string_dup(key);
+}
+
 CORBA_ORB_ObjectIdList *
 CORBA_ORB_list_initial_services(CORBA_ORB _obj,
 				CORBA_Environment *ev)
 {
-  return NULL;
+  CORBA_ORB_ObjectIdList *retval;
+  retval = CORBA_ORB_ObjectIdList__alloc();
+  if(_obj->initial_refs)
+    {
+      retval->_length = g_hash_table_size(_obj->initial_refs);
+      retval->_maximum = 0;
+      retval->_buffer =
+	CORBA_sequence_CORBA_ORB_ObjectId_allocbuf(retval->_length);
+      g_hash_table_foreach(_obj->initial_refs, servlist_add_id, retval);
+    }
+  else
+    {
+      retval->_length = 0;
+      retval->_buffer = NULL;
+    }
+  return retval;
 }
 
 CORBA_Object
@@ -231,6 +255,14 @@ CORBA_ORB_resolve_initial_references(CORBA_ORB _obj,
 				     const CORBA_ORB_ObjectId identifier,
 				     CORBA_Environment * ev)
 {
+  ORBit_InitialReference *val;
+  if(!_obj->initial_refs)
+    return CORBA_OBJECT_NIL;
+  val = g_hash_table_lookup(_obj->initial_refs, identifier);
+
+  if(val)
+    return CORBA_Object_duplicate(val->objref, ev);
+
   return CORBA_OBJECT_NIL;
 }
 
@@ -464,6 +496,23 @@ CORBA_ORB_lookup_value_factory(CORBA_ORB _obj,
 /* ORBit extension */
 void
 CORBA_ORB_set_initial_reference(CORBA_ORB orb, CORBA_ORB_ObjectId identifier,
-				CORBA_Object obj, CORBA_Environment *ev)
+				ORBit_InitialReference *val, CORBA_Environment *ev)
 {
+  ORBit_InitialReference *findval;
+  char *findkey = NULL;
+
+  if(!orb->initial_refs)
+    orb->initial_refs = g_hash_table_new(g_str_hash, g_str_equal);
+
+  if(g_hash_table_lookup_extended(orb->initial_refs, identifier,
+				  &findkey, &findval))
+    {
+      if(!findval->free_name)
+	findkey = NULL;
+    }
+
+  g_hash_table_insert(orb->initial_refs,
+		      val->free_name?g_strdup(identifier):identifier,
+		      val);
+  g_free(findkey);
 }
