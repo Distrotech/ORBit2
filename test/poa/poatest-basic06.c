@@ -61,7 +61,7 @@ poatest_run (PortableServer_POA        rootpoa,
 {
 	CORBA_Environment        ev;
 	poatest                  poatest_obj;
-	CORBA_PolicyList         poa_policies;
+	CORBA_PolicyList        *poa_policies;
 	PortableServer_POA       child_poa;
 	PortableServer_ObjectId *obj1id, *obj2id;
 
@@ -70,12 +70,14 @@ poatest_run (PortableServer_POA        rootpoa,
 	/*
 	 * Create child POA with MULTIPLE_ID Object Id Uniqueness policy.
 	 */
-	poa_policies._maximum = 1;
-	poa_policies._length = 1;
-	poa_policies._buffer = CORBA_PolicyList_allocbuf (1);
-	CORBA_sequence_set_release (&poa_policies, CORBA_FALSE);
+	poa_policies           = CORBA_PolicyList__alloc ();
+	poa_policies->_maximum = 1;
+	poa_policies->_length  = 1;
+	poa_policies->_buffer  = CORBA_PolicyList_allocbuf (1);
+	CORBA_sequence_set_release (poa_policies, CORBA_TRUE);
 
-	poa_policies._buffer[0] = (CORBA_Policy)PortableServer_POA_create_id_uniqueness_policy (
+	poa_policies->_buffer[0] = (CORBA_Policy)
+					PortableServer_POA_create_id_uniqueness_policy (
 							rootpoa,
 							PortableServer_MULTIPLE_ID,
 							&ev);
@@ -83,15 +85,15 @@ poatest_run (PortableServer_POA        rootpoa,
 	child_poa = PortableServer_POA_create_POA (rootpoa,
 						   "Multiple Id POA",
 						   rootpoa_mgr,
-						   &poa_policies,
+						   poa_policies,
 						   &ev);
 	if (POATEST_EX (&ev)) {
 		POATEST_PRINT_EX ("create_POA : ", &ev);
 		return CORBA_OBJECT_NIL;
 	}
 
-	CORBA_Policy_destroy (poa_policies._buffer[0], &ev);
-	CORBA_free (poa_policies._buffer);
+	CORBA_Policy_destroy (poa_policies->_buffer[0], &ev);
+	CORBA_free (poa_policies);
 
 	/*
 	 * Initialise the servant.

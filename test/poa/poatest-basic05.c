@@ -64,7 +64,7 @@ poatest_run (PortableServer_POA        rootpoa,
 {
 	CORBA_Environment        ev;
 	poatest                  poatest_obj;
-	CORBA_PolicyList         poa_policies;
+	CORBA_PolicyList        *poa_policies;
 	PortableServer_POA       child_poa;
 	PortableServer_ObjectId *objid;
 
@@ -73,17 +73,20 @@ poatest_run (PortableServer_POA        rootpoa,
 	/*
 	 * Create child POA with USER_ID Id Assignment and PERSISTENT lifespan policy.
 	 */
-	poa_policies._maximum = 2;
-	poa_policies._length = 2;
-	poa_policies._buffer = CORBA_PolicyList_allocbuf (2);
-	CORBA_sequence_set_release (&poa_policies, CORBA_FALSE);
+	poa_policies           = CORBA_PolicyList__alloc ();
+	poa_policies->_maximum = 2;
+	poa_policies->_length  = 2;
+	poa_policies->_buffer  = CORBA_PolicyList_allocbuf (2);
+	CORBA_sequence_set_release (poa_policies, CORBA_TRUE);
 
-	poa_policies._buffer[0] = (CORBA_Policy)PortableServer_POA_create_id_assignment_policy (
+	poa_policies->_buffer[0] = (CORBA_Policy)
+					PortableServer_POA_create_id_assignment_policy (
 							rootpoa,
 							PortableServer_USER_ID,
 							&ev);
 
-	poa_policies._buffer[1] = (CORBA_Policy)PortableServer_POA_create_lifespan_policy (
+	poa_policies->_buffer[1] = (CORBA_Policy)
+					PortableServer_POA_create_lifespan_policy (
 							rootpoa,
 							PortableServer_PERSISTENT,
 							&ev);
@@ -91,7 +94,7 @@ poatest_run (PortableServer_POA        rootpoa,
 	child_poa = PortableServer_POA_create_POA (rootpoa,
 						   "User Id and Persistent POA",
 						   rootpoa_mgr,
-						   &poa_policies,
+						   poa_policies,
 						   &ev);
 	if (POATEST_EX (&ev)) {
 		POATEST_PRINT_EX ("create_POA : ", &ev);
@@ -155,7 +158,7 @@ poatest_run (PortableServer_POA        rootpoa,
 	child_poa = PortableServer_POA_create_POA (rootpoa,
 						   "User Id and Persistent POA",
 						   rootpoa_mgr,
-						   &poa_policies,
+						   poa_policies,
 						   &ev);
 	if (POATEST_EX (&ev)) {
 		POATEST_PRINT_EX ("create_POA : ", &ev);
@@ -174,9 +177,9 @@ poatest_run (PortableServer_POA        rootpoa,
 
 	CORBA_free (objid);
 
-	CORBA_Policy_destroy (poa_policies._buffer[0], &ev);
-	CORBA_Policy_destroy (poa_policies._buffer[1], &ev);
-	CORBA_free (poa_policies._buffer);
+	CORBA_Policy_destroy (poa_policies->_buffer[0], &ev);
+	CORBA_Policy_destroy (poa_policies->_buffer[1], &ev);
+	CORBA_free (poa_policies);
 
 	/*
 	 * Activate the POAManager. POA will now accept requests
