@@ -585,7 +585,7 @@ IOP_shutdown_profiles (GSList *profiles)
 void
 IOP_generate_profiles (CORBA_Object obj)
 {
-	CORBA_ORB      orb;
+	CORBA_ORB orb;
 	ORBit_OAObject adaptor_obj;
 
 	g_assert (obj && (obj->profile_list == NULL) && obj->orb);
@@ -825,6 +825,7 @@ IOP_components_marshal (CORBA_Object    obj,
 		switch (ci->component_type) {
 		case IOP_TAG_GENERIC_SSL_SEC_TRANS:
 		case IOP_TAG_SSL_SEC_TRANS:
+		case IOP_TAG_CODE_SETS:
 			marker = giop_send_buffer_append_aligned (buf, &len, 4);
 			len = buf->msg.header.message_size;
 			giop_send_buffer_append (buf, &buf->msg.header.flags, 1);
@@ -1112,7 +1113,7 @@ IOP_TAG_COMPLETE_OBJECT_KEY_demarshal (IOP_ComponentId id,
 	ORBit_ObjectKey                  *objkey;
   
 	objkey = IOP_ObjectKey_demarshal (buf);
-	if(!objkey)
+	if (!objkey)
 		return NULL;
 
 	retval = g_new (IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
@@ -1159,22 +1160,31 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 }
 
 static IOP_Component_info *
-IOP_TAG_CODE_SETS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
+IOP_TAG_CODE_SETS_demarshal (IOP_ComponentId  id,
+			     GIOPRecvBuffer  *buf)
 {
-  IOP_TAG_CODE_SETS_info *retval;
-  CORBA_unsigned_long    dummy;
+	IOP_TAG_CODE_SETS_info *retval;
+	CORBA_unsigned_long     dummy;
+	GIOPRecvBuffer         *encaps;
+
+	encaps = giop_recv_buffer_use_encaps_buf (buf);
+	if (!encaps)
+		return NULL;
   
-  retval = g_new (IOP_TAG_CODE_SETS_info, 1);
-  retval->parent.component_type = id;
+	retval = g_new (IOP_TAG_CODE_SETS_info, 1);
+	retval->parent.component_type = id;
 
-  /* We don't care about the data much */
-  if (!CodeSetComponent_demarshal (buf, &dummy, NULL) ||
-      !CodeSetComponent_demarshal (buf, &dummy, NULL)) {
-	  g_free (retval);
-	  return NULL;
-  }
+	/* We don't care about the data much */
+	if (!CodeSetComponent_demarshal (encaps, &dummy, NULL) ||
+	    !CodeSetComponent_demarshal (encaps, &dummy, NULL)) {
+		giop_recv_buffer_unuse (encaps);
+		g_free (retval);
+		return NULL;
+	}
 
-  return (IOP_Component_info *) retval;
+	giop_recv_buffer_unuse (encaps);
+
+	return (IOP_Component_info *) retval;
 }
 
 static IOP_Component_info *

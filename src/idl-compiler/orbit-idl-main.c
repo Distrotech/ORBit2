@@ -53,6 +53,7 @@ static int cl_add_imodule = 0;
 static gboolean cl_disable_defs_skels = FALSE;
 static gboolean cl_showcpperrors = TRUE;
 static char *cl_output_lang = "c";
+static char *cl_header_guard_prefix = "";
 static char *cl_backend_dir = ORBITLIBDIR;
 static gboolean cl_onlytop = FALSE;
 static char *cl_deps_file = NULL;
@@ -135,6 +136,7 @@ struct poptOption options[] = {
   {"pidl", '\0', POPT_ARG_NONE, &cl_is_pidl, 0, "Treat as Pseudo IDL", NULL},
   {"nodefskels", '\0', POPT_ARG_NONE, &cl_disable_defs_skels, 0, "Don't output defs for skels in header", NULL},
   {"deps", '\0', POPT_ARG_STRING, &cl_deps_file, 0, "Generate dependency info suitable for inclusion in Makefile", "FILENAME"},
+  {"headerguardprefix", '\0', POPT_ARG_STRING, &cl_header_guard_prefix, 0, "Prefix for #ifdef header guards. Sometimes useful to avoid conflicts.", NULL},
   POPT_AUTOHELP
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
@@ -204,6 +206,7 @@ int main(int argc, const char *argv[])
 
   rinfo.output_formatter = c_output_formatter;
   rinfo.output_language = cl_output_lang;
+  rinfo.header_guard_prefix = cl_header_guard_prefix;
   rinfo.backend_directory = cl_backend_dir;
   rinfo.onlytop = cl_onlytop;
   rinfo.small = cl_enable_small_stubs || cl_enable_small_skels;

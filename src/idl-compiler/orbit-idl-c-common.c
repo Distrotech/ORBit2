@@ -928,7 +928,10 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 
 		fprintf (of, "ORBit_IMethod %s__imethods [] = {\n", id);
 
-		for (m = i->methods; m; m = m->next)
+		if (!(m = i->methods))
+			fprintf (of, "{{0}}");
+
+		else for (; m; m = m->next)
 			cc_small_output_method (of, m->data, id);
 
 		fprintf (of, "};\n");
