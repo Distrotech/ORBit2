@@ -901,13 +901,14 @@ traverse_cb(PortableServer_ObjectId *oid, ORBit_POAObject *pobj,
  * traverse through oid_to_obj_map and remove
  * any destroyed POAObjects.
  * This *can't* be done in traverse_cb.
- *
  */
 static gboolean
 remove_cb(PortableServer_ObjectId *oid, ORBit_POAObject *pobj, gpointer dummy)
 {
-  if ( (pobj->life_flags & ORBit_LifeF_Destroyed) == 0 )
+  if ( (pobj->life_flags & ORBit_LifeF_Destroyed) == 0 ) {
+    g_free( pobj );
     return TRUE;
+    }
 }
 
 gboolean
@@ -1667,10 +1668,6 @@ ORBit_POAObject_release_cb(ORBit_RootObject robj)
  /* object *must* be deactivated */
  g_assert( pobj->servant == NULL );
 
- /* FIXME: can we assert a life_flag? */
- g_assert( pobj->life_flags == 0 || 
-           (pobj->life_flags & ORBit_LifeF_IsCleanup) != 0 );
-
  ((PortableServer_ObjectId *)pobj->object_id)->_release = CORBA_TRUE;
  CORBA_free(pobj->object_id);
 
@@ -1679,7 +1676,7 @@ ORBit_POAObject_release_cb(ORBit_RootObject robj)
   * are currently traversing across it !
   * Just mark it as destroyed
   */
- if ( (pobj->life_flags & ORBit_LifeF_IsCleanup) == 0 ) {
+ if ( (poa->life_flags & ORBit_LifeF_Deactivating) == 0 ) {
    g_hash_table_remove( poa->oid_to_obj_map, pobj->object_id );
    g_free(pobj);
  }
@@ -1862,10 +1859,8 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 	g_assert( ev->_major == 0 );
     }
 
-    /* this will enable the POAObj to be removed from the oidobjmap
-     * and the memory reclaimed, once there is no objref to it.
-     */
-    pobj->life_flags &= ~(ORBit_LifeF_DeactivateDo|ORBit_LifeF_DoEtherealize);
+    pobj->life_flags &= ~(ORBit_LifeF_DeactivateDo
+      |ORBit_LifeF_IsCleanup|ORBit_LifeF_DoEtherealize);
 
     ORBit_RootObject_release(pobj);
 }
