@@ -1,3 +1,11 @@
+ORBit2-2.9.3
+
+	* bug fixes
+		+ configure logic bug (Morten Welinder)
+		+ no-mainloop threading issue (Michael)
+		+ custom policy oneway fix (Michael, JP)
+		+ policy lookup fix (Alex Larsson)
+
 ORBit2-2.9.2
 
 	* bug fixes
