@@ -1,5 +1,12 @@
 2003-04-21  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_set_limit): impl.
+	(giop_recv_buffer_handle_fragmented, giop_recv_msg_reading_body):
+	use the dynamic limit instead.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): set the limit,
+	add an "ORBInitialMsgLimit" option.
+
 	* src/orb/GIOP/giop.c (wakeup_mainloop): handle EINTR.
 
 2003-04-19  Michael Meeks  <michael@ximian.com>
