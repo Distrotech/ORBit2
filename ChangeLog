@@ -1,3 +1,8 @@
+2001-09-19  Raja R Harinath  <harinath@cs.umn.edu>
+
+	* Makefile.shared: Make dependency output file name
+	agree with pattern used for IDL_DEPS_MAGIC.
+
 2001-09-18  Mark McLoughlin <mark@skynet.ie>
 
 	Port command line option handling from ORBit-0.5.x.
