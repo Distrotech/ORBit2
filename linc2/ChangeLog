@@ -1,9 +1,13 @@
+2002-12-28  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.7.1
+
 2002-12-09  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-protocols.c (linc_protocol_get_sockaddr_unix): 
 	finally - scuppered by my own undefined test in gcc ;-)
 
-2002-12-09  Laurent.Vivier@bull.net <Laurent Vivier>
+2002-12-09  Laurent Vivier  <Laurent.Vivier@bull.net>
 
 	* src/linc-connection.c (LINC_IOV_MAX): re-order
 	mess of compatibility evilness to move glibc's
