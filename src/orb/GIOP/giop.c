@@ -32,12 +32,13 @@ giop_dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
 	guint32 off;
 
 	for (lp = 0;lp<(len+15)/16;lp++) {
-		fprintf (out, "0x%4x ", offset + lp * 16);
+		fprintf (out, "0x%.4x: ", offset + lp * 16);
 		for (lp2=0;lp2<16;lp2++) {
+			fprintf (out, "%s", lp2%4?" ":"  ");
 			off = lp2 + (lp<<4);
-			off<len?fprintf (out, "%2x ", ptr[off]):fprintf (out, "XX ");
+			off<len?fprintf (out, "%.2x", ptr[off]):fprintf (out, "XX");
 		}
-		fprintf (out, "| ");
+		fprintf (out, " | ");
 		for (lp2=0;lp2<16;lp2++) {
 			off = lp2 + (lp<<4);
 			fprintf (out, "%c", off<len?(ptr[off]>'!'&&ptr[off]<127?ptr[off]:'.'):'*');
