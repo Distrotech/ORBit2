@@ -1,3 +1,8 @@
+2004-05-02  Frank Rehberger  <frehberg@gnome-de.org>
+
+	* src/orb/orb-core/iop-defs.idl: add IIOP.idl and CORBA Security
+	Ineterop. attributes in files CSI.idl and CSIIOP.idl 
+
 2004-05-01  Frank Rehberger <frehberg@gnome-de.org>
 
 	* src/idl: upgrade to CORBA-3.0 IDL files cause of security
