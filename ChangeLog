@@ -1,3 +1,28 @@
+2005-01-13  Jules Colding  <colding@omesc.com>
+
+	* src/idl-compiler/orbit-idl-c-skelimpl.c (prev_char_is_nl): New function
+	that implements check of previously written character to the output file.
+	Excessive output of newline characters are fixed by checking the last
+	character written: If it is '\n' then do not write another '\n'.
+	(cbe_ski_do_list): The correct fix for exessive newline output.
+	
+	Generation of skelimpl files has been fixed by protecting definitions and
+	declarations with #ifdef blocks. This is *not* the right fix. The right fix 
+	would be to generate header files with the proper extern declarations. The
+	current "fix" has the drawback of forcing the developer to include the 
+	skelimpl files in inheritance order: Most common ancestor first, then 
+	progressively later descendants. The right fix requires more redesign of 
+	the code than I would like to do now, so this hack must suffice for the time 
+	being. 
+
+	* src/idl-compiler/orbit-idl-c-backend.c (out_for_pass): Change the opening
+	mode of output files to "w+". This is needed to support the correct fix for 
+	excessive newline output in skelimpl files.
+
+	* src/idl-compiler/orbit-idl-c-skelimpl.c: I had a really hard time parsing 
+	the code with the former indentation level of 2, so I changed it to a more
+	reasonable 8.
+
 2005-01-12  Jules Colding  <colding@omesc.com>
 
 	* src/idl-compiler/orbit-idl-main.c (main): Fix print of passes.
