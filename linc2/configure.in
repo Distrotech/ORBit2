@@ -33,7 +33,7 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.
@@ -91,33 +91,43 @@ AC_TRY_COMPILE(
 
 AC_C_BIGENDIAN
 
+AC_MSG_CHECKING(maximum number of iovecs for a writev)
 AC_TRY_RUN([
 #include <fcntl.h>
 #include <sys/uio.h>
-#define NIOVECS 50
+#include <stdio.h>
+#include <unistd.h>
+#define NIOVECS 2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2
 int main(int argc, char *argv[])
 {
 	char dumbuf[20] = "\n";
 	struct iovec iovecs[NIOVECS];
 	int i,fd;
+	FILE *f;
 
 	for(i = 0; i < NIOVECS; i++) {
 		iovecs[i].iov_base = dumbuf;
 		iovecs[i].iov_len = 1;
 	}
 
+	f = fopen("conftestval", "w");
 	fd=open("/dev/null", O_WRONLY);
 	if(fd==-1)
 		return(1);
 
-	if(writev(fd, iovecs, NIOVECS) < 0)
-		return 1;
+	for(i = 1; i < NIOVECS; i *= 2)
+		if(writev(fd, iovecs, i) < 0)
+			break;
+	fprintf(f, "%d\n", i);
 
 	close(fd);
+	fclose(f);
 	return 0;
 }
-], , AC_DEFINE(HAVE_LIMITED_WRITEV), AC_DEFINE(HAVE_LIMITED_WRITEV))
-AC_SUBST(HAVE_LIMITED_WRITEV)
+], WRITEV_IOVEC_LIMIT="`cat conftestval`", WRITEV_IOVEC_LIMIT=1024, WRITEV_IOVEC_LIMIT=1024)
+
+AC_MSG_RESULT($WRITEV_IOVEC_LIMIT)
+AC_DEFINE_UNQUOTED(WRITEV_IOVEC_LIMIT, $WRITEV_IOVEC_LIMIT)
 
 AC_OUTPUT([
 Makefile

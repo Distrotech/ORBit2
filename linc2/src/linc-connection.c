@@ -1,4 +1,8 @@
 #include "config.h"
+#if LINC_SSL_SUPPORT
+/* So we can check if we need to retry */
+#include <openssl/bio.h>
+#endif
 #include <linc/linc-connection.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -197,4 +201,151 @@ linc_connection_state_changed(LINCConnection *cnx, LINCConnectionStatus status)
 
   if(klass->state_changed)
     klass->state_changed(cnx, status);
+}
+
+int
+linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_for_full_read)
+{
+  int n;
+  int written = 0;
+
+  do {
+#if LINC_SSL_SUPPORT
+    if(cnx->options & LINC_CONNECTION_SSL)
+      n = SSL_read(cnx->ssl, buf, len);
+    else
+#endif
+      n = read(cnx->fd, buf, len);
+
+      if(n < 0)
+	{
+#if LINC_SSL_SUPPORT
+	  if(cnx->options & LINC_CONNECTION_SSL)
+	    {
+	      gulong rv;
+	      rv = SSL_get_error(n);
+	      if(rv == SSL_ERROR_WANT_READ
+		 || rv == SSL_ERROR_WANT_WRITE)
+		g_main_iteration(FALSE);
+	      else
+		return -1;
+	    }
+	  else
+#endif
+	    {
+	      if(errno == EAGAIN)
+		g_main_iteration(FALSE);
+	      else
+		return -1;
+	    }
+	}
+      else if(n == 0)
+	return -1;
+      else
+	{
+	  buf += n;
+	  len -= n;
+	  written += n;
+	}
+  } while(len > 0 && block_for_full_read);
+
+  return written;
+}
+
+int
+linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
+{
+  int n;
+
+  while(len > 0)
+    {
+#if LINC_SSL_SUPPORT
+      if(cnx->options & LINC_CONNECTION_SSL)
+	n = SSL_write(cnx->ssl, buf, len);
+      else
+#endif
+	n = write(cnx->fd, buf, len);
+
+      if(n < 0)
+	{
+#if LINC_SSL_SUPPORT
+	  if(cnx->options & LINC_CONNECTION_SSL)
+	    {
+	      gulong rv;
+	      rv = SSL_get_error(n);
+	      if(rv == SSL_ERROR_WANT_READ
+		 || rv == SSL_ERROR_WANT_WRITE)
+		g_main_iteration(FALSE);
+	      else
+		return -1;
+	    }
+	  else
+#endif
+	    {
+	      if(errno == EAGAIN)
+		g_main_iteration(FALSE);
+	      else
+		return -1;
+	    }
+	}
+      else if(n == 0)
+	return -1;
+      else
+	{
+	  buf += n;
+	  len -= n;
+	}
+    }
+
+  return 0;
+}
+
+int
+linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulong total_size)
+{
+  register int n, fd, vecs_left;
+  register struct iovec *vptr;
+  register gulong size_left;
+
+#if LINC_SSL_SUPPORT
+  if(cnx->options & LINC_CONNECTION_SSL)
+    {
+      for(n = 0; n < nvecs; n++)
+	{
+	  if(linc_connection_write(cnx, vecs[n].iov_base, vecs[n].iov_len))
+	    return -1;
+	}
+
+      return 0;
+    }
+#endif
+
+  vptr = vecs;
+  vecs_left = nvecs;
+  size_left = total_size;
+  while(size_left > 0)
+    {
+      n = writev(fd, vptr, MIN(vecs_left, WRITEV_IOVEC_LIMIT));
+      if(n < 0)
+	{
+	  if(errno == EAGAIN)
+	    g_main_iteration(FALSE); /* Try to give other things a chance to run */
+	  else
+	    return -1; /* Unhandleable error */
+	}
+      else if(n == 0)
+	return -1;
+      else
+	{
+	  size_left -= n;
+	  if(size_left)
+	    {
+	      while(n > vptr->iov_len)
+		vptr++;
+	      vptr->iov_len -= n;
+	    }
+	}
+    }
+
+  return 0;
 }

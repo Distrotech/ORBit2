@@ -1,2 +1,2 @@
 #undef socklen_t
-#undef HAVE_LIMITED_WRITEV
+#undef WRITEV_IOVEC_LIMIT

@@ -51,7 +51,9 @@ gboolean linc_connection_initiate(LINCConnection *cnx,
 				  const char *remote_serv_info,
 				  LINCConnectionOptions options);
 
-int linc_connection_read(LINCConnection *cnx, guchar *buf, int len);
-int linc_connection_write(LINCConnection *cnx, const guchar *buf, int len);
-int linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs);
+int linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_for_full_read);
+
+/* Return values from these functions are going to be "abnormal", since they make sure to write all the data out */
+int linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len);
+int linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulong total_size);
 #endif
