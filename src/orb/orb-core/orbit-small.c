@@ -328,8 +328,7 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	dprintf (MESSAGES, "Marshal: id 0x%x\n", request_id);
 
-	for (i = 0; (i < m_data->arguments._length &&
-		     m_data->arguments._buffer [i].flags); i++) {
+	for (i = 0; i < m_data->arguments._length; i++) {
 
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
 		gpointer    p;
@@ -350,7 +349,7 @@ orbit_small_marshal (CORBA_Object           obj,
 		p = args [i];
 		do_marshal_value (send_buffer, &p, tc);
 
-		if (m_data->arguments._buffer [i+1].flags)
+		if (i < m_data->arguments._length - 1)
 			tprintf (", ");
 	}
 
@@ -409,7 +408,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 	if (giop_recv_buffer_reply_status (recv_buffer) != GIOP_NO_EXCEPTION)
  		goto msg_exception;
 
-	if ((tc = m_data->ret)) {
+	if ((tc = m_data->ret) && tc->kind != CORBA_tk_void) {
 		tprintf (" =>: ");
 
 		g_assert (ret != NULL);
@@ -452,8 +451,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		int i;
 		int trace_have_out = 0;
 
-		for (i = 0; (i < m_data->arguments._length &&
-			     m_data->arguments._buffer [i].flags); i++) {
+		for (i = 0; i < m_data->arguments._length; i++) {
 			const ORBit_IArg *a;
 			gpointer          arg;
 
@@ -515,7 +513,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 				break;
 			}
 			if (trace_have_out &&
-			    m_data->arguments._buffer [i + 1].flags)
+			    i < m_data->arguments._length - 1)
 				tprintf (", ");
 		}
 		if (trace_have_out)
@@ -691,7 +689,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	tprintf_header (adaptor_obj->objref, m_data);
 
-	if ((tc = m_data->ret)) {
+	if ((tc = m_data->ret) && tc->kind != CORBA_tk_void) {
 		
 		while (tc->kind == CORBA_tk_alias)
 			tc = tc->subtypes [0];
@@ -784,7 +782,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 		}
 
-		if (m_data->arguments._buffer [i+1].flags)
+		if (i < m_data->arguments._length - 1)
 			tprintf (", ");
 	}
 
@@ -834,7 +832,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	} else { /* Marshal return values */
 		int trace_have_out = 0;
 
-		if ((tc = m_data->ret)) {
+		if ((tc = m_data->ret) && tc->kind != CORBA_tk_void) {
 			gpointer p = retval;
 
 			tprintf (" =>; ");
@@ -896,6 +894,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			}
 
 			if (trace_have_out &&
+			    i < m_data->arguments._length - 1 &&
 			    m_data->arguments._buffer [i + 1].flags &
 			    (ORBit_I_ARG_OUT | ORBit_I_ARG_INOUT))
 				tprintf (", ");
@@ -909,7 +908,8 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
 
-	if (m_data->ret && ev->_major == CORBA_NO_EXCEPTION) {
+	if (m_data->ret && tc->kind != CORBA_tk_void &&
+	    ev->_major == CORBA_NO_EXCEPTION) {
 		switch (m_data->ret->kind) {
 		case BASE_TYPES:
 			break;
