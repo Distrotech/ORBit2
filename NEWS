@@ -1,3 +1,18 @@
+Version 2.3.103
+
+	* Changes
+		+ big POA cleanup (Mark)
+		+ unique id generator re-write (Mark, Michael)
+		+ runtime debugging (Jacob Berkman, Mark)
+		+ idl compiler checks oneway's validity (Mark)
+		+ union marshalling cleanup (Mark)
+		+ allow multiple ORB:init calls (Michael)
+
+	* Bugs
+		+ fix profile leaks (Michael)
+		+ fix screwy idl compiler output (Xiong Jiang)
+		+ bomb out if alingment checks fail (Mark)
+
 Version 2.3.102
 
 	* Changes
