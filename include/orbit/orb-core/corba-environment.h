@@ -11,6 +11,8 @@ typedef struct {
   void (*demarshal)(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev);
 } ORBit_exception_demarshal_info;
 
+CORBA_Environment *CORBA_exception__alloc (void);
+CORBA_Environment *CORBA_exception__copy  (const CORBA_Environment *ev);
 void CORBA_exception_set(CORBA_Environment *ev,
 			 CORBA_exception_type major,
 			 const CORBA_char *except_repos_id,

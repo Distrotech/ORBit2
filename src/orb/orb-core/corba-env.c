@@ -2,83 +2,13 @@
 #include <orbit/orbit.h>
 #include <string.h>
 
-void
-ORBit_handle_system_exception(CORBA_Environment *ev,
-			      const CORBA_char *nom,
-			      CORBA_completion_status status,
-			      GIOPRecvBuffer *buf,
-			      GIOPSendBuffer *sendbuf)
-{
-  CORBA_exception_set_system(ev, nom, status);
-  giop_recv_buffer_unuse(buf);
-  giop_send_buffer_unuse(sendbuf);
-}
-
-void
-CORBA_exception_set_system(CORBA_Environment *ev,
-			   const CORBA_char *except_repos_id,
-			   CORBA_completion_status completed)
-{
-  CORBA_SystemException *se;
-
-  se = CORBA_SystemException__alloc();
-  /* I have never seen a case where 'minor' is actually necessary */
-  se->minor = 0 /* minor */;
-  se->completed = completed;
-  CORBA_exception_set(ev, CORBA_SYSTEM_EXCEPTION, except_repos_id, se);
-}
-
-void
-CORBA_exception_set(CORBA_Environment *ev,
-		    CORBA_exception_type major,
-		    const CORBA_char *except_repos_id,
-		    void *param)
-{
-  CORBA_exception_free(ev);
-  
-  ev->_major = major;
-  if(major != CORBA_NO_EXCEPTION)
-    {
-      ev->_id = CORBA_string_dup(except_repos_id);
-      ev->_any._type = NULL; /* CORBA sucks */
-      ev->_any._value = param;
-      ev->_any._release = CORBA_TRUE;
-    }
-}
-
-CORBA_char *
-CORBA_exception_id(CORBA_Environment *ev)
-{
-  if(ev->_major != CORBA_NO_EXCEPTION)
-    return ev->_id;
-
-  return NULL;
-}
-
-void *
-CORBA_exception_value(CORBA_Environment *ev)
-{
-  if(ev->_major != CORBA_NO_EXCEPTION)
-    return ev->_any._value;
-
-  return NULL;
-}
-
-/* An ORBit extension that seems to be perpetuated */
-void
-CORBA_exception_init(CORBA_Environment *ev)
-{
-  memset(ev, 0, sizeof(CORBA_Environment));
-  ev->_major = CORBA_NO_EXCEPTION;
-}
-
-void
-CORBA_exception_free (CORBA_Environment *ev)
+static void
+CORBA_exception_free_T (CORBA_Environment *ev)
 {
 	if (ev->_major != CORBA_NO_EXCEPTION) {
 		ev->_major = CORBA_NO_EXCEPTION;
 
-		CORBA_free (ev->_id);
+		ORBit_free_T (ev->_id);
 		ev->_id = NULL;
 
 		CORBA_any__freekids (&ev->_any, NULL);
@@ -88,10 +18,136 @@ CORBA_exception_free (CORBA_Environment *ev)
 	}
 }
 
-CORBA_any *
-CORBA_exception_as_any(CORBA_Environment *ev)
+void
+CORBA_exception_free (CORBA_Environment *ev)
 {
-  return &ev->_any;
+	if (ev->_major != CORBA_NO_EXCEPTION) {
+		LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+
+		CORBA_exception_free_T (ev);
+
+		LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	}
+}
+
+static gpointer
+CORBA_exception__freekids (gpointer mem, gpointer dat)
+{
+	CORBA_Environment *env;
+
+	env = mem;
+	CORBA_exception_free_T (env);
+
+	return env + 1;
+}
+
+CORBA_Environment *
+CORBA_exception__alloc (void)
+{
+	CORBA_Environment *retval = ORBit_alloc (
+		sizeof (CORBA_Environment), 1, 
+		&CORBA_exception__freekids);
+
+	CORBA_exception_init (retval);
+
+	return retval;
+}
+
+CORBA_Environment *
+CORBA_exception__copy (const CORBA_Environment *ev)
+{
+	CORBA_Environment *dest;
+
+	dest = CORBA_exception__alloc ();
+
+	if (ev->_major != CORBA_NO_EXCEPTION) {
+		*dest = *ev;
+		dest->_id = CORBA_string_dup (ev->_id);
+		if (dest->_any._type != CORBA_OBJECT_NIL)
+			CORBA_any__copy (&dest->_any, &ev->_any);
+		else /* FIXME: we need good type data here ! */
+			dest->_any._value = NULL;
+	}
+
+	return dest;
+}
+
+void
+ORBit_handle_system_exception (CORBA_Environment *ev,
+			       const CORBA_char *nom,
+			       CORBA_completion_status status,
+			       GIOPRecvBuffer *buf,
+			       GIOPSendBuffer *sendbuf)
+{
+	CORBA_exception_set_system (ev, nom, status);
+	giop_recv_buffer_unuse (buf);
+	giop_send_buffer_unuse (sendbuf);
+}
+
+void
+CORBA_exception_set_system (CORBA_Environment *ev,
+			    const CORBA_char *except_repos_id,
+			    CORBA_completion_status completed)
+{
+	CORBA_SystemException *se;
+
+	se = CORBA_SystemException__alloc ();
+	/* I have never seen a case where 'minor' is actually necessary */
+	se->minor = 0 /* minor */;
+	se->completed = completed;
+	CORBA_exception_set (
+		ev, CORBA_SYSTEM_EXCEPTION, except_repos_id, se);
+}
+
+void
+CORBA_exception_set (CORBA_Environment   *ev,
+		     CORBA_exception_type major,
+		     const CORBA_char    *except_repos_id,
+		     void                *param)
+{
+	CORBA_exception_free(ev);
+  
+	ev->_major = major;
+	if (major != CORBA_NO_EXCEPTION) {
+		ev->_id = CORBA_string_dup (except_repos_id);
+		
+		/* FIXME: we can get this from the typelib */
+		ev->_any._type = NULL; /* CORBA sucks */
+		ev->_any._value = param;
+		ev->_any._release = CORBA_TRUE;
+	}
+}
+
+CORBA_char *
+CORBA_exception_id (CORBA_Environment *ev)
+{
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return ev->_id;
+
+	return NULL;
+}
+
+void *
+CORBA_exception_value (CORBA_Environment *ev)
+{
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return ev->_any._value;
+
+	return NULL;
+}
+
+/* An ORBit extension that seems to be perpetuated */
+void
+CORBA_exception_init (CORBA_Environment *ev)
+{
+	memset (ev, 0, sizeof (CORBA_Environment));
+	ev->_major = CORBA_NO_EXCEPTION;
+}
+
+CORBA_any *
+CORBA_exception_as_any (CORBA_Environment *ev)
+{
+	return &ev->_any;
 }
 
 void
@@ -191,33 +247,33 @@ ORBit_handle_exception(GIOPRecvBuffer *rb, CORBA_Environment *ev,
 }
 
 void
-ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev)
+ORBit_send_system_exception (GIOPSendBuffer    *buf,
+			     CORBA_Environment *ev)
 {
-  CORBA_unsigned_long len;
-  CORBA_SystemException *se = ev->_any._value;
+	CORBA_unsigned_long    len;
+	CORBA_SystemException *se = ev->_any._value;
 
-  g_assert(ev->_major == CORBA_SYSTEM_EXCEPTION);
+	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 
-  len = strlen(ev->_id) + 1;
-  giop_send_buffer_append_aligned (buf, &len, 4);
-  giop_send_buffer_append(buf, ev->_id, len);
+	len = strlen (ev->_id) + 1;
+	giop_send_buffer_append_aligned (buf, &len, 4);
+	giop_send_buffer_append (buf, ev->_id, len);
   
-  giop_send_buffer_append_aligned(buf, &se->minor, 4);
-  giop_send_buffer_append_aligned(buf, &se->completed, 4);
+	giop_send_buffer_append_aligned (buf, &se->minor, 4);
+	giop_send_buffer_append_aligned (buf, &se->completed, 4);
 }
 
 void
-ORBit_send_user_exception(GIOPSendBuffer *send_buffer,
-			  CORBA_Environment *ev,
-			  const ORBit_exception_marshal_info *user_exceptions)
+ORBit_send_user_exception (GIOPSendBuffer    *send_buffer,
+			   CORBA_Environment *ev,
+			   const ORBit_exception_marshal_info *user_exceptions)
 {
   int i;
 
-  for(i = 0; user_exceptions[i].tc != CORBA_OBJECT_NIL; i++)
-    {
-      if(!strcmp(user_exceptions[i].tc->repo_id, ev->_id))
-	break;
-    }
+  for (i = 0; user_exceptions[i].tc != CORBA_OBJECT_NIL; i++) {
+	  if(!strcmp (user_exceptions[i].tc->repo_id, ev->_id))
+		  break;
+  }
 
   if(user_exceptions[i].tc == CORBA_OBJECT_NIL)
     {

@@ -2,7 +2,8 @@
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
-void CORBA_free (gpointer mem)
+void
+CORBA_free (gpointer mem)
 {
 	ORBit_free (mem);
 }

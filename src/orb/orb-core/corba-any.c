@@ -651,18 +651,18 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 
 
 gpointer
-ORBit_demarshal_arg(GIOPRecvBuffer *buf,
-		    CORBA_TypeCode tc,
-		    gboolean dup_strings,
-		    CORBA_ORB orb)
+ORBit_demarshal_arg (GIOPRecvBuffer *buf,
+		     CORBA_TypeCode tc,
+		     gboolean       dup_strings,
+		     CORBA_ORB      orb)
 {
-  gpointer retval, val;
+	gpointer retval, val;
 
-  retval = val = ORBit_alloc_tcval(tc, 1);
+	retval = val = ORBit_alloc_tcval (tc, 1);
 
-  ORBit_demarshal_value(tc, &val, buf, dup_strings, orb);
+	ORBit_demarshal_value (tc, &val, buf, dup_strings, orb);
 
-  return retval;
+	return retval;
 }
 
 gboolean
@@ -687,28 +687,39 @@ ORBit_demarshal_any (GIOPRecvBuffer *buf,
 }
 
 gpointer
-CORBA_any__freekids(gpointer mem, gpointer dat)
+CORBA_any__freekids (gpointer mem, gpointer dat)
 {
-  CORBA_any *t;
-  t = mem;
-  if(t->_type)
-    ORBit_RootObject_release_T ((ORBit_RootObject)t->_type);
-  if(t->_release)
-    ORBit_free_T(t->_value);
-  return t + 1;
+	CORBA_any *t;
+
+	t = mem;
+	if (t->_type)
+		ORBit_RootObject_release_T (
+			(ORBit_RootObject) t->_type);
+
+	if (t->_release)
+		ORBit_free_T (t->_value);
+
+	return t + 1;
 }
 
 CORBA_any *
-CORBA_any__alloc(void)
+CORBA_any__alloc (void)
 {
-  CORBA_any *retval = ORBit_alloc(sizeof(CORBA_any), 1, 
-				  &CORBA_any__freekids);
-  memset(retval, 0, sizeof(CORBA_any)); /* Make things easier on stubs */
-  return retval;
+	CORBA_any *retval = ORBit_alloc (
+		sizeof(CORBA_any), 1, 
+		&CORBA_any__freekids);
+
+	/* FIXME: do we need to do this for small ? */
+	/* Make things easier on stubs */
+	memset (retval, 0, sizeof (CORBA_any));
+
+	return retval;
 }
 
 void
-ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
+ORBit_copy_value_core (gconstpointer *val,
+		       gpointer      *newval,
+		       CORBA_TypeCode tc)
 {
   CORBA_long i;
   gconstpointer pval1; 
