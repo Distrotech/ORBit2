@@ -336,12 +336,12 @@ test_blocking (void)
 	g_assert (client->status == LINK_CONNECTED);
 	g_assert (bd.status >= 3);
 
-	g_object_unref (G_OBJECT (client));
+	link_connection_unref (client);
 	g_assert (client == NULL);
 
 	link_main_iteration (FALSE);
 
-	g_object_unref (G_OBJECT (server));
+	g_object_unref (server);
 	g_assert (server == NULL);
 
 	test_server_cnx_type = 0;
@@ -527,7 +527,7 @@ test_connected (void)
 	g_assert (link_connection_wait_connected (client) == LINK_CONNECTED);
 
 	g_object_unref (server);
-	g_object_unref (client);
+	link_connection_unref (client);
 }
 
 int

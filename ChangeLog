@@ -1,3 +1,13 @@
+2004-02-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/Makefile.am (IDL_DIR): set
+	this so we're not vunerable to environment
+	problems.
+
+2004-02-05  Michael Meeks  <michael@ximian.com>
+
+	* test/test-giop.c (run_test): upd. tests.
+
 2004-02-04  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.9.7

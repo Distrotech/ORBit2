@@ -1,3 +1,16 @@
+2004-02-05  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c
+	(link_connections_close): fix - do dispose loop,
+	don't unref things we don't own.
+	(link_connection_finalize): add debug assertion.
+	(link_connection_from_fd_T): dont' re-add the cnx
+	to the list when re-trying the connect.
+
+2004-02-04  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.9.7
+
 2004-02-02  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-private.h: include linc-debug.h here, after the

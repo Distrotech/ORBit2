@@ -68,6 +68,7 @@ IDL_FLAGS = -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	--define=Object=OObject --define=TypeCode=TTypeCode	\
         --showcpperrors
 IDL_FILES=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl
+IDL_DIR=$(top_srcdir)/src/orb/orb-core/
 include $(top_srcdir)/Makefile.shared
 
 IDL_FLAGS_CORBA_OPS = --showcpperrors
