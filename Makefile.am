@@ -17,6 +17,3 @@ m4data_DATA=ORBit2.m4
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ORBit-2.0.pc ORBit-CosNaming-2.0.pc
-
-orbit2-config: orbit-config
-	cp -f orbit-config orbit2-config
