@@ -3,15 +3,19 @@
 #include "orbit-idl-c-backend.h"
 #include <string.h>
 
-static GSList *cc_small_build_interfaces (GSList *list, IDL_tree tree, guint depth);
+static GSList *cc_small_build_interfaces (GSList *list, IDL_tree tree);
 static void cc_small_output_imodule (GSList *interfaces, OIDL_C_Info *ci);
 
 typedef struct {
 	IDL_tree tree;
-	guint    depth;
 	guint    method_count;
 } Interface;
 
+typedef struct {
+	IDL_tree cur_node; /* Current Interface */
+	guint    parents;
+} CCSmallInterfaceTraverseInfo;
+ 
 void
 orbit_idl_output_c_imodule(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
@@ -26,8 +30,17 @@ orbit_idl_output_c_imodule(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n");
   fprintf(ci->fh, "#include \"%s-common.c\"\n\n", ci->base_name);
 
-  list = cc_small_build_interfaces (NULL, tree->tree, 0);
+  list = cc_small_build_interfaces (NULL, tree->tree);
   cc_small_output_imodule (list, ci);
+}
+
+static void
+cc_small_output_base_itypes(IDL_tree node, CCSmallInterfaceTraverseInfo *iti)
+{
+	if (iti->cur_node == node)
+		return;
+
+	iti->parents++;
 }
 
 static void
@@ -41,6 +54,7 @@ cc_small_output_imodule (GSList *list, OIDL_C_Info *ci)
 		 ci->base_name);
 
 	for (l = list; l; l = l->next) {
+		CCSmallInterfaceTraverseInfo iti;
 		Interface *i = l->data;
 		char      *id;
 
@@ -49,12 +63,16 @@ cc_small_output_imodule (GSList *list, OIDL_C_Info *ci)
 		id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
 			IDL_INTERFACE (i->tree).ident), "_", 0);
 
+		iti.cur_node = i->tree;
+		iti.parents = 0;
+		IDL_tree_traverse_parents(i->tree, (GFunc)cc_small_output_base_itypes, &iti);
+
 		fprintf (of, "   {TC_%s,", id);
 		fprintf (of, "      {%d, %d, %s__imethods, FALSE},\n",
 			 i->method_count, i->method_count, id);
 
 		fprintf (of, "      {%d, %d, %s__base_itypes, FALSE}}", 
-			 i->depth, i->depth, id);
+			 iti.parents + 1, iti.parents + 1, id);
 
 		fprintf (of, (l->next) ? ",\n" : "\n");
 
@@ -78,7 +96,7 @@ cc_small_output_imodule (GSList *list, OIDL_C_Info *ci)
 
 
 static GSList *
-cc_small_build_interfaces (GSList *list, IDL_tree tree, guint depth)
+cc_small_build_interfaces (GSList *list, IDL_tree tree)
 {
 	if (!tree)
 		return list;
@@ -86,27 +104,24 @@ cc_small_build_interfaces (GSList *list, IDL_tree tree, guint depth)
 	switch (IDL_NODE_TYPE (tree)) {
 	case IDLN_MODULE:
 		list = cc_small_build_interfaces (
-			list, IDL_MODULE (tree).definition_list,
-			depth + 1);
+			list, IDL_MODULE (tree).definition_list);
 		break;
 	case IDLN_LIST: {
 		IDL_tree sub;
 		for (sub = tree; sub; sub = IDL_LIST (sub).next)
 			list = cc_small_build_interfaces (
-				list, IDL_LIST (sub).data,
-				depth);
+				list, IDL_LIST (sub).data);
 		break;
 	}
 	case IDLN_INTERFACE: {
 		Interface *i = g_new0 (Interface, 1);
 
 		i->tree = tree;
-		i->depth = depth + 1;
 
 		list = g_slist_append (list, i);
 
 		list = cc_small_build_interfaces (
-			list, IDL_INTERFACE(tree).body, depth + 1);
+			list, IDL_INTERFACE(tree).body);
 
 		break;
 	}
