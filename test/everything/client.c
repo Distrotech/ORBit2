@@ -407,6 +407,27 @@ testCompoundStruct (test_TestFactory   factory,
 }
 
 static void
+testObjectStruct (test_TestFactory   factory, 
+		  CORBA_Environment *ev)
+{
+  test_StructServer objref;
+  test_ObjectStruct inArg;
+
+  d_print ("Testing object structs...\n");
+  objref = test_TestFactory_getStructServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  inArg.serv = objref;
+
+  test_StructServer_opObjectStruct (objref, &inArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+}
+
+static void
 testStructAny (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -1287,6 +1308,8 @@ testPingPong (test_TestFactory   factory,
 	      CORBA_Environment *ev)
 {
 	test_PingPongServer r_objref, l_objref, objref;
+	CORBA_unsigned_long before_remote_hash;
+	CORBA_unsigned_long after_remote_hash;
 
 	d_print ("Testing ping pong invocations ...\n");
 	r_objref = test_TestFactory_createPingPongServer (factory, ev);
@@ -1297,6 +1320,8 @@ testPingPong (test_TestFactory   factory,
 	CORBA_Object_release (l_objref, ev); /* only want 1 ref */
 	g_assert (ORBit_small_get_servant (l_objref) != NULL);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+	before_remote_hash = CORBA_Object_hash (l_objref, 0, ev);
 
 	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
@@ -1309,6 +1334,11 @@ testPingPong (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (ORBit_small_get_servant (objref) != NULL);
 	g_assert (l_objref == objref);
+
+	after_remote_hash = CORBA_Object_hash (l_objref, 0, ev);
+
+	d_print ("Testing hashing\n");
+	g_assert (before_remote_hash == after_remote_hash);
 
 	d_print ("Testing equivalence\n");
 	g_assert (CORBA_Object_is_equivalent (
@@ -1446,6 +1476,7 @@ run_tests (test_TestFactory   factory,
 		testFixedLengthStruct (factory, ev);
 		testVariableLengthStruct (factory, ev);
 		testCompoundStruct (factory, ev);
+		testObjectStruct (factory, ev);
 		testStructAny (factory, ev);
 		testUnboundedSequence (factory, ev);
 		testBoundedSequence (factory, ev);

@@ -1,3 +1,19 @@
+2001-12-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_hash),
+	(CORBA_Object_is_equivalent): make faster and better -
+	we were screwing up if we hashed an object before
+	remoting it. Since we garentee a CORBA_Object <-> profile
+	mapping anyway these can be trivial methods.
+
+	* test/everything/client.c (testPingPong): test hashing.
+
+2001-12-05  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/structServer.c (opObjectStruct): impl.
+
+	* test/everything/client.c (testObjectStruct): impl.
+
 2001-12-06  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/idl-compiler/orbit-idl-c-common.c:

@@ -160,16 +160,17 @@ module test {
 	};
 
 	interface StructServer : BasicServer {
-		FixedLengthStruct opFixed(in FixedLengthStruct inArg, 
-					  inout FixedLengthStruct inoutArg,
-					  out FixedLengthStruct outArg);
-		VariableLengthStruct opVariable(in VariableLengthStruct inArg, 
-						inout VariableLengthStruct inoutArg,
-						out VariableLengthStruct outArg);
-		CompoundStruct opCompound(in CompoundStruct inArg, 
-					  inout CompoundStruct inoutArg,
-					  out CompoundStruct outArg);
-		StructAny opStructAny();
+		FixedLengthStruct opFixed       (in FixedLengthStruct       inArg, 
+						 inout FixedLengthStruct    inoutArg,
+						 out FixedLengthStruct      outArg);
+		VariableLengthStruct opVariable (in VariableLengthStruct    inArg, 
+						 inout VariableLengthStruct inoutArg,
+						 out VariableLengthStruct   outArg);
+		CompoundStruct opCompound       (in CompoundStruct          inArg, 
+						 inout CompoundStruct       inoutArg,
+						 out CompoundStruct         outArg);
+		oneway void    opObjectStruct   (in ObjectStruct            inArg);
+		StructAny opStructAny           ();
 	};
 
 	interface BaseServer {
