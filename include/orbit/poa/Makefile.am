@@ -6,4 +6,5 @@ poainclude_HEADERS= \
 	poa-defs.h	\
 	poa-policy.h	\
 	portableserver-poa-type.h \
-	portableserver-current-type.h
+	portableserver-current-type.h \
+	orbit-adaptor.h

@@ -22,7 +22,8 @@ main_src = \
 	orbit-poa.h \
 	poa-manager.c \
 	poa-policy.c \
-	poa-servants.c
+	poa-servants.c \
+	orbit-adaptor.c
 
 liborb_poa_la_SOURCES=\
 	$(POA_IDLOUT) \

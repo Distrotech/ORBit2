@@ -9,7 +9,7 @@
 #undef DEBUG
 
 /*
- * common set of profiles for POA generated refs
+ * common set of profiles for Ojbect Adaptor generated refs
  */
 static GSList *common_profiles = NULL;
 
@@ -419,6 +419,7 @@ IOP_generate_profiles (CORBA_Object obj)
   IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
   IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
   gboolean                          need_objkey_component;
+  ORBit_OAObject                    adaptor_obj = obj->adaptor_obj;
   GSList                           *ltmp;
 
   g_assert( obj && (obj->profile_list == NULL) );
@@ -437,8 +438,8 @@ IOP_generate_profiles (CORBA_Object obj)
     }
   }
 
-  if (!obj->oki && obj->pobj)
-    obj->oki = ORBit_POA_object_to_okey (obj->pobj);
+  if (!obj->oki && adaptor_obj)
+    obj->oki = adaptor_obj->interface->object_to_objkey (adaptor_obj);
 
   /* share the profiles between everyone. */
   if (common_profiles) {

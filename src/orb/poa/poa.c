@@ -28,6 +28,29 @@ static void ORBit_POA_add_child( PortableServer_POA poa,
 				 PortableServer_POA child, 
 				 CORBA_Environment *ev );
 
+static void ORBit_POA_handle_request (PortableServer_POA          poa,
+				      GIOPRecvBuffer             *recv_buffer,
+				      CORBA_sequence_CORBA_octet *objkey);
+
+static gboolean            ORBit_POAObject_is_active        (ORBit_POAObject    pobj);
+
+static IOP_ObjectKey_info* ORBit_POAObject_object_to_objkey (ORBit_POAObject    pobj);
+
+static void                ORBit_POAObject_invoke           (ORBit_POAObject    pobj,
+							     gpointer           ret,
+							     gpointer          *args,
+							     CORBA_Context      ctx,
+							     gpointer           data,
+							     CORBA_Environment *ev);
+
+static void                ORBit_POAObject_handle_request   (ORBit_POAObject    pobj,
+							     CORBA_Identifier   opname,
+							     gpointer           ret,
+							     gpointer          *args,
+							     CORBA_Context      ctx,
+							     GIOPRecvBuffer    *recv_buffer,
+							     CORBA_Environment *ev);
+
 static GHashTable *ORBit_class_assignments = NULL;
 static guint ORBit_class_assignment_counter = 0;
 
@@ -420,8 +443,8 @@ PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
   if ( retain && unique && pobj )
     {
     /* pobj != NULL --> object activated */
-    if ( pobj->objref != NULL )
-      return pobj->objref;
+    if ( ((ORBit_OAObject)pobj)->objref != NULL )
+      return ((ORBit_OAObject)pobj)->objref;
     else
       return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
     }
@@ -475,7 +498,7 @@ PortableServer_POA_reference_to_servant(PortableServer_POA _obj,
   }
 
   if ( _obj->p_servant_retention == PortableServer_RETAIN ) {
-    ORBit_POAObject pobj = reference->pobj;
+    ORBit_POAObject pobj = (ORBit_POAObject)reference->adaptor_obj;
 
     if ( pobj == NULL ) {
       CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
@@ -508,7 +531,7 @@ PortableServer_POA_reference_to_id(PortableServer_POA _obj,
   if ( reference == NULL )
      return NULL;
 
-  if ( (pobj = reference->pobj) != NULL )
+  if ( (pobj = (ORBit_POAObject)reference->adaptor_obj) != NULL )
      return (PortableServer_ObjectId *)
 		ORBit_sequence_CORBA_octet_dup(pobj->object_id);
 
@@ -562,8 +585,8 @@ PortableServer_POA_id_to_reference(PortableServer_POA _obj,
   if ( ev->_major )
     return NULL;	/* may raise WrongPolicy or ObjectNotActive */
 
-  if ( pobj->objref != NULL )
-    return pobj->objref;
+  if ( ((ORBit_OAObject)pobj)->objref != NULL )
+    return ((ORBit_OAObject)pobj)->objref;
 
   return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
 }
@@ -851,10 +874,11 @@ ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
 		       randlen);
 }
 
-IOP_ObjectKey_info*
-ORBit_POA_object_to_okey( ORBit_POAObject pobj )
+static IOP_ObjectKey_info*
+ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 {
   PortableServer_POA         poa;
+  ORBit_ObjectAdaptor        adaptor;
   PortableServer_ObjectId    *oid;
   CORBA_octet*	             restbuf;
   IOP_ObjectKey_info         *retval;
@@ -865,8 +889,9 @@ ORBit_POA_object_to_okey( ORBit_POAObject pobj )
 
   g_return_val_if_fail (pobj != NULL, NULL);
 
-  poa = pobj->poa;
-  oid = pobj->object_id;
+  poa     = pobj->poa;
+  adaptor = (ORBit_ObjectAdaptor)poa;
+  oid     = pobj->object_id;
 
   if ( poa->num_to_koid_map )
     {
@@ -904,7 +929,7 @@ ORBit_POA_object_to_okey( ORBit_POAObject pobj )
       restbuf = oid->_buffer;
     }
 
-  okey_len = poa->poa_key._length + restlen + sizeof(guint32);
+  okey_len = adaptor->adaptor_key._length + restlen + sizeof(guint32);
   rlen = ALIGN_VALUE(okey_len, 4);
   retval = g_malloc(G_STRUCT_OFFSET(IOP_ObjectKey_info, object_key_data._buffer)
 		    + rlen);
@@ -913,10 +938,10 @@ ORBit_POA_object_to_okey( ORBit_POAObject pobj )
   okey->_buffer = retval->object_key_data._buffer;
   retval->object_key_data._length = okey_len;
   okey->_release = CORBA_FALSE;
-  memcpy( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length);
-  iptr = (gint32*)(okey->_buffer+poa->poa_key._length);
+  memcpy( okey->_buffer, adaptor->adaptor_key._buffer, adaptor->adaptor_key._length);
+  iptr = (gint32*)(okey->_buffer+adaptor->adaptor_key._length);
   *iptr = keynum;
-  memcpy( okey->_buffer + poa->poa_key._length + sizeof(guint32),
+  memcpy( okey->_buffer + adaptor->adaptor_key._length + sizeof(guint32),
 	  restbuf, restlen);
   retval->object_key_vec.iov_base = &retval->object_key_data;
   retval->object_key_vec.iov_len = sizeof(guint32) + rlen;
@@ -1009,8 +1034,8 @@ ORBit_POA_destroy(PortableServer_POA poa,
      * ORB's global list (rather than poa->child_poas) 
      * to avoid walking into dead children.
      */
-  for (cpidx=0; cpidx < orb->poas->len; cpidx++ ) {
-    PortableServer_POA cpoa = g_ptr_array_index(orb->poas, cpidx);
+  for (cpidx=0; cpidx < orb->adaptors->len; cpidx++ ) {
+    PortableServer_POA cpoa = g_ptr_array_index(orb->adaptors, cpidx);
     if ( cpoa && cpoa->parent_poa == poa ) {
       ORBit_POA_destroy(cpoa, etherealize_objects, ev);
     }
@@ -1043,7 +1068,7 @@ ORBit_POA_destroy(PortableServer_POA poa,
    * Don't clear the RootPOA entry.
    */
   if ( poa->poaID > 0 ) {
-    g_ptr_array_index(orb->poas, poa->poaID) = NULL;
+    g_ptr_array_index(orb->adaptors, poa->poaID) = NULL;
     poa->poaID = -1;
   }
 
@@ -1052,7 +1077,7 @@ ORBit_POA_destroy(PortableServer_POA poa,
      * to the POA itself.
      */
   numobjs = poa->oid_to_obj_map ? g_hash_table_size(poa->oid_to_obj_map) : 0;
-  g_assert( poa->parent.refs > numobjs );
+  g_assert( ((ORBit_RootObject)poa)->refs > numobjs );
 
   poa->life_flags |= ORBit_LifeF_Destroyed;
   poa->life_flags &= ~ORBit_LifeF_Destroying;
@@ -1063,7 +1088,7 @@ ORBit_POA_destroy(PortableServer_POA poa,
    * be released in CORBA_ORB_destroy. The application and 
    * POAObjects may still hold refs to the POA.
    */
-  g_assert( g_ptr_array_index(orb->poas, 0) != NULL );
+  g_assert( g_ptr_array_index(orb->adaptors, 0) != NULL );
 
   return CORBA_TRUE;
 }
@@ -1122,7 +1147,7 @@ ORBit_POA_handle_held_requests(PortableServer_POA poa)
      */
   for ( req=reqlist; req; req=req->next) {
     GIOPRecvBuffer *buf = req->data;
-    ORBit_handle_request(poa->orb, buf);
+    ORBit_handle_request (poa->orb, buf);
   }
   g_slist_free(reqlist);
 }
@@ -1135,13 +1160,13 @@ ORBit_POA_free_fn(ORBit_RootObject obj_in)
     g_hash_table_destroy (poa->oid_to_obj_map);
     g_hash_table_destroy (poa->child_poas);
     ORBit_free_T (poa->name);
-    ORBit_free_T (poa->poa_key._buffer);
+    ORBit_free_T (((ORBit_ObjectAdaptor)poa)->adaptor_key._buffer);
     poa->orb = NULL;
     g_free (poa);
 }
 
 static const ORBit_RootObject_Interface ORBit_POA_epv = {
-    ORBIT_ROT_POA,
+    ORBIT_ROT_ADAPTOR,
     ORBit_POA_free_fn
 };
 
@@ -1294,21 +1319,26 @@ ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
 	      const CORBA_PolicyList *policies,
 	      CORBA_Environment *ev)
 {
-  PortableServer_POA poa;
-  CORBA_long *tptr;
+  PortableServer_POA   poa;
+  ORBit_ObjectAdaptor  adaptor;
+  CORBA_long          *tptr;
   
   poa = g_new0(struct PortableServer_POA_type, 1);
-  ORBit_RootObject_init(&poa->parent, &ORBit_POA_epv);
+  ORBit_RootObject_init((ORBit_RootObject)poa, &ORBit_POA_epv);
   /* released in ORBit_POA_destroy */
   ORBit_RootObject_duplicate(poa);
   if(!manager)
     manager = ORBit_POAManager_new(orb, ev);
   if(ev->_major != CORBA_NO_EXCEPTION) goto error;
+
+  adaptor = (ORBit_ObjectAdaptor)poa;
+  adaptor->handle_request = (ORBitReqHandlerFunc)ORBit_POA_handle_request;
+
   poa->child_poas = g_hash_table_new(g_str_hash, g_str_equal);
   poa->orb = ORBit_RootObject_duplicate(orb);
-  poa->poaID = orb->poas->len;
-  g_ptr_array_set_size(orb->poas, orb->poas->len + 1);
-  g_ptr_array_index(orb->poas, poa->poaID) = poa;
+  poa->poaID = orb->adaptors->len;
+  g_ptr_array_set_size(orb->adaptors, orb->adaptors->len + 1);
+  g_ptr_array_index(orb->adaptors, poa->poaID) = poa;
 
   /* Need to initialise poa policies etc.. here */
   poa->p_thread = PortableServer_ORB_CTRL_MODEL;
@@ -1330,14 +1360,15 @@ ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
   poa->poa_rand_len = 8;
   
   poa->name = CORBA_string_dup(nom);
-  poa->poa_key._length = sizeof(CORBA_long) + poa->poa_rand_len;
-  poa->poa_key._buffer =
-    CORBA_sequence_CORBA_octet_allocbuf(poa->poa_key._length);
-  tptr = (CORBA_long *)poa->poa_key._buffer;
+
+  adaptor->adaptor_key._length = sizeof(CORBA_long) + poa->poa_rand_len;
+  adaptor->adaptor_key._buffer =
+    CORBA_sequence_CORBA_octet_allocbuf(adaptor->adaptor_key._length);
+  tptr = (CORBA_long *)adaptor->adaptor_key._buffer;
   *tptr = poa->poaID;
   if(poa->poa_rand_len)
     ORBit_genrand_buf(&poa->orb->genrand,
-		      poa->poa_key._buffer + sizeof(CORBA_long),
+		      adaptor->adaptor_key._buffer + sizeof(CORBA_long),
 		      poa->poa_rand_len);
 
   if ( poa->p_id_assignment == PortableServer_SYSTEM_ID )
@@ -1373,7 +1404,7 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
   CORBA_Object             objref;
   const char              *type_id = intf;
 
-  g_assert( pobj && pobj->objref == NULL );
+  g_assert( pobj && ((ORBit_OAObject)pobj)->objref == NULL );
 
   if(!type_id)
     {
@@ -1388,9 +1419,9 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
   objref = ORBit_objref_new(poa->poa_manager->orb, type_id);
 
   /* released by CORBA_Object_release */
-  objref->pobj = ORBit_RootObject_duplicate(pobj);
+  objref->adaptor_obj = ORBit_RootObject_duplicate(pobj);
 
-  pobj->objref = ORBit_RootObject_duplicate(objref);
+  ((ORBit_OAObject)pobj)->objref = ORBit_RootObject_duplicate(objref);
 
   return objref;
 }
@@ -1415,6 +1446,15 @@ ORBit_POA_setup_root(CORBA_ORB orb, CORBA_Environment *ev)
   CORBA_Policy_destroy( policies._buffer[0], ev );
 
   return poa;
+}
+
+static gboolean
+ORBit_POAObject_is_active (ORBit_POAObject pobj)
+{
+	if (pobj && pobj->servant)
+		return TRUE;
+
+	return FALSE;
 }
 
 /*
@@ -1452,9 +1492,18 @@ ORBit_POAObject_release_cb(ORBit_RootObject robj)
 }
 
 static ORBit_RootObject_Interface ORBit_POAObject_if = {
-  ORBIT_ROT_POAOBJECT,
+  ORBIT_ROT_OAOBJECT,
   ORBit_POAObject_release_cb
   };
+
+static struct 
+ORBit_OAObject_Interface_type ORBit_POAObject_methods = {
+	ORBIT_ADAPTOR_POA,
+	(ORBitStateCheckFunc)ORBit_POAObject_is_active,
+	(ORBitKeyGenFunc)ORBit_POAObject_object_to_objkey,
+	(ORBitInvokeFunc)ORBit_POAObject_invoke,
+	(ORBitReqFunc) ORBit_POAObject_handle_request
+};
 
 /*
     If USER_ID policy, {oid} must be non-NULL.
@@ -1477,10 +1526,12 @@ ORBit_POA_create_object(PortableServer_POA poa,
      * it will be immediately duplicated by being
      * activated or associated with a ref.
      */
-    ORBit_RootObject_init(&newobj->parent, &ORBit_POAObject_if);
+    ORBit_RootObject_init((ORBit_RootObject)newobj, &ORBit_POAObject_if);
 
     /* released in ORBit_POAObject_release_cb */
     newobj->poa = ORBit_RootObject_duplicate(poa);
+
+    ((ORBit_OAObject)newobj)->interface = &ORBit_POAObject_methods;
 
     if ( asDefault )
       {
@@ -1631,22 +1682,22 @@ ORBit_POA_okey_to_poa(	/*in*/CORBA_ORB orb,
 		        /*in*/CORBA_sequence_CORBA_octet *okey)
 {
   gint32		poanum;	/* signed */
-  PortableServer_POA	poa;
+  ORBit_ObjectAdaptor	adaptor;
 
   if ( okey->_length < sizeof(guint32) )
     return NULL;
 
   poanum = *(gint32*)(okey->_buffer);
-  if( poanum < 0 || poanum >= orb->poas->len )
+  if( poanum < 0 || poanum >= orb->adaptors->len )
     return NULL;
-  poa = g_ptr_array_index(orb->poas, poanum);
+  adaptor = g_ptr_array_index(orb->adaptors, poanum);
 
-  if( okey->_length < poa->poa_key._length )
+  if( okey->_length < adaptor->adaptor_key._length )
     return NULL;
-  if( memcmp( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length))
+  if( memcmp( okey->_buffer, adaptor->adaptor_key._buffer, adaptor->adaptor_key._length))
     return NULL;
 
-  return poa;
+  return (PortableServer_POA)adaptor;
 }
 
 static PortableServer_POA
@@ -1678,18 +1729,37 @@ ORBit_ORB_find_POA_for_okey(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey)
   return NULL;
 }
 
+struct ORBit_POA_invoke_data {
+	ORBitSmallSkeleton small_skel;
+	gpointer           imp;
+};
+
+static void
+ORBit_POAObject_invoke (ORBit_POAObject    pobj,
+			gpointer           ret,
+			gpointer          *args,
+			CORBA_Context      ctx,
+			gpointer           data,
+			CORBA_Environment *ev)
+{
+	ORBitSmallSkeleton small_skel = ((struct ORBit_POA_invoke_data *)data)->small_skel;
+	gpointer           imp = ((struct ORBit_POA_invoke_data *)data)->imp;
+
+	small_skel (pobj->servant, ret, args, ctx, ev, imp);
+}
+
 /*
  * If invoked in the local case, recv_buffer == NULL.
  * If invoked in the remote cse, ret = args = ctx == NULL.
  */
-void
-ORBit_small_handle_request(ORBit_POAObject    pobj,
-			   CORBA_Identifier   opname,
-			   gpointer           ret,
-			   gpointer          *args,
-			   CORBA_Context      ctx,
-			   GIOPRecvBuffer    *recv_buffer,
-			   CORBA_Environment *ev)
+static void
+ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
+				CORBA_Identifier   opname,
+				gpointer           ret,
+				gpointer          *args,
+				CORBA_Context      ctx,
+				GIOPRecvBuffer    *recv_buffer,
+				CORBA_Environment *ev)
 {
 	PortableServer_POA                   poa = pobj->poa;
 	PortableServer_ServantLocator_Cookie cookie;
@@ -1698,6 +1768,7 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 	ORBit_IMethod                       *m_data;
 	ORBitSkeleton                        skel = NULL;
 	ORBitSmallSkeleton                   small_skel = NULL;
+	ORBit_POAInvocation		     iframe;
 	gpointer                             imp = NULL;
 
 	switch (poa->poa_manager->state) {
@@ -1733,7 +1804,7 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 	}
 	
 	oid = pobj->object_id;
-	
+
 	if (!pobj->servant) {
 		switch (poa->p_request_processing) {
 
@@ -1757,6 +1828,11 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 			break;
 		}
 	}
+
+	pobj->use_cnt++;
+	iframe.pobj = pobj;
+	iframe.prev = poa->orb->poa_current_invocations;
+	poa->orb->poa_current_invocations = &iframe;
 	
 	if (ev->_major == CORBA_NO_EXCEPTION && !pobj->servant)
 		CORBA_exception_set_system (
@@ -1796,10 +1872,16 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 	if (skel)
 		skel (pobj->servant, recv_buffer, ev, imp);
 
-	else if (recv_buffer)
-		ORBit_small_invoke_poa (
-			pobj->servant, recv_buffer, m_data, 
-			small_skel, imp, ev);
+	else if (recv_buffer) {
+		struct ORBit_POA_invoke_data invoke_data;
+
+		invoke_data.small_skel = small_skel;
+		invoke_data.imp        = imp;
+
+		ORBit_small_invoke_adaptor (
+				(ORBit_OAObject)pobj, recv_buffer, m_data, 
+				(gpointer)&invoke_data, ev);
+	}
 	else
 		small_skel (pobj->servant, ret, args, ctx, ev, imp);
 
@@ -1820,83 +1902,76 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 			g_assert_not_reached ();
 			break;
 		}
+
+	g_assert (poa->orb->poa_current_invocations == &iframe);
+	poa->orb->poa_current_invocations = iframe.prev;
+	pobj->use_cnt--;
+
+	if (pobj->life_flags & ORBit_LifeF_NeedPostInvoke)
+		ORBit_POAObject_post_invoke (pobj);             
 }
 
-void
-ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
+static void
+ORBit_POA_handle_request (PortableServer_POA          poa,
+			  GIOPRecvBuffer             *recv_buffer,
+			  CORBA_sequence_CORBA_octet *objkey)
 {
-  PortableServer_POA          poa;
-  CORBA_sequence_CORBA_octet *objkey;
-  ORBit_POAObject             pobj;
-  ORBit_POAInvocation         iframe;
-  CORBA_Identifier            opname;
-  PortableServer_ObjectId     oid;
-  CORBA_Environment           env;
+	ORBit_POAObject         pobj;
+	CORBA_Identifier        opname;
+	PortableServer_ObjectId oid;
+	CORBA_Environment       env;
 
-  CORBA_exception_init(&env);
+	CORBA_exception_init(&env);
 
-  objkey = giop_recv_buffer_get_objkey(recv_buffer);
-  poa = ORBit_ORB_find_POA_for_okey(orb, objkey);
-  if( poa == NULL )
-    return;
+	if (!ORBit_POA_okey_to_oid (poa, objkey, &oid)) {
+		CORBA_exception_set_system (&env, 
+					    ex_CORBA_OBJECT_NOT_EXIST,
+					    CORBA_COMPLETED_NO);
+		goto send_sys_ex;
+	}
 
-  if ( !ORBit_POA_okey_to_oid( poa, objkey, &oid) ) {
-    CORBA_exception_set_system(&env, ex_CORBA_OBJECT_NOT_EXIST,
-			       CORBA_COMPLETED_NO);
-    goto send_sys_ex;
-  }
+	pobj = ORBit_POA_oid_to_obj (poa, &oid, FALSE, &env);
+	if (!pobj)
+		switch( poa->p_request_processing ) {
+		case PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY:
+			CORBA_exception_set_system (&env, 
+						    ex_CORBA_OBJECT_NOT_EXIST, 
+						    CORBA_COMPLETED_NO);
+			break;
 
-  pobj = ORBit_POA_oid_to_obj(poa, &oid, FALSE, &env);
-  if ( pobj == NULL ) {
-    switch( poa->p_request_processing ) {
-      case PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY:
-	CORBA_exception_set_system(&env, ex_CORBA_OBJECT_NOT_EXIST, 
-				   CORBA_COMPLETED_NO);
-	break;
-      case PortableServer_USE_DEFAULT_SERVANT: /* drop through */
-      case PortableServer_USE_SERVANT_MANAGER:
-	pobj = ORBit_POA_create_object(poa, &oid, FALSE, &env);
-	break;
-      default:
-	g_assert_not_reached();
-	break;
-    }
-  }
+		case PortableServer_USE_DEFAULT_SERVANT: /* drop through */
+		case PortableServer_USE_SERVANT_MANAGER:
+			pobj = ORBit_POA_create_object (poa, &oid, FALSE, &env);
+			break;
 
-  g_assert( pobj != NULL );
+		default:
+			g_assert_not_reached ();
+			break;
+		}
 
-  pobj->use_cnt++;
-  iframe.pobj = pobj;
-  iframe.prev = poa->orb->poa_current_invocations;
-  poa->orb->poa_current_invocations = &iframe;
+	g_assert ( pobj != NULL );
 
-  opname = giop_recv_buffer_get_opname(recv_buffer);
+	opname = giop_recv_buffer_get_opname (recv_buffer);
 
-  ORBit_small_handle_request(pobj, opname, NULL, NULL, NULL, recv_buffer, &env);
-
-  g_assert( poa->orb->poa_current_invocations == &iframe );
-  poa->orb->poa_current_invocations = iframe.prev;
-  pobj->use_cnt--;
-
-  if ( pobj->life_flags & ORBit_LifeF_NeedPostInvoke )
-    ORBit_POAObject_post_invoke( pobj );             
+	ORBit_POAObject_handle_request (pobj, opname, NULL, NULL, 
+					NULL, recv_buffer, &env);
 
 send_sys_ex:
-  if( env._major == CORBA_SYSTEM_EXCEPTION ) {
-    GIOPSendBuffer *reply_buf;
+	if (env._major == CORBA_SYSTEM_EXCEPTION) {
+		GIOPSendBuffer *reply_buf;
 
-    reply_buf = giop_send_buffer_use_reply( 
-				recv_buffer->connection->giop_version,
-				giop_recv_buffer_get_request_id(recv_buffer),
-				CORBA_SYSTEM_EXCEPTION);
-    ORBit_send_system_exception(reply_buf, &env);
-    giop_send_buffer_write(reply_buf, recv_buffer->connection);
-    giop_send_buffer_unuse(reply_buf);
-  }
-  else
-    g_assert(env._major == CORBA_NO_EXCEPTION);
+		reply_buf = giop_send_buffer_use_reply ( 
+					recv_buffer->connection->giop_version,
+					giop_recv_buffer_get_request_id (recv_buffer),
+					CORBA_SYSTEM_EXCEPTION);
+		ORBit_send_system_exception (reply_buf, &env);
+		giop_send_buffer_write (reply_buf, recv_buffer->connection);
+		giop_send_buffer_unuse (reply_buf);
+	}
+	else
+		g_assert (env._major == CORBA_NO_EXCEPTION);
 
-  CORBA_exception_free(&env);
+	CORBA_exception_free(&env);
 }
 
 /***************************************************************************
@@ -2026,12 +2101,12 @@ ORBit_POA_okey_to_oid(	/*in*/PortableServer_POA poa,
 			/*in*/CORBA_sequence_CORBA_octet *okey,
 			/*out*/PortableServer_ObjectId *oid)
 {
-    int		poa_keylen = poa->poa_key._length;
+    int		poa_keylen = ((ORBit_ObjectAdaptor)poa)->adaptor_key._length;
     int	keynum;	/* this must be signed! */
 
     oid->_length = 0;
     if ( okey->_length < poa_keylen+sizeof(CORBA_long)
-      || memcmp(okey->_buffer, poa->poa_key._buffer, poa_keylen)!=0 )
+      || memcmp(okey->_buffer, ((ORBit_ObjectAdaptor)poa)->adaptor_key._buffer, poa_keylen)!=0 )
     	return FALSE;
     keynum = *(gint32*)(okey->_buffer + poa_keylen);
     if ( keynum > 0 ) {

@@ -11,7 +11,7 @@ CORBA_ORB_release_fn(ORBit_RootObject robj)
 {
   CORBA_ORB orb = (CORBA_ORB)robj;
 
-  g_ptr_array_free (orb->poas, TRUE);
+  g_ptr_array_free (orb->adaptors, TRUE);
   g_hash_table_destroy (orb->initial_refs);
 
   g_free (orb);
@@ -51,7 +51,7 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
   ORBit_genrand_init(&retval->genrand);
   retval->default_giop_version = GIOP_LATEST;
 
-  retval->poas = g_ptr_array_new();
+  retval->adaptors = g_ptr_array_new();
   ORBit_init_internals(retval, ev);
 
   return (CORBA_ORB) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
@@ -783,7 +783,7 @@ CORBA_ORB_shutdown(CORBA_ORB orb,
 		   const CORBA_boolean wait_for_completion,
 		   CORBA_Environment * ev)
 {
-  PortableServer_POA root_poa = g_ptr_array_index(orb->poas, 0);
+  PortableServer_POA root_poa = g_ptr_array_index(orb->adaptors, 0);
 
   if ( root_poa != NULL )
     {
@@ -809,33 +809,33 @@ CORBA_ORB_destroy(CORBA_ORB orb, CORBA_Environment * ev)
   CORBA_ORB_shutdown(orb, TRUE, ev);
   if ( ev->_major )
     return;
-  root_poa = g_ptr_array_index(orb->poas, 0);
+  root_poa = g_ptr_array_index(orb->adaptors, 0);
   if ( root_poa )
     {
-      if ( root_poa->parent.refs != 1 )
+      if ( ((ORBit_RootObject)root_poa)->refs != 1 )
 	{
 	  g_warning("CORBA_ORB_destroy: Application still has %d refs to RootPOA.",
-		    root_poa->parent.refs-1);
+		    ((ORBit_RootObject)root_poa)->refs-1);
 	}
 
       ORBit_RootObject_release(root_poa);
-      g_ptr_array_index(orb->poas, 0) = NULL;
+      g_ptr_array_index(orb->adaptors, 0) = NULL;
     }
 
 #if 0
 #ifndef G_DISABLE_ASSERT
   {
     int pi;
-    for (pi = 0; pi < orb->poas->len; pi++)
+    for (pi = 0; pi < orb->adaptors->len; pi++)
       {
-	PortableServer_POA poa = g_ptr_array_index(orb->poas,pi);
+	ORBit_ObjectAdaptor adaptor = g_ptr_array_index (orb->adaptors, pi);
 	/*
 	 * FIXME:
 	 * This is just not true !
-	 * The application may still have refs to its POAs
-	 * or to its objects, in which case the poa has
+	 * The application may still have refs to its Object 
+	 * Adaptors or to its objects, in which case the poa has
 	 * not gone away.
-	g_assert(poa == NULL);
+	g_assert(adaptor == NULL);
 	 */
       }
   }

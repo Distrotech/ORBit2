@@ -15,7 +15,7 @@ struct CORBA_Object_type {
   GSList *profile_list, *forward_locations;
   IOP_ObjectKey_info *oki;
 
-  ORBit_POAObject pobj;
+  ORBit_OAObject adaptor_obj;
 };
 
 #endif
