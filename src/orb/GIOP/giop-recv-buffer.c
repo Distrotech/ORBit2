@@ -1049,10 +1049,8 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				if (MORE_FRAGMENTS_FOLLOW (buf)) {
 					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
-					else {
-						LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+					else
 						goto frag_out;
-					}
 				} else {
 					buf->cur = buf->message_body + 12;
 
@@ -1123,6 +1121,8 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		break;
 	}
  frag_out:	
+	cnx->incoming_msg = NULL;
+	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 	g_object_unref ((GObject *) cnx);
 
 	return TRUE;
