@@ -256,7 +256,7 @@ CORBA_ORB_list_initial_services(CORBA_ORB _obj,
       retval->_buffer =
 	CORBA_sequence_CORBA_ORB_ObjectId_allocbuf(retval->_length);
       g_hash_table_foreach(_obj->initial_refs, servlist_add_id, retval);
-      retval->_release = TRUE;
+      retval->_release = CORBA_TRUE;
     }
   else
     {

@@ -1378,8 +1378,9 @@ DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 		return NULL;
 
 	retval = CORBA_sequence_DynamicAny_NameValuePair__alloc ();
-	retval->_buffer = CORBA_sequence_DynamicAny_NameValuePair_allocbuf (tc->sub_parts);
-	retval->_length = tc->sub_parts;
+	retval->_buffer  = CORBA_sequence_DynamicAny_NameValuePair_allocbuf (tc->sub_parts);
+	retval->_length  = tc->sub_parts;
+	retval->_release = CORBA_TRUE;
 
 	for (i = 0; i < tc->sub_parts; i++) {
 		CORBA_any      *any;
@@ -1482,8 +1483,9 @@ DynamicAny_DynStruct_get_members_as_dyn_any (DynamicAny_DynStruct obj,
 		return NULL;
 
 	retval = CORBA_sequence_DynamicAny_NameDynAnyPair__alloc ();
-	retval->_buffer = CORBA_sequence_DynamicAny_NameDynAnyPair_allocbuf (tc->sub_parts);
-	retval->_length = tc->sub_parts;
+	retval->_buffer  = CORBA_sequence_DynamicAny_NameDynAnyPair_allocbuf (tc->sub_parts);
+	retval->_length  = tc->sub_parts;
+	retval->_release = CORBA_TRUE;
 
 	for (i = 0; i < tc->sub_parts; i++) {
 		CORBA_TypeCode subtc = tc->subtypes [i];
@@ -1731,8 +1733,9 @@ DynamicAny_DynSequence_get_elements (DynamicAny_DynSequence obj,
 	
 	src = s->_buffer;
 	retval = DynamicAny_AnySeq__alloc ();
-	retval->_buffer = DynamicAny_AnySeq_allocbuf (s->_length);
-	retval->_length = s->_length;
+	retval->_buffer  = DynamicAny_AnySeq_allocbuf (s->_length);
+	retval->_length  = s->_length;
+	retval->_release = CORBA_TRUE;
 	subtc = dynany->any->_type->subtypes [0];
 
 	for (i = 0; i < s->_length; i++) {

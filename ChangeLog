@@ -1,3 +1,25 @@
+2001-08-07  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/dynamic/dynany.c
+	(DynamicAny_DynStruct_get_members): set _release
+	to CORBA_TRUE.
+	(DynamicAny_DynStruct_get_members_as_dyn_any): ditto.
+	(DynamicAny_DynSequence_get_elements): ditto.
+
+	* ORBit2/src/orb/orb-core/corba-any.c
+	(ORBit_copy_value_core): ditto.
+
+	* src/orb/poa/poa.c(ORBit_POA_new): ditto.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_list_initial_services): use CORBA_TRUE instead
+	of TRUE.
+
+	* src/orb/orb-core/corba-types.c
+	(ORBit_sequence_CORBA_octet_dup): ditto.
+	
+	* src/orb/orb-core/orbit-small.c(load_module): ditto.
+
 2001-08-07  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testIInterface): actualy
