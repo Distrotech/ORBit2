@@ -9,6 +9,7 @@
 #define O_MUTEX_INIT(x) (x) = g_mutex_new()
 #define O_MUTEX_LOCK(x) g_mutex_lock(x)
 #define O_MUTEX_UNLOCK(x) g_mutex_unlock(x)
+#define O_MUTEX_DESTROY(x) g_mutex_free(x)
 
 #else
 
@@ -16,6 +17,7 @@
 #define O_MUTEX_INIT(x)
 #define O_MUTEX_LOCK(x)
 #define O_MUTEX_UNLOCK(x)
+#define O_MUTEX_FREE(x)
 
 #endif
 

@@ -31,10 +31,10 @@ static GIOPProtocolInfo protocol_ents[] = {
   {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0},
 #endif
 #ifdef AF_UNIX
-  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, GIOP_PROTOCOL_SECURE, af_unix_destroy},
+  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, GIOP_PROTOCOL_SECURE|GIOP_PROTOCOL_NEEDS_BIND, af_unix_destroy},
 #endif
 #ifdef AF_IRDA
-  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, 0, NULL, irda_getaddrinfo, irda_getnameinfo},
+  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, GIOP_PROTOCOL_NEEDS_BIND, NULL, irda_getaddrinfo, irda_getnameinfo},
 #endif
   {NULL}
 };
@@ -103,6 +103,20 @@ giop_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 	    default:
 	      rv = tmprv;
 	      keep_going = FALSE;
+#ifdef AF_UNIX
+	      if(!rv
+		 && !servname
+		 && (hints->ai_flags & AI_PASSIVE)
+		 && ((*res)->ai_family == AF_UNIX))
+		{
+		  struct sockaddr_un *sun = (struct sockaddr_un *)res->ai_addr;
+		  /* Special hack for ORBit usage */
+		  srand(time(NULL));
+		  g_snprintf(sun->sun_path, sizeof(sun->sun_path),
+			     "/tmp/orbit-%s/orb-%x%x",
+			     rand(), rand());
+		}
+#endif
 	      break;
 	    }
 	}
@@ -180,42 +194,50 @@ irda_find_device(guint32 *addr, char *name, gboolean name_to_addr)
   return retval;
 }
 
+#define IRDA_PREFIX
+
 static int
 irda_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
 {
   struct sockaddr_irda sai;
   struct addrinfo *retval;
-  char hnbuf[IRDA_NICKNAME_MAX + strlen("IrDA-")];
+  char hnbuf[IRDA_NICKNAME_MAX + strlen(IRDA_PREFIX)];
   int n;
 
-  /* For now, it *has* to start with "IrDA-" to be in the IRDA hostname/address format we use */
-  if(strcmp(nodename, "IrDA-"))
-    return EAI_NONAME;
-
-  if(!(nodename || servname))
+  /* For now, it *has* to start with IRDA_PREFIX to be in the IRDA
+     hostname/address format we use */
+  if(nodename && strcmp(nodename, IRDA_PREFIX))
     return EAI_NONAME;
 
   sai.sir_family = AF_IRDA;
   sai.sir_lsap_sel = LSAP_ANY;
-  g_snprintf(sai.sir_name, sizeof(sai.sir_name), "%s", servname?servname:"");
+  if(servname)
+    g_snprintf(sai.sir_name, sizeof(sai.sir_name), "%s", servname);
+  else
+    {
+      srand(time(NULL));
+      g_snprintf(sai.sir_name, sizeof(sai.sir_name), "IIOP%x%x",
+		 rand(), rand());
+    }
 
   if(nodename)
     {
-      if(!strncmp(nodename + strlen("IrDA-"), "0x", 2))
+      if(!strncmp(nodename + strlen(IRDA_PREFIX), "0x", 2))
 	{
-	  if(sscanf(nodename + strlen("IrDA-0x"), "%u", &sai.sir_addr) != 1)
+	  if(sscanf(nodename + strlen(IRDA_PREFIX "0x"), "%u", 
+		    &sai.sir_addr) != 1)
 	    return EAI_NONAME;
 
 	  /* It's a numeric address - we need to find the hostname */
-	  strcpy(hnbuf, "IrDA-");
-	  if(irda_find_device(&sai.sir_addr, hnbuf + strlen("IrDA-"), FALSE))
+	  strcpy(hnbuf, IRDA_PREFIX);
+	  if(irda_find_device(&sai.sir_addr, hnbuf + strlen(IRDA_PREFIX), FALSE))
 	    return EAI_NONAME;
 	  nodename = hnbuf;
 	}
       else if(!(hints->ai_flags & AI_NUMERICHOST))
 	{
 	  /* It's a name - we need to find the address */
-	  if(irda_find_device(&sai.sir_addr, (char *)nodename + strlen("IrDA-"), TRUE))
+	  if(irda_find_device(&sai.sir_addr, (char *)nodename + strlen(IRDA_PREFIX), TRUE))
 	    return EAI_NONAME;
 	}
       else
@@ -226,7 +248,7 @@ irda_getaddrinfo(const char *nodename, const char *servname, const struct addrin
   n = sizeof(struct addrinfo) + sizeof(struct sockaddr_irda);
   if(hints->ai_flags & AI_CANONNAME)
     n += strlen(hnbuf) + 1;
-  retval = malloc(n);
+  retval = calloc(1, n);
   retval->ai_addr = (struct sockaddr *)(((guchar *)retval) + sizeof(struct addrinfo));
   memcpy(retval->ai_addr, &sai, sizeof(struct sockaddr_irda));
   strcpy(((guchar *)retval) + sizeof(struct addrinfo) + sizeof(struct sockaddr_irda), nodename);
@@ -271,7 +293,7 @@ irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
       if(flags & NI_NAMEREQD)
 	return -1;
 
-      g_snprintf(host, hostlen, "IrDA-%#08x", sai->sir_addr);
+      g_snprintf(host, hostlen, IRDA_PREFIX "%#08x", sai->sir_addr);
     }
 
   g_snprintf(serv, servlen, "%s", sai->sir_name);

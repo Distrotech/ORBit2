@@ -5,17 +5,6 @@
 static void giop_server_init       (GIOPServer      *cnx);
 static void giop_server_class_init (GIOPServerClass *klass);
 
-static void giop_server_get_param(GObject        *object,
-				  guint           param_id,
-				  GValue         *value,
-				  GParamSpec     *pspec,
-				  const gchar    *trailer);
-static void giop_server_set_param(GObject        *object,
-				 guint           param_id,
-				 GValue         *value,
-				 GParamSpec     *pspec,
-				 const gchar    *trailer);
-
 GType
 giop_server_get_type(void)
 {
@@ -59,58 +48,97 @@ static void
 giop_server_class_init (GIOPServerClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *)klass;
-  GParamSpec *pspec;
-
-  object_class->get_param = giop_server_get_param;
-  object_class->set_param = giop_server_set_param;
-
-  pspec = g_param_spec_string_c("GIOPServer::proto_name",
-				"proto_name", "Protocol names",
-				"IPv4", G_PARAM_READABLE|G_PARAM_WRITABLE);
-  g_object_class_install_param(object_class, PARAM_SA_FAMILY, pspec);
 }
 
-static void
-giop_server_get_param(GObject        *object,
-		      guint           param_id,
-		      GValue         *value,
-		      GParamSpec     *pspec,
-		      const gchar    *trailer)
+static gboolean
+giop_server_handle_io(GIOChannel *gioc,
+		      GIOCondition condition,
+		      gpointer data)
 {
-  GIOPServer *cnx = (GIOPServer *)object;
+  GIOPServer *cnx = data;
+  struct sockaddr *saddr;
+  int addrlen, fd;
+  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
 
-  g_return_if_fail(PARAM_SA_FAMILY == param_id);
-  g_value_set_string(value, cnx->proto->name);
-}
+  if(condition != G_IO_IN)
+    g_error("condition on server fd is %#x", condition);
 
-static void
-giop_server_set_param(GObject        *object,
-		      guint           param_id,
-		      GValue         *value,
-		      GParamSpec     *pspec,
-		      const gchar    *trailer)
-{
-  GIOPServer *cnx = (GIOPServer *)object;
-  int fd;
-  const GIOPProtocolInfo * proto;
+  addrlen = cnx->proto->addr_len;
+  saddr = orbit_alloca(addrlen);
+  fd = accept(cnx->fd, saddr, &addrlen);
 
-  g_return_if_fail(PARAM_SA_FAMILY == param_id);
+  if(fd < 0)
+    return TRUE; /* error */
 
-  cnx->proto = giop_protocol_find(g_value_get_string(value));
-  g_assert(cnx->proto);
+  if(giop_getnameinfo(saddr, cnx->proto->addr_len, hnbuf, sizeof(hnbuf),
+		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
+    {
+      close(fd);
+      return TRUE;
+    }
 
-  fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
-  g_assert(fd >= 0);
+  giop_connection_from_fd(fd, cnx->proto, hnbuf, servbuf, FALSE);
 
-  
+  return TRUE;
 }
 
 GIOPServer *
 giop_server_new(const char *proto_name, GIOPConnectionOptions create_options)
 {
-  GIOPServer *server;
+  GIOPServer *cnx;
+  GIOChannel *gioc;
+  int fd, n;
+  const GIOPProtocolInfo * proto;
+  struct addrinfo *ai, hints = {0};
+  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
 
-  server = g_object_new(giop_server_get_type(), NULL);
+  proto = giop_protocol_find(proto_name);
+  if(!proto)
+    return NULL;
 
-  return server;
+  hints.ai_flags = AI_PASSIVE|AI_CANONNAME;
+  hints.ai_family = proto->family;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = proto->stream_proto_num;
+  if(giop_getaddrinfo(NULL, NULL, &hints, &ai))
+    return NULL;
+  if(giop_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
+		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
+    {
+      freeaddrinfo(ai);
+      return NULL;
+    }
+
+  fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
+  if(fd < 0)
+    {
+      freeaddrinfo(ai);
+      return NULL;
+    }
+
+  n = 0;
+  if(proto->flags & GIOP_PROTOCOL_NEEDS_BIND)
+    n = bind(fd, ai->ai_addr, ai->ai_addrlen);
+  freeaddrinfo(ai);
+
+  if(!n)
+    n = listen(fd, 10);
+  if(n)
+    {
+      close(fd);
+      return NULL;
+    }
+
+  cnx = g_object_new(giop_server_get_type(), NULL);
+  cnx->proto = proto;
+  cnx->fd = fd;
+  gioc = g_io_channel_unix_new(fd);
+  cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+			    giop_server_handle_io, cnx);
+  g_io_channel_unref(gioc);
+  cnx->create_options = create_options;
+  cnx->local_host_info = g_strdup(hnbuf);
+  cnx->local_serv_info = g_strdup(servbuf);
+
+  return cnx;
 }
