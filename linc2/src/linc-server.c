@@ -97,7 +97,7 @@ linc_server_class_init (LINCServerClass *klass)
   ptype = G_TYPE_OBJECT;
   server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
 						 G_OBJECT_CLASS_TYPE(klass),
-						 0, closure,
+						 G_SIGNAL_RUN_LAST, closure,
 						 NULL, NULL,
 						 my_cclosure_marshal_VOID__OBJECT,
 						 G_TYPE_NONE,

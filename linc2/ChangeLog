@@ -1,5 +1,10 @@
 2001-05-18  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-server.c (linc_server_class_init): actualy
+	make the signal run.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
 	* autogen.sh: update for libtool 1.4
 
 	* src/linc-connection.c (linc_connection_destroy): unref
