@@ -8,7 +8,7 @@ Name: ORBit
 Version: %ver
 Release: %rel
 Source: ftp://ftp.labs.redhat.com/pub/ORBit/ORBit-%{PACKAGE_VERSION}.tar.gz
-Group: System Environment/Daemons
+Group: System Environment/Libraries
 Copyright: LGPL/GPL
 BuildRoot: /var/tmp/orbit-%{PACKAGE_VERSION}-root
 Prefix: %{prefix}
@@ -17,31 +17,28 @@ Prereq: /sbin/install-info
 URL: http://www.labs.redhat.com/orbit/
 
 %description
-ORBit is a high-performance CORBA ORB (object request
-broker). It allows programs to send requests and 
-receive replies from other programs, regardless of
-the locations of the two programs.
+ORBit is a high-performance CORBA (Common Object Request Broker 
+Architecture) ORB (object request broker). It allows programs to 
+send requests and receive replies from other programs, regardless 
+of the locations of the two programs. CORBA is an architecture that 
+enables communication between program objects, regardless of the 
+programming language they're written in or the operating system they
+run on.
 
-You will need to install this package and the
-related header files, libraries and utilities
-if you want to write programs that use CORBA
-technology.
+You will need to install this package if you want to run programs that use
+the ORBit implementation of CORBA technology.
 
 %package devel
 Summary: Development libraries, header files and utilities for ORBit.
 Group: Development/Libraries
 Requires: indent
+Requires: glib-devel
+Requires: ORBit = %{ver}
 
 %description devel
-ORBit is a high-performance CORBA ORB (object request
-broker) with support for the C language. It allows
-programs to send requests and receive replies from
-other programs, regardless of the locations of the
-two programs.
-
-This package contains the header files, libraries and 
-utilities necessary to write programs that use CORBA
-technology.
+This package contains the header files, libraries and utilities 
+necessary to write programs that use CORBA technology. If you want to
+write such programs, you'll also need to install the ORBit package.
 
 %prep
 %setup
@@ -84,12 +81,17 @@ fi
 rm -rf $RPM_BUILD_ROOT
 
 %files
+%defattr(-,root,root)
+
 %doc AUTHORS COPYING ChangeLog NEWS README TODO
 %doc -P libIDL/COPYING libIDL/ChangeLog libIDL/AUTHORS
 %doc -P libIDL/README* libIDL/NEWS libIDL/BUGS libIDL/tstidl.c
+
 %{prefix}/lib/lib*.so.*
 %{prefix}/bin/orbit-event-server
 %{prefix}/bin/orbit-name-server
+#don't install old-name-server
+#%{prefix}/bin/old-name-server
 %{prefix}/bin/name-client
 %{prefix}/bin/orbit-ird
 
@@ -105,6 +107,8 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/share/aclocal/*
 
 %changelog
+* Mon Aug 30 1999 Elliot Lee <sopwith@redhat.com> 0.4.94-1
+- Spec file fixes from RHL 6.0.
 
 * Wed Jun 2 1999  Jose Mercado <jmercado@mit.edu>
 - Fixed configure.in so spec.in could be used.
