@@ -9,9 +9,8 @@ cd $srcdir
 
 DIE=0
 
-# Check for autoconf
-(autoconf --version | grep -q "version 2.12") || 
-(autoconf --version | grep -q "version 2.13") || {
+# Check for autoconf, the required version is set in configure.in
+(autoconf --version) < /dev/null > /dev/null 2>&1 || {
 	echo
 	echo "You must have at minimum autoconf version 2.12 installed"
 	echo "to compile ORBit. Download the appropriate package for"
@@ -30,9 +29,8 @@ DIE=0
 	DIE=1
 }
 
-# Check for automake
-(automake --version | grep -q "1.3") ||
-(automake --version | grep -q "1.4") ||{
+# Check for automake, the required version is set in Makefile.am
+(automake --version) < /dev/null > /dev/null 2>&1 ||{
 	echo
 	echo "You must have at minimum automake version 1.3 installed"
 	echo "to compile ORBit. Download the appropriate package for"
