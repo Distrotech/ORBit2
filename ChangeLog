@@ -1,3 +1,12 @@
+2003-08-04  James Henstridge  <james@daa.com.au>
+
+	* src/services/imodule/orbit-imodule.c (build_cpp_args): add
+	function to build up a full set of cpp args (adds __ORBIT_IDL__
+	and __basename_COMPILATION).  Makes many Gnome IDL files just
+	work.
+	(ORBit_iinterfaces_from_file): use build_cpp_args() to build the
+	full set of CPP args.
+
 2003-07-31  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.7.5
