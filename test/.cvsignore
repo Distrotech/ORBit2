@@ -27,3 +27,4 @@ typelib-dump
 test-mem
 test-performance
 test-giop
+test-corbaloc
