@@ -40,6 +40,16 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
 
+dnl Check for pkg-config
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+if test x$PKG_CONFIG = xno ; then
+  AC_MSG_ERROR([*** pkg-config not found. See http://pkgconfig.sourceforge.net])
+fi
+
+if ! pkg-config --atleast-pkgconfig-version 0.5 ; then
+  AC_MSG_ERROR([*** pkg-config too old; version 0.5 or better needed.])
+fi
+
 AC_CHECK_HEADERS(pthread.h)
 if test $ac_cv_header_pthread_h = yes; then
 	THREADLIBS=gthread
@@ -141,5 +151,5 @@ src/Makefile
 include/Makefile
 include/linc/Makefile
 include/linc/linc-config.h
-linc-config
+linc.pc
 ])
