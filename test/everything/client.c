@@ -1824,7 +1824,7 @@ test_time_noop (test_TestFactory   factory,
 	g_timer_elapsed (timer, NULL) * 1000);
 
 	old_flags = ORBit_small_flags;
-	ORBit_small_flags != ORBIT_SMALL_FORCE_GENERIC_MARSHAL;
+	ORBit_small_flags |= ORBIT_SMALL_FORCE_GENERIC_MARSHAL;
 	g_timer_reset (timer);
 	g_timer_start (timer);
 	for (i = 0; i < TIME_TEST_RUNS; i++)

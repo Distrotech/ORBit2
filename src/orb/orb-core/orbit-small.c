@@ -933,18 +933,19 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
 
-	if (m_data->ret && tc->kind != CORBA_tk_void &&
-	    ev->_major == CORBA_NO_EXCEPTION) {
+	if (m_data->ret && tc->kind != CORBA_tk_void) {
 		switch (m_data->ret->kind) {
 		case BASE_TYPES:
 			break;
 		case CORBA_tk_objref:
 		case CORBA_tk_TypeCode:
-			CORBA_Object_release (*(CORBA_Object *) retval, ev);
+			if (ev->_major == CORBA_NO_EXCEPTION)
+				CORBA_Object_release (*(CORBA_Object *) retval, ev);
 			break;
 		case CORBA_tk_string:
 		case CORBA_tk_wstring:
-			ORBit_free (*(char **) retval);
+			if (ev->_major == CORBA_NO_EXCEPTION)
+				ORBit_free (*(char **) retval);
 			break;
 		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
@@ -952,7 +953,8 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				break;
 			} /* drop through */
 		default:
-			ORBit_free (pretval);
+			if (ev->_major == CORBA_NO_EXCEPTION)
+				ORBit_free (pretval);
 			break;
 		}
 	}
@@ -993,20 +995,30 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				ORBit_free (args [i]);
 				break;
 			}
-		} else if (ev->_major == CORBA_NO_EXCEPTION) { /* Out */
+		} else { /* Out */
 			switch (tc->kind) {
 			case BASE_TYPES:
 				break;
 			case CORBA_tk_objref:
 			case CORBA_tk_TypeCode:
-				CORBA_Object_release (*(CORBA_Object *) scratch [i], ev);
+				if (ev->_major == CORBA_NO_EXCEPTION)
+					CORBA_Object_release (*(CORBA_Object *) scratch [i], ev);
 				break;
 			case CORBA_tk_string:
 			case CORBA_tk_wstring:
-				ORBit_free (*(char **) scratch [i]);
+				if (ev->_major == CORBA_NO_EXCEPTION)
+					ORBit_free (*(char **) scratch [i]);
 				break;
+			case STRUCT_UNION_TYPES:
+			case CORBA_tk_array:
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
+					ORBit_free (scratch [i]);
+					break;
+				}
+				/* drop through */
 			default:
-				ORBit_free (scratch [i]);
+				if (ev->_major == CORBA_NO_EXCEPTION)
+					ORBit_free (scratch [i]);
 				break;
 			}
 		}

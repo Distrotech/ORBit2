@@ -1,5 +1,16 @@
 2003-06-11  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (test_time_noop): fix.
+
+2003-06-11  Frank Rehberger <Frank.Rehberger@web.de>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): ensure we free
+	temporarily allocated fixed size struct/union
+	return & out values.
+
+2003-06-11  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/poa.c: bin dupped set_classinfo macro.
 
 	* include/orbit/poa/poa.h
