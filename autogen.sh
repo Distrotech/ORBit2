@@ -45,7 +45,7 @@ if test "$DIE" -eq 1; then
 	exit 1
 fi
 
-(test -f src/orb/orbit_types.h) || {
+(test -f ORBit.spec.in) || {
 	echo "You must run this script in the top-level ORBit directory"
 	exit 1
 }

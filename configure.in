@@ -58,7 +58,7 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.
@@ -237,4 +237,13 @@ AC_SUBST(pkglibdir)
 AC_OUTPUT(Makefile
 orbit-config
 src/Makefile
+src/idl-compiler/Makefile
+src/orb/Makefile
+src/orb/util/Makefile
+src/orb/IIOP/Makefile
+src/orb/orb-core/Makefile
+src/orb/dynamic/Makefile
+src/orb/poa/Makefile
+include/Makefile
+include/orbit/Makefile
 ORBit.spec)
