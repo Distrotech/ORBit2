@@ -30,7 +30,7 @@
 #include "../poa/orbit-poa-export.h"
 
 #undef DEBUG
-#define TYPE_DEBUG
+#undef TYPE_DEBUG
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -988,14 +988,6 @@ ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
 }
 #endif
 
-ORBit_IInterface *
-ORBit_iinterface_from_idl (IDL_tree idl)
-{
-	g_warning ("Implement me");
-
-	return NULL;
-}
-
 CORBA_char *
 ORBit_small_get_type_id (CORBA_Object       object,
 			 CORBA_Environment *ev)
@@ -1017,11 +1009,83 @@ ORBit_small_get_type_id (CORBA_Object       object,
 	}
 }
 
-static ORBit_IInterface *
-shallow_copy_iinterface (const ORBit_IInterface *idata)
+static GHashTable *interfaces = NULL;
+
+static GHashTable *
+get_type_db (void)
 {
-	/* FIXME: we deep copy for now - we should speed this up */
+	if (!interfaces)
+		/* FIXME: need a g_atexit free */
+		interfaces = g_hash_table_new (
+			g_str_hash, g_str_equal);
+
+	return interfaces;
+}
+
+static ORBit_IInterface *
+lookup_iinterface (const CORBA_char *type_id)
+{
+	GHashTable *db = get_type_db ();
+
+	return g_hash_table_lookup (db, type_id);
+}
+
+static void
+add_iinterface (ORBit_IInterface *idata)
+{
+	GHashTable *db = get_type_db ();
+
+	g_hash_table_insert (db, idata->tc->repo_id, idata);
+}
+
+static ORBit_IInterface *
+copy_iinterface (const ORBit_IInterface *idata, gboolean shallow)
+{
+	/* FIXME: we deep copy always for now - we should speed this up */
+	/* FIXME: we need to set a flag here */
 	return ORBit_copy_value (idata, TC_ORBit_IInterface);
+}
+
+static GSList *types = NULL;
+
+typedef struct {
+	char *name;
+	CORBA_sequence_CORBA_TypeCode *types;
+} TypeList;
+
+static void
+add_types (ORBit_IModule *imodule, const char *libname)
+{
+	TypeList *tl = g_new0 (TypeList, 1);
+
+	tl->name = g_strdup (libname);
+	tl->types = ORBit_copy_value (
+		&imodule->types, TC_CORBA_sequence_CORBA_TypeCode);
+
+	/* FIXME: some g_atexit free loving ? */
+	types = g_slist_prepend (types, tl);
+}
+
+static CORBA_sequence_CORBA_TypeCode *
+get_types (const char *module_name)
+{
+	GSList *l;
+
+	for (l = types; l; l = l->next) {
+		TypeList *tl = l->data;
+
+		if (!strcmp (tl->name, module_name)) {
+			CORBA_sequence_CORBA_TypeCode *st;
+
+			st = CORBA_sequence_CORBA_TypeCode__alloc ();
+			*st = *tl->types;
+			st->_release = FALSE;
+
+			return st;
+		}
+	}
+
+	return NULL;
 }
 
 ORBit_IInterface *
@@ -1029,11 +1093,14 @@ ORBit_small_get_iinterface (CORBA_Object       opt_object,
 			    const CORBA_char  *type_id,
 			    CORBA_Environment *ev)
 {
-	ORBit_IInterface *retval = NULL;
+	ORBit_IInterface *retval;
 	PortableServer_ClassInfo *ci;
 
-	if ((ci = ORBit_classinfo_lookup (type_id))) {
-		retval = shallow_copy_iinterface (ci->idata);
+	if ((retval = lookup_iinterface (type_id)))
+		retval = copy_iinterface (retval, TRUE);
+
+	else if ((ci = ORBit_classinfo_lookup (type_id))) {
+		retval = copy_iinterface (ci->idata, TRUE);
 
 	} else if (opt_object) {
 		/* FIXME: first walk the object's data,
@@ -1048,6 +1115,12 @@ ORBit_small_get_iinterface (CORBA_Object       opt_object,
 			&CORBA_Object__imethods [
 				CORBA_OBJECT_SMALL_GET_IINTERFACE],
 			&retval, args, NULL, ev);
+
+		if (retval != CORBA_OBJECT_NIL) {
+			ORBit_IInterface *cache;
+			cache = copy_iinterface (retval, FALSE);
+			add_iinterface (cache);
+		}
 	}
 
 	if (!retval &&
@@ -1119,7 +1192,7 @@ get_typelib_paths (void)
 }
 
 static gboolean
-load_module (const char *fname)
+load_module (const char *fname, const char *libname)
 {
 	GModule *handle;
 	ORBit_IModule *module;
@@ -1141,15 +1214,28 @@ load_module (const char *fname)
 	} else {
 		ORBit_IInterface **p;
 
+#ifdef TYPE_DEBUG
 		g_warning ("Loaded interfaces of serial %d from '%s'",
 			   module->version, fname);
+#endif
 
 		for (p = module->interfaces; p && *p; p++) {
 			ORBit_IInterface *idata = *p;
+			ORBit_IInterface *copy = copy_iinterface (idata, FALSE);
 
+			add_iinterface (copy);
+#ifdef TYPE_DEBUG
 			g_warning ("Type '%s'", idata->tc->repo_id);
+#endif
 		}
-		/* FIXME: Leak the handle - should we copy the data ? */
+
+		add_types (module, libname);
+
+		/* FIXME: before we can close this,
+		   we need to deep copy typecodes - that is if
+		   in fact we want to close it ? */
+/*		g_module_close (handle); */
+
 		return TRUE;
 	}
 }
@@ -1175,7 +1261,7 @@ ORBit_small_load_typelib (const char *libname)
 			fname = g_strconcat (
 				paths [i], "/", libname, "_module", NULL);
 
-			if ((loaded = load_module (fname)))
+			if ((loaded = load_module (fname, libname)))
 				break;
 
 			else {
@@ -1186,8 +1272,13 @@ ORBit_small_load_typelib (const char *libname)
 
 		g_strfreev (paths);
 	} else
-		loaded = load_module (fname);
+		loaded = load_module (libname, libname);
 
 	return loaded;
 }
 
+CORBA_sequence_CORBA_TypeCode *
+ORBit_small_get_types (const char *name)
+{
+	return get_types (name);
+}

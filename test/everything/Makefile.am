@@ -28,12 +28,13 @@ client_LDADD = $(LDADD)
 client_LDFLAGS = -static -module
 
 included_src = \
-	basicServer.c    \
-	structServer.c   \
-	sequenceServer.c \
-	unionServer.c    \
+	anyServer.c	 \
 	arrayServer.c    \
-	anyServer.c
+	basicServer.c    \
+	contextServer.c  \
+	sequenceServer.c \
+	structServer.c   \
+	unionServer.c
 
 orbittypelibdir = $(libdir)/orbit
 orbittypelib_LTLIBRARIES = Everything_module.la
