@@ -121,6 +121,19 @@ IDLElement::get_cpp_typename () const
 	return retval;
 }
 
+string
+IDLElement::get_cpp_method_prefix () const
+{
+	string retval = get_cpp_typename ();
+	
+	// Remove :: from head
+	string::iterator i = retval.begin ();
+	while (i != retval.end () && *i == ':')
+		i = retval.erase (i);
+
+	return retval;
+}
+
 IDLScope const *
 IDLElement::getRootScope() const {
 	IDLScope const *run = getParentScope();
