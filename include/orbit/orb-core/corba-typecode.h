@@ -26,11 +26,7 @@ struct CORBA_TypeCode_struct {
   CORBA_short c_align;
 };
 
-#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
-
 extern const ORBit_RootObject_Interface ORBit_TypeCode_epv;
-
-#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
 #define TC_null ((CORBA_TypeCode)&TC_null_struct)
 #define TC_void ((CORBA_TypeCode)&TC_void_struct)

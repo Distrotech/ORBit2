@@ -6,6 +6,8 @@ void CORBA_free (gpointer mem);
 #define CORBA_sequence_set_release(s,r) (s)->_release = r
 #define CORBA_sequence_get_release(s) (s)->_release
 
+gpointer ORBit_alloc_tcval (CORBA_TypeCode tc, guint nelements);
+
 #ifdef ORBIT2_INTERNAL_API
 
 #define PTR_TO_MEMINFO(x) (((ORBit_mem_info *)(x)) - 1)
@@ -82,7 +84,6 @@ extern void ORBit_free_T(gpointer mem);
 gpointer ORBit_alloc_simple(size_t block_size);
 gpointer ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
 				   ORBit_free_kidvals free_fnc);
-gpointer ORBit_alloc_tcval(CORBA_TypeCode tc, guint nelements);
 
 #define ORBit_alloc(sz, len, fnc) ORBit_alloc_kidfnc( (sz), (len), (fnc))
 

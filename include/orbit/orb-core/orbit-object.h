@@ -38,16 +38,17 @@ struct ORBit_RootObject_struct {
 
 #define ORBIT_REFCOUNT_STATIC -10
 
+void     ORBit_RootObject_init      (ORBit_RootObject obj,
+				     const ORBit_RootObject_Interface *interface);
+
 #ifdef ORBIT2_INTERNAL_API
 
 /* Used to determine whether the refcount is valid or not */
 #define ORBIT_REFCOUNT_MAX (1<<20)
 
-#define ORBIT_ROOT_OBJECT(obj) ((ORBit_RootObject)(obj))
+#define ORBIT_ROOT_OBJECT(obj)      ((ORBit_RootObject)(obj))
 #define ORBIT_ROOT_OBJECT_TYPE(obj) (((ORBit_RootObject)(obj))->interface->type)
 
-void     ORBit_RootObject_init      (ORBit_RootObject obj,
-				     const ORBit_RootObject_Interface *interface);
 
 gpointer ORBit_RootObject_duplicate   (gpointer obj);
 gpointer ORBit_RootObject_duplicate_T (gpointer obj);
