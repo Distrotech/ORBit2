@@ -1,6 +1,8 @@
 TODO:
 
 * Threading 
+	+ orb->current_invocations needs to be per-thread ...
+	  also, we should push a stack-data pointer.
 	+ Split class_info registration out of the skels - shrink
 	  the POA_..._init method to a single chained method call,
 	  do some locking on that - esp. for __classid init.
