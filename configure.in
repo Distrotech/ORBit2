@@ -162,11 +162,6 @@ AC_CHECK_HEADERS(sys/time.h netinet/in.h sys/socket.h arpa/inet.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
 AC_CHECK_HEADERS(netinet/in.h sys/un.h openssl/ssl.h)
 AC_CHECK_HEADERS([linux/socket.h])
-AC_CHECK_HEADERS([linux/irda.h], [], [],
-[#if HAVE_LINUX_SOCKET_H
-#include <linux/socket.h>
-#endif
-])
 
 
 if test $ac_cv_header_openssl_ssl_h = yes; then
@@ -262,8 +257,9 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
-AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h)
+AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h)
 AC_CHECK_HEADERS(arpa/nameser.h resolv.h)
+dnl AC_CHECK_HEADERS(linux/irda.h)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(poll basename)
