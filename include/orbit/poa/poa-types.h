@@ -8,8 +8,8 @@ G_BEGIN_DECLS
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 typedef struct {
-	ORBit_impl_finder        relay_call;
-	ORBit_small_impl_finder  small_relay_call;
+	void (*dummy_padding) (void);
+	ORBit_impl_finder        impl_finder;
 	const char              *class_name;
 	CORBA_unsigned_long     *class_id;
 	ORBit_VepvIdx           *vepvmap;

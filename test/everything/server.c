@@ -425,24 +425,35 @@ create_TestFactory (PortableServer_POA        poa,
 test_TestFactory_Servant servant;
 
 static void
-init_iinterfaces (ORBit_IInterfaces *interfaces)
+init_iinterfaces (ORBit_IInterfaces *interfaces,
+		  CORBA_Environment *ev)
 {
-	test_TestFactory__iinterface      = interfaces->_buffer [0];
-	test_DeadReferenceObj__iinterface = interfaces->_buffer [1];
-	test_TransientObj__iinterface     = interfaces->_buffer [2];
-	test_SequenceServer__iinterface   = interfaces->_buffer [3];
-	test_ArrayServer__iinterface      = interfaces->_buffer [4];
-	test_BasicServer__iinterface      = interfaces->_buffer [5];
-	test_StructServer__iinterface     = interfaces->_buffer [6];
-	test_BaseServer__iinterface       = interfaces->_buffer [7];
-	test_B1__iinterface               = interfaces->_buffer [8];
-	test_B2__iinterface               = interfaces->_buffer [9];
-	test_C1__iinterface               = interfaces->_buffer [10];
-	test_DerivedServer__iinterface    = interfaces->_buffer [11];
-	test_UnionServer__iinterface      = interfaces->_buffer [12];
-	test_AnyServer__iinterface        = interfaces->_buffer [13];
-	test_ContextServer__iinterface    = interfaces->_buffer [14];
-	test_PingPongServer__iinterface   = interfaces->_buffer [15];
+	int i = 0;
+
+#define CLOBBER_SYM(a) G_STMT_START { \
+	g_assert (CORBA_TypeCode_equal ( \
+		interfaces->_buffer[i].tc, (a).tc, ev)); \
+	(a) = interfaces->_buffer [i]; \
+	i++; \
+	} G_STMT_END
+
+	CLOBBER_SYM (test_TestFactory__iinterface);
+	CLOBBER_SYM (test_DeadReferenceObj__iinterface);
+	CLOBBER_SYM (test_TransientObj__iinterface);
+	CLOBBER_SYM (test_SequenceServer__iinterface);
+	CLOBBER_SYM (test_ArrayServer__iinterface);
+	CLOBBER_SYM (test_BasicServer__iinterface);
+	CLOBBER_SYM (test_StructServer__iinterface);
+	CLOBBER_SYM (test_BaseServer__iinterface);
+	CLOBBER_SYM (test_B1__iinterface);
+	CLOBBER_SYM (test_B2__iinterface);
+	CLOBBER_SYM (test_C1__iinterface);
+	CLOBBER_SYM (test_DerivedServer__iinterface);
+	CLOBBER_SYM (test_UnionServer__iinterface);
+	CLOBBER_SYM (test_AnyServer__iinterface);
+	CLOBBER_SYM (test_ContextServer__iinterface);
+	CLOBBER_SYM (test_PingPongServer__iinterface);
+#undef CLOBBER_SYM
 }
 
 #ifndef _IN_CLIENT_
@@ -480,10 +491,10 @@ init_iinterfaces (ORBit_IInterfaces *interfaces)
 			gen_imodule = TRUE;
 
 	if (gen_imodule) {
-		interfaces = ORBit_iinterfaces_from_file ("everything.idl", NULL, NULL);
+		interfaces = ORBit_iinterfaces_from_file (TEST_SRCDIR "/everything.idl", NULL, NULL);
 		g_assert (interfaces != NULL);
 
-		init_iinterfaces (interfaces);
+		init_iinterfaces (interfaces, ev);
         }
 #endif
 

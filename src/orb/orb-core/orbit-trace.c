@@ -31,7 +31,9 @@ void
 ORBit_trace_typecode (const CORBA_TypeCode tc)
 {
 	g_return_if_fail (tc != NULL);
-	tprintf ("tc:%s", NOT_NULL (TC_CORBA_TCKind->subnames [tc->kind]));
+	tprintf ("tc:%s:%s",
+		 NOT_NULL (TC_CORBA_TCKind->subnames [tc->kind]),
+		 NOT_NULL (tc->repo_id));
 }
 
 void

@@ -966,7 +966,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	PortableServer_ObjectId             *oid;
 	PortableServer_ClassInfo            *klass;
 	ORBit_IMethod                       *m_data = NULL;
-	ORBitSkeleton                        skel = NULL;
 	ORBitSmallSkeleton                   small_skel = NULL;
 	gpointer                             imp = NULL;
 
@@ -1053,21 +1052,18 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 
 	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
 
-	if (klass->relay_call)
-		skel = klass->relay_call (
-			pobj->servant, recv_buffer, &imp);
-
-	if (!skel && klass->small_relay_call)
-		small_skel = klass->small_relay_call (
+	if (klass->impl_finder)
+		small_skel = klass->impl_finder (
 			pobj->servant, opname, (gpointer *)&m_data, &imp);
 
-	if (!skel && !small_skel)
+	/* FIXME: we can only do that in-proc [!] */
+	if (!small_skel)
 		small_skel = get_small_skel_CORBA_Object (
 			pobj->servant, opname,
 			(gpointer *)&m_data, &imp);
 	
-	if ((!small_skel && !skel) || !imp) {
-		if (!imp && (small_skel || skel)) {
+	if (!small_skel || !imp) {
+		if (!imp && small_skel) {
 			tprintf ("'%s' not implemented on %p",
 				 opname, pobj);
 			CORBA_exception_set_system (
@@ -1087,10 +1083,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		goto clean_out;
 	}
 
-	if (skel)
-		skel (pobj->servant, recv_buffer, ev, imp);
-
-	else if (recv_buffer) {
+	if (recv_buffer) {
 		struct ORBit_POA_invoke_data invoke_data;
 
 		invoke_data.small_skel = small_skel;

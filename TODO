@@ -1,5 +1,7 @@
 TODO:
 
+* add CORBA_TypeCode_duplicate / release - that do typenice things.
+
 * GIOP fragments
 	+ need to handle a cancel request in the middle of a fragment stream
 
