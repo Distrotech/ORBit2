@@ -1,5 +1,8 @@
 2003-10-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c (giop_thread_free):
+	only free policy queue if we have one.
+
 	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_connection_handle_input): on HUP goto
 	msg_error so we don't leave the cnx->incoming_msg
