@@ -1,3 +1,40 @@
+2002-01-17  Mark McLoughlin  <mark@skynet.ie>
+	
+	Allow ORBit2 debugging to be switched on/off at runtime.
+	Based on a patch by Jacob Berkman <jacob@ximian.com>
+
+	* configure.in: --enable-debug option.
+
+	* src/orb/GIOP/Makefile.am, src/orb/Makefile.am,
+	  src/orb/dynamic/Makefile.am, src/orb/orb-core/Makefile.am,
+	  src/orb/poa/Makefile.am, src/orb/util/Makefile.am:
+	use ORBIT_DEBUG_CFLAGS.
+	
+	* src/orb/orb-core/corba-object.c: (g_CORBA_Object_equal),
+	(ORBit_objref_find), (ORBit_object_get_connection),
+	(ORBit_marshal_object): upd.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_setup_debug_flags),
+	(CORBA_ORB_init): add --ORBDebugFlags option and ORBIT2_DEBUG
+	env variable and parse.
+
+	* src/orb/orb-core/orbit-debug.h: kill old debug stuff and
+	make everything conditional on G_ENABLE_DEBUG.
+	
+	* src/orb/orb-core/orbit-small.c: (ORBit_handle_exception_array),
+	(ORBit_small_send_user_exception), (orbit_small_marshal),
+	(orbit_small_demarshal), (ORBit_small_invoke_stub),
+	(ORBit_small_invoke_adaptor), (ORBit_small_demarshal_async): upd.
+
+	* src/orb/orb-core/orbit-trace.c: (ORBit_trace_timestamp): upd.
+
+	* src/orb/orb-core/orbit-typelib.c: (load_module): upd.
+
+	* src/orb/poa/orbit-adaptor.c: (ORBit_handle_request): upd.
+
+	* src/orb/util/genrand.c: (ORBit_genuid_init), (genuid_simple):
+	incorporate the pid and an incrementing number into simple uid.
+
 2002-01-16  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-orb-type.h: kill genrand

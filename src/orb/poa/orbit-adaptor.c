@@ -74,7 +74,7 @@ ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 			 giop_recv_buffer_get_opname (recv_buffer));
 		return;
 	}
-	dprintf ("p %d: handle request '%s'\n", getpid (),
+	dprintf (MESSAGES, "p %d: handle request '%s'\n", getpid (),
 		 giop_recv_buffer_get_opname (recv_buffer));
 	adaptor->handle_request (adaptor, recv_buffer, objkey);
 }

@@ -52,6 +52,19 @@ AC_PROG_INSTALL
 dnl --enable-comile-warnings
 AC_ARG_ENABLE(compile-warnings, [  --enable-compile-warnings=[no/yes] Turn on compiler warnings.], [enable_compile_warnings="$enableval"],[enable_compile_warnings="yes"])
 
+dnl --enable-debug=(yes|minimum|no)
+AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging [default=no]],,enable_debug=minimum)
+if test "$enable_debug" = "yes"; then
+  ORBIT_DEBUG_CFLAGS="-DG_ENABLE_DEBUG"
+else
+  if test "x$enable_debug" = "xno"; then
+    ORBIT_DEBUG_FLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS"
+  else
+    ORBIT_DEBUG_CFLAGS=""
+  fi
+fi
+AC_SUBST(ORBIT_DEBUG_CFLAGS)
+
 dnl Handle indent variations 
 dnl default is "sopwith indent", use "--enable-indent=kr" for "kr"appy indent.
 AC_ARG_ENABLE(indent, [  --disable-indent        do not indent output code], use_indent=$enableval, use_indent=yes)

@@ -42,15 +42,18 @@ g_CORBA_Object_equal (gconstpointer a, gconstpointer b)
 		for (cur2 = other_object->profile_list; cur2; cur2 = cur2->next) {
 			if (IOP_profile_equal (_obj, other_object,
 					       cur1->data, cur2->data)) {
-#if 0
-				char *a, *b;
-				a = IOP_profile_dump (_obj, cur1->data);
-				b = IOP_profile_dump (other_object, cur2->data);
-				fprintf (stderr, "Profiles match:\n'%s':%s\n'%s':%s\n",
-					 _obj->type_id, a, other_object->type_id, b);
-				g_free (a);
-				g_free (b);
-#endif
+#ifdef G_ENABLE_DEBUG
+			        if (_orbit_debug_flags & ORBIT_DEBUG_OBJECTS) {
+					char *a, *b;
+					a = IOP_profile_dump (_obj, cur1->data);
+					b = IOP_profile_dump (other_object, cur2->data);
+					fprintf (stderr, "Profiles match:\n'%s':%s\n'%s':%s\n",
+						           g_quark_to_string (_obj->type_qid), a,
+						           g_quark_to_string (other_object->type_qid), b);
+					g_free (a);
+					g_free (b);
+				}
+#endif /* G_ENABLE_DEBUG */
 				return TRUE;
 			}
 		}
@@ -141,19 +144,20 @@ ORBit_objref_find (CORBA_ORB   orb,
 
 	retval = ORBit_lookup_objref (&fakeme);
 
-#ifdef OBJECT_DEBUG
-	g_warning ("Lookup '%s' (%p) == %p", type_id, profiles, retval);
-	{
+	dprintf (OBJECTS, "Lookup '%s' (%p) == %p\n", type_id, profiles, retval);
+
+#ifdef G_ENABLE_DEBUG
+	if (_orbit_debug_flags & ORBIT_DEBUG_OBJECTS) {
 		GSList *l;
-		g_print ("Profiles: ");
+		fprintf (stderr, "Profiles: ");
 		for (l = profiles; l; l = l->next) {
 			char *str;
-			g_print ("%s", (str = IOP_profile_dump (&fakeme, l->data)));
+			fprintf (stderr, "%s", (str = IOP_profile_dump (&fakeme, l->data)));
 			g_free (str);
 		}
-		g_print ("\n");
+		fprintf (stderr, "\n");
 	}
-#endif
+#endif /* G_ENABLE_DEBUG */
 
 	if (!retval) {
 		retval = ORBit_objref_new (orb, fakeme.type_qid);
@@ -265,10 +269,10 @@ ORBit_object_get_connection (CORBA_Object obj)
 			if (ORBit_try_connection (obj)) {
 				obj->object_key = objkey;
 				obj->connection->orb_data = obj->orb;
-#ifdef OBJECT_DEBUG
-				fprintf (stderr, "Initiated a connection to '%s' '%s' '%s'\n",
+
+				dprintf (OBJECTS, "Initiated a connection to '%s' '%s' '%s'\n",
 					 proto, host, service);
-#endif
+
 				return obj->connection;
 			}
 		}
@@ -433,17 +437,18 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 		num_profiles = 0;
 	giop_send_buffer_append_aligned (buf, &num_profiles, 4);
 
-#ifdef OBJECT_DEBUG
-	fprintf (stderr, "Marshal object '%p'\n", obj);
-#endif
+	dprintf (OBJECTS, "Marshal object '%p'\n", obj);
+
 	if (obj)
 		for (cur = obj->profile_list; cur; cur = cur->next) {
-#ifdef OBJECT_DEBUG
-			char *str;
-			fprintf (stderr, "%s\n",
-				 (str = IOP_profile_dump (obj, cur->data)));
-			g_free (str);
-#endif
+#ifdef G_ENABLE_DEBUG
+			if (_orbit_debug_flags & ORBIT_DEBUG_OBJECTS) {
+				char *str;
+				fprintf (stderr, "%s\n",
+					 (str = IOP_profile_dump (obj, cur->data)));
+				g_free (str);
+			}
+#endif /* G_ENABLE_DEBUG */
 			IOP_profile_marshal (obj, buf, cur->data);
 		}
 }

@@ -6,6 +6,7 @@ INCLUDES =						\
 	-DORBIT_SYSTEM_RCFILE=\"$(sysconfdir)/orbitrc\"	\
 	-DORBIT2_INTERNAL_API				\
 	$(WARN_CFLAGS)					\
+	$(ORBIT_DEBUG_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
 liborb_util_la_SOURCES= \
