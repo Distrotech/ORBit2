@@ -76,7 +76,8 @@ giop_connection_get_type(void)
       
       object_type = g_type_register_static (linc_connection_get_type(),
                                             "GIOPConnection",
-                                            &object_info);
+                                            &object_info,
+					    G_TYPE_FLAG_INSTANTIATABLE);
     }  
 
   return object_type;

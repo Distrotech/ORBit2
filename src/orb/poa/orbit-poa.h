@@ -1,6 +1,13 @@
 #ifndef ORBIT_POA_H
 #define ORBIT_POA_H 1
 
+#include "config.h"
+
+typedef struct {
+  struct CORBA_Policy_type parent;
+  CORBA_unsigned_long obj_rand_len;
+} ORBit_PortableServer_OkeyrandPolicy_t;
+
 typedef struct ORBit_POAKOid_struct {
         gushort                   oid_length;
         /* oid octets comes here */
@@ -55,10 +62,19 @@ void ORBit_POA_activate_object(PortableServer_POA poa,
 void ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 				 CORBA_boolean do_etherealize,
 				 CORBA_boolean is_cleanup);
-extern int ORBit_class_assignment_counter;
 void ORBit_POAObject_post_invoke(ORBit_POAObject *pobj);
 CORBA_boolean ORBit_POA_okey_to_oid(/*in*/PortableServer_POA poa,
 				    /*in*/CORBA_sequence_CORBA_octet *okey,
 				    /*out*/PortableServer_ObjectId *oid);
+ORBit_POAObject *ORBit_POA_okey_to_obj(PortableServer_POA poa,
+				      CORBA_sequence_CORBA_octet *okey);
+void ORBit_POAManager_register_poa(PortableServer_POAManager poa_mgr, 
+				   PortableServer_POA poa,
+				   CORBA_Environment *ev);
+void ORBit_POAManager_unregister_poa(PortableServer_POAManager poa_mgr, 
+				     PortableServer_POA poa,
+				     CORBA_Environment *ev);
+PortableServer_POAManager ORBit_POAManager_new(CORBA_ORB orb,
+					       CORBA_Environment *ev);
 
 #endif

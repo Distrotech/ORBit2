@@ -3,6 +3,8 @@
 
 #include <orbit/poa/poa-defs.h>
 
+#include <orbit/poa/poa-policy.h>
+
 typedef struct {
   void *_private;
 } POA_PortableServer_ServantManager__epv;
@@ -89,6 +91,5 @@ void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
   (PortableServer_ClassInfo*)                                           \
   ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )      \
 )
-
 
 #endif
