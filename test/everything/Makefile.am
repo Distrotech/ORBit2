@@ -36,6 +36,7 @@ included_src = \
 	arrayServer.c    \
 	basicServer.c    \
 	contextServer.c  \
+	deadReference.c  \
 	sequenceServer.c \
 	structServer.c   \
 	unionServer.c
