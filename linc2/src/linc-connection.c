@@ -190,59 +190,63 @@ linc_connection_from_fd (LINCConnection *cnx, int fd,
   return TRUE;
 }
 
-/* This will just create the fd, do the connect and all, and then call
-   linc_connection_from_fd */
 gboolean
-linc_connection_initiate (LINCConnection *cnx, const char *proto_name,
-			  const char *remote_host_info,
-			  const char *remote_serv_info,
-			  LINCConnectionOptions options)
+linc_connection_initiate (LINCConnection        *cnx,
+			  const char            *proto_name,
+			  const char            *remote_host_info,
+			  const char            *remote_serv_info,
+			  LINCConnectionOptions  options)
 {
-  struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0,
-				NULL, NULL, NULL};
-  int rv;
-  int fd;
-  const LINCProtocolInfo *proto;
-  gboolean retval = FALSE;
+	const LINCProtocolInfo *proto;
+	int                     rv;
+	int                     fd;
+	gboolean                retval = FALSE;
+	struct sockaddr        *saddr;
+	socklen_t		saddr_len;
 
-  proto = linc_protocol_find(proto_name);
+	proto = linc_protocol_find (proto_name);
 
-  if(!proto)
-    return FALSE;
+	if (!proto)
+		return FALSE;
 
-  hints.ai_family = proto->family;
-  rv = linc_getaddrinfo(remote_host_info, remote_serv_info, &hints, &ai);
-  if(rv)
-    return FALSE;
 
-  fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
-/* FIXME: it seems slightly whacked out that socket returns fd == 0 to me. */
-/*  g_warning ("Socket: %d, '%s'", fd, proto_name); */
-  if(fd < 0)
-    goto out;
-  if(options & LINC_CONNECTION_NONBLOCKING) {
-    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-      goto out;
-  }
-  if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
-    goto out;
+	saddr = linc_protocol_get_sockaddr (proto, remote_host_info, 
+					    remote_serv_info, &saddr_len);
+	if (!saddr)
+		return FALSE;
 
-  rv = connect(fd, ai->ai_addr, ai->ai_addrlen);
-  if(rv && errno != EINPROGRESS)
-    goto out;
+	fd = socket (proto->family, SOCK_STREAM, 
+		     proto->stream_proto_num);
 
-  retval = linc_connection_from_fd (
-	  cnx, fd, proto, remote_host_info,
-	  remote_serv_info, TRUE, rv?LINC_CONNECTING:LINC_CONNECTED, options);
+	if (fd < 0)
+		goto out;
+
+	if (options & LINC_CONNECTION_NONBLOCKING)
+		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0)
+			goto out;
+
+	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0)
+		goto out;
+
+	rv = connect (fd, saddr, saddr_len);
+	if (rv && errno != EINPROGRESS)
+		goto out;
+
+	retval = linc_connection_from_fd (
+				cnx, fd, proto, remote_host_info, 
+				remote_serv_info, TRUE, 
+				rv ? LINC_CONNECTING : LINC_CONNECTED,
+				options);
+
  out:
-  if(!cnx)
-    {
-      if(fd >= 0)
-	close(fd);
-    }
-  freeaddrinfo(ai);
+	if (!cnx) {
+		if (fd >= 0)
+			close (fd);
+	}
 
-  return retval;
+	g_free (saddr);
+
+	return retval;
 }
 
 void

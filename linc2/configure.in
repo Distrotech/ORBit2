@@ -116,6 +116,20 @@ AC_TRY_COMPILE(
   [AC_DEFINE(socklen_t, size_t)
    AC_MSG_RESULT(no)])
 
+# Blatantly stolen from configure.in in the sample code from 
+# "UNIX Network Programming, Volume 1" by W. Richard Stevens 
+AC_CACHE_CHECK(if sockaddr has sa_len member,
+ac_cv_sockaddr_has_sa_len,
+        AC_TRY_COMPILE([
+#               include <sys/types.h>
+#               include <sys/socket.h>],
+                [unsigned int i = sizeof(((struct sockaddr *)0)->sa_len)],
+        ac_cv_sockaddr_has_sa_len=yes,
+        ac_cv_sockaddr_has_sa_len=no))
+if test x"$ac_cv_sockaddr_has_sa_len" = "xyes" ; then
+        AC_DEFINE(HAVE_SOCKADDR_SA_LEN)
+fi
+
 AC_C_BIGENDIAN
 
 AC_MSG_CHECKING(maximum number of iovecs for a writev)

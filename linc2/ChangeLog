@@ -1,5 +1,36 @@
 2001-09-07  Mark McLoughlin <mark@skynet.ie>
 
+        * acconfig.h, configure.in: add check for
+        sockaddr's sa_len member.
+
+        * src/linc-protocols.c(linc_protocol_get_sockaddr,
+        linc_protocol_get_sockaddr_ipv4,
+        linc_protocol_get_sockaddr_ipv6,
+        linc_protocol_get_sockaddr_unix,
+        linc_protocol_get_sockaddr_irda): impl. get_sockaddr
+        will replace getaddrinfo soon. getaddrinfo is a waste
+        of time - we don't need most of the data it returns,
+        and it is non-portable for unix sockets, ipv6 and irda.
+        Indeed older unices don't even have an implementation for 
+        ipv4.
+	*NOTE*: irda and ipv6 are not working with this yet. But
+	        I doubt anyone is actually using these...
+
+        * src/linc-private.h: add linc_protocol_get_sockaddr.
+
+        * src/linc-connection.c(linc_connection_initiate): use
+        linc_protocol_get_sockaddr instead of linc_getaddrinfo.
+
+        * src/linc-server.c(linc_server_setup): ditto.
+
+        * include/linc/linc-types.h: moved LINCProtocolInfo here.
+
+        * include/linc/linc-protocol.h
+        (LINCProtocolInfo): added get_sockname. Impl typedefs
+        for functions types.
+
+2001-09-07  Mark McLoughlin <mark@skynet.ie>
+
 	* src/linc-protocols.c: Warning killers - include string.h
 	and don't prototype IRDA functions if IRDA defines not
 	available.
