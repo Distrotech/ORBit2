@@ -60,10 +60,21 @@ PingPongServer_opOneWayCallback (PortableServer_Servant servant,
 				 test_PingPongServer    remote_obj,
 				 CORBA_Environment     *ev)
 {
-	/* While these are blocking, loads more incoming
+	int i;
+	static int depth = 0;
+
+	depth++;
+	if (depth % 400 == 0 && depth > 1)
+		fprintf (stderr, " recursion depth %d\n", depth);
+
+	g_assert (ORBit_small_get_connection_status (remote_obj)
+		  != ORBIT_CONNECTION_IN_PROC);
+	
+	/* While this is blocking, loads more incoming
 	 * calls will trash our stack - quite possibly */
 	test_PingPongServer_opRoundTrip (remote_obj, ev);
-	test_PingPongServer_opRoundTrip (remote_obj, ev);
+
+	depth--;
 }
 
 static void

@@ -1,4 +1,13 @@
 2002-06-13  Michael Meeks  <michael@ximian.com> &
+
+	* test/everything/client.c (testPingPong):
+	disable this test - ultimately oneways suck.
+	You can't block the event consumer, because you
+	deadlock, you can't block the event client
+	because you don't know when the server has a
+	full stack.
+
+2002-06-13  Michael Meeks  <michael@ximian.com> &
 	    Bill Haneman <bill.haneman@sun.com>
 
 	* test/everything/client.c (testPingPong):
