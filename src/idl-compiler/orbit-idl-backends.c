@@ -45,7 +45,7 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
       return &orbit_idl_builtin_backends[i];
   }
 
-  g_return_val_if_fail(!g_module_supported(), NULL);
+  g_return_val_if_fail(g_module_supported(), NULL);
 
   ctmp = alloca(sizeof("orbit-idl--backend") + strlen(lang));
   sprintf(ctmp, "orbit-idl-%s-backend", lang);
@@ -53,14 +53,20 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
   g_assert(fname);
   gmod = g_module_open(fname, G_MODULE_BIND_LAZY);
 
-  g_return_val_if_fail(gmod, NULL);
+  if(!gmod) {
+	g_warning("Module load failed: %s", g_module_error());
+	return NULL;
+  }
 
   g_module_make_resident(gmod);
 
   ret = g_module_symbol(gmod,
 			"orbit_idl_backend",
 			(gpointer *)&retval);
-  g_return_val_if_fail(!ret, NULL);
+  if(!ret) {
+	g_warning("Symbol lookup failed: %s", g_module_error());
+	return NULL;
+  }
 
   return retval;
 }
