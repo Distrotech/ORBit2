@@ -395,7 +395,7 @@ static void
 giop_request_handler_fn (gpointer data, gpointer user_data)
 {
 	gboolean done;
-	GIOPThread *tdata = user_data;
+	GIOPThread *tdata = data;
 
 	g_private_set (giop_tdata_private, tdata);
 
