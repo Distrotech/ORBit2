@@ -65,7 +65,7 @@ dnl Useful for automating stuff
 AC_CACHE_CHECK([for aclocal flags], ac_cv_orbit_aclocal_flags,[
    ac_cv_orbit_aclocal_flags="$ACLOCAL_FLAGS"
 ])
-ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
+ACLOCAL="$ACLOCAL $ac_cv_orbit_aclocal_flags"
 
 dnl Checks for programs.
 AC_PROG_CC
