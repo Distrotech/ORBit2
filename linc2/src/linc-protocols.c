@@ -31,7 +31,7 @@
 
 #include "linc-private.h"
 
-#undef DEBUG
+#define DEBUG
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -580,7 +580,7 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
 	g_assert (proto && saddr && saddr->sa_family == AF_UNIX);
 
 	if (hostname) {
-		gchar hname[NI_MAXHOST];
+		gchar hname [NI_MAXHOST];
 
 		if (gethostname (hname, NI_MAXHOST) == -1)
 			return FALSE;

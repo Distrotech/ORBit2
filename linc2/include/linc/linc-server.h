@@ -41,6 +41,8 @@ typedef struct {
 	LincWatch              *tag;
 	/* Options that incoming connections are created with */
 	LINCConnectionOptions   create_options;
+	GSList                 *connections;
+	gpointer                priv;
 } LINCServer;
 
 typedef struct {

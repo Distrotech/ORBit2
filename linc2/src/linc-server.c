@@ -75,34 +75,48 @@ linc_server_init (LINCServer *cnx)
 static void
 linc_server_dispose (GObject *obj)
 {
+	GSList     *l;
 	LINCServer *cnx = (LINCServer *)obj;
 
 #ifdef G_THREADS_ENABLED
-	if (cnx->mutex)
+	if (cnx->mutex) {
 		g_mutex_free (cnx->mutex);
+		cnx->mutex = NULL;
+	}
 #endif
-	if (cnx->tag)
+	if (cnx->tag) {
 		linc_io_remove_watch (cnx->tag);
-	cnx->tag = NULL;
+		cnx->tag = NULL;
+	}
 
-	if (cnx->proto && cnx->proto->destroy)
-		cnx->proto->destroy (
-			cnx->fd, cnx->local_host_info,
-			cnx->local_serv_info);
-	cnx->proto = NULL;
-
-	if (cnx->fd >= 0)
+	if (cnx->fd >= 0) {
+		if (cnx->proto->destroy)
+			cnx->proto->destroy (
+				cnx->fd, cnx->local_host_info,
+				cnx->local_serv_info);
 		close (cnx->fd);
-	cnx->fd = -1;
+		cnx->fd = -1;
+	}
+
+	for (; (l = cnx->connections); ) {
+		GObject *o = l->data;
+		cnx->connections = l->next;
+		g_slist_free_1 (l);
+		g_object_unref (o);
+	}
+
+	parent_class->dispose (obj);
+}
+
+static void
+linc_server_finalize (GObject *obj)
+{
+	LINCServer *cnx = (LINCServer *)obj;
 
 	g_free (cnx->local_host_info);
-	cnx->local_host_info = NULL;
-
 	g_free (cnx->local_serv_info);
-	cnx->local_serv_info = NULL;
 
-	if (parent_class->dispose)
-		parent_class->dispose (obj);
+	parent_class->finalize (obj);
 }
 
 static LINCConnection *
@@ -112,7 +126,8 @@ linc_server_create_connection (LINCServer *cnx)
 }
 
 static gboolean
-linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
+linc_server_accept_connection (LINCServer      *server,
+			       LINCConnection **connection)
 {
 	LINCServerClass *klass;
 	struct sockaddr *saddr;
@@ -140,7 +155,8 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 		return FALSE;
 	}
 
-	if (!linc_protocol_get_sockinfo (server->proto, saddr, &hostname, &service)) {
+	if (!linc_protocol_get_sockinfo (server->proto, saddr,
+					 &hostname, &service)) {
 		close (fd);
 		return FALSE;
 	}
@@ -155,7 +171,7 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 	if (!linc_connection_from_fd (
 		*connection, fd, server->proto, hostname, service,
 		FALSE, LINC_CONNECTED, server->create_options)) {
-
+		
 		g_object_unref (G_OBJECT (*connection));
 		*connection = NULL;
 
@@ -164,6 +180,9 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 
 		return FALSE;
 	}
+
+	server->connections = g_slist_prepend (
+		server->connections, *connection);
 
 	return TRUE;
 }
@@ -299,10 +318,6 @@ linc_server_setup (LINCServer            *cnx,
 	}
 #endif
 
-	/*
-	 * FIXME: If we get EINUSE we should loop to getaddrinfo ?
-	 */
-
 	if (!n)
 		n = getsockname (fd, saddr, &saddr_len);
 #ifdef DEBUG
@@ -311,7 +326,7 @@ linc_server_setup (LINCServer            *cnx,
 #endif
 
 	if (n) {
-		close(fd);
+		close (fd);
 #ifdef DEBUG
 		perror ("get_sockname failed");
 #endif
@@ -360,6 +375,7 @@ linc_server_class_init (LINCServerClass *klass)
 	GObjectClass *object_class = (GObjectClass *) klass;
 
 	object_class->dispose    = linc_server_dispose;
+	object_class->finalize   = linc_server_finalize;
 	klass->create_connection = linc_server_create_connection;
 
 	parent_class = g_type_class_peek_parent (klass);

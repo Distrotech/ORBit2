@@ -42,7 +42,7 @@ typedef enum { LINC_CONNECTING, LINC_CONNECTED, LINC_DISCONNECTED } LINCConnecti
 typedef struct {
 	GObject parent;
 
-	LINCProtocolInfo *proto;
+	const LINCProtocolInfo *proto;
 
 	char *remote_host_info;
 	char *remote_serv_info;
@@ -58,6 +58,7 @@ typedef struct {
 	LINCConnectionStatus status;
 	LINCConnectionOptions options;
 	guint8 was_initiated : 1, is_auth : 1;
+	gpointer priv;
 } LINCConnection;
 
 typedef struct {
