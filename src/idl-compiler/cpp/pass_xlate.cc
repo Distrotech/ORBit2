@@ -210,8 +210,12 @@ IDLPassXlate::struct_create_accessor_constructors (IDLStruct
 		// Initialize accessors in constructor
 		m_module << mod_indent << member.getCPPIdentifier ()
 			 << " (c_struct." << member.getCIdentifier () << ")";
-		if (i != --(idlStruct.end ()))
+
+    IDLStruct::const_iterator iterBeforeEnd = idlStruct.end();
+		iterBeforeEnd--;
+		if (i != iterBeforeEnd)
 			m_module << ",";
+
 		m_module << endl;
 	}
 }

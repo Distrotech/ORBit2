@@ -1,3 +1,9 @@
+2002-03-14  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/pass_xlate.cc:
+	gcc2.96RH complained about use of -- on an lvalue when using an
+	iterator, so I made the code more lengthy.
+
 2002-03-13  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/pass_xlate.cc (doStruct): create accessors
