@@ -94,7 +94,8 @@ CORBA_exception_as_any(CORBA_Environment *ev)
 
 void
 ORBit_handle_exception(GIOPRecvBuffer *rb, CORBA_Environment *ev,
-		       ORBit_exception_demarshal_info *ex_info, CORBA_ORB orb)
+		       const ORBit_exception_demarshal_info *ex_info,
+		       CORBA_ORB orb)
 {
   CORBA_SystemException *new;
   CORBA_unsigned_long len, completion_status, reply_status;

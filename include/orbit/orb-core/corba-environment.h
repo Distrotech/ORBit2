@@ -28,7 +28,7 @@ void ORBit_handle_system_exception(CORBA_Environment *ev,
 				   CORBA_completion_status status,
 				   GIOPRecvBuffer *buf, GIOPSendBuffer *sendbuf);
 void ORBit_handle_exception(GIOPRecvBuffer *buf, CORBA_Environment *ev,
-			    ORBit_exception_demarshal_info *ex_info,
+			    const ORBit_exception_demarshal_info *ex_info,
 			    CORBA_ORB orb);
 GIOPConnection *ORBit_handle_location_forward(GIOPRecvBuffer *buf,
 					      CORBA_Object obj);
