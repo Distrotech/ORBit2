@@ -221,9 +221,9 @@ orbit_cbe_get_typename(IDL_tree tree)
     {
       char *ctmp;
 
-      ctmp = orbit_cbe_get_typename(orbit_cbe_get_efftype(IDL_TYPE_SEQUENCE(tree).simple_type_spec));
+      ctmp = orbit_cbe_get_typename(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
 
-      if(!strncmp(ctmp, "CORBA_", strlen("CORBA_")))
+      if(orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec))
 	memmove(ctmp, ctmp + strlen("CORBA_"), strlen(ctmp + strlen("CORBA_")) + 1);
 
       g_string_sprintf(tmpstr, "CORBA_sequence_%s", ctmp);
@@ -437,15 +437,16 @@ orbit_cbe_get_const(IDL_tree tree)
     g_string_sprintf(tmpstr, "%s%s", opc, ctmp);
     g_free(ctmp);
     break;
+#if 0
   case IDLN_IDENT:
     {
-      /* XXX fixme, brokenness */
       char *id;
       id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(tree), "_", 0);
       g_string_sprintf(tmpstr, "%s", id);
       g_free(id);
     }
     break;
+#endif
   default:
     g_error("We were asked to print a constant for %s", IDL_tree_type_names[tree->_type]);
     break;
@@ -508,4 +509,63 @@ orbit_cbe_write_node_typespec(FILE *of, OIDL_Marshal_Node *node)
     fprintf(of, "%s", ctmp);
   } else
     g_error("Don't know how to write a typespec for node type %d.", node->type);
+}
+
+gboolean
+orbit_cbe_type_is_builtin(IDL_tree tree)
+{
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_LIST:
+  case IDLN_GENTREE:
+  case IDLN_MEMBER:
+  case IDLN_NATIVE:
+  case IDLN_CASE_STMT:
+  case IDLN_MODULE:
+  case IDLN_BINOP:
+  case IDLN_UNARYOP:
+  case IDLN_CODEFRAG:
+    g_error("Strange type for being a builtin");
+    break;
+  case IDLN_INTEGER:
+  case IDLN_STRING:
+  case IDLN_WIDE_STRING:
+  case IDLN_CHAR:
+  case IDLN_WIDE_CHAR:
+  case IDLN_FIXED:
+  case IDLN_FLOAT:
+  case IDLN_BOOLEAN:
+  case IDLN_CONST_DCL:
+  case IDLN_TYPE_INTEGER:
+  case IDLN_TYPE_FLOAT:
+  case IDLN_TYPE_CHAR:
+  case IDLN_TYPE_WIDE_CHAR:
+  case IDLN_TYPE_STRING:
+  case IDLN_TYPE_WIDE_STRING:
+  case IDLN_TYPE_BOOLEAN:
+  case IDLN_TYPE_OCTET:
+  case IDLN_TYPE_ANY:
+  case IDLN_TYPE_OBJECT:
+  case IDLN_TYPE_TYPECODE:
+  case IDLN_TYPE_ENUM:
+    return TRUE;
+    break;
+  case IDLN_TYPE_DCL:
+  case IDLN_EXCEPT_DCL:
+  case IDLN_ATTR_DCL:
+  case IDLN_OP_DCL:
+  case IDLN_PARAM_DCL:
+  case IDLN_TYPE_FIXED:
+  case IDLN_TYPE_SEQUENCE:
+  case IDLN_TYPE_ARRAY:
+  case IDLN_TYPE_STRUCT:
+  case IDLN_TYPE_UNION:
+  case IDLN_IDENT:
+  case IDLN_INTERFACE:
+  case IDLN_FORWARD_DCL:
+  default:
+    return FALSE;
+    break;
+  }
+
+  return FALSE;
 }

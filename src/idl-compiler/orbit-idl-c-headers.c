@@ -1,9 +1,6 @@
 #include "config.h"
 #include "orbit-idl-c-backend.h"
 
-/* TODO:
- */
-
 #include <string.h>
 
 /* #define DO_CPP */
@@ -357,6 +354,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
   char *ctmp, *fullname;
 
   fullname = orbit_cbe_get_typename(tree);
+
   fprintf(ci->fh, "#ifndef ORBIT_DECL_%s\n#define ORBIT_DECL_%s 1\n", fullname, fullname);
   fprintf(ci->fh, "#define ORBIT_IMPL_%s ORBIT_FILE_ID_%s\n", fullname, ci->c_base_name);
 
@@ -374,7 +372,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
   ctmp = orbit_cbe_get_typename(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   fprintf(ci->fh, " *CORBA_sequence_%s_allocbuf(CORBA_unsigned_long len);\n",
-	  (!strncmp(ctmp, "CORBA_", strlen("CORBA_")))?(ctmp+strlen("CORBA_")):ctmp);
+	  orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp);
 
   fprintf(ci->fh, "#endif\n");
 
