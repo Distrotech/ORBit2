@@ -17,15 +17,25 @@ ORBit_trace_objref (const CORBA_Object obj)
 }
 
 void
-ORBit_trace_any (const CORBA_any *any)
+ORBit_trace_typecode (const CORBA_TypeCode tc)
 {
-	tprintf ("{ an any }");
+	g_return_if_fail (tc != NULL);
+	tprintf ("tc:%s", TC_CORBA_TCKind->subnames [tc->kind]);
 }
 
 void
-ORBit_trace_typecode (const CORBA_TypeCode tc)
+ORBit_trace_any (const CORBA_any *any)
 {
-	tprintf ("{ tc %d }", tc->kind);
+	gconstpointer p;
+
+	g_return_if_fail (any != NULL);
+
+	tprintf ("{ ");
+	ORBit_trace_typecode (any->_type);
+	tprintf (", ");
+	p = any->_value;
+	ORBit_trace_value (&p, any->_type);
+	tprintf (" }");
 }
 
 void

@@ -996,62 +996,64 @@ run_tests (test_TestFactory   factory,
 #include "server.c"
 #undef  _IN_CLIENT_
 
-int main(int argc, char *argv[])
+int
+main (int argc, char *argv [])
 {
-  CORBA_Environment ev;
-  test_TestFactory factory;
+	CORBA_Environment ev;
+	test_TestFactory  factory;
 
-/*  g_mem_set_vtable (glib_mem_profiler_table);*/
+	CORBA_exception_init (&ev);
+	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
-  CORBA_exception_init(&ev);
-  orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
-  g_assert(ev._major == CORBA_NO_EXCEPTION);
+	free (malloc (8)); /* -lefence */
 
-  free (malloc (8)); /* -lefence */
-
-  /* In Proc ... */
+	/* In Proc ... */
 #ifndef TIMING_RUN
-  {
-    factory = get_server (orb, &ev);
-    run_tests (factory, &ev, FALSE);
-    CORBA_Object_release (factory, &ev);
-    g_assert(ev._major == CORBA_NO_EXCEPTION);
-    factory = CORBA_OBJECT_NIL;
-  }
-
-  fprintf (stderr, "\n\n\n --- Out of proc ---\n\n\n\n");
+	{
+		factory = get_server (orb, &ev);
+		run_tests (factory, &ev, FALSE);
+		CORBA_Object_release (factory, &ev);
+		g_assert (ev._major == CORBA_NO_EXCEPTION);
+		factory = CORBA_OBJECT_NIL;
+	}
+	fprintf (stderr, "\n\n\n --- Out of proc ---\n\n\n\n");
 #endif
 
-  /* Out of Proc */
-  { /* read the ior from iorfile, and swizzle to an objref*/
-    int size;
-    char ior[1024];
-    FILE *infile = fopen("iorfile","rb");
-    if (!infile)
-	    g_error ("Start the server before running the client");
-    size = fread(ior,1,1024,infile);
-    fclose(infile);
-    ior[size] = '\0';   /* insure that string is terminated correctly */
-    factory = CORBA_ORB_string_to_object(orb, ior, &ev);
-    g_assert(ev._major == CORBA_NO_EXCEPTION);
-    if (CORBA_Object_non_existent (factory, &ev))
-	    g_error ("Start the server before running the client");
-    g_assert(ev._major == CORBA_NO_EXCEPTION);
-  }
+	/* Out of Proc */
+	{ /* read the ior from iorfile, and swizzle to an objref*/
+		int   size;
+		char  ior [1024];
+		FILE *infile = fopen ("iorfile","rb");
 
-  run_tests (factory, &ev, FALSE);
+		if (!infile)
+			g_error ("Start the server before running the client");
+
+		size = fread (ior,1,1024,infile);
+		fclose (infile);
+		ior [size] = '\0';   /* insure that string is terminated correctly */
+
+		factory = CORBA_ORB_string_to_object (orb, ior, &ev);
+		g_assert (ev._major == CORBA_NO_EXCEPTION);
+
+		if (CORBA_Object_non_existent (factory, &ev))
+			g_error  ("Start the server before running the client");
+		g_assert (ev._major == CORBA_NO_EXCEPTION);
+	}
+
+	run_tests (factory, &ev, FALSE);
 
 #ifdef PROFILING
-  sleep (1000);
+	sleep (1000);
 #endif
   
-  CORBA_Object_release(factory, &ev);
-  g_assert(ev._major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (factory, &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	
+	CORBA_ORB_destroy (orb, &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
-  CORBA_ORB_destroy (orb, &ev);
-  g_assert(ev._major == CORBA_NO_EXCEPTION);
-
-  CORBA_exception_free (&ev);
-
-  return 0;
+	CORBA_exception_free (&ev);
+	
+	return 0;
 }

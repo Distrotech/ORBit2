@@ -20,13 +20,18 @@
  *    * make locking more chunky _T everything.
  */
 
-#include "config.h"
-#include <orbit/orbit.h>
-#include <orbit/GIOP/giop.h>
+#include <config.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <gmodule.h>
 #include <glib/garray.h>
+
+#include <orbit/orbit.h>
+#include <orbit/GIOP/giop.h>
+
 #include "../poa/orbit-poa-export.h"
 #include "orb-core-private.h"
 
@@ -169,7 +174,12 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 		/* FIXME: check what should the repo ID be? */
 		CORBA_exception_set (ev, CORBA_SYSTEM_EXCEPTION,
 				     my_repoid, new);
-
+		/* FIXME: might be fixed one day by cunning detection
+		   in CORBA_exception_set ... */
+		if (!ev->_any._type)
+			ev->_any._type = ORBit_RootObject_duplicate (
+				TC_CORBA_SystemException);
+		
 		dprintf ("system exception de-marshaled\n");
 		return;
 
@@ -197,8 +207,13 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 			data = ORBit_demarshal_arg (
 				rb, types->_buffer [i], TRUE, orb);
 
+			/* FIXME: might be fixed one day by cunning detection
+			   in CORBA_exception_set ... */
 			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 					     types->_buffer [i]->repo_id, data);
+			if (!ev->_any._type)
+				ev->_any._type = ORBit_RootObject_duplicate (
+					types->_buffer [i]);
 		}
 		return;
 	}
@@ -333,7 +348,7 @@ orbit_small_marshal (CORBA_Object           obj,
 	ORBit_marshal_value_info mi;
 
 #ifdef TRACE_DEBUG
-	tprintf (": (");
+	tprintf ("p%4x : (", getpid ());
 	ORBit_trace_objref (obj);
 	tprintf (")->%s (", m_data->name);
 #endif
@@ -483,6 +498,8 @@ orbit_small_demarshal (CORBA_Object           obj,
 
 	{
 		int i;
+		int trace_have_out = 0;
+
 		for (i = 0; (m_data->arguments._buffer &&
 			     m_data->arguments._buffer [i].flags); i++) {
 			const ORBit_IArg *a;
@@ -518,8 +535,11 @@ orbit_small_demarshal (CORBA_Object           obj,
 				}
 				/* drop through */
 			case BASE_TYPES:
-				do_demarshal_value (
-					recv_buffer, &arg, tc, orb);
+				if (!trace_have_out++)
+					tprintf (" out: (");
+				p = arg;
+				do_demarshal_value (recv_buffer, &arg, tc, orb);
+				tprintf_trace_value (&p, tc);
 				break;
 			}
 
@@ -527,18 +547,27 @@ orbit_small_demarshal (CORBA_Object           obj,
 			case SEQ_ANY_TYPES:
 			case CORBA_tk_array:
 			default:
+				p = arg;
 				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					do_demarshal_value (recv_buffer, &arg, tc, orb);
-					break;
 				} else if (a->flags & ORBit_I_ARG_INOUT) {
 					ORBit_freekids_via_TypeCode (tc, arg);
 					do_demarshal_value (recv_buffer, &arg, tc, orb);
 				} else
-					*(gpointer *)args [i] = ORBit_demarshal_arg (
+					*(gpointer *)args [i] = p = ORBit_demarshal_arg (
 						recv_buffer, tc, TRUE, obj->orb);
+
+				if (!trace_have_out++)
+					tprintf (" out: (");
+				tprintf_trace_value (&p, tc);
 				break;
 			}
+			if (trace_have_out &&
+			    m_data->arguments._buffer [i + 1].flags)
+				tprintf (", ");
 		}
+		if (trace_have_out)
+			tprintf (" )");
 	}
 	
 	giop_recv_buffer_unuse (recv_buffer);
@@ -549,12 +578,22 @@ orbit_small_demarshal (CORBA_Object           obj,
 	    GIOP_LOCATION_FORWARD) {
 		
 		*cnx = ORBit_handle_location_forward (recv_buffer, obj);
+		tprintf (" Exception: forward");
 
 		return MARSHAL_RETRY;
 	} else {
 		ORBit_handle_exception_array (
 			recv_buffer, ev, &m_data->exceptions, obj->orb);
 		giop_recv_buffer_unuse (recv_buffer);
+
+#ifdef TRACE_DEBUG
+		if (ev->_major == CORBA_SYSTEM_EXCEPTION)
+			tprintf (" System Exception: '%s' ", ev->_id);
+		else {
+			tprintf (" User Exception: '%s' ", ev->_id);
+			ORBit_trace_any (&ev->_any);
+		}
+#endif
 
 		return MARSHAL_EXCEPTION_COMPLETE;
 	}
