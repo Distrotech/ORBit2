@@ -370,9 +370,9 @@ ORBit_POA_remove_child (PortableServer_POA poa,
 }
 
 static gboolean
-ORBit_POA_destroy_T (PortableServer_POA  poa,
-		     CORBA_boolean       etherealize_objects,
-		     CORBA_Environment  *ev)
+ORBit_POA_destroy_T_R (PortableServer_POA  poa,
+		       CORBA_boolean       etherealize_objects,
+		       CORBA_Environment  *ev)
 {
 	GPtrArray *adaptors;
 	int        numobjs;
@@ -390,8 +390,8 @@ ORBit_POA_destroy_T (PortableServer_POA  poa,
 
 	adaptors = poa->orb->adaptors;
 
-	/* FIXME: this lock thrash is really ugly */
 	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	POA_UNLOCK (poa);
 
 	/* Destroying the children is tricky, b/c they may die
 	 * while we are traversing. We traverse over the
@@ -406,7 +406,7 @@ ORBit_POA_destroy_T (PortableServer_POA  poa,
 			POA_LOCK (cpoa);
 
 			if (cpoa->parent_poa == poa) 
-				ORBit_POA_destroy_T (cpoa, etherealize_objects, ev);
+				ORBit_POA_destroy_T_R (cpoa, etherealize_objects, ev);
 
 			POA_UNLOCK (cpoa);
 			LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
@@ -414,6 +414,7 @@ ORBit_POA_destroy_T (PortableServer_POA  poa,
 		}
 	}
 
+	POA_LOCK (poa);
 	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	poa->default_servant = NULL;
@@ -1856,7 +1857,7 @@ PortableServer_POA_destroy (PortableServer_POA   poa,
 		CORBA_exception_set_system (ev, ex_CORBA_BAD_INV_ORDER,
 					    CORBA_COMPLETED_NO);
 	else {
-		done = ORBit_POA_destroy_T (poa, etherealize_objects, ev);
+		done = ORBit_POA_destroy_T_R (poa, etherealize_objects, ev);
 
 		g_assert (done || !wait_for_completion);
 	}

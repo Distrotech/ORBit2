@@ -1,3 +1,9 @@
+2003-10-14  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POA_destroy_T_R):
+	rename to this; fix nasty deadlock with child
+	poas.
+
 2003-10-10  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: switch to 2.9.0
