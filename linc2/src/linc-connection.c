@@ -60,93 +60,102 @@ linc_connection_dispose (GObject *obj)
 		parent_class->dispose (obj);
 }
 
+#define ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI)
+
 static gboolean
 linc_connection_connected (GIOChannel  *gioc,
 			   GIOCondition condition,
 			   gpointer     data)
 {
-  LINCConnection *cnx = data;
-  int rv, n;
-  socklen_t n_size = sizeof(n);
-  gboolean retval = TRUE;
-  gboolean disconnected = FALSE;
+	LINCConnection      *cnx = data;
+	LINCConnectionClass *klass;
+	int rv, n;
+	socklen_t n_size = sizeof(n);
+	gboolean retval = TRUE;
+	gboolean disconnected = FALSE;
 
-  g_object_ref (G_OBJECT (cnx));
+	g_object_ref (G_OBJECT (cnx));
 
-  switch(cnx->status)
-    {
-    case LINC_CONNECTING:
-      n = 0;
-      rv = getsockopt(cnx->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
-      if(!rv && !n && condition == G_IO_OUT)
-	{
-	  linc_connection_state_changed(cnx, LINC_CONNECTED);
-	  g_assert (cnx->tag == NULL);
-	  cnx->tag = linc_io_add_watch(
-		  cnx->gioc,
-		  G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
-		  linc_connection_connected, cnx);
+	klass = LINC_CONNECTION_CLASS (G_OBJECT_GET_CLASS (data));
 
-	  retval = FALSE;
+	if (cnx->status == LINC_CONNECTED &&
+	    condition & G_IO_IN &&
+	    klass->handle_input)
+		retval = klass->handle_input (cnx);
+
+	if (retval && (condition & (ERR_CONDS | G_IO_OUT))) {
+
+		switch (cnx->status) {
+		case LINC_CONNECTING:
+			n = 0;
+			rv = getsockopt (cnx->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
+			if (!rv && !n && condition == G_IO_OUT) {
+				linc_connection_state_changed (cnx, LINC_CONNECTED);
+				g_assert (cnx->tag == NULL);
+				cnx->tag = linc_io_add_watch (
+					cnx->gioc, ERR_CONDS,
+					linc_connection_connected, cnx);
+
+				retval = FALSE;
+			} else {
+				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+				disconnected = TRUE;
+			}
+			break;
+		case LINC_CONNECTED: {
+			linc_connection_state_changed(cnx, LINC_DISCONNECTED);
+			disconnected = TRUE;
+			break;
+		}
+		default:
+			break;
+		}
 	}
-      else {
-	linc_connection_state_changed(cnx, LINC_DISCONNECTED);
-	disconnected = TRUE;
-      }
-      break;
-    case LINC_CONNECTED: {
-      linc_connection_state_changed(cnx, LINC_DISCONNECTED);
-      disconnected = TRUE;
-      break;
-    }
-    default:
-      break;
-    }
 
-  g_object_unref (G_OBJECT (cnx));
+	g_object_unref (G_OBJECT (cnx));
 
-  return retval;
+	return retval;
 }
 
 static void
 linc_connection_real_state_changed (LINCConnection      *cnx,
 				    LINCConnectionStatus status)
 {
-  switch(status)
-    {
-    case LINC_CONNECTED:
+	switch (status) {
+	case LINC_CONNECTED:
 #ifdef LINC_SSL_SUPPORT
-      if(cnx->options & LINC_CONNECTION_SSL)
-	{
-	  if(cnx->was_initiated)
-	    SSL_connect(cnx->ssl);
-	  else
-	    SSL_accept(cnx->ssl);
-	}
+		if (cnx->options & LINC_CONNECTION_SSL) {
+			if (cnx->was_initiated)
+				SSL_connect (cnx->ssl);
+			else
+				SSL_accept (cnx->ssl);
+		}
 #endif
-      if (!cnx->tag)
-	cnx->tag = linc_io_add_watch (
-		cnx->gioc,
-		G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
-		linc_connection_connected, cnx);
-      break;
-    case LINC_CONNECTING:
-      linc_source_remove (cnx, FALSE);
-      cnx->tag = linc_io_add_watch (
-	      cnx->gioc, G_IO_OUT|G_IO_ERR|G_IO_HUP|G_IO_NVAL,
-	      linc_connection_connected, cnx);
-      break;
-    case LINC_DISCONNECTED:
+		if (!cnx->tag)
+			cnx->tag = linc_io_add_watch (
+				cnx->gioc, ERR_CONDS | G_IO_IN,
+				linc_connection_connected, cnx);
+		break;
+
+	case LINC_CONNECTING:
+		linc_source_remove (cnx, FALSE);
+		cnx->tag = linc_io_add_watch (
+			cnx->gioc, G_IO_OUT|ERR_CONDS,
+			linc_connection_connected, cnx);
+		break;
+
+	case LINC_DISCONNECTED:
 /*      g_warning ("Linc disconnected tag %d fd '%d'",
 	cnx->tag, cnx->fd);*/
-      linc_source_remove (cnx, TRUE);
-      linc_close_fd (cnx);
+		linc_source_remove (cnx, TRUE);
+		linc_close_fd (cnx);
 
-      g_signal_emit (G_OBJECT (cnx), linc_connection_signals [BROKEN], 0);
-      break;
-    }
+		g_signal_emit (G_OBJECT (cnx),
+			       linc_connection_signals [BROKEN], 0);
+		break;
+	}
 
-  cnx->status = status;
+	cnx->status = status;
 }
 
 gboolean

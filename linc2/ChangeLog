@@ -1,8 +1,12 @@
 2001-08-16  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: bump version to 0.1.2
+
 	* src/linc-connection.c (linc_connection_get_type): don't
 	use the base_init - but the instance_init to set fd == -1
 	so we don't close (0), doh.
+	(linc_connection_connected): update to call the
+	handle_input virtual method on input.
 
 2001-08-14  Michael Meeks  <michael@ximian.com>
 
