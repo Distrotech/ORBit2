@@ -71,7 +71,7 @@ struct _LincWatch {
 struct sockaddr *linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 					     const char             *hostname,
 					     const char             *service,
-					     socklen_t              *saddr_len);
+					     LincSockLen            *saddr_len);
 
 gboolean         linc_protocol_get_sockinfo (const LINCProtocolInfo *proto,
 					     const struct sockaddr  *saddr,
@@ -80,7 +80,7 @@ gboolean         linc_protocol_get_sockinfo (const LINCProtocolInfo *proto,
 
 gboolean         linc_protocol_is_local     (const LINCProtocolInfo  *proto,
 					     const struct sockaddr   *saddr,
-					     socklen_t                saddr_len);
+					     LincSockLen              saddr_len);
 
 void             linc_protocol_destroy_cnx  (const LINCProtocolInfo  *proto,
 					     int                      fd,
