@@ -1,3 +1,12 @@
+2003-07-14  Mark McLoughlin  <mark@skynet.ie>
+
+	Fix for bug #103159.
+	Patiently tracked down by Brian Cameron <brian.cameron@sun.com>
+
+	* src/orb/orb-core/corba-any.c: (ORBit_value_equivalent):
+	align to the discriminator before figure out the members
+	typecode based on the discriminator value.
+
 2003-07-14  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testSegv): fix silly -

@@ -1056,24 +1056,20 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	}
 
 	case CORBA_tk_union: {
-		gint     union_align = tc->c_align;
-		gint     discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
-		size_t   union_size = ORBit_gather_alloc_info (tc);
-		gpointer a_orig, b_orig;
+		CORBA_TypeCode utc_a, utc_b;
+		gint           union_align = tc->c_align;
+		gint           discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
+		size_t         union_size = ORBit_gather_alloc_info (tc);
+		gpointer       a_orig, b_orig;
 
-		CORBA_TypeCode utc_a = ORBit_get_union_tag (
-			tc, (gconstpointer *)a, FALSE);
-		CORBA_TypeCode utc_b = ORBit_get_union_tag (
-			tc, (gconstpointer *)b, FALSE);
+		a_orig = *a = ALIGN_ADDRESS (*a, discrim_align);
+		b_orig = *b = ALIGN_ADDRESS (*b, discrim_align);
 
-		a_orig = *a;
-		b_orig = *b;
+		utc_a = ORBit_get_union_tag (tc, (gconstpointer *)a, FALSE);
+		utc_b = ORBit_get_union_tag (tc, (gconstpointer *)b, FALSE);
 
 		if (!CORBA_TypeCode_equal (utc_a, utc_b, ev))
 			return FALSE;
-
-		*a = ALIGN_ADDRESS (*a, discrim_align);
-		*b = ALIGN_ADDRESS (*b, discrim_align);
 
 		if (!ORBit_value_equivalent (a, b, tc->discriminator, ev))
 			return FALSE;
