@@ -61,13 +61,22 @@ linc_connection_init       (LINCConnection      *cnx)
 }
 
 static void
-linc_connection_shutdown    (GObject             *obj)
+linc_source_remove (LINCConnection *cnx, gboolean unref)
+{
+  if(cnx->tag) {
+    g_assert (g_source_remove(cnx->tag));
+    if (unref) 
+      g_object_unref (G_OBJECT (cnx));
+  }
+  cnx->tag = 0;
+}
+
+static void
+linc_connection_shutdown (GObject *obj)
 {
   LINCConnection *cnx = (LINCConnection *)obj;
 
-  if(cnx->tag)
-    g_assert (g_source_remove(cnx->tag));
-  cnx->tag = 0;
+  linc_source_remove (cnx, FALSE);
   g_free(cnx->remote_host_info);
   cnx->remote_host_info = NULL;
   g_free(cnx->remote_serv_info);
@@ -89,6 +98,9 @@ linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer dat
   int rv, n;
   socklen_t n_size = sizeof(n);
   gboolean retval = TRUE;
+  gboolean disconnected = FALSE;
+
+  g_object_ref (G_OBJECT (cnx));
 
   switch(cnx->status)
     {
@@ -104,15 +116,21 @@ linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer dat
 				    linc_connection_connected, cnx);
 	  retval = FALSE;
 	}
-      else
+      else {
 	linc_connection_state_changed(cnx, LINC_DISCONNECTED);
+	disconnected = TRUE;
+      }
       break;
-    case LINC_CONNECTED:
+    case LINC_CONNECTED: {
       linc_connection_state_changed(cnx, LINC_DISCONNECTED);
+      disconnected = TRUE;
       break;
+    }
     default:
       break;
     }
+
+  g_object_unref (G_OBJECT (cnx));
 
   return retval;
 }
@@ -138,15 +156,15 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
 				  linc_connection_connected, cnx);
       break;
     case LINC_CONNECTING:
-      if(cnx->tag)
-	g_assert (g_source_remove(cnx->tag));
+      linc_source_remove (cnx, FALSE);
       cnx->tag = g_io_add_watch(cnx->gioc, G_IO_OUT|G_IO_ERR|G_IO_HUP|G_IO_NVAL, linc_connection_connected, cnx);
       break;
     case LINC_DISCONNECTED:
-      if(cnx->tag)
-	g_assert (g_source_remove(cnx->tag));
-      cnx->tag = 0;
-      close(cnx->fd);
+/*      g_warning ("Linc disconnected tag %d fd '%d'",
+	cnx->tag, cnx->fd);*/
+      linc_source_remove (cnx, TRUE);
+      if (cnx->fd >= 0)
+        close(cnx->fd);
       cnx->fd = -1;
       break;
     }
