@@ -191,14 +191,18 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		*val = ((guchar *)*val) + sz;
 		break;
 	}
-	case CORBA_tk_wstring:
+	case CORBA_tk_wstring: {
+		CORBA_wchar endian_marker = 0xfeff;
+
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
-		ulval = CORBA_wstring_len (*(CORBA_wchar **)*val) + 1;
+		ulval = (CORBA_wstring_len (*(CORBA_wchar **)*val) + 1) * 2;
 		giop_send_buffer_append_aligned (buf, &ulval,
 						 sizeof (CORBA_unsigned_long));
-		giop_send_buffer_append (buf, *(char **)*val, ulval);
-		*val = ((guchar *)*val) + sizeof (char *);
+		giop_send_buffer_append (buf, &endian_marker, 2);
+		giop_send_buffer_append (buf, *(CORBA_wchar **)*val, ulval - 2);
+		*val = ((guchar *)*val) + sizeof (CORBA_wchar *);
 		break;
+	}
 	case CORBA_tk_string:
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		giop_send_buffer_append_string (buf, *(char **)*val);
@@ -578,7 +582,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		break;
 	}
 	case CORBA_tk_string:
-	case CORBA_tk_wstring:
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
 		if ((buf->cur + sizeof (CORBA_long)) > buf->end)
@@ -594,6 +597,54 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		*val = ((guchar *)*val) + sizeof (CORBA_char *);
 		buf->cur += i;
 		break;
+	case CORBA_tk_wstring: {
+		CORBA_wchar endian_marker = 0, *ptr;
+
+		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
+		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
+		if ((buf->cur + sizeof (CORBA_long)) > buf->end)
+			return TRUE;
+		i = *(CORBA_unsigned_long *)buf->cur;
+		if (giop_msg_conversion_needed (buf))
+			i = GUINT32_SWAP_LE_BE (i);
+		buf->cur += sizeof (CORBA_unsigned_long);
+		if ((buf->cur + i) > buf->end
+		    || (buf->cur + i) < buf->cur)
+			return TRUE;
+		if (i >= 2) {
+			endian_marker = *(CORBA_wchar *)buf->cur;
+			if (endian_marker != 0xfeff &&
+			    endian_marker != 0xfffe)
+				endian_marker = 0;
+			else {
+				i -= 2;
+				buf->cur += 2;
+			}
+		}
+		if (!endian_marker) {
+			((unsigned char *)&endian_marker)[0] = 0xfe;
+			((unsigned char *)&endian_marker)[1] = 0xff;
+		}
+		ptr = CORBA_wstring_alloc ((i + 1) / 2);
+		*(CORBA_wchar **)*val = ptr;
+		if (endian_marker == 0xfffe) {
+			while(i >= 2) {
+				*ptr++ = GUINT16_SWAP_LE_BE(
+				         	*((CORBA_wchar *)buf->cur));
+				buf->cur += 2;
+				i -= 2;
+			}
+			*ptr = 0;
+		} else {
+			memcpy(ptr, buf->cur, i);
+			ptr[(i + 1) / 2] = 0;
+			buf->cur += i;
+			i = 0;
+		}
+		*val = ((guchar *)*val) + sizeof (CORBA_wchar *);
+		buf->cur += i;
+		break;
+	}
 	case CORBA_tk_sequence: {
 		CORBA_sequence_CORBA_octet *p;
 		gpointer subval;
