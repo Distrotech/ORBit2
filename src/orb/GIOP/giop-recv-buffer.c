@@ -870,6 +870,13 @@ giop_recv_buffer_use(void)
   return retval;
 }
 
+GIOPRecvBuffer *
+giop_recv_buffer_use_noblock (void)
+{	
+	/* FIXME: this sucks */
+	return giop_recv_list_pop();
+}
+
 static void
 giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {

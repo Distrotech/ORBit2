@@ -21,4 +21,7 @@ void CORBA_ORB_set_initial_reference(CORBA_ORB orb,
 				     CORBA_Environment *ev);
 void ORBit_ORB_forw_bind(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
 			 CORBA_Object oref, CORBA_Environment *ev);
+
+guint ORBit_ORB_idle_init (CORBA_ORB orb);
+
 #endif

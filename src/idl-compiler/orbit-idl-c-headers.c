@@ -26,9 +26,6 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "#define ORBIT_IDL_SERIAL %d\n", ORBIT_CONFIG_SERIAL);
   fprintf(ci->fh, "#include <orbit/orbit-types.h>\n\n");
 
-  if (rinfo->small) /* hackish ? */
-    fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
-
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "extern \"C\" {\n");
   fprintf(ci->fh, "#endif /* __cplusplus */\n\n");
@@ -54,8 +51,12 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "\n/** more internals **/\n");
   ch_output_marshallers(ci);
 
-  if (rinfo->small)
+  if (rinfo->small) {
+    /* FIXME: hackish ? */
+    fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
+
     ch_output_itypes(tree->tree, ci);
+  }
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");

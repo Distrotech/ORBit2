@@ -931,3 +931,27 @@ ORBit_ORB_forw_bind(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
 {
   g_warning("ORBit_ORB_forw_bind NYI");
 }
+
+
+static guint
+idle_fn (CORBA_ORB orb)
+{
+	GIOPRecvBuffer *buf;
+	/* FIXME: this sucks */
+
+	if ((buf = giop_recv_buffer_use_noblock())) {
+
+		if (buf->msg.header.message_type == GIOP_REQUEST)
+			ORBit_handle_request (orb, buf);
+		
+		giop_recv_buffer_unuse (buf);
+	}
+	return TRUE;
+}
+
+guint
+ORBit_ORB_idle_init (CORBA_ORB orb)
+{
+	/* FIXME: this sucks */
+	return g_idle_add ((GSourceFunc)idle_fn, orb);
+}

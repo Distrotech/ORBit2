@@ -43,24 +43,24 @@ ior_decode_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 $(ECHO_IDLOUT): echo_built
 
 echo_built: echo.idl $(IDL)
-	$(IDL) --showcpperrors $(srcdir)/echo.idl
+	$(IDL) --small --showcpperrors $(srcdir)/echo.idl
 	touch echo_built
 
 $(EMPTY_IDLOUT): empty_built
 empty_built: empty.idl $(IDL)
-	$(IDL) --showcpperrors $(srcdir)/empty.idl
+	$(IDL) --small --showcpperrors $(srcdir)/empty.idl
 	touch empty_built
 
 $(IDLOUT): test1_built
 test1_built: test1.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) --showcpperrors $(srcdir)/test1.idl
+	$(IDL) --small --showcpperrors $(srcdir)/test1.idl
 	touch test1_built
 
 $(TEST_ANY_IDLOUT): test_any_built
 test_any_built: test-any.idl $(IDL)
 	-(rm -f $(TEST_ANY_IDLOUT) || true) > /dev/null
-	$(IDL) --showcpperrors $(srcdir)/test-any.idl
+	$(IDL) --small --showcpperrors $(srcdir)/test-any.idl
 	touch test_any_built
 
 BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT)

@@ -186,6 +186,8 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
       }
   } while(cnx && cnx->incoming_msg);
 
+  /* Lets do something with the recv buffer ? */
+
  out:
   if(cnx)
     {

@@ -1,3 +1,16 @@
+2001-05-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_idle_init, idle_fn): FIXME these suck.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_use_noblock): impl.
+
+2001-05-19  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(orbit_idl_output_c_headers): re-order.
+
 2001-05-19  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POA_free_fn): free the poa's
