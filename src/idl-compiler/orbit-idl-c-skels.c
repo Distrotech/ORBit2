@@ -206,6 +206,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "_ORBIT_send_buffer = giop_send_reply_buffer_use(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer)->connection, NULL, "
 	    "_ORBIT_recv_buffer->message.u.request.request_id, ev->_major);\n");
 
+    fprintf(ci->fh, "if(_ORBIT_send_buffer) {\n");
     fprintf(ci->fh, "if (ev->_major == CORBA_NO_EXCEPTION) {\n");
     ck_skel_alloc_tmpvars(oi->out_skels, ci);
 
@@ -236,6 +237,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
     fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
+    fprintf(ci->fh, "}\n");
 
     cbe_skel_op_params_free(tree, ci);
 
