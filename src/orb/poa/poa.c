@@ -1545,7 +1545,7 @@ PortableServer_POA__get_the_children (PortableServer_POA  poa,
 	retval           = PortableServer_POAList__alloc ();
 	retval->_length  = 0;
 	retval->_maximum = length;
-	retval->_buffer  = PortableServer_POAList_allocbuf (length);
+	retval->_buffer  = (CORBA_Object *) PortableServer_POAList_allocbuf (length);
 	retval->_release = CORBA_TRUE;
 
 	g_hash_table_foreach (poa->child_poas, (GHFunc) ORBit_POAList_add_child, retval);

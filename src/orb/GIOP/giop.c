@@ -120,7 +120,8 @@ giop_tmpdir_init (void)
 				guint32 b;
 			} id;
 
-			ORBit_genuid_buffer ((guint8 *)&id, sizeof (id));
+			ORBit_genuid_buffer ((guint8 *)&id, sizeof (id),
+					     ORBIT_GENUID_OBJECT_ID);
 
 			newname = g_strdup_printf (
 				"%s/%s-%4x", PATH_ROOT, dirname, id.b);
@@ -171,7 +172,7 @@ giop_tmpdir_init (void)
 }
 
 void
-giop_init (void)
+giop_init (gboolean blank_wire_data)
 {
 	linc_init (FALSE);
 
@@ -179,7 +180,7 @@ giop_init (void)
 
 	giop_connection_list_init ();
 
-	giop_send_buffer_init ();
+	giop_send_buffer_init (blank_wire_data);
 	giop_recv_buffer_init ();
 }
 

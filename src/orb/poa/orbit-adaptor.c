@@ -37,8 +37,8 @@ ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
 static ORBit_ObjectAdaptor
 ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 {
-	ORBit_ObjectAdaptor   adaptor;
-	gint32                adaptorId;
+	gint32 adaptorId;
+	ORBit_ObjectAdaptor adaptor;
 
 	if (!objkey)
 		return NULL;

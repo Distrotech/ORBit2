@@ -1,5 +1,29 @@
 2002-06-25  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c
+	(giop_tmpdir_init): update to new genuid
+	API, how did this get missed (!), dependency
+	problems it seems.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_init): upd.
+	(get_next_indirect): blank newly allocated
+	memory if giop_blank_wire_data is set.
+	(giop_send_buffer_use): blank indirects we
+	have already used.
+
+	* src/orb/GIOP/giop.c (giop_init): upd.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): pass flag to giop_init.
+
+	* src/orb/poa/poa.c
+	(PortableServer_POA__get_the_children): fix annoying
+	typedef warning type thing, needs an IDL compiler fix
+	really.
+
+2002-06-25  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/orbit-adaptor.c (ORBit_adaptor_setup),
 	(ORBit_adaptor_find): upd.
 
