@@ -1136,7 +1136,7 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 
 	*native_code_set = *(CORBA_unsigned_long *)buf->cur;
 	if (giop_msg_conversion_needed (buf))
-		native_code_set = GUINT32_SWAP_LE_BE (native_code_set);
+		*native_code_set = GUINT32_SWAP_LE_BE (*native_code_set);
 	buf->cur += 4;
 
 	sequence_length = *(CORBA_unsigned_long *)buf->cur;

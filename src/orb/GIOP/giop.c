@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "giop-private.h"
+#include "giop-debug.h"
 
 const char giop_version_ids [GIOP_NUM_VERSIONS][2] = {
 	{1,0},

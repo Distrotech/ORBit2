@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #include "giop-private.h"
+#include "giop-debug.h"
 #include <orbit/GIOP/giop-types.h>
 #include <orbit/GIOP/giop-recv-buffer.h>
 
@@ -778,6 +779,10 @@ static gboolean
 giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 			    gboolean        is_auth)
 {
+	giop_dprintf ("Incoming IIOP data:\n");
+
+	do_giop_dump (stderr, (guint8 *)buf, 12, 0);
+
 	/* Check the header */
 	if (memcmp (buf->msg.header.magic, "GIOP", 4))
 		return TRUE;
@@ -887,6 +892,12 @@ giop_connection_handle_input (LINCConnection *lcnx)
 						goto msg_error;
 				} else {
 					buf->cur = buf->message_body + 12;
+
+					if ((buf->cur + buf->msg.header.message_size) > buf->end)
+						goto msg_error;
+
+					do_giop_dump (stderr, buf->message_body + 12,
+						      buf->msg.header.message_size, 12);
 
 					if (giop_recv_buffer_demarshal (buf))
 						goto msg_error;
