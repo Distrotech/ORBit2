@@ -1,6 +1,10 @@
-Please do not put your ChangeLog in here. CVS already does the work for
-us. If you would like to see a ChangeLog, just type 'rcs2log' in the top
-ORBit directory.
+1998-12-13  Miguel de Icaza  <miguel@nuclecu.unam.mx>
 
-This file is here merely to satisfy the whims of automake. :)
--- Elliot
+	* src/IIOP/giop-msg-buffer.c (giop_recv_message_buffer_use):
+	Denial of service prevention.  Do not allocate more than 8k on the
+	initial message.
+
+	This code still has issues.  The attacker can just telnet to the
+	local port and start typing, he will be able to freeze any
+	CORBA-aware application if he keeps the connection open and never
+	finishes. 
