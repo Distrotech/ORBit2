@@ -16,3 +16,4 @@ ltmain.sh
 obj
 stamp-h
 stamp-h.in
+linc.pc
