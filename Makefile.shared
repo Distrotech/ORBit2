@@ -11,7 +11,7 @@ IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl
 	done
 
 if MAINTAINER_MODE
-DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+IDL_DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
 IDL_DEP_FILES = $(IDL_FILES:%.idl=.deps/%.idl.P)
 -include $(IDL_DEP_FILES)
 distclean-local:

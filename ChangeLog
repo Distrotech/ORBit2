@@ -1,5 +1,12 @@
 2001-09-17  Mark McLoughlin <mark@skynet.ie>
 
+	* Makefile.shared: s/DEPS_MAGIC/IDL_DEPS_MAGIC/. Using
+	the same variable name used by automake causes automake
+	to get confused. This was causing automatic Makefile 
+	dependancy tracking to not work.
+
+2001-09-17  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/poa/Makefile.am: remove bogus BUILT_SOURCE
 	dependancy.
 
