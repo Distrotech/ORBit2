@@ -1,3 +1,10 @@
+2002-06-17  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_start_servers): pass local only
+	create_options into linc_server_new
+	add "ORBLocalOnly" option.
+
 2002-06-13  Michael Meeks  <michael@ximian.com> &
 
 	* test/everything/client.c (testPingPong):
