@@ -64,6 +64,8 @@ IDLPassGather::doTypedef (IDL_tree  node,
 
 		dcl_list = IDL_LIST(dcl_list).next;
 	}
+
+	Super::doTypedef (node, scope);
 }
 
 
@@ -82,16 +84,17 @@ IDLPassGather::doStruct (IDL_tree  node,
 
 
 
-#if 0 //!!!
-
 void 
 IDLPassGather::doUnion(IDL_tree node,IDLScope &scope) {
 
 	IDLType *type = m_state.m_typeparser.parseTypeSpec(scope,
 		IDL_TYPE_UNION(node).switch_type_spec);
+
+	IDLUnionDiscriminator *d = dynamic_cast<IDLUnionDiscriminator*> (type);
+	g_assert (d != 0);
 	
 	IDLUnion *idlUnion = new IDLUnion(
-		IDL_IDENT(IDL_TYPE_UNION(node).ident).str,node,*type,&scope
+		IDL_IDENT(IDL_TYPE_UNION(node).ident).str,node,*d,&scope
 	);
 	ORBITCPP_MEMCHECK(idlUnion);
 	Super::doUnion(node,*idlUnion);
@@ -101,6 +104,8 @@ IDLPassGather::doUnion(IDL_tree node,IDLScope &scope) {
 
 
 
+
+#if 0 //!!!
 
 
 void 
@@ -144,6 +149,22 @@ IDLPassGather::doConstant(IDL_tree  node,
 	
 	ORBITCPP_MEMCHECK(new IDLConstant(type,id,node,&scope));
 }
+
+void 
+IDLPassGather::doSequence (IDL_tree node,
+			   IDLScope &scope)
+{
+	IDL_tree member_type_node = IDL_TYPE_SEQUENCE (node).simple_type_spec;
+        IDLType *type = m_state.m_typeparser.parseTypeSpec (scope, member_type_node);
+
+	//int seq_bound = IDL_INTEGER (IDL_TYPE_SEQUENCE (node).positive_int_const).value;
+
+	IDLSequence seq (*type, 0);
+	m_state.m_seqs.register_seq (seq);
+	
+	Super::doSequence (node, scope);
+}
+
 
 void 
 IDLPassGather::doEnum (IDL_tree  node,
@@ -190,8 +211,14 @@ IDLPassGather::doOperation (IDL_tree  node,
 		IDLException *ex = (IDLException *) scope.lookup(
 		                        idlGetQualIdentifier(IDL_LIST(raises_list).data));
 
-		op->m_raises.push_back(ex);
-
+		if (ex)
+			op->m_raises.push_back(ex);
+		else
+			g_warning ("%s can throw exceptions of type "
+				   "%s, but it's not defined",
+				   op->get_cpp_typename ().c_str (),
+				   idlGetQualIdentifier (IDL_LIST (raises_list).data).c_str ());
+		
 		raises_list = IDL_LIST(raises_list).next;
 	}
 }
@@ -228,16 +255,17 @@ IDLPassGather::doCaseStmt (IDL_tree  node,
 	// member
 	IDL_tree member = IDL_CASE_STMT(node).element_spec;
 	g_assert(IDL_NODE_TYPE(member) == IDLN_MEMBER);
+	
 	IDL_tree dcl = IDL_LIST(IDL_MEMBER(member).dcls).data;   // dont handle multiple dcls	
 	g_assert(IDL_NODE_TYPE(dcl) == IDLN_IDENT);
+
 	IDLType *type = m_state.m_typeparser.parseTypeSpec(scope,IDL_TYPE_DCL(member).type_spec);
 	type = m_state.m_typeparser.parseDcl(dcl,type,id);
+	
 	IDLMember *themember = new IDLMember(type,id,dcl);  // don't attach this to the scope
 	new IDLCaseStmt(themember,id,node,&scope);  // attach the case stmt instead
 	// case stmt takes ownership of member
 }
-
-
 
 void 
 IDLPassGather::doException (IDL_tree node,

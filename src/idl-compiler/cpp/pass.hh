@@ -35,7 +35,7 @@
 #include "base.hh"
 #include "types.hh"
 #include "types/IDLInterface.hh"
-//#include "types/IDLSequenceList.hh"
+#include "types/IDLSequenceList.hh"
 #include "types/IDLArrayList.hh"
 #include <iostream>
 #include <vector>
@@ -59,7 +59,7 @@ public:
 	IDLScope                m_rootscope;
 	vector<IDLInterface *>  m_interfaces;
 	IDLTypeParser           m_typeparser;
-//	IDLSequenceList         m_seqs;
+	IDLSequenceList         m_seqs;
 	IDLArrayList            m_arrays;
 
 	IDLPass                *m_pass_gather;

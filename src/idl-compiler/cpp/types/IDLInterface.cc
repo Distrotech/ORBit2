@@ -472,6 +472,26 @@ IDLInterface::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLInterface::get_seq_typename (unsigned int      length,
+				const IDLTypedef *active_typedef) const
+{
+	string retval;
+
+	char *tmp = 0;
+	if (length)
+		tmp = g_strdup_printf (IDL_IMPL_NS "::CompoundBoundedSeq< %s, %d>",
+				       get_cpp_typename ().c_str (), length);
+	else
+		tmp = g_strdup_printf (IDL_IMPL_NS "::CompoundUnboundedSeq< %s >",
+				       get_cpp_typename ().c_str ());
+	
+	retval = tmp;
+	g_free (tmp);
+	
+	return retval;
+}
+
+string
 IDLInterface::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	return get_cpp_typename_ptr ();
@@ -651,8 +671,3 @@ IDLInterface::common_write_typedefs (ostream &ostr,
 	
 }
 
-string
-IDLInterface::get_seq_traits_typename (const IDLTypedef *active_typedef) const
-{
-	return get_cpp_typename () + "_seq_elem_traits";	
-}

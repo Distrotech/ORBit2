@@ -210,6 +210,12 @@ IDLVoid::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLVoid::get_seq_typename (unsigned int length, const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+	
+string
 IDLVoid::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();

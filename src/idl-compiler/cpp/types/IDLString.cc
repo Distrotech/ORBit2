@@ -271,9 +271,10 @@ IDLString::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
-IDLString::get_seq_traits_typename (const IDLTypedef *active_typedef) const
+IDLString::get_seq_typename (unsigned int      length,
+			     const IDLTypedef *active_typedef) const
 {
-	return "CORBA::String_seq_elem_traits";
+#warning "WRITE ME"
 }
 
 string
@@ -329,6 +330,13 @@ IDLString::member_unpack_from_c (ostream      &ostr,
 				 const string &c_id,
 				 const IDLTypedef *active_typedef) const
 {
+#if 0
+	ostr << indent << "if (" << cpp_id << ")" << endl
+	     << ++indent << "CORBA::string_free (" << cpp_id << ");"
+	     << endl;
+	--indent;
+#endif
+	
 	ostr << indent << cpp_id << " = CORBA::string_dup (" << c_id << ")"
 	     << ';' << endl;
 }

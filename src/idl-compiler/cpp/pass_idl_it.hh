@@ -41,8 +41,7 @@
 
 class IDLIteratingPass {
 protected:
-	virtual void doTypedef(IDL_tree node,IDLScope &scope) {
-	}
+	virtual void doTypedef(IDL_tree node,IDLScope &scope);
 	virtual void doConstant(IDL_tree node,IDLScope &scope) {
 	}
 #if 0 //!!!
@@ -65,9 +64,7 @@ protected:
 	virtual void doStruct(IDL_tree node,IDLScope &scope);
 	virtual void doSequence(IDL_tree node, IDLScope &scope){
 	}
-#if 0 //!!!
 	virtual void doUnion(IDL_tree node,IDLScope &scope);
-#endif
 	virtual void doException(IDL_tree node,IDLScope &scope);
 
 	virtual void doInterface(IDL_tree node,IDLScope &scope);
@@ -78,6 +75,8 @@ protected:
 	virtual void doMemberList(IDL_tree list,IDLScope &scope);
 	virtual void doExportList(IDL_tree list,IDLScope &scope);
 	virtual void doDefinitionList(IDL_tree list,IDLScope &scope);
+
+	virtual void handle_node (IDL_tree node, IDLScope &scope);
 	
 	virtual void enumHook(IDL_tree next,IDLScope &scope) {
 	}

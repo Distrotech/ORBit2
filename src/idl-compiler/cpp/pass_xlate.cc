@@ -104,9 +104,6 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 			 << "_tc_" << td.get_cpp_identifier () << " = " 
 			 << "(CORBA::TypeCode_ptr)TC_" << td.get_c_typename ()
 			 << ';' << endl << endl;
-
-		// Create traits classes
-		ORBITCPP_MEMCHECK(new IDLWriteCPPTraits (td, m_state, *this));
 	}
 }
 
@@ -119,10 +116,8 @@ IDLPassXlate::doStruct (IDL_tree  node,
 	m_header << indent << "struct " << strct.get_cpp_identifier () << endl
 		 << indent++ << "{" << endl;
 
-	// Create members
+	struct_create_traits (strct);
 	struct_create_members (strct);
-
-	// Create conversion methods
 	struct_create_converters (strct);
 	
 	// End struct definition
@@ -134,10 +129,76 @@ IDLPassXlate::doStruct (IDL_tree  node,
 	// Create typecode and Any stuff
 	struct_create_any (strct);
 
-	// Create traits classes
-	ORBITCPP_MEMCHECK(new IDLWriteCPPTraits (strct, m_state, *this));
-
 	m_header << endl;
+}
+
+void IDLPassXlate::struct_create_traits (const IDLStruct &strct)
+{
+	if (!m_state.m_seqs.seq_of_type_exists (strct))
+		return;
+
+	const string traits_typename = strct.get_cpp_typename ()
+		+ "::SeqTraits";
+	
+	m_header << indent << "struct SeqTraits" << endl
+		 << indent++ << "{" << endl;
+
+	// Typedefs
+	m_header << indent << "typedef " << strct.get_cpp_member_typename ()
+		 << " value_t;" << endl;
+	m_header << indent << "typedef " << strct.get_c_typename ()
+		 << " c_value_t;" << endl;
+	m_header << indent << "typedef CORBA_sequence_" << strct.get_c_typename ()
+		 << " c_seq_t;" << endl << endl;
+
+
+	// C sequence allocator
+	m_header << indent << "static c_seq_t* alloc_c ();" << endl;
+
+	m_module << mod_indent << traits_typename << "::c_seq_t* "
+		 << strct.get_cpp_method_prefix ()
+		 << "::SeqTraits::alloc_c ()" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "return CORBA_sequence_"
+		 << strct.get_c_typename () << "__alloc ();" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// C sequence buffer allocator
+	m_header << indent << "static c_value_t* alloc_c_buf (CORBA::ULong l);" << endl;
+
+	m_module << mod_indent << traits_typename << "::c_value_t* "
+		 << strct.get_cpp_method_prefix ()
+		 << "::SeqTraits::alloc_c_buf (CORBA::ULong l)" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "return CORBA_sequence_"
+		 << strct.get_c_typename () << "_allocbuf (l);" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// C++ -> C packer
+	m_header << indent << "static void pack_elem "
+		 << "(const value_t &cpp_elem, c_value_t &c_elem);" << endl;
+
+	m_module << mod_indent << "void " << strct.get_cpp_method_prefix ()
+		 << "::SeqTraits::pack_elem "
+		 << "(const value_t &cpp_elem, c_value_t &c_elem)" << endl
+		 << mod_indent++ << "{" << endl;
+	strct.member_pack_to_c (m_module, mod_indent, "cpp_elem", "c_elem");
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// C -> C++ unpacker
+	m_header << indent << "static void unpack_elem "
+		 << "(value_t &cpp_elem, const c_value_t &c_elem);" << endl;
+
+	m_module << mod_indent << "void " << strct.get_cpp_method_prefix ()
+		 << "::SeqTraits::unpack_elem "
+		 << "(value_t &cpp_elem, const c_value_t &c_elem)" << endl
+		 << mod_indent++ << "{" << endl;
+	strct.member_unpack_from_c (m_module, mod_indent, "cpp_elem", "c_elem");
+	m_module << --mod_indent << "}" << endl << endl;
+
+	
+	// End of traits
+	m_header << --indent << "};" << endl << endl;
 }
 
 void IDLPassXlate::struct_create_members (const IDLStruct &strct)
@@ -229,19 +290,32 @@ void IDLPassXlate::struct_create_any (const IDLStruct &strct)
 }
 
 
-#if 0
 void 
-IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
-	IDLUnion &idlUnion = (IDLUnion &) *scope.getItem(node);
+IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope)
+{
+	const IDLUnion               &un = (IDLUnion &) *scope.getItem (node);
+	
+	m_header << indent << "class " << un.get_cpp_identifier () << endl
+		 << indent++ << "{" << endl;
+	m_header << --indent << "private:" << endl;
+	m_header << ++indent << un.get_c_typename () << " m_target;"
+		 << endl << endl;
+	
+	// Create internally used methods
+	union_create_internal (un);
+	
+	m_header << --indent << "public:" << endl;
+	++indent;
+	
+	// Create discriminator handler code
+	union_create_discr (un);
 
-	m_header
-	<< indent << "class " << idlUnion.getCPPIdentifier() << endl
-	<< indent << "{" << endl
-	<< indent << "private:" << endl;
+	// Create member accessors
+	union_create_members (un);
 
-	m_header
-	<< ++indent << idlUnion.getNSScopedCTypeName() << " m_target;" << endl << endl;
-
+	m_header << --indent << "};" << endl << endl;
+	
+#if 0
 	m_header	
 	<< indent << "void _clear_member() {" << endl;
 	m_header	
@@ -291,26 +365,6 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	
 	const IDLType &desc = idlUnion.getDiscriminatorType();
 	string dcl, typespec;
-	
-	desc.getCPPStubDeclarator(IDL_PARAM_IN,"desc",typespec,dcl);
-	m_header
-	<< indent << "void _d(" << typespec << " " << dcl	<< ")" << endl
-	<< indent << "{" << endl;
-	m_header	
-	<< ++indent << "m_target._d = "
-	<< desc.getCPPStubParameterTerm(IDL_PARAM_IN,"desc") << ";" << endl;
-	m_header	
-	<< --indent << "}" << endl;
-	
-	desc.getCPPStubReturnDeclarator("",typespec,dcl);
-	m_header
-	<< indent << typespec << dcl << " _d() const" << endl
-	<< indent << "{" << endl;
-	m_header	
-	<< ++indent << "return " << desc.getCPPSkelParameterTerm(IDL_PARAM_IN,"m_target._d")
-	<< ";" << endl;
-	m_header	
-	<< --indent << "}" << endl;
 	
 	IDLUnion::const_iterator first = idlUnion.begin(),last = idlUnion.end();
 
@@ -385,10 +439,118 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	<< "(CORBA::TypeCode_ptr)TC_" + idlUnion.getQualifiedCIdentifier() + ";" << endl;
 
 	ORBITCPP_MEMCHECK( new IDLWriteUnionAnyFuncs(idlUnion, m_state, *this) );
-}
 #endif
+}
+
+void
+IDLPassXlate::union_create_internal (const IDLUnion &un)
+{
+	// _clear_member
+	m_header << indent << "void _clear_member ();" << endl;
+
+	m_module << mod_indent << "void " << un.get_cpp_method_prefix ()
+		 << "::_clear_member ()" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << un.get_c_method_prefix () << "__freekids ("
+		 << "&m_target, 0);" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// Destructor
+	m_header << --indent << "public: " << endl;
+	m_header << ++indent << "~" << un.get_cpp_identifier ()
+		 << ";" << endl << endl;
+	
+	m_module << mod_indent << un.get_cpp_method_prefix ()
+		 << "::~" << un.get_cpp_identifier () << " ()" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "_clear_member ();" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+}
 
 
+void
+IDLPassXlate::union_create_discr (const IDLUnion &un)
+{
+	const IDLUnionDiscriminator  &d = un.get_discriminator ();
+
+	const string d_cpp = d.discr_get_cpp_typename ();
+	const string d_c = d.discr_get_c_typename ();
+	
+	// Get discriminator
+	m_header << indent << d_cpp << " _d () const;" << endl;
+
+	m_module << mod_indent << d_cpp << " "
+		 << un.get_cpp_method_prefix () << "::_d () const" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << "return (" << d_cpp << ")" << "m_target._d;" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// Set discriminator
+	m_header << indent << "void _d (" << d_cpp << " d);" << endl << endl;
+	
+	m_module << mod_indent << "void " << un.get_cpp_method_prefix ()
+		 << "::_d (" << d_cpp << " d)" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << "m_target._d = (" << d_c << ") d;" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+}
+
+void
+IDLPassXlate::union_create_members (const IDLUnion &un)
+{
+	for (IDLUnion::const_iterator i = un.begin (); i != un.end (); i++)
+	{
+		const IDLCaseStmt &case_stmt = static_cast<const IDLCaseStmt&> (**i);
+		const IDLMember   &member = case_stmt.get_member ();
+
+		const string member_cpp_type = member.getType ()->get_cpp_member_typename ();
+		const string member_name = member.get_cpp_identifier ();
+		
+		// Get accessor
+		m_header << indent << member_cpp_type << " "
+			 << member_name << " () const;" << endl;
+
+		m_module << mod_indent << member_cpp_type << " "
+			 << un.get_cpp_method_prefix () << "::" << member_name
+			 << " () const" << endl
+			 << mod_indent++ << "{" << endl;
+
+		m_module << mod_indent << member_cpp_type << " _ret;" << endl;
+
+		member.getType ()->member_unpack_from_c (m_module, mod_indent,
+							 "_ret", "m_target._u." + member_name);	
+		
+		m_module << mod_indent << "return _ret;" << endl;
+		m_module << --mod_indent << "}" << endl << endl;
+		
+
+		// Set accessor
+		const string discr_val = *(case_stmt.labelsBegin ());
+#if 0 // !!!
+		if(casestmt.isDefault() == true){
+			descVal = idlUnion.getDefaultDiscriminatorValue();
+		} else {
+			descVal = *(casestmt.labelsBegin());
+		}
+#endif
+		
+		m_header << indent << "void " << member_name
+			 << " (" << member_cpp_type << " val);" << endl << endl;
+		
+		m_module << mod_indent << "void "
+			 << un.get_cpp_method_prefix () << "::" << member_name
+			 << " (" << member_cpp_type << " val)" << endl
+			 << mod_indent++ << "{" << endl;
+
+		m_module << mod_indent << "_clear_member ();" << endl;
+		m_module << mod_indent << "_d (" << discr_val << ");" << endl;
+		
+		member.getType ()->member_pack_to_c (m_module, mod_indent,
+						     "val", "m_target._u." + member_name);
+
+		m_module << --mod_indent << "}" << endl << endl;
+	}
+}
 
 void 
 IDLPassXlate::doEnum (IDL_tree  node,
@@ -420,7 +582,6 @@ IDLPassXlate::doEnum (IDL_tree  node,
 		 << "(CORBA::TypeCode_ptr)TC_" << idlEnum.get_c_typename ()
 		 << ';' << endl;
 	
-	ORBITCPP_MEMCHECK(new IDLWriteCPPTraits (idlEnum, m_state, *this));
 	ORBITCPP_MEMCHECK(new IDLWriteEnumAnyFuncs (idlEnum, m_state, *this));
 }
 
@@ -681,9 +842,6 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	iface.common_write_typedefs (m_header, indent);
 	m_header << endl;
 
-	// Write sequence elem traits
-	ORBITCPP_MEMCHECK (new IDLWriteCPPTraits (iface, m_state, *this));
-	
 	// generate type container
 	m_header << indent << "class " << iface.get_cpp_identifier ();
 
@@ -705,6 +863,9 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	
 	m_header << --indent << "public:" << endl;
 	indent++;
+
+	iface_create_traits (iface);
+	
 	Super::doInterface(node, iface);
 	doInterfaceStaticMethodDeclarations (iface);
 
@@ -719,6 +880,76 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	// _duplicate() and _narrow implementations:
 	// write the static method definitions
 	doInterfaceStaticMethodDefinitions(iface);
+}
+
+void
+IDLPassXlate::iface_create_traits (const IDLInterface &iface)
+{
+	if (!m_state.m_seqs.seq_of_type_exists (iface))
+		return;
+
+	const string traits_typename = iface.get_cpp_typename ()
+		+ "::SeqTraits";
+	
+	m_header << indent << "struct SeqTraits" << endl
+		 << indent++ << "{" << endl;
+
+	// Typedefs
+	m_header << indent << "typedef " << iface.get_cpp_member_typename ()
+		 << " value_t;" << endl;
+	m_header << indent << "typedef " << iface.get_c_typename ()
+		 << " c_value_t;" << endl;
+	m_header << indent << "typedef CORBA_sequence_" << iface.get_c_typename ()
+		 << " c_seq_t;" << endl << endl;
+
+
+	// C sequence allocator
+	m_header << indent << "static c_seq_t* alloc_c ();" << endl;
+
+	m_module << mod_indent << traits_typename << "::c_seq_t* "
+		 << iface.get_cpp_method_prefix ()
+		 << "::SeqTraits::alloc_c ()" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "return CORBA_sequence_"
+		 << iface.get_c_typename () << "__alloc ();" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// C sequence buffer allocator
+	m_header << indent << "static c_value_t* alloc_c_buf (CORBA::ULong l);" << endl;
+
+	m_module << mod_indent << traits_typename << "::c_value_t* "
+		 << iface.get_cpp_method_prefix ()
+		 << "::SeqTraits::alloc_c_buf (CORBA::ULong l)" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "return CORBA_sequence_"
+		 << iface.get_c_typename () << "_allocbuf (l);" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// C++ -> C packer
+	m_header << indent << "static void pack_elem "
+		 << "(const value_t &cpp_elem, c_value_t &c_elem);" << endl;
+
+	m_module << mod_indent << "void " << iface.get_cpp_method_prefix ()
+		 << "::SeqTraits::pack_elem "
+		 << "(const value_t &cpp_elem, c_value_t &c_elem)" << endl
+		 << mod_indent++ << "{" << endl;
+	iface.member_pack_to_c (m_module, mod_indent, "cpp_elem", "c_elem");
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// C -> C++ unpacker
+	m_header << indent << "static void unpack_elem "
+		 << "(value_t &cpp_elem, const c_value_t &c_elem);" << endl;
+
+	m_module << mod_indent << "void " << iface.get_cpp_method_prefix ()
+		 << "::SeqTraits::unpack_elem "
+		 << "(value_t &cpp_elem, const c_value_t &c_elem)" << endl
+		 << mod_indent++ << "{" << endl;
+	iface.member_unpack_from_c (m_module, mod_indent, "cpp_elem", "c_elem");
+	m_module << --mod_indent << "}" << endl << endl;
+
+	
+	// End of traits
+	m_header << --indent << "};" << endl << endl;
 }
 
 
@@ -794,57 +1025,6 @@ IDLPassXlate::doModule (IDL_tree  node,
 void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 	if (!scope.getTopLevelInterface())
 		runJobs(IDL_EV_TOPLEVEL);
-}
-
-// IDLWriteCPPTraits -------------------------------------------------------
-IDLWriteCPPTraits::IDLWriteCPPTraits (const IDLElement &element,
-				      IDLCompilerState &state,
-				      IDLOutputPass    &pass) :
-	IDLOutputJob (IDL_EV_TOPLEVEL, state, pass),
-	m_element (element)
-{
-}
-
-void
-IDLWriteCPPTraits::run ()
-{
-	g_assert (dynamic_cast<const IDLType*>(&m_element));
-	const IDLType &type = *dynamic_cast<const IDLType*>(&m_element);
-	
-	string cpp_id = m_element.get_cpp_identifier ();
-	string c_id = m_element.get_c_typename ();
-	
-	// Write sequence elem traits
-	string elem_cpp = type.get_cpp_member_typename ();
-	string elem_c = type.get_c_member_typename ();
-
-	string seq_elem_traits_id = cpp_id + "_seq_elem_traits";
-	string seq_elem_traits_prefix = m_element.get_cpp_method_prefix () + "_seq_elem_traits";
-	
-	m_header << indent << "struct " << seq_elem_traits_id << endl
-		 << indent++ << "{" << endl;
-	
-	// pack_elem (C++ -> C)
-	m_header << indent << "void pack_elem (" << elem_cpp << " &cpp_value, "
-		 << elem_c << " &c_value);" << endl;
-	m_module << mod_indent << "void " << seq_elem_traits_prefix
-		 << "::pack_elem (" << elem_cpp << " &cpp_value, "
-		 << elem_c << " &c_value)" << endl
-		 << mod_indent++ << "{" << endl;
-	type.member_pack_to_c (m_module, mod_indent, "cpp_value", "c_value");
-	m_module << --mod_indent << "}" << endl << endl;
-
-	// unpack_elem (C -> C++)
-	m_header << indent << "void unpack_elem (" << elem_cpp << " &cpp_value, "
-		 << elem_c << " &c_value);" << endl;
-	m_module << mod_indent << "void " << seq_elem_traits_prefix
-		 << "::unpack_elem (" << elem_cpp << " &cpp_value, "
-		 << elem_c << " &c_value)" << endl
-		 << mod_indent++ << "{" << endl;
-	type.member_unpack_from_c (m_module, mod_indent, "cpp_value", "c_value");
-	m_module << --mod_indent << "}" << endl << endl;
-	
-	m_header << --indent << "};" << endl << endl;
 }
 
 // IDLWriteArrayProps -------------------------------------------------------

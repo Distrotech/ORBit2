@@ -37,7 +37,7 @@
 #include "pass_idl_it.hh"
 #include "types/IDLEnum.hh"
 #include "types/IDLStruct.hh"
-//#include "types/IDLUnion.hh"
+#include "types/IDLUnion.hh"
 #include "types/IDLException.hh"
 #include <libIDL/IDL.h>
 #include <iostream>
@@ -65,9 +65,7 @@ protected:
 	void doTypedef(IDL_tree node,IDLScope &scope);
 	
 	void doStruct(IDL_tree node,IDLScope &scope);
-#if 0 //!!!
 	void doUnion(IDL_tree node,IDLScope &scope);
-#endif
 	void doEnum(IDL_tree node,IDLScope &scope);
 	void doNative(IDL_tree node,IDLScope &scope);
 	void doConstant(IDL_tree node,IDLScope &scope);
@@ -86,25 +84,22 @@ protected:
 	void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
 	void enumHook(IDL_tree list,IDLScope &scope);
 
+	void iface_create_traits (const IDLInterface &iface);
+	
+	void struct_create_traits     (const IDLStruct &strct);
 	void struct_create_members    (const IDLStruct &strct);
 	void struct_create_converters (const IDLStruct &strct);
 	void struct_create_typedefs   (const IDLStruct &strct);
 	void struct_create_any        (const IDLStruct &strct);
 
+	void union_create_internal (const IDLUnion &un);
+	void union_create_discr    (const IDLUnion &un);
+	void union_create_members  (const IDLUnion &un);
+
 	void exception_create_members      (const IDLException &ex);
 	void exception_create_constructors (const IDLException &ex);
 	void exception_create_converters   (const IDLException &ex);
 	void exception_create_any          (const IDLException &ex);
-};
-
-class IDLWriteCPPTraits: public IDLOutputPass::IDLOutputJob
-{
-	const IDLElement &m_element;
-public:
-	IDLWriteCPPTraits (const IDLElement &element,
-			   IDLCompilerState &state,
-			   IDLOutputPass    &pass);
-	void run();
 };
 
 class IDLWriteArrayProps : public IDLOutputPass::IDLOutputJob {

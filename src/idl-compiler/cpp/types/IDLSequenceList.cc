@@ -26,18 +26,13 @@
 
 #include "IDLSequenceList.hh"
 
-
-bool IDLSequenceList::doesSeqTypeExist(IDLSequence const& seq)
+bool IDLSequenceList::seq_of_type_exists (const IDLType &member_type)
 {
-	if( m_seqSet.find(&seq) == m_seqSet.end() ) {
-		m_seqSet.insert(&seq);
-		return false;
-	}
-	else
-		return true;
+    return m_seqs.find (member_type.get_c_member_typename ()) != m_seqs.end ();    
 }
 
-void IDLSequenceList::clear()
+void IDLSequenceList::register_seq (const IDLSequence &seq)
 {
-	m_seqSet.clear();
+    m_seqs.insert (seq.m_element_type.get_c_member_typename ());
 }
+

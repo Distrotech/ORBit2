@@ -39,5 +39,4 @@ IDLException::stub_check_and_propagate (ostream &ostr,
 	ostr << indent << "throw ex;" << endl;
 	
 	ostr << --indent << "}" << endl;
-	
 }

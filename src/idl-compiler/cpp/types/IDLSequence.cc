@@ -59,7 +59,10 @@ IDLSequence::typedef_decl_write (ostream          &ostr,
 				 const IDLTypedef &target,
 				 const IDLTypedef *active_typedef) const
 {
-	string cpp_type = target.get_cpp_identifier ();
+	string cpp_typedef = target.get_cpp_identifier ();
+	string cpp_type = m_element_type.get_seq_typename (m_length);
+	
+#if 0
 	string cpp_elem = m_element_type.get_cpp_member_typename ();
 	string c_elem = m_element_type.get_c_member_typename ();
 	string cpp_traits = m_element_type.get_seq_traits_typename ();
@@ -118,12 +121,16 @@ IDLSequence::typedef_decl_write (ostream          &ostr,
 	ostr << --indent << "}" << endl;
 	
 	ostr << --indent << "};" << endl << endl;
-
+#else
+	ostr << indent << "typedef " << cpp_type << " " << cpp_typedef
+	     << ";" << endl;
+#endif
+		
 	// Create smart pointers
-	ostr << indent << "typedef " << IDL_IMPL_NS << "::Sequence_var<" << cpp_type << "> "
-	     << cpp_type << "_var;" << endl;
-	ostr << indent << "typedef " << IDL_IMPL_NS << "::Sequence_out<" << cpp_type << "> "
-	     << cpp_type << "_out;" << endl;
+	ostr << indent << "typedef " << IDL_IMPL_NS << "::Sequence_var<" << cpp_typedef << "> "
+	     << cpp_typedef << "_var;" << endl;
+	ostr << indent << "typedef " << IDL_IMPL_NS << "::Sequence_out<" << cpp_typedef << "> "
+	     << cpp_typedef << "_out;" << endl;
 }
 
 string
@@ -380,10 +387,11 @@ IDLSequence::skel_impl_ret_post (ostream          &ostr,
 string
 IDLSequence::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
-	g_assert (active_typedef);
+	if (active_typedef)
+		return active_typedef->get_cpp_typename () + "_var";
 
-	return active_typedef->get_cpp_typename () + "_var";
+	const string seq_typename = m_element_type.get_seq_typename (m_length);
+	return IDL_IMPL_NS "::Sequence_var< " + seq_typename + ">";
 }
 
 string
@@ -395,6 +403,13 @@ IDLSequence::get_c_member_typename (const IDLTypedef *active_typedef) const
 	return active_typedef->get_c_typename () + "*";
 }
 
+string
+IDLSequence::get_seq_typename (unsigned int      length,
+			       const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+	
 string
 IDLSequence::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
@@ -416,6 +431,7 @@ IDLSequence::member_init_cpp (ostream          &ostr,
 			 const string     &cpp_id,
 			 const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
 }
 
 void
@@ -424,22 +440,25 @@ IDLSequence::member_init_c (ostream          &ostr,
 		       const string     &c_id,
 		       const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
 }
 
 void
 IDLSequence::member_pack_to_c (ostream          &ostr,
-			  Indent           &indent,
-			  const string     &cpp_id,
-			  const string     &c_id,
-			  const IDLTypedef *active_typedef) const
-{
-}
-
-void
-IDLSequence::member_unpack_from_c  (ostream          &ostr,
 			       Indent           &indent,
 			       const string     &cpp_id,
 			       const string     &c_id,
 			       const IDLTypedef *active_typedef) const
 {
+	ostr << indent << cpp_id << "._orbitcpp_pack (" << c_id << ");" << endl;
+}
+
+void
+IDLSequence::member_unpack_from_c  (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef) const
+{
+	ostr << indent << cpp_id << "._orbitcpp_unpack (" << c_id << ");" << endl;
 }

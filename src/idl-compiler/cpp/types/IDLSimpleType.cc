@@ -293,6 +293,27 @@ IDLSimpleType::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLSimpleType::get_seq_typename (unsigned int      length,
+				 const IDLTypedef *active_typedef) const
+{
+	string retval;
+	const string traits = "::_orbitcpp::seq_traits::__" + get_fixed_c_typename ();
+
+	char *tmp = 0;
+	if (length)
+		tmp = g_strdup_printf ("::_orbitcpp::SimpleBoundedSeq< %s, %d>",
+				       traits.c_str (), length);
+	else
+		tmp = g_strdup_printf ("::_orbitcpp::SimpleUnboudedSeq< %s >",
+				       traits.c_str ());
+
+	retval = tmp;
+	g_free (tmp);
+	
+	return retval;
+}
+
+string
 IDLSimpleType::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	string cpp_typename = active_typedef ?

@@ -156,6 +156,8 @@ public:
 	// Compund declaration
 	string get_cpp_member_typename (const IDLTypedef *active_typedef = 0) const;
 	string get_c_member_typename   (const IDLTypedef *active_typedef = 0) const;
+	string get_seq_typename (unsigned int      length,
+				 const IDLTypedef *active_typedef = 0) const;
 
 	string member_decl_arg_get (const IDLTypedef *active_typedef = 0) const;
 	

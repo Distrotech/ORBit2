@@ -33,7 +33,7 @@
 
 class IDLBoolean
 : public IDLSimpleType,
-  public IDLUnionDescriminator
+  public IDLUnionDiscriminator
 {
 protected:
 	string get_fixed_cpp_typename () const;
@@ -41,6 +41,14 @@ protected:
 
 public:
 	string getDefaultValue(set<string> const &labels) const;
+
+	string discr_get_c_typename () const {
+		return get_fixed_c_typename ();
+	}									
+	
+	string discr_get_cpp_typename () const {
+		return get_fixed_cpp_typename ();
+	}									
 };
 
 #endif //ORBITCPP_TYPES_IDLBOOLEAN

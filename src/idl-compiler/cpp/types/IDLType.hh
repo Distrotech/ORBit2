@@ -153,7 +153,9 @@ public:
 	// Compund declaration
 	virtual string get_cpp_member_typename (const IDLTypedef *active_typedef = 0) const = 0;
 	virtual string get_c_member_typename   (const IDLTypedef *active_typedef = 0) const = 0;
-	virtual string get_seq_traits_typename (const IDLTypedef *active_typedef = 0) const;
+
+	virtual string get_seq_typename (unsigned int      length,
+					 const IDLTypedef *active_typedef = 0) const = 0;
 	
 	virtual string member_decl_arg_get (const IDLTypedef *active_typedef = 0) const = 0;
 	

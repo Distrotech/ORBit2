@@ -29,51 +29,38 @@
 
 #include <orbit/orbit.h>
 
-#define ORBITCPP_DECLARE_SIMPLE_SEQ_TRAITS(CPPElem, CElem)            \
-    struct CPPElem##_seq_elem_traits                                  \
-    {                                                                 \
-        void pack_elem (CPPElem &cpp_value, CElem &c_value) const {   \
-	        c_value = (CElem) cpp_value;                              \
-	    }                                                             \
-                                                                      \
-        void unpack_elem (CPPElem &cpp_value, CElem &c_value) const { \
-            cpp_value = (CPPElem) c_value;                            \
-        }                                                             \
-    };                                                                \
-
-#define ORBITCPP_DECLARE_SIMPLE(CPPType, CType)       \
-	typedef CType    CPPType;                         \
-	typedef CPPType& CPPType##_out;                   \
-	ORBITCPP_DECLARE_SIMPLE_SEQ_TRAITS(CPPType, CType)
+#define ORBITCPP_DECLARE_SIMPLE(CPPType, CType) \
+    typedef CType    CPPType;			\
+    typedef CPPType& CPPType##_out;
 
 namespace CORBA {
-	ORBITCPP_DECLARE_SIMPLE(Char,    CORBA_char);
-	ORBITCPP_DECLARE_SIMPLE(WChar,   CORBA_wchar);
-	ORBITCPP_DECLARE_SIMPLE(Boolean, CORBA_boolean);
-	ORBITCPP_DECLARE_SIMPLE(Octet,   CORBA_octet);
+    ORBITCPP_DECLARE_SIMPLE(Char,    CORBA_char);
+    ORBITCPP_DECLARE_SIMPLE(WChar,   CORBA_wchar);
+    ORBITCPP_DECLARE_SIMPLE(Boolean, CORBA_boolean);
+    ORBITCPP_DECLARE_SIMPLE(Octet,   CORBA_octet);
+    
+    ORBITCPP_DECLARE_SIMPLE(Short,    CORBA_short);
+    ORBITCPP_DECLARE_SIMPLE(Long,     CORBA_long);
+    ORBITCPP_DECLARE_SIMPLE(LongLong, CORBA_long_long);
+    
+    ORBITCPP_DECLARE_SIMPLE(UShort,    CORBA_unsigned_short);
+    ORBITCPP_DECLARE_SIMPLE(ULong,     CORBA_unsigned_long);
+    ORBITCPP_DECLARE_SIMPLE(ULongLong, CORBA_unsigned_long_long);
+    
+    ORBITCPP_DECLARE_SIMPLE(Float,      CORBA_float);
+    ORBITCPP_DECLARE_SIMPLE(Double,     CORBA_double);
+    ORBITCPP_DECLARE_SIMPLE(LongDouble, CORBA_long_double);
 
-	ORBITCPP_DECLARE_SIMPLE(Short,    CORBA_short);
-	ORBITCPP_DECLARE_SIMPLE(Long,     CORBA_long);
-	ORBITCPP_DECLARE_SIMPLE(LongLong, CORBA_long_long);
-	
-	ORBITCPP_DECLARE_SIMPLE(UShort,    CORBA_unsigned_short);
-	ORBITCPP_DECLARE_SIMPLE(ULong,     CORBA_unsigned_long);
-	ORBITCPP_DECLARE_SIMPLE(ULongLong, CORBA_unsigned_long_long);
-	
-	ORBITCPP_DECLARE_SIMPLE(Float,      CORBA_float);
-	ORBITCPP_DECLARE_SIMPLE(Double,     CORBA_double);
-	ORBITCPP_DECLARE_SIMPLE(LongDouble, CORBA_long_double);
-	
-	typedef Char *ORBid;
-	typedef Char *RepositoryId;
+    typedef Char *ORBid;
+    typedef Char *RepositoryId;
+    
+    Char* string_alloc(ULong len);
+    Char* string_dup(const Char* str);
+    void string_free(Char* str);
 
-	Char* string_alloc(ULong len);
-	Char* string_dup(const Char* str);
-	void string_free(Char* str);
-
-	WChar* wstring_alloc(ULong len);
-	WChar* wstring_dup(const WChar* str);
-	void wstring_free(WChar* str);
+    WChar* wstring_alloc(ULong len);
+    WChar* wstring_dup(const WChar* str);
+    void wstring_free(WChar* str);
 };
 
 

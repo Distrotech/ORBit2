@@ -136,6 +136,12 @@ IDLElement::get_cpp_method_prefix () const
 	return retval;
 }
 
+string
+IDLElement::get_c_method_prefix () const
+{
+    return get_c_typename ();
+}
+
 IDLScope const *
 IDLElement::getRootScope() const {
 	IDLScope const *run = getParentScope();

@@ -50,6 +50,8 @@ public:
 	virtual string get_idl_typename () const;
 	virtual string get_c_typename   () const;
 	virtual string get_cpp_typename () const;
+	
+	virtual string get_c_method_prefix   () const;
 	virtual string get_cpp_method_prefix () const;
 	
 

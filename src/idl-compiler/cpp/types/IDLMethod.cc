@@ -133,9 +133,9 @@ IDLMethod::stub_do_call (ostream &ostr,
 		
 		for (ExceptionList::const_iterator i = m_raises.begin ();
 		     i != m_raises.end (); i++)
-			{
-				(*i)->stub_check_and_propagate (ostr, indent);
-			}
+		{
+			(*i)->stub_check_and_propagate (ostr, indent);
+		}
 	}
 		
 	// Handle unknown exceptions

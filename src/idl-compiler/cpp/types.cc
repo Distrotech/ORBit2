@@ -52,7 +52,7 @@ static IDLString idlString;
 
 
 #define ORBITCPP_MAKE_SIMPLE_INT_TYPE(name,cname) \
-	static class IDL##name : public IDLSimpleType, public IDLUnionDescriminator {	\
+	static class IDL##name : public IDLSimpleType, public IDLUnionDiscriminator {	\
 	protected:									\
 		string get_fixed_cpp_typename () const {				\
 			return IDL_CORBA_NS "::" #name;					\
@@ -69,10 +69,18 @@ static IDLString idlString;
 		  	} while( labels.find(valstr) != labels.end() ); 		\
 			return valstr; 							\
 		}									\
+											\
+		string discr_get_c_typename () const {					\
+			return get_fixed_c_typename ();					\
+		}									\
+											\
+		string discr_get_cpp_typename () const {				\
+			return get_fixed_cpp_typename ();				\
+		}									\
 	} idl##name;
 
 #define ORBITCPP_MAKE_SIMPLE_CHAR_TYPE(name,cname)					\
-	static class IDL##name : public IDLSimpleType, public IDLUnionDescriminator {	\
+	static class IDL##name : public IDLSimpleType, public IDLUnionDiscriminator {	\
 	protected:									\
 		string get_fixed_cpp_typename () const {				\
 			return IDL_CORBA_NS "::" #name;					\
@@ -83,6 +91,14 @@ static IDLString idlString;
 	public:										\
 		string getDefaultValue(set<string> const &labels) const {		\
 			return "\'\\0\'"; 						\
+		}									\
+											\
+		string discr_get_c_typename () const {					\
+			return get_fixed_c_typename ();					\
+		}									\
+											\
+		string discr_get_cpp_typename () const {				\
+			return get_fixed_cpp_typename ();				\
 		}									\
 	} idl##name;
 
@@ -106,9 +122,7 @@ ORBITCPP_MAKE_SIMPLE_TYPE(Double, CORBA_double)
 ORBITCPP_MAKE_SIMPLE_TYPE(LongDouble, CORBA_long_double)
 
 
-#if 0 //!!!
 static IDLAny idlAny;
-#endif
 static IDLObject idlObject;
 static IDLTypeCode idlTypeCode;
 
@@ -153,11 +167,9 @@ IDLTypeParser::parseTypeSpec(IDLScope &scope,IDL_tree typespec) {
 			type = &idlString;
 			break;
 
-#if 0 //!!!
 		case IDLN_TYPE_ANY:
 			type = &idlAny;
 			break;
-#endif
 
 		case IDLN_TYPE_OBJECT:
 			type = &idlObject;

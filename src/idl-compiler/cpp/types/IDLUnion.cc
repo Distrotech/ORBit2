@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -26,124 +27,275 @@
 
 #include "IDLUnion.hh"
 
-IDLUnion::IDLUnion(string const &id,IDL_tree node,
-				   IDLType const &discriminatorType, IDLScope *parentscope = NULL)
-	: IDLStruct(id,node,parentscope),m_discriminatorType(discriminatorType) {
+#include "IDLTypedef.hh"
+
+IDLUnion::IDLUnion(const string                &id,
+		   IDL_tree                     node,
+		   const IDLUnionDiscriminator &discriminator,
+		   IDLScope                    *parentscope) :
+    IDLScope (id, node, parentscope),
+    m_discriminator (discriminator)
+{
+}
+
+const IDLUnionDiscriminator &
+IDLUnion::get_discriminator () const
+{
+	return m_discriminator;
 }
 
 bool
-IDLUnion::isVariableLength() const {
-	IDLUnion::const_iterator first = begin(), last = end();
-	while (first != last) {
-		IDLCaseStmt &stmt = (IDLCaseStmt &) **first++;
-		const IDLMember &member = stmt.getMember();
-		if(member.getType()->isVariableLength()){
-			return true;
-		}
-	}
+IDLUnion::is_fixed () const
+{
+#warning "WRITE ME"
 	return false;
+}
+
+void
+IDLUnion::typedef_decl_write (ostream          &ostr,
+			      Indent           &indent,
+			      IDLCompilerState &state,
+			      const IDLTypedef &target,
+			      const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+string
+IDLUnion::stub_decl_arg_get (const string     &cpp_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::stub_decl_arg_get" << endl;
+	return get_cpp_typename () + " " + cpp_id;
+	
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::stub_impl_arg_pre (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &cpp_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::stub_impl_arg_pre" << endl;
+
+#warning "WRITE ME"
+}
+	
+string
+IDLUnion::stub_impl_arg_call (const string     &cpp_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::stub_impl_arg_call" << endl;
+	return cpp_id;
+	
+#warning "WRITE ME"
+}
+	
+void
+IDLUnion::stub_impl_arg_post (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &cpp_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::stub_impl_arg_post" << endl;
+
+#warning "WRITE ME"
+}
+
+
+
+
+string
+IDLUnion::stub_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+	
+void
+IDLUnion::stub_impl_ret_pre (ostream &ostr,
+			   Indent  &indent,
+			   const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::stub_impl_ret_call (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &c_call_expression,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::stub_impl_ret_post (ostream          &ostr,
+			    Indent           &indent,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+	
+
+
+
+string
+IDLUnion::skel_decl_arg_get (const string     &c_id,
+			   IDL_param_attr    direction,
+			   const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::skel_decl_arg_get" << endl;
+
+	return get_c_typename () + " " + c_id;
+	
+	
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::skel_impl_arg_pre (ostream          &ostr,
+			   Indent           &indent,
+			   const string     &c_id,
+			   IDL_param_attr    direction,
+			   const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::skel_impl_arg_pre" << endl;
+
+#warning "WRITE ME"
+}
+	
+string
+IDLUnion::skel_impl_arg_call (const string     &c_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::skel_impl_arg_call" << endl;
+
+	return c_id;
+	
+#warning "WRITE ME"
+}
+	
+void
+IDLUnion::skel_impl_arg_post (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &c_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+	cerr << "IDLUnion::skel_impl_arg_pre" << endl;
+
+#warning "WRITE ME"
+}
+
+
+
+
+string
+IDLUnion::skel_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::skel_impl_ret_pre (ostream          &ostr,
+			   Indent           &indent,
+			   const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::skel_impl_ret_call (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &cpp_call_expression,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::skel_impl_ret_post (ostream          &ostr,
+			    Indent           &indent,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
 
 string
-IDLUnion::getDefaultDiscriminatorValue() const {
-	IDLUnionDescriminator const &desc =
-		dynamic_cast<IDLUnionDescriminator const &>(getDiscriminatorType());
-	set<string> members;
-
-	// collect all the union labels
-	const_iterator it = begin();
-	while (it != end()) {
-		IDLCaseStmt &casestmt = (IDLCaseStmt &) **it;
-		IDLCaseStmt::const_iterator csit = casestmt.labelsBegin(),
-			csend = casestmt.labelsEnd();
-		while (csit != csend) {
-			members.insert(*csit);
-			csit++;
-		}
-		it++;
-	}
-	return desc.getDefaultValue(members);
+IDLUnion::get_cpp_member_typename (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
-bool
-IDLUnion::hasExplicitDefault() const {
-	bool result = false;
-	const_iterator it = begin();
-	while (it != end()) {
-		IDLCaseStmt &casestmt = (IDLCaseStmt &) **it;
-		if(casestmt.isDefault()){
-			result = true;
-			break;
-		}
-		it++;
-	}
-	return result;
+string
+IDLUnion::get_c_member_typename (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
-
-void IDLUnion::writeCPPDeepCopyCode(ostream &ostr, Indent &indent, string const &ident,string const &target) const {
-
-	ostr << indent <<  "switch(" << target << "._d()) {" << endl;
-	const_iterator it = begin();
-	while (it != end()) {
-		// collect the case labels for this member
-		IDLCaseStmt &casestmt = (IDLCaseStmt &) **it;
-		IDLCaseStmt::const_iterator csit = casestmt.labelsBegin(),
-			csend = casestmt.labelsEnd();
-		if(casestmt.isDefault() == true) {
-			ostr << indent << "default:" << endl;
-		} else {
-			while (csit != csend) {
-				ostr << indent << "case " << *csit << ":" << endl;
-				csit++;
-			}
-		}
-		indent++;		
-		IDLMember const &member = casestmt.getMember();
-		ostr << indent << ident << "." << member.getCPPIdentifier()
-			 << "(" << target << "." << member.getCPPIdentifier() << "());" << endl;
-		ostr << indent << "break;" << endl;
-		it++;
-		indent--;
-	}
-	ostr << indent << "}" << endl << endl;
+string
+IDLUnion::get_seq_typename (unsigned int      length,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
-void IDLUnion::writeCDeepCopyCode(ostream &ostr, Indent &indent, string const &ident,string const &target) const {
-
-	ostr << indent <<  "switch(" << target << "._d) {" << endl;
-	const_iterator it = begin();
-	while (it != end()) {
-		// collect the case labels for this member
-		IDLCaseStmt &casestmt = (IDLCaseStmt &) **it;
-		IDLCaseStmt::const_iterator csit = casestmt.labelsBegin(),
-			csend = casestmt.labelsEnd();
-
-		if(casestmt.isDefault() == true) {
-			ostr << indent << "default:" << endl;
-		} else {
-			while (csit != csend) {
-				ostr << indent << "case " << *csit << ":" << endl;
-				csit++;
-			}
-		}
-		
-		indent++;		
-		IDLMember const &member = casestmt.getMember();
-		IDLType const *elemtype = member.getType();
-		elemtype->writeCDeepCopyCode(ostr,indent,ident+"._u."+member.getCIdentifier(),target+"._u."+member.getCIdentifier());	
-		ostr << indent << "break;" << endl;
-		it++;
-		indent--;
-	}
-
-	if(hasExplicitDefault() == false) {
-		ostr << indent++ << "default:" << endl;
-		ostr << indent-- << "break;" << endl;
-	}
-	
-	ostr << indent << "}" << endl << endl;
-	ostr << indent << ident << "._d = " << target << "._d;" << endl;
+string
+IDLUnion::member_decl_arg_get (const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
 }
 
+void
+IDLUnion::member_impl_arg_copy (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::member_init_cpp (ostream          &ostr,
+			 Indent           &indent,
+			 const string     &cpp_id,
+			 const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::member_init_c (ostream          &ostr,
+		       Indent           &indent,
+		       const string     &c_id,
+		       const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::member_pack_to_c (ostream          &ostr,
+			  Indent           &indent,
+			  const string     &cpp_id,
+			  const string     &c_id,
+			  const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+void
+IDLUnion::member_unpack_from_c  (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &c_id,
+			       const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}

@@ -29,16 +29,16 @@
 #define ORBITCPP_TYPES_IDLSEQUENCELIST
 
 #include "IDLSequence.hh"
+#include <set>
 
 class IDLSequenceList
 {
-	std::multiset<IDLSequence const*, IDLSequenceComp> m_seqSet;
+	std::set<string> m_seqs;
 
 public:
-	IDLSequenceList() {}
-	bool doesSeqTypeExist(IDLSequence const& seq);
-	void clear();
+        void register_seq (const IDLSequence &seq);
+	bool seq_of_type_exists (const IDLType &member_type);
+	void clear() { m_seqs.clear(); }
 };
 
 #endif //ORBITCPP_TYPES_IDLSEQUENCELIST
-

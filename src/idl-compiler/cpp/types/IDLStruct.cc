@@ -491,6 +491,26 @@ IDLStruct::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLStruct::get_seq_typename (unsigned int      length,
+			     const IDLTypedef *active_typedef) const
+{
+	string retval;
+
+	char *tmp = 0;
+	if (length)
+		tmp = g_strdup_printf (IDL_IMPL_NS "::CompoundBoundedSeq< %s, %d>",
+				       get_cpp_typename ().c_str (), length);
+	else
+		tmp = g_strdup_printf (IDL_IMPL_NS "::CompoundUnboundedSeq< %s >",
+				       get_cpp_typename ().c_str ());
+	
+	retval = tmp;
+	g_free (tmp);
+	
+	return retval;
+}
+
+string
 IDLStruct::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	string cpp_type = active_typedef ?
@@ -540,10 +560,10 @@ IDLStruct::member_pack_to_c (ostream          &ostr,
 
 void
 IDLStruct::member_unpack_from_c  (ostream          &ostr,
-			       Indent           &indent,
-			       const string     &cpp_id,
-			       const string     &c_id,
-			       const IDLTypedef *active_typedef) const
+				  Indent           &indent,
+				  const string     &cpp_id,
+				  const string     &c_id,
+				  const IDLTypedef *active_typedef) const
 {
 	// FIXME: Write passthrough optimization impl
 

@@ -50,7 +50,7 @@
 #include "types/IDLTypeCode.hh"
 #include "types/IDLStruct.hh"
 #include "types/IDLEnum.hh"
-//#include "types/IDLUnion.hh"
+#include "types/IDLUnion.hh"
 #include "types/IDLException.hh"
 
 class IDLTypedef;

@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -28,33 +29,150 @@
 #ifndef ORBITCPP_TYPES_IDLANY
 #define ORBITCPP_TYPES_IDLANY
 
-#include "IDLSimpleType.hh"
+#include "IDLType.hh"
 
-class IDLAny : public IDLSimpleType
+class IDLAny: public IDLType
 {
-	string getTypeName() const;
-	string getCTypeName() const ;
-	virtual bool isVariableLength() const ;
-	void getCPPStructCtorDeclarator(string const &id,string &typespec,string &dcl, IDLTypedef const *activeTypedef = NULL) const;
-	void writeCPPStructCtor(ostream &ostr,Indent &indent,string const &id, IDLTypedef const *activeTypedef = NULL) const;
-	void getCPPStubDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl, IDLTypedef const *activeTypedef=NULL) const;
-	string getCPPStubParameterTerm(IDL_param_attr attr,string const &id, IDLTypedef const *activeTypedef = NULL) const;
-	// stub return stuff
-	void getCPPStubReturnDeclarator(string const &id,string &typespec,string &dcl, IDLTypedef const *activeTypedef = NULL) const;
-	void writeCPPStubReturnPrepCode(ostream &ostr,Indent &indent, IDLTypedef const *activeTypedef = NULL) const;
-	string IDLAny::getCPPStubReturnAssignment() const;
-	void writeCPPStubReturnDemarshalCode(ostream &ostr,Indent &indent, IDLTypedef const *activeTypedef = NULL) const ;
+private:
+	string get_cpp_typename () const;
+	string get_c_typename   () const;
+	
+public:
+	bool is_fixed () const;
+	
+	////////////////////////////////////////////
+	// Creating typedefs
 
-	// skel stuff
-	void getCSkelDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl, IDLTypedef const *activeTypedef = NULL) const;
-	string getCPPSkelParameterTerm(IDL_param_attr attr,string const &id, IDLTypedef const *activeTypedef = NULL) const;
+	void typedef_decl_write (ostream          &ostr,
+				 Indent           &indent,
+				 IDLCompilerState &state,
+				 const IDLTypedef &target,
+				 const IDLTypedef *active_typedef = 0) const;
+	
+	////////////////////////////////////////////
+	// Stubs
 
-	// skel return stuff
-	void getCSkelReturnDeclarator(string const &id,string &typespec,string &dcl, IDLTypedef const *activeTypedef = NULL) const;
-	void writeCPPSkelReturnPrepCode(ostream &ostr,Indent &indent,bool passthru, IDLTypedef const *activeTypedef = NULL) const;
-	string getCPPSkelReturnAssignment(bool passthru, IDLTypedef const *activeTypedef = NULL) const;
-	void writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,bool passthru, IDLTypedef const *activeTypedef = NULL) const;
-	string getInvalidReturn() const;
+	// Stub declaration
+	string stub_decl_arg_get (const string     &cpp_id,
+				  IDL_param_attr    direction,
+				  const IDLTypedef *active_typedef = 0) const;
+	
+	string stub_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
+	
+	// Stub implementation -- argument
+	void stub_impl_arg_pre (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef = 0) const;
+	
+	string stub_impl_arg_call (const string     &cpp_id,
+				   IDL_param_attr    direction,
+				   const IDLTypedef *active_typedef = 0) const;
+	
+	void stub_impl_arg_post (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &cpp_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef = 0) const;
+
+	// Stub implementation -- return value
+	void stub_impl_ret_pre (ostream          &ostr,
+				Indent           &indent,
+				const IDLTypedef *active_typedef = 0) const;
+	
+	void stub_impl_ret_call (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &c_call_expression,
+				 const IDLTypedef *active_typedef = 0) const;
+
+	void stub_impl_ret_post (ostream          &ostr,
+				 Indent           &indent,
+				 const IDLTypedef *active_typedef = 0) const;
+	
+	////////////////////////////////////////////
+	// Skels
+
+	// Skel declaration
+	string skel_decl_arg_get (const string     &c_id,
+				  IDL_param_attr    direction,
+				  const IDLTypedef *active_typedef = 0) const;
+	
+	string skel_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
+	
+	// Skel implementation -- argument
+	void skel_impl_arg_pre (ostream          &ostr,
+				Indent           &indent,
+				const string     &c_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef = 0) const;
+	
+	string skel_impl_arg_call (const string     &c_id,
+				   IDL_param_attr    direction,
+				   const IDLTypedef *active_typedef = 0) const;
+	
+	void skel_impl_arg_post (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &c_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef = 0) const;
+
+	// Skel implementation -- return value
+	void skel_impl_ret_pre (ostream          &ostr,
+				Indent           &indent,
+				const IDLTypedef *active_typedef = 0) const;
+
+	void skel_impl_ret_call (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &cpp_call_expression,
+				 const IDLTypedef *active_typedef = 0) const;
+    
+	void skel_impl_ret_post (ostream          &ostr,
+				 Indent           &indent,
+				 const IDLTypedef *active_typedef = 0) const;
+
+	////////////////////////////////////////////
+	// Members of compund types
+
+	// Compund declaration
+	string get_cpp_member_typename (const IDLTypedef *active_typedef = 0) const;
+	string get_c_member_typename   (const IDLTypedef *active_typedef = 0) const;
+	string get_seq_typename (unsigned int      length,
+				 const IDLTypedef *active_typedef = 0) const;
+
+	string member_decl_arg_get (const IDLTypedef *active_typedef = 0) const;
+	
+	void member_impl_arg_copy (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const IDLTypedef *active_typedef = 0) const;
+	
+	// Initialization
+	void member_init_cpp (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const IDLTypedef *active_typedef = 0) const;
+	
+	void member_init_c   (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_id,
+			      const IDLTypedef *active_typedef = 0) const;
+
+	// Compound conversion: C++ -> C
+	void member_pack_to_c (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &c_id,
+			       const IDLTypedef *active_typedef = 0) const;
+	
+	// Compound conversion: C -> C++
+	void member_unpack_from_c (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const string     &c_id,
+				   const IDLTypedef *active_typedef = 0) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLANY
+
+

@@ -43,7 +43,7 @@
 
 
 namespace PortableServer {
-	ORBITCPP_DECLARE_SEQUENCE(ObjectId, CORBA::Octet, CORBA_octet, PortableServer_ObjectId)
+	ORBITCPP_DECLARE_SIMPLE_SEQUENCE(ObjectId, CORBA_octet);
 	
 	class ServantBase;
 	typedef ServantBase* Servant;

@@ -110,14 +110,16 @@ private:
 	bool m_isDefault;
 public:
 	// takes ownership of member
-	IDLCaseStmt(IDLMember *member, string const &id,
-				IDL_tree node,IDLScope *parentscope = NULL);
+	IDLCaseStmt (IDLMember    *member,
+		     const string &id,
+		     IDL_tree      node,
+		     IDLScope     *parentscope = 0);
 
 	~IDLCaseStmt() {
 		delete m_member;
 	}
   
-	IDLMember const &getMember() {
+	const IDLMember& get_member () const {
 		return *m_member;
 	}
 	const_iterator labelsBegin() const {
@@ -158,12 +160,16 @@ public:
 
 
 // An interface implemented by types that can be used as
-// union descriminators
-class IDLUnionDescriminator {
+// union discriminators
+class IDLUnionDiscriminator {
 public:
+#if 0
 	// retns a default value, given a set of values used to
 	// descriminate members of the union
-	virtual string getDefaultValue(set<string> const &labels)const =0;
+	virtual string getDefaultValue(set<string> const &labels)const = 0;
+#endif
+	virtual string discr_get_c_typename () const = 0;
+	virtual string discr_get_cpp_typename () const = 0;
 };
 
 #endif

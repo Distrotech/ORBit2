@@ -54,8 +54,8 @@ public:
 protected:
 	void doTypedef(IDL_tree node,IDLScope &scope);
 	void doStruct(IDL_tree node,IDLScope &scope);
-#if 0 //!!!
 	void doUnion(IDL_tree node,IDLScope &scope);
+#if 0 //!!!
 	void doNative(IDL_tree node,IDLScope &scope);
     
 #endif //!!!
@@ -65,7 +65,9 @@ protected:
 	void doAttribute(IDL_tree node,IDLScope &scope);
 	void doMember(IDL_tree node,IDLScope &scope);
 	void doCaseStmt(IDL_tree node,IDLScope &scope);
-
+	
+	void doSequence (IDL_tree node, IDLScope &scope);
+    
 	void doException(IDL_tree node,IDLScope &scope);
 	void doInterface(IDL_tree node,IDLScope &scope);
 	void doForwardDcl(IDL_tree node,IDLScope &scope);

@@ -715,6 +715,13 @@ IDLArray::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLArray::get_seq_typename (unsigned int      length,
+			    const IDLTypedef *active_typedef) const
+{
+#warning "WRITE ME"
+}
+
+string
 IDLArray::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	g_assert (active_typedef);

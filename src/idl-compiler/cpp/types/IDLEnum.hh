@@ -33,7 +33,7 @@
 
 class IDLEnum
 : public IDLUserDefSimpleType,
-  public IDLUnionDescriminator
+  public IDLUnionDiscriminator
 {
 public:
 	typedef std::vector<IDLEnumComponent *> 	ElementsVec;
@@ -48,7 +48,15 @@ public:
 	const_iterator begin() const;
 	const_iterator end() const;
 
-	virtual string getDefaultValue(set<string> const &labels) const;
+	string getDefaultValue(set<string> const &labels) const;
+
+	string discr_get_c_typename () const {
+		return get_fixed_c_typename ();
+	}
+	
+	string discr_get_cpp_typename () const {
+		return get_fixed_cpp_typename ();
+	}
 };
 
 #endif //ORBITCPP_TYPES_IDLENUM

@@ -48,6 +48,27 @@ namespace CORBA {
 
 	public:		
 		// begin ORBitcpp extension
+
+		struct SeqTraits
+        {
+			typedef CORBA::Any               value_t;
+			typedef CORBA_any                c_value_t;
+			typedef CORBA_sequence_CORBA_any c_seq_t;
+
+			static c_seq_t* alloc_c () {
+				return CORBA_sequence_CORBA_any__alloc ();
+			}
+			static c_value_t* alloc_c_buf (CORBA::ULong l) {
+				return CORBA_sequence_CORBA_any_allocbuf (l);
+			}
+				 
+			static void pack_elem (const value_t &cpp_elem, c_value_t &c_elem) {
+			}
+
+			static void unpack_elem (value_t &cpp_elem, const c_value_t &c_elem) {
+			}
+        };
+
 		
 		CORBA_any* _orbitcpp_cobj () const {
 			return const_cast<CORBA_any*> (&m_target);
