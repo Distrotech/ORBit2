@@ -1,5 +1,9 @@
 2003-10-10  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.8.2
+
+2003-10-10  Michael Meeks  <michael@ximian.com>
+
 	* ORBit.spec.in: fix from Joe Pranevich.
 
 	* src/orb/GIOP/giop-recv-buffer.c
