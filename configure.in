@@ -16,7 +16,7 @@ AC_SUBST(LT_VERSION)
 
 ORBIT_MAJOR_VERSION=2
 ORBIT_MINOR_VERSION=3
-ORBIT_MICRO_VERSION=109
+ORBIT_MICRO_VERSION=110
 ORBIT_VERSION=$ORBIT_MAJOR_VERSION.$ORBIT_MINOR_VERSION.$ORBIT_MICRO_VERSION
 AC_SUBST(ORBIT_MAJOR_VERSION)
 AC_SUBST(ORBIT_MINOR_VERSION)
@@ -205,7 +205,6 @@ src/idl/CORBA/Makefile
 src/idl/CORBA_PIDL/Makefile
 src/idl/interop/Makefile
 src/idl/misc/Makefile
-src/cleanup/Makefile
 src/orb/Makefile
 src/orb/include/Makefile
 src/orb/util/Makefile

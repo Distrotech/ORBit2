@@ -1,3 +1,14 @@
+Version 2.3.110
+
+	* leak fixes (Michael)
+		+ async code
+		+ connection dispose
+		+ GIOP 1.0 service contexts
+
+	* trace cleanup (Sean Atkinson)
+		+ us timestamp printing
+		+ ellipsize long strings
+
 Version 2.3.109
 
 	* Bug fixes
