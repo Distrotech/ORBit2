@@ -76,5 +76,5 @@ ORBit_OAObject_invoke (ORBit_OAObject     adaptor_obj,
 		       gpointer           data,
 		       CORBA_Environment *ev)
 {
-	return adaptor_obj->interface->invoke(adaptor_obj, ret, args, ctx, data, ev);
+	adaptor_obj->interface->invoke(adaptor_obj, ret, args, ctx, data, ev);
 }
