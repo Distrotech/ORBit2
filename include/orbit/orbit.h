@@ -11,7 +11,9 @@
 #define ORBIT_H 1
 
 #include <orbit/orbit-types.h>
-#include <orbit/GIOP/giop.h>
+#ifdef ORBIT2_INTERNAL_API
+#  include <orbit/GIOP/giop.h>
+#endif
 #include <orbit/orb-core/orb-core.h>
 #include <orbit/poa/poa.h>
 #include <orbit/dynamic/dynamic.h>

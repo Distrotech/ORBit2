@@ -11,6 +11,7 @@ INCLUDES =					\
 	-DORBIT2_INTERNAL_API			\
 	$(WARN_CFLAGS)				\
 	$(ORBIT_DEBUG_CFLAGS)			\
+	$(LOCAL_LINC_CFLAGS)			\
 	$(ORBIT_CFLAGS)
 
 libORBit_2_la_SOURCES=orbit-init.c orbit-init.h
@@ -18,6 +19,7 @@ libORBit_2_la_SOURCES=orbit-init.c orbit-init.h
 libORBit_2_la_LDFLAGS =               \
 	-version-info $(LT_VERSION)   \
 	-no-undefined		      \
+	$(LOCAL_LINC_LIBS)            \
 	$(ORBIT_LIBS)                 \
 	-lpopt
 

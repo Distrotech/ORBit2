@@ -2,7 +2,7 @@
 #define GIOP_H 1
 
 #include <linc/linc.h>
-#define ORBIT_SSL_SUPPORT LINC_SSL_SUPPORT
+#define ORBIT_SSL_SUPPORT LINK_SSL_SUPPORT
 
 #include <orbit/GIOP/giop-types.h>
 #include <orbit/GIOP/giop-send-buffer.h>

@@ -71,7 +71,7 @@ CORBA_unsigned_long         giop_recv_buffer_get_request_id (GIOPRecvBuffer *buf
 char                       *giop_recv_buffer_get_opname     (GIOPRecvBuffer *buf);
 CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey     (GIOPRecvBuffer *buf);
 void                        giop_recv_list_zap              (GIOPConnection *cnx);
-gboolean                    giop_connection_handle_input    (LINCConnection *lcnx);
+gboolean                    giop_connection_handle_input    (LinkConnection *lcnx);
 void                        giop_connection_destroy_frags   (GIOPConnection *cnx);
 
 gpointer                    giop_recv_thread_fn             (gpointer        data);

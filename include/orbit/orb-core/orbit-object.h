@@ -2,7 +2,6 @@
 #define ORBIT_OBJECT_H 1
 
 #include <glib.h>
-#include <linc/linc.h>
 
 G_BEGIN_DECLS
 

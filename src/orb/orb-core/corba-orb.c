@@ -42,20 +42,20 @@ static char        *orbit_debug_options      = NULL;
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
 {
-	LINCProtocolInfo     *info;
-	LINCConnectionOptions create_options = 0;
+	LinkProtocolInfo     *info;
+	LinkConnectionOptions create_options = 0;
 
-	LINC_MUTEX_LOCK (orb->lock);
+	LINK_MUTEX_LOCK (orb->lock);
 	
 	if (orb->servers) { /* beaten to it */
-		LINC_MUTEX_UNLOCK (orb->lock);
+		LINK_MUTEX_UNLOCK (orb->lock);
 		return;
 	}
 
 	if (orbit_local_only)
-		create_options |= LINC_CONNECTION_LOCAL_ONLY;
+		create_options |= LINK_CONNECTION_LOCAL_ONLY;
 
-	for (info = linc_protocol_all (); info->name; info++) {
+	for (info = link_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
 
 		if (!ORBit_proto_use (info->name))
@@ -69,13 +69,13 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 		if (server) {
 			orb->servers = g_slist_prepend (orb->servers, server);
 
-			if (!(info->flags & LINC_PROTOCOL_SECURE)) {
+			if (!(info->flags & LINK_PROTOCOL_SECURE)) {
 				if (!ORBit_proto_use ("SSL"))
 					continue;
 
 				server = giop_server_new (
 					orb->default_giop_version, info->name,
-					NULL, NULL, LINC_CONNECTION_SSL | create_options,
+					NULL, NULL, LINK_CONNECTION_SSL | create_options,
 					orb);
 
 				if (server)
@@ -93,7 +93,7 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 
 	orb->profiles = IOP_start_profiles (orb);
 
-	LINC_MUTEX_UNLOCK (orb->lock);
+	LINK_MUTEX_UNLOCK (orb->lock);
 }
 
 static void
@@ -107,7 +107,7 @@ strip_object_profiles (gpointer o, gpointer b, gpointer c)
 static void
 ORBit_ORB_shutdown_servers (CORBA_ORB orb)
 {
-	LINC_MUTEX_LOCK (orb->lock);
+	LINK_MUTEX_LOCK (orb->lock);
 
 	if (orb->objrefs) {
 		g_hash_table_foreach (orb->objrefs,
@@ -123,7 +123,7 @@ ORBit_ORB_shutdown_servers (CORBA_ORB orb)
 	g_slist_free (orb->servers); 
 	orb->servers = NULL;
 
-	LINC_MUTEX_UNLOCK (orb->lock);
+	LINK_MUTEX_UNLOCK (orb->lock);
 }
 
 static ORBitGenUidType
@@ -188,7 +188,7 @@ GMutex *ORBit_RootObject_lifecycle_lock = NULL;
 static void
 ORBit_locks_initialize (void)
 {
-	ORBit_RootObject_lifecycle_lock = linc_mutex_new ();
+	ORBit_RootObject_lifecycle_lock = link_mutex_new ();
 }
 
 #ifdef G_ENABLE_DEBUG
@@ -302,7 +302,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_RootObject_init (&retval->root_object, &orb_if);
 	/* released by CORBA_ORB_destroy */
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
-	_ORBit_orb->lock = linc_mutex_new ();
+	_ORBit_orb->lock = link_mutex_new ();
 	g_atexit (shutdown_orb);
 
 	retval->default_giop_version = GIOP_LATEST;
@@ -955,14 +955,14 @@ CORBA_boolean
 CORBA_ORB_work_pending (CORBA_ORB          orb,
 			CORBA_Environment *ev)
 {
-	return linc_main_pending ();
+	return link_main_pending ();
 }
 
 void
 CORBA_ORB_perform_work (CORBA_ORB          orb,
 			CORBA_Environment *ev)
 {
-	linc_main_iteration (FALSE);
+	link_main_iteration (FALSE);
 }
 
 void

@@ -35,14 +35,14 @@ ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
 	int adaptor_id;
 	CORBA_long *tptr;
 
-	LINC_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 	{
 		adaptor_id = orb->adaptors->len;
 
 		g_ptr_array_set_size (orb->adaptors, adaptor_id + 1);
 		g_ptr_array_index    (orb->adaptors, adaptor_id) = adaptor;
 	}
-	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	adaptor->thread_hint = ORBIT_THREAD_HINT_NONE;
 
@@ -77,7 +77,7 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 	if (adaptorId < 0 || adaptorId >= orb->adaptors->len)
 		return NULL;
 
-	LINC_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 	{
 		adaptor = g_ptr_array_index (orb->adaptors, adaptorId);
 
@@ -88,7 +88,7 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 		else
 			ORBit_RootObject_duplicate_T (adaptor);
 	}
-	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	return adaptor;
 }

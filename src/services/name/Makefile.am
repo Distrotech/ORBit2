@@ -18,6 +18,7 @@ libORBitCosNaming_2_la_LDFLAGS =					\
 	-version-info $(LT_VERSION)					\
 	-no-undefined							\
 	$(ORBIT_NAME_LIBS)						\
+	$(LOCAL_LINC_LIBS)						\
 	$(top_builddir)/src/orb/libORBit-2.la
 
 INCLUDES =				\
@@ -27,6 +28,7 @@ INCLUDES =				\
 	-DORBIT2_INTERNAL_API		\
 	$(WARN_CFLAGS)			\
 	$(DISABLE_DEPRECATED_CFLAGS)	\
+	$(LOCAL_LINC_CFLAGS)		\
 	$(ORBIT_NAME_CFLAGS)
 
 CosNaming_built = 							\

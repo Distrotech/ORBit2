@@ -1,5 +1,5 @@
-#ifndef _LINC_DEBUG_H
-#define _LINC_DEBUG_H
+#ifndef _LINK_DEBUG_H
+#define _LINK_DEBUG_H
 
 /*
  * Enables debug on the Unix socket / connection
@@ -12,10 +12,10 @@
 #else
 #  include <stdio.h>
 #  define d_printf(format...) fprintf (stderr, format)
-#  define STATE_NAME(s) (((s) == LINC_CONNECTED) ? "Connected" : \
-			 ((s) == LINC_CONNECTING) ? "Connecting" : \
-			 ((s) == LINC_DISCONNECTED) ? "Disconnected" : \
+#  define STATE_NAME(s) (((s) == LINK_CONNECTED) ? "Connected" : \
+			 ((s) == LINK_CONNECTING) ? "Connecting" : \
+			 ((s) == LINK_DISCONNECTED) ? "Disconnected" : \
 			 "Invalid state")
 #endif
 
-#endif /* _LINC_DEBUG_H */
+#endif /* _LINK_DEBUG_H */

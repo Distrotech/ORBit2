@@ -108,10 +108,8 @@ fi
 AC_PROG_AWK
 
 GLIB_REQUIRED=2.0.0
-LINC_REQUIRED=1.1.1
 LIBIDL_REQUIRED=0.7.4
 AC_SUBST(GLIB_REQUIRED)
-AC_SUBST(LINC_REQUIRED)
 AC_SUBST(LIBIDL_REQUIRED)
 
 dnl Check for pkg-config version; want >= 0.14.0 because of -pthread bug
@@ -128,9 +126,13 @@ if ! $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
   AC_MSG_ERROR(You need at least version $PKG_CONFIG_MIN_VERSION of pkg-config)
 fi
 
+LOCAL_LINC_LIBS='$(top_builddir)/linc2/src/liblinc.la'
+LOCAL_LINC_CFLAGS='-I$(top_srcdir)/linc2/include'
+AC_SUBST(LOCAL_LINC_LIBS)
+AC_SUBST(LOCAL_LINC_CFLAGS)
+
 dnl Checks for libraries.
 PKG_CHECK_MODULES(ORBIT, \
-	linc >= $LINC_REQUIRED \
 	glib-2.0 >= $GLIB_REQUIRED \
 	gobject-2.0 >= $GLIB_REQUIRED \
 	gmodule-2.0 >= $GLIB_REQUIRED)
@@ -147,7 +149,6 @@ AC_SUBST(ORBIT_IDL_CFLAGS)
 
 PKG_CHECK_MODULES(ORBIT_NAME, \
 	libIDL-2.0 >= $LIBIDL_REQUIRED \
-	linc >= $LINC_REQUIRED \
 	glib-2.0 >= $GLIB_REQUIRED)
 AC_SUBST(ORBIT_NAME_LIBS)
 AC_SUBST(ORBIT_NAME_CFLAGS)

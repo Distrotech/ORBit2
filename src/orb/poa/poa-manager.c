@@ -6,8 +6,8 @@
 
 GMutex *_ORBit_poa_manager_lock = NULL;
 
-#define POA_MGR_LOCK(pmgr)   LINC_MUTEX_LOCK (_ORBit_poa_manager_lock);
-#define POA_MGR_UNLOCK(pmgr) LINC_MUTEX_UNLOCK (_ORBit_poa_manager_lock);
+#define POA_MGR_LOCK(pmgr)   LINK_MUTEX_LOCK (_ORBit_poa_manager_lock);
+#define POA_MGR_UNLOCK(pmgr) LINK_MUTEX_UNLOCK (_ORBit_poa_manager_lock);
 
 static void
 ORBit_POAManager_free_fn (ORBit_RootObject obj)

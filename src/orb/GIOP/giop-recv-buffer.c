@@ -530,7 +530,7 @@ giop_recv_list_zap (GIOPConnection *cnx)
 	GList  *l, *next;
 	GSList *sl, *notify = NULL;
 
-	LINC_MUTEX_LOCK (giop_queued_messages_lock);
+	LINK_MUTEX_LOCK (giop_queued_messages_lock);
 
 	for (l = giop_queued_messages; l; l = next) {
 		GIOPMessageQueueEntry *ent = l->data;
@@ -552,7 +552,7 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		}
 	}
 
-	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
 
 	for (sl = notify; sl; sl = sl->next) {
 		GIOPMessageQueueEntry *ent = sl->data;
@@ -624,9 +624,9 @@ void
 giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 {
 #warning We need to hold a cnx ref on ent, and release it here.
-	LINC_MUTEX_LOCK (giop_queued_messages_lock);
+	LINK_MUTEX_LOCK (giop_queued_messages_lock);
 	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
-	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
 }
 
 void
@@ -643,13 +643,13 @@ giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
 	ent->request_id = request_id;
 	ent->buffer = NULL;
 
-	LINC_MUTEX_LOCK   (giop_queued_messages_lock);
+	LINK_MUTEX_LOCK   (giop_queued_messages_lock);
 #ifdef DEBUG
 	g_warning ("Push XX:%p:(%p) - %d", ent, ent->async_cb,
 		   g_list_length (giop_queued_messages));
 #endif
 	giop_queued_messages = g_list_prepend (giop_queued_messages, ent);
-	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
 }
 
 void
@@ -665,7 +665,7 @@ static inline gboolean
 check_got (GIOPMessageQueueEntry *ent)
 {
 	return (ent->buffer || !ent->cnx ||
-		(ent->cnx->parent.status == LINC_DISCONNECTED));
+		(ent->cnx->parent.status == LINK_DISCONNECTED));
 }
 
 GIOPRecvBuffer *
@@ -690,8 +690,8 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 	} else { /* non-threaded */
 
 		while (!ent->buffer && ent->cnx &&
-		       (ent->cnx->parent.status != LINC_DISCONNECTED))
-			linc_main_iteration (TRUE);
+		       (ent->cnx->parent.status != LINK_DISCONNECTED))
+			link_main_iteration (TRUE);
 	}
 
 	giop_recv_list_destroy_queue_entry (ent);
@@ -761,7 +761,7 @@ giop_recv_buffer_get_opname (GIOPRecvBuffer *buf)
 void
 giop_recv_buffer_init (void)
 {
-	giop_queued_messages_lock = linc_mutex_new ();
+	giop_queued_messages_lock = link_mutex_new ();
 }
 
 static void
@@ -1006,7 +1006,7 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 
 	error = FALSE;
 
-	LINC_MUTEX_LOCK (giop_queued_messages_lock);
+	LINK_MUTEX_LOCK (giop_queued_messages_lock);
 
 	for (l = giop_queued_messages; l; l = l->next) {
 		ent = l->data;
@@ -1056,7 +1056,7 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 			(giop_queued_messages, l);
 	}
 
-	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
 
 	if (ent && !error) {
 		gboolean async = FALSE;
@@ -1145,7 +1145,7 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
  * giving a nice deadlock.
  */
 gboolean
-giop_connection_handle_input (LINCConnection *lcnx)
+giop_connection_handle_input (LinkConnection *lcnx)
 {
 	GIOPRecvBuffer *buf;
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
@@ -1158,14 +1158,14 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 		buf = cnx->incoming_msg;
 
-		n = linc_connection_read (
+		n = link_connection_read (
 			lcnx, buf->cur, buf->left_to_read, FALSE);
 
 		if (n == 0) /* We'll be back */
 			return TRUE;
 
 		if (n < 0 || !buf->left_to_read) { /* HUP */
-			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
+			link_connection_state_changed (lcnx, LINK_DISCONNECTED);
 			return TRUE;
 		}
 
@@ -1247,7 +1247,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	case GIOP_LOCATEREPLY:
 		dprintf (MESSAGES, "handling reply\n");
 		if (handle_reply (buf, FALSE)) /* dodgy inbound data, pull the cnx */
-			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
+			link_connection_state_changed (lcnx, LINK_DISCONNECTED);
 		break;
 
 	case GIOP_REQUEST:
@@ -1270,7 +1270,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	case GIOP_CLOSECONNECTION:
 		dprintf (MESSAGES, "received close connection\n");
 		giop_recv_buffer_unuse (buf);
-		linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
+		link_connection_state_changed (lcnx, LINK_DISCONNECTED);
 		break;
 
 	case GIOP_FRAGMENT:
@@ -1296,8 +1296,8 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	/* Zap it for badness.
 	 * XXX We should probably handle oversized
 	 * messages more graciously XXX */
-	linc_connection_state_changed (LINC_CONNECTION (cnx),
-				       LINC_DISCONNECTED);
+	link_connection_state_changed (LINK_CONNECTION (cnx),
+				       LINK_DISCONNECTED);
 
 	return TRUE;
 }
@@ -1323,7 +1323,7 @@ giop_recv_buffer_use_buf (void)
 gpointer
 giop_recv_thread_fn (gpointer data)
 {
-	linc_main_loop_run ();
+	link_main_loop_run ();
 
 	/* FIXME: need to be able to quit without waiting ... */
 
@@ -1349,11 +1349,11 @@ giop_recv_handle_queued_input (void)
 	for (;;) {
 		GIOPMessageQueueEntry *ent;
 
-		LINC_MUTEX_LOCK (tdata->lock); /* ent_lock */
+		LINK_MUTEX_LOCK (tdata->lock); /* ent_lock */
 		
 		ent = g_queue_pop_head (tdata->async_ents);
 
-		LINC_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
+		LINK_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
 
 		dprintf (MESSAGES, "Queue pop %p => %p", ent, ent ? ent->buffer : NULL);
 		if (ent)

@@ -4,7 +4,7 @@
 #ifndef CORBA_SMALL_H
 #define CORBA_SMALL_H 1
 
-#include <orbit/GIOP/giop.h>
+#include <glib-object.h>
 #include <orbit/orb-core/orbit-interface.h>
 
 G_BEGIN_DECLS
@@ -14,6 +14,8 @@ typedef struct {
 	ORBit_IInterface            **interfaces;
 	CORBA_sequence_CORBA_TypeCode types;
 } ORBit_IModule;
+
+const char    *ORBit_get_safe_tmp      (void);
 
 /* Builtin allocators */
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);
@@ -82,6 +84,8 @@ void           ORBit_small_invoke_stub_n (CORBA_Object        object,
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
 #ifdef ORBIT2_INTERNAL_API
+
+#include <orbit/GIOP/giop.h>
 
 void           ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 					   GIOPRecvBuffer    *recv_buffer,

@@ -22,11 +22,11 @@ void
 CORBA_exception_free (CORBA_Environment *ev)
 {
 	if (ev->_major != CORBA_NO_EXCEPTION) {
-		LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+		LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
 		CORBA_exception_free_T (ev);
 
-		LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 	}
 }
 

@@ -20,7 +20,7 @@
 
 #undef LOCAL_DEBUG
 
-static char *linc_tmpdir = NULL;
+static char *link_tmpdir = NULL;
 
 /*
  * make_local_tmpdir:
@@ -72,7 +72,7 @@ make_local_tmpdir (const char *dirname)
 }
 
 /**
- * linc_set_tmpdir:
+ * link_set_tmpdir:
  * @dir: directory name.
  *
  * Set the temporary directory used by linc to @dir. 
@@ -82,16 +82,16 @@ make_local_tmpdir (const char *dirname)
  * otherwise this method will g_error.
  **/
 void
-linc_set_tmpdir (const char *dir)
+link_set_tmpdir (const char *dir)
 {
-	g_free (linc_tmpdir);
-	linc_tmpdir = g_strdup (dir);
+	g_free (link_tmpdir);
+	link_tmpdir = g_strdup (dir);
 
-	make_local_tmpdir (linc_tmpdir);
+	make_local_tmpdir (link_tmpdir);
 }
 
 /**
- * linc_get_tmpdir:
+ * link_get_tmpdir:
  * @void: 
  * 
  * Fetches the directory name used by linc to whack
@@ -100,31 +100,31 @@ linc_set_tmpdir (const char *dir)
  * Return value: the g_allocated socket name.
  **/
 char *
-linc_get_tmpdir (void)
+link_get_tmpdir (void)
 {
-	return g_strdup (linc_tmpdir ? linc_tmpdir : "");
+	return g_strdup (link_tmpdir ? link_tmpdir : "");
 }
 
 #ifdef HAVE_SOCKADDR_SA_LEN
-#define LINC_SET_SOCKADDR_LEN(saddr, len)                     \
+#define LINK_SET_SOCKADDR_LEN(saddr, len)                     \
 		((struct sockaddr *)(saddr))->sa_len = (len)
 #else 
-#define LINC_SET_SOCKADDR_LEN(saddr, len)
+#define LINK_SET_SOCKADDR_LEN(saddr, len)
 #endif
 
 #if defined(HAVE_RESOLV_H) && defined(AF_INET6) && defined(RES_USE_INET6)
-#define LINC_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
-#define LINC_RESOLV_UNSET_IPV6   _res.options &= ~RES_USE_INET6
+#define LINK_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
+#define LINK_RESOLV_UNSET_IPV6   _res.options &= ~RES_USE_INET6
 #else
-#define LINC_RESOLV_SET_IPV6
-#define LINC_RESOLV_UNSET_IPV6
+#define LINK_RESOLV_SET_IPV6
+#define LINK_RESOLV_UNSET_IPV6
 #endif
 
 
 
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
 const char *
-linc_get_local_hostname (void)
+link_get_local_hostname (void)
 {
 	static char local_host[NI_MAXHOST] = { 0 };
 
@@ -172,7 +172,7 @@ ipv4_addr_from_addr (struct in_addr *dest_addr,
 }
 
 static gboolean
-linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
+link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 			      const struct sockaddr   *saddr,
 			      LincSockLen              saddr_len)
 {
@@ -193,10 +193,10 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = AI_CANONNAME;
 
-		if (getaddrinfo(linc_get_local_hostname(), NULL, &hints, &local_addr) != 0) {
+		if (getaddrinfo(link_get_local_hostname(), NULL, &hints, &local_addr) != 0) {
 			if (!warned++)
 				g_warning ("can't getaddrinfo on '%s'",
-					   linc_get_local_hostname ());
+					   link_get_local_hostname ());
 			return FALSE;
 		}
 	}
@@ -250,14 +250,14 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 	return FALSE;
 #else   /*HAVE_GETADDRINFO*/	
 	if (!local_hostent) {
-		LINC_RESOLV_SET_IPV6;
-		local_hostent = gethostbyname (linc_get_local_hostname ());
+		LINK_RESOLV_SET_IPV6;
+		local_hostent = gethostbyname (link_get_local_hostname ());
 	}
 
 	if (!local_hostent) {
 		if (!warned++)
 			g_warning ("can't gethostbyname on '%s'",
-				   linc_get_local_hostname ());
+				   link_get_local_hostname ());
 		return FALSE;
 	}
 
@@ -319,8 +319,8 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 #endif
 
 /*
- * linc_protocol_get_sockaddr_ipv4:
- * @proto: the #LINCProtocolInfo structure for the IPv4 protocol.
+ * link_protocol_get_sockaddr_ipv4:
+ * @proto: the #LinkProtocolInfo structure for the IPv4 protocol.
  * @hostname: the hostname.
  * @portnum: the port number.
  * @saddr_len: location in which to store the returned structure's length.
@@ -333,7 +333,7 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
  */
 #ifdef AF_INET
 static struct sockaddr *
-linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
+link_protocol_get_sockaddr_ipv4 (const LinkProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *portnum,
 				 LincSockLen            *saddr_len)
@@ -351,7 +351,7 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 
 	*saddr_len = sizeof (struct sockaddr_in);
 
-	LINC_SET_SOCKADDR_LEN (saddr, sizeof (struct sockaddr_in));
+	LINK_SET_SOCKADDR_LEN (saddr, sizeof (struct sockaddr_in));
 
 	saddr->sin_family = AF_INET;
 	saddr->sin_port   = htons (atoi (portnum));
@@ -359,7 +359,7 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 	if ((saddr->sin_addr.s_addr = inet_addr (hostname)) == INADDR_NONE) {
 	        int i;
 
-		LINC_RESOLV_UNSET_IPV6;
+		LINK_RESOLV_UNSET_IPV6;
 #ifdef HAVE_RESOLV_H
 		if (!(_res.options & RES_INIT))
 			res_init();
@@ -388,8 +388,8 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 #endif /* AF_INET */
 
 /*
- * linc_protocol_get_sockaddr_ipv6:
- * @proto: the #LINCProtocolInfo structure for the IPv6 protocol.
+ * link_protocol_get_sockaddr_ipv6:
+ * @proto: the #LinkProtocolInfo structure for the IPv6 protocol.
  * @hostname: the hostname.
  * @portnum: the port number
  * @saddr_len: location in which to store the returned structure's length.
@@ -404,7 +404,7 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
  */
 #ifdef AF_INET6
 static struct sockaddr *
-linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
+link_protocol_get_sockaddr_ipv6 (const LinkProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *portnum,
 				 LincSockLen            *saddr_len)
@@ -426,7 +426,7 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 
 	*saddr_len = sizeof (struct sockaddr_in6);
 
-	LINC_SET_SOCKADDR_LEN (saddr, sizeof (struct sockaddr_in6));
+	LINK_SET_SOCKADDR_LEN (saddr, sizeof (struct sockaddr_in6));
 
 	saddr->sin6_family = AF_INET6;
 	saddr->sin6_port = htons (atoi (portnum));
@@ -461,7 +461,7 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 		res_init();
 #endif
 
-	LINC_RESOLV_SET_IPV6;
+	LINK_RESOLV_SET_IPV6;
 	host = gethostbyname (hostname);
 	if (!host || host->h_addrtype != AF_INET6) {
 		g_free (saddr);
@@ -477,8 +477,8 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 
 #ifdef AF_UNIX
 /*
- * linc_protocol_get_sockaddr_unix:
- * @proto: the #LINCProtocolInfo structure for the UNIX sockets protocol.
+ * link_protocol_get_sockaddr_unix:
+ * @proto: the #LinkProtocolInfo structure for the UNIX sockets protocol.
  * @dummy: not used.
  * @path: the path name of the UNIX socket.
  * @saddr_len: location in which to store the returned structure's length.
@@ -492,14 +492,14 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
  *               succeeds, NULL otherwise.
  */
 static struct sockaddr *
-linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
+link_protocol_get_sockaddr_unix (const LinkProtocolInfo *proto,
 				 const char             *dummy,
 				 const char             *path,
 				 LincSockLen            *saddr_len)
 {
 	struct sockaddr_un *saddr;
 	int                 pathlen;
-	char                buf[LINC_UNIX_PATH_MAX], *actual_path;
+	char                buf[LINK_UNIX_PATH_MAX], *actual_path;
 
 	g_assert (proto->family == AF_UNIX);
 
@@ -513,7 +513,7 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 		gettimeofday (&t, NULL);
 		g_snprintf (buf, sizeof (buf),
 			    "%s/linc-%x-%x-%x%x",
-			    linc_tmpdir ? linc_tmpdir : "",
+			    link_tmpdir ? link_tmpdir : "",
 			    pid, idx,
 			    (guint) (rand() ^ t.tv_sec),
 			    (guint) (idx ^ t.tv_usec));
@@ -535,7 +535,7 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 
 	*saddr_len = sizeof (struct sockaddr_un) - sizeof (saddr->sun_path) + pathlen;
 
-	LINC_SET_SOCKADDR_LEN (saddr, *saddr_len);
+	LINK_SET_SOCKADDR_LEN (saddr, *saddr_len);
 
 	saddr->sun_family =  AF_UNIX;
 	strncpy (saddr->sun_path, actual_path, sizeof (saddr->sun_path) - 1);
@@ -546,7 +546,7 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 #endif /* AF_UNIX */
 
 /*
- * linc_protocol_get_sockaddr_irda:
+ * link_protocol_get_sockaddr_irda:
  * @proto:
  * @hostname:
  * @service:
@@ -559,7 +559,7 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
  */
 #ifdef AF_IRDA
 static struct sockaddr *
-linc_protocol_get_sockaddr_irda (const LINCProtocolInfo *proto,
+link_protocol_get_sockaddr_irda (const LinkProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *service,
 				 LincSockLen            *saddr_len)
@@ -571,8 +571,8 @@ linc_protocol_get_sockaddr_irda (const LINCProtocolInfo *proto,
 #endif /* AF_IRDA */
 
 /*
- * linc_protocol_get_sockaddr:
- * @proto: a #LINCProtocolInfo structure.
+ * link_protocol_get_sockaddr:
+ * @proto: a #LinkProtocolInfo structure.
  * @hostname: protocol dependant host information.
  * @service: protocol dependant service information.
  * @saddr_len: location in which to store the returned structure's length.
@@ -584,7 +584,7 @@ linc_protocol_get_sockaddr_irda (const LINCProtocolInfo *proto,
  *               succeeds, NULL otherwise.
  */
 struct sockaddr *
-linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
+link_protocol_get_sockaddr (const LinkProtocolInfo *proto,
 			    const char             *hostname,
 			    const char             *service,
 			    LincSockLen            *saddr_len)		   
@@ -596,7 +596,7 @@ linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 }
 
 /*
- * linc_protocol_get_sockinfo_ipv46:
+ * link_protocol_get_sockinfo_ipv46:
  * @host: char pointer describing the hostname.
  * @port: the portnumber.
  * @hostname: pointer by which the hostname string is returned.
@@ -614,13 +614,13 @@ linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 static gboolean
-linc_protocol_get_sockinfo_ipv46 (const char      *host,
+link_protocol_get_sockinfo_ipv46 (const char      *host,
 				  guint            port,
 				  gchar          **hostname,
 				  char           **portnum)
 {
 	if (!host)  
-		if (!(host = linc_get_local_hostname ()))
+		if (!(host = link_get_local_hostname ()))
 			return FALSE;
 	
 	if (hostname)
@@ -638,8 +638,8 @@ linc_protocol_get_sockinfo_ipv46 (const char      *host,
 }
 
 /*
- * linc_protocol_get_sockinfo_ipv4:
- * @proto: the #LINCProtocolInfo structure for the IPv4 protocol.
+ * link_protocol_get_sockinfo_ipv4:
+ * @proto: the #LinkProtocolInfo structure for the IPv4 protocol.
  * @sockaddr: a #sockaddr_in structure desribing the socket.
  * @hostname: pointer by which the hostname string is returned.
  * @portnum: pointer by which the port number string is returned.
@@ -656,7 +656,7 @@ linc_protocol_get_sockinfo_ipv46 (const char      *host,
  */
 #ifdef AF_INET
 static gboolean
-linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
+link_protocol_get_sockinfo_ipv4 (const LinkProtocolInfo  *proto,
 				 const struct sockaddr   *saddr,
 				 gchar                  **hostname,
 				 gchar                  **portnum)
@@ -676,14 +676,14 @@ linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
 			hname = host->h_name;
 	}
 
-	return linc_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
+	return link_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
 						 hostname, portnum);
 }
 #endif /* AF_INET */
 
 /*
- * linc_protocol_get_sockinfo_ipv6:
- * @proto: the #LINCProtocolInfo structure for the IPv6 protocol.
+ * link_protocol_get_sockinfo_ipv6:
+ * @proto: the #LinkProtocolInfo structure for the IPv6 protocol.
  * @sockaddr: a #sockaddr_in structure desribing the socket.
  * @hostname: pointer by which the hostname string is returned.
  * @portnum: pointer by which the port number string is returned.
@@ -714,7 +714,7 @@ linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
 #endif
 
 static gboolean
-linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
+link_protocol_get_sockinfo_ipv6 (const LinkProtocolInfo  *proto,
 				 const struct sockaddr   *saddr,
 				 gchar                  **hostname,
 				 gchar                  **portnum)
@@ -747,15 +747,15 @@ linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
 	}
 #endif /* HAVE_GETNAMEINFO */
 
-	return linc_protocol_get_sockinfo_ipv46 (hname, sa_in6->sin6_port, 
+	return link_protocol_get_sockinfo_ipv46 (hname, sa_in6->sin6_port, 
 						 hostname, portnum);
 }
 
 #endif /* AF_INET6 */
 
 /*
- * linc_protocol_get_sockinfo_unix:
- * @proto: a #LINCProtocolInfo structure.
+ * link_protocol_get_sockinfo_unix:
+ * @proto: a #LinkProtocolInfo structure.
  * @sockaddr: a #sockaddr_un structure desribing the socket.
  * @hostname: pointer by which the hostname string is returned.
  * @service: pointer by which the sockets pathname string is returned.
@@ -772,7 +772,7 @@ linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
  */
 #ifdef AF_UNIX
 static gboolean
-linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
+link_protocol_get_sockinfo_unix (const LinkProtocolInfo  *proto,
 				 const struct sockaddr   *saddr,
 				 gchar                  **hostname,
 				 gchar                  **sock_path)
@@ -784,7 +784,7 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
 	if (hostname) {
 		const char *local_host;
 
-		if (!(local_host = linc_get_local_hostname ()))
+		if (!(local_host = link_get_local_hostname ()))
 			return FALSE;
 
 		*hostname = g_strdup (local_host);
@@ -798,8 +798,8 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
 #endif /* AF_UNIX */
 
 /*
- * linc_protocol_get_sockinfo_irda:
- * @proto: a #LINCProtocolInfo structure.
+ * link_protocol_get_sockinfo_irda:
+ * @proto: a #LinkProtocolInfo structure.
  * @sockaddr: a #sockaddr_irda structure desribing the socket.
  * @hostname: 
  * @service: 
@@ -808,7 +808,7 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
  */
 #ifdef AF_IRDA
 static gboolean
-linc_protocol_get_sockinfo_irda (const LINCProtocolInfo  *proto,
+link_protocol_get_sockinfo_irda (const LinkProtocolInfo  *proto,
 				 const struct sockaddr   *saddr,
 				 gchar                  **hostname,
 				 gchar                  **portnum)
@@ -820,8 +820,8 @@ linc_protocol_get_sockinfo_irda (const LINCProtocolInfo  *proto,
 #endif /* AF_IRDA */
 
 /*
- * linc_protocol_get_sockinfo:
- * @proto: a #LINCProtocolInfo structure.
+ * link_protocol_get_sockinfo:
+ * @proto: a #LinkProtocolInfo structure.
  * @sockaddr: a #sockadrr structure desribing the socket.
  * @hostname: pointer by which the hostname string is returned.
  * @service: pointer by which the service string is returned.
@@ -838,7 +838,7 @@ linc_protocol_get_sockinfo_irda (const LINCProtocolInfo  *proto,
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 gboolean
-linc_protocol_get_sockinfo (const LINCProtocolInfo  *proto,
+link_protocol_get_sockinfo (const LinkProtocolInfo  *proto,
 			    const struct sockaddr   *saddr,
 			    gchar                  **hostname,
 			    gchar                  **service)
@@ -850,7 +850,7 @@ linc_protocol_get_sockinfo (const LINCProtocolInfo  *proto,
 }
 
 /**
- * linc_protocol_is_local:
+ * link_protocol_is_local:
  * @proto: the protocol
  * @saddr: the socket address of a connecting client.
  * 
@@ -860,7 +860,7 @@ linc_protocol_get_sockinfo (const LINCProtocolInfo  *proto,
  * Return value: TRUE if the connection is local, else FALSE
  **/
 gboolean
-linc_protocol_is_local (const LINCProtocolInfo  *proto,
+link_protocol_is_local (const LinkProtocolInfo  *proto,
 			const struct sockaddr   *saddr,
 			LincSockLen              saddr_len)
 {
@@ -880,7 +880,7 @@ linc_protocol_is_local (const LINCProtocolInfo  *proto,
  */
 #ifdef AF_UNIX
 static void
-linc_protocol_unix_destroy (int         fd,
+link_protocol_unix_destroy (int         fd,
 			    const char *dummy,
 			    const char *pathname)
 {
@@ -888,7 +888,7 @@ linc_protocol_unix_destroy (int         fd,
 }
 
 static gboolean
-linc_protocol_unix_is_local (const LINCProtocolInfo *proto,
+link_protocol_unix_is_local (const LinkProtocolInfo *proto,
 			     const struct sockaddr   *saddr,
 			     LincSockLen              saddr_len)
 {
@@ -897,9 +897,9 @@ linc_protocol_unix_is_local (const LINCProtocolInfo *proto,
 #endif /* AF_UNIX */
 
 /*
- * linc_protocol_tcp_setup:
+ * link_protocol_tcp_setup:
  * @fd: file descriptor of the socket.
- * @cnx_flags: a #LINCConnectionOptions value.
+ * @cnx_flags: a #LinkConnectionOptions value.
  *
  * Sets the TCP_NODELAY option on the TCP socket.
  *
@@ -907,11 +907,11 @@ linc_protocol_unix_is_local (const LINCProtocolInfo *proto,
  */
 #if defined(AF_INET) || defined(AF_INET6)
 static void
-linc_protocol_tcp_setup (int                   fd,
-			 LINCConnectionOptions cnx_flags)
+link_protocol_tcp_setup (int                   fd,
+			 LinkConnectionOptions cnx_flags)
 {
 #ifdef TCP_NODELAY
-	if (!(cnx_flags & LINC_CONNECTION_SSL)) {
+	if (!(cnx_flags & LINK_CONNECTION_SSL)) {
 		struct protoent *proto;
 		int              on = 1;
 
@@ -926,7 +926,7 @@ linc_protocol_tcp_setup (int                   fd,
 }
 #endif /* defined(AF_INET) || defined(AF_INET6) */
 
-static LINCProtocolInfo static_linc_protocols[] = {
+static LinkProtocolInfo static_link_protocols[] = {
 #if defined(AF_INET)
 	{
 	"IPv4", 			/* name */
@@ -934,11 +934,11 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	sizeof (struct sockaddr_in), 	/* addr_len */
 	IPPROTO_TCP, 			/* stream_proto_num */
 	0, 				/* flags */
-	linc_protocol_tcp_setup, 	/* setup */
+	link_protocol_tcp_setup, 	/* setup */
 	NULL, 				/* destroy */
-	linc_protocol_get_sockaddr_ipv4,/* get_sockaddr */
-	linc_protocol_get_sockinfo_ipv4,/* get_sockinfo */
-	linc_protocol_is_local_ipv46    /* is_local */
+	link_protocol_get_sockaddr_ipv4,/* get_sockaddr */
+	link_protocol_get_sockinfo_ipv4,/* get_sockinfo */
+	link_protocol_is_local_ipv46    /* is_local */
 	},
 #endif
 #if defined(AF_INET6)
@@ -948,11 +948,11 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	sizeof (struct sockaddr_in6), 	/* addr_len */
 	IPPROTO_TCP, 			/* stream_proto_num */
 	0, 				/* flags */
-	linc_protocol_tcp_setup, 	/* setup */
+	link_protocol_tcp_setup, 	/* setup */
 	NULL, 				/* destroy */
-	linc_protocol_get_sockaddr_ipv6,/* get_sockaddr */
-	linc_protocol_get_sockinfo_ipv6,/* get_sockinfo */
-	linc_protocol_is_local_ipv46    /* is_local */
+	link_protocol_get_sockaddr_ipv6,/* get_sockaddr */
+	link_protocol_get_sockinfo_ipv6,/* get_sockinfo */
+	link_protocol_is_local_ipv46    /* is_local */
 	},
 #endif
 #ifdef AF_UNIX
@@ -961,12 +961,12 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	AF_UNIX, 					/* family */
 	sizeof (struct sockaddr_un), 			/* addr_len */
 	0, 						/* stream_proto_num */
-	LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, 	/* flags */
+	LINK_PROTOCOL_SECURE|LINK_PROTOCOL_NEEDS_BIND, 	/* flags */
 	NULL,  						/* setup */
-	linc_protocol_unix_destroy,  			/* destroy */
-	linc_protocol_get_sockaddr_unix, 		/* get_sockaddr */
-	linc_protocol_get_sockinfo_unix, 		/* get_sockinfo */
-	linc_protocol_unix_is_local                     /* is_local */
+	link_protocol_unix_destroy,  			/* destroy */
+	link_protocol_get_sockaddr_unix, 		/* get_sockaddr */
+	link_protocol_get_sockinfo_unix, 		/* get_sockinfo */
+	link_protocol_unix_is_local                     /* is_local */
 	},
 #endif
 #ifdef AF_IRDA
@@ -975,11 +975,11 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	AF_IRDA, 				/* family */
 	sizeof (struct sockaddr_irda), 		/* addr_len */
 	0, 					/* stream_proto_num */
-	LINC_PROTOCOL_NEEDS_BIND, 		/* flags */
+	LINK_PROTOCOL_NEEDS_BIND, 		/* flags */
 	NULL, 					/* setup */
 	NULL, 					/* destroy */
-	linc_protocol_get_sockaddr_irda, 	/* get_sockaddr */
-	linc_protocol_get_sockinfo_irda, 	/* get_sockinfo */
+	link_protocol_get_sockaddr_irda, 	/* get_sockaddr */
+	link_protocol_get_sockinfo_irda, 	/* get_sockinfo */
 	NULL                                    /* is_local */
 	},
 #endif
@@ -989,8 +989,8 @@ static LINCProtocolInfo static_linc_protocols[] = {
 /* 
  * Routines for AF_IRDA 
  * FIXME: These are left here only as a reference for implementing
- *        linc_protocol_get_sockinfo_irda and 
- *        linc_protocol_get_sockaddr_irda
+ *        link_protocol_get_sockinfo_irda and 
+ *        link_protocol_get_sockaddr_irda
  *       
  */
 #if 0
@@ -1044,7 +1044,7 @@ irda_find_device (guint32  *addr,
 	}
 
  out:
-	LINC_CLOSE (fd);
+	LINK_CLOSE (fd);
 
 	return retval;
 }
@@ -1179,7 +1179,7 @@ irda_getnameinfo (const struct sockaddr *sa,
 #endif /* 0 */
 
 void
-linc_protocol_destroy_cnx (const LINCProtocolInfo *proto,
+link_protocol_destroy_cnx (const LinkProtocolInfo *proto,
 			   int                     fd,
 			   const char             *host,
 			   const char             *service)
@@ -1190,13 +1190,13 @@ linc_protocol_destroy_cnx (const LINCProtocolInfo *proto,
 		if (proto->destroy)
 			proto->destroy (fd, host, service);
 		
-		LINC_CLOSE (fd);
+		LINK_CLOSE (fd);
 	}
 }
 
 
 void
-linc_protocol_destroy_addr (const LINCProtocolInfo *proto,
+link_protocol_destroy_addr (const LinkProtocolInfo *proto,
 			    int                     fd,
 			    struct sockaddr        *saddr)
 {
@@ -1211,67 +1211,67 @@ linc_protocol_destroy_addr (const LINCProtocolInfo *proto,
 			proto->destroy (fd, NULL, addr_un->sun_path);
 		}
 #endif
-		LINC_CLOSE (fd);
+		LINK_CLOSE (fd);
 		g_free (saddr);
 	}
 
 }
 
 /*
- * linc_protocol_all:
+ * link_protocol_all:
  *
  * Returns a list of protocols supported by linc.
  *
- * Note: the list is terminated by a #LINCProtocolInfo with a
+ * Note: the list is terminated by a #LinkProtocolInfo with a
  *       NULL name pointer.
  *
- * Return Value: an array of #LINCProtocolInfo structures.
+ * Return Value: an array of #LinkProtocolInfo structures.
  */
-LINCProtocolInfo * const
-linc_protocol_all (void)
+LinkProtocolInfo * const
+link_protocol_all (void)
 {
-	return static_linc_protocols;
+	return static_link_protocols;
 }
 
 /*
- * linc_protocol_find:
+ * link_protocol_find:
  * @name: name of the protocol.
  *
  * Find a protocol identified by @name.
  *
- * Return Value: a pointer to a valid #LINCProtocolInfo structure if 
+ * Return Value: a pointer to a valid #LinkProtocolInfo structure if 
  *               the protocol is supported by linc, NULL otherwise.
  */
-LINCProtocolInfo * const
-linc_protocol_find (const char *name)
+LinkProtocolInfo * const
+link_protocol_find (const char *name)
 {
 	int i;
 
-	for (i = 0; static_linc_protocols [i].name; i++) {
-		if (!strcmp (name, static_linc_protocols [i].name))
-			return &static_linc_protocols [i];
+	for (i = 0; static_link_protocols [i].name; i++) {
+		if (!strcmp (name, static_link_protocols [i].name))
+			return &static_link_protocols [i];
 	}
 
 	return NULL;
 }
 
 /*
- * linc_protocol_find_num:
+ * link_protocol_find_num:
  * @family: the family identifier of the protocol - i.e. AF_*
  *
  * Find a protocol identified by @family.
  *
- * Return Value: a pointer to a valid #LINCProtocolInfo structure if
+ * Return Value: a pointer to a valid #LinkProtocolInfo structure if
  *               the protocol is supported by linc, NULL otherwise.
  */
-LINCProtocolInfo * const
-linc_protocol_find_num (const int family)
+LinkProtocolInfo * const
+link_protocol_find_num (const int family)
 {
 	int i;
 
-	for (i = 0; static_linc_protocols [i].name; i++) {
-		if (family == static_linc_protocols [i].family)
-			return &static_linc_protocols [i];
+	for (i = 0; static_link_protocols [i].name; i++) {
+		if (family == static_link_protocols [i].family)
+			return &static_link_protocols [i];
 	}
 
 	return NULL;

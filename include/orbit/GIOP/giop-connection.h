@@ -22,7 +22,7 @@ G_BEGIN_DECLS
 				         GIOP_TYPE_IS_CONNECTION (((GTypeClass*) (class))->g_type))
 
 struct _GIOPConnection {
-	LINCConnection  parent;
+	LinkConnection  parent;
 
 	GIOPRecvBuffer *incoming_msg;
 	GList          *incoming_frags;
@@ -33,7 +33,7 @@ struct _GIOPConnection {
 };
 
 typedef struct {
-	LINCConnectionClass parent_class;
+	LinkConnectionClass parent_class;
 } GIOPConnectionClass;
 
 GType           giop_connection_get_type      (void) G_GNUC_CONST;
@@ -47,8 +47,8 @@ GIOPConnection *giop_connection_initiate      (gpointer              orb_data,
 void            giop_connections_shutdown     (void);
 void            giop_connection_close         (GIOPConnection       *cnx);
 
-#define         giop_connection_ref(cnx)      linc_connection_ref(cnx)
-#define         giop_connection_unref(cnx)    linc_connection_unref(cnx)
+#define         giop_connection_ref(cnx)      link_connection_ref(cnx)
+#define         giop_connection_unref(cnx)    link_connection_unref(cnx)
 
 #endif /* ORBIT2_INTERNAL_API */
 

@@ -123,11 +123,11 @@ ORBit_freekids_via_TypeCode (CORBA_TypeCode tc, gpointer mem)
 {
 	gpointer ret;
 
-	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
 	ret = ORBit_freekids_via_TypeCode_T (mem, tc);
 
-	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	return ret;
 }
@@ -208,11 +208,11 @@ ORBit_free (gpointer mem)
 	if (!mem)
 		return;
 
-	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
 	ORBit_free_T (mem);
 
-	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 }
 
 CORBA_char *

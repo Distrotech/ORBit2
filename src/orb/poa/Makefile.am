@@ -15,6 +15,7 @@ INCLUDES =						\
 	$(WARN_CFLAGS)					\
 	$(ORBIT_DEBUG_CFLAGS)				\
 	$(DISABLE_DEPRECATED_CFLAGS)			\
+	$(LOCAL_LINC_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
 POA_IDLOUT=poa-defs-common.c

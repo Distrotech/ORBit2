@@ -9,8 +9,8 @@
  * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
  *                 Sun Microsystems, Inc.
  */
-#ifndef _LINC_PROTOCOL_H_
-#define _LINC_PROTOCOL_H_
+#ifndef _LINK_PROTOCOL_H_
+#define _LINK_PROTOCOL_H_
 
 #include <glib/gmacros.h>
 
@@ -25,51 +25,51 @@ G_BEGIN_DECLS
 typedef unsigned int LincSockLen;
 
 typedef enum {
-	LINC_PROTOCOL_SECURE     = 1<<0,
-	LINC_PROTOCOL_NEEDS_BIND = 1<<1
-} LINCProtocolFlags;
+	LINK_PROTOCOL_SECURE     = 1<<0,
+	LINK_PROTOCOL_NEEDS_BIND = 1<<1
+} LinkProtocolFlags;
 
-typedef void (*LINCProtocolSetupFunc)       (int                     fd,
-					     LINCConnectionOptions   cnx_flags);
-typedef void (*LINCProtocolDestroyFunc)     (int                     fd,
+typedef void (*LinkProtocolSetupFunc)       (int                     fd,
+					     LinkConnectionOptions   cnx_flags);
+typedef void (*LinkProtocolDestroyFunc)     (int                     fd,
 					     const char             *host_info,
 					     const char             *serv_info);
-typedef struct sockaddr *(*LINCProtocolGetSockAddrFunc) (const LINCProtocolInfo *proto,
+typedef struct sockaddr *(*LinkProtocolGetSockAddrFunc) (const LinkProtocolInfo *proto,
 							 const char             *hostname,
 							 const char             *service,
 							 LincSockLen            *saddr_len);
 
-typedef gboolean (*LINCProtocolGetSockInfoFunc) (const LINCProtocolInfo *proto,
+typedef gboolean (*LinkProtocolGetSockInfoFunc) (const LinkProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
 						 gchar                 **hostname,
 						 gchar                 **service);
 
-typedef gboolean (*LINCProtocolIsLocal)         (const LINCProtocolInfo *proto,
+typedef gboolean (*LinkProtocolIsLocal)         (const LinkProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
 						 LincSockLen             saddr_len);
 
-struct _LINCProtocolInfo {
+struct _LinkProtocolInfo {
 	const char                 *name;
 	int                         family;
 	int                         addr_len;
 	int                         stream_proto_num;
-	LINCProtocolFlags           flags;
+	LinkProtocolFlags           flags;
 
-	LINCProtocolSetupFunc       setup;
-	LINCProtocolDestroyFunc     destroy;
-	LINCProtocolGetSockAddrFunc get_sockaddr;
-	LINCProtocolGetSockInfoFunc get_sockinfo;
-	LINCProtocolIsLocal         is_local;
+	LinkProtocolSetupFunc       setup;
+	LinkProtocolDestroyFunc     destroy;
+	LinkProtocolGetSockAddrFunc get_sockaddr;
+	LinkProtocolGetSockInfoFunc get_sockinfo;
+	LinkProtocolIsLocal         is_local;
 	/* This structure is private and may be extended in future */
 	gpointer                    dummy[8];
 };
 
-LINCProtocolInfo * const linc_protocol_find     (const char *name);
-LINCProtocolInfo * const linc_protocol_find_num (const int   family);
-LINCProtocolInfo * const linc_protocol_all      (void);
-char                    *linc_get_tmpdir        (void);
-void                     linc_set_tmpdir        (const char *dir);
+LinkProtocolInfo * const link_protocol_find     (const char *name);
+LinkProtocolInfo * const link_protocol_find_num (const int   family);
+LinkProtocolInfo * const link_protocol_all      (void);
+char                    *link_get_tmpdir        (void);
+void                     link_set_tmpdir        (const char *dir);
 
 G_END_DECLS
 
-#endif /* _LINC_PROTOCOL_H_ */
+#endif /* _LINK_PROTOCOL_H_ */

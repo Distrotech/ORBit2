@@ -2,9 +2,11 @@ lib_LTLIBRARIES=liblinc.la
 
 bin_PROGRAMS = linc-cleanup-sockets
 
+#	-I$(top_builddir)/include  
+#	-I$(top_srcdir)/include    
 INCLUDES =                         \
-	-I$(top_builddir)/include  \
-	-I$(top_srcdir)/include    \
+	-I$(top_builddir)/linc2/include  \
+	-I$(top_srcdir)/linc2/include    \
 	$(LINC_CFLAGS)             \
 	$(SSL_CFLAGS)              \
 	$(WARN_CFLAGS)             \

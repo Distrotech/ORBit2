@@ -1581,7 +1581,7 @@ testAsync (test_TestFactory   factory,
 }
 
 static void
-broken_cb (LINCConnection *connection, gboolean *broken)
+broken_cb (LinkConnection *connection, gboolean *broken)
 {
 	*broken = TRUE;
 }
@@ -1722,7 +1722,7 @@ testPingPong (test_TestFactory   factory,
 }
 
 static void
-dummy_cb (LINCConnection *connection, gboolean *invoked)
+dummy_cb (LinkConnection *connection, gboolean *invoked)
 {
 	*invoked = TRUE;
 }
@@ -1993,9 +1993,9 @@ static void
 dump_protos (void)
 {
 	int enabled_count = 0;
-	LINCProtocolInfo *info;
+	LinkProtocolInfo *info;
 
-	for (info = linc_protocol_all (); info->name; info++) {
+	for (info = link_protocol_all (); info->name; info++) {
 		gboolean enabled;
 
 		if ((enabled = ORBit_proto_use (info->name)))

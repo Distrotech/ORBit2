@@ -9,60 +9,60 @@
  * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
  *                 Sun Microsystems, Inc.
  */
-#ifndef _LINC_PRIVATE_H_
-#define _LINC_PRIVATE_H_
+#ifndef _LINK_PRIVATE_H_
+#define _LINK_PRIVATE_H_
 
 #include "config.h"
 #include <linc/linc.h>
 
-#ifdef LINC_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
 
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
-extern SSL_METHOD *linc_ssl_method;
-extern SSL_CTX *linc_ssl_ctx;
+extern SSL_METHOD *link_ssl_method;
+extern SSL_CTX *link_ssl_ctx;
 
-#endif /* LINC_SSL_SUPPORT */
+#endif /* LINK_SSL_SUPPORT */
 
 typedef struct {
 	enum {
-		LINC_COMMAND_DISCONNECT,
-		LINC_COMMAND_SET_CONDITION
+		LINK_COMMAND_DISCONNECT,
+		LINK_COMMAND_SET_CONDITION
 	} type;
-} LINCCommand;
+} LinkCommand;
 
 typedef struct {
-	LINCCommand     cmd;
-	LINCConnection *cnx;
+	LinkCommand     cmd;
+	LinkConnection *cnx;
 	GIOCondition    condition;
-} LINCCommandSetCondition;
+} LinkCommandSetCondition;
 
 typedef struct {
-	LINCCommand     cmd;
-	LINCConnection *cnx;
-} LINCCommandDisconnect;
+	LinkCommand     cmd;
+	LinkConnection *cnx;
+} LinkCommandDisconnect;
 
-void linc_exec_command (LINCCommand *cmd);
-void linc_connection_exec_disconnect (LINCCommandDisconnect *cmd);
-void linc_connection_exec_set_condition (LINCCommandSetCondition *cmd);
-void _linc_connection_thread_init (gboolean thread);
+void link_exec_command (LinkCommand *cmd);
+void link_connection_exec_disconnect (LinkCommandDisconnect *cmd);
+void link_connection_exec_set_condition (LinkCommandSetCondition *cmd);
+void _link_connection_thread_init (gboolean thread);
 
 /*
  * Really raw internals, exported for the tests
  */
 
-struct _LINCServerPrivate {
+struct _LinkServerPrivate {
 	int        fd;
 	LincWatch *tag;
 	GSList    *connections;
 };
 
-struct _LINCWriteOpts {
+struct _LinkWriteOpts {
 	gboolean block_on_write;
 };
 
-struct _LINCConnectionPrivate {
-#ifdef LINC_SSL_SUPPORT
+struct _LinkConnectionPrivate {
+#ifdef LINK_SSL_SUPPORT
 	SSL         *ssl;
 #endif
 	LincWatch   *tag;
@@ -84,50 +84,50 @@ typedef struct {
 
 struct _LincWatch {
 	GSource *main_source;
-	GSource *linc_source;
+	GSource *link_source;
 };
 
-#define LINC_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
-#define LINC_IN_CONDS  (G_IO_PRI|G_IO_IN)
+#define LINK_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
+#define LINK_IN_CONDS  (G_IO_PRI|G_IO_IN)
 
-#define LINC_CLOSE(fd)  while (close (fd) < 0 && errno == EINTR)
+#define LINK_CLOSE(fd)  while (close (fd) < 0 && errno == EINTR)
 
-const char      *linc_get_local_hostname    (void);
+const char      *link_get_local_hostname    (void);
 
-struct sockaddr *linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
+struct sockaddr *link_protocol_get_sockaddr (const LinkProtocolInfo *proto,
 					     const char             *hostname,
 					     const char             *service,
 					     LincSockLen            *saddr_len);
 
-gboolean         linc_protocol_get_sockinfo (const LINCProtocolInfo *proto,
+gboolean         link_protocol_get_sockinfo (const LinkProtocolInfo *proto,
 					     const struct sockaddr  *saddr,
 					     gchar                 **hostname,
 					     gchar                 **service);
 
-gboolean         linc_protocol_is_local     (const LINCProtocolInfo  *proto,
+gboolean         link_protocol_is_local     (const LinkProtocolInfo  *proto,
 					     const struct sockaddr   *saddr,
 					     LincSockLen              saddr_len);
 
-void             linc_protocol_destroy_cnx  (const LINCProtocolInfo  *proto,
+void             link_protocol_destroy_cnx  (const LinkProtocolInfo  *proto,
 					     int                      fd,
 					     const char              *host,
 					     const char              *service);
 
-void             linc_protocol_destroy_addr (const LINCProtocolInfo  *proto,
+void             link_protocol_destroy_addr (const LinkProtocolInfo  *proto,
 					     int                      fd,
 					     struct sockaddr         *saddr);
 
-LincWatch       *linc_io_add_watch_fd       (int                     fd,
+LincWatch       *link_io_add_watch_fd       (int                     fd,
 					     GIOCondition            condition,
 					     GIOFunc                 func,
 					     gpointer                user_data);
 
-void             linc_watch_set_condition   (LincWatch              *w,
+void             link_watch_set_condition   (LincWatch              *w,
 					     GIOCondition            condition);
 
-GMainContext    *linc_main_get_context      (void);
-gboolean         linc_get_threaded          (void);
-gboolean         linc_in_io_thread          (void);
-gboolean         linc_mutex_is_locked       (GMutex *lock);
+GMainContext    *link_main_get_context      (void);
+gboolean         link_get_threaded          (void);
+gboolean         link_in_io_thread          (void);
+gboolean         link_mutex_is_locked       (GMutex *lock);
 
-#endif /* _LINC_PRIVATE_H */
+#endif /* _LINK_PRIVATE_H */

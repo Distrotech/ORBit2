@@ -118,10 +118,10 @@ ORBit_RootObject_duplicate (gpointer obj)
 	ORBit_RootObject robj = obj;
 
 	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC) {
-		LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+		LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 		robj->refs++;
 		total_refs++;
-		LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 	}
 
 	return obj;
@@ -179,11 +179,11 @@ ORBit_RootObject_release (gpointer obj)
 
 	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC) {
 
-		LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+		LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
 		do_unref (robj);
 
-		LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 	}
 }
 

@@ -1,5 +1,27 @@
 2003-05-30  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c (giop_tmpdir_init):
+	guard against double init.
+	(ORBit_get_safe_tmp): impl. for hp/others.
+
+	* */Makefile.am: add LOCAL_LINC_LIBS/CFLAGS
+
+	* include/orbit/orbit.h: only include GIOP
+	if we need to.
+
+	* include/orbit/GIOP/Makefile.am: don't
+	install the GIOP headers - they're private.
+
+	* configure.in: include linc2/include in the
+	include path.
+
+	* Updated *.[ch] with:
+
+		#!/usr/bin/perl -w -pi.bak
+		s/linc_/link_/g;
+		s/LINC([^_])/Link$1/g;
+		s/LINC/LINK/g;
+
 	* configure.in: merge a chunk of checks in
 	for linc2
 

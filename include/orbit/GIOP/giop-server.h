@@ -30,14 +30,14 @@ G_BEGIN_DECLS
 )
 
 typedef struct {
-	LINCServer  parent;
+	LinkServer  parent;
 
 	gpointer    orb_data;
 	GIOPVersion giop_version;
 } GIOPServer;
 
 typedef struct {
-	LINCServerClass parent_class;
+	LinkServerClass parent_class;
 } GIOPServerClass;
 
 GType       giop_server_get_type (void) G_GNUC_CONST;
@@ -45,7 +45,7 @@ GIOPServer *giop_server_new      (GIOPVersion            giop_version,
 				  const char             *proto_name,
 				  const char            *local_host_info,
 				  const char            *local_serv_info,
-				  LINCConnectionOptions  create_options,
+				  LinkConnectionOptions  create_options,
 				  gpointer               create_orb_data);
 
 #endif /* ORBIT2_INTERNAL_API */

@@ -19,7 +19,7 @@ main (int argc, char *argv[])
 }
 #else
 
-LINCWriteOpts  *non_blocking = NULL;
+LinkWriteOpts  *non_blocking = NULL;
 GIOPServer     *server     = NULL;
 GIOPConnection *server_cnx = NULL;
 GIOPConnection *cnx        = NULL;
@@ -33,9 +33,9 @@ wait_for_disconnect (void)
 
 	/* a main_pending just looks for IO and not HUPs */
 	for (i = 0; i < 10; i++) {
-		if (linc_main_pending ())
+		if (link_main_pending ())
 			i = 0;
-		linc_main_iteration (FALSE);
+		link_main_iteration (FALSE);
 	}
 }
 
@@ -70,8 +70,8 @@ hook_unexpected_frag_reply (GIOPRecvBuffer *buf)
 static void
 test_fragments (void)
 {
-	linc_connection_write (
-		LINC_CONNECTION (cnx),
+	link_connection_write (
+		LINK_CONNECTION (cnx),
 		giop_fragment_data,
 		sizeof (giop_fragment_data),
 		non_blocking);
@@ -80,7 +80,7 @@ test_fragments (void)
 
 	fragment_done = FALSE;
 	while (!fragment_done)
-		linc_main_iteration (FALSE);
+		link_main_iteration (FALSE);
 
 	giop_debug_hook_unexpected_reply = NULL;
 }
@@ -130,7 +130,7 @@ test_spoofing (void)
 		giop_send_buffer_unuse (reply);
 
 		while (!spoof_done)
-			linc_main_iteration (TRUE);
+			link_main_iteration (TRUE);
 
 		switch (i) {
 		case 0: /* valid */
@@ -139,7 +139,7 @@ test_spoofing (void)
 		case 1: /* invalid */
 			g_assert (!spoof_succeeded);
 			wait_for_disconnect ();
-			g_assert (LINC_CONNECTION (cnx)->status == LINC_DISCONNECTED);
+			g_assert (LINK_CONNECTION (cnx)->status == LINK_DISCONNECTED);
 			break;
 		default:
 			g_assert_not_reached ();
@@ -167,20 +167,20 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 {
 	server = giop_server_new (GIOP_1_2, "UNIX", NULL, NULL, 0, orb);
 	server_cnx = NULL;
-	g_assert (LINC_IS_SERVER (server));
+	g_assert (LINK_IS_SERVER (server));
 
 	giop_debug_hook_new_connection = run_test_hook_new_connection;
 
 	cnx = giop_connection_initiate (
 		orb, "UNIX",
-		LINC_SERVER (server)->local_host_info,
-		LINC_SERVER (server)->local_serv_info,
-		LINC_CONNECTION_NONBLOCKING,
+		LINK_SERVER (server)->local_host_info,
+		LINK_SERVER (server)->local_serv_info,
+		LINK_CONNECTION_NONBLOCKING,
 		GIOP_1_2);
 	g_assert (cnx != NULL);
 
 	while (server_cnx == NULL)
-		linc_main_iteration (TRUE);
+		link_main_iteration (TRUE);
 
 	giop_debug_hook_new_connection = NULL;
 	g_assert (server_cnx != NULL);
@@ -278,15 +278,15 @@ test_incoming_mangler (GIOPRecvBuffer *buf)
 static void
 test_mangling_exec (void)
 {
-	linc_connection_write (
-		LINC_CONNECTION (cnx),
+	link_connection_write (
+		LINK_CONNECTION (cnx),
 		giop_fragment_data,
 		sizeof (giop_fragment_data),
 		non_blocking);
 
 	wait_for_disconnect (); /* Wait around for things to blow up */
 
-	if (cnx->parent.status == LINC_DISCONNECTED)
+	if (cnx->parent.status == LINK_DISCONNECTED)
 		cnx_closed++;
 }
 
@@ -318,7 +318,7 @@ main (int argc, char *argv[])
 
 	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
-	non_blocking = linc_write_options_new (FALSE);
+	non_blocking = link_write_options_new (FALSE);
 
 	fprintf (stderr, "Testing fragment support ...\n");
 	run_test (orb, test_fragments, FALSE);
@@ -331,7 +331,7 @@ main (int argc, char *argv[])
 	test_cookie (orb);
 	test_mangling (orb);
 
-	linc_write_options_free (non_blocking);
+	link_write_options_free (non_blocking);
 	CORBA_ORB_destroy (orb, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	CORBA_Object_release ((CORBA_Object) orb, &ev);

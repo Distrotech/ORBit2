@@ -1104,7 +1104,7 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 	aqe->mqe.async_cb = NULL;
 
 	if (!aqe->mqe.cnx ||
-	    aqe->mqe.cnx->parent.status == LINC_DISCONNECTED)
+	    aqe->mqe.cnx->parent.status == LINK_DISCONNECTED)
 		CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 					    aqe->completion_status);
 
@@ -1220,11 +1220,11 @@ get_status (GIOPConnection *cnx)
 
 	g_return_val_if_fail (cnx != NULL, ORBIT_CONNECTION_DISCONNECTED);
 
-	switch (linc_connection_get_status (LINC_CONNECTION (cnx))) {
-	case LINC_CONNECTED:
+	switch (link_connection_get_status (LINK_CONNECTION (cnx))) {
+	case LINK_CONNECTED:
 		ret = ORBIT_CONNECTION_CONNECTED;
 		break;
-	case LINC_CONNECTING:
+	case LINK_CONNECTING:
 		ret = ORBIT_CONNECTION_CONNECTED;
 		break;
 	default:
@@ -1348,9 +1348,9 @@ void
 ORBit_connection_set_max_buffer (ORBitConnection *cnx,
 				 gulong           max_buffer_bytes)
 {
-	LINCConnection *lcnx = (LINCConnection *) cnx;
+	LinkConnection *lcnx = (LinkConnection *) cnx;
 
-	g_return_if_fail (LINC_IS_CONNECTION (lcnx));
+	g_return_if_fail (LINK_IS_CONNECTION (lcnx));
 
-	linc_connection_set_max_buffer (lcnx, max_buffer_bytes);
+	link_connection_set_max_buffer (lcnx, max_buffer_bytes);
 }
