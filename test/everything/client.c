@@ -1274,6 +1274,7 @@ testPingPong (test_TestFactory   factory,
 	l_objref = TestFactory_createPingPongServer (NULL, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	CORBA_Object_release (l_objref, ev); /* only want 1 ref */
+	g_assert (ORBit_small_get_servant (l_objref) != NULL);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
@@ -1285,6 +1286,8 @@ testPingPong (test_TestFactory   factory,
 	
 	objref = test_PingPongServer_get (r_objref, "Foo", ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (ORBit_small_get_servant (objref) != NULL);
+	g_assert (l_objref == objref);
 	CORBA_Object_release (objref, ev);
 
 	CORBA_Object_release (l_objref, ev);

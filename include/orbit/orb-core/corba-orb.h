@@ -17,7 +17,9 @@ void      ORBit_ORB_forw_bind (CORBA_ORB                   orb,
 			       CORBA_Object                oref,
 			       CORBA_Environment          *ev);
 
-guint     ORBit_ORB_idle_init (CORBA_ORB orb);
+guint     ORBit_ORB_idle_init     (CORBA_ORB orb);
+
+void      ORBit_ORB_start_servers (CORBA_ORB orb);
 
 #endif /* ORBIT2_INTERNAL_API */
 
