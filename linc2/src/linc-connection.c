@@ -735,9 +735,7 @@ linc_connection_exec_set_condition (LINCCommandSetCondition *cmd)
 		  cmd->cnx, cmd->condition);
 
 	CNX_LOCK (cmd->cnx);
-	linc_watch_set_condition
-		(cmd->cnx->priv->tag,
-		 LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
+	linc_watch_set_condition (cmd->cnx->priv->tag, cmd->condition);
 	CNX_UNLOCK (cmd->cnx);
 	linc_object_unref (cmd->cnx);
 	g_free (cmd);

@@ -3,6 +3,8 @@
 	* src/linc-connection.c (queue_signal_T): drop lock
 	over the signal emission.
 	(linc_connection_class_state_changed): ditto.
+	(linc_connection_exec_set_condition): actually use
+	the passed in I/O condition. (thanks AlexL)
 
 2003-05-21  Michael Meeks  <michael@ximian.com>
 

@@ -1,3 +1,9 @@
+** Idle I/O thread setup
+	+ Can we setup the I/O thread idly in either
+		a) CORBA method dispatch from non-main thread
+	or	b) a servant binding with non-default policy.
+
+
 ** linc_main_iteration () / linc_main_loop_run ...
 	+ We need to examine the API/ABI compat issues with
 	  these methods; what can we do about them ?
