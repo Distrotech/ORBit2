@@ -716,10 +716,12 @@ cbe_skel_interface_print_relayers(const CBESkelInterfaceTraverseInfo *iti)
 		iti->curlevel + 1, opi->opname + iti->curlevel+1);
       fprintf(iti->ci->fh, "*impl = (gpointer)servant->vepv->%s_epv->%s;\n",
 	      opi->iface_id, opi->opname);
-      if (iti->small)
+      if (iti->small) {
+        fprintf(iti->ci->fh, "*m_data = (gpointer)&%s__itype.methods._buffer [%d];\n",
+		opi->iface_id, opi->idx);
         fprintf(iti->ci->fh, "return (ORBitSmallSkeleton)_ORBIT_skel_small_%s_%s;\n",
 	        opi->iface_id, opi->opname);
-      else
+      } else
         fprintf(iti->ci->fh, "return (ORBitSkeleton)_ORBIT_skel_%s_%s;\n",
 	        opi->iface_id, opi->opname);
     }
@@ -737,7 +739,8 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Inf
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
   if (rinfo->small_skels) {
-    fprintf(ci->fh, "static ORBitSmallSkeleton get_skel_small_%s(POA_%s *servant,\nconst char *opname,\gpointer *impl)\n{\n", id, id);
+    fprintf(ci->fh, "static ORBitSmallSkeleton get_skel_small_%s(POA_%s *servant,\nconst char *opname,"
+	    "gpointer *m_data, gpointer *impl)\n{\n", id, id);
   } else {
     fprintf(ci->fh, "static ORBitSkeleton get_skel_%s(POA_%s *servant,\nGIOPRecvBuffer *_ORBIT_recv_buffer,\ngpointer *impl)\n{\n", id, id);
     fprintf(ci->fh, "gchar *opname = giop_recv_buffer_get_opname(_ORBIT_recv_buffer);\n\n");

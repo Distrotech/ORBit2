@@ -87,6 +87,7 @@ typedef ORBitSkeleton (*ORBit_impl_finder)(PortableServer_ServantBase *servant,
 					   gpointer *implementation);
 typedef ORBitSmallSkeleton (*ORBit_small_impl_finder)(PortableServer_ServantBase *servant,
 						      const char                 *method,
+						      gpointer                   *m_data,
 						      gpointer                   *implementation);
 typedef void (*ORBit_vepvmap_init)(ORBit_VepvIdx *map);
 
