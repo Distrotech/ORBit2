@@ -26,6 +26,7 @@ typedef struct {
 
 LINCProtocolInfo * const linc_protocol_find(const char *name);
 LINCProtocolInfo * const linc_protocol_find_num(const int family);
+LINCProtocolInfo * const linc_protocol_all(void);
 int linc_getaddrinfo(const char *nodename, const char *servname,
 		     const struct addrinfo *hints, struct addrinfo **res);
 int linc_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,

@@ -42,6 +42,12 @@ static LINCProtocolInfo protocol_ents[] = {
 };
 
 LINCProtocolInfo * const
+linc_protocol_all(void)
+{
+  return protocol_ents;
+}
+
+LINCProtocolInfo * const
 linc_protocol_find(const char *name)
 {
   int i;
