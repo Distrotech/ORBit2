@@ -1,0 +1,30 @@
+module Test
+{
+    interface IMember
+    {
+	void print_name ();
+    };
+
+    struct var_st
+    {
+	IMember member_1;
+	IMember member_2;
+    };
+
+    struct fix_st
+    {
+	long num_1;
+	long num_2;
+    };
+    
+    exception ExTest
+    {
+	var_st objs;
+	fix_st nums;
+    };
+    
+    interface IMaster
+    {
+	void provoke () raises (ExTest);
+    };
+};

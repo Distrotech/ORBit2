@@ -1,0 +1,16 @@
+module Test
+{
+    typedef string TestArray[2];
+    
+    struct Test_st
+    {
+	long      num;
+	TestArray text;
+    };
+
+    interface IMaster
+    {
+	void struct_in (in Test_st struct_in);
+	Test_st struct_ret ();	
+    };
+};

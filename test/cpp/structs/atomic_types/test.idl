@@ -1,0 +1,27 @@
+module Test
+{
+    enum Direction
+    {
+	DIR_NORTH,
+	DIR_EAST,
+	DIR_SOUTH,
+	DIR_WEST
+    };
+    
+    struct Test_st
+    {
+	long      one;
+	long      two;
+	Direction dir;
+    };
+
+    typedef Test_st foo_st;
+    
+    interface IMaster
+    {
+	void struct_in (in Test_st struct_in);
+	void struct_inout (inout Test_st struct_inout);
+	void struct_out (out Test_st struct_out);
+	Test_st struct_ret ();
+    };
+};

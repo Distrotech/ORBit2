@@ -1,0 +1,23 @@
+module Test
+{
+    interface IMember
+    {
+        void print_name ();
+    };
+
+    struct Test_st
+    {
+	long    num;
+	IMember obj_one;
+	IMember obj_two;
+    };
+    
+    interface IMaster
+    {
+	Test_st struct_ret ();
+	
+	void struct_in (in Test_st struct_in);
+	void struct_inout (inout Test_st struct_inout);
+	void struct_out (out Test_st struct_out);
+    };
+};
