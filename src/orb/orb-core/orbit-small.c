@@ -579,6 +579,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPMessageQueueEntry   mqe;
 	ORBit_OAObject          adaptor_obj;
 	GIOPRecvBuffer         *recv_buffer = NULL;
+	CORBA_Object            xt_proxy = CORBA_OBJECT_NIL;
 
 	if (!obj) {
 		dprintf (MESSAGES, "Cannot invoke method on null object\n");
@@ -590,11 +591,18 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	adaptor_obj = obj->adaptor_obj;
 
 	if (adaptor_obj) {
-		tprintf_header (obj, m_data);
-		tprintf ("[in-proc]");
-		ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
-					    args, ctx, NULL, ev);
-		goto clean_out;
+		/* FIXME: unchecked cast */
+		if (ORBit_poa_allow_cross_thread_call ((ORBit_POAObject) adaptor_obj)) {
+			tprintf_header (obj, m_data);
+			tprintf ("[in-proc]");
+			ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
+						    args, ctx, NULL, ev);
+			goto clean_out;
+		} else {
+			tprintf ("[in-proc-XT]");
+			xt_proxy = ORBit_objref_get_proxy (obj);
+			obj = xt_proxy;
+		}
 	}
 
 	cnx = ORBit_object_get_connection (obj);
@@ -652,6 +660,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	};
 
  clean_out:
+	ORBit_RootObject_release (xt_proxy);
 	giop_recv_buffer_unuse (recv_buffer);
 
 	tprintf_end_method ();

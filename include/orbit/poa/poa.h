@@ -141,7 +141,8 @@ void ORBit_classinfo_register  (PortableServer_ClassInfo   *ci);
 #ifdef ORBIT2_INTERNAL_API
 
 PortableServer_ClassInfo *ORBit_classinfo_lookup (const char *type_id);
-void ORBit_POAObject_post_invoke (ORBit_POAObject obj);
+void     ORBit_POAObject_post_invoke (ORBit_POAObject obj);
+gboolean ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj);
 
 void ORBit_recv_buffer_return_sys_exception (GIOPRecvBuffer    *buf,
 					     CORBA_Environment *ev);

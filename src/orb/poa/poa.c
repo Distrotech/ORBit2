@@ -63,7 +63,7 @@ static void               ORBit_POA_deactivate_object       (PortableServer_POA 
 							     ORBit_POAObject     pobj,
 							     CORBA_boolean       do_etherealize,
 							     CORBA_boolean       is_cleanup);
-
+     
 /* PortableServer_Current interface */
 static void
 ORBit_POACurrent_free_fn (ORBit_RootObject obj_in)
@@ -2321,6 +2321,52 @@ ORBit_poa_init (void)
 	giop_thread_set_main_handler (ORBit_POAObject_invoke_incoming_request);
 }
 
+gboolean
+ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj)
+{
+	gpointer key = NULL;
+	PortableServer_POA poa = pobj->poa;
+
+	if (!poa)
+		return TRUE;
+
+	switch (poa->p_thread) {
+	case PortableServer_SINGLE_THREAD_MODEL:
+		break;
+
+	case PortableServer_ORB_CTRL_MODEL: {
+		ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
+				
+		switch (adaptor->thread_hint) {
+		case ORBIT_THREAD_HINT_PER_OBJECT:
+			key = pobj;
+			break;
+			
+		case ORBIT_THREAD_HINT_PER_POA:
+			key = poa;
+			break;
+			
+		case ORBIT_THREAD_HINT_PER_CONNECTION:
+			/* FIXME: ? */
+		case ORBIT_THREAD_HINT_PER_REQUEST:
+			return TRUE;
+			break;
+			
+		case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
+		case ORBIT_THREAD_HINT_ALL_AT_IDLE:
+		case ORBIT_THREAD_HINT_NONE:
+			break;
+		}
+		break;
+	}
+	}
+
+	if (!key)
+		return giop_thread_self () == giop_thread_get_main ();
+	else
+		return giop_thread_same_key (key, TRUE);
+}
+
 static gpointer
 get_c_method (CORBA_Object obj,
 	      glong        class_id,
@@ -2336,6 +2382,9 @@ get_c_method (CORBA_Object obj,
 		return NULL;
 
 	if (method_offset <= 0 || class_id <= 0)
+		return NULL;
+
+	if (!ORBit_poa_allow_cross_thread_call (pobj))
 		return NULL;
 
 	if (!(ORBit_small_flags & ORBIT_SMALL_FAST_LOCALS))

@@ -35,6 +35,8 @@ void        giop_thread_request_push     (GIOPThread *tdata,
 void        giop_thread_request_push_key (gpointer    key,
 					  gpointer   *poa_object,
 					  gpointer   *recv_buffer);
+gboolean    giop_thread_same_key         (gpointer    key,
+					  gboolean    no_key_default);
 void        giop_thread_key_release      (gpointer    key);
 void        giop_thread_request_process  (GIOPThread *tdata);
 
