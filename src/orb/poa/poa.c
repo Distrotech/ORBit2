@@ -1,12 +1,10 @@
 #include <orbit/orbit.h>
-#include "orbit-poa.h"
+#include <orb-core-export.h>
+#include <orbit-debug.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "orb-core-export.h"
-#include "orbit-poa-export.h"
-#include "corba-ops.h"
-#include "orbit-debug.h"
+#include "orbit-poa.h"
 
 static PortableServer_Servant ORBit_POA_ServantManager_use_servant(
 				     PortableServer_POA poa,
