@@ -1,19 +1,41 @@
 #include <signal.h>
 #include "linc-private.h"
 
-GMainLoop    *linc_loop = NULL;
-GMainContext *linc_context = NULL;
+static gboolean linc_threaded = FALSE;
+GMainLoop      *linc_loop = NULL;
+GMainContext   *linc_context = NULL;
 
 #ifdef LINC_SSL_SUPPORT
 SSL_METHOD *linc_ssl_method;
 SSL_CTX    *linc_ssl_ctx;
 #endif
 
+/**
+ * linc_set_threaded:
+ * @threaded: whether to do locking
+ * 
+ *   This routine turns threading on or off for the whole
+ * ORB, it should be called (TRUE) if threading is desired
+ * before any of the ORB initialization occurs.
+ **/
+void
+linc_set_threaded (gboolean threaded)
+{
+	linc_threaded = threaded;
+}
+
+/**
+ * linc_init:
+ * @init_threads: if we want threading enabled.
+ * 
+ * Initialize linc.
+ **/
 void
 linc_init (gboolean init_threads)
 {
 	if (init_threads && !g_thread_supported ())
 		g_thread_init (NULL);
+	linc_set_threaded (init_threads);
 
 	g_type_init ();
 
@@ -152,7 +174,7 @@ GMutex *
 linc_mutex_new (void)
 {
 #ifdef G_THREADS_ENABLED
-	if (g_thread_supported ())
+	if (linc_threaded && g_thread_supported ())
 		return g_mutex_new ();
 #endif
 
