@@ -16,61 +16,91 @@ oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, co
   return retval;
 }
 
+/* A node is an array element if it is
+   Underneath a MARSHAL_LOOP and zero or more nameless nodes.
+ */
 static gboolean
 oidl_marshal_node_is_arrayel(OIDL_Marshal_Node *node, OIDL_Marshal_Node **loopvar_ret)
 {
-  OIDL_Marshal_Node *lv = NULL, *curnode;
+  OIDL_Marshal_Node *curnode;
   gboolean retval = FALSE;
 
   g_assert(node);
 
-  for(curnode = node; curnode && !curnode->name; curnode = curnode->up) /* */;
+  for(curnode = node->up; curnode && !curnode->name && curnode->type != MARSHAL_LOOP; curnode = curnode->up) /* */;
 
-  g_return_val_if_fail(curnode, FALSE);
+  if(!curnode) return FALSE;
 
-  for(curnode = curnode->up; curnode && !curnode->name && curnode->type != MARSHAL_LOOP; curnode = curnode->up) /* */;
-
-  if(curnode->type == MARSHAL_LOOP)
+  if(curnode
+     && (curnode->type == MARSHAL_LOOP)
+     && curnode->u.loop_info.loop_var != node
+     && curnode->u.loop_info.length_var != node) {
      retval = TRUE;
 
-  if(loopvar_ret)
-    *loopvar_ret = lv;
+     if(loopvar_ret)
+       *loopvar_ret = curnode->u.loop_info.loop_var;
+  } else if(loopvar_ret)
+    *loopvar_ret = NULL;
   
   return retval;
 }
 
-/* If we are trying to produce C code to access a specific variable, then we need to be able get the C-compilable
-   string that refers to that var */
-static char *
+/* If we are trying to produce C code to access a specific variable,
+   then we need to be able get the C-compilable string that refers to
+   that var.
+ */
+
+char *
 oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
 {
   GString *tmpstr;
   char *retval;
-  OIDL_Marshal_Node *curnode, *tnode;
+  OIDL_Marshal_Node *curnode, *childwas = NULL;
 
-  tmpstr = g_string_new(NULL);
+  if(!node->name
+     && (
+	 (node->flags & MN_NEED_TMPVAR)
+	 || (node->type == MARSHAL_CONST))) {
+    return g_strdup("<Unassigned>");
+  }
 
-  retval = tmpstr->str;
+  tmpstr = g_string_new("");
 
   curnode = node;
   while(curnode) {
-    if(curnode->name) {
-      if(oidl_marshal_node_is_arrayel(curnode, &tnode)) {
-	char *ctmp;
-	ctmp = oidl_marshal_node_fqn(tnode);
-	g_string_prepend_c(tmpstr, ']');
-	g_string_prepend(tmpstr, ctmp);
-	g_string_prepend_c(tmpstr, '[');
-      }
+    if(curnode != node
+       && curnode->type == MARSHAL_LOOP) {
+      char *ctmp;
+      gboolean do_buffer;
 
-      if(curnode != node) {
+      do_buffer = (curnode->flags & MN_ISSEQ)
+	&& !(node == curnode->u.loop_info.length_var
+	     || node == curnode->u.loop_info.loop_var);
+
+      if(do_buffer)
+	g_string_prepend_c(tmpstr, '.');
+
+      ctmp = oidl_marshal_node_fqn(curnode->u.loop_info.loop_var);
+      g_string_prepend_c(tmpstr, ']');
+      g_string_prepend(tmpstr, ctmp);
+      g_string_prepend_c(tmpstr, '[');
+      g_free(ctmp);
+
+      if(do_buffer)
+	g_string_prepend(tmpstr, "_buffer");
+    }
+
+    if(curnode->name) {
+      if(curnode != node
+	 && childwas && childwas->name) {
 	if(curnode->flags & MN_POINTER_VAR)
 	  g_string_prepend(tmpstr, "->");
 	else
 	  g_string_prepend_c(tmpstr, '.');
       }
 
-      g_string_prepend(tmpstr, node->name);
+      g_string_prepend(tmpstr, curnode->name);
+      childwas = curnode;
     }
 
     if(curnode->flags & MN_NSROOT)
@@ -83,6 +113,8 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
     g_string_prepend(tmpstr, "*(");
     g_string_append_c(tmpstr, ')');
   }
+
+  retval = tmpstr->str;
 
   g_string_free(tmpstr, FALSE);
 
@@ -98,6 +130,23 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
   case IDLN_INTEGER:
     retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL);
     retval->u.const_info.amount = IDL_INTEGER(tree).value;
+    retval->tree = tree;
+    break;
+  case IDLN_TYPE_OCTET:
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval->u.datum_info.datum_size = sizeof(CORBA_octet);
+    break;
+  case IDLN_TYPE_BOOLEAN:
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval->u.datum_info.datum_size = sizeof(CORBA_boolean);
+    break;
+  case IDLN_TYPE_CHAR:
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval->u.datum_info.datum_size = sizeof(CORBA_char);
+    break;
+  case IDLN_TYPE_WIDE_CHAR:
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval->u.datum_info.datum_size = sizeof(CORBA_wchar);
     break;
   case IDLN_TYPE_FLOAT:
     retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
@@ -115,6 +164,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
       g_assert(0);
       break;
     }
+    retval->tree = tree;
     break;
   case IDLN_TYPE_INTEGER:
     retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
@@ -132,18 +182,26 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
       g_assert(0);
       break;
     }
+    retval->tree = tree;
     break;
   case IDLN_TYPE_STRING:
   case IDLN_TYPE_WIDE_STRING:
     retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL);
-    retval->u.loop_info.is_string = 1;
+    retval->flags |= MN_ISSTRING;
     retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
     retval->u.loop_info.length_var->u.datum_info.datum_size = sizeof(CORBA_long);
     retval->u.loop_info.length_var->flags |= MN_NEED_TMPVAR;
+    retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_long);
+    retval->u.loop_info.loop_var->flags |= MN_NEED_TMPVAR;
+    retval->u.loop_info.contents = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_octet);
+    retval->tree = tree;
     break;
   case IDLN_TYPE_ENUM:
     retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
     retval->u.datum_info.datum_size = sizeof(CORBA_long);
+    retval->tree = tree;
     break;
   case IDLN_TYPE_ARRAY:
     {
@@ -153,12 +211,11 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
       for(curlevel = IDL_TYPE_ARRAY(tree).size_list; curlevel; curlevel = IDL_LIST(curlevel).next) {
 	newsub = oidl_marshal_node_new(cursub, MARSHAL_LOOP, NULL);
 
-	cursub = newsub;
-
 	if(!retval)
-	  retval = cursub;
-	else
-	  cursub->u.loop_info.contents = newsub;
+	  retval = newsub;
+
+	cursub->u.loop_info.contents = newsub;
+	cursub = newsub;
 
 	cursub->u.loop_info.loop_var = oidl_marshal_node_new(cursub, MARSHAL_DATUM, NULL);
 	cursub->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_long);
@@ -170,9 +227,11 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
 
       cursub->u.loop_info.contents = marshal_populate_in(orbit_idl_get_array_type(tree), cursub);
     }
+    retval->tree = tree;
     break;
   case IDLN_TYPE_SEQUENCE:
     retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL);
+    retval->flags |= MN_ISSEQ;
 
     retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
     retval->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_unsigned_long);
@@ -183,6 +242,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
     retval->u.loop_info.length_var->name = "_length";
 
     retval->u.loop_info.contents = marshal_populate_in(IDL_TYPE_SEQUENCE(tree).simple_type_spec, retval);
+    retval->tree = tree;
     break;
   case IDLN_TYPE_STRUCT:
     {
@@ -194,6 +254,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
 						     marshal_populate_in(IDL_LIST(curitem).data, retval));
       }
     }
+    retval->tree = tree;
     break;
   case IDLN_MEMBER:
     {
@@ -216,14 +277,18 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
 	retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, tnode);
       }
     }
+    retval->tree = tree;
     break;
   case IDLN_TYPE_UNION:
     retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
+    retval->tree = tree;
     break;
   case IDLN_IDENT:
+  case IDLN_LIST:
     retval = marshal_populate_in(IDL_get_parent_node(tree, IDLN_ANY, NULL), parent);
     break;
   case IDLN_TYPE_DCL:
+    retval = marshal_populate_in(IDL_TYPE_DCL(tree).type_spec, parent);
     break;
   case IDLN_PARAM_DCL:
     retval = marshal_populate_in(IDL_PARAM_DCL(tree).param_type_spec, parent);
@@ -231,7 +296,12 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
     g_assert(!retval->name);
     retval->name = IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str;
     break;
+  case IDLN_TYPE_FIXED:
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval->tree = tree;
+    break;
   default:
+    g_warning("Not populating for %s", IDL_tree_type_names[IDL_NODE_TYPE(tree)]);
     break;
   }
 
@@ -312,6 +382,7 @@ orbit_idl_assign_tmpvar_names(OIDL_Marshal_Node *node, int *counter)
     return;
 
   node->name = g_strdup_printf("v%d", *counter);
+  node->flags |= MN_NSROOT;
 
   (*counter)++;
 }
@@ -331,6 +402,9 @@ orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node)
   switch(node->type) {
   case MARSHAL_DATUM:
     btmp = (node->u.datum_info.datum_size > 1);
+    break;
+  case MARSHAL_UPDATE:
+    btmp = orbit_idl_marshal_endian_dependant_p(node->u.update_info.amount);
     break;
   case MARSHAL_SET:
     for(ltmp = node->u.set_info.subnodes; !btmp && ltmp; ltmp = g_slist_next(ltmp)) {
@@ -354,4 +428,58 @@ orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node)
   }
 
   return btmp;
+}
+
+void
+orbit_idl_collapse_sets(OIDL_Marshal_Node *node)
+{
+  GSList *ltmp;
+  OIDL_Marshal_Node *ntmp;
+
+  g_assert(node);
+
+#define SET_SIZE(node) g_slist_length(((OIDL_Marshal_Node *)node)->u.set_info.subnodes)
+
+#define COLLAPSE_NODE(anode) \
+if(!(anode)->name \
+   && (anode)->type == MARSHAL_SET \
+   && SET_SIZE((anode)) == 1) { \
+(anode) = (anode)->u.set_info.subnodes->data; \
+(anode)->up = node; \
+}
+
+  switch(node->type) {
+  case MARSHAL_SET:
+    for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
+      ntmp = ltmp->data;
+      orbit_idl_collapse_sets(ntmp);
+      if(ntmp->type == MARSHAL_SET
+	 && SET_SIZE(ntmp) == 1) {
+	ltmp->data = ntmp->u.set_info.subnodes->data;
+	ntmp = ltmp->data;
+	ntmp->up = node;
+      }
+    }
+    break;
+  case MARSHAL_LOOP:
+    orbit_idl_collapse_sets(node->u.loop_info.loop_var);
+    COLLAPSE_NODE(node->u.loop_info.loop_var);
+    orbit_idl_collapse_sets(node->u.loop_info.length_var);
+    COLLAPSE_NODE(node->u.loop_info.length_var);
+    orbit_idl_collapse_sets(node->u.loop_info.contents);
+    COLLAPSE_NODE(node->u.loop_info.contents);
+    break;
+  case MARSHAL_SWITCH:
+    orbit_idl_collapse_sets(node->u.switch_info.discrim);
+    COLLAPSE_NODE(node->u.switch_info.discrim);
+    orbit_idl_collapse_sets(node->u.switch_info.contents);
+    COLLAPSE_NODE(node->u.switch_info.contents);
+    break;
+  case MARSHAL_UPDATE:
+    orbit_idl_collapse_sets(node->u.update_info.amount);
+    COLLAPSE_NODE(node->u.update_info.amount);
+    break;
+  default:
+    break;
+  }
 }

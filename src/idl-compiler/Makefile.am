@@ -4,4 +4,10 @@ lib_LIBRARIES=liborbit-c-backend.a
 
 liborbit_c_backend_a_SOURCES=\
 	orbit-idl-c-backend.h \
-	orbit-idl-c-backend.c
+	orbit-idl-c-backend.c \
+	orbit-idl-c-stubs.c \
+	orbit-idl-c-skels.c \
+	orbit-idl-c-headers.c \
+	orbit-idl-c-common.c \
+	orbit-idl-c-skelimpl.c \
+	orbit-idl-c-utils.c

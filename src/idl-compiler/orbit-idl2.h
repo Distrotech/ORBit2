@@ -16,8 +16,8 @@ typedef struct {
   enum { OUTPUT_STUBS=1<<0,
 	 OUTPUT_SKELS=1<<1,
 	 OUTPUT_COMMON=1<<2,
-	 OUTPUT_HEADERS=8,
-	 OUTPUT_SKELIMPL=16 } enabled_passes;
+	 OUTPUT_HEADERS=1<<3,
+	 OUTPUT_SKELIMPL=1<<4 } enabled_passes;
 
   char *output_formatter;
 
@@ -58,7 +58,9 @@ typedef enum {
   MN_INOUT = 1<<1, /* Needs freeing before alloc */
   MN_NSROOT = 1<<2, /* Don't go to parents for variable naming */
   MN_NEED_TMPVAR = 1<<3, /* Need a temporary variable to hold this value */
-  MN_NOMARSHAL = 1<<4 /* This is used by other vars, but not actually marshalled */
+  MN_NOMARSHAL = 1<<4, /* This is used by other vars, but not actually marshalled */
+  MN_ISSEQ = 1<<5, /* for MARSHAL_LOOP only - we need to do foo._buffer before tacking on [v1] */
+  MN_ISSTRING = 1<<6 /* for MARSHAL_LOOP only */
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {
@@ -71,7 +73,6 @@ struct _OIDL_Marshal_Node {
     struct {
       OIDL_Marshal_Node *loop_var, *length_var;
       OIDL_Marshal_Node *contents;
-      guint is_string : 1;
     } loop_info;
     struct {
       OIDL_Marshal_Node *discrim, *contents;
@@ -120,6 +121,8 @@ OIDL_Marshal_Node *orbit_idl_marshal_populate_in(IDL_tree tree);
 OIDL_Marshal_Node *orbit_idl_marshal_populate_out(IDL_tree tree);
 gboolean orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node);
 void orbit_idl_tmpvars_assign(OIDL_Marshal_Node *top, int *counter);
+char *oidl_marshal_node_fqn(OIDL_Marshal_Node *node);
+void orbit_idl_collapse_sets(OIDL_Marshal_Node *node);
 
 /* passes */
 void orbit_idl_do_passes(IDL_tree tree);

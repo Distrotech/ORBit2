@@ -387,7 +387,15 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
   if(!tree) { g_print("Nil\n"); return; }
 
   if(tree->name)
-    g_print("\"%s\" ", tree->name);
+    g_print("\"%s\" (\"%s\") ", tree->name, oidl_marshal_node_fqn(tree));
+  else {
+    char *ctmp;
+
+    ctmp = oidl_marshal_node_fqn(tree);
+    if(ctmp)
+      g_print("(\"%s\") ", ctmp);
+  }
+
   g_print("(%s %p): [", nodenames[tree->type], tree);
   if(tree->flags & MN_POINTER_VAR)
     g_print("POINTER_VAR ");
@@ -399,6 +407,10 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("NEED_TMPVAR ");
   if(tree->flags & MN_NOMARSHAL)
     g_print("NOMARSHAL ");
+  if(tree->flags & MN_ISSEQ)
+    g_print("ISSEQ ");
+  if(tree->flags & MN_ISSTRING)
+    g_print("ISSTRING ");
   g_print("]\n");
 
   switch(tree->type) {
@@ -412,8 +424,6 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     do_indent(indent_level + INDENT_INCREMENT_1);
     g_print("contents:\n");
     oidl_marshal_node_dump(tree->u.loop_info.contents, indent_level + INDENT_INCREMENT_2);
-    do_indent(indent_level + INDENT_INCREMENT_1);
-    g_print("is_string: %d\n", tree->u.loop_info.is_string);
     break;
   case MARSHAL_DATUM:
     do_indent(indent_level + INDENT_INCREMENT_1);
