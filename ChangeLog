@@ -1,3 +1,8 @@
+2001-09-18  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/Makefile.am: depend on $(IDL_COMPILER)
+	not on $(IDL). hmmm.
+	
 2001-09-18  Jens Finke <jens@gnome.org>
 	
 	* ORBit.spec.in: Updated, matches gpp requirements now, renamed the
