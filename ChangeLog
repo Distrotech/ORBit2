@@ -2,7 +2,7 @@
 
 	* Version 2.10.3
 
-2004-06-22  Michael Meeks  <michael@ximian.com>
+2004-06-22  Chris Landrieu  <perotin101@yahoo.com>
 
 	* src/orb/orb-core/allocators.c (ORBit_freekids_via_TypeCode_T):
 	add missing pre-align for struct/except types. Complicate the
