@@ -69,7 +69,7 @@ Problems to solve:
 	 We need to handle all cases of OIDL_Marshal_Where properly.
 
 	 OIDL_Marshal_Where is a function of context rather than data
-	 type. It will always be MW_Heap, MW_Auto or MW_Null for
+	 type. It will always be MW_Heap or MW_Null for
 	 stubs.  We need the concept of 'allocation contexts' -
 	 i.e. where a variable is 'auto' in or alloca'd in. No we
 	 don't, we just need to have a mask of allowed marshalling

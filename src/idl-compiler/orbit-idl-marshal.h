@@ -31,6 +31,7 @@ OIDL_Type_Marshal_Info *oidl_marshal_context_find(OIDL_Marshal_Context *ctxt, ID
 typedef struct {
   OIDL_Marshal_Context *ctxt;
   enum { PI_BUILD_FUNC = 1<<0 } flags;
+  OIDL_Marshal_Where where;
 } OIDL_Populate_Info;
 
 OIDL_Marshal_Node *marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *pi);
