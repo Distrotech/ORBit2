@@ -15,10 +15,6 @@
 #include "poa-private.h"
 #include "orbit-poa.h"
 
-#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) {                      \
-  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci); \
-}
-
 #define POA_LOCK(poa)   LINK_MUTEX_LOCK(poa->base.lock)
 #define POA_UNLOCK(poa) LINK_MUTEX_UNLOCK(poa->base.lock)
 
