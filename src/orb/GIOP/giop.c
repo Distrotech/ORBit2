@@ -400,9 +400,9 @@ giop_thread_request_push_key (gpointer  key,
 
 	if (!(tdata = g_hash_table_lookup (giop_pool_hash, key))) {
 		new_tdata = giop_thread_new (NULL);
+		tdata = new_tdata;
 		if (key)
 			giop_thread_key_add_T (tdata, key);
-		tdata = new_tdata;
 		dprintf (GIOP, "Create new thread %p for op", tdata);
 	} else
 		dprintf (GIOP, "Re-use thread %p for op", tdata);

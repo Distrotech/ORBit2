@@ -68,11 +68,12 @@ object_hash_dump (gpointer key,
 int
 ORBit_RootObject_shutdown (gboolean moan)
 {
+#ifdef G_ENABLE_DEBUG
+	int valid_running = 1; /* The ORB */
+#endif
 	if (!moan)
 		return 0;
 #ifdef G_ENABLE_DEBUG
-	int valid_running = 1; /* The ORB */
-
 	if (!ORBit_RootObject_lifecycle_lock &&
 	    alive_root_objects - valid_running)
 		g_warning ("ORB: a total of %ld refs to %ld ORB "
