@@ -1,2 +1,8 @@
 Makefile
 Makefile.in
+.deps
+.libs
+*.la
+*.lo
+*-common.c
+runidl_poa

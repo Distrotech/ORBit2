@@ -1,2 +1,15 @@
 Makefile
 Makefile.in
+.deps
+.libs
+*-common.c
+*-skel.c
+*-stubs.c
+*.lo
+*.la
+corba-defs.h
+corba-ops.h
+*-skels.c
+runidl
+runidl_iop
+runidl_ops

@@ -8,3 +8,6 @@ config.guess
 config.sub
 ltconfig
 ltmain.sh
+libtool
+linc-config
+config.cache
