@@ -1,6 +1,10 @@
 Code for an ORB written in C will spontaneously evolve here. C, ObjC, and
 Scheme bindings will be supported, eventually.
 
+ORBit is part of the GNU project, and is a GNU program. For more
+information on the Free Software Foundation and GNU, visit
+http://www.gnu.org/
+
 Read 'NEWS', 'TODO', and 'docs/*' if you're bored.
 
 Notes on installing on Digital UNIX 4.0:
