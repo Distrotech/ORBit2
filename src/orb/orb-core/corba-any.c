@@ -239,16 +239,10 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 			giop_send_buffer_append (buf, *val, tc->length);
 			*val = ((guchar *)*val) + tc->length;
 			break;
-		default: {
-			int align = tc->subtypes[0]->c_align;
-			
-	  		for (i = 0; i < tc->length; i++) {
+		default:
+	  		for (i = 0; i < tc->length; i++)
 				ORBit_marshal_value (buf, val, tc->subtypes[0]);
-				
-				*val = ALIGN_ADDRESS (*val, align);
-			}
 			break;
-		}
 		}
 		break;
 	case CORBA_tk_longlong:

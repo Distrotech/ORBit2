@@ -1,3 +1,17 @@
+2005-02-14  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_marshal_value): Don't do any
+	post-realignment for array elements. We don't do that for array
+	elements in ORBit_demarshal_value() either, and the marshalling of
+	structs and unions already takes care of their post-alignment.
+
+	* src/idl-compiler/orbit-idl-c-utils.c: Revert the change from
+	2005-02-01. It's unnecessary now with the alignment fixes in the
+	marshalling code. (The changes were not sufficient anyway; without
+	the alignment fixes in the marshalling code, even more sillyness
+	in the IDL compiler generated code would have been necessary to
+	make it work on Win32.)
+
 2005-02-13  Arvind Samptur  <arvind.samptur@wipro.com
 
 	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers): if we

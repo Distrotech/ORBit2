@@ -488,8 +488,8 @@ orbit_cbe_id_cond_hack(FILE *fh, const char *def_prefix, const char *def_name, c
 	case IDLN_INTERFACE: \
 	case IDLN_FORWARD_DCL
 
-static void
-orbit_cbe_flatten_ref (FILE *of, IDL_ParamRole role, IDL_tree typespec, char *paramname)
+static const char *
+orbit_cbe_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 {
 	gboolean is_fixed;
 
@@ -503,22 +503,20 @@ orbit_cbe_flatten_ref (FILE *of, IDL_ParamRole role, IDL_tree typespec, char *pa
 		case OBJREF_TYPES:
 		case IDLN_TYPE_TYPECODE:
 		case IDLN_NATIVE:
-			fprintf (of, "(gpointer)&copy_of_%s.", paramname);
-			return;
+			return "(gpointer)&";
 
 		case IDLN_TYPE_STRUCT:
 		case IDLN_TYPE_UNION:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ARRAY:
-			fprintf (of, "(gpointer)");
-			return;
+			return "(gpointer)";
 			
 		default:
 		case IDLN_TYPE_FIXED:
 			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
 		};
-		return;
+		return NULL;
 
 	case DATA_INOUT:
 		switch (IDL_NODE_TYPE (typespec)) {
@@ -532,13 +530,13 @@ orbit_cbe_flatten_ref (FILE *of, IDL_ParamRole role, IDL_tree typespec, char *pa
 		case IDLN_NATIVE:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-			return;
+			return "";
 
 		default:
 		case IDLN_TYPE_FIXED:
 			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
 		};
-		return;
+		return NULL;
 
 	case DATA_OUT:
 		switch (IDL_NODE_TYPE (typespec)) {
@@ -547,49 +545,31 @@ orbit_cbe_flatten_ref (FILE *of, IDL_ParamRole role, IDL_tree typespec, char *pa
 		case OBJREF_TYPES:
 		case IDLN_TYPE_TYPECODE:
 		case IDLN_NATIVE:
-			fprintf (of, "&");
-			return;
+			return "&";
 
 		case IDLN_TYPE_STRUCT:
 		case IDLN_TYPE_UNION:
 		case IDLN_TYPE_ARRAY:
 			if (is_fixed)
-				fprintf (of, "&");
-			return;
+				return "&";
+			else /* drop through */
 
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ANY:
-			return;
+			return "";
 
 		default:
 		case IDLN_TYPE_FIXED:
 			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
 		};
-		return;
+		return NULL;
 
 	case DATA_RETURN:
 		g_error ("No data return handler");
-		return;
+		return NULL;
 	}
-}
 
-static void
-orbit_cbe_maybe_copy_of_data_in (FILE *of, IDL_tree decl, char *paramname)
-{
-	switch (IDL_NODE_TYPE (orbit_cbe_get_typespec (decl))) {
-	case BASE_TYPES:
-	case STRING_TYPES:
-	case OBJREF_TYPES:
-	case IDLN_TYPE_TYPECODE:
-	case IDLN_NATIVE:
-		fprintf (of, "struct{");
-		orbit_cbe_write_param_typespec (of, decl);
-		fprintf (of, " %s;} copy_of_%s = {%s};\n",
-			 paramname, paramname, paramname);
-		return;
-	default:
-		return;
-	}
+	return NULL;
 }
 
 void
@@ -608,23 +588,8 @@ orbit_cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
 	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
 	     l = IDL_LIST(l).next) {
 		IDL_tree decl = IDL_LIST (l).data;
-		char *paramname;
-
-		if (IDL_PARAM_DCL(decl).attr == IDL_PARAM_IN) {
-			paramname = IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str;
-			orbit_cbe_maybe_copy_of_data_in (of, decl, paramname);
-		}
-		i++;
-	}
-	
-
-	i = 0;
-	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
-	     l = IDL_LIST(l).next) {
-		IDL_tree decl = IDL_LIST (l).data;
 		IDL_tree tspec = orbit_cbe_get_typespec (decl);
 		IDL_ParamRole r = 0;
-		char *paramname;
 
 		switch(IDL_PARAM_DCL(decl).attr) {
 		case IDL_PARAM_IN:    r = DATA_IN;    break;
@@ -634,11 +599,10 @@ orbit_cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
 			g_error("Unknown IDL_PARAM type");
 		}
 		
-		paramname = IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str;
-		fprintf (of, "%s[%d] = ",
-			 name, i);
-		orbit_cbe_flatten_ref (of, r, tspec, paramname);
-		fprintf (of, "%s;\n", paramname);
+		fprintf (of, "%s[%d] = %s%s;\n",
+			 name, i,
+			 orbit_cbe_flatten_ref (r, tspec),
+			 IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str);
 		i++;
 	}
 }
