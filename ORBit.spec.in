@@ -1,20 +1,16 @@
-%define ver    @VERSION@ 
-%define  RELEASE 1
-%define  rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
-%define prefix  /usr
-
-Summary: High-performance CORBA Object Request Broker.
-Name: ORBit
-Version: %ver
-Release: %rel
-Source: ftp://ftp.labs.redhat.com/pub/ORBit/ORBit-%{PACKAGE_VERSION}.tar.gz
-Group: System Environment/Libraries
-Copyright: LGPL/GPL
-BuildRoot: /var/tmp/orbit-%{PACKAGE_VERSION}-root
-Prefix: %{prefix}
-Docdir: %{prefix}/doc
-Prereq: /sbin/install-info
-URL: http://www.labs.redhat.com/orbit/
+Summary:	High-performance CORBA Object Request Broker.
+Name:		ORBit2
+Version:	@VERSION@
+Release:	1
+Source:		ftp://ftp.labs.redhat.com/pub/ORBit/ORBit-%{version}.tar.gz
+Group:		System Environment/Libraries
+Copyright:	LGPL/GPL
+BuildRoot:	/var/tmp/%{name}-%{version}-root
+URL:		http://www.labs.redhat.com/orbit/
+Requires:	glib2
+Requires:	linc
+BuildRequires:  glib2-devel
+BuildRequires:  linc-devel
 
 %description
 ORBit is a high-performance CORBA (Common Object Request Broker 
@@ -29,11 +25,12 @@ You will need to install this package if you want to run programs that use
 the ORBit implementation of CORBA technology.
 
 %package devel
-Summary: Development libraries, header files and utilities for ORBit.
+Summary: Development libraries, header files and utilities for ORBit2.
 Group: Development/Libraries
 Requires: indent
-Requires: glib-devel
-Requires: ORBit = %{ver}
+Requires: glib2-devel
+Requires: linc-devel
+Requires: %{name} = %{version}
 
 %description devel
 This package contains the header files, libraries and utilities 
@@ -41,40 +38,49 @@ necessary to write programs that use CORBA technology. If you want to
 write such programs, you'll also need to install the ORBit package.
 
 %prep
-%setup
+%setup -q -n ORBit-%{version}
 
 %build
 # Needed for snapshot releases.
 #MYCFLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS $RPM_OPT_FLAGS"
 MYCFLAGS="$RPM_OPT_FLAGS"
 if [ ! -f configure ]; then
-	CFLAGS="$MYCFLAGS" ./autogen.sh --prefix=%prefix
+   CFLAGS="$MYCFLAGS" ./autogen.sh --prefix=%{_prefix} \
+	       --bindir=%{_bindir} --mandir=%{_mandir} \
+	       --localstatedir=%{_localstatedir} --libdir=%{_libdir} \
+	       --datadir=%{_datadir} --includedir=%{_includedir} \
+	       --sysconfdir=%{_sysconfdir}  --infodir=%{_infodir}
 else
-	CFLAGS="$MYCFLAGS" ./configure --prefix=%prefix
+   CFLAGS="$MYCFLAGS" ./configure --prefix=%{_prefix} \
+	       --bindir=%{_bindir} --mandir=%{_mandir} \
+	       --localstatedir=%{_localstatedir} --libdir=%{_libdir} \
+	       --datadir=%{_datadir} --includedir=%{_includedir} \
+	       --sysconfdir=%{_sysconfdir} --infodir=%{_infodir}
 fi
 make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT%{prefix}
-make prefix=$RPM_BUILD_ROOT%{prefix} install
 
-/sbin/ldconfig -n $RPM_BUILD_ROOT%{prefix}/lib
+make prefix=$RPM_BUILD_ROOT%{_prefix} bindir=$RPM_BUILD_ROOT%{_bindir} \
+    mandir=$RPM_BUILD_ROOT%{_mandir} libdir=$RPM_BUILD_ROOT%{_libdir} \
+    datadir=$RPM_BUILD_ROOT%{_datadir} \
+    includedir=$RPM_BUILD_ROOT%{_includedir} \
+    infodir=$RPM_BUILD_ROOT%{_infodir} \
+    sysconfdir=$RPM_BUILD_ROOT%{_sysconfdir} install
 
-strip $RPM_BUILD_ROOT%{prefix}/bin/* || :
-
-gzip -9 $RPM_BUILD_ROOT%{prefix}/info/*
+gzip -9 $RPM_BUILD_ROOT%{_infodir}/*
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %post devel
-/sbin/install-info %{prefix}/info/libIDL.info.gz %{prefix}/info/dir
+/sbin/install-info %{_infodir}/libIDL.info.gz %{_infodir}/dir
 
 %preun devel
 if [ $1 = 0 ]; then
-   /sbin/install-info --delete %{prefix}/info/libIDL.info.gz %{prefix}/info/dir
+   /sbin/install-info --delete %{_infodir}/libIDL.info.gz %{_infodir}/dir
 fi
 
 %clean
@@ -87,26 +93,38 @@ rm -rf $RPM_BUILD_ROOT
 %doc -P libIDL/COPYING libIDL/ChangeLog libIDL/AUTHORS
 %doc -P libIDL/README* libIDL/NEWS libIDL/BUGS libIDL/tstidl.c
 
-%{prefix}/lib/lib*.so.*
-%{prefix}/bin/orbit-event-server
-%{prefix}/bin/orbit-name-server
-#don't install old-name-server
-#%{prefix}/bin/old-name-server
-%{prefix}/bin/name-client
-%{prefix}/bin/orbit-ird
+%{_libdir}/lib*.so.*
+%{_libdir}/orbit/Everything*.so.*
+%{_bindir}/orbit-name-server
+%{_bindir}/name-client
+%{_bindir}/ior-decode
+%{_bindir}/typelib-dump
 
 %files devel
-%{prefix}/bin/orbit-idl
-%{prefix}/bin/orbit-config
-%{prefix}/bin/libIDL-config
-%{prefix}/include/*
-%{prefix}/info/libIDL.info.gz
-%{prefix}/lib/*.sh
-%{prefix}/lib/lib*.a
-%{prefix}/lib/lib*.so
-%{prefix}/share/aclocal/*
+%{_libdir}/lib*.so
+%{_libdir}/lib*a
+%{_libdir}/orbit/*.so
+%{_libdir}/orbit/*a
+%{_libdir}/pkgconfig/*.pc
+%{_bindir}/orbit-idl
+%{_bindir}/libIDL-config
+%{_bindir}/orbit-config
+%{_includedir}/orbit-idl2.h
+%{_includedir}/ORBitservices
+%{_includedir}/orbit
+%{_includedir}/libIDL
+%{_infodir}/libIDL.info*
+%{_libdir}/*.sh
+%{_datadir}/aclocal/*
 
 %changelog
+* Tue Spe 18 2001 Jens Finke <jens@gnome.org>
+- Changed package name to ORBit2.
+- Updated spec file to match gpp standard.
+- Removed all hardcoded paths, use rpm macros instead.
+- Added glib2 and linc as required packages.
+- Removed docdir statement.
+
 * Mon Aug 30 1999 Elliot Lee <sopwith@redhat.com> 0.4.94-1
 - Spec file fixes from RHL 6.0.
 

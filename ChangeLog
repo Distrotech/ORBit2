@@ -1,3 +1,8 @@
+2001-09-18  Jens Finke <jens@gnome.org>
+	
+	* ORBit.spec.in: Updated, matches gpp requirements now, renamed the
+	package to ORBit2 and reworked the files section.
+
 2001-09-17  Mark McLoughlin <mark@skynet.ie>
 
 	* Makefile.shared: s/DEPS_MAGIC/IDL_DEPS_MAGIC/. Using
