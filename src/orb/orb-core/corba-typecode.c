@@ -122,14 +122,14 @@ const ORBit_RootObject_Interface ORBit_TypeCode_epv = {
   ORBit_TypeCode_free_fn
 };
 
-#define DEF_TC_BASIC(nom, c_align)                               \
-	struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = {  \
-		{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},    \
-		CORBA_tk_##nom,                                  \
-		#nom,                                            \
-		"IDL:CORBA/" #nom ":1.0",                        \
-		0, 0, NULL, NULL, NULL,                          \
-		CORBA_OBJECT_NIL, -1, 0, 0, 0, c_align           \
+#define DEF_TC_BASIC(nom, c_align)                                      \
+	const struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = {  \
+		{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},           \
+		CORBA_tk_##nom,                                         \
+		#nom,                                                   \
+		"IDL:CORBA/" #nom ":1.0",                               \
+		0, 0, NULL, NULL, NULL,                                 \
+		CORBA_OBJECT_NIL, -1, 0, 0, 0, c_align                  \
 }
 
 #define CORBA_tk_Object CORBA_tk_objref
@@ -139,14 +139,14 @@ const ORBit_RootObject_Interface ORBit_TypeCode_epv = {
 #define CORBA_tk_unsigned_short CORBA_tk_ushort
 #define CORBA_tk_long_double CORBA_tk_longdouble
 
-struct CORBA_TypeCode_struct TC_null_struct = {
+const struct CORBA_TypeCode_struct TC_null_struct = {
   {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
   CORBA_tk_null,
   "null",
   "Null",
   0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0, -1
 };
-struct CORBA_TypeCode_struct TC_void_struct = {
+const struct CORBA_TypeCode_struct TC_void_struct = {
   {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
   CORBA_tk_void,
   "void",

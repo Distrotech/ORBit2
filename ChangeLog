@@ -1,5 +1,11 @@
 2001-09-19  Raja R Harinath  <harinath@cs.umn.edu>
 
+	* src/orb/orb-core/corba-typecode.c: Have 
+	definitions of '*_struct's agree with declarations 
+	in include/orbit/orb-core/corba-typecode.h.
+
+2001-09-19  Raja R Harinath  <harinath@cs.umn.edu>
+
 	* Makefile.shared: Make dependency output file name
 	agree with pattern used for IDL_DEPS_MAGIC.
 
