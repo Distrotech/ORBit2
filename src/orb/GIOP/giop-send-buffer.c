@@ -204,8 +204,19 @@ giop_send_buffer_use_message_error (GIOPVersion giop_version)
 void
 giop_send_buffer_unuse (GIOPSendBuffer *buf)
 {
+	int i;
+
+	for (i = 0; i < buf->num_indirects_used; i++) {
+		if (buf->indirects[i].size > GIOP_CHUNK_SIZE) {
+			buf->indirects [i].size = GIOP_CHUNK_SIZE;
+			buf->indirects [i].ptr = g_realloc (buf->indirects [i].ptr,
+							    buf->indirects [i].size);
+		}
+	}
+
 	LINK_MUTEX_LOCK (send_buffer_list_lock);
 	send_buffer_list = g_slist_prepend (send_buffer_list, buf);
+
 	LINK_MUTEX_UNLOCK (send_buffer_list_lock);
 }
 

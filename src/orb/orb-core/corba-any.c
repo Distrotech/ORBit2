@@ -1243,10 +1243,8 @@ ORBit_sequence_append (gpointer      sequence,
 	g_return_if_fail (tc->kind == CORBA_tk_sequence);
 
 	if (seq->_length == seq->_maximum) {
-		/* take care for _maximum==0 */ 
 		guint new_len = MAX (2, (seq->_maximum * 2));
 
-		/* NB. extend maximum, not length */
 		seq->_buffer = ORBit_realloc_tcval
 			(seq->_buffer, subtc,
 			 seq->_maximum, new_len );

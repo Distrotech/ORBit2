@@ -1,3 +1,15 @@
+2003-07-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_unuse): shrink indirect chunk size, so
+	we don't keep vast buffers kicking around.
+
+	* src/orb/orb-core/corba-any.c (ORBit_sequence_append):
+	prune comments.
+
+	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval):
+	bin comments / extra braces - nice otherwise.
+
 2003-07-03  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/orb-core/corba-any.c (ORBit_sequence_alloc): undo
