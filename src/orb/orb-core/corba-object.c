@@ -267,9 +267,6 @@ ORBit_try_connection (CORBA_Object obj)
 		retval = TRUE;
 		break;
 	case LINK_DISCONNECTED:
-
-		g_warning ("TESTME: Re-connecting %p", obj->connection);
-
 		/* Have a go at reviving it */
 		dprintf (MESSAGES, "re-connecting dropped cnx %p", obj->connection);
 		giop_connection_try_reconnect (obj->connection);
