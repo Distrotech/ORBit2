@@ -89,7 +89,7 @@ linc_connection_connected (GIOChannel  *gioc,
 	klass = LINC_CONNECTION_CLASS (G_OBJECT_GET_CLASS (data));
 
 	if (cnx->status == LINC_CONNECTED &&
-	    condition & IN_CONDS &&
+	    (condition & IN_CONDS) &&
 	    klass->handle_input)
 
 		klass->handle_input (cnx);
@@ -323,14 +323,28 @@ linc_connection_state_changed (LINCConnection      *cnx,
 		klass->state_changed(cnx, status);
 }
 
-/* FIXME: the linc_main_iteration stuff here
-   looks like a deadlock / re-enterancy hell */
+/**
+ * linc_connection_read:
+ * @cnx: the connection to write to
+ * @buf: a pointer to the start of an array of bytes to read data into
+ * @len: the length of the array in bytes to read ingo
+ * @block_for_full_read: whether to block for a full read
+ * 
+ * FIXME: it allows re-enterancy via linc_connection_iterate
+ *        in certain cases.
+ * FIXME: on this basis, the connection can die underneath
+ *        our feet eg. between the main_iteration and the
+ *        g_return_if_fail.
+ *
+ * Return value: number of bytes written on success; negative on error.
+ **/
 int
-linc_connection_read (LINCConnection *cnx, guchar *buf,
-		      int len, gboolean block_for_full_read)
+linc_connection_read (LINCConnection *cnx,
+		      guchar         *buf,
+		      int             len,
+		      gboolean        block_for_full_read)
 {
-	int n;
-	int written = 0;
+	int bytes_read = 0;
 
 	if (!len)
 		return 0;
@@ -344,13 +358,15 @@ linc_connection_read (LINCConnection *cnx, guchar *buf,
 		return -1;
 
 	do {
+		int n;
+
 #ifdef LINC_SSL_SUPPORT
 		if (cnx->options & LINC_CONNECTION_SSL)
 			n = SSL_read (cnx->ssl, buf, len);
 		else
 #endif
 			n = read (cnx->fd, buf, len);
-
+		
 		if (n < 0) {
 #ifdef LINC_SSL_SUPPORT
 			if (cnx->options & LINC_CONNECTION_SSL) {
@@ -365,6 +381,9 @@ linc_connection_read (LINCConnection *cnx, guchar *buf,
 			} else
 #endif
 			{
+				if (errno == EINTR)
+					continue;
+
 				if (errno == EAGAIN
 				   && (cnx->options & LINC_CONNECTION_NONBLOCKING))
 					linc_main_iteration (FALSE);
@@ -378,132 +397,173 @@ linc_connection_read (LINCConnection *cnx, guchar *buf,
 		else {
 			buf += n;
 			len -= n;
-			written += n;
+			bytes_read += n;
 		}
 	} while (len > 0 && block_for_full_read);
 
-	return written;
+	return bytes_read;
 }
 
+/**
+ * linc_connection_write:
+ * @cnx: the connection to write to
+ * @buf: a pointer to the start of an array of bytes
+ * @len: the length of the array in bytes
+ * 
+ * Writes a contiguous block of data to the abstract connection.
+ * 
+ * FIXME: it allows re-enterancy via linc_connection_iterate
+ *        in certain cases.
+ * FIXME: on this basis, the connection can die underneath
+ *        our feet eg. between the main_iteration and the
+ *        g_return_if_fail.
+ *
+ * Return value: 0 on success, non 0 on error.
+ **/
 int
-linc_connection_write (LINCConnection *cnx, const guchar *buf, gulong len)
+linc_connection_write (LINCConnection *cnx,
+		       const guchar   *buf,
+		       gulong          len)
 {
-  int n;
+	int n;
 
-  if(cnx->options & LINC_CONNECTION_NONBLOCKING)
-    {
-      while(cnx->status == LINC_CONNECTING)
-	linc_main_iteration(TRUE);
-    }
-
-  g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
-
-  while(len > 0)
-    {
-#ifdef LINC_SSL_SUPPORT
-      if(cnx->options & LINC_CONNECTION_SSL)
-	n = SSL_write(cnx->ssl, buf, len);
-      else
-#endif
-	n = write(cnx->fd, buf, len);
-
-      if(n < 0)
-	{
-#ifdef LINC_SSL_SUPPORT
-	  if(cnx->options & LINC_CONNECTION_SSL)
-	    {
-	      gulong rv;
-	      rv = SSL_get_error(cnx->ssl, n);
-	      if((rv == SSL_ERROR_WANT_READ
-		  || rv == SSL_ERROR_WANT_WRITE)
-		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		linc_main_iteration(FALSE);
-	      else
-		return -1;
-	    }
-	  else
-#endif
-	    {
-	      if(errno == EAGAIN
-		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		linc_main_iteration(FALSE);
-	      else
-		return -1;
-	    }
+	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
+		while (cnx->status == LINC_CONNECTING)
+			linc_main_iteration (TRUE);
 	}
-      else if(n == 0)
-	return -1;
-      else
-	{
-	  buf += n;
-	  len -= n;
-	}
-    }
 
-  return 0;
+	g_return_val_if_fail (cnx->status == LINC_CONNECTED, -1);
+
+	while (len > 0) {
+#ifdef LINC_SSL_SUPPORT
+		if (cnx->options & LINC_CONNECTION_SSL)
+			n = SSL_write (cnx->ssl, buf, len);
+		else
+#endif
+			n = write (cnx->fd, buf, len);
+
+		if (n < 0) {
+#ifdef LINC_SSL_SUPPORT
+			if (cnx->options & LINC_CONNECTION_SSL) {
+				gulong rv;
+
+				rv = SSL_get_error (cnx->ssl, n);
+
+				if ((rv == SSL_ERROR_WANT_READ || 
+				     rv == SSL_ERROR_WANT_WRITE) &&
+				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					linc_main_iteration (FALSE);
+				else
+					return -1;
+			} else
+#endif
+			{
+				if (errno == EINTR)
+					continue;
+
+				else if (errno == EAGAIN &&
+					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					linc_main_iteration (FALSE);
+
+				else
+					return -1;
+			}
+		} else if (n == 0)
+			return -1;
+
+		else {
+			buf += n;
+			len -= n;
+		}
+	}
+
+	return 0;
 }
 
+/**
+ * linc_connection_writev:
+ * @cnx: the connection to write to
+ * @vecs: a structure of iovecs to write
+ * @nvecs: the number of populated iovecs
+ * @total_size: the total size of the data
+ * 
+ * This routine writes data to the abstract connection.
+ * FIXME: it allows re-enterancy via linc_connection_iterate
+ *        in certain cases.
+ * FIXME: on this basis, the connection can die underneath
+ *        our feet.
+ * 
+ * Return value: 0 on success, non 0 on error.
+ **/
 int
-linc_connection_writev (LINCConnection *cnx, struct iovec *vecs,
-			int nvecs, gulong total_size)
+linc_connection_writev (LINCConnection *cnx,
+			struct iovec   *vecs,
+			int             nvecs,
+			gulong          total_size)
 {
-  register int n, fd, vecs_left;
-  register struct iovec *vptr;
-  register gulong size_left;
+	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
+		while (cnx->status == LINC_CONNECTING)
+			linc_main_iteration (TRUE);
+	}
 
-  if(cnx->options & LINC_CONNECTION_NONBLOCKING)
-    {
-      while(cnx->status == LINC_CONNECTING)
-	linc_main_iteration(TRUE);
-    }
-
-  g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
-
-  fd = cnx->fd;
+	g_return_val_if_fail (cnx->status == LINC_CONNECTED, -1);
 
 #ifdef LINC_SSL_SUPPORT
-  if(cnx->options & LINC_CONNECTION_SSL)
-    {
-      for(n = 0; n < nvecs; n++)
-	{
-	  if(linc_connection_write(cnx, vecs[n].iov_base, vecs[n].iov_len))
-	    return -1;
-	}
+	if (cnx->options & LINC_CONNECTION_SSL) {
+		int i;
 
-      return 0;
-    }
+		for (i = 0; i < nvecs; i++) {
+			if (linc_connection_write (
+				cnx, vecs[i].iov_base, vecs[i].iov_len))
+				return -1;
+		}
+		return 0;
+	} else
 #endif
-
-  vptr = vecs;
-  vecs_left = nvecs;
-  size_left = total_size;
-  while(size_left > 0)
-    {
-      n = writev(fd, vptr, MIN(vecs_left, WRITEV_IOVEC_LIMIT));
-      if(n < 0)
 	{
-	  if(errno == EAGAIN
-	     && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-	    linc_main_iteration(FALSE); /* Try to give other things a
-					   chance to run */
-	  else
-	    return -1; /* Unhandlable error */
-	}
-      else if(n == 0)
-	return -1;
-      else
-	{
-	  size_left -= n;
-	  if(size_left)
-	    {
-	      while(n > vptr->iov_len)
-		vptr++;
-	      vptr->iov_len -= n;
-	    }
-	}
-    }
+		int fd, vecs_left;
+		struct iovec *vptr;
+		gulong size_left;
+		
+		vptr = vecs;
+		vecs_left = nvecs;
+		size_left = total_size;
 
-  return 0;
+		fd = cnx->fd;
+
+		while (size_left > 0) {
+			int n;
+
+			n = writev (fd, vptr, MIN (vecs_left, WRITEV_IOVEC_LIMIT));
+
+			if (n < 0) {
+				if (errno == EINTR)
+					continue;
+
+				else if (errno == EAGAIN &&
+					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					linc_main_iteration (FALSE);
+				else
+					return -1; /* Unhandlable error */
+
+			} else if (n == 0)
+				return -1;
+
+			else {
+				size_left -= n;
+				if (size_left) {
+					while (n > vptr->iov_len) {
+						n -= vptr->iov_len;
+						vecs_left--;
+						vptr++;
+					}
+					vptr->iov_len -= n;
+				}
+			}
+		}
+	}
+
+	return 0;
 }
 
 static void

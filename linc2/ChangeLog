@@ -1,3 +1,13 @@
+2001-11-08  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_writev): remove
+	'register' optimization :-) fix SSL path, make the code
+	legible, handle EINTR, don't skip partialy written
+	iovecs in a totaly bogus way.
+	(linc_connection_write): handle EINTR.
+	(linc_connection_read): rename 'written' 'bytes_read'
+	Document all methods.
+
 2001-11-06  Michael Meeks  <michael@ximian.com>
 
 	* src/linc.c (linc_init): init with G_TYPE_DEBUG_OBJECTS.
