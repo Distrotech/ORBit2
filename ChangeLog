@@ -1,3 +1,9 @@
+2003-10-06  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* src/services/imodule/orbit-imodule.c:
+	(ORBit_iinterface_fill_iargs): 
+	fill the name field of ORBit::IArg struct
+
 2003-10-02  Alexander Larsson  <alexl@redhat.com>
 
 	* src/orb/GIOP/giop.c: (giop_thread_free):
