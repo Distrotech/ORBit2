@@ -894,7 +894,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	giop_send_buffer_write (send_buffer, recv_buffer->connection);
 	giop_send_buffer_unuse (send_buffer);
 
-	if (m_data->ret) {
+	if (m_data->ret && ev->_major == CORBA_NO_EXCEPTION) {
 		switch (m_data->ret->kind) {
 		case BASE_TYPES:
 			break;
