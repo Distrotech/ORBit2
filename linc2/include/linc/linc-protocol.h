@@ -22,7 +22,7 @@ G_BEGIN_DECLS
 #include <netdb.h>
 
 /* socklen_t seems rather un-portable */
-typedef unsigned int LincSockLen;
+typedef unsigned int LinkSockLen;
 
 typedef enum {
 	LINK_PROTOCOL_SECURE     = 1<<0,
@@ -37,7 +37,7 @@ typedef void (*LinkProtocolDestroyFunc)     (int                     fd,
 typedef struct sockaddr *(*LinkProtocolGetSockAddrFunc) (const LinkProtocolInfo *proto,
 							 const char             *hostname,
 							 const char             *service,
-							 LincSockLen            *saddr_len);
+							 LinkSockLen            *saddr_len);
 
 typedef gboolean (*LinkProtocolGetSockInfoFunc) (const LinkProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
@@ -46,7 +46,7 @@ typedef gboolean (*LinkProtocolGetSockInfoFunc) (const LinkProtocolInfo *proto,
 
 typedef gboolean (*LinkProtocolIsLocal)         (const LinkProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
-						 LincSockLen             saddr_len);
+						 LinkSockLen             saddr_len);
 
 struct _LinkProtocolInfo {
 	const char                 *name;

@@ -25,7 +25,7 @@ typedef enum {
 	LINK_CONNECTION_LOCAL_ONLY   = 1 << 3
 } LinkConnectionOptions;
 
-typedef struct _LincWatch        LincWatch;
+typedef struct _LinkWatch        LinkWatch;
 typedef struct _LinkProtocolInfo LinkProtocolInfo;
 
 #ifdef G_THREADS_ENABLED

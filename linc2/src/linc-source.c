@@ -32,7 +32,7 @@ link_source_prepare (GSource *source,
 static gboolean 
 link_source_check (GSource *source)
 {
-	LincUnixWatch *watch = (LincUnixWatch *)source;
+	LinkUnixWatch *watch = (LinkUnixWatch *)source;
 
 	return watch->pollfd.revents & watch->condition;
 }
@@ -44,7 +44,7 @@ link_source_dispatch (GSource    *source,
 
 {
 	GIOFunc    func;
-	LincUnixWatch *watch = (LincUnixWatch *) source;
+	LinkUnixWatch *watch = (LinkUnixWatch *) source;
 
 	if (!callback)
 		g_error ("No callback");
@@ -81,7 +81,7 @@ void
 link_source_set_condition (GSource      *source,
 			   GIOCondition  condition)
 {
-	LincUnixWatch *watch = (LincUnixWatch *) source;
+	LinkUnixWatch *watch = (LinkUnixWatch *) source;
 
 	if (watch) {
 		watch->pollfd.events = condition;
@@ -111,14 +111,17 @@ link_source_create_watch (GMainContext *context,
 			  gpointer      user_data)
 {
 	GSource       *source;
-	LincUnixWatch *watch;
+	LinkUnixWatch *watch;
 
 	source = g_source_new (&link_source_watch_funcs,
-			       sizeof (LincUnixWatch));
-	watch = (LincUnixWatch *) source;
+			       sizeof (LinkUnixWatch));
+	watch = (LinkUnixWatch *) source;
 
 	watch->pollfd.fd = fd;
 	watch->channel   = opt_channel;
+	watch->condition = condition;
+	watch->callback  = func;
+	watch->user_data = user_data;
 
 	link_source_set_condition (source, condition);
 
@@ -132,51 +135,70 @@ link_source_create_watch (GMainContext *context,
 	return source;
 }
 
-LincWatch *
+LinkWatch *
 link_io_add_watch_fd (int          fd,
 		      GIOCondition condition,
 		      GIOFunc      func,
 		      gpointer     user_data)
 {
-	LincWatch *w;
+	LinkWatch *w;
+	GMainContext *thread_ctx;
 
-	w = g_new0 (LincWatch, 1);
+	w = g_new0 (LinkWatch, 1);
 
-	/* Linc loop */
-	w->link_source = link_source_create_watch (
-		link_main_get_context (), fd, NULL,
-		condition, func, user_data);
+	if ((thread_ctx = link_thread_io_context ())) {
+		/* Have a dedicated I/O worker thread */
 
-	if (!link_get_threaded ()) /* Main loop too */
-		w->main_source = link_source_create_watch (
-			NULL, fd, NULL, condition, func, user_data);
-	else
-		w->main_source = NULL;
+		w->link_source = link_source_create_watch
+			(thread_ctx, fd, NULL, condition, func, user_data);
+
+	} else {
+		/* Have an inferior and hook into the glib context */
+
+		/* Link loop */
+		w->link_source = link_source_create_watch
+			(link_main_get_context (), fd, NULL,
+			 condition, func, user_data);
+		
+		if (!link_get_threaded ()) /* Main loop too */
+			w->main_source = link_source_create_watch
+				(NULL, fd, NULL, condition, func, user_data);
+		else
+			w->main_source = NULL;
+	}
 
 	return w;
 }
 
-void
-link_io_remove_watch (LincWatch *w)
+static void
+link_watch_unlisten (LinkWatch *w)
 {
-	if (w) {
-		link_source_set_condition (w->main_source, 0);
-		link_source_set_condition (w->link_source, 0);
+	link_source_set_condition (w->main_source, 0);
+	link_source_set_condition (w->link_source, 0);
 
-		if (w->main_source) {
-			g_source_destroy (w->main_source);
-			g_source_unref   (w->main_source);
-		} /* else - threaded */
+	if (w->main_source) {
+		g_source_destroy (w->main_source);
+		g_source_unref   (w->main_source);
+		w->main_source = NULL;
+	} /* else - threaded */
 		
-		g_source_destroy (w->link_source);
-		g_source_unref   (w->link_source);
-
-		g_free (w);
-	}
+	g_source_destroy (w->link_source);
+	g_source_unref   (w->link_source);	
+	w->link_source = NULL;
 }
 
 void
-link_watch_set_condition (LincWatch   *w,
+link_io_remove_watch (LinkWatch *w)
+{
+	if (!w)
+		return;
+
+	link_watch_unlisten (w);
+	g_free (w);
+}
+
+void
+link_watch_set_condition (LinkWatch   *w,
 			  GIOCondition condition)
 {
 	if (w) {
@@ -188,3 +210,27 @@ link_watch_set_condition (LincWatch   *w,
 	}
 }
 
+/*
+ * Migrates the source to/from the main thread.
+ */
+void
+link_watch_move_io (LinkWatch *w,
+		    gboolean to_io_thread)
+{
+	LinkUnixWatch w_cpy;
+
+	if (!w)
+		return;
+
+	g_assert (to_io_thread); /* FIXME */
+
+	w_cpy = *(LinkUnixWatch *)w->link_source;
+
+	link_watch_unlisten (w);
+
+	w->link_source = link_source_create_watch
+		(link_thread_io_context (),
+		 w_cpy.pollfd.fd,
+		 w_cpy.channel, w_cpy.condition,
+		 w_cpy.callback, w_cpy.user_data);
+}

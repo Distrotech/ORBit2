@@ -1,5 +1,27 @@
 2003-06-03  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-source.c (link_watch_unlisten): split
+	(link_io_remove_watch): from here.
+	(link_watch_move_io): impl.
+
+	* src/linc.c (linc_exec_set_io_thread): 
+	call the hooks.
+
+	* src/linc-connection.c
+	(link_connections_move_io_T): impl.
+
+	* src/linc-server.c: s/cnx/srv/ for servers.
+	(link_server_dispose, link_server_setup): manage
+	server_list. (link_servers_move_io_T): impl.
+
+	* src/linc-connection.c
+	(link_connection_initiate_list): check was_initiated.
+	Track all connections on cnx_list.
+	(link_connection_from_fd_T): prepend to list here.
+	(link_connection_initiate): and not here.
+
+2003-06-03  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-server.c
 	(link_server_accept_connection): upd.
 

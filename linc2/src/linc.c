@@ -19,7 +19,8 @@
 static gboolean link_threaded = FALSE;
 static gboolean link_mutex_new_called = FALSE;
 GMainLoop      *link_loop = NULL;
-GMainContext   *link_context = NULL;
+static GMainContext   *link_context = NULL;
+static GMainContext   *link_thread_context = NULL;
 
 static GMutex  *link_main_lock;
 /* commands for the I/O loop */
@@ -182,7 +183,7 @@ link_init (gboolean init_threads)
 	g_type_init ();
 
 	/*
-	 * Linc's raison d'etre is for ORBit2 and Bonobo
+	 * Link's raison d'etre is for ORBit2 and Bonobo
 	 *
 	 * In Bonobo, components and containers must not crash if the
 	 * remote end crashes.  If a remote server crashes and then we
@@ -387,17 +388,32 @@ link_shutdown (void)
 	}
 }
 
-static gboolean io_in_thread = FALSE;
+GMainContext *
+link_thread_io_context (void)
+{
+	return link_thread_context;
+}
 
 static void
-linc_exec_set_io_thread (gpointer data)
+link_exec_set_io_thread (gpointer data)
 {
-	g_warning ("FIXME: re-write watches");
+	gboolean to_io_thread = TRUE;
+
+	link_lock ();
+	
+	g_warning ("FIXME: spawn new I/O thread ...");
+	link_thread_context = NULL;
+
+	link_connections_move_io_T (to_io_thread);
+	link_servers_move_io_T     (to_io_thread);
+
+	link_unlock ();
 }
 
 void
 link_set_io_thread (gboolean new_thread)
 {
+	static gboolean io_in_thread = FALSE;
 	LinkCommand *cmd = g_new0 (LinkCommand, 1);
 
 	g_warning ("FIXME: guard from double entry");
@@ -423,7 +439,7 @@ link_dispatch_command (gpointer data)
 		link_connection_exec_disconnect (data);
 		break;
 	case LINK_COMMAND_SET_IO_THREAD:
-		linc_exec_set_io_thread (data);
+		link_exec_set_io_thread (data);
 		break;
 	default:
 		g_error ("Unimplemented (%d)", cmd->type);
