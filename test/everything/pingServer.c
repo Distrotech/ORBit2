@@ -42,8 +42,6 @@ PingPongServer_opSleep (PortableServer_Servant  servant,
 			const char             *large_string,
 			CORBA_Environment      *ev)
 {
-	static int slept = 0;
-
 	/* Don't process the buffer - it should fill up at the other end */
 	g_usleep (10000);
 }
