@@ -1,4 +1,7 @@
-2001-11-06  Johan Dahlin  <zilch.am@home.se>
+2001-11-06  Johan Dahlin  <jdahlin@telia.com>
+
+	* test/everything/Makefile.am (Everything_module_la_LIBADD): 
+	Add $(top_builddir)/src/orb/libORBit-2.la
 
 	* src/orb/orb-core/Makefile.am (TYPELIB_DIR): fix
 	to be $(libdir)/orbit-2.0
