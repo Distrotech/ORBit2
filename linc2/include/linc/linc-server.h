@@ -43,5 +43,6 @@ gboolean linc_server_setup(LINCServer *cnx, const char *proto_name,
 			   const char *local_host_info,
 			   const char *local_serv_info,
 			   LINCConnectionOptions create_options);
+void linc_server_handle(LINCServer *cnx);
 
 #endif

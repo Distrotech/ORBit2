@@ -31,7 +31,8 @@ linc_server_get_type(void)
       
       object_type = g_type_register_static (G_TYPE_OBJECT,
                                             "LINCServer",
-                                            &object_info);
+                                            &object_info,
+					    0);
     }  
 
   return object_type;
@@ -61,7 +62,7 @@ linc_server_destroy(GObject         *obj)
   O_MUTEX_DESTROY(cnx->mutex);
   if(cnx->tag)
     g_source_remove(cnx->tag);
-  if(cnx->proto->destroy)
+  if(cnx->proto && cnx->proto->destroy)
     cnx->proto->destroy(cnx->fd, cnx->local_host_info, cnx->local_serv_info);
   if(cnx->fd >= 0)
     close(cnx->fd);
@@ -120,6 +121,12 @@ linc_server_handle_io(GIOChannel *gioc,
   return TRUE;
 }
 
+void
+linc_server_handle(LINCServer *cnx)
+{
+  linc_server_handle_io(NULL, G_IO_IN, cnx);
+}
+
 gboolean
 linc_server_setup(LINCServer *cnx, const char *proto_name, 
 		  const char *local_host_info, const char *local_serv_info,
@@ -149,7 +156,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
 
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
   if(fd < 0)
-    {
+  {
       freeaddrinfo(ai);
       return FALSE;
     }
@@ -158,15 +165,15 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof(oneval));
   }
     
-  n = 0;
+    n = 0;
   if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
      || local_serv_info)
-    n = bind(fd, ai->ai_addr, ai->ai_addrlen);
+  n = bind(fd, ai->ai_addr, ai->ai_addrlen);
   if(!n)
-    n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
+  n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
   if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-    {
+  {
       freeaddrinfo(ai);
       return FALSE;
     }
@@ -182,10 +189,13 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
 
   cnx->proto = proto;
   cnx->fd = fd;
-  gioc = g_io_channel_unix_new(fd);
-  cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-			    linc_server_handle_io, cnx);
-  g_io_channel_unref(gioc);
+  if(!(create_options & LINC_CONNECTION_NONBLOCKING))
+  {
+    gioc = g_io_channel_unix_new(fd);
+    cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+			      linc_server_handle_io, cnx);
+    g_io_channel_unref(gioc);
+  }
   cnx->create_options = create_options;
   cnx->local_host_info = g_strdup(hnbuf);
   cnx->local_serv_info = g_strdup(servbuf);
