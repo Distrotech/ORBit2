@@ -95,7 +95,7 @@ ORBit_free_T(gpointer mem)
     /* CB invokation must free any assoc. memory */
     return;
   }
-  g_assert_not_reached();
+  g_error ("couldn't free memory at %p; not initialized?\n", mem);
 }
 
 void

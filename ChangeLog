@@ -1,3 +1,9 @@
+2001-08-07  Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_free_T): do g_error instead of g_assert,
+	makes debugging a bit easier.
+
 2001-08-07  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/dynamic/dynany.c
