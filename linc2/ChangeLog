@@ -1,5 +1,9 @@
 2002-04-08  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: use --with-openssl #77962
+
+2002-04-08  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-protocols.c (cleanup_sweep): disable,
 	it seems that this is a source of evil lockups;
 	really we need to do this in a non-blocking way,
