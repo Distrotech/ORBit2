@@ -1,5 +1,9 @@
 2002-05-03  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/idl-compiler/cpp/pass_xlate.cc (IDLWriteArrayProps): Use
+	"template<>" before template specializations, and use local
+	type names instead of full, namespaced ID's.
+
 	* src/idl-compiler/Makefile.am: Force C++ linking if C++ backend
 	is to be included
 
