@@ -1,5 +1,12 @@
 2001-06-19  Michael Meeks  <michael@ximian.com>
 
+	* src/idl-compiler/orbit-idl-c-stubs.c (cs_small_output_stub): 
+	output pre / post call code even for small stubs / skels.
+
+	* include/orbit/poa/poa-types.h: remove redundant type defines.
+
+2001-06-19  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/util/genrand.c (genrand_unix): if ORBIT_PURIFY don't
 	use bits of uninitialized stack.
 

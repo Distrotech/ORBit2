@@ -34,22 +34,6 @@ typedef struct {
 
 #define ORBIT_SERVANT_TO_ORB(servant) \
   (((PortableServer_POA)ORBIT_SERVANT_TO_POAOBJECT(servant)->poa)->orb )
-#define ORBIT_SERVANT_TO_POAOBJECT(s) \
-((ORBit_POAObject *)((PortableServer_ServantBase*)(s))->_private)
-
-#define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant,major) 			\
-  ( ((PortableServer_ServantBase *)(servant))->vepv[major] )
-
-#ifdef ORBIT_BYPASS_MAPCACHE
-#define ORBIT_POAOBJECT_TO_EPVIDX(pobj,clsid) \
-  ( (pobj)->vepvmap_cache[(clsid)] )
-#else
-#define ORBIT_POAOBJECT_TO_EPVIDX(pobj,clsid) \
-  ( ORBIT_SERVANT_TO_CLASSINFO((pobj)->servant)->vepvmap[(clsid)] )
-#endif
-#define ORBIT_POAOBJECT_TO_EPVPTR(pobj,clsid) \
-  ORBIT_SERVANT_MAJOR_TO_EPVPTR((pobj)->servant, \
-    ORBIT_POAOBJECT_TO_EPVIDX((pobj),(clsid)) )
 
 typedef struct ORBit_POAInvocation ORBit_POAInvocation;
 
@@ -138,13 +122,12 @@ typedef struct {
     ORBIT_SERVANT_TO_EPVIDX((servant),(clsid)) )
 
 #define ORBIT_STUB_GetPoaObj(x) (((CORBA_Object)x)->bypass_obj)
-
-/* FIXME: do we need / want this ? */
-/*
 #define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->bypass_obj && \
                                            ((CORBA_Object)obj)->bypass_obj->servant && classid)
 #define ORBIT_STUB_GetServant(obj) ((CORBA_Object)obj)->bypass_obj->servant
 #define ORBIT_STUB_GetEpv(obj,clsid) ORBIT_POAOBJECT_TO_EPVPTR(((CORBA_Object)obj)->bypass_obj, (clsid))
+
+#ifdef ORBIT_IN_PROC_COMPLIANT
 #define ORBIT_STUB_PreCall(obj, iframe) {		\
   ++( (obj)->bypass_obj->use_cnt );			\
   iframe.pobj = (obj)->bypass_obj;			\
@@ -158,15 +141,9 @@ typedef struct {
   if ( (obj)->bypass_obj->life_flags & ORBit_LifeF_NeedPostInvoke )	\
 	ORBit_POAObject_post_invoke( (obj)->bypass_obj);		\
 }
-
-*/
-
-#define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->bypass_obj)
+#else
 #define ORBIT_STUB_PreCall(x,y)
 #define ORBIT_STUB_PostCall(x,y)
-#define ORBIT_STUB_GetServant(obj) \
-	((obj)->bypass_obj->servant)
-#define ORBIT_STUB_GetEpv(x,y) \
-	ORBIT_POAOBJECT_TO_EPVPTR( (x)->bypass_obj, (y))
+#endif
 
 #endif
