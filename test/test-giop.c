@@ -10,6 +10,12 @@
 
 #ifndef G_ENABLE_DEBUG
 #  warning GIOP test hooks only enabled in a debugging build
+int
+main (int argc, char *argv[])
+{
+	g_warning ("GIOP test hooks only enabled in a debugging build");
+	return 0;
+}
 #else
 
 LINCWriteOpts  *non_blocking = NULL;
@@ -146,7 +152,6 @@ test_spoofing (void)
 	g_object_unref (misc);
 	giop_debug_hook_spoofed_reply = NULL;
 }
-#endif /* G_ENABLE_DEBUG */
 
 static void
 run_test_hook_new_connection (GIOPServer     *server,
@@ -208,8 +213,6 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 int
 main (int argc, char *argv[])
 {
-#ifdef G_ENABLE_DEBUG
-
 	CORBA_ORB orb;
 	CORBA_Environment ev;
 
@@ -231,7 +234,8 @@ main (int argc, char *argv[])
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
 	fprintf (stderr, "All tests passed.\n");
-#endif /* G_ENABLE_DEBUG */
 
 	return 0;
 }
+
+#endif /* G_ENABLE_DEBUG */
