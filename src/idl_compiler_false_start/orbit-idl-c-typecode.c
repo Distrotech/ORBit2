@@ -99,8 +99,9 @@ cbe_tc_generate(CBETCGenInfo *tci)
     subtypes_id = random_id++, sublabels_id = random_id++;
 
   if(strncmp(tci->structname, "anon", 4)) {
-    fprintf(tci->of, "#if (TC_IMPL_%s == ORBIT_FILE_ID_%s) && !defined(TC_DEF_%s)\n",
-	    tci->structname, tci->ci->c_base_name, tci->structname);
+    fprintf(tci->of, "#if ");
+    orbit_cbe_id_cond_hack(tci->of, "TC_IMPL", tci->structname, tci->ci->c_base_name);
+    fprintf(tci->of, " && !defined(TC_DEF_%s)\n", tci->structname);
     fprintf(tci->of, "#define TC_DEF_%s 1\n", tci->structname);
   }
 

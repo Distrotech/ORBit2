@@ -455,7 +455,9 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 
   ctmp = orbit_cbe_get_typename(tree);
 
-  fprintf(ci->fh, "#if (ORBIT_IMPL_%s == ORBIT_FILE_ID_%s) && !defined(ORBIT_DEF_%s)\n", ctmp, ci->c_base_name, ctmp);
+  fprintf(ci->fh, "#if ");
+  orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);
+  fprintf(ci->fh, " && !defined(ORBIT_DEF_%s)\n", ctmp);
   fprintf(ci->fh, "#define ORBIT_DEF_%s 1\n\n", ctmp);
   fprintf(ci->fh, "gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings)\n", ctmp);
   fprintf(ci->fh, "{\n");
