@@ -31,28 +31,35 @@
 #endif
 #include <string.h>
 
+/* FIXME: should be condtional */
+void orbit_idl_output_cpp (OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
+
 static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
   {"c", &orbit_idl_output_c},
+  { "cpp", &orbit_idl_output_cpp },
   {NULL, NULL}
 };
 
-OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang,const char* backend_dir)
+OIDL_Backend_Info *
+orbit_idl_backend_for_lang (const char *lang, const char *backend_dir)
 {
-  int i;
+  int i = 0;
+
+  for (i = 0; orbit_idl_builtin_backends[i].name; i++) {
+    if (!strcmp (lang, orbit_idl_builtin_backends[i].name))
+      return &orbit_idl_builtin_backends[i];
+  }
+
+  fprintf (stderr, "Language '%s' not supported\n", lang);
+
+  return NULL;
+}
 #if 0
   int ret;
   char *fname, *ctmp;
   GModule *gmod;
   OIDL_Backend_Info *retval = NULL;
-#endif
 
-  for(i = 0; orbit_idl_builtin_backends[i].name; i++) {
-    if(!strcmp(lang, orbit_idl_builtin_backends[i].name))
-      return &orbit_idl_builtin_backends[i];
-  }
-
-  return NULL;
-#if 0
   g_return_val_if_fail(g_module_supported(), NULL);
 
   ctmp = alloca(sizeof("orbit-idl--backend") + strlen(lang));
@@ -78,4 +85,4 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang,const char* backe
 
   return retval;
 #endif
-}
+
