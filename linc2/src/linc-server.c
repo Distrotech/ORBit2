@@ -67,17 +67,17 @@ my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
   if (G_CCLOSURE_SWAP_DATA (closure))
     {
       data1 = closure->data;
-      data2 = g_value_get_as_pointer (param_values + 0);
+      data2 = g_value_peek_pointer (param_values + 0);
     }
   else
     {
-      data1 = g_value_get_as_pointer (param_values + 0);
+      data1 = g_value_peek_pointer (param_values + 0);
       data2 = closure->data;
     }
   callback = (GSignalFunc_VOID__OBJECT) (marshal_data ? marshal_data : cc->callback);
 
   callback (data1,
-            g_value_get_as_pointer (param_values + 1),
+            g_value_peek_pointer (param_values + 1),
             data2);
 }
 
@@ -98,7 +98,7 @@ linc_server_class_init (LINCServerClass *klass)
   server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
 						 G_OBJECT_CLASS_TYPE(klass),
 						 0, closure,
-						 NULL,
+						 NULL, NULL,
 						 my_cclosure_marshal_VOID__OBJECT,
 						 G_TYPE_NONE,
 						 1, &ptype);
