@@ -397,6 +397,7 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 	CORBA_TypeCode tc = sequence_tc->subtypes [0];
 	gpointer buf, old_buf, b;
 	gconstpointer a;
+	CORBA_unsigned_long old_len;
 
 	buf = ORBit_alloc_tcval (tc, len);
 
@@ -404,6 +405,8 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 		return FALSE;
 
 	old_buf = s->_buffer;
+	old_len = s->_length;
+
 	s->_buffer = buf;
 	s->_length = len;
 
@@ -413,7 +416,7 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 		a = old_buf;
 		b = buf;
 		
-		for (i = 0; i < len; i++)
+		for (i = 0; i < old_len; i++)
 			ORBit_copy_value_core (&a, &b, tc);
 		
 		ORBit_free (old_buf);

@@ -1,4 +1,9 @@
 2001-05-30  Michael Meeks  <michael@ximian.com>
+	
+	* src/orb/dynamic/dynany.c (dynany_sequence_realloc_to): only
+	copy old_len elements from the old buffer.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/dynamic/dynany.c: Port from ORBit-stable.
 
