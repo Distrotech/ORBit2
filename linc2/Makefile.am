@@ -1,8 +1,11 @@
 SUBDIRS=include src
 
-bin_SCRIPTS=linc-config
 m4datadir=$(datadir)/aclocal
 m4data_DATA=linc.m4
 
-EXTRA_DIST=linc-config.in linc.m4
+EXTRA_DIST=	linc.m4			\
+		linc.pc.in
+
+pkgconfigdir=$(libdir)/pkgconfig
+pkgconfig_DATA = linc.pc
 
