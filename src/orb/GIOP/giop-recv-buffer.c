@@ -1007,8 +1007,9 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 
 		if (giop_threaded () && !process_now) {
 			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-			giop_thread_push_recv (ent);
 			ent_unlock (ent);
+
+			giop_thread_push_recv (ent);
 
 		} else {
 			if (ent->async_cb)

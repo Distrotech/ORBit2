@@ -287,6 +287,7 @@ static int      corba_wakeup_fds[2];
 #define WAKEUP_WRITE (corba_wakeup_fds [0])
 #define WAKEUP_POLL  (corba_wakeup_fds [1])
 static GSource *corba_main_source = NULL;
+static GThread *giop_incoming_thread = NULL;
 
 static gboolean
 giop_mainloop_handle_input (GIOChannel     *source,
@@ -311,6 +312,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 	if (threaded) {
 		GIOPThread *tdata;
+		GError     *error = NULL;
 
 		/* FIXME: should really cleanup with descructor */
 		giop_tdata_private = g_private_new (NULL);
@@ -327,6 +329,16 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 			giop_mainloop_handle_input, NULL);
 		
 		g_private_set (giop_tdata_private, tdata);
+
+		giop_incoming_thread =
+			g_thread_create_full (
+				giop_recv_thread_fn,
+				NULL, /* data */
+				0, TRUE, FALSE, 
+				G_THREAD_PRIORITY_HIGH,
+				&error);
+		if (!giop_incoming_thread || error)
+			g_error ("Failed to create ORB worker thread");
 	}
 
 	giop_tmpdir_init ();
@@ -356,8 +368,11 @@ giop_thread_push_recv (GIOPMessageQueueEntry *ent)
 	tdata = ent->src_thread;
 
 	g_mutex_lock (tdata->lock);
-	tdata->recv_buffers = g_slist_append (
-		tdata->recv_buffers, ent->buffer);
+
+	if (ent->async_cb) /* we need the recv buffer later */
+		tdata->recv_buffers = g_slist_append (
+			tdata->recv_buffers, ent->buffer);
+	/* else - someone already waiting on the stack */
 
 	/* wakeup thread ... */
 	g_cond_signal (tdata->incoming);

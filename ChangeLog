@@ -1,5 +1,10 @@
 2002-10-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c (giop_init): 
+	actually start the IO thread ;-)
+
+2002-10-31  Michael Meeks  <michael@ximian.com>
+
 	* test/echo-client-t.c (main): init mt orb.
 
 	* src/orb/GIOP/giop-recv-buffer.c

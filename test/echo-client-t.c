@@ -4,7 +4,7 @@
 #include "echo.h"
 
 int niters = 10000;
-int nthreads = 8;
+int nthreads = 3;
 char *server_ior;
 CORBA_ORB orb;
 
@@ -63,9 +63,6 @@ main (int argc, char *argv[])
 	CORBA_Environment *ev, real_ev;
 
 	CORBA_exception_init ((ev = &real_ev));
-
-	/* Tell linc we want a threaded ORB */
-	linc_set_threaded (TRUE);
 
 	orb = CORBA_ORB_init (&argc, argv, "orbit-local-mt-orb", ev);
 
