@@ -231,104 +231,111 @@ ch_output_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 }
 
 static void
-ch_output_type_enum(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+ch_output_type_enum (IDL_tree       tree,
+		     OIDL_Run_Info *rinfo,
+		     OIDL_C_Info   *ci)
 {
-  IDL_tree curitem;
-  char *id, *enumid;
+	IDL_tree  l;
+	char     *enumid;
 
-  /* CORBA spec says to do
-	   typedef unsigned int enum_name;
-     and then #defines for each enumerator.
-     This works just as well and seems cleaner.
-  */
+	/* CORBA spec says to do
+	 * typedef unsigned int enum_name;
+	 * and then #defines for each enumerator.
+	 * This works just as well and seems cleaner.
+	 */
 
-  enumid = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_TYPE_ENUM(tree).ident), "_", 0);
-  fprintf(ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n", enumid, enumid);
-  fprintf(ci->fh, "typedef enum {\n");
+	enumid = IDL_ns_ident_to_qstring (
+			IDL_IDENT_TO_NS (IDL_TYPE_ENUM (tree).ident), "_", 0);
+	fprintf (ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n", enumid, enumid);
+	fprintf (ci->fh, "typedef enum {\n");
 
-  for(curitem = IDL_TYPE_ENUM(tree).enumerator_list;
-      curitem;
-      curitem = IDL_LIST(curitem).next) {
-    id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_LIST(curitem).data), "_", 0);
+	for (l = IDL_TYPE_ENUM (tree).enumerator_list; l; l = IDL_LIST (l).next) {
+		char *id;
 
-    fprintf(ci->fh, "  %s%s\n",
-	    id,
-	    IDL_LIST(curitem).next?",":"");
+		id = IDL_ns_ident_to_qstring (
+			IDL_IDENT_TO_NS (IDL_LIST (l).data), "_", 0);
 
-    g_free(id);
-  }
+		fprintf (ci->fh, "  %s%s\n", id, IDL_LIST (l).next ? "," : "");
 
-  fprintf(ci->fh, "} %s;\n", enumid);
+		g_free (id);
+	}
 
-  ch_type_alloc_and_tc(tree, rinfo, ci, FALSE);
+	fprintf (ci->fh, "} %s;\n", enumid);
 
-  fprintf(ci->fh, "#endif\n");
+	ch_type_alloc_and_tc (tree, rinfo, ci, FALSE);
 
-  g_free(enumid);
+	fprintf (ci->fh, "#endif\n");
+
+	g_free (enumid);
 }
-
 
 static void
 ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  char *ctmp = NULL; /* Quiet gcc */
-  IDL_tree curitem, ent, sub;
+	IDL_tree  l;
 
-  ch_prep(IDL_TYPE_DCL(tree).type_spec, rinfo, ci);
+	ch_prep (IDL_TYPE_DCL (tree).type_spec, rinfo, ci);
 
-  for(curitem = IDL_TYPE_DCL(tree).dcls; curitem; curitem = IDL_LIST(curitem).next) {
-    ent = IDL_LIST(curitem).data;
+	for (l = IDL_TYPE_DCL (tree).dcls; l; l = IDL_LIST (l).next) {
+		char *ctmp = NULL;
 
-    switch(IDL_NODE_TYPE(ent)) {
-    case IDLN_IDENT:
-      ctmp = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(ent), "_", 0);
-      break;
-    case IDLN_TYPE_ARRAY:
-      ctmp = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_TYPE_ARRAY(ent).ident), "_", 0);
-      break;
-    default:
-      g_error("Huh?");
-      break;
-    }
-    fprintf(ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n", ctmp, ctmp);
-    fprintf(ci->fh, "typedef ");
-    orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
+		IDL_tree ent = IDL_LIST (l).data;
 
-    switch(IDL_NODE_TYPE(ent)) {
-    case IDLN_IDENT:
-      {
-	fprintf(ci->fh, " %s;\n", ctmp);
-	fprintf(ci->fh, "#define %s_marshal(x,y,z) ", ctmp);
-	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
-	fprintf(ci->fh, "_marshal((x),(y),(z))\n");
+		switch (IDL_NODE_TYPE(ent)) {
+		case IDLN_IDENT:
+			ctmp = IDL_ns_ident_to_qstring (
+					IDL_IDENT_TO_NS (ent), "_", 0);
+			break;
+		case IDLN_TYPE_ARRAY:
+			ctmp = IDL_ns_ident_to_qstring (
+					IDL_IDENT_TO_NS (IDL_TYPE_ARRAY (ent).ident), "_", 0);
+			break;
+		default:
+			g_assert_not_reached ();
+			break;
+		}
 
-	fprintf(ci->fh, "#define %s_demarshal(x,y,z,i) ", ctmp);
-	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
-	fprintf(ci->fh, "_demarshal((x),(y),(z),(i))\n");
-      }
-      break;
-    case IDLN_TYPE_ARRAY:
-      {
-	fprintf(ci->fh, " %s", ctmp);
-	for(sub = IDL_TYPE_ARRAY(ent).size_list; sub; sub = IDL_LIST(sub).next)
-	  fprintf(ci->fh, "[%" IDL_LL "d]", IDL_INTEGER(IDL_LIST(sub).data).value);
-	fprintf(ci->fh, ";\n");
-	fprintf(ci->fh, "typedef ");
-	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
-	fprintf(ci->fh, " %s_slice", ctmp);
-	for(sub = IDL_LIST(IDL_TYPE_ARRAY(ent).size_list).next; sub; sub = IDL_LIST(sub).next)
-	  fprintf(ci->fh, "[%" IDL_LL "d]", IDL_INTEGER(IDL_LIST(sub).data).value);
-	fprintf(ci->fh, ";\n");
-      }
-      break;
-    default:
-      break;
-    }
+		fprintf (ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n", ctmp, ctmp);
+		fprintf (ci->fh, "typedef ");
+		orbit_cbe_write_typespec (ci->fh, IDL_TYPE_DCL (tree).type_spec);
 
-    ch_type_alloc_and_tc(ent, rinfo, ci, TRUE);
-    fprintf(ci->fh, "#endif\n");
-    g_free(ctmp);
-  }
+		switch (IDL_NODE_TYPE (ent)) {
+		case IDLN_IDENT:
+			fprintf (ci->fh, " %s;\n", ctmp);
+			fprintf (ci->fh, "#define %s_marshal(x,y,z) ", ctmp);
+			orbit_cbe_write_typespec (ci->fh, IDL_TYPE_DCL (tree).type_spec);
+			fprintf (ci->fh, "_marshal((x),(y),(z))\n");
+
+			fprintf (ci->fh, "#define %s_demarshal(x,y,z,i) ", ctmp);
+			orbit_cbe_write_typespec (ci->fh, IDL_TYPE_DCL (tree).type_spec);
+			fprintf (ci->fh, "_demarshal((x),(y),(z),(i))\n");
+			break;
+		case IDLN_TYPE_ARRAY: {
+			IDL_tree sub;
+
+			fprintf (ci->fh, " %s", ctmp);
+			for (sub = IDL_TYPE_ARRAY (ent).size_list; sub; sub = IDL_LIST (sub).next)
+				fprintf (ci->fh, "[%" IDL_LL "d]",
+					 IDL_INTEGER (IDL_LIST (sub).data).value);
+
+			fprintf (ci->fh, ";\n");
+			fprintf (ci->fh, "typedef ");
+			orbit_cbe_write_typespec (ci->fh, IDL_TYPE_DCL (tree).type_spec);
+			fprintf (ci->fh, " %s_slice", ctmp);
+			for (sub = IDL_LIST (IDL_TYPE_ARRAY (ent).size_list).next;
+			     sub; sub = IDL_LIST (sub).next)
+				fprintf (ci->fh, "[%" IDL_LL "d]", IDL_INTEGER (IDL_LIST (sub).data).value);
+			fprintf(ci->fh, ";\n");
+			}
+			break;
+		default:
+			break;
+		}
+
+		ch_type_alloc_and_tc (ent, rinfo, ci, TRUE);
+		fprintf (ci->fh, "#endif\n");
+		g_free (ctmp);
+	}
 }
 
 static void
@@ -472,32 +479,6 @@ ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	g_free(id);
 }
 
-static void ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-static void ch_prep_fixed(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-
-/**
-   ch_prep(), unlike ch_output_types(), assumes that the decl
-   is part of some nested definition. I dont know why this really
-   matters, except perhaps to provide better semantic checking.
-**/
-static
-void ch_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
-{
-  switch(IDL_NODE_TYPE(tree)) {
-  case IDLN_TYPE_SEQUENCE:
-    ch_prep_sequence(tree, rinfo, ci);
-    break;
-  case IDLN_TYPE_FIXED:
-    ch_prep_fixed(tree, rinfo, ci);
-    break;
-  case IDLN_TYPE_STRUCT:
-    ch_output_type_struct(tree, rinfo, ci);
-    break;
-  default:
-    break;
-  }
-}
-
 static void
 ch_prep_fixed(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
@@ -609,6 +590,29 @@ ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   g_free(ctmp);
   g_free(fullname);
   g_free(fullname_def);
+}
+
+static
+void ch_prep (IDL_tree       tree,
+	      OIDL_Run_Info *rinfo,
+	      OIDL_C_Info   *ci)
+{
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_TYPE_SEQUENCE:
+		ch_prep_sequence (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_FIXED:
+		ch_prep_fixed (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_STRUCT:
+		ch_output_type_struct (tree, rinfo, ci);
+		break;
+	case IDLN_TYPE_ENUM:
+		ch_output_type_enum (tree, rinfo, ci);
+		break;
+	default:
+		break;
+	}
 }
 
 static void
