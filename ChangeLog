@@ -1,3 +1,17 @@
+2002-10-16  James Henstridge  <james@daa.com.au>
+
+	* src/idl-compiler/orbit-idl-c-imodule.c (ci_build_types): handle
+	types nested within structs, unions and exceptions.
+
+	* test/everything/client.c (testIInterface): add a test to check
+	that the subnames array of the FixedLengthUnion typecode is
+	correct.
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(orbit_output_tcstruct_anon_subnames_array): when generating the
+	subnames array for unions, repeat the name once for each label
+	associated with the case statement.
+
 2002-10-16  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testIInterface):
