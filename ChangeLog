@@ -1,3 +1,15 @@
+2003-01-09  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_create_struct_tc),
+	(CORBA_ORB_create_union_tc), (CORBA_ORB_create_enum_tc),
+	(CORBA_ORB_create_alias_tc), (CORBA_ORB_create_exception_tc),
+	(CORBA_ORB_create_interface_tc), (CORBA_ORB_create_string_tc),
+	(CORBA_ORB_create_wstring_tc), (CORBA_ORB_create_fixed_tc),
+	(CORBA_ORB_create_sequence_tc),
+	(CORBA_ORB_create_recursive_sequence_tc),
+	(CORBA_ORB_create_array_tc): remove malloc return value
+	checks - its all through glib.
+
 2003-01-09  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: bump version to 2.7.0,

@@ -544,16 +544,9 @@ CORBA_ORB_create_struct_tc (CORBA_ORB                    orb,
 	int            i;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval)
-		goto tc_alloc_failed;
 
 	retval->subtypes = g_new0 (CORBA_TypeCode, members->_length);
-	if (!retval->subtypes)
-		goto subtypes_alloc_failed;
-
 	retval->subnames = g_new0 (char *, members->_length);
-	if (!retval->subnames)
-		goto subnames_alloc_failed;
 
 	retval->kind      = CORBA_tk_struct;
 	retval->name      = g_strdup (name);
@@ -571,18 +564,6 @@ CORBA_ORB_create_struct_tc (CORBA_ORB                    orb,
 	}
 
 	return retval;
-
- subnames_alloc_failed:
-	g_free (retval->subtypes);
-
- subtypes_alloc_failed:
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 static void
@@ -628,22 +609,11 @@ CORBA_ORB_create_union_tc (CORBA_ORB                   orb,
 
 	retval = ORBit_TypeCode_allocate ();
 
-	if (!retval)
-		goto tc_alloc_failed;
-
 	retval->discriminator = ORBit_RootObject_duplicate (discriminator_type);
 		
-	retval->subtypes = g_new0 (CORBA_TypeCode, members->_length);
-	if (!retval)
-		goto subtypes_alloc_failed;
-
-	retval->subnames = g_new0 (char *, members->_length);
-	if(!retval->subnames)
-		goto subnames_alloc_failed;
-
+	retval->subtypes  = g_new0 (CORBA_TypeCode, members->_length);
+	retval->subnames  = g_new0 (char *, members->_length);
 	retval->sublabels = g_new0 (CORBA_long, members->_length);
-	if (!retval->sublabels)
-		goto sublabels_alloc_failed;
 
 	retval->kind          = CORBA_tk_union;
 	retval->name          = g_strdup (name);
@@ -667,22 +637,6 @@ CORBA_ORB_create_union_tc (CORBA_ORB                   orb,
 	}
 
 	return retval;
-
- sublabels_alloc_failed:
-	g_free (retval->sublabels);
-
- subnames_alloc_failed:
-	g_free (retval->subtypes);
-
- subtypes_alloc_failed:
-	ORBit_free (retval->discriminator);
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
@@ -696,12 +650,8 @@ CORBA_ORB_create_enum_tc (CORBA_ORB                  orb,
 	int            i;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval)
-		goto tc_alloc_failed;
 
 	retval->subnames=g_new0 (char *, members->_length);
-	if (!retval->subnames)
-		goto subnames_alloc_failed;
 
 	retval->kind      = CORBA_tk_enum;
 	retval->name      = g_strdup (name);
@@ -713,15 +663,6 @@ CORBA_ORB_create_enum_tc (CORBA_ORB                  orb,
 		retval->subnames [i] = g_strdup (members->_buffer [i]);
 
 	return retval;
-
- subnames_alloc_failed:
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
@@ -734,12 +675,8 @@ CORBA_ORB_create_alias_tc (CORBA_ORB             orb,
 	CORBA_TypeCode retval;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval)
-		goto tc_alloc_failed;
 	
 	retval->subtypes = g_new0 (CORBA_TypeCode, 1);
-	if (!retval->subtypes)
-		goto subtypes_alloc_failed;
 
 	retval->kind      = CORBA_tk_alias;
 	retval->name      = g_strdup (name);
@@ -750,15 +687,6 @@ CORBA_ORB_create_alias_tc (CORBA_ORB             orb,
 	retval->subtypes [0] = ORBit_RootObject_duplicate (original_type);
 
 	return retval;
-
- subtypes_alloc_failed:
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
@@ -772,17 +700,10 @@ CORBA_ORB_create_exception_tc (CORBA_ORB                    orb,
 	int            i;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval)
-		goto tc_alloc_failed;
 
 	if (members->_length) {
 		retval->subtypes = g_new0 (CORBA_TypeCode, members->_length);
-		if (!retval->subtypes)
-			goto subtypes_alloc_failed;
-
 		retval->subnames = g_new0 (char *, members->_length);
-		if (!retval->subnames)
-			goto subnames_alloc_failed;
 	}
 
 	retval->kind      = CORBA_tk_except;
@@ -801,18 +722,6 @@ CORBA_ORB_create_exception_tc (CORBA_ORB                    orb,
 	}
 
 	return retval;
-
- subnames_alloc_failed:
-	g_free (retval->subtypes);
-
- subtypes_alloc_failed:
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
@@ -824,12 +733,6 @@ CORBA_ORB_create_interface_tc (CORBA_ORB                 orb,
 	CORBA_TypeCode retval;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval) {
-		CORBA_exception_set_system (
-				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-		return CORBA_OBJECT_NIL;
-	}
 
 	retval->kind    = CORBA_tk_objref;
 	retval->name    = g_strdup (name);
@@ -846,12 +749,6 @@ CORBA_ORB_create_string_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode retval;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval) {
-		CORBA_exception_set_system (
-				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-		return CORBA_OBJECT_NIL;
-	}
 
 	retval->kind   = CORBA_tk_string;
 	retval->length = bound;
@@ -867,12 +764,6 @@ CORBA_ORB_create_wstring_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode retval;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval) {
-		CORBA_exception_set_system (
-				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-		return CORBA_OBJECT_NIL;
-	}
 
 	retval->kind   = CORBA_tk_wstring;
 	retval->length = bound;
@@ -889,12 +780,6 @@ CORBA_ORB_create_fixed_tc (CORBA_ORB                   orb,
 	CORBA_TypeCode retval;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval) {
-		CORBA_exception_set_system (
-				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-		return CORBA_OBJECT_NIL;
-	}
 
 	retval->kind   = CORBA_tk_fixed;
 	retval->digits = digits;
@@ -912,12 +797,8 @@ CORBA_ORB_create_sequence_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode retval;
 
 	retval = ORBit_TypeCode_allocate ();
-	if (!retval)
-		goto tc_alloc_failed;
 
 	retval->subtypes = g_new0 (CORBA_TypeCode, 1);
-	if (!retval->subtypes)
-		goto subtypes_alloc_failed;
 
 	retval->kind      = CORBA_tk_sequence;
 	retval->sub_parts = 1;
@@ -926,15 +807,6 @@ CORBA_ORB_create_sequence_tc (CORBA_ORB                  orb,
 	retval->subtypes [0] = ORBit_RootObject_duplicate (element_type);
 
 	return retval;
-
- subtypes_alloc_failed:
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
@@ -946,12 +818,8 @@ CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode retval;
 
 	retval=ORBit_TypeCode_allocate ();
-	if (retval)
-		goto tc_alloc_failed;
 
 	retval->subtypes = g_new0 (CORBA_TypeCode, 1);
-	if (!retval->subtypes)
-		goto subtypes_alloc_failed;
 
 	retval->kind      = CORBA_tk_sequence;
 	retval->sub_parts = 1;
@@ -963,15 +831,6 @@ CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
 	retval->subtypes [0]->recurse_depth = offset;
 
 	return retval;
-
- subtypes_alloc_failed:
-	ORBit_RootObject_release (retval);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
@@ -983,12 +842,8 @@ CORBA_ORB_create_array_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode tc;
 
 	tc = ORBit_TypeCode_allocate ();
-	if (!tc)
-		goto tc_alloc_failed;
 
 	tc->subtypes = g_new0 (CORBA_TypeCode, 1);
-	if (!tc->subtypes)
-		goto subtypes_alloc_failed;
 
 	tc->kind      = CORBA_tk_array;
 	tc->sub_parts = 1;
@@ -997,15 +852,6 @@ CORBA_ORB_create_array_tc (CORBA_ORB                  orb,
 	tc->subtypes [0] = ORBit_RootObject_duplicate (element_type);
 
 	return (tc);
-
- subtypes_alloc_failed:
-	ORBit_RootObject_release (tc);
-
- tc_alloc_failed:
-	CORBA_exception_set_system (
-			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-
-	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
