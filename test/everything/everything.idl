@@ -68,13 +68,17 @@ module test {
 		void remove();
 	};
 
-
 	struct FixedLengthStruct {
 		short a;
 	};
   
 	struct VariableLengthStruct {
 		string a;
+	};
+
+	struct StructAny {
+		string a;
+		any    b;
 	};
 
 	struct CompoundStruct {
@@ -145,6 +149,7 @@ module test {
 		CompoundStruct opCompound(in CompoundStruct inArg, 
 					  inout CompoundStruct inoutArg,
 					  out CompoundStruct outArg);
+		StructAny opStructAny();
 	};
 
 	interface BaseServer {

@@ -239,7 +239,8 @@ void testIInterface(test_TestFactory factory,
   CORBA_Object_release (objref, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
-  ORBit_small_load_typelib ("Everything");
+  if (!ORBit_small_load_typelib ("Everything"))
+	  g_warning ("Failed to load Everything");
 }
 
 void testFixedLengthStruct(test_TestFactory factory, 
@@ -322,6 +323,29 @@ void testCompoundStruct(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
+void
+testStructAny (test_TestFactory   factory, 
+	       CORBA_Environment *ev)
+{
+	test_StructServer objref;
+	test_StructAny   *a;
+
+	d_print ("Testing 'any' structs...\n");
+	objref = test_TestFactory_getStructServer (factory,ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	a = test_StructServer_opStructAny (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	g_assert (!strcmp (a->a, constants_STRING_IN));
+	g_assert (*(CORBA_long *)a->b._value == constants_LONG_IN);
+  
+	CORBA_free (a);  
+
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
 void testUnboundedSequence(test_TestFactory factory, 
 			   CORBA_Environment *ev)
 {
@@ -373,8 +397,9 @@ void testUnboundedSequence(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testBoundedSequence(test_TestFactory factory, 
-			 CORBA_Environment *ev)
+void
+testBoundedSequence (test_TestFactory   factory, 
+		     CORBA_Environment *ev)
 {
   test_SequenceServer objref;
   test_BoundedStructSeq inArg, inoutArg, *outArg, *retn;
@@ -877,6 +902,7 @@ run_tests (test_TestFactory   factory,
     testFixedLengthStruct(factory,ev);
     testVariableLengthStruct(factory,ev);
     testCompoundStruct(factory,ev);
+    testStructAny(factory,ev);
     testUnboundedSequence(factory,ev);
     testBoundedSequence(factory,ev);
     testFixedLengthUnion(factory,ev);

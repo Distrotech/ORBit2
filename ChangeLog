@@ -1,3 +1,11 @@
+2001-07-28  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testStructAny): impl.
+	(run_tests): hook up.
+	
+	* test/everything/structServer.c (StructServer_opStructAny): impl.
+	(StructServer_epv): add. & fix all the serious stylistic issues.
+
 2001-07-27  Mark McLoughlin <mark@skynet.ie>
 
 	* /src/idl-compiler/orbit-idl-c-common.c:

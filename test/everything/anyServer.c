@@ -29,13 +29,13 @@ static CORBA_long opAnyLong_inout = constants_LONG_INOUT_OUT;
 static CORBA_long opAnyLong_out = constants_LONG_OUT;
 static CORBA_long opAnyLong_retn = constants_LONG_RETN;
 
-static
-CORBA_any *
-AnyServer_opAnyLong(PortableServer_Servant _servant,
-					const CORBA_any * inArg,
-					CORBA_any * inoutArg,
-					CORBA_any ** outArg,
-					CORBA_Environment * ev){
+static CORBA_any *
+AnyServer_opAnyLong (PortableServer_Servant _servant,
+		     const CORBA_any * inArg,
+		     CORBA_any * inoutArg,
+		     CORBA_any ** outArg,
+		     CORBA_Environment * ev)
+{
   CORBA_any *retn;  
 
   g_assert(CORBA_TypeCode_equal(inArg->_type,TC_CORBA_long,ev));
