@@ -28,7 +28,7 @@ cc_small_build_interfaces (OIDL_C_Info *ci,
 		id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
 			IDL_INTERFACE (tree).ident), "_", 0);
 
-		fprintf (ci->fh, "\t&%s__itype,\n", id);
+		fprintf (ci->fh, "\t&%s__iinterface,\n", id);
 
 		g_free (id);
 
@@ -36,6 +36,115 @@ cc_small_build_interfaces (OIDL_C_Info *ci,
 			ci, IDL_INTERFACE(tree).body);
 		break;
 	}
+	default:
+		break;
+	}
+}
+
+static void
+cc_small_build_types (OIDL_C_Info *ci,
+		      IDL_tree     tree)
+{
+	if (!tree)
+		return;
+
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_MODULE:
+		cc_small_build_types (
+			ci, IDL_MODULE (tree).definition_list);
+		break;
+	case IDLN_LIST: {
+		IDL_tree sub;
+		for (sub = tree; sub; sub = IDL_LIST (sub).next)
+			cc_small_build_types (
+				ci, IDL_LIST (sub).data);
+		break;
+	}
+	case IDLN_INTERFACE:
+		cc_small_build_types (
+			ci, IDL_INTERFACE(tree).body);
+		break;
+	case IDLN_TYPE_DCL: {
+	    IDL_tree sub;
+	    for (sub = IDL_TYPE_DCL (tree).dcls; sub; sub = IDL_LIST (sub).next) {
+		IDL_tree ent = IDL_LIST (sub).data;
+		gchar *id;
+
+		id = orbit_cbe_get_typespec_str (ent);
+
+		fprintf (ci->fh, "\tTC_%s,\n", id);
+
+		g_free (id);
+	    }
+
+	    break;
+	}
+	case IDLN_TYPE_INTEGER:
+	case IDLN_TYPE_ANY:
+	case IDLN_TYPE_STRING:
+	case IDLN_TYPE_WIDE_STRING:
+	case IDLN_TYPE_CHAR:
+	case IDLN_TYPE_WIDE_CHAR:
+	case IDLN_TYPE_FLOAT:
+	case IDLN_TYPE_BOOLEAN:
+	case IDLN_TYPE_OCTET:
+	case IDLN_TYPE_SEQUENCE:
+	case IDLN_TYPE_STRUCT:
+	case IDLN_TYPE_UNION:
+	case IDLN_TYPE_ENUM:
+	case IDLN_IDENT:
+	case IDLN_FORWARD_DCL:
+	case IDLN_TYPE_OBJECT: {
+		gchar *id;
+
+		id = orbit_cbe_get_typespec_str (tree);
+
+		fprintf (ci->fh, "\tTC_%s,\n", id);
+
+		g_free (id);
+
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static void
+cc_small_build_exceptions (OIDL_C_Info *ci,
+			   IDL_tree     tree)
+{
+	if (!tree)
+		return;
+
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_MODULE:
+		cc_small_build_exceptions (
+			ci, IDL_MODULE (tree).definition_list);
+		break;
+	case IDLN_LIST: {
+		IDL_tree sub;
+		for (sub = tree; sub; sub = IDL_LIST (sub).next)
+			cc_small_build_exceptions (
+				ci, IDL_LIST (sub).data);
+		break;
+	}
+	case IDLN_INTERFACE:
+		cc_small_build_exceptions (
+			ci, IDL_INTERFACE(tree).body);
+		break;
+	case IDLN_EXCEPT_DCL: {
+		gchar *id;
+
+		id = orbit_cbe_get_typespec_str (tree);
+
+		fprintf (ci->fh, "\tTC_%s,\n", id);
+
+		g_free (id);
+
+		break;
+	}
+
 	default:
 		break;
 	}
@@ -57,8 +166,22 @@ orbit_idl_output_c_imodule (OIDL_Output_Tree *tree,
 
 	fprintf (ci->fh, "#include <orbit/orb-core/orbit-small.h>\n\n");
 
+	fprintf (ci->fh, "static CORBA_TypeCode %s__itypes[] = {\n",
+		 ci->c_base_name);
+
+	cc_small_build_types (ci, tree->tree);
+
+	fprintf (ci->fh, "\tNULL\n};\n\n");
+
+	fprintf (ci->fh, "static CORBA_TypeCode %s__iexceptions[] = {\n",
+		 ci->c_base_name);
+
+	cc_small_build_exceptions (ci, tree->tree);
+
+	fprintf (ci->fh, "\tNULL\n};\n\n");
+
 	fprintf (ci->fh, "static ORBit_IInterface *%s__iinterfaces[] = {\n",
-		 ci->base_name);
+		 ci->c_base_name);
 
 	cc_small_build_interfaces (ci, tree->tree);
 
@@ -66,7 +189,9 @@ orbit_idl_output_c_imodule (OIDL_Output_Tree *tree,
 
 	fprintf (ci->fh, "ORBit_IModule orbit_imodule_data = {\n");
 	fprintf (ci->fh, "   %d,\n", ORBIT_CONFIG_SERIAL);
-	fprintf (ci->fh, "   %s__iinterfaces\n", ci->base_name);
+	fprintf (ci->fh, "   %s__iinterfaces,\n", ci->c_base_name);
+	fprintf (ci->fh, "   %s__iexceptions,\n", ci->c_base_name);
+	fprintf (ci->fh, "   %s__itypes\n", ci->c_base_name);
 	fprintf (ci->fh, "};\n\n");
 }
 

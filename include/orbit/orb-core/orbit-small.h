@@ -10,7 +10,9 @@
 
 typedef struct {
 	CORBA_unsigned_long version;
-	ORBit_IInterface  **interfaces;
+	ORBit_IInterface **interfaces;
+	CORBA_TypeCode *exceptions;
+	CORBA_TypeCode *types;
 } ORBit_IModule;
 
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);

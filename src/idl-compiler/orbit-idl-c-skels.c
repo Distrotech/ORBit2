@@ -711,7 +711,7 @@ cbe_skel_interface_print_relayers(const CBESkelInterfaceTraverseInfo *iti)
       fprintf(iti->ci->fh, "*impl = (gpointer)servant->vepv->%s_epv->%s;\n",
 	      opi->iface_id, opi->opname);
       if (iti->small) {
-        fprintf(iti->ci->fh, "*m_data = (gpointer)&%s__itype.methods._buffer [%d];\n",
+        fprintf(iti->ci->fh, "*m_data = (gpointer)&%s__iinterface.methods._buffer [%d];\n",
 		opi->iface_id, opi->idx);
         fprintf(iti->ci->fh, "return (ORBitSmallSkeleton)_ORBIT_skel_small_%s_%s;\n",
 	        opi->iface_id, opi->opname);
@@ -837,7 +837,7 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   else
 	  fprintf(ci->fh, "(ORBit_impl_finder)&get_skel_%s, NULL, ", id);
 
-  fprintf(ci->fh,"\"%s\", &%s__classid, INIT_VEPVMAP_%s, NULL, 0, &%s__itype};\n",
+  fprintf(ci->fh,"\"%s\", &%s__classid, INIT_VEPVMAP_%s, NULL, 0, &%s__iinterface};\n",
 	  IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id, id, id);
 
   {

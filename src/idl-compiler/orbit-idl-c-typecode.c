@@ -752,11 +752,11 @@ cbe_tc_generate(CBETCGenInfo *tci)
   fprintf(tci->of, ", ");
 
   if(IDL_NODE_TYPE(tci->ts) == IDLN_TYPE_FIXED) {
-    fprintf(tci->of, "%d, %d",
+    fprintf(tci->of, "%d, %d, 0",
 	    (int)IDL_INTEGER(IDL_TYPE_FIXED(tci->ts).positive_int_const).value,
 	    (int)IDL_INTEGER(IDL_TYPE_FIXED(tci->ts).integer_lit).value);
   } else
-    fprintf(tci->of, "0, 0");
+    fprintf(tci->of, "0, 0, 0");
 
   fprintf(tci->of, "\n};\n");
   if(strncmp(tci->structname, "anon", 4))

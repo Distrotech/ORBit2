@@ -1169,7 +1169,7 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 
 		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
       
-		fprintf (ci->fh, "extern ORBit_IInterface %s__itype;\n", id);
+		fprintf (ci->fh, "extern ORBit_IInterface %s__iinterface;\n", id);
 		fprintf (ci->fh, "extern ORBit_IMethod %s__imethods[];\n", id);
 		fprintf (ci->fh, "#define %s_IMETHODS_LEN %d\n", id, num_methods);
 

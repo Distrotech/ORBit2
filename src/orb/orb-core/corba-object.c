@@ -732,7 +732,7 @@ CORBA_Object__imethods[] = {
  */
 
 ORBit_IInterface
-CORBA_Object__itype = {
+CORBA_Object__iinterface = {
   TC_CORBA_Object, 
   {12, 12, CORBA_Object__imethods, FALSE},
   {0, 0, NULL, FALSE}
