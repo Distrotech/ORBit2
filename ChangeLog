@@ -1,5 +1,9 @@
 2003-06-05  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/Makefile.am: use check_PROGRAMS
+	instead of noinst_PROGRAMS - Mac people have
+	problems with their static libraries it seems.
+
 	* test/everything/client.c (test_time_noop):
 	upd for FORCE_GENERIC_MARSHAL etc.
 
