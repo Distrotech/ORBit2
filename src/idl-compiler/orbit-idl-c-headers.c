@@ -660,19 +660,24 @@ ch_output_inherited_protos(IDL_tree curif, InheritedOutputInfo *ioi)
       break;
     case IDLN_ATTR_DCL:
       {
-	OIDL_Attr_Info *ai = curop->data;
 	IDL_tree curitem;
-	    
+
+	/* We don't use OIDL_Attr_Info here because inherited ops may go back into trees that are output-inhibited
+	   and therefore don't have the OIDL_Attr_Info generated on them */
+
 	for(curitem = IDL_ATTR_DCL(curop).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
-	  ai = IDL_LIST(curitem).data->data;
+	  IDL_tree ident;
+
+	  ident = IDL_LIST(curitem).data;
 	  
 	  fprintf(ioi->of, "#define %s_%s %s_%s\n",
-		  realid, IDL_IDENT(IDL_OP_DCL(ai->op1).ident).str,
-		  id, IDL_IDENT(IDL_OP_DCL(ai->op1).ident).str);
-	  if(ai->op2)
+		  realid, IDL_IDENT(ident).str,
+		  id, IDL_IDENT(ident).str);
+
+	  if(!IDL_ATTR_DCL(curop).f_readonly)
 	    fprintf(ioi->of, "#define %s_%s %s_%s\n",
-		    realid, IDL_IDENT(IDL_OP_DCL(ai->op2).ident).str,
-		    id, IDL_IDENT(IDL_OP_DCL(ai->op2).ident).str);
+		    realid, IDL_IDENT(ident).str,
+		    id, IDL_IDENT(ident).str);
 	}
       }
       break;
