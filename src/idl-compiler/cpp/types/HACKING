@@ -1,0 +1,32 @@
+So here's my writeup of how I'm going to restructure this big
+mess. The new approach is to be more flexible, but at the same time,
+more high-level.
+
+The new code is to be based on operations one does with CORBA
+types. There are four operations:
+
+   1. Definition
+   2. As parameters to a CORBA interface's method
+   3. As return values of a CORBA interface's method
+   4. As a member of another, composite type
+
+1. Definition
+This currently implemented in the pass_* source files, so we won't
+bother with them for the time being.
+
+2. As parameters to a CORBA interface's method
+3. As return values of a CORBA interface's method
+These can be broken up into several smaller steps:
+   -- Stub code
+      -- Argument declaration in stub signature
+      -- Preparing for the call
+      -- Doing the call
+      -- Optional post-call stuff
+   -- Skel code
+      (same steps)
+
+Each type implements each of these steps, via the
+{stub,skel}_{decl,impl}_{arg,ret}_* methods. It is perfectly valid to
+do nothing in the pre/post code -- for example, since atomic C++ types
+are simple typedefs of the C types, you can do a call instantly
+without any setup in pre/post-call time.
