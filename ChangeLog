@@ -1,6 +1,12 @@
 2001-11-19  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-connection.c
+	(giop_connection_close): remove bogus fsync breaking
+	encapsulation.
+
+2001-11-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
 	(giop_connection_list_lookup): kill retval.
 	(giop_cnx_descr): impl. for debug.
 	(giop_connection_initiate): DOH ! pass the right args to

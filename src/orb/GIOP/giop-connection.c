@@ -121,7 +121,6 @@ giop_connection_close (GIOPConnection *cnx)
 		buf = giop_send_buffer_use_close_connection (
 			cnx->giop_version);
 		giop_send_buffer_write (buf, cnx);
-		fsync (cnx->parent.fd);
 		giop_send_buffer_unuse (buf);
 	}
 
