@@ -22,42 +22,18 @@ do_echoString(PortableServer_Servant servant,
 	      CORBA_double *outnum,
 	      CORBA_Environment *ev)
 {
-  if ( !echo_opt_quiet )
-      g_message("[server] %s", astring);
+	if (!echo_opt_quiet)
+		g_message ("[server] %s", astring);
 
-  *outnum = rand() % 100;
+	*outnum = rand() % 100;
 
-#if 0
-  {
-  	PortableServer_POA myCurPoa;
-  	PortableServer_ObjectId *myCurOid;
-	CORBA_char *myCurOidStr;
-	PortableServer_Current poacur = (PortableServer_Current)
-	  CORBA_ORB_resolve_initial_references(the_orb, "POACurrent", ev);
-  	g_assert( ev->_major == 0 );
-  	myCurPoa = PortableServer_Current_get_POA(poacur,ev);
-  	g_assert( ev->_major == 0 );
-  	myCurOid = PortableServer_Current_get_object_id(poacur,ev);
-  	g_assert( ev->_major == 0 );
-
-	g_assert( myCurPoa == the_poa );
-	g_assert( ORBit_sequence_octet_equal( myCurOid, the_objid) );
-	myCurOidStr = PortableServer_ObjectId_to_string(myCurOid, ev);
-  	if ( !echo_opt_quiet )
-      	    g_message("[server] oid=%s", myCurOidStr);
-
-  	CORBA_Object_release((CORBA_Object)myCurPoa,ev);
-  	CORBA_free(myCurOid);
-	CORBA_free(myCurOidStr);
-  	CORBA_Object_release((CORBA_Object)poacur,ev);
-  }
-#endif
-
-  return CORBA_Object_duplicate(the_echo_client, ev);
+	return CORBA_Object_duplicate (the_echo_client, ev);
 }
 
 static void
-do_doNothing(PortableServer_Servant servant, CORBA_Environment *ev) {
+do_doNothing (PortableServer_Servant servant,
+	      CORBA_Environment     *ev)
+{
 }
 
 PortableServer_ServantBase__epv base_epv = {
@@ -65,13 +41,12 @@ PortableServer_ServantBase__epv base_epv = {
   NULL,
   NULL
 };
-POA_Echo__epv echo_epv = { NULL, do_echoString, do_doNothing };
+POA_Echo__epv echo_epv = { NULL, do_echoString, do_doNothing, NULL };
 POA_Echo__vepv poa_echo_vepv = { &base_epv, &echo_epv };
 POA_Echo poa_echo_servant = { NULL, &poa_echo_vepv };
 
-
 void
-echo_srv_start_poa(CORBA_ORB orb, CORBA_Environment *ev)
+echo_srv_start_poa (CORBA_ORB orb, CORBA_Environment *ev)
 {
     PortableServer_POAManager mgr;
 
