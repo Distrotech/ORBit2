@@ -1,3 +1,22 @@
+/*
+ * CORBA empty test
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Author: Elliot Lee <sopwith@redhat.com>
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,9 +28,9 @@ Empty empty_client = CORBA_OBJECT_NIL;
 static void do_Nothing(PortableServer_Servant servant, CORBA_Environment *ev);
 
 PortableServer_ServantBase__epv base_epv = {
-  NULL,
-  NULL,
-  NULL
+	NULL,
+	NULL,
+	NULL
 };
 POA_Empty__epv empty_epv = { NULL, do_Nothing };
 POA_Empty__vepv poa_empty_vepv = { &base_epv, &empty_epv };
@@ -25,48 +44,54 @@ static void do_exit(int arg)
 int
 main (int argc, char *argv[])
 {
-    PortableServer_ObjectId objid = {0, sizeof("myFoo"), "myFoo"};
-    PortableServer_POA poa;
+	PortableServer_ObjectId objid = {0, sizeof("myFoo"), "myFoo"};
+	PortableServer_POA poa;
 
-    CORBA_Environment ev;
-    char *retval;
-    CORBA_ORB orb;
-    PortableServer_ObjectId *oid;
+	CORBA_Environment ev;
+	char *retval;
+	CORBA_ORB orb;
+	PortableServer_ObjectId *oid;
 
-    signal(SIGINT, do_exit);
-    signal(SIGTERM, do_exit);
+	signal(SIGINT, do_exit);
+	signal(SIGTERM, do_exit);
 
-    CORBA_exception_init(&ev);
-    orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
+	CORBA_exception_init(&ev);
+	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
 
-    POA_Empty__init(&poa_empty_servant, &ev);
+	POA_Empty__init(&poa_empty_servant, &ev);
 
-    poa = (PortableServer_POA)CORBA_ORB_resolve_initial_references(orb, "RootPOA", &ev);
-    PortableServer_POAManager_activate(PortableServer_POA__get_the_POAManager(poa, &ev), &ev);
-    oid = PortableServer_POA_activate_object(poa, &poa_empty_servant, &ev);
-    if(ev._major == CORBA_NO_EXCEPTION)
-      CORBA_free(oid);
+	poa = (PortableServer_POA)
+		CORBA_ORB_resolve_initial_references(orb,
+						     "RootPOA", &ev);
+	PortableServer_POAManager_activate(
+		PortableServer_POA__get_the_POAManager(poa, &ev), 
+		&ev);
 
-    empty_client = PortableServer_POA_servant_to_reference(poa,
-							   &poa_empty_servant,
-							   &ev);
-    if (ev._major != CORBA_NO_EXCEPTION)
-      {
-	printf("Cannot get objref\n");
-	return 1;
-      }
+	oid = PortableServer_POA_activate_object(poa, &poa_empty_servant, &ev);
+	if(ev._major == CORBA_NO_EXCEPTION)
+		CORBA_free(oid);
 
-    retval = CORBA_ORB_object_to_string(orb, empty_client, &ev);
+	empty_client = 
+		PortableServer_POA_servant_to_reference(poa,
+							&poa_empty_servant,
+							&ev);
+	if (ev._major != CORBA_NO_EXCEPTION)
+	{
+		printf("Cannot get objref\n");
+		return 1;
+	}
 
-    g_print("%s\n", retval); fflush(stdout);
+	retval = CORBA_ORB_object_to_string(orb, empty_client, &ev);
 
-    CORBA_free(retval);
+	g_print("%s\n", retval); fflush(stdout);
 
-    CORBA_ORB_run(orb, &ev);
+	CORBA_free(retval);
 
-    PortableServer_POA_deactivate_object(poa, &objid, &ev);
+	CORBA_ORB_run(orb, &ev);
 
-    return 0;
+	PortableServer_POA_deactivate_object(poa, &objid, &ev);
+
+	return 0;
 }
 
 static void
