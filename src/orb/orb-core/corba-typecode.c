@@ -1,6 +1,7 @@
 #include "config.h"
 #include <orbit/orbit.h>
 #include <string.h>
+#include "../util/orbit-purify.h"
 
 typedef struct {
 	CORBA_TypeCode tc;
@@ -289,7 +290,7 @@ ORBit_TypeCode_free_fn (ORBit_RootObject obj_in)
 	if (tc->discriminator)
 		ORBit_RootObject_release_T (tc->discriminator);
 
-	g_free (tc);
+	p_free (tc, struct CORBA_TypeCode_struct);
 }
 
 static gboolean

@@ -1,10 +1,9 @@
-#include "config.h"
-
+#include <config.h>
 #include <string.h>
-
+#include <sys/uio.h>
 #include "giop-private.h"
 #include <orbit/GIOP/giop.h>
-#include <sys/uio.h>
+#include "../util/orbit-purify.h"
 
 #define GIOP_CHUNK_ALIGN 8
 #define GIOP_CHUNK_SIZE (GIOP_CHUNK_ALIGN * 256)
@@ -324,9 +323,7 @@ giop_send_buffer_align (GIOPSendBuffer *buf, gulong boundary)
 		if (buf->indirect_left < align_amt)
 			get_next_indirect (buf, 0);
 
-#ifdef ORBIT_PURIFY
-		memset (buf->indirect, 0, align_amt);
-#endif
+		p_memzero (buf->indirect, align_amt);
 		giop_send_buffer_append_real (buf, buf->indirect, align_amt);
 
 		buf->indirect      += align_amt;
@@ -369,10 +366,8 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 
 	if (mem)
 		memcpy (indirect, mem, align_len);
-#ifdef ORBIT_PURIFY
 	else
-		memset (indirect, 0, align_len);
-#endif
+		p_memzero (indirect, align_len);
 
 	giop_send_buffer_append_real (buf, indirect, align_len);
 	

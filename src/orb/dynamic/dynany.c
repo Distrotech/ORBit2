@@ -29,6 +29,7 @@
 #include "config.h"
 #include "orbit/orbit.h"
 #include "orb-core/orb-core-private.h"
+#include "../util/orbit-purify.h"
 
 #define o_return_val_if_fail(expr, val) if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO); return (val); }
 #define o_return_if_fail(expr)          if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO); return; }
@@ -183,7 +184,8 @@ DynamicAny_DynAny_release_fn (ORBit_RootObject robj)
 	dynany->children = NULL;
 
 	g_free (dynany);
-	g_free (robj);
+
+	p_free (robj, struct DynamicAny_DynAny_type);
 }
 
 static CORBA_TypeCode

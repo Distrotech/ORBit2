@@ -1,77 +1,81 @@
 #include "config.h"
-#include <orbit/orbit.h>
 #include <string.h>
+#include <orbit/orbit.h>
+#include "orb-core-export.h"
+#include "../util/orbit-purify.h"
 
 static gboolean
-free_entry(gpointer key, gpointer value, gpointer user_data)
+free_entry (gpointer key, gpointer value, gpointer user_data)
 {
-  g_free(key);
-  g_free(value);
-
-  return TRUE;
+	g_free (key);
+	g_free (value);
+	
+	return TRUE;
 }
 
 static void ORBit_Context_free_fn(ORBit_RootObject ctx);
 
 static gboolean
-free_child(gpointer value, gpointer user_data)
+free_child (gpointer value, gpointer user_data)
 {
-  CORBA_Context ctx = value;
+	CORBA_Context ctx = value;
 
-  ctx->parent.refs = 0;
-  ctx->parent_ctx = CORBA_OBJECT_NIL;
-  ORBit_Context_free_fn(ORBIT_ROOT_OBJECT(ctx));
+	ctx->parent.refs = 0;
+	ctx->parent_ctx = CORBA_OBJECT_NIL;
+	ORBit_Context_free_fn (ORBIT_ROOT_OBJECT (ctx));
 
-  return TRUE;
+	return TRUE;
 }
 
 static void
-ORBit_Context_free_fn(ORBit_RootObject obj_in)
+ORBit_Context_free_fn (ORBit_RootObject obj_in)
 {
-  CORBA_Context ctx = (CORBA_Context)obj_in;
-  if(ctx->children)
-    {
-      g_slist_foreach(ctx->children, (GFunc)free_child, ctx);
-      g_slist_free(ctx->children);
-    }
+	CORBA_Context ctx = (CORBA_Context) obj_in;
 
-  if(ctx->mappings)
-    {
-      g_hash_table_foreach_remove(ctx->mappings, free_entry, ctx);
-      g_hash_table_destroy(ctx->mappings);
-    }
+	if (ctx->children) {
+		g_slist_foreach (ctx->children, (GFunc)free_child, ctx);
+		g_slist_free (ctx->children);
+	}
 
-  if(ctx->parent_ctx != CORBA_OBJECT_NIL)
-    ctx->parent_ctx->children = g_slist_remove(ctx->parent_ctx->children, ctx->the_name);
+	if (ctx->mappings) {
+		g_hash_table_foreach_remove (ctx->mappings, free_entry, ctx);
+		g_hash_table_destroy (ctx->mappings);
+	}
+
+	if (ctx->parent_ctx != CORBA_OBJECT_NIL)
+		ctx->parent_ctx->children = g_slist_remove (
+			ctx->parent_ctx->children, ctx->the_name);
 	  
-  g_free(ctx->the_name);
-	  
-  g_free(ctx);
+	g_free (ctx->the_name);
+	
+	p_free (ctx, struct CORBA_Context_type);
 }
 
 static const ORBit_RootObject_Interface CORBA_Context_epv =
 {
-  ORBIT_ROT_CONTEXT,
-  ORBit_Context_free_fn
+	ORBIT_ROT_CONTEXT,
+	ORBit_Context_free_fn
 };
 
 static CORBA_Context
-CORBA_Context_new(CORBA_Context parent, const char *name, CORBA_Environment *ev)
+CORBA_Context_new (CORBA_Context      parent,
+		   const char        *name,
+		   CORBA_Environment *ev)
 {
-  CORBA_Context retval;
+	CORBA_Context retval;
 
-  retval = g_new0(struct CORBA_Context_type, 1);
+	retval = g_new0 (struct CORBA_Context_type, 1);
 
-  ORBit_RootObject_init(&retval->parent, &CORBA_Context_epv);
+	ORBit_RootObject_init (&retval->parent, &CORBA_Context_epv);
 
-  if(name)
-    retval->the_name = g_strdup(name);
+	if (name)
+		retval->the_name = g_strdup (name);
 
-  retval->parent_ctx = parent;
-  if(parent)
-    parent->children = g_slist_prepend(parent->children, retval);
+	retval->parent_ctx = parent;
+	if (parent)
+		parent->children = g_slist_prepend (parent->children, retval);
 
-  return (CORBA_Context) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
+	return ORBit_RootObject_duplicate (retval);
 }
 
 void
@@ -85,8 +89,7 @@ CORBA_ORB_get_default_context (CORBA_ORB          orb,
 		orb->default_ctx = CORBA_Context_new (
 			CORBA_OBJECT_NIL, NULL, ev);
 
-	*ctx = (CORBA_Context) CORBA_Object_duplicate (
-		(CORBA_Object) orb->default_ctx, ev);
+	*ctx = ORBit_RootObject_duplicate (orb->default_ctx);
 }
 
 void

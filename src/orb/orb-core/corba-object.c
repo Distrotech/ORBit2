@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "corba-ops.h"
 #include "orb-core-private.h"
+#include "../util/orbit-purify.h"
 
 #undef DEBUG
 
@@ -110,7 +111,7 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	if (obj->adaptor_obj)
 		ORBit_RootObject_release_T (obj->adaptor_obj);
 
-	g_free (obj);
+	p_free (obj, struct CORBA_Object_type);
 }
 
 static ORBit_RootObject_Interface objref_if = {

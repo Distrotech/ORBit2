@@ -1,5 +1,7 @@
+#include <config.h>
 #include <orbit/orbit.h>
 #include "orbit-poa.h"
+#include "../util/orbit-purify.h"
 
 static void
 ORBit_POAManager_free_fn (ORBit_RootObject obj)
@@ -7,7 +9,7 @@ ORBit_POAManager_free_fn (ORBit_RootObject obj)
 	PortableServer_POAManager poa_mgr = (PortableServer_POAManager)obj;
 
 	g_assert (poa_mgr->poa_collection == NULL);
-	g_free (poa_mgr);
+	p_free (poa_mgr, struct PortableServer_POAManager_type);
 }
 
 static const ORBit_RootObject_Interface CORBA_POAManager_epv = {
