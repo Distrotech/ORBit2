@@ -398,13 +398,8 @@ linc_idle_unref (gpointer object)
 gboolean
 linc_in_io_thread (void)
 {
-	gboolean result;
-
-	/* FIXME: we can do a lot better here */
-	if ((result = g_main_context_acquire (linc_context)))
-		g_main_context_release (linc_context);
-
-	return result;
+	return (!linc_io_thread ||
+		g_thread_self() == linc_io_thread);
 }
 
 void
@@ -413,11 +408,10 @@ linc_object_unref (gpointer object)
 	if (linc_fast_unref (object)) {
 		/* final unref outside the guard */
 		if (linc_lifecycle_mutex) {
-			if (g_main_context_acquire (linc_context)) {
-				/* linc thread */
+			if (linc_in_io_thread ())
 				g_object_unref (object);
-				g_main_context_release (linc_context);
-			} else {
+
+			else {
 				/* push to main linc thread */
 				linc_main_idle_add (
 					linc_idle_unref,
