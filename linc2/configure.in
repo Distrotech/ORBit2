@@ -38,7 +38,13 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE(linc, $LINC_VERSION, no-define)
 
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
+
 AM_MAINTAINER_MODE
 
 dnl Cache $ACLOCAL_FLAGS
@@ -46,10 +52,6 @@ AC_CACHE_CHECK([for aclocal flags], ac_cv_linc_aclocal_flags,[
    ac_cv_linc_aclocal_flags="$ACLOCAL_FLAGS"
 ])
 ACLOCAL="$ACLOCAL $ac_cv_linc_aclocal_flags"
-
-dnl Checks for programs.
-AC_PROG_CC
-AC_PROG_INSTALL
 
 GLIB_REQUIRED=1.3.11
 AC_SUBST(GLIB_REQUIRED)
@@ -101,6 +103,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
 AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h)
+AC_CHECK_HEADERS(arpa/nameser.h resolv.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
