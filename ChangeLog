@@ -1,3 +1,10 @@
+2004-05-17  Fernando Herrera  <fherrera@onirica.com>
+
+	* src/idl-compiler/orbit-idl-c-backend.c: (out_for_pass):
+	Merge fix from HEAD for bug #142546.  clobber LC_ALL because
+	cpp tranlates some strings in some locales during dep files
+	generation that makes compilation fails.
+
 2004-05-17  Michael Meeks  <michael@ximian.com>
 
 	* ORBit-2.0.pc.in: prune pkgconfig cruft.
