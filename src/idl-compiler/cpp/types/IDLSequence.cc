@@ -66,8 +66,20 @@ IDLSequence::typedef_decl_write (ostream          &ostr,
 	string c_type = target.get_c_typename ();
 	
 	string base_type = IDL_IMPL_NS "::";
-	if (!m_length)
-	{		
+	if (m_length)
+	{
+		// Bounded sequence
+		char *base_tmp = g_strdup_printf (
+			"BoundedSequence < %s, %s, %s, %s, %d >",
+			cpp_elem.c_str (), c_elem.c_str (),
+			cpp_traits.c_str (), c_type.c_str (),
+			m_length);
+		
+		base_type += base_tmp;
+		g_free (base_tmp);
+		
+	} else {
+		
 		// Unbounded sequence
 		char *base_tmp = g_strdup_printf (
 			"UnboundedSequence < %s, %s, %s, %s >",
@@ -258,12 +270,9 @@ IDLSequence::skel_impl_arg_pre (ostream          &ostr,
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
+	case IDL_PARAM_INOUT:
 		ostr << indent << cpp_type << " " << cpp_id << ";" << endl;
 		ostr << indent << cpp_id << "._orbitcpp_unpack (*" << c_id << ");" << endl;
-		break;
-	case IDL_PARAM_INOUT:
-		ostr << indent << cpp_type << "_var " << cpp_id << ";" << endl;
-		ostr << indent << cpp_id << "->_orbitcpp_unpack (*" << c_id << ");" << endl;
 		break;
 	case IDL_PARAM_OUT:
 		ostr << indent << cpp_type << "_var " << cpp_id << ";" << endl;
@@ -281,11 +290,14 @@ IDLSequence::skel_impl_arg_call (const string     &c_id,
 	
 void
 IDLSequence::skel_impl_arg_post (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &c_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+				 Indent           &indent,
+				 const string     &c_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef) const
 {
+	if (direction == IDL_PARAM_INOUT)
+		ostr << indent << "_cpp_" << c_id << "._orbitcpp_pack"
+		     << " (*" << c_id << ");" << endl;
 }
 
 
