@@ -1,1 +1,1 @@
-SUBDIRS=devel internals
+SUBDIRS=devel internals api

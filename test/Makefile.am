@@ -57,7 +57,7 @@ ior_decode_2_SOURCES=ior-decode.c
 
 typelib_dump_SOURCES=typelib-dump.c
 
-DYNANY_IDLOUT=dynany.h dynany-common.c
+DYNANY_IDLOUT=dynany.h dynany-common.c dynany-skels.c dynany-stubs.c
 test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
 test_dynany_LDFLAGS=-lm
 
