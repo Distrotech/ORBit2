@@ -142,6 +142,8 @@ linc_server_accept_connection (LINCServer      *server,
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
 
+	*connection = NULL;
+
 	addrlen = server->proto->addr_len;
 	saddr = g_alloca (addrlen);
 
