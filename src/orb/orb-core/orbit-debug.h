@@ -15,10 +15,18 @@ typedef enum {
 #ifndef G_ENABLE_DEBUG
 
 /*static inline void dprintf (OrbitDebugFlags flags, const char *format, ...) { };*/
-#define dprintf(...)
+#ifdef G_HAVE_ISO_VARARGS
+#  define dprintf(...)
+#  define tprintf(...)
+#elif defined(G_HAVE_GNUC_VARARGS)
+#  define dprintf(args...)
+#  define tprintf(args...)
+#else
+#  error No suitable pre-processor vararg support
+#endif
+
 #define dump_arg(a,b)
 
-#define tprintf(...)
 #define tprintf_header(obj,md)
 #define tprintf_trace_value(a,b)
 #define tprintf_timestamp()
@@ -31,10 +39,17 @@ typedef enum {
 
 extern OrbitDebugFlags _orbit_debug_flags;
 
-#define dprintf(type, ...) G_STMT_START {		\
+#ifdef G_HAVE_ISO_VARARGS
+#  define dprintf(type, ...) G_STMT_START {		\
 	if (_orbit_debug_flags & ORBIT_DEBUG_##type)	\
 		fprintf (stderr, __VA_ARGS__);		\
-} G_STMT_END
+	} G_STMT_END
+#elif defined(G_HAVE_GNUC_VARARGS)
+#  define dprintf(type, args...) G_STMT_START {		\
+	if (_orbit_debug_flags & ORBIT_DEBUG_##type)	\
+		fprintf (stderr, args);			\
+	} G_STMT_END
+#endif
 
 static inline void
 dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
@@ -57,27 +72,31 @@ void     ORBit_trace_end_method (void);
 void     ORBit_trace_profiles   (CORBA_Object obj);
 void     ORBit_trace_timestamp  (void);
 
-#define tprintf(...)  dprintf (TRACES, __VA_ARGS__)
+#ifdef G_HAVE_ISO_VARARGS
+#  define tprintf(...)  dprintf (TRACES, __VA_ARGS__)
+#elif defined(G_HAVE_GNUC_VARARGS)
+#  define tprintf(args...)  dprintf (TRACES, args)
+#endif
 
 #define tprintf_header(obj,md)		G_STMT_START {		\
 	if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)		\
 		ORBit_trace_header (obj,md);			\
-} G_STMT_END
+	} G_STMT_END
 
 #define tprintf_trace_value(a,b)	G_STMT_START {		\
 	if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)		\
 		ORBit_trace_value ((gconstpointer *)(a), (b));	\
-} G_STMT_END
+	} G_STMT_END
 
 #define tprintf_end_method() 		G_STMT_START {		\
 	if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)		\
 		ORBit_trace_end_method ();			\
-} G_STMT_END
+	} G_STMT_END
 
 #define tprintf_timestamp()		G_STMT_START {		\
 	if (_orbit_debug_flags & ORBIT_DEBUG_TIMINGS)		\
 		ORBit_trace_timestamp ();			\
-} G_STMT_END
+	} G_STMT_END
 
 #endif /* G_ENABLE_DEBUG */
 

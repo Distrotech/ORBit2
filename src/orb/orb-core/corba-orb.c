@@ -435,9 +435,8 @@ CORBA_ORB_list_initial_services (CORBA_ORB          orb,
 
 		retval->_release = CORBA_TRUE;
 
-		g_assert (info->index = retval->_length);
-	}
-	else {
+		g_assert (info->index == retval->_length);
+	} else {
 		retval->_length = 0;
 		retval->_buffer = NULL;
 	}
@@ -460,6 +459,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	return ORBit_RootObject_duplicate (objref);
 }
 
+//This shouldn't be static because we use it in orbitcpp_tools.cc too:
 CORBA_TypeCode
 CORBA_TypeCode_allocate (void)
 {

@@ -48,8 +48,6 @@ CORBA_Object _orbitcpp::duplicate_guarded(CORBA_Object obj) {
 }
 
 
-
-
 void _orbitcpp::release_guarded(CORBA_Object obj) {
 	CEnvironment ev;
 	CORBA_Object_release(obj, ev._orbitcpp_get_c_object());
@@ -63,6 +61,7 @@ void _orbitcpp::error(char *text) {
 	printf("%s\n",text);
 	abort();
 }
+
 
 CORBA_TypeCode _orbitcpp::TypeCode_allocate() {
 	CORBA_TypeCode tc = CORBA_TypeCode_allocate();

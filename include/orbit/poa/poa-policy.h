@@ -1,6 +1,8 @@
 #ifndef POA_POLICY_H
 #define POA_POLICY_H 1
 
+#include <glib.h>
+
 G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API

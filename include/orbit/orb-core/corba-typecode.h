@@ -4,12 +4,11 @@
 #include <orbit/orb-core/corba-typecode-type.h>
 #include <orbit/orb-core/corba-any-type.h>
 #include <orbit/orb-core/orbit-object.h>
-#include <orbit/orb-core/orb-types.h>
-#include <orbit/GIOP/giop-basics.h>
+#include <orbit/GIOP/giop-basics.h> //For GIOPSendBuffer and GIOPRecvBuffer
 
 G_BEGIN_DECLS
 
-#define CORBA_tk_recursive -1
+#define CORBA_tk_recursive 0xffffffff
 #define CORBA_tk_last (CORBA_tk_abstract_interface + 1)
 
 struct CORBA_TypeCode_struct {
