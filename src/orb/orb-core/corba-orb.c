@@ -245,6 +245,8 @@ shutdown_orb (void)
 
 	if (!(orb = _ORBit_orb))
 		return;
+
+	init_level = 1; /* clobber it */
 	
 	CORBA_exception_init (&ev);
 

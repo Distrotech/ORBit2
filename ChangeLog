@@ -1,3 +1,9 @@
+2003-08-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c (shutdown_orb):
+	set init_level to 1, so our g_atexit handler
+	actually does clean-up the ORB bits.
+
 2003-08-06  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: don't link libIDL into the name
