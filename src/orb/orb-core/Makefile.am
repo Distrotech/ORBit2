@@ -15,10 +15,12 @@ INCLUDES =						\
 	$(DISABLE_DEPRECATED_CFLAGS)			\
 	$(ORBIT_CFLAGS)
 
+if ENABLE_HTTP
+ORBHTTP = orbhttp.c orbhttp.h
+endif
+
 main_src = \
 	corba-orb.c \
-	orbhttp.c \
-	orbhttp.h \
 	orbit-object.c \
 	orbit-small.c \
 	orbit-typelib.c \
@@ -38,7 +40,8 @@ main_src = \
 	corba-request.c \
 	iop-profiles.c \
 	iop-profiles.h \
-	orbit-debug.h
+	orbit-debug.h \
+	$(ORBHTTP) 
 
 liborb_core_la_SOURCES= \
 	$(BUILT_SOURCES) \

@@ -12,7 +12,9 @@
 #include "../util/orbit-purify.h"
 #include "iop-profiles.h"
 #include "orb-core-private.h"
+#if defined ENABLE_HTTP
 #include "orbhttp.h"
+#endif
 #include "orbit-debug.h"
 
 extern const ORBit_option orbit_supported_options[];
@@ -341,6 +343,7 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 
 	if (strncmp (string, "IOR:", 4)) {
 
+#if defined ENABLE_HTTP
 		if (orbit_use_http_iors &&
 		    strstr (string, "://")) {
 			/* FIXME: this code is a security hazard */
@@ -349,7 +352,9 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 				return CORBA_OBJECT_NIL;
 
 			string = ior;
-		} else {
+		} else 
+#endif
+		{
 			CORBA_exception_set_system (
 					ev,
 					ex_CORBA_BAD_PARAM,

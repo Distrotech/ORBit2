@@ -49,6 +49,11 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
 
+AC_ARG_ENABLE(http, [--enable-http enables http connections],, enable_http=no)
+AM_CONDITIONAL(ENABLE_HTTP, test x"$enable_http" = xyes)
+if test x"$enable_http" = xyes ; then
+  AC_DEFINE(ENABLE_HTTP, 1)
+fi
 dnl --enable-comile-warnings
 AC_ARG_ENABLE(compile-warnings, [  --enable-compile-warnings=[no/yes] Turn on compiler warnings.], [enable_compile_warnings="$enableval"],[enable_compile_warnings="yes"])
 
