@@ -605,7 +605,7 @@ write_data (LINCConnection *cnx, QueuedWrite *qw)
  * @cnx: the connection to write to
  * @vecs: a structure of iovecs to write - this is altered.
  * @nvecs: the number of populated iovecs
- * @total_size: the total size of the data
+ * @opt_write_opts: optional write options, or NULL
  * 
  * This routine writes data to the abstract connection.
  * FIXME: it allows re-enterancy via linc_connection_iterate
@@ -670,6 +670,7 @@ linc_connection_writev (LINCConnection       *cnx,
  * @cnx: the connection to write to
  * @buf: a pointer to the start of an array of bytes
  * @len: the length of the array in bytes
+ * @opt_write_opts: optional write options, or NULL
  * 
  * Writes a contiguous block of data to the abstract connection.
  * 

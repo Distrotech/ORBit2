@@ -30,6 +30,28 @@ acconfig
 </para>
 
 
+<!-- ##### MACRO LINC_IS_CONNECTION ##### -->
+<para>
+
+</para>
+
+@obj: 
+@object: 
+
+<!-- ##### MACRO LINC_IS_SERVER ##### -->
+<para>
+
+</para>
+
+@obj: 
+@object: 
+
+<!-- ##### MACRO LINC_SSL_SUPPORT ##### -->
+<para>
+
+</para>
+
+
 <!-- ##### FUNCTION gboolean ##### -->
 <para>
 
