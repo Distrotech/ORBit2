@@ -1,5 +1,6 @@
 #include "genrand.h"
 #include <orbit/util/orbit-util.h>
+#include <orbit/util/orbit-util.h>
 #include <linc/linc.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -11,12 +12,14 @@
 #include <stdio.h>
 
 void
-ORBit_genrand_init(ORBit_genrand *gr) {
+ORBit_genrand_init(ORBit_genrand *gr)
+{
     gr->fd = open("/dev/urandom", O_RDONLY);
 }
 
 void
-ORBit_genrand_fini(ORBit_genrand *gr) {
+ORBit_genrand_fini(ORBit_genrand *gr)
+{
     if ( gr->fd >= 0 ) {
     	close(gr->fd); 
     	gr->fd = -1;
