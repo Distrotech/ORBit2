@@ -1,3 +1,17 @@
+2001-10-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-env.c
+	(CORBA_exception_free_T): impl & upd.
+	(CORBA_exception_free): do correct locking.
+
+	* test/everything/client.c
+	(testException): test copying.
+
+	* src/orb/orb-core/corba-env.c
+	(CORBA_exception__alloc),
+	(CORBA_exception__copy),
+	(CORBA_exception__freekids): move from bonobo.
+
 2001-10-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-object.c

@@ -176,28 +176,48 @@ void testEnum (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testException (test_TestFactory factory, 
-		   CORBA_Environment *ev)
+void
+testException (test_TestFactory   factory, 
+	       CORBA_Environment *ev)
 {
-  test_BasicServer objref;
-  test_TestException *ex;
-  d_print ("Testing exceptions...\n");
-  objref = test_TestFactory_getBasicServer (factory, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	test_BasicServer    objref;
+	test_TestException *ex;
+	CORBA_Environment  *cpyev;
 
-  test_BasicServer_opException (objref, ev);
+	d_print ("Testing exceptions...\n");
+
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	test_BasicServer_opException (objref, ev);
   
-  g_assert (ev->_major == CORBA_USER_EXCEPTION);
-  g_assert (strcmp (CORBA_exception_id (ev), ex_test_TestException) == 0);
-  ex = CORBA_exception_value (ev);
-  g_assert (strcmp (ex->reason, constants_STRING_IN) == 0);
-  g_assert (ex->number == constants_LONG_IN);
-  g_assert (ex->aseq._length == 1);
-  g_assert (ex->aseq._buffer[0] == constants_LONG_IN);
+	g_assert (ev->_major == CORBA_USER_EXCEPTION);
+	g_assert (strcmp (CORBA_exception_id (ev), ex_test_TestException) == 0);
+	ex = CORBA_exception_value (ev);
+	g_assert (strcmp (ex->reason, constants_STRING_IN) == 0);
+	g_assert (ex->number == constants_LONG_IN);
+	g_assert (ex->aseq._length == 1);
+	g_assert (ex->aseq._buffer[0] == constants_LONG_IN);
 
-  CORBA_exception_free (ev);
-  CORBA_Object_release (objref, ev);  
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	cpyev = CORBA_exception__copy (ev);
+	CORBA_exception_free (ev);
+	ev = cpyev;
+
+	g_assert (ev->_major == CORBA_USER_EXCEPTION);
+	g_assert (strcmp (CORBA_exception_id (ev), ex_test_TestException) == 0);
+/*	FIXME: we can't do this until we get exception data from
+	the typelib - and make sure we register all system types
+	there too */
+/*	ex = CORBA_exception_value (ev);
+	g_assert (strcmp (ex->reason, constants_STRING_IN) == 0);
+	g_assert (ex->number == constants_LONG_IN);
+	g_assert (ex->aseq._length == 1);
+	g_assert (ex->aseq._buffer[0] == constants_LONG_IN);*/
+
+	CORBA_free (cpyev);
+
+	CORBA_Object_release (objref, ev);  
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 gboolean
