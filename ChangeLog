@@ -1,3 +1,8 @@
+2001-09-01  Darin Adler  <darin@bentspoon.com>
+
+	* src/orb/orb-core/.cvsignore: New generated file that needs
+	ignoring.
+
 2001-08-31 Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-typecode.h:
