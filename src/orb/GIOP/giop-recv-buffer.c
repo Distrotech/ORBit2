@@ -1001,13 +1001,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	 * XXX We should probably handle oversized
 	 * messages more graciously XXX */
 	giop_connection_close (cnx);
-	
-	if (!cnx->parent.was_initiated)
-		/* If !was_initiated, then
-		   a refcount owned by a GIOPServer
-		   must be released */
-		g_object_unref (G_OBJECT (cnx));
-
 	g_object_unref ((GObject *) cnx);
 
 	return TRUE;

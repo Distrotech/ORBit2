@@ -479,6 +479,9 @@ test_TestFactory_Servant servant;
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	
 	CORBA_exception_free (ev);
+
+	sleep (10000);
+
 	return 0;
 #else
 	return factory;

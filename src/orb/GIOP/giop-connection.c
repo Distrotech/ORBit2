@@ -28,11 +28,7 @@ giop_connection_list_add (GIOPConnection *cnx)
 static void
 giop_connection_list_remove (GIOPConnection *cnx)
 {
-	LINC_MUTEX_LOCK (cnx_list.lock);
-
 	cnx_list.list = g_list_remove (cnx_list.list, cnx);
-
-	LINC_MUTEX_UNLOCK (cnx_list.lock);
 }
 
 static GIOPConnection *
@@ -198,7 +194,8 @@ giop_connection_initiate (const char *proto_name,
 		remote_serv_info, (options & LINC_CONNECTION_SSL));
 
 	if (!cnx) {
-		cnx = (GIOPConnection *) g_object_new (giop_connection_get_type (), NULL);
+		cnx = (GIOPConnection *) g_object_new (
+			giop_connection_get_type (), NULL);
 
 		cnx->giop_version = giop_version;
 		if (!linc_connection_initiate (
@@ -234,8 +231,21 @@ giop_connection_remove_by_orb (gpointer match_orb_data)
 		if (cnx->orb_data == match_orb_data) {
 			cnx_list.list = g_list_delete_link (cnx_list.list, l);
 			giop_connection_close (cnx);
+			g_object_unref (G_OBJECT (cnx));
 		}
 	}
 
 	LINC_MUTEX_UNLOCK (cnx_list.lock);
+}
+
+void
+giop_connection_unref (GIOPConnection *cnx)
+{
+	if (cnx) {
+		LINC_MUTEX_LOCK (cnx_list.lock);
+		
+		g_object_unref (G_OBJECT (cnx));
+		
+		LINC_MUTEX_UNLOCK (cnx_list.lock);
+	}
 }

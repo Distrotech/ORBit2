@@ -44,6 +44,7 @@ GIOPConnection *giop_connection_initiate(const char *proto_name,
 					 GIOPVersion giop_version);
 void giop_connection_remove_by_orb (gpointer        match_orb_data);
 void giop_connection_close         (GIOPConnection *cnx);
+void giop_connection_unref         (GIOPConnection *cnx);
 
 #endif /* ORBIT2_INTERNAL_API */
 
