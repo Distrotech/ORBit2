@@ -1,3 +1,9 @@
+2001-07-27  Mark McLoughlin <mark@skynet.ie>
+
+	* /src/idl-compiler/orbit-idl-c-common.c:
+	add a couple of '\n's to the generated code. We shouldn't rely
+	on indent to fix up broken code.
+
 2001-07-27  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c (quick_compare): impl.
