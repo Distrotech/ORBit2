@@ -1,3 +1,12 @@
+2005-02-23  Tor Lillqvist  <tml@novell.com>
+
+	* orbit2-zip.in: Include also etc/orbitrc (even if it is
+	empty). Don't include lib/orbit-2.0, just the Everything_module
+	gets installed there by ORBit2, and that's just for testing.
+
+	* test/test-giop.c (run_test): Use IPv4 instead of UNIX domain
+	sockets on Win32.
+
 2005-02-21  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Use -DPOPT_STATIC on Win32 when building the IDL

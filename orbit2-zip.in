@@ -14,6 +14,7 @@ COPYING.LIB-2
 bin/libORBit-2-0.dll
 bin/libORBit-imodule-2-0.dll
 bin/libORBitCosNaming-2-0.dll
+etc/orbitrc
 EOF
 
 rm $DEVZIP
@@ -29,6 +30,6 @@ lib/pkgconfig/ORBit-2.0.pc
 lib/pkgconfig/ORBit-CosNaming-2.0.pc
 lib/pkgconfig/ORBit-idl-2.0.pc
 lib/pkgconfig/ORBit-imodule-2.0.pc
-lib/orbit-2.0
+share/idl/orbit-2.0
 share/gtk-doc/html/ORBit2
 EOF
