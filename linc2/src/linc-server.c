@@ -140,9 +140,9 @@ link_server_accept_connection (LinkServer      *server,
 	addrlen = server->proto->addr_len;
 	saddr = g_alloca (addrlen);
 
-	fd = LINC_TEMP_FAILURE_RETRY(accept (server->priv->fd, 
+	LINC_TEMP_FAILURE_RETRY(accept (server->priv->fd, 
 					     saddr, 
-					     &addrlen));
+					     &addrlen), fd);
 	if (fd < 0) {
 		d_printf ("accept on %d failed %d", server->priv->fd, errno);
 		return FALSE; /* error */
