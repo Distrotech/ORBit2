@@ -1,3 +1,22 @@
+2002-06-12  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump version to 0.5.1
+
+	* src/linc-connection.c
+	(linc_connection_read): add paranoid assertion.
+
+2002-06-12  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c
+	(linc_get_tmpdir): implement new API in
+	accordance with release team approval for use
+	in bonobo-activation, for it's locking / IOR
+	exchange mechanism.
+
+	* src/linc-connection.c
+	(linc_connection_writev): split out
+	(linc_connection_should_block): this.
+
 2002-06-06  James M. Cape  <jcape@ignore-your.tv>
 
 	* include/linc/linc-connection.h

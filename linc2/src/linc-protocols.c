@@ -74,6 +74,8 @@ make_local_tmpdir (const char *dirname)
  * Set the temporary directory used by linc to @dir. 
  *
  * This directory is used for the creation of UNIX sockets.
+ * @dir must have the correct permissions, 0700, user owned
+ * otherwise this method will g_error.
  **/
 void
 linc_set_tmpdir (const char *dir)
@@ -83,6 +85,21 @@ linc_set_tmpdir (const char *dir)
 	linc_tmpdir [PATH_MAX - 1] = '\0';
 
 	make_local_tmpdir (linc_tmpdir);
+}
+
+/**
+ * linc_get_tmpdir:
+ * @void: 
+ * 
+ * Fetches the directory name used by linc to whack
+ * Unix Domain sockets into.
+ * 
+ * Return value: the g_allocated socket name.
+ **/
+char *
+linc_get_tmpdir (void)
+{
+	return g_strdup (linc_tmpdir);
 }
 
 #ifdef HAVE_SOCKADDR_SA_LEN

@@ -435,6 +435,8 @@ linc_connection_read (LINCConnection *cnx,
 #endif
 			n = read (cnx->priv->fd, buf, len);
 
+		g_assert (n <= len);
+
 		if (n < 0) {
 #ifdef LINC_SSL_SUPPORT
 			if (cnx->options & LINC_CONNECTION_SSL) {
@@ -600,6 +602,19 @@ write_data (LINCConnection *cnx, QueuedWrite *qw)
 	return bytes_written;
 }
 
+static gboolean
+linc_connection_should_block (LINCConnection      *cnx,
+			      const LINCWriteOpts *opt_write_opts)
+{
+	if (!opt_write_opts)
+		return TRUE;
+
+	if (opt_write_opts->block_on_write)
+		return TRUE;
+
+	return FALSE;
+}
+
 /**
  * linc_connection_writev:
  * @cnx: the connection to write to
@@ -650,10 +665,11 @@ linc_connection_writev (LINCConnection       *cnx,
 		/* Queue data & listen for buffer space */
 		linc_watch_set_condition (cnx->priv->tag,
 					  LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
-		if (opt_write_opts &&
-		    !opt_write_opts->block_on_write) {
+
+		if (!linc_connection_should_block (cnx, opt_write_opts)) {
 			queue_flattened (cnx, qw.vecs, qw.nvecs);
 			return LINC_IO_QUEUED_DATA;
+
 		} else {
 			linc_main_iteration (TRUE);
 			goto continue_write;
