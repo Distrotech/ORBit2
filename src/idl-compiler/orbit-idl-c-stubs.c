@@ -277,7 +277,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
 #else
   fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_ex, _ORBIT_completion_status, %s, _ORBIT_send_buffer);\n",
-	  IDL_OP_DCL(tree).f_oneway?"NULL":"_ORBIT_recv_buffer")
+	  IDL_OP_DCL(tree).f_oneway?"NULL":"_ORBIT_recv_buffer");
 #endif
   if(IDL_OP_DCL(tree).op_type_spec)
     /* This will avoid warning about uninitialized memory while
