@@ -330,13 +330,14 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       for(i = 0; i < n; i++) {
 	fprintf(ci->fh, "int n%d;\n", i);
       }
-      
+
+      fprintf(ci->fh, "gpointer retval = mem;\n");
       for(i = 0, ttmp = IDL_TYPE_ARRAY(node).size_list; i < n; i++, ttmp = IDL_LIST(ttmp).next) {
 	fprintf(ci->fh, "for(n%d = 0; n%d < %" IDL_LL "d; n%d++) {\n",
 		i, i, IDL_INTEGER(IDL_LIST(ttmp).data).value, i);
       }
       
-      fprintf(ci->fh, "%s__free(&((%s_slice *)mem)", ctmp, tname);
+      fprintf(ci->fh, "retval = %s__free(&((%s_slice *)retval)", ctmp, tname);
       for(i = 0; i < n; i++)
 	fprintf(ci->fh, "[n%d]", i);
       fprintf(ci->fh, ", NULL, free_strings);\n");
@@ -344,6 +345,8 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       for(i = 0; i < n; i++) {
 	fprintf(ci->fh, "}\n");
       }
+
+      fprintf(ci->fh, "return retval;\n");
 
       break;
     default:
