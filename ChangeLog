@@ -1,5 +1,12 @@
 2003-10-07  Ian McKellar  <yakk@yakk.net>
 
+	* src/services/imodule/orbit-imodule.c:
+	(ORBit_iinterface_fill_iargs):
+	I suck - Olivier just made a better version of my change.
+	I'm reverting it.
+
+2003-10-07  Ian McKellar  <yakk@yakk.net>
+
 	reviewed by: Michael Meeks  <michael@ximian.com>
 
 	* src/services/imodule/orbit-imodule.c:
