@@ -1,3 +1,6 @@
+#include "config.h"
+#include <orbit/orbit.h>
+
 void
 CORBA_Context_set_one_value(CORBA_Context _obj,
 			    const CORBA_Identifier prop_name,

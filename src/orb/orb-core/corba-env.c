@@ -10,11 +10,15 @@ ORBit_handle_system_exception(CORBA_Environment *ev,
 			      GIOPRecvBuffer *buf,
 			      GIOPSendBuffer *sendbuf)
 {
+  g_assert(ev->_major == CORBA_SYSTEM_EXCEPTION);
+  CORBA_exception_set_system(ev, nom, status);
+  giop_recv_buffer_unuse(buf);
+  giop_send_buffer_unuse(sendbuf);
 }
 
 void
 CORBA_exception_set_system(CORBA_Environment *ev,
-			   CORBA_char *except_repos_id,
+			   const CORBA_char *except_repos_id,
 			   CORBA_completion_status completed)
 {
   CORBA_SystemException *se;
@@ -29,7 +33,7 @@ CORBA_exception_set_system(CORBA_Environment *ev,
 void
 CORBA_exception_set(CORBA_Environment *ev,
 		    CORBA_exception_type major,
-		    CORBA_char *except_repos_id,
+		    const CORBA_char *except_repos_id,
 		    void *param)
 {
   CORBA_exception_free(ev);
@@ -91,8 +95,9 @@ CORBA_exception_as_any(CORBA_Environment *ev)
 
 void
 ORBit_handle_exception(GIOPRecvBuffer *buf, CORBA_Environment *ev,
-		       gpointer ex_info, CORBA_ORB orb)
+		       ORBit_exception_demarshal_info *ex_info, CORBA_ORB orb)
 {
+  
 }
 
 GIOPConnection *

@@ -51,6 +51,15 @@ PortableServer_RequestProcessingPolicy__get_value
   return ORBit_Policy_get((CORBA_Policy)_obj);
 }
 
+PortableServer_POAManager
+ORBit_POAManager_new(CORBA_ORB orb, CORBA_Environment *ev)
+{
+  PortableServer_POAManager retval;
+  retval = g_new0(struct PortableServer_POAManager_type, 1);
+
+  return retval;
+}
+
 /**** PortableServer_POAManager_activate
       Inputs: 'obj' - a POAManager to activate
       Outputs: '*ev' - result of the activate operation
@@ -804,6 +813,7 @@ ORBit_POA_is_inuse(PortableServer_POA poa,
 		   CORBA_boolean consider_children,
 		   CORBA_Environment *ev)
 {
+  return FALSE;
 }
 
 ORBit_POAObject *ORBit_POA_create_object(PortableServer_POA poa,
@@ -825,47 +835,195 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 		     const CORBA_RepositoryId intf,
 		     CORBA_Environment *ev)
 {
+  return NULL;
 }
 
-ORBit_POAObject *ORBit_POA_oid_to_obj(PortableServer_POA poa,
-				      const PortableServer_ObjectId *oid,
-				      gboolean active,
-				      CORBA_Environment *ev)
+ORBit_POAObject *
+ORBit_POA_oid_to_obj(PortableServer_POA poa,
+		     const PortableServer_ObjectId *oid,
+		     gboolean active,
+		     CORBA_Environment *ev)
+{
+  return NULL;
+}
+
+gboolean
+ORBit_POA_destroy(PortableServer_POA poa,
+		  CORBA_boolean etherealize_objects,
+		  CORBA_Environment *ev)
+{
+  return FALSE;
+}
+
+void
+ORBit_POA_add_child(PortableServer_POA poa,
+		    PortableServer_POA child, 
+		    CORBA_Environment *ev)
 {
 }
 
-gboolean ORBit_POA_destroy(PortableServer_POA poa,
-			   CORBA_boolean etherealize_objects,
-			   CORBA_Environment *ev)
+void
+ORBit_POA_deactivate(PortableServer_POA poa,
+		     CORBA_boolean etherealize_objects,
+		     CORBA_Environment *ev)
 {
 }
 
-void ORBit_POA_add_child(PortableServer_POA poa,
-			 PortableServer_POA child, 
+void
+ORBit_POA_handle_held_requests(PortableServer_POA poa)
+{
+}
+
+static void
+ORBit_POA_free_fn(ORBit_RootObject obj_in)
+{
+    PortableServer_POA poa = (PortableServer_POA)obj_in;
+    ORBit_RootObject_release(poa->orb);
+    g_free(poa);
+}
+
+static const ORBit_RootObject_Interface ORBit_POA_epv = {
+    ORBIT_ROT_POA,
+    ORBit_POA_free_fn
+};
+
+
+static guint
+ORBit_ObjectId_sysid_hash(gconstpointer ptr)
+{
+  const PortableServer_ObjectId *oid = ptr;
+    return *(guint*)oid->_buffer;
+}
+
+guint
+ORBit_sequence_octet_hash(gconstpointer ptr)
+{
+  const CORBA_sequence_octet *so = ptr;
+	const char *s = (char*)so->_buffer;
+  	const char *p, *e = ((char *)so->_buffer) + so->_length;
+  	guint h=0, g;
+
+  	for(p = s; p < e; p ++) {
+    		h = ( h << 4 ) + *p;
+    		if ( ( g = h & 0xf0000000 ) ) {
+      			h = h ^ (g >> 24);
+      			h = h ^ g;
+    		}
+  	}
+  	return h;
+}
+
+/*
+ * Returns TRUE if s1 and s2 are the same, FALSE otherwise.
+ * Note that this is what the glib hash module wants.
+ */
+gint
+ORBit_sequence_octet_equal(gconstpointer p1, gconstpointer p2)
+{
+  const CORBA_sequence_octet *s1 = p1;
+  const CORBA_sequence_octet *s2 = p2;
+    int	same;
+    same = s1->_length == s2->_length 
+      && memcmp(s1->_buffer,s2->_buffer,s1->_length)==0;
+    return same;
+}
+
+static void
+ORBit_POA_check_policy_conflicts(PortableServer_POA poa, CORBA_Environment *ev)
+{
+}
+
+static void
+ORBit_POA_set_policylist(PortableServer_POA poa,
+			 const CORBA_PolicyList *policies,
 			 CORBA_Environment *ev)
 {
 }
 
-void ORBit_POA_deactivate(PortableServer_POA poa,
-			  CORBA_boolean etherealize_objects,
-			  CORBA_Environment *ev)
+PortableServer_POA
+ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
+	      PortableServer_POAManager manager,
+	      const CORBA_PolicyList *policies,
+	      CORBA_Environment *ev)
 {
+  PortableServer_POA poa;
+  CORBA_long *tptr;
+  
+  poa = g_new0(struct PortableServer_POA_type, 1);
+  ORBit_RootObject_init(&poa->parent, &ORBit_POA_epv);
+  ORBit_RootObject_duplicate(poa);
+  if(!manager)
+    manager = ORBit_POAManager_new(orb, ev);
+  if(ev->_major != CORBA_NO_EXCEPTION) goto error;
+  poa->child_poas = NULL;
+  poa->orb = ORBit_RootObject_duplicate(orb);
+  poa->poaID = orb->poas->len;
+  g_ptr_array_set_size(orb->poas, orb->poas->len + 1);
+  g_ptr_array_index(orb->poas, poa->poaID) = poa;
+
+  /* Need to initialise poa policies etc.. here */
+  poa->p_thread = PortableServer_ORB_CTRL_MODEL;
+  poa->p_lifespan = PortableServer_TRANSIENT;
+  poa->p_id_uniqueness = PortableServer_UNIQUE_ID;
+  poa->p_id_assignment = PortableServer_SYSTEM_ID;
+  poa->p_servant_retention = PortableServer_RETAIN;
+  poa->p_request_processing = PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY;
+  poa->p_implicit_activation = PortableServer_NO_IMPLICIT_ACTIVATION;
+
+  if (policies) {
+    ORBit_POA_set_policylist(poa, policies, ev);
+    if(ev->_major != CORBA_NO_EXCEPTION) goto error;
+  }
+  /* check_policy also sets up some defaults, so need to always call */
+  ORBit_POA_check_policy_conflicts(poa, ev);
+
+  poa->poa_rand_len = 8;
+  
+  poa->name = CORBA_string_dup(nom);
+  poa->poa_key._length = sizeof(CORBA_long) + poa->poa_rand_len;
+  poa->poa_key._buffer =
+    CORBA_sequence_CORBA_octet_allocbuf(poa->poa_key._length);
+  tptr = (CORBA_long *)poa->poa_key._buffer;
+  *tptr = poa->poaID;
+  if(poa->poa_rand_len)
+    ORBit_genrand_buf(&poa->orb->genrand,
+		      poa->poa_key._buffer + sizeof(CORBA_long),
+		      poa->poa_rand_len);
+  if( poa->p_servant_retention == PortableServer_RETAIN )
+    {
+      if ( poa->p_id_assignment == PortableServer_SYSTEM_ID )
+	poa->oid_to_obj_map = g_hash_table_new(ORBit_ObjectId_sysid_hash,
+					       ORBit_sequence_octet_equal);
+      else /* USER_ID */
+	poa->oid_to_obj_map = g_hash_table_new(ORBit_sequence_octet_hash,
+					       (GCompareFunc)ORBit_sequence_octet_equal);
+    }
+
+  if ( poa->p_id_assignment == PortableServer_USER_ID 
+      && poa->obj_rand_len > 0 )
+      {
+	poa->num_to_koid_map = g_ptr_array_new();
+	g_ptr_array_set_size(poa->num_to_koid_map, 1);
+	g_ptr_array_index(poa->num_to_koid_map, 0) = NULL;
+      }
+
+  return poa;
+error:
+  g_free(poa); /* FIXME */
+  return NULL;
 }
 
-void ORBit_POA_handle_held_requests(PortableServer_POA poa)
+CORBA_Object
+ORBit_POA_obj_to_ref(PortableServer_POA poa,
+		     ORBit_POAObject *pobj,
+		     const CORBA_RepositoryId intf,
+		     CORBA_Environment *ev)
 {
+  return NULL;
 }
 
-PortableServer_POA ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
-				 const PortableServer_POAManager manager,
-				 const CORBA_PolicyList *policies,
-				 CORBA_Environment *ev)
+PortableServer_POA
+ORBit_POA_setup_root(CORBA_ORB orb, CORBA_Environment *ev)
 {
-}
-
-CORBA_Object ORBit_POA_obj_to_ref(PortableServer_POA poa,
-				  ORBit_POAObject *pobj,
-				  const CORBA_RepositoryId intf,
-				  CORBA_Environment *ev)
-{
+  return ORBit_POA_new(orb, "RootPOA", CORBA_OBJECT_NIL, NULL, ev);
 }

@@ -47,11 +47,20 @@ ORBit_TypeCode_demarshal_value(CORBA_TypeCode tc,
 			       gboolean dup_strings,
 			       CORBA_ORB orb)
 {
+  return TRUE;
 }
 
 gpointer
 CORBA_TypeCode__freekids(gpointer mem, gpointer dat)
 {
+  CORBA_TypeCode t, *tp;
+
+  tp = mem;
+  t = *tp;
+
+  CORBA_Object_release((CORBA_Object)t, NULL);
+
+  return tp + 1;
 }
 
 void
@@ -62,4 +71,5 @@ ORBit_encode_CORBA_TypeCode(CORBA_TypeCode tc, GIOPSendBuffer* buf)
 gboolean
 ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf)
 {
+  return FALSE;
 }

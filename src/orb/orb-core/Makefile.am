@@ -1,6 +1,7 @@
 noinst_LTLIBRARIES=liborb-core.la
 
-INCLUDES=-I. -I$(top_srcdir)/include \
+INCLUDES=-I. -I$(srcdir) \
+	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-I$(top_builddir)/include/orbit/orb-core \
 	@GLIB_CFLAGS@ \
@@ -21,7 +22,8 @@ liborb_core_la_SOURCES=\
 	allocators.c \
 	corba-typecode.c \
 	corba-types.c \
-	corba-any.c
+	corba-any.c \
+	corba-context.c
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c

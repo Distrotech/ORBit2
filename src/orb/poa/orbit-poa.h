@@ -14,6 +14,7 @@ gboolean ORBit_POA_destroy(PortableServer_POA poa,
 void ORBit_POA_add_child(PortableServer_POA poa,
 			 PortableServer_POA child, 
 			 CORBA_Environment *ev);
+PortableServer_POA ORBit_POA_setup_root(CORBA_ORB orb, CORBA_Environment *ev);
 PortableServer_POA ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
 				 const PortableServer_POAManager manager,
 				 const CORBA_PolicyList *policies,

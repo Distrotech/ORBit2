@@ -12,7 +12,7 @@ struct PortableServer_POA_type {
   struct ORBit_RootObject_struct parent;
 
   guint life_flags;
-  CORBA_unsigned_long poaID;
+  int poaID;
   PortableServer_ObjectId poa_key; /* poaID + rand_data */
   char *name;
   CORBA_ORB orb;
