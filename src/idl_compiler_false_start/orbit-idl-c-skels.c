@@ -83,9 +83,9 @@ ck_output_skels(IDL_tree tree, OIDL_C_Info *ci)
 static void
 cbe_print_var_dcl(FILE *of, IDL_tree tree)
 {
-    IDL_tree 		rawts, ts;
-    IDL_ParamRole	role;
-    gchar		*id, *ts_str;
+    IDL_tree 		rawts = NULL /* Quiet gcc */, ts;
+    IDL_ParamRole	role = 0 /* Quiet gcc */;
+    gchar		*id = NULL /* Quiet gcc */, *ts_str;
     gboolean		isSlice;
     int			n;
 
