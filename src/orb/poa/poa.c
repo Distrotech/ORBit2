@@ -166,6 +166,7 @@ PortableServer_POA__get_the_children(PortableServer_POA _obj,
   retval->_length = g_hash_table_size(_obj->child_poas);
   retval->_maximum = 0;
   retval->_buffer = CORBA_sequence_PortableServer_POA_allocbuf(retval->_length);
+  retval->_release = TRUE;
   g_hash_table_foreach(_obj->child_poas, poalist_add_child, retval);
 
   return retval;
@@ -724,7 +725,6 @@ PortableServer_string_to_ObjectId (CORBA_char        *str,
 
 	tmp._length  = strlen (str);
 	tmp._buffer  = str;
-	tmp._release = CORBA_TRUE;
   
 	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
 }
@@ -1556,6 +1556,7 @@ ORBit_POA_create_object(PortableServer_POA poa,
 			  == sizeof(CORBA_unsigned_long) + poa->obj_rand_len );
 		newoid->_length = oid->_length;
 		newoid->_buffer = PortableServer_ObjectId_allocbuf(oid->_length);
+		newoid->_release = TRUE;
 		memcpy(newoid->_buffer, oid->_buffer, oid->_length);
 	      }
 	    else

@@ -5,9 +5,6 @@
 
 #define tprintf(format...) fprintf(stderr, format)
 
-
-#define _ORBIT_BASE_TYPE_MACRO							\
-
 void
 ORBit_trace_objref (const CORBA_Object obj)
 {

@@ -24,6 +24,7 @@ ORBit_sequence_CORBA_octet_dup(const CORBA_sequence_CORBA_octet *in)
     {
       retval->_buffer = CORBA_sequence_CORBA_octet_allocbuf(in->_length);
       memcpy(retval->_buffer, in->_buffer, in->_length);
+      retval->_release = TRUE;
     }
 
   return retval;

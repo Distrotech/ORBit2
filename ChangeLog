@@ -1,3 +1,25 @@
+2001-08-07  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testIInterface): actualy
+	free the iinterface structure.
+
+	* src/orb/orb-core/orbit-small.c (load_module): fix leak.
+
+	* src/orb/orb-core/corba-types.c
+	(ORBit_sequence_CORBA_octet_dup): set release to TRUE.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_list_initial_services): ditto.
+
+	* src/orb/poa/clean-poa.c
+	(PortableServer_POA__get_the_children): ditto.
+
+	* src/orb/poa/clean-poa.c (ORBit_POA_create_object): ditto.
+
+	* src/orb/poa/poa.c (PortableServer_POA__get_the_children),
+	(ORBit_POA_create_object): ditto.
+	(PortableServer_string_to_ObjectId): revert.
+
 2001-08-07  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/poa/poa.c

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <orbit/orbit.h>
 #include <orbit/poa/orbit-adaptor.h>
 
