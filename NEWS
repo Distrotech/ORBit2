@@ -1,3 +1,38 @@
+ORBit2-2.4.1
+
+	* bug fixes
+		+ parallel build fixage (Martin Pool)
+		+ lonely cnx crasher (Michael)
+		+ return sys ex on no method (Michael)
+		+ orbit-idl 'ns' fix (Murray Cumming, Felix Breuer)
+		+ cnx / buffer lifecycle fixes (Michael)
+		+ cmd line parsing regression (Gustavo Giráldez)
+		+ disable broken http: IOR code by default (Michael)
+		+ check send buffer alignment (Alex Larsson, Michael)
+		+ don't install various tests (Brian Cameron)
+		+ build fixage (Jacob Berkman, Alex, Bill Haneman)
+		+ debugging flag pokage fix (Mark McLouglin)
+		+ marshalling sequence shrinkage (Mark)
+		+ connection logic bug (Michael)
+		+ don't spew debug on destroy (Michael)
+		+ copy alias typecodes (Mark)
+
+	* featurelets (Michael)
+		+ GIOP fragment handling 
+		+ Security Audit 
+		+ 'LocalOnly' mode 
+		+ new ORBIT_DEBUG=errors spew 
+		+ debug build debug hooks 
+		+ more graceful OOM handling 
+		+ blank uninitialized outgoing data 
+		+ random keys re-hashed / accelerated 
+		+ skeptical sequence de-marshling 
+		+ configure time dofus detection 
+		+ beefed up regression tests 
+			+ various spoofing
+			+ randomized valid data
+			+ broken fragments
+
 ORBit2-2.4.0
 
 	* bug fixes
