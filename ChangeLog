@@ -1,3 +1,18 @@
+2001-08-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_value): impl.
+
+	* src/orb/orb-core/Makefile.am: add orbit-trace.c
+
+2001-08-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c
+	(typecode_equiv_internal): split this out of
+	(CORBA_TypeCode_equal): here.
+	(CORBA_TypeCode_eqivalent): impl.
+	(typecode_equiv_internal): impl equivalent checking.
+
 2001-08-06  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/orbit-small.c

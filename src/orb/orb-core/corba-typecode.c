@@ -775,15 +775,24 @@ tc_dec_tk_fixed(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
    already visited a given TypeCode.  I'm not sure if every recursive
    type will have a tk_recursive node in it; if not, then this will
    need to be reworked a bit.  */
-CORBA_boolean
-CORBA_TypeCode_equal (CORBA_TypeCode obj,
-		      CORBA_TypeCode tc,
-		      CORBA_Environment *ev)
+static CORBA_boolean
+typecode_equiv_internal (CORBA_TypeCode obj,
+			 CORBA_TypeCode tc,
+			 gboolean       strict_equal,
+			 CORBA_Environment *ev)
 {
 	int i;
 
 	g_return_val_if_fail (tc != NULL, CORBA_FALSE);
 	g_return_val_if_fail (obj != NULL, CORBA_FALSE);
+
+	if (!strict_equal) {
+		while (obj->kind == CORBA_tk_alias)
+			obj = obj->subtypes [0];
+
+		while (tc->kind  == CORBA_tk_alias)
+			tc  = tc->subtypes [0];
+	}
 
 	if (obj->kind != tc->kind)
 		return CORBA_FALSE;
@@ -857,6 +866,22 @@ CORBA_TypeCode_equal (CORBA_TypeCode obj,
 	}
 
 	return CORBA_TRUE;
+}
+
+CORBA_boolean
+CORBA_TypeCode_equal (CORBA_TypeCode obj,
+		      CORBA_TypeCode tc,
+		      CORBA_Environment *ev)
+{
+	return typecode_equiv_internal (obj, tc, TRUE, ev);
+}
+
+CORBA_boolean
+CORBA_TypeCode_eqivalent (CORBA_TypeCode obj,
+			  CORBA_TypeCode tc,
+			  CORBA_Environment *ev)
+{
+	return typecode_equiv_internal (obj, tc, FALSE, ev);
 }
 
 const char *
