@@ -1,3 +1,8 @@
+2002-06-24  Murray Cumming  <murrayc@usa.net>
+
+	* I had not properly restored the -lc++ command - just the -lcpp
+	command that does the same thing.
+
 2002-06-18  Murray Cumming  <murrayc@usa.net>
 	
 	* src/orb/orb-core/corba-orb.c: make CORBA_Typecode_allocate

@@ -37,6 +37,7 @@ void orbit_idl_output_cpp (OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
 static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
   {"c", &orbit_idl_output_c},
   { "cpp", &orbit_idl_output_cpp },
+  { "c++", &orbit_idl_output_cpp },
   {NULL, NULL}
 };
 
