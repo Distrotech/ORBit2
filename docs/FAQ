@@ -32,6 +32,7 @@ The ORBit2 FAQ - v 0.1
 		+ how do I enable reference tracking ?
 		+ my skels leak memory - why ?
 		+ why should I not use _release ?
+		+ why can't I keep a pointer to an argument ?
 
 * What is ORBit2 ?
 
@@ -401,3 +402,38 @@ has no control ( or idea ) of it's lifecycle.
 	Thus you might return some data, and then in a later method
 alter the data - the client's copy then would contain bad information.
 
+
+** why can't I keep a pointer to an argument ?
+
+	If you are implementing a CORBA method, often you are sent
+data and wish to keep it around; one scenario might be where you are
+sent a sequence<octet> as an 'in' or 'inout' argument:
+
+static void
+impl_MyModule_myMethod (PortableServer_Servant            servant,
+			const CORBA_sequence_CORBA_octet *data,
+			CORBA_Environment                *ev)
+{
+	/* This code contains an error */
+	g_hash_table_insert (my_hash, data);
+}
+
+	The lifetime of the 'data' variable is only that of the method
+invocation. What this means is that when the invocation comes in
+across the wire - the arguments are de-marshaled to temporary storage.
+The method is then invoked - on the data, and then the data is freed
+after the invocation ( to avoid leaking it, or the user having to
+explicitely free it ).
+
+	Thus - if you want to keep a pointer to data; you need to copy
+it to insert it into the table. ORBit2 provides a helpful convenience
+function to copy any value, specified by type:
+
+{
+	CORBA_sequence_CORBA_octet *copy;
+
+	copy = ORBit_copy_value (data, TC_CORBA_sequence_CORBA_octet);
+	g_hash_table_insert (my_hash, copy);
+}
+
+	is correct.
