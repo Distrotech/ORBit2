@@ -4,6 +4,12 @@
 
 2004-02-04  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_zap): signal the wait condition on
+	threads when a connection dies.
+
+2004-02-04  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop.c (wakeup_mainloop): handle EAGAIN
 	on wakeup pipe more elegantly, downgrade g_error.
 
