@@ -23,3 +23,5 @@ test-dynany
 *-imodule.c
 ior
 typelib-dump
+test-mem
+test-performance

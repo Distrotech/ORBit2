@@ -69,13 +69,13 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		int sz = 0;
 		int al = 1;
 		gconstpointer cmem = mem;
-		subtc = ORBit_get_union_tag(tc, &cmem, TRUE);
-		for(i = 0; i < tc->sub_parts; i++) {
-			al = MAX(al, tc->subtypes[i]->c_align);
-			sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
+		subtc = ORBit_get_union_tag (tc, &cmem, TRUE);
+		for (i = 0; i < tc->sub_parts; i++) {
+			al = MAX (al, tc->subtypes [i]->c_align);
+			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes [i]));
 		}
-		mem = ALIGN_ADDRESS(cmem, al);
-		ORBit_freekids_via_TypeCode_T(mem, subtc);
+		mem = ALIGN_ADDRESS (cmem, al);
+		ORBit_freekids_via_TypeCode_T (mem, subtc);
 		/* the end of the body (subtc) may not be the
 		 * same as the end of the union */
 		retval = ((guchar *)mem) + sz;

@@ -12,8 +12,26 @@
 #include "iop-profiles.h"
 #include "orb-core-private.h"
 #include "orbhttp.h"
+#include "orbit-debug.h"
 
 extern ORBit_option orbit_supported_options[];
+
+#ifdef G_ENABLE_DEBUG
+OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
+#endif
+
+/*
+ * Command line option handling.
+ */
+static gboolean     orbit_use_ipv4          = FALSE;
+static gboolean     orbit_use_ipv6          = FALSE; 
+static gboolean     orbit_use_usocks        = TRUE;
+static gboolean     orbit_use_irda          = FALSE;
+static gboolean     orbit_use_ssl           = FALSE;
+static gboolean     orbit_use_genuid_simple = FALSE;
+static char        *orbit_ipsock            = NULL;
+static char        *orbit_ipname            = NULL;
+static char        *orbit_debug_options     = NULL;
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -27,7 +45,8 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 			continue;
 
 		server = giop_server_new (orb->default_giop_version,
-					  info->name, NULL, NULL, 0, orb);
+					  info->name, orbit_ipname,
+					  orbit_ipsock, 0, orb);
 		if (server) {
 			orb->servers = g_slist_prepend (orb->servers, server);
 
@@ -66,6 +85,21 @@ ORBit_ORB_shutdown_servers (CORBA_ORB orb)
 	orb->servers = NULL;
 }
 
+static ORBitGenUidType
+ORBit_genuid_type (void)
+{
+	ORBitGenUidType retval = ORBIT_GENUID_STRONG;;
+
+	if (orbit_use_genuid_simple)
+		retval = ORBIT_GENUID_SIMPLE;
+
+	else if (orbit_use_usocks && !orbit_use_ipv4 &&
+		 !orbit_use_ipv6 && !orbit_use_irda)
+		retval = ORBIT_GENUID_SIMPLE;
+
+	return retval;
+}
+
 static void
 ORBit_service_list_free_ref (gpointer         key,
 			     ORBit_RootObject objref,
@@ -94,7 +128,39 @@ ORBit_locks_initialize (void)
 	ORBit_RootObject_lifecycle_lock = linc_mutex_new ();
 }
 
+#ifdef G_ENABLE_DEBUG
+static void
+ORBit_setup_debug_flags (void)
+{
+	static GDebugKey debug_keys[] = {
+		{ "traces",   ORBIT_DEBUG_TRACES },
+		{ "timings",  ORBIT_DEBUG_TIMINGS },
+		{ "types",    ORBIT_DEBUG_TYPES },
+		{ "messages", ORBIT_DEBUG_MESSAGES },
+		{ "objects",  ORBIT_DEBUG_OBJECTS },
+		{ "giop",     ORBIT_DEBUG_GIOP },
+		{ "refs",     ORBIT_DEBUG_REFS },
+	};
+	const char *env_string;
+
+	env_string = g_getenv ("ORBIT2_DEBUG");
+
+	if (env_string)
+		_orbit_debug_flags |=
+			g_parse_debug_string (env_string,
+					      debug_keys,
+					      G_N_ELEMENTS (debug_keys));
+
+	if (orbit_debug_options)
+		_orbit_debug_flags |=
+			g_parse_debug_string (orbit_debug_options,
+					      debug_keys,
+					      G_N_ELEMENTS (debug_keys));
+}
+#endif /* G_ENABLE_DEBUG */
+
 static CORBA_ORB _ORBit_orb = NULL;
+static gulong    init_level = 0;
 
 CORBA_ORB
 CORBA_ORB_init (int *argc, char **argv,
@@ -107,13 +173,19 @@ CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORB_release_fn
 	};
 
+	init_level++;
+
 	if ((retval = _ORBit_orb))
 		return ORBit_RootObject_duplicate (retval);
 
-	/* the allocation code uses the bottom bit of this pointer */
-	g_assert (ORBIT_ALIGNOF_CORBA_POINTER > 2);
+	/* the allocation code uses the bottom bit of any pointer */
+	g_assert (ORBIT_ALIGNOF_CORBA_DOUBLE > 2);
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
+
+#ifdef G_ENABLE_DEBUG
+	ORBit_setup_debug_flags ();
+#endif /* G_ENABLE_DEBUG */
 
 	giop_init ();
 
@@ -125,7 +197,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	/* released by CORBA_ORB_destroy */
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 
-	ORBit_genrand_init (&retval->genrand);
+	ORBit_genuid_init (ORBit_genuid_type ());
 	retval->default_giop_version = GIOP_LATEST;
 
 	retval->adaptors = g_ptr_array_new ();
@@ -135,55 +207,63 @@ CORBA_ORB_init (int *argc, char **argv,
 }
 
 CORBA_char *
-CORBA_ORB_object_to_string(CORBA_ORB _obj,
-			   const CORBA_Object obj,
-			   CORBA_Environment * ev)
+CORBA_ORB_object_to_string (CORBA_ORB          orb,
+			   const CORBA_Object  obj,
+			   CORBA_Environment  *ev)
 {
-  GIOPSendBuffer *buf;
-  CORBA_octet endianness = GIOP_FLAG_ENDIANNESS;
-  CORBA_char *out;
-  int i, j, k;
+	GIOPSendBuffer *buf;
+	CORBA_octet     endianness = GIOP_FLAG_ENDIANNESS;
+	CORBA_char     *out;
+	int             i, j, k;
 
-  g_return_val_if_fail(ev, NULL);
+	g_return_val_if_fail (ev != NULL, NULL);
 
-  if(!obj || !_obj
-     || ORBIT_ROOT_OBJECT_TYPE(obj) != ORBIT_ROT_OBJREF)
-    {
-      CORBA_exception_set_system(ev,
-				 ex_CORBA_BAD_PARAM,
-				 CORBA_COMPLETED_NO);
-      return NULL;
-    }
+	if(!orb || !obj || ORBIT_ROOT_OBJECT_TYPE (obj) != ORBIT_ROT_OBJREF) {
+		CORBA_exception_set_system (
+				ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO);
 
-  buf = giop_send_buffer_use(_obj->default_giop_version);
-  buf->header_size = 0;
-  g_assert(buf->num_used == 1);
-  buf->lastptr = NULL;
-  buf->num_used = 0; /* we don't want the header in there */
-  buf->msg.header.message_size = 0;
-  giop_send_buffer_append(buf, &endianness, 1);
-  ORBit_marshal_object(buf, obj);
-  out = CORBA_string_alloc(4 + (buf->msg.header.message_size * 2) + 1);
-
-  strcpy(out, "IOR:");
-  k = 4;
-  for(i = 0; i < buf->num_used; i++)
-    {
-      struct iovec *curvec = &buf->iovecs[i];
-      guchar *ptr = curvec->iov_base;
-
-      for(j = 0; j < curvec->iov_len; j++, ptr++)
-	{
-	  int n1 = (*ptr & 0xF0) >> 4, n2 = (*ptr & 0xF);
-	  out[k++] = num2hexdigit(n1);
-	  out[k++] = num2hexdigit(n2);
+		return NULL;
 	}
-    }
-  out[k++] = '\0';
-  
-  giop_send_buffer_unuse(buf);
 
-  return out;
+	buf = giop_send_buffer_use (orb->default_giop_version);
+
+	g_assert (buf->num_used == 1);
+
+	buf->header_size             = 0;
+	buf->lastptr                 = NULL;
+	buf->num_used                = 0; /* we don't want the header in there */
+	buf->msg.header.message_size = 0;
+
+	giop_send_buffer_append (buf, &endianness, 1);
+
+	ORBit_marshal_object (buf, obj);
+	out = CORBA_string_alloc (4 + (buf->msg.header.message_size * 2) + 1);
+
+	strcpy (out, "IOR:");
+
+	for (i = 0, k = 4; i < buf->num_used; i++) {
+		struct iovec *curvec;
+		guchar       *ptr;
+
+		curvec = &buf->iovecs [i];
+		ptr    = curvec->iov_base;
+
+		for (j = 0; j < curvec->iov_len; j++, ptr++) {
+			int n1, n2;
+
+			n1 = (*ptr & 0xF0) >> 4;
+			n2 = (*ptr & 0xF);
+
+			out [k++] = num2hexdigit (n1);
+			out [k++] = num2hexdigit (n2);
+		}
+	}
+
+	out [k++] = '\0';
+  
+	giop_send_buffer_unuse (buf);
+
+	return out;
 }
 
 CORBA_Object
@@ -268,49 +348,51 @@ CORBA_ORB_create_list (CORBA_ORB          obj,
 }
 
 void
-CORBA_ORB_create_operation_list(CORBA_ORB _obj,
-				const CORBA_OperationDef oper,
-				CORBA_NVList * new_list,
-				CORBA_Environment * ev)
+CORBA_ORB_create_operation_list (CORBA_ORB                 orb,
+				 const CORBA_OperationDef  oper,
+				 CORBA_NVList             *new_list,
+				 CORBA_Environment        *ev)
 {
 }
 
 void
-CORBA_ORB_send_multiple_requests_oneway(CORBA_ORB _obj,
-					const CORBA_RequestSeq * req,
-					CORBA_Environment * ev)
+CORBA_ORB_send_multiple_requests_oneway (CORBA_ORB               orb,
+					 const CORBA_RequestSeq *req,
+					 CORBA_Environment      *ev)
 {
 }
 
 void
-CORBA_ORB_send_multiple_requests_deferred(CORBA_ORB _obj,
-					  const CORBA_RequestSeq *req,
-					  CORBA_Environment * ev)
+CORBA_ORB_send_multiple_requests_deferred (CORBA_ORB               orb,
+					   const CORBA_RequestSeq *req,
+					   CORBA_Environment      *ev)
 {
 }
 
 CORBA_boolean
-CORBA_ORB_poll_next_response(CORBA_ORB _obj,
-			     CORBA_Environment * ev)
+CORBA_ORB_poll_next_response (CORBA_ORB          orb,
+			      CORBA_Environment *ev)
 {
-  return CORBA_FALSE;
+	return CORBA_FALSE;
 }
 
 void
-CORBA_ORB_get_next_response(CORBA_ORB _obj, CORBA_Request * req,
-			    CORBA_Environment * ev)
+CORBA_ORB_get_next_response (CORBA_ORB          orb,
+			     CORBA_Request     *req,
+			     CORBA_Environment *ev)
 {
-  *req = NULL;
+	*req = NULL;
 }
 
 CORBA_boolean
-CORBA_ORB_get_service_information(CORBA_ORB _obj,
-				  const CORBA_ServiceType service_type,
-				  CORBA_ServiceInformation **service_information,
-				  CORBA_Environment * ev)
+CORBA_ORB_get_service_information (CORBA_ORB                  orb,
+				   const CORBA_ServiceType    service_type,
+				   CORBA_ServiceInformation **service_information,
+				   CORBA_Environment         *ev)
 {
-  *service_information = NULL;
-  return CORBA_FALSE;
+	*service_information = NULL;
+
+	return CORBA_FALSE;
 }
 
 struct ORBit_service_list_info {
@@ -389,426 +471,477 @@ CORBA_TypeCode_allocate (void)
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_struct_tc (CORBA_ORB                    _obj,
+CORBA_ORB_create_struct_tc (CORBA_ORB                    orb,
 			    const CORBA_char            *id,
 			    const CORBA_char            *name,
 			    const CORBA_StructMemberSeq *members,
 			    CORBA_Environment           *ev)
 {
-  CORBA_TypeCode tc;
-  int i;
+	CORBA_TypeCode retval;
+	int            i;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc == NULL)
-    goto tc_alloc_failed;
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval)
+		goto tc_alloc_failed;
 
-  tc->subtypes = g_new0(CORBA_TypeCode, members->_length);
-  if(tc->subtypes == NULL)
-    goto subtypes_alloc_failed;
+	retval->subtypes = g_new0 (CORBA_TypeCode, members->_length);
+	if (!retval->subtypes)
+		goto subtypes_alloc_failed;
 
-  tc->subnames = g_new0(char *, members->_length);
-  if(tc->subnames == NULL)
-    goto subnames_alloc_failed;
+	retval->subnames = g_new0 (char *, members->_length);
+	if (!retval->subnames)
+		goto subnames_alloc_failed;
 
-  tc->kind = CORBA_tk_struct;
-  tc->name = g_strdup(name);
-  tc->repo_id = g_strdup(id);
-  tc->sub_parts = members->_length;
-  tc->length = members->_length;
+	retval->kind      = CORBA_tk_struct;
+	retval->name      = g_strdup (name);
+	retval->repo_id   = g_strdup (id);
+	retval->sub_parts = members->_length;
+	retval->length    = members->_length;
 
-  for(i = 0; i<members->_length; i++) {
-    CORBA_StructMember *mem = (CORBA_StructMember *)&(members->_buffer[i]);
+	for(i = 0; i < members->_length; i++) {
+		CORBA_StructMember *member = &members->_buffer [i];
 
-    g_assert(&(mem->type) != NULL);
+		g_assert (&member->type != CORBA_OBJECT_NIL);
 
-    tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
-    tc->subnames[i] = g_strdup(mem->name);
-  }
+		retval->subtypes [i] = ORBit_RootObject_duplicate (member->type);
+		retval->subnames [i] = g_strdup (member->name);
+	}
 
-  return(tc);
+	return retval;
 
  subnames_alloc_failed:
-  g_free(tc->subtypes);
+	g_free (retval->subtypes);
+
  subtypes_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return NULL;
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
+}
+
+static void
+copy_case_value (CORBA_long *dest,
+		 CORBA_any  *src)
+{
+        switch (src->_type->kind) {
+        case CORBA_tk_ulong:
+        case CORBA_tk_long:
+        case CORBA_tk_enum:
+                *dest = *(CORBA_long *) src->_value;
+                break;
+        case CORBA_tk_ushort:
+        case CORBA_tk_short:
+                *dest = *(CORBA_short *) src->_value;
+                break;
+        case CORBA_tk_char:
+        case CORBA_tk_boolean:
+        case CORBA_tk_octet:
+                *dest = *(CORBA_octet *) src->_value;
+                break;
+        default:
+		g_assert_not_reached ();
+		break;
+        }
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_union_tc (CORBA_ORB                   _obj,
+CORBA_ORB_create_union_tc (CORBA_ORB                   orb,
 			   const CORBA_char           *id,
 			   const CORBA_char           *name,
 			   const CORBA_TypeCode        discriminator_type,
 			   const CORBA_UnionMemberSeq *members,
 			   CORBA_Environment          *ev)
 {
-  CORBA_TypeCode tc;
-  int i;
+	CORBA_TypeCode retval;
+	int            i;
 
-  tc=CORBA_TypeCode_allocate();
+	retval = CORBA_TypeCode_allocate ();
 
-  if(tc == NULL)
-    goto tc_alloc_failed;
+	if (!retval)
+		goto tc_alloc_failed;
 
-  tc->discriminator = ORBit_RootObject_duplicate(discriminator_type);
+	retval->discriminator = ORBit_RootObject_duplicate (discriminator_type);
 		
-  tc->subtypes=g_new0(CORBA_TypeCode, members->_length);
-  if(tc->subtypes==NULL)
-    goto subtypes_alloc_failed;
+	retval->subtypes = g_new0 (CORBA_TypeCode, members->_length);
+	if (!retval)
+		goto subtypes_alloc_failed;
 
-  tc->subnames=g_new0(char *, members->_length);
-  if(tc->subnames==NULL)
-    goto subnames_alloc_failed;
+	retval->subnames = g_new0 (char *, members->_length);
+	if(!retval->subnames)
+		goto subnames_alloc_failed;
 
-  tc->sublabels=g_new0(CORBA_any, members->_length);
-  if(tc->sublabels == NULL)
-    goto sublabels_alloc_failed;
+	retval->sublabels = g_new0 (CORBA_long, members->_length);
+	if (!retval->sublabels)
+		goto sublabels_alloc_failed;
 
-  tc->kind=CORBA_tk_union;
-  tc->name=g_strdup(name);
-  tc->repo_id=g_strdup(id);
-  tc->sub_parts=members->_length;
-  tc->length=members->_length;
-  tc->default_index=-1;
+	retval->kind          = CORBA_tk_union;
+	retval->name          = g_strdup (name);
+	retval->repo_id       = g_strdup (id);
+	retval->sub_parts     = members->_length;
+	retval->length        = members->_length;
+	retval->default_index = -1;
 
-  for(i=0;i<members->_length;i++) {
-    CORBA_UnionMember *mem=(CORBA_UnionMember *)&(members->_buffer[i]);
+	for (i = 0; i < members->_length; i++) {
+		CORBA_UnionMember *member = &members->_buffer [i];
 
-    g_assert(&(mem->label)!=NULL);
-    memcpy(&(tc->sublabels[i]), &(mem->label), (size_t)sizeof(CORBA_any));
-    g_assert(&(mem->type)!=NULL);
-    tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
-    tc->subnames[i]=g_strdup(mem->name);
+		g_assert (member->type != CORBA_OBJECT_NIL);
 
-    if(mem->label._type->kind==CORBA_tk_octet) {
-      tc->default_index=i;
-    }
-  }
+		copy_case_value (&retval->sublabels [i], &member->label);
 
-  return(tc);
+		retval->subtypes [i] = ORBit_RootObject_duplicate (member->type);
+		retval->subnames [i] = g_strdup (member->name);
+
+		if (member->label._type->kind == CORBA_tk_octet)
+			retval->default_index = i;
+	}
+
+	return retval;
 
  sublabels_alloc_failed:
-  g_free(tc->sublabels);
+	g_free (retval->sublabels);
+
  subnames_alloc_failed:
-  g_free(tc->subtypes);
+	g_free (retval->subtypes);
+
  subtypes_alloc_failed:
-  ORBit_free(tc->discriminator);
-  ORBit_RootObject_release(tc);
+	ORBit_free (retval->discriminator);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return NULL;
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_enum_tc (CORBA_ORB                  _obj,
+CORBA_ORB_create_enum_tc (CORBA_ORB                  orb,
 			  const CORBA_char          *id,
 			  const CORBA_char          *name,
 			  const CORBA_EnumMemberSeq *members,
 			  CORBA_Environment         *ev)
 {
-  CORBA_TypeCode tc;
-  int i;
+	CORBA_TypeCode retval;
+	int            i;
 
-  tc = CORBA_TypeCode_allocate();
-  if(tc == NULL)
-    goto tc_alloc_failed;
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval)
+		goto tc_alloc_failed;
 
-  tc->subnames=g_new0(char *, members->_length);
-  if(tc->subnames==NULL)
-    goto subnames_alloc_failed;
+	retval->subnames=g_new0 (char *, members->_length);
+	if (!retval->subnames)
+		goto subnames_alloc_failed;
 
-  tc->kind = CORBA_tk_enum;
-  tc->name = g_strdup(name);
-  tc->repo_id = g_strdup(id);
-  tc->sub_parts = members->_length;
-  tc->length = members->_length;
+	retval->kind      = CORBA_tk_enum;
+	retval->name      = g_strdup (name);
+	retval->repo_id   = g_strdup (id);
+	retval->sub_parts = members->_length;
+	retval->length    = members->_length;
 
-  for(i=0;i<members->_length;i++)
-    tc->subnames[i]=g_strdup(members->_buffer[i]);
+	for (i = 0; i < members->_length; i++)
+		retval->subnames [i] = g_strdup (members->_buffer [i]);
 
-  return(tc);
+	return retval;
 
  subnames_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return(NULL);
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_alias_tc (CORBA_ORB                 _obj,
-			   const CORBA_char         *id,
-			   const CORBA_char         *name,
-			   const CORBA_TypeCode      original_type,
-			   CORBA_Environment        *ev)
+CORBA_ORB_create_alias_tc (CORBA_ORB             orb,
+			   const CORBA_char     *id,
+			   const CORBA_char     *name,
+			   const CORBA_TypeCode  original_type,
+			   CORBA_Environment    *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-  tc = CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    goto tc_alloc_failed;
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval)
+		goto tc_alloc_failed;
 	
-	/* Can't use chunks here, because it's sometimes an array. Doh! */
-  tc->subtypes=g_new0(CORBA_TypeCode, 1);
-  if(tc->subtypes==NULL)
-    goto subtypes_alloc_failed;
+	retval->subtypes = g_new0 (CORBA_TypeCode, 1);
+	if (!retval->subtypes)
+		goto subtypes_alloc_failed;
 
-  tc->kind=CORBA_tk_alias;
-  tc->name=g_strdup(name);
-  tc->repo_id=g_strdup(id);
-  tc->sub_parts=1;
-  tc->length=1;
+	retval->kind      = CORBA_tk_alias;
+	retval->name      = g_strdup (name);
+	retval->repo_id   = g_strdup (id);
+	retval->sub_parts = 1;
+	retval->length    = 1;
 
-  tc->subtypes[0] = ORBit_RootObject_duplicate(original_type);
+	retval->subtypes [0] = ORBit_RootObject_duplicate (original_type);
 
-  return(tc);
+	return retval;
+
  subtypes_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return NULL;
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_exception_tc (CORBA_ORB                    _obj,
+CORBA_ORB_create_exception_tc (CORBA_ORB                    orb,
 			       const CORBA_char            *id,
 			       const CORBA_char            *name,
 			       const CORBA_StructMemberSeq *members,
 			       CORBA_Environment           *ev)
 {
-  CORBA_TypeCode tc;
-  int i;
+	CORBA_TypeCode retval;
+	int            i;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    goto tc_alloc_failed;
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval)
+		goto tc_alloc_failed;
 
-  if (members->_length == 0)
-    {
-      tc->subtypes = NULL;
-      tc->subnames = NULL;
-    }
-  else
-    {
-      tc->subtypes=g_new0(CORBA_TypeCode, members->_length);
-      if(tc->subtypes==NULL)
-	goto subtypes_alloc_failed;
+	if (members->_length) {
+		retval->subtypes = g_new0 (CORBA_TypeCode, members->_length);
+		if (!retval->subtypes)
+			goto subtypes_alloc_failed;
 
-      tc->subnames=g_new0(char *, members->_length);
-      if(tc->subnames==NULL)
-	goto subnames_alloc_failed;
-    }
+		retval->subnames = g_new0 (char *, members->_length);
+		if (!retval->subnames)
+			goto subnames_alloc_failed;
+	}
 
-  tc->kind=CORBA_tk_except;
-  tc->name=g_strdup(name);
-  tc->repo_id=g_strdup(id);
-  tc->sub_parts=members->_length;
-  tc->length=members->_length;
+	retval->kind      = CORBA_tk_except;
+	retval->name      = g_strdup (name);
+	retval->repo_id   = g_strdup (id);
+	retval->sub_parts = members->_length;
+	retval->length    = members->_length;
 
-  for(i=0;i<members->_length;i++) {
-    CORBA_StructMember *mem=(CORBA_StructMember *)&(members->_buffer[i]);
+	for (i = 0; i < members->_length; i++) {
+		CORBA_StructMember *member = &members->_buffer [i];
 
-    g_assert(mem->type != NULL);
-    tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
-    tc->subnames[i]=g_strdup(mem->name);
-  }
+		g_assert (member->type != CORBA_OBJECT_NIL);
 
-  return(tc);
+		retval->subtypes [i] = ORBit_RootObject_duplicate (member->type);
+		retval->subnames [i] = g_strdup (member->name);
+	}
+
+	return retval;
 
  subnames_alloc_failed:
-  g_free(tc->subtypes);
+	g_free (retval->subtypes);
+
  subtypes_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return(NULL);
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_interface_tc (CORBA_ORB                 _obj,
+CORBA_ORB_create_interface_tc (CORBA_ORB                 orb,
 			       const CORBA_char         *id,
 			       const CORBA_char         *name,
 			       CORBA_Environment        *ev)
 {
-	CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-	tc=CORBA_TypeCode_allocate();
-	if(tc==NULL) {
-		CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY,
-					   CORBA_COMPLETED_NO);
-		return(NULL);
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval) {
+		CORBA_exception_set_system (
+				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+		return CORBA_OBJECT_NIL;
 	}
 
-	tc->kind=CORBA_tk_objref;
-	tc->name=g_strdup(name);
-	tc->repo_id=g_strdup(id);
+	retval->kind    = CORBA_tk_objref;
+	retval->name    = g_strdup (name);
+	retval->repo_id = g_strdup (id);
 
-	return(tc);
+	return retval;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_string_tc(CORBA_ORB _obj,
-			   const CORBA_unsigned_long bound,
-			   CORBA_Environment * ev)
+CORBA_ORB_create_string_tc (CORBA_ORB                  orb,
+			    const CORBA_unsigned_long  bound,
+			    CORBA_Environment         *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    {
-      CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-      return(NULL);
-    }
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval) {
+		CORBA_exception_set_system (
+				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
 
-  tc->kind=CORBA_tk_string;
-  tc->length=bound;
+		return CORBA_OBJECT_NIL;
+	}
 
-  return(tc);
+	retval->kind   = CORBA_tk_string;
+	retval->length = bound;
+
+	return retval;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_wstring_tc(CORBA_ORB _obj,
-			    const CORBA_unsigned_long bound,
-			    CORBA_Environment * ev)
+CORBA_ORB_create_wstring_tc (CORBA_ORB                  orb,
+			     const CORBA_unsigned_long  bound,
+			     CORBA_Environment         *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    {
-      CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-      return(NULL);
-    }
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval) {
+		CORBA_exception_set_system (
+				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
 
-  tc->kind=CORBA_tk_wstring;
-  tc->length=bound;
+		return CORBA_OBJECT_NIL;
+	}
 
-  return(tc);
+	retval->kind   = CORBA_tk_wstring;
+	retval->length = bound;
+
+	return retval;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_fixed_tc(CORBA_ORB _obj,
-			  const CORBA_unsigned_short digits,
-			  const CORBA_short scale,
-			  CORBA_Environment * ev)
+CORBA_ORB_create_fixed_tc (CORBA_ORB                   orb,
+			   const CORBA_unsigned_short  digits,
+			   const CORBA_short           scale,
+			   CORBA_Environment          *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    {
-      CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-      return(NULL);
-    }
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval) {
+		CORBA_exception_set_system (
+				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
 
-  tc->kind=CORBA_tk_fixed;
-  tc->digits=digits;
-  tc->scale=scale;
+		return CORBA_OBJECT_NIL;
+	}
 
-  return(tc);
+	retval->kind   = CORBA_tk_fixed;
+	retval->digits = digits;
+	retval->scale  = scale;
+
+	return retval;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_sequence_tc(CORBA_ORB _obj,
-			     const CORBA_unsigned_long
-			     bound,
-			     const CORBA_TypeCode
-			     element_type,
-			     CORBA_Environment * ev)
+CORBA_ORB_create_sequence_tc (CORBA_ORB                  orb,
+			      const CORBA_unsigned_long  bound,
+			      const CORBA_TypeCode       element_type,
+			      CORBA_Environment         *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    goto tc_alloc_failed;
+	retval = CORBA_TypeCode_allocate ();
+	if (!retval)
+		goto tc_alloc_failed;
 
-  tc->subtypes=g_new0(CORBA_TypeCode, 1);
-  if(tc->subtypes==NULL)
-    goto subtypes_alloc_failed;
+	retval->subtypes = g_new0 (CORBA_TypeCode, 1);
+	if (!retval->subtypes)
+		goto subtypes_alloc_failed;
 
-  tc->kind=CORBA_tk_sequence;
-  tc->sub_parts=1;
-  tc->length=bound;
+	retval->kind      = CORBA_tk_sequence;
+	retval->sub_parts = 1;
+	retval->length    = bound;
 
-  tc->subtypes[0] = ORBit_RootObject_duplicate(element_type);
+	retval->subtypes [0] = ORBit_RootObject_duplicate (element_type);
 
-  return(tc);
+	return retval;
 
  subtypes_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return(NULL);
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_recursive_sequence_tc(CORBA_ORB _obj,
-				       const CORBA_unsigned_long bound,
-				       const CORBA_unsigned_long offset,
-				       CORBA_Environment *ev)
+CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
+					const CORBA_unsigned_long  bound,
+					const CORBA_unsigned_long  offset,
+					CORBA_Environment         *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode retval;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    goto tc_alloc_failed;
+	retval=CORBA_TypeCode_allocate ();
+	if (retval)
+		goto tc_alloc_failed;
 
-  tc->subtypes=g_new0(CORBA_TypeCode, 1);
-  if(tc->subtypes==NULL)
-    goto subtypes_alloc_failed;
+	retval->subtypes = g_new0 (CORBA_TypeCode, 1);
+	if (!retval->subtypes)
+		goto subtypes_alloc_failed;
 
-  tc->kind=CORBA_tk_sequence;
-  tc->sub_parts=1;
-  tc->length=bound;
+	retval->kind      = CORBA_tk_sequence;
+	retval->sub_parts = 1;
+	retval->length    = bound;
 
-  tc->subtypes[0] = CORBA_TypeCode_allocate();
-  tc->subtypes[0]->kind=CORBA_tk_recursive;
-  tc->subtypes[0]->recurse_depth=offset;
+	retval->subtypes [0] = CORBA_TypeCode_allocate ();
 
-  return(tc);
+	retval->subtypes [0]->kind          = CORBA_tk_recursive;
+	retval->subtypes [0]->recurse_depth = offset;
+
+	return retval;
 
  subtypes_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (retval);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return(NULL);
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_array_tc(CORBA_ORB _obj,
-			  const CORBA_unsigned_long length,
-			  const CORBA_TypeCode element_type,
-			  CORBA_Environment * ev)
+CORBA_ORB_create_array_tc (CORBA_ORB                  orb,
+			   const CORBA_unsigned_long  length,
+			   const CORBA_TypeCode       element_type,
+			   CORBA_Environment         *ev)
 {
-  CORBA_TypeCode tc;
+	CORBA_TypeCode tc;
 
-  tc=CORBA_TypeCode_allocate();
-  if(tc==NULL)
-    goto tc_alloc_failed;
+	tc = CORBA_TypeCode_allocate ();
+	if (!tc)
+		goto tc_alloc_failed;
 
-  tc->subtypes=g_new0(CORBA_TypeCode, 1);
-  if(tc->subtypes==NULL)
-    goto subtypes_alloc_failed;
+	tc->subtypes = g_new0 (CORBA_TypeCode, 1);
+	if (!tc->subtypes)
+		goto subtypes_alloc_failed;
 
-  tc->kind=CORBA_tk_array;
-  tc->sub_parts=1;
-  tc->length=length;
+	tc->kind      = CORBA_tk_array;
+	tc->sub_parts = 1;
+	tc->length    = length;
 
-  tc->subtypes[0] = ORBit_RootObject_duplicate(element_type);
+	tc->subtypes [0] = ORBit_RootObject_duplicate (element_type);
 
-  return(tc);
+	return (tc);
 
  subtypes_alloc_failed:
-  ORBit_RootObject_release(tc);
+	ORBit_RootObject_release (tc);
+
  tc_alloc_failed:
-  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
-  return(NULL);
+	CORBA_exception_set_system (
+			ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_value_tc (CORBA_ORB                   _obj,
+CORBA_ORB_create_value_tc (CORBA_ORB                   orb,
 			   const CORBA_char           *id,
 			   const CORBA_char           *name,
 			   const CORBA_ValueModifier   type_modifier,
@@ -816,56 +949,57 @@ CORBA_ORB_create_value_tc (CORBA_ORB                   _obj,
 			   const CORBA_ValueMemberSeq *members,
 			   CORBA_Environment          *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_value_box_tc (CORBA_ORB                 _obj,
-			       const CORBA_char         *id,
-			       const CORBA_char         *name,
-			       const CORBA_TypeCode      boxed_type,
-			       CORBA_Environment        *ev)
+CORBA_ORB_create_value_box_tc (CORBA_ORB             orb,
+			       const CORBA_char     *id,
+			       const CORBA_char     *name,
+			       const CORBA_TypeCode  boxed_type,
+			       CORBA_Environment    *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_native_tc (CORBA_ORB                 _obj,
-			    const CORBA_char         *id,
-			    const CORBA_char         *name,
-			    CORBA_Environment        *ev)
+CORBA_ORB_create_native_tc (CORBA_ORB          orb,
+			    const CORBA_char  *id,
+			    const CORBA_char  *name,
+			    CORBA_Environment *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_recursive_tc (CORBA_ORB          _obj,
+CORBA_ORB_create_recursive_tc (CORBA_ORB          orb,
 			       const CORBA_char  *id,
 			       CORBA_Environment *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_abstract_interface_tc (CORBA_ORB                 _obj,
-				        const CORBA_char         *id,
-				        const CORBA_char         *name,
-				        CORBA_Environment        *ev)
+CORBA_ORB_create_abstract_interface_tc (CORBA_ORB          orb,
+				        const CORBA_char  *id,
+				        const CORBA_char  *name,
+				        CORBA_Environment *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_boolean
-CORBA_ORB_work_pending(CORBA_ORB _obj,
-		       CORBA_Environment * ev)
+CORBA_ORB_work_pending (CORBA_ORB          orb,
+			CORBA_Environment *ev)
 {
-  return linc_main_pending();
+	return linc_main_pending ();
 }
 
 void
-CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
+CORBA_ORB_perform_work (CORBA_ORB          orb,
+			CORBA_Environment *ev)
 {
-  linc_main_iteration(FALSE);
+	linc_main_iteration (FALSE);
 }
 
 void
@@ -876,11 +1010,14 @@ CORBA_ORB_run (CORBA_ORB          orb,
 }
 
 void
-CORBA_ORB_shutdown (CORBA_ORB            orb,
-		    const CORBA_boolean  wait_for_completion,
-		    CORBA_Environment   *ev)
+CORBA_ORB_shutdown (CORBA_ORB           orb,
+		    const CORBA_boolean wait_for_completion,
+		    CORBA_Environment  *ev)
 {
 	PortableServer_POA root_poa;
+
+	if (init_level > 0)
+		return;
 
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa) {
@@ -903,11 +1040,16 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 {
 	PortableServer_POA root_poa;
 
-	g_assert (_ORBit_orb == orb);
-	_ORBit_orb = NULL;
-
 	if (orb->life_flags & ORBit_LifeF_Destroyed)
 		return;
+
+	init_level--;
+
+	if (init_level > 0)
+		return;
+
+	g_assert (_ORBit_orb == orb);
+	_ORBit_orb = NULL;
 
 	CORBA_ORB_shutdown (orb, TRUE, ev);
 	if (ev->_major)
@@ -932,27 +1074,27 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 	{
 		int i;
-		int leaked_poas = 0;
+		int leaked_adaptors = 0;
 
 		/* Each poa has a ref on the ORB */
 		for (i = 0; i < orb->adaptors->len; i++) {
-			PortableServer_POA poa;
+			ORBit_ObjectAdaptor adaptor;
 
-			poa = g_ptr_array_index (orb->adaptors, i);
+			adaptor = g_ptr_array_index (orb->adaptors, i);
 
-			if (poa)
-				leaked_poas++;
+			if (adaptor)
+				leaked_adaptors++;
 		}
 
-		if (leaked_poas) {
-			g_warning ("CORBA_ORB_destroy: leaked '%d' POAs", leaked_poas);
+		if (leaked_adaptors) {
+			g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors", leaked_adaptors);
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
 
-		if (((ORBit_RootObject)orb)->refs != 2 + leaked_poas) {
+		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
 			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
-				   ((ORBit_RootObject)orb)->refs - 1 - leaked_poas);
+				   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
@@ -970,36 +1112,36 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 }
 
 CORBA_Policy
-CORBA_ORB_create_policy(CORBA_ORB _obj,
-			const CORBA_PolicyType type,
-			const CORBA_any * val,
-			CORBA_Environment * ev)
+CORBA_ORB_create_policy (CORBA_ORB               orb,
+			 const CORBA_PolicyType  type,
+			 const CORBA_any        *val,
+			 CORBA_Environment      *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_ValueFactory
-CORBA_ORB_register_value_factory (CORBA_ORB                 _obj,
+CORBA_ORB_register_value_factory (CORBA_ORB                 orb,
 				  const CORBA_char         *id,
 				  const CORBA_ValueFactory  factory,
 				  CORBA_Environment        *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 void
-CORBA_ORB_unregister_value_factory (CORBA_ORB          _obj,
+CORBA_ORB_unregister_value_factory (CORBA_ORB          orb,
 				    const CORBA_char  *id,
 				    CORBA_Environment *ev)
 {
 }
 
 CORBA_ValueFactory
-CORBA_ORB_lookup_value_factory (CORBA_ORB          _obj,
+CORBA_ORB_lookup_value_factory (CORBA_ORB          orb,
 			        const CORBA_char  *id,
 			        CORBA_Environment *ev)
 {
-  return CORBA_OBJECT_NIL;
+	return CORBA_OBJECT_NIL;
 }
 
 void
@@ -1019,20 +1161,13 @@ ORBit_set_initial_reference (CORBA_ORB  orb,
 }
 
 void
-ORBit_ORB_forw_bind (CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
-		     CORBA_Object oref, CORBA_Environment *ev)
+ORBit_ORB_forw_bind (CORBA_ORB                   orb,
+		     CORBA_sequence_CORBA_octet *objkey,
+		     CORBA_Object                obj,
+		     CORBA_Environment          *ev)
 {
-	g_warning("ORBit_ORB_forw_bind NYI");
+	g_warning ("ORBit_ORB_forw_bind NYI");
 }
-
-/*
- * Command line option handling.
- */
-static gboolean     orbit_use_ipv4   = FALSE;
-static gboolean     orbit_use_ipv6   = FALSE; 
-static gboolean     orbit_use_usocks = TRUE;
-static gboolean     orbit_use_irda   = FALSE;
-static gboolean     orbit_use_ssl    = FALSE;
 
 gboolean
 ORBit_proto_use (const char *name)
@@ -1042,7 +1177,7 @@ ORBit_proto_use (const char *name)
 	    (orbit_use_ipv6   && !strcmp ("IPv6", name)) || 
 	    (orbit_use_usocks && !strcmp ("UNIX", name)) || 
 	    (orbit_use_irda   && !strcmp ("IrDA", name)) || 
-	    (orbit_use_ipv6   && !strcmp ("SSL",  name)))
+	    (orbit_use_ssl    && !strcmp ("SSL",  name)))
 		return TRUE;
 
 	return FALSE;
@@ -1054,12 +1189,15 @@ static ORBit_option orbit_supported_options[] = {
 	{"ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
 	{"ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
 	{"ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL}, /* FIXME: huh?          */
+ 	{"ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname},
+ 	{"ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock},
 	{"ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4},
 	{"ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6},
 	{"ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
 	{"ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
 	{"ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda},
 	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
+	{"ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple},
+	{"ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options},
 	{NULL,              0,                    NULL},
 };
-

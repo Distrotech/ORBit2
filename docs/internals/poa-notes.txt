@@ -118,13 +118,23 @@ MULTIPLE_ID POAs
 ================
 
 	So that a servant can incarnate more than one object, the
-servant's ._private member is a GSList of POAObjects.
+ORBit_POAObject pointed to by the servant's ._private member has a
+.next member pointing to the next Object incarnated by that servant.
+This forms a simple singly-linked list of Objects. A GSList was not
+used so as to not kill the common case of a UNIQUE_ID POA.
 
 	If you look at the note at the end of section 11.3.5.1, it
 says that it is legal for the servant to be shared between two POAs
 with different Object Id uniqueness policies.	
 
 	This could create serious problems when we are using
-ORBIT_SERVANT_TO_FIRST_POAOBJECT to get the POAObject associated with
-the servant in the UNIQUE_ID case. This needs to fixed to check that
-it actually belongs to the POA in question.
+obtaining the POAObject associated with the servant in the UNIQUE_ID
+case. This needs to fixed to check that it actually belongs to the POA
+in question.
+
+Implementing Anpther Object Adaptor
+==================================
+
+	ORBit2's POA is virtualised. This means that, in theory, it
+should be possible to plug another Object Adaptor into the ORB. The
+details are in orbit/poa/orbit-adaptor.h.

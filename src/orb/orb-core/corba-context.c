@@ -44,7 +44,7 @@ ORBit_Context_free_fn (ORBit_RootObject obj_in)
 
 	if (ctx->parent_ctx != CORBA_OBJECT_NIL)
 		ctx->parent_ctx->children = g_slist_remove (
-			ctx->parent_ctx->children, ctx->the_name);
+			ctx->parent_ctx->children, ctx);
 	  
 	g_free (ctx->the_name);
 	

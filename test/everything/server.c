@@ -76,9 +76,7 @@ TestFactory_getStructServerIOR (PortableServer_Servant servant,
 {
 	test_TestFactory_Servant *this = (test_TestFactory_Servant *) servant;
 
-	return CORBA_ORB_object_to_string (
-		ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant)->poa->orb,
-		this->structServerRef, ev);
+	return CORBA_ORB_object_to_string (global_orb, this->structServerRef, ev);
 }
 
 static test_StructServer
@@ -188,7 +186,7 @@ TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 	return obj;
 }
 
-static CORBA_char *
+static void
 TestFactory_segv (PortableServer_Servant servant,
 		  const CORBA_char      *when,
 		  CORBA_Environment     *ev)
@@ -199,8 +197,6 @@ TestFactory_segv (PortableServer_Servant servant,
 #else
 	g_main_loop_quit (linc_loop);
 #endif
-
-	return CORBA_string_dup ("I'm dead");
 }
 
 static void

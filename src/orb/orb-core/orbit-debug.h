@@ -1,67 +1,50 @@
 #ifndef __ORBIT_DEBUG_H__
 #define __ORBIT_DEBUG_H__
 
-/*
- * Flip this switch to dump 
- * general debug messages.
- */
-#undef DEBUG
+typedef enum {
+	ORBIT_DEBUG_NONE     = 0,
+	ORBIT_DEBUG_TRACES   = 1 << 0,
+	ORBIT_DEBUG_TIMINGS  = 1 << 1,
+	ORBIT_DEBUG_TYPES    = 1 << 2,
+	ORBIT_DEBUG_MESSAGES = 1 << 3,
+	ORBIT_DEBUG_OBJECTS  = 1 << 4,
+	ORBIT_DEBUG_GIOP     = 1 << 5,
+	ORBIT_DEBUG_REFS     = 1 << 6
+} OrbitDebugFlags;
 
-/*
- * Flip this switch to get a nice trace
- * of method invocations.
- */
-#undef TRACE_DEBUG
+#ifndef G_ENABLE_DEBUG
 
-/*
- * Define this to get microsecond time stamps on
- * each method invocation, a-la strace -ttt
- */
-#undef TRACE_TIMING
-
-/*
- * Flip this switch if you want tyeplib
- * related warnings.
- */
-#undef TYPE_DEBUG
-
-
-
-#ifndef DEBUG
-
-static inline void dprintf (const char *format, ...) { };
+/*static inline void dprintf (OrbitDebugFlags flags, const char *format, ...) { };*/
+#define dprintf(...)
 #define dump_arg(a,b)
 
-#else /* DEBUG */
+#define tprintf(...)
+#define tprintf_header(obj,md)
+#define tprintf_trace_value(a,b)
+#define tprintf_timestamp()
+#define tprintf_end_method()
+#define tprintf_timestamp()
+
+#else /* G_ENABLE_DEBUG */
 
 #include <stdio.h>
 
-#define dprintf(...) fprintf(stderr, __VA_ARGS__)
+extern OrbitDebugFlags _orbit_debug_flags;
+
+#define dprintf(type, ...) G_STMT_START {		\
+	if (_orbit_debug_flags & ORBIT_DEBUG_##type)	\
+		fprintf (stderr, __VA_ARGS__);		\
+} G_STMT_END
 
 static inline void
 dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
 {
-	fprintf (stderr, " '%s' : kind - %d, %c%c",
-		 a->name, tc->kind, 
-		 a->flags & (ORBit_I_ARG_IN | ORBit_I_ARG_INOUT) ? 'i' : ' ',
-		 a->flags & (ORBit_I_ARG_OUT | ORBit_I_ARG_INOUT) ? 'o' : ' ');
+	if (_orbit_debug_flags & ORBIT_DEBUG_MESSAGES)
+		fprintf (stderr, " '%s' : kind - %d, %c%c",
+			 a->name, tc->kind, 
+			 a->flags & (ORBit_I_ARG_IN | ORBit_I_ARG_INOUT) ? 'i' : ' ',
+			 a->flags & (ORBit_I_ARG_OUT | ORBit_I_ARG_INOUT) ? 'o' : ' ');
 }
-
-#endif /* DEBUG */
-
-
-
-#ifndef TRACE_DEBUG
-
-static inline void tprintf (const char *format, ...) { };
-#define tprintf_trace_value(a,b)
-#define tprintf_header(obj,md)
-#define tprintf_timestamp()
-#define tprintf_end_method()
-
-#else /* TRACE_DEBUG */
-
-#include <stdio.h>
 
 void     ORBit_trace_objref     (const CORBA_Object   obj);
 void     ORBit_trace_any        (const CORBA_any     *any);
@@ -71,23 +54,31 @@ void     ORBit_trace_value      (gconstpointer       *val,
 void     ORBit_trace_header     (CORBA_Object         object,
 				 ORBit_IMethod       *m_data);
 void     ORBit_trace_end_method (void);
+void     ORBit_trace_profiles   (CORBA_Object obj);
+void     ORBit_trace_timestamp  (void);
 
-#define tprintf(...) fprintf(stderr, __VA_ARGS__)
-#define tprintf_header(obj,md) ORBit_trace_header(obj,md)
-#define tprintf_trace_value(a,b) \
-		ORBit_trace_value ((gconstpointer *)(a), (b))
-#define tprintf_end_method() \
-		ORBit_trace_end_method ()
+#define tprintf(...)  dprintf (TRACES, __VA_ARGS__)
 
+#define tprintf_header(obj,md)		G_STMT_START {		\
+	if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)		\
+		ORBit_trace_header (obj,md);			\
+} G_STMT_END
 
-#ifdef TRACE_TIMING
-#  define tprintf_timestamp() \
-		ORBit_trace_timestamp ()
-void     ORBit_trace_timestamp (void);
-#else
-#  define tprintf_timestamp()
-#endif
+#define tprintf_trace_value(a,b)	G_STMT_START {		\
+	if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)		\
+		ORBit_trace_value ((gconstpointer *)(a), (b));	\
+} G_STMT_END
 
-#endif /* TRACE_DEBUG */
+#define tprintf_end_method() 		G_STMT_START {		\
+	if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)		\
+		ORBit_trace_end_method ();			\
+} G_STMT_END
+
+#define tprintf_timestamp()		G_STMT_START {		\
+	if (_orbit_debug_flags & ORBIT_DEBUG_TIMINGS)		\
+		ORBit_trace_timestamp ();			\
+} G_STMT_END
+
+#endif /* G_ENABLE_DEBUG */
 
 #endif /* __ORBIT_DEBUG_H__ */

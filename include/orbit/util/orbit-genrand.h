@@ -5,16 +5,14 @@
 
 #ifdef ORBIT2_INTERNAL_API
 
-typedef struct ORBit_genrand_type {
-    gint	fd;
-} ORBit_genrand;
+typedef enum {
+	ORBIT_GENUID_STRONG,
+	ORBIT_GENUID_SIMPLE,
+} ORBitGenUidType;
 
-void ORBit_genrand_init (ORBit_genrand *gr);
-void ORBit_genrand_fini (ORBit_genrand *gr);
-
-void ORBit_genrand_buf  (ORBit_genrand *gr,
-			 guchar        *buffer,
-			 int            buf_len);
+void ORBit_genuid_init   (ORBitGenUidType type);
+void ORBit_genuid_fini   (void);
+void ORBit_genuid_buffer (guchar *buffer, int length);
 
 #endif /* ORBIT2_INTERNAL_API */
 

@@ -1,6 +1,8 @@
+#include <stdio.h>
+#include <unistd.h>
+
 #include "everything.h"
 #include "constants.h"
-#include <stdio.h>
 
 extern PortableServer_POA global_poa;
 
@@ -36,9 +38,18 @@ PingPongServer_get (PortableServer_Servant    servant,
 }
 
 static void
-PingPongServer_opOneWay (PortableServer_Servant    servant,
-			 const CORBA_long          l,
-			 CORBA_Environment        *ev)
+PingPongServer_opSleep (PortableServer_Servant  servant,
+			const char             *large_string,
+			CORBA_Environment      *ev)
+{
+	/* Don't process the buffer - it should fill up at the other end */
+	g_usleep (10000);
+}
+
+static void
+PingPongServer_opOneWay (PortableServer_Servant servant,
+			 const CORBA_long       l,
+			 CORBA_Environment     *ev)
 {
 	/* Do nothing, but try and confuse the queue */
 	linc_main_iteration (FALSE);
@@ -88,6 +99,7 @@ PortableServer_ServantBase__epv PingPongServer_base_epv = {
 
 POA_test_PingPongServer__epv PingPongServer_epv = {
 	NULL,
+	PingPongServer_opSleep,
 	PingPongServer_opOneWay,
 	PingPongServer_pingPong,
 	PingPongServer_set,

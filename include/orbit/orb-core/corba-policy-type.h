@@ -12,8 +12,6 @@ struct CORBA_Policy_type {
 
 CORBA_Policy        ORBit_Policy_new (CORBA_unsigned_long type,
 				      CORBA_unsigned_long value);
-void                ORBit_Policy_set (CORBA_Policy p, CORBA_unsigned_long value);
-CORBA_unsigned_long ORBit_Policy_get (CORBA_Policy p);
 
 #endif /* ORBIT2_INTERNAL_API */
 

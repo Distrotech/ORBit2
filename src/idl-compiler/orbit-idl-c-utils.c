@@ -264,7 +264,7 @@ orbit_cbe_write_param_typespec_str(IDL_tree ts, IDL_ParamRole role)
 
 		g_free (typedef_name);
 	} else
-		g_string_sprintf (str, "%s", name);
+		g_string_printf (str, "%s", name);
 
 	g_free (name);
 
@@ -307,47 +307,50 @@ orbit_cbe_write_param_typespec(FILE *of, IDL_tree tree) {
 }
 
 void
-orbit_cbe_op_write_proto(FILE *of,
-			 IDL_tree op,
-			 const char *nom_prefix,
-			 gboolean for_epv)
+orbit_cbe_op_write_proto (FILE       *of,
+			  IDL_tree    op,
+			  const char *nom_prefix,
+			  gboolean    for_epv)
 {
-  IDL_tree sub;
-  char *id;
+	IDL_tree  sub;
+	char     *id;
 
-  g_assert( IDL_NODE_TYPE(op) == IDLN_OP_DCL );
-  orbit_cbe_write_param_typespec(of, op);	/* return type */
+	g_assert (IDL_NODE_TYPE(op) == IDLN_OP_DCL);
 
-  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(IDL_get_parent_node(op, IDLN_INTERFACE, NULL)).ident), "_", 0);
+	orbit_cbe_write_param_typespec (of, op);
 
-  if(for_epv) {
-    fprintf(of, " (*%s%s)", nom_prefix?nom_prefix:"",
-	    IDL_IDENT(IDL_OP_DCL(op).ident).str);
-  } else {
-    fprintf(of, " %s%s_%s", nom_prefix?nom_prefix:"",
-	    id,
-	    IDL_IDENT(IDL_OP_DCL(op).ident).str);
-  }
+	id = IDL_ns_ident_to_qstring (
+		IDL_IDENT_TO_NS (IDL_INTERFACE (
+			IDL_get_parent_node (op, IDLN_INTERFACE, NULL)).ident), "_", 0);
 
-  fprintf(of, "(");
+	if (for_epv)
+		fprintf (of, " (*%s%s)", nom_prefix ? nom_prefix : "",
+			 IDL_IDENT(IDL_OP_DCL(op).ident).str);
+	else 
+		fprintf (of, " %s%s_%s", nom_prefix ? nom_prefix : "",
+			 id, IDL_IDENT (IDL_OP_DCL (op).ident).str);
 
-  if(for_epv)
-    fprintf(of, "PortableServer_Servant _servant, ");
-  else
-    fprintf(of, "%s _obj, ", id);
+	fprintf (of, "(");
 
-  g_free(id);
+	if (for_epv)
+		fprintf (of, "PortableServer_Servant _servant, ");
+	else
+		fprintf (of, "%s _obj, ", id);
 
-  for(sub = IDL_OP_DCL(op).parameter_dcls; sub; sub = IDL_LIST(sub).next) {
-    IDL_tree parm = IDL_LIST(sub).data;
-    orbit_cbe_write_param_typespec(of, parm);	/* param type */
-    fprintf(of, " %s, ", IDL_IDENT(IDL_PARAM_DCL(parm).simple_declarator).str);
-  }
+	g_free (id);
 
-  if(IDL_OP_DCL(op).context_expr)
-    fprintf(of, "CORBA_Context _ctx, ");
+	for (sub = IDL_OP_DCL (op).parameter_dcls; sub; sub = IDL_LIST (sub).next) {
+		IDL_tree parm = IDL_LIST (sub).data;
 
-  fprintf(of, "CORBA_Environment *ev)");
+		orbit_cbe_write_param_typespec (of, parm);
+
+		fprintf (of, " %s, ", IDL_IDENT (IDL_PARAM_DCL (parm).simple_declarator).str);
+	}
+
+	if (IDL_OP_DCL (op).context_expr)
+		fprintf (of, "CORBA_Context _ctx, ");
+
+	fprintf (of, "CORBA_Environment *ev)");
 }
 
 /* Writes the value of the constant in 'tree' to file handle 'of' */
@@ -359,28 +362,28 @@ orbit_cbe_get_const(IDL_tree tree)
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_BOOLEAN:
-    g_string_sprintf(tmpstr, "%s", IDL_BOOLEAN(tree).value?"CORBA_TRUE":"CORBA_FALSE");
+    g_string_printf(tmpstr, "%s", IDL_BOOLEAN(tree).value?"CORBA_TRUE":"CORBA_FALSE");
     break;
   case IDLN_CHAR:
-    g_string_sprintf(tmpstr, "'%s'", IDL_CHAR(tree).value);
+    g_string_printf(tmpstr, "'%s'", IDL_CHAR(tree).value);
     break;
   case IDLN_FLOAT:
-    g_string_sprintf(tmpstr, "%f", IDL_FLOAT(tree).value);
+    g_string_printf(tmpstr, "%f", IDL_FLOAT(tree).value);
     break;
   case IDLN_INTEGER:
-    g_string_sprintf(tmpstr, "%" IDL_LL "d", IDL_INTEGER(tree).value);
+    g_string_printf(tmpstr, "%" IDL_LL "d", IDL_INTEGER(tree).value);
     break;
   case IDLN_STRING:
-    g_string_sprintf(tmpstr, "\"%s\"", IDL_STRING(tree).value);
+    g_string_printf(tmpstr, "\"%s\"", IDL_STRING(tree).value);
     break;
   case IDLN_WIDE_CHAR:
-    g_string_sprintf(tmpstr, "L'%ls'", IDL_WIDE_CHAR(tree).value);
+    g_string_printf(tmpstr, "L'%ls'", IDL_WIDE_CHAR(tree).value);
     break;
   case IDLN_WIDE_STRING:
-    g_string_sprintf(tmpstr, "L\"%ls\"", IDL_WIDE_STRING(tree).value);
+    g_string_printf(tmpstr, "L\"%ls\"", IDL_WIDE_STRING(tree).value);
     break;
   case IDLN_BINOP:
-    g_string_sprintf(tmpstr, "(");
+    g_string_printf(tmpstr, "(");
     ctmp = orbit_cbe_get_const(IDL_BINOP(tree).left);
     g_string_append(tmpstr, ctmp);
     g_free(ctmp);
@@ -416,9 +419,9 @@ orbit_cbe_get_const(IDL_tree tree)
       opc = "%";
       break;
     }
-    g_string_sprintfa(tmpstr, " %s ", opc);
+    g_string_append_printf(tmpstr, " %s ", opc);
     ctmp = orbit_cbe_get_const(IDL_BINOP(tree).right);
-    g_string_sprintfa(tmpstr, "%s)", ctmp);
+    g_string_append_printf(tmpstr, "%s)", ctmp);
     g_free(ctmp);
     break;
   case IDLN_UNARYOP:
@@ -428,14 +431,14 @@ orbit_cbe_get_const(IDL_tree tree)
     case IDL_UNARYOP_COMPLEMENT: opc = "~"; break;
     }
     ctmp = orbit_cbe_get_const(IDL_UNARYOP(tree).operand);
-    g_string_sprintf(tmpstr, "%s%s", opc, ctmp);
+    g_string_printf(tmpstr, "%s%s", opc, ctmp);
     g_free(ctmp);
     break;
   case IDLN_IDENT:
     {
       char *id;
       id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(tree), "_", 0);
-      g_string_sprintf(tmpstr, "%s", id);
+      g_string_printf(tmpstr, "%s", id);
       g_free(id);
     }
     break;
@@ -494,22 +497,22 @@ cbe_eval_const(IDL_tree tree)
     return IDL_CHAR(tree).value;
     break;
   case IDLN_FLOAT:
-    g_string_sprintf(tmpstr, "%f", IDL_FLOAT(tree).value);
+    g_string_printf(tmpstr, "%f", IDL_FLOAT(tree).value);
     break;
   case IDLN_STRING:
-    g_string_sprintf(tmpstr, "\"%s\"", IDL_STRING(tree).value);
+    g_string_printf(tmpstr, "\"%s\"", IDL_STRING(tree).value);
     break;
   case IDLN_WIDE_CHAR:
-    g_string_sprintf(tmpstr, "L'%ls'", IDL_WIDE_CHAR(tree).value);
+    g_string_printf(tmpstr, "L'%ls'", IDL_WIDE_CHAR(tree).value);
     break;
   case IDLN_WIDE_STRING:
-    g_string_sprintf(tmpstr, "L\"%ls\"", IDL_WIDE_STRING(tree).value);
+    g_string_printf(tmpstr, "L\"%ls\"", IDL_WIDE_STRING(tree).value);
     break;
   case IDLN_IDENT:
     {
       char *id;
       id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(tree), "_", 0);
-      g_string_sprintf(tmpstr, "%s", id);
+      g_string_printf(tmpstr, "%s", id);
       g_free(id);
     }
     break;

@@ -30,23 +30,6 @@ ORBit_Policy_new (CORBA_unsigned_long type,
 	return (CORBA_Policy)ORBit_RootObject_duplicate (policy);
 }
 
-void
-ORBit_Policy_set (CORBA_Policy        p, 
-		  CORBA_unsigned_long value)
-{
-	struct CORBA_Policy_type *policy = (struct CORBA_Policy_type *)p;
-
-	policy->value = value;
-}
-
-CORBA_unsigned_long
-ORBit_Policy_get (CORBA_Policy p)
-{
-	struct CORBA_Policy_type *policy = (struct CORBA_Policy_type *)p;
-
-	return policy->value;
-}
-
 CORBA_PolicyType
 CORBA_Policy__get_policy_type (CORBA_Policy       p,
 			       CORBA_Environment *ev)

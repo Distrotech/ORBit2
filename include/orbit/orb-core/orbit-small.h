@@ -36,6 +36,12 @@ ORBitConnectionStatus ORBit_small_listen_for_broken     (CORBA_Object obj,
 ORBitConnectionStatus ORBit_small_unlisten_for_broken   (CORBA_Object obj,
 							 GCallback    fn);
 
+typedef struct _ORBitConnection ORBitConnection;
+
+ORBitConnection      *ORBit_small_get_connection        (CORBA_Object     obj);
+void                  ORBit_connection_set_max_buffer   (ORBitConnection *cnx,
+							 gulong           max_buffer_bytes);
+
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 void           ORBit_small_invoke_stub (CORBA_Object        object,

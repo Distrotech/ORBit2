@@ -13,6 +13,9 @@ for params in '--ORBIIOPIPv4=0 --ORBIIOPUSock=1' '--ORBIIOPIPv4=1 --ORBIIOPUSock
     until test -s iorfile; do sleep 1; done
 
     if ./client $params; then
+	echo "============================================================="
+	echo "Test passed with params: $params"
+	echo "============================================================="
 	rm iorfile
     else
         echo "============================================================="

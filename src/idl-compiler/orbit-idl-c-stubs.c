@@ -102,14 +102,21 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 		g_assert(curitem);
 		id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
 					     "_", 0);
-		fprintf(ci->fh, "if(ORBIT_STUB_IsBypass (_obj, %s__classid)) {\n", id);
 
-		fprintf(ci->fh, "ORBIT_STUB_PreCall (_obj);\n");
+		fprintf (ci->fh, "if (ORBIT_STUB_IsBypass (_obj, %s__classid)) {\n", id);
+		fprintf (ci->fh, "POA_%s__epv *%s;\n", id, ORBIT_EPV_VAR_NAME);
+		fprintf (ci->fh, "ORBIT_STUB_PreCall (_obj);\n");
+		fprintf (ci->fh, "%s = (POA_%s__epv *) ORBIT_STUB_GetEpv (_obj, %s__classid);\n",
+			 ORBIT_EPV_VAR_NAME, id, id);
 
-		fprintf(ci->fh, "%s((POA_%s__epv *)ORBIT_STUB_GetEpv(_obj, %s__classid))->%s(\n"
-			"ORBIT_STUB_GetServant(_obj), ",
-			IDL_OP_DCL(tree).op_type_spec? ORBIT_RETVAL_VAR_NAME " = ":"",
-			id, id, IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+		fprintf (ci->fh, "if (!%s->%s) {\n", ORBIT_EPV_VAR_NAME, IDL_IDENT (IDL_OP_DCL (tree).ident).str);
+		fprintf (ci->fh, "CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);\n");
+		fprintf (ci->fh, "return %s;\n}\n", IDL_OP_DCL (tree).op_type_spec ? ORBIT_RETVAL_VAR_NAME :"");
+
+		fprintf (ci->fh, "%s%s->%s (ORBIT_STUB_GetServant (_obj), ",
+			 IDL_OP_DCL (tree).op_type_spec? ORBIT_RETVAL_VAR_NAME " = ":"",
+			 ORBIT_EPV_VAR_NAME,
+			 IDL_IDENT (IDL_OP_DCL (tree).ident).str);
 		g_free(id);
 
 		for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
@@ -126,7 +133,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 	}
 
 	fprintf (of, " } else\n");
-	fprintf (of, "#endif ORBIT_STUB_DEBUG_LOCAL\n");
+	fprintf (of, "#endif /* ORBIT_STUB_DEBUG_LOCAL */\n");
 	fprintf (of, " { /* remote marshal */\n");
 	{
 		if (has_args)
@@ -504,7 +511,7 @@ cbe_stub_op_param_alloc(FILE *of, IDL_tree node, GString *tmpstr)
   for(i = 0; i < n - 1; i++)
     g_string_append_c(tmpstr, '*');
 
-  g_string_sprintfa(tmpstr, "%s",
+  g_string_append_printf(tmpstr, "%s",
 		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
 
   id = orbit_cbe_get_typespec_str(IDL_PARAM_DCL(node).param_type_spec);
@@ -587,7 +594,7 @@ cbe_stub_op_param_free(FILE *of, IDL_tree node, GString *tmpstr)
   for(i = 0; i < n; i++)
     g_string_append_c(tmpstr, '*');
   
-  g_string_sprintfa(tmpstr, "%s",
+  g_string_append_printf(tmpstr, "%s",
 		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
   switch(IDL_NODE_TYPE(ts)) {
   case IDLN_TYPE_ANY:

@@ -23,7 +23,7 @@ struct CORBA_TypeCode_struct {
 	char                *name;
 	char                *repo_id;
 	char               **subnames;      /* for struct, exception, union, enum */
-	CORBA_any           *sublabels;     /* for union */
+	CORBA_long          *sublabels;     /* for union */
 	CORBA_long           default_index; /* for union */
 	CORBA_unsigned_long  recurse_depth; /* for recursive sequence */
 	CORBA_unsigned_short digits;        /* for fixed */

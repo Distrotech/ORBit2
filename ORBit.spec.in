@@ -92,7 +92,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc AUTHORS COPYING ChangeLog NEWS README TODO
 
 %{_libdir}/lib*.so.*
-%{_libdir}/orbit/Everything*.so.*
+%{_libdir}/orbit-2.0/*.so.*
 %{_bindir}/orbit-name-server-2
 %{_bindir}/name-client-2
 %{_bindir}/ior-decode-2
@@ -101,8 +101,8 @@ rm -rf $RPM_BUILD_ROOT
 %files devel
 %{_libdir}/lib*.so
 %{_libdir}/lib*a
-%{_libdir}/orbit/*.so
-%{_libdir}/orbit/*a
+%{_libdir}/orbit-2.0/*.so
+%{_libdir}/orbit-2.0/*a
 %{_libdir}/pkgconfig/*.pc
 %{_bindir}/orbit-idl-2
 %{_bindir}/orbit2-config
@@ -112,6 +112,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/aclocal/*
 
 %changelog
+* Sun Dec 15 2001 Ross Golder <ross@golder.org>
+- Updated shared library directory name
+
 * Fri Oct 12 2001 Ross Golder <ross@golder.org>
 - Changed source filename, and setup directory to ORBit2.
 - Commented out statements related to missing info file.

@@ -145,53 +145,50 @@ tc_enc_tk_struct(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 	}
 }
 
-/**
-    Note that a union discriminator must of an integer (any size),
-    octet, enum or char type. In particular, a discriminator
-    type never embeds a pointer. So we can skip the whole CORBA_free
-    mechanism and allocate simple memory for the types.
-**/
 static void
-tc_enc_tk_union(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+tc_enc_tk_union (CORBA_TypeCode   t,
+		 GIOPSendBuffer  *c,
+		 TCEncodeContext *ctx)
 {
-  CORBA_unsigned_long i;
-  CDR_put_string(c, t->repo_id);
-  CDR_put_string(c, t->name);
-  tc_enc(t->discriminator, c, ctx);
-  CDR_put_long(c, t->default_index);
-  CDR_put_ulong(c, t->sub_parts);
-  i=t->sub_parts;
-  /* Thank goodness the discriminator types are rather limited,
-     we can do the marshalling inline.. */
-#define MEMBER_LOOPER_ENC(putname, typename, tkname) \
-	case CORBA_tk_##tkname: \
-		for(i=0;i<t->sub_parts;i++) \
-                { \
-			CDR_put_##putname(c, *(CORBA_##typename*) \
-				      (t->sublabels[i]._value)); \
-			CDR_put_string(c, t->subnames[i]); \
-			tc_enc(t->subtypes[i], c, ctx); \
-		} \
+	CORBA_unsigned_long i;
+
+	CDR_put_string (c, t->repo_id);
+	CDR_put_string (c, t->name);
+	tc_enc (t->discriminator, c, ctx);
+	CDR_put_long (c, t->default_index);
+	CDR_put_ulong (c, t->sub_parts);
+
+	i = t->sub_parts;
+
+#define MEMBER_LOOPER_ENC(putname, typename, tkname)		 		\
+	case CORBA_tk_##tkname:							\
+		for(i = 0; i < t->sub_parts; i++) {				\
+			CORBA_##typename tmp;					\
+			tmp = (CORBA_##typename) t->sublabels [i];		\
+			CDR_put_##putname (c, tmp);				\
+			CDR_put_string (c, t->subnames [i]);			\
+			tc_enc (t->subtypes [i], c, ctx);			\
+		}								\
 		break
 
-#define UNION_MEMBERS(dir)					\
-	MEMBER_LOOPER_##dir(ulong, long, long);			\
-    case CORBA_tk_enum: /* fall through */			\
-	MEMBER_LOOPER_##dir(ulong, unsigned_long, ulong);	\
-	MEMBER_LOOPER_##dir(octet, boolean, boolean);		\
-	MEMBER_LOOPER_##dir(octet, char, char);			\
-	MEMBER_LOOPER_##dir(ushort, short, short);		\
-	MEMBER_LOOPER_##dir(ushort, unsigned_short, ushort);	\
-	MEMBER_LOOPER_##dir(ulong_long, long_long, longlong);	\
-	MEMBER_LOOPER_##dir(ulong_long, unsigned_long_long, ulonglong);	\
+#define UNION_MEMBERS(dir)							\
+	MEMBER_LOOPER_##dir(ulong, long, long);					\
+    case CORBA_tk_enum: /* fall through */					\
+	MEMBER_LOOPER_##dir(ulong, unsigned_long, ulong);			\
+	MEMBER_LOOPER_##dir(octet, boolean, boolean);				\
+	MEMBER_LOOPER_##dir(octet, char, char);					\
+	MEMBER_LOOPER_##dir(ushort, short, short);				\
+	MEMBER_LOOPER_##dir(ushort, unsigned_short, ushort);			\
+	MEMBER_LOOPER_##dir(ulong_long, long_long, longlong);			\
+	MEMBER_LOOPER_##dir(ulong_long, unsigned_long_long, ulonglong);		\
 	MEMBER_LOOPER_##dir(wchar, wchar, wchar);
 
-  switch(t->discriminator->kind)
-    {
-      UNION_MEMBERS(ENC);
-    default:
-      g_error("tc_enc_tk_union: Illegal union discriminator "
-	      "type %s\n", t->discriminator->name);
+	switch (t->discriminator->kind) {
+		UNION_MEMBERS (ENC);
+	default:
+		g_error ("tc_enc_tk_union: Illegal union discriminator "
+			 "type %s\n", t->discriminator->name);
+		break;
     }
 }
 
@@ -262,9 +259,6 @@ ORBit_TypeCode_free_fn (ORBit_RootObject obj_in)
 
 		if (tc->subtypes)
 			ORBit_RootObject_release_T (tc->subtypes [i]);
-
-		if (tc->sublabels)
-			CORBA_any__freekids (&tc->sublabels [i], NULL);
 	}
 
 	g_free (tc->subnames);
@@ -454,8 +448,6 @@ static gboolean
 tc_dec_tk_union (CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 {
 	CORBA_unsigned_long i;
-	guchar*	vec;
-	long*	discrim_vec;
 
 	if (CDR_get_const_string (c, &t->repo_id))
 		return TRUE;
@@ -468,29 +460,23 @@ tc_dec_tk_union (CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 	if (CDR_get_ulong (c, &t->sub_parts))
 		return TRUE;
 
-	/* for simplicity, we assume discrim is longest possible size,
-	 * and waste space. */
-	vec = g_malloc0 ((sizeof (CORBA_any) + sizeof (long)) * t->sub_parts);
-	t->sublabels = (CORBA_any *) vec;
-	discrim_vec  = (long*) (vec + sizeof (CORBA_any) * t->sub_parts);
-	t->subnames  = g_new0 (char*, t->sub_parts);
+	t->sublabels = g_new0 (CORBA_long, t->sub_parts);
+	t->subnames  = g_new0 (char *, t->sub_parts);
 	t->subtypes  = g_new0 (CORBA_TypeCode, t->sub_parts);
 
-#define MEMBER_LOOPER_DEC(getname, typename, tkname) \
-    case CORBA_tk_##tkname: \
-	for(i = 0; i < t->sub_parts; i++){ 	\
-	    t->sublabels[i]._type = 	\
-	      ORBit_RootObject_duplicate (t->discriminator); \
-	    t->sublabels[i]._value = &discrim_vec[i]; \
-	    t->sublabels[i]._release = CORBA_FALSE; \
-	    if (CDR_get_##getname (c, t->sublabels[i]._value)) \
-               return TRUE; \
-	    if (CDR_get_const_string (c, &t->subnames[i])) \
-               return TRUE; \
-	    if (tc_dec (&t->subtypes[i], c, ctx)) \
-              return TRUE; \
-	} \
-	break
+#define MEMBER_LOOPER_DEC(getname, typename, tkname)			\
+	case CORBA_tk_##tkname:						\
+		for(i = 0; i < t->sub_parts; i++){ 			\
+			CORBA_##typename tmp;				\
+			if (CDR_get_##getname (c, &tmp))		\
+				return TRUE;				\
+			t->sublabels [i] = (CORBA_long) tmp;		\
+			if (CDR_get_const_string (c, &t->subnames[i]))	\
+				return TRUE;				\
+			if (tc_dec (&t->subtypes[i], c, ctx))		\
+				return TRUE;				\
+		}							\
+		break
 
 	switch (t->discriminator->kind) {
 		UNION_MEMBERS (DEC);
@@ -655,8 +641,7 @@ typecode_equiv_internal (CORBA_TypeCode obj,
 			if (! typecode_equiv_internal (obj->subtypes[i],
 						       tc->subtypes[i],
 						       strict_equal, ev)
-			    || ! ORBit_any_equivalent (&obj->sublabels[i],
-						       &tc->sublabels[i], ev))
+			    || obj->sublabels [i] != tc->sublabels [i])
 				return CORBA_FALSE;
 
 		break;
