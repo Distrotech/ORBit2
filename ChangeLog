@@ -1,3 +1,10 @@
+2004-02-02  Michael Meeks  <michael@ximian.com>
+
+	* docs/internals/Makefile.am: add misc. bits.
+
+	* docs/internals/interface-indirection.xls: switch
+	from .gnumeric, and tag -kb.
+
 2004-01-25  Alexander Winston  <alexander.winston@comcast.net>
 
 	* ORBit2.m4: quote it properly
