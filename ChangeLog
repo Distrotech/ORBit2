@@ -1,3 +1,23 @@
+2001-11-09  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/GIOP/giop-recv-buffer.h: kill
+	GIOPMessageInfo, not neccessary.
+	remove giop_recv_buffer_data_read prototype.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_push): a crack smoking & inefficient
+	loop search; re-order compare - most unlikely first,
+	get request_id only once. re-order locking to be yet
+	more transparent. Remove the huge, paranoid and
+	incorrect ( except for Elliot's huge stubs/skels )
+	message.
+	(giop_recv_buffer_demarshal): make robust against
+	duff giop versions.
+	(giop_recv_buffer_use_buf): simplify, remove bogus
+	is_auth parameter.
+	(giop_connection_handle_input): upd. to not pass isauth.
+	(giop_recv_list_push): add processed concept outline.
+
 2001-11-08  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: require linc >= 0.1.7
