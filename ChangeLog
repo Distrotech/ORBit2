@@ -1,5 +1,18 @@
 2001-09-03 Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-any.c,
+	  src/orb/orb-core/orb-core-private.h
+	(ORBit_find_alignment): kill - we have that info
+	in the TypeCode now.
+
+	* src/orb/dynamic/dynany.c,
+	  src/orb/orb-core/allocators.c,
+	  src/orb/orb-core/corba-any.c,
+	  src/orb/orb-core/orbit-trace.c: update for
+	above change.
+
+2001-09-03 Mark McLoughlin <mark@skynet.ie>
+
 	* src/idl-compiler/orbit-idl-c-typecode.c:
 	Big cleanup. Split out the generation of individual
 	TypeCode members from cbe_tc_generate into seperate
