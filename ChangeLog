@@ -1,3 +1,7 @@
+1998-12-14  Federico Mena Quintero  <federico@nuclecu.unam.mx>
+
+	* test/Makefile.am (EXTRA_DIST): Added test-ir.idl to EXTRA_DIST.
+
 1998-12-13  Miguel de Icaza  <miguel@nuclecu.unam.mx>
 
 	* src/IIOP/giop-msg-buffer.c (giop_recv_message_buffer_use):
