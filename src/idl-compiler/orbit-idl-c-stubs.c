@@ -171,9 +171,12 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "if(!_cnx) goto _ORBIT_system_exception;\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
-    fprintf(ci->fh, "_ORBIT_retry_request:\n");
+    {
+      fprintf(ci->fh, "_ORBIT_retry_request:\n");
+      fprintf(ci->fh, "_ORBIT_recv_buffer = NULL;\n");
+    }
 
-  fprintf(ci->fh, "_ORBIT_send_buffer = NULL;\n_ORBIT_recv_buffer = NULL;\n");
+  fprintf(ci->fh, "_ORBIT_send_buffer = NULL;\n");
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_NO;\n");
 
   if(sizeof(gpointer) > sizeof(CORBA_unsigned_long))
