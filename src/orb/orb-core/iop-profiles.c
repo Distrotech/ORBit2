@@ -188,7 +188,7 @@ IOP_profile_get_info(CORBA_Object obj, gpointer *pinfo,
 	      IOP_component_find(mci->components, IOP_TAG_COMPLETE_OBJECT_KEY,
 				 NULL);
 	    if(coki)
-	      *oki = coki->oki;
+	      *oki = coki->oki ? coki->oki : obj->oki;
 	  }
 	return *oki?TRUE:FALSE;
       }
@@ -243,8 +243,8 @@ IOP_ObjectKey_equal(IOP_ObjectKey_info *a, IOP_ObjectKey_info *b)
 }
 
 gboolean
-IOP_profile_equal( CORBA_Object obj1, CORBA_Object obj2,
-		   gpointer d1, gpointer d2 )
+IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
+		   gpointer d1, gpointer d2)
 {
 	IOP_TAG_MULTIPLE_COMPONENTS_info *mci1, *mci2;
 	IOP_ProfileId                    t1, t2;
@@ -403,7 +403,7 @@ IOP_profile_hash(gpointer item, gpointer data)
 }
 
 void
-IOP_delete_profiles( GSList **profiles )
+IOP_delete_profiles (GSList **profiles)
 {
   if (profiles && *profiles && (*profiles != common_profiles)) {
     g_slist_foreach (*profiles, (GFunc)IOP_profile_free, NULL);
@@ -413,12 +413,12 @@ IOP_delete_profiles( GSList **profiles )
 }
 
 void
-IOP_generate_profiles( CORBA_Object obj )
+IOP_generate_profiles (CORBA_Object obj)
 {
   IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
   IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
   IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
-  gboolean                         need_objkey_component;
+  gboolean                          need_objkey_component;
   GSList                           *ltmp;
 
   g_assert( obj && (obj->profile_list == NULL) );
@@ -428,11 +428,11 @@ IOP_generate_profiles( CORBA_Object obj )
    * if the ORB has been shutdown and restarted,
    * the profiles must be regenerated.
    */
-  if ( obj->orb->servers == NULL ) {
-    ORBit_start_servers( obj->orb );
-    if ( common_profiles != NULL ) {
-      g_slist_foreach(common_profiles, (GFunc)IOP_profile_free, NULL);
-      g_slist_free(common_profiles);
+  if (!obj->orb->servers) {
+    ORBit_start_servers (obj->orb);
+    if (common_profiles) {
+      g_slist_foreach (common_profiles, (GFunc)IOP_profile_free, NULL);
+      g_slist_free (common_profiles);
       common_profiles = NULL;
     }
   }
@@ -447,7 +447,6 @@ IOP_generate_profiles( CORBA_Object obj )
   }
 
   need_objkey_component = FALSE;
-
   for(ltmp = obj->orb->servers ; ltmp != NULL ; ltmp = ltmp->next)
     {
       LINCServer *serv = ltmp->data;
@@ -539,30 +538,38 @@ IOP_generate_profiles( CORBA_Object obj )
               g_assert(!giop->service);
               giop->service = g_strdup(serv->local_serv_info);
             }
-
-          need_objkey_component = TRUE;
         }
+      need_objkey_component = TRUE;
     }
 
-  if(osi)
-    common_profiles = g_slist_append(common_profiles, osi);
+  if (osi)
+    common_profiles = g_slist_append (common_profiles, osi);
 
-  if(need_objkey_component)
-    {
-      mci = g_new0(IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
-      mci->parent.profile_type = IOP_TAG_MULTIPLE_COMPONENTS;
-      if(need_objkey_component)
-        {
-          IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
-          coki = g_new0(IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
-          coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
-          mci->components = g_slist_append(mci->components, coki);
-        }
-      common_profiles = g_slist_append(common_profiles, mci);
-    }
+  /* We always create this to marshal the TAG_CODE_SET component */
+  mci = g_new0 (IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
+  mci->parent.profile_type = IOP_TAG_MULTIPLE_COMPONENTS;
 
- obj->profile_list = common_profiles;
- ORBit_register_objref (obj);
+  if (need_objkey_component) {
+    IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
+
+    coki = g_new0 (IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
+    coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
+    coki->oki = NULL; /* Sucks in the object's key at marshal time */
+    mci->components = g_slist_append (mci->components, coki);
+  }
+
+  {
+    IOP_TAG_CODE_SETS_info *csets;
+
+    csets = g_new0 (IOP_TAG_CODE_SETS_info, 1);
+    csets->parent.component_type = IOP_TAG_CODE_SETS;
+    mci->components = g_slist_append (mci->components, csets);
+  }
+
+  common_profiles = g_slist_append (common_profiles, mci);
+
+  obj->profile_list = common_profiles;
+  ORBit_register_objref (obj);
 }
 
 /*
@@ -581,6 +588,8 @@ IOP_component_free(IOP_Component_info *c)
       g_free(((IOP_TAG_COMPLETE_OBJECT_KEY_info*)c)->oki);
       break;
     case IOP_TAG_SSL_SEC_TRANS:
+      break;
+    case IOP_TAG_CODE_SETS:
       break;
     default:
       g_free(((IOP_UnknownProfile_info*)c)->data._buffer);
@@ -696,19 +705,50 @@ static void
 IOP_TAG_SSL_SEC_TRANS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 			      IOP_Component_info *ci)
 {
-  IOP_TAG_SSL_SEC_TRANS_info *ssli = (IOP_TAG_SSL_SEC_TRANS_info *)ci;
+  IOP_TAG_SSL_SEC_TRANS_info *ssli = (IOP_TAG_SSL_SEC_TRANS_info *) ci;
 
-  giop_send_buffer_align(buf, 4);
-  giop_send_buffer_append(buf, &ssli->target_supports, 10);
+  giop_send_buffer_align (buf, 4);
+  giop_send_buffer_append (buf, &ssli->target_supports, 10);
 }
 
 static void
 IOP_TAG_COMPLETE_OBJECT_KEY_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 				    IOP_Component_info *ci)
 {
-  IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)ci;
+  IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = (IOP_TAG_COMPLETE_OBJECT_KEY_info *) ci;
 
-  IOP_ObjectKey_marshal(obj, buf, coki->oki);
+  IOP_ObjectKey_marshal (obj, buf, coki->oki);
+}
+
+static void
+CodeSetComponent_marshal (GIOPSendBuffer *buf,
+			  CORBA_unsigned_long native_code_set,
+			  CORBA_sequence_CORBA_unsigned_long *opt_conversion_code_sets)
+{
+	/* native_code_set */
+	giop_send_buffer_append_aligned (buf, &native_code_set, 4);
+
+	if (opt_conversion_code_sets)
+		g_error ("Unimplemented as yet");
+	else {
+		CORBA_unsigned_long length = 0;
+		giop_send_buffer_append_aligned (buf, &length, 4);
+	}	
+}
+
+/* we always marshal the same thing: see 13.7.2.4 */
+static void
+IOP_TAG_CODE_SETS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
+			  IOP_Component_info *ci)
+{
+	/* To get these magic numbers see the 'OSF Character
+	   and Codeset Registry'; ftp.opengroup.org/pub/code_set_registry */
+	CORBA_unsigned_long utf8_key  = 0x05010001;
+	CORBA_unsigned_long utf16_key = 0x00010109;
+
+	/* Marshal a CodeSetComponentInfo structure */
+	CodeSetComponent_marshal (buf, utf8_key, NULL);
+	CodeSetComponent_marshal (buf, utf16_key, NULL);
 }
 
 static void
@@ -762,6 +802,9 @@ IOP_components_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 	  break;
 	case IOP_TAG_COMPLETE_OBJECT_KEY:
 	  IOP_TAG_COMPLETE_OBJECT_KEY_marshal(obj, buf, ci);
+	  break;
+	case IOP_TAG_CODE_SETS:
+          IOP_TAG_CODE_SETS_marshal (obj, buf, ci);
 	  break;
 	default:
 	  IOP_UnknownComponent_marshal(obj, buf, ci);
@@ -817,13 +860,14 @@ IOP_TAG_GENERIC_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 }
 
 static void
-IOP_TAG_MULTIPLE_COMPONENTS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
-				    IOP_Profile_info *profile)
+IOP_TAG_MULTIPLE_COMPONENTS_marshal (CORBA_Object      obj,
+				     GIOPSendBuffer   *buf,
+				     IOP_Profile_info *profile)
 {
-  IOP_TAG_MULTIPLE_COMPONENTS_info *mci = (IOP_TAG_MULTIPLE_COMPONENTS_info*)
-    profile;
+	IOP_TAG_MULTIPLE_COMPONENTS_info *mci = (IOP_TAG_MULTIPLE_COMPONENTS_info*)
+		profile;
 
-  IOP_components_marshal(obj, buf, mci->components);
+	IOP_components_marshal(obj, buf, mci->components);
 }
 
 static void
@@ -1015,6 +1059,56 @@ IOP_TAG_COMPLETE_OBJECT_KEY_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
   return (IOP_Component_info *)retval;
 }
 
+static gboolean
+CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
+			    CORBA_unsigned_long *native_code_set,
+			    CORBA_sequence_CORBA_unsigned_long **opt_conversion_code_sets)
+{
+	CORBA_unsigned_long sequence_length;
+
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+
+	if (buf->cur + 8 > buf->end)
+		return FALSE;
+
+	*native_code_set = *(CORBA_unsigned_long *)buf->cur;
+	buf->cur += 4;
+	sequence_length = *(CORBA_unsigned_long *)buf->cur;
+	buf->cur += 4;
+
+	if (sequence_length > 0) {
+		static int warned = 0;
+		if (!(warned++))
+			g_warning ("Ignoring incoming code_sets component");
+
+		if (buf->cur + sequence_length * 4 < buf->end)
+			return FALSE;
+		else
+			buf->cur += sequence_length * 4;
+	}
+	
+	return TRUE;
+}
+
+static IOP_Component_info *
+IOP_TAG_CODE_SETS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
+{
+  IOP_TAG_CODE_SETS_info *retval;
+  CORBA_unsigned_long    dummy;
+  
+  retval = g_new (IOP_TAG_CODE_SETS_info, 1);
+  retval->parent.component_type = id;
+
+  /* We don't care about the data much */
+  if (!CodeSetComponent_demarshal (buf, &dummy, NULL) ||
+      !CodeSetComponent_demarshal (buf, &dummy, NULL)) {
+	  g_free (retval);
+	  return NULL;
+  }
+
+  return (IOP_Component_info *) retval;
+}
+
 static IOP_Component_info *
 IOP_UnknownComponent_demarshal(IOP_ComponentId p, GIOPRecvBuffer *buf)
 {
@@ -1077,6 +1171,9 @@ IOP_components_demarshal(GIOPRecvBuffer *buf, GSList **components)
 	  break;
 	case IOP_TAG_SSL_SEC_TRANS:
 	  c = IOP_TAG_SSL_SEC_TRANS_demarshal(cid, buf);
+	  break;
+	case IOP_TAG_CODE_SETS:
+          c = IOP_TAG_CODE_SETS_demarshal(cid, buf);
 	  break;
 	default:
 	  c = IOP_UnknownComponent_demarshal(cid, buf);
