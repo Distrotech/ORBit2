@@ -603,7 +603,10 @@ giop_recv_list_zap (GIOPConnection *cnx)
 
 			giop_recv_destroy_queue_entry_T (ent);
 
+			if (giop_thread_io () && !ent->async_cb)
+				giop_incoming_signal_T (ent->src_thread, GIOP_CLOSECONNECTION);
 			ent_unlock (ent);
+
 			if (ent->async_cb)
 				notify = g_slist_prepend (notify, ent);
 			giop_queued_messages = g_list_delete_link (
