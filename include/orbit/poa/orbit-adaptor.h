@@ -78,7 +78,7 @@ typedef void                (*ORBitReqFunc)        (ORBit_OAObject     adaptor_o
 						    CORBA_Environment *ev);
 
 typedef enum {
-	ORBIT_ADAPTOR_POA = 1 << 0
+	ORBIT_ADAPTOR_POA        = 1 << 0
 } ORBit_Adaptor_type;
 
 struct ORBit_OAObject_Interface_type {

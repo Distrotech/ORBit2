@@ -61,7 +61,9 @@ void                  ORBit_connection_set_max_buffer   (ORBitConnection *cnx,
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
-#define ORBIT_SMALL_FAST_LOCALS 1
+#define ORBIT_SMALL_FAST_LOCALS           1
+#define ORBIT_SMALL_FORCE_GENERIC_MARSHAL 2
+
 extern int     ORBit_small_flags;
 
 /* Deprecated - only for bin-compat with pre 2.4 stubs */
