@@ -1,3 +1,9 @@
+2001-09-07  Mark McLoughlin <mark@skynet.ie>
+
+	* src/linc-protocols.c: Warning killers - include string.h
+	and don't prototype IRDA functions if IRDA defines not
+	available.
+
 2001-08-31  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c (ERR_CONDS): hack off G_IO_PRI
