@@ -1,21 +1,65 @@
+/**************************************************************************
+
+    orbit-idl-backends.c (Backend directory & loading)
+
+    Copyright (C) 1999 Elliot Lee
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id$
+
+***************************************************************************/
+
 #include "orbit-idl2.h"
 #include "backends/c/orbit-idl-c-backend.h"
+#include <dirent.h>
+#include <gmodule.h>
 
 static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
-  {"c", /* &orbit_idl_output_c */},
+  {"c", &orbit_idl_output_c},
   {NULL, NULL}
 };
 
 OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
 {
   int i;
+  char *fname, *ctmp;
+  GModule *gmod;
+  OIDL_Backend_Info *retval = NULL;
 
   for(i = 0; orbit_idl_builtin_backends[i].name; i++) {
     if(!strcmp(lang, orbit_idl_builtin_backends[i].name))
       return &orbit_idl_builtin_backends[i];
   }
 
-  /* XXX TODO - dlopen backend modules */
+  g_return_if_fail(!g_module_supported());
 
-  return NULL;
+  ctmp = alloca(sizeof("orbit-idl--backend") + strlen(lang));
+  sprintf(ctmp, "orbit-idl-%s-backend", lang);
+  fname = g_module_build_path(ORBITLIBDIR, ctmp);
+  g_assert(fname);
+  gmod = g_module_open(fname, G_MODULE_BIND_LAZY);
+
+  g_return_val_if_fail(gmod, NULL);
+
+  g_module_make_resident(gmod);
+
+  g_return_val_if_fail(g_module_symbol(gmod,
+				       "orbit_idl_backend",
+				       (gpointer *)&retval),
+		       NULL);
+
+  return retval;
 }

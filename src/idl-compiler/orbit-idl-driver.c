@@ -1,3 +1,27 @@
+/**************************************************************************
+
+    orbit-idl-driver.c (Dispatch parsed tree to various backends)
+
+    Copyright (C) 1999 Elliot Lee
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id$
+
+***************************************************************************/
+
 #include "orbit-idl2.h"
 #include <string.h>
 
@@ -20,7 +44,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   binfo = orbit_idl_backend_for_lang(rinfo->output_language);
 
-  g_return_val_if_fail(binfo, 0);
+  g_return_val_if_fail(binfo && binfo->op_output, 0);
 
   errcode = IDL_parse_filename(filename, rinfo->cpp_args, NULL,
 			       &tree, &namespace,
@@ -41,8 +65,8 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   otree.tree = tree;
   otree.pass_info = NULL;
-  if(binfo->op_output)
-    binfo->op_output(&otree, rinfo);
+
+  binfo->op_output(&otree, rinfo);
 
   return 1;
 }
