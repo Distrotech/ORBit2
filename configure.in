@@ -125,6 +125,9 @@ AC_CHECK_FUNCS(poll basename)
 AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
 
+AC_CHECK_LIB(popt, poptStrippedArgv, POPT_LIBS=-lpopt, AC_MSG_ERROR([You must have popt version 1.5 or greater installed.]))
+AC_SUBST(POPT_LIBS)
+
 # AC_CHECK_TYPE doesn't work here.
 AC_MSG_CHECKING([for socklen_t])
 AC_TRY_COMPILE(
@@ -190,7 +193,7 @@ LIBS="$GLIB_LIBS $LIBS"
 AC_CACHE_VAL(AC_CV_NAME,
 [AC_TRY_RUN([
 #include <stdio.h>
-#include "$srcdir/src/ORBitutil/basic_types.h"
+#include "$srcdir/include/orbit/util/basic_types.h"
 typedef struct {char s1;} CORBA_struct;
 typedef void *CORBA_pointer;
 struct test {char s1; $1 s2;};
@@ -229,7 +232,8 @@ AC_CONFIG_SUBDIRS(popt)
 
 AC_SUBST(pkglibdir)
 
-AC_OUTPUT([Makefile
+AC_OUTPUT([
+Makefile
 orbit-config
 ORBit.spec
 src/Makefile
@@ -242,6 +246,7 @@ src/orb/dynamic/Makefile
 src/orb/poa/Makefile
 include/Makefile
 include/orbit/Makefile
+include/orbit/orbit-config.h
 include/orbit/IIOP/Makefile
 include/orbit/util/Makefile
 docs/Makefile
