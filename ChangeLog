@@ -1,3 +1,13 @@
+2002-12-17  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(orbit_add_align): impl.
+	(orbit_find_c_align): re-write to use a string
+	list of the ALIGNOF defines.
+	(orbit_output_tcstruct_c_align): build a MAX
+	statement, where appropriate.
+	This means the -common.c file is cross-compilable.
+
 2002-11-29  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-connection.c

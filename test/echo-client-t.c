@@ -3,8 +3,8 @@
 
 #include "echo.h"
 
-int niters = 100;
-int nthreads = 3;
+int niters = 1000;
+int nthreads = 20;
 char *server_ior;
 CORBA_ORB orb;
 
