@@ -1,6 +1,18 @@
 #ifndef ORBIT_POA_H
 #define ORBIT_POA_H 1
 
+typedef struct ORBit_POAKOid_struct {
+        gushort                   oid_length;
+        /* oid octets comes here */
+        /* rand_data octets come here */
+} ORBit_POAKOid;
+#define ORBIT_POAKOID_OidLenOf(koid) \
+        ((koid)->oid_length)
+#define ORBIT_POAKOID_OidBufOf(koid) \
+        ( (CORBA_octet*) (((char*)(koid))+sizeof(*(koid))) )
+#define ORBIT_POAKOID_RandBufOf(koid) \
+        ( (CORBA_octet*) (((char*)(koid))+sizeof(*(koid))+(koid)->oid_length) )
+
 void ORBit_POA_handle_held_requests(PortableServer_POA poa);
 gboolean ORBit_POA_is_inuse(PortableServer_POA poa,
 			    CORBA_boolean consider_children,

@@ -2,7 +2,7 @@ INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
-noinst_PROGRAMS=test1 echo-client echo-server
+noinst_PROGRAMS=test1 echo-client echo-server ior-decode
 
 ECHO_IDLOUT=echo.h echo-common.c echo-stubs.c echo-skels.c
 echo_client_SOURCES=echo-client.c $(ECHO_IDLOUT)
@@ -16,6 +16,9 @@ IDLOUT=test1-stubs.c test1-skels.c test1-common.c test1.h
 test1_SOURCES=test1.c $(IDLOUT)
 test1_LDADD=$(top_builddir)/src/orb/libORBit.la
 $(srcdir)/test1.c: test1.h
+
+ior_decode_SOURCES=ior-decode.c
+ior_decode_LDADD=$(top_builddir)/src/orb/libORBit.la
 
 $(ECHO_IDLOUT): echo.idl $(IDL)
 	$(IDL) --showcpperrors $(srcdir)/echo.idl

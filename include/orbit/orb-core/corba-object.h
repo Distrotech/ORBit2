@@ -9,5 +9,7 @@ GIOPConnection *_ORBit_object_get_connection(CORBA_Object obj);
 void ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj);
 gboolean ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
 				CORBA_ORB orb);
+CORBA_Object ORBit_objref_find(CORBA_ORB orb,
+			       const char *type_id, GSList *profiles);
 
 #endif
