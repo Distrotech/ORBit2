@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 
 #ifdef LINC_SSL_SUPPORT
 #include <openssl/ssl.h>
@@ -24,26 +25,148 @@
 #include <linc/linc-config.h>
 #include <linc/linc-connection.h>
 
+struct _LINCWriteOpts {
+	gboolean block_on_write;
+};
+
 struct _LINCConnectionPrivate {
 #ifdef LINC_SSL_SUPPORT
-	SSL        *ssl;
+	SSL         *ssl;
 #endif
-	LincWatch  *tag;
-	int         fd;
+	LincWatch   *tag;
+	int          fd;
+
+	gulong       max_buffer_bytes;
+	gulong       write_queue_bytes;
+	GList       *write_queue;
 };
 
 static GObjectClass *parent_class = NULL;
 
 enum {
 	BROKEN,
+	BLOCKING,
 	LAST_SIGNAL
 };
 static guint linc_connection_signals [LAST_SIGNAL];
 
+static gboolean linc_connection_io_handler (GIOChannel  *gioc,
+					    GIOCondition condition,
+					    gpointer     data);
 
-static gboolean linc_connection_connected (GIOChannel  *gioc,
-					   GIOCondition condition,
-					   gpointer     data);
+static void
+linc_close_fd (LINCConnection *cnx)
+{
+	if (cnx->priv->fd >= 0) {
+		d_printf ("Close %d\n", cnx->priv->fd);
+		close (cnx->priv->fd);
+	}
+	cnx->priv->fd = -1;
+}
+
+typedef struct {
+	guchar       *data;
+
+	struct iovec *vecs;
+	int           nvecs;
+	struct iovec  single_vec;
+} QueuedWrite;
+
+static void
+queue_signal (LINCConnection *cnx,
+	      glong           delta)
+{
+	gulong old_size;
+	gulong new_size;
+
+	d_printf ("Queue signal %ld bytes, delta %ld, max %ld\n",
+		  cnx->priv->write_queue_bytes, delta,
+		  cnx->priv->max_buffer_bytes);
+
+	old_size = cnx->priv->write_queue_bytes;
+	cnx->priv->write_queue_bytes += delta;
+	new_size = cnx->priv->write_queue_bytes;
+
+	if (cnx->options & LINC_CONNECTION_BLOCK_SIGNAL) {
+		if (new_size == 0 ||
+		    (old_size < cnx->priv->max_buffer_bytes &&
+		     new_size > cnx->priv->max_buffer_bytes) ||
+		    new_size >= cnx->priv->max_buffer_bytes)
+			g_signal_emit (G_OBJECT (cnx),
+				       linc_connection_signals [BLOCKING],
+				       0, new_size);
+	}
+
+	if (cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
+		linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+}
+
+static gulong
+calc_size (struct iovec *src_vecs,
+	   int           nvecs)
+{
+	int i;
+	gulong total_size = 0;
+
+	for (i = 0; i < nvecs; i++)
+		total_size += src_vecs [i].iov_len;
+
+	return total_size;
+}
+
+static void
+queue_flattened (LINCConnection *cnx,
+		 struct iovec   *src_vecs,
+		 int             nvecs)
+{
+	int     i;
+	guchar *p;
+	gulong  total_size;
+	QueuedWrite *qw = g_new (QueuedWrite, 1);
+
+	total_size = calc_size (src_vecs, nvecs);
+
+	p = g_malloc (total_size);
+
+	qw->data  = p;
+	qw->vecs  = &qw->single_vec;
+	qw->nvecs = 1;
+
+	qw->vecs->iov_base = p;
+	qw->vecs->iov_len = total_size;
+
+	for (i = 0; i < nvecs; i++) {
+		memcpy (p, src_vecs [i].iov_base, src_vecs [i].iov_len);
+		p += src_vecs [i].iov_len;
+	}
+	g_assert (p == (qw->data + total_size));
+
+	d_printf ("Queueing write of %ld bytes on fd %d\n",
+		  total_size, cnx->priv->fd);
+
+	cnx->priv->write_queue = g_list_append (cnx->priv->write_queue, qw);
+	queue_signal (cnx, total_size);
+}
+
+static void
+queued_write_free (QueuedWrite *qw)
+{
+	g_free (qw->data);
+	g_free (qw);
+}
+
+static void
+queue_free (LINCConnection *cnx)
+{
+	GList *l;
+
+	for (l = cnx->priv->write_queue; l; l = l->next)
+		queued_write_free (l->data);
+
+	g_list_free (cnx->priv->write_queue);
+
+	cnx->priv->write_queue = NULL;
+}
 
 static void
 linc_source_remove (LINCConnection *cnx)
@@ -64,104 +187,10 @@ linc_source_add (LINCConnection *cnx,
 
 	cnx->priv->tag = linc_io_add_watch_fd (
 		cnx->priv->fd, condition,
-		linc_connection_connected, cnx);
+		linc_connection_io_handler, cnx);
 
 	d_printf ("Added watch on %d (0x%x)\n",
 		 cnx->priv->fd, condition);
-}
-
-static void
-linc_close_fd (LINCConnection *cnx)
-{
-	if (cnx->priv->fd >= 0) {
-		d_printf ("Close %d\n", cnx->priv->fd);
-		close (cnx->priv->fd);
-	}
-	cnx->priv->fd = -1;
-}
-
-static void
-linc_connection_dispose (GObject *obj)
-{
-	LINCConnection *cnx = (LINCConnection *)obj;
-
-	linc_source_remove (cnx);
-
-	parent_class->dispose (obj);
-}
-
-static void
-linc_connection_finalize (GObject *obj)
-{
-	LINCConnection *cnx = (LINCConnection *)obj;
-
-	linc_close_fd (cnx);
-
-	g_free (cnx->remote_host_info);
-	g_free (cnx->remote_serv_info);
-
-	g_free (cnx->priv);
-
-	parent_class->finalize (obj);
-}
-
-static gboolean
-linc_connection_connected (GIOChannel  *gioc,
-			   GIOCondition condition,
-			   gpointer     data)
-{
-	LINCConnection      *cnx = data;
-	LINCConnectionClass *klass;
-	int rv, n;
-	socklen_t n_size = sizeof(n);
-
-	g_object_ref (G_OBJECT (cnx));
-
-	klass = LINC_CONNECTION_CLASS (G_OBJECT_GET_CLASS (data));
-
-	if (cnx->status == LINC_CONNECTED &&
-	    (condition & LINC_IN_CONDS) &&
-	    klass->handle_input) {
-
-		d_printf ("Handle input on fd %d\n", cnx->priv->fd);
-		klass->handle_input (cnx);
-
-	} else if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
-
-		switch (cnx->status) {
-		case LINC_CONNECTING:
-			n = 0;
-			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
-			if (!rv && !n && condition == G_IO_OUT) {
-				d_printf ("State changed to connected on %d\n", cnx->priv->fd);
-
-				linc_watch_set_condition (
-					cnx->priv->tag,
-					LINC_ERR_CONDS | LINC_IN_CONDS);
-
-				linc_connection_state_changed (cnx, LINC_CONNECTED);
-				
-			} else {
-				d_printf ("Error connecting %d %d %d on fd %d\n",
-					   rv, n, errno, cnx->priv->fd);
-				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
-			}
-			break;
-		case LINC_CONNECTED: {
-			d_printf ("Disconnect %d\n", cnx->priv->fd);
-			linc_connection_state_changed (cnx, LINC_DISCONNECTED);
-			break;
-		}
-		default:
-			break;
-		}
-	} else
-		g_warning ("Dropping state on fd %d on the floor (%d)",
-			   cnx->priv->fd, condition);
-
-	g_object_unref (G_OBJECT (cnx));
-
-	return TRUE;
 }
 
 /*
@@ -217,6 +246,7 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 	case LINC_DISCONNECTED:
 		linc_source_remove (cnx);
 		linc_close_fd (cnx);
+		/* don't free pending queue - we could get re-connected */
 
 		g_signal_emit (G_OBJECT (cnx),
 			       linc_connection_signals [BROKEN], 0);
@@ -387,7 +417,7 @@ linc_connection_state_changed (LINCConnection      *cnx,
  *
  * Return value: number of bytes written on success; negative on error.
  **/
-int
+glong
 linc_connection_read (LINCConnection *cnx,
 		      guchar         *buf,
 		      int             len,
@@ -401,7 +431,7 @@ linc_connection_read (LINCConnection *cnx,
 		return 0;
 
 	if (cnx->status != LINC_CONNECTED)
-		return -1;
+		return LINC_IO_FATAL_ERROR;
 
 	do {
 		int n;
@@ -425,7 +455,7 @@ linc_connection_read (LINCConnection *cnx,
 				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
 					return bytes_read;
 				else
-					return -1;
+					return LINC_IO_FATAL_ERROR;
 			} else
 #endif
 			{
@@ -438,15 +468,15 @@ linc_connection_read (LINCConnection *cnx,
 
 				else if (errno == EBADF) {
 					g_warning ("Serious fd usage error %d", cnx->priv->fd);
-					return -1;
+					return LINC_IO_FATAL_ERROR;
 
 				} else
-					return -1;
+					return LINC_IO_FATAL_ERROR;
 			}
 
 		} else if (n == 0) {
 			if (cnx->options & LINC_CONNECTION_NONBLOCKING)
-				return -1;
+				return LINC_IO_FATAL_ERROR;
 		} else {
 			buf += n;
 			len -= n;
@@ -457,6 +487,146 @@ linc_connection_read (LINCConnection *cnx,
 	d_printf ("we read %d bytes\n", bytes_read);
 
 	return bytes_read;
+}
+
+static LINCIOStatus
+write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
+{
+	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
+			      LINC_IO_FATAL_ERROR);
+
+	while (qw->vecs && qw->vecs->iov_len > 0) {
+		int n;
+
+		d_printf ("write_data %ld bytes to fd %d : %s\n",
+			  calc_size (qw->vecs, qw->nvecs),
+			  cnx->priv->fd, queue_write ? "from queue" : "direct");
+
+#ifdef LINC_SSL_SUPPORT
+		if (cnx->options & LINC_CONNECTION_SSL)
+			n = SSL_write (cnx->priv->ssl, qw->vecs->iov_base,
+				       qw->vecs->iov_len);
+		else
+#endif
+			n = writev (cnx->priv->fd, qw->vecs,
+				    MIN (qw->nvecs, WRITEV_IOVEC_LIMIT));
+
+		if (n < 0) {
+#ifdef LINC_SSL_SUPPORT
+			if (cnx->options & LINC_CONNECTION_SSL) {
+				gulong rv;
+					
+				rv = SSL_get_error (cnx->priv->ssl, n);
+					
+				if ((rv == SSL_ERROR_WANT_READ || 
+				     rv == SSL_ERROR_WANT_WRITE) &&
+				    cnx->options & LINC_CONNECTION_NONBLOCKING)
+					return LINC_IO_QUEUED_DATA;
+				else
+					return LINC_IO_FATAL_ERROR;
+			} else
+#endif
+			{
+				if (errno == EINTR)
+					continue;
+
+				else if (errno == EAGAIN &&
+					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					return LINC_IO_QUEUED_DATA;
+
+				else if (errno == EBADF) {
+					g_warning ("Serious fd usage error %d", cnx->priv->fd);
+					return LINC_IO_FATAL_ERROR;
+				} else
+					return LINC_IO_FATAL_ERROR; /* Unhandlable error */
+			}
+
+		} else if (n == 0) /* CHECK: is this really an error condition */
+			return LINC_IO_FATAL_ERROR;
+
+		else {
+			glong size = n;
+
+			while (n > qw->vecs->iov_len) {
+				n -= qw->vecs->iov_len;
+				qw->nvecs--;
+				qw->vecs++;
+			}
+
+			if (n) {
+				qw->vecs->iov_len  -= n;
+				qw->vecs->iov_base += n;
+			}
+
+			if (queue_write)
+				queue_signal (cnx, -size);
+		}
+	}
+
+	return LINC_IO_OK;
+}
+
+/**
+ * linc_connection_writev:
+ * @cnx: the connection to write to
+ * @vecs: a structure of iovecs to write - this is altered.
+ * @nvecs: the number of populated iovecs
+ * @total_size: the total size of the data
+ * 
+ * This routine writes data to the abstract connection.
+ * FIXME: it allows re-enterancy via linc_connection_iterate
+ *        in certain cases.
+ * FIXME: on this basis, the connection can die underneath
+ *        our feet.
+ * 
+ * Return value: 0 on success, non 0 on error.
+ **/
+LINCIOStatus
+linc_connection_writev (LINCConnection       *cnx,
+			struct iovec         *vecs,
+			int                   nvecs,
+			const LINCWriteOpts  *opt_write_opts)
+{
+	QueuedWrite     qw;
+	LINCIOStatus status;
+
+	/* FIXME: need an option to turn this off ? */
+	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
+		while (cnx->status == LINC_CONNECTING)
+			linc_main_iteration (TRUE);
+	}
+
+	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
+			      LINC_IO_FATAL_ERROR);
+
+	if (cnx->priv->write_queue) {
+		/* FIXME: we should really retry the write here, but we'll
+		 * get a POLLOUT for this lot at some stage anyway */
+		queue_flattened (cnx, vecs, nvecs);
+		return LINC_IO_QUEUED_DATA;
+	}
+
+	qw.vecs  = vecs;
+	qw.nvecs = nvecs;
+
+ continue_write:
+	status = write_data (cnx, &qw, FALSE);
+
+	if (status == LINC_IO_QUEUED_DATA) {
+		/* Queue data & listen for buffer space */
+		linc_watch_set_condition (cnx->priv->tag,
+					  LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
+		if (opt_write_opts &&
+		    !opt_write_opts->block_on_write) {
+			queue_flattened (cnx, qw.vecs, qw.nvecs);
+			return LINC_IO_QUEUED_DATA;
+		} else {
+			linc_main_iteration (TRUE);
+			goto continue_write;
+		}
+	}
+
+	return status;
 }
 
 /**
@@ -475,175 +645,53 @@ linc_connection_read (LINCConnection *cnx,
  *
  * Return value: 0 on success, non 0 on error.
  **/
-int
-linc_connection_write (LINCConnection *cnx,
-		       const guchar   *buf,
-		       gulong          len)
+LINCIOStatus
+linc_connection_write (LINCConnection       *cnx,
+		       const guchar         *buf,
+		       gulong                len,
+		       const LINCWriteOpts  *opt_write_opts)
 {
-	int n;
+	struct iovec vec;
 
-	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
-		while (cnx->status == LINC_CONNECTING)
-			linc_main_iteration (TRUE);
-	}
+	vec.iov_base = (guchar *) buf;
+	vec.iov_len  = len;
 
-	g_return_val_if_fail (cnx->status == LINC_CONNECTED, -1);
-
-	d_printf ("Write %ld bytes to fd %d\n", len, cnx->priv->fd);
-
-	while (len > 0) {
-#ifdef LINC_SSL_SUPPORT
-		if (cnx->options & LINC_CONNECTION_SSL)
-			n = SSL_write (cnx->priv->ssl, buf, len);
-		else
-#endif
-			n = write (cnx->priv->fd, buf, len);
-
-		if (n < 0) {
-#ifdef LINC_SSL_SUPPORT
-			if (cnx->options & LINC_CONNECTION_SSL) {
-				gulong rv;
-
-				rv = SSL_get_error (cnx->priv->ssl, n);
-
-				if ((rv == SSL_ERROR_WANT_READ || 
-				     rv == SSL_ERROR_WANT_WRITE) &&
-				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
-					linc_main_iteration (FALSE);
-				else
-					return -1;
-			} else
-#endif
-			{
-				if (errno == EINTR)
-					continue;
-
-				else if (errno == EAGAIN &&
-					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
-
-					linc_main_iteration (FALSE);
-
-				else if (errno == EBADF) {
-					g_warning ("Serious fd usage error %d", cnx->priv->fd);
-					return -1;
-
-				} else
-					return -1;
-			}
-		} else if (n == 0) /* CHECK: is this really an error condition */
-			return -1;
-
-		else {
-			buf += n;
-			len -= n;
-		}
-
-		if (cnx->status != LINC_CONNECTED)
-			return -1;
-	}
-
-	return 0;
+	return linc_connection_writev (cnx, &vec, 1, opt_write_opts);
 }
 
-/**
- * linc_connection_writev:
- * @cnx: the connection to write to
- * @vecs: a structure of iovecs to write
- * @nvecs: the number of populated iovecs
- * @total_size: the total size of the data
- * 
- * This routine writes data to the abstract connection.
- * FIXME: it allows re-enterancy via linc_connection_iterate
- *        in certain cases.
- * FIXME: on this basis, the connection can die underneath
- *        our feet.
- * 
- * Return value: 0 on success, non 0 on error.
- **/
-int
-linc_connection_writev (LINCConnection *cnx,
-			struct iovec   *vecs,
-			int             nvecs,
-			gulong          total_size)
+static void
+linc_connection_dispose (GObject *obj)
 {
-	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
-		while (cnx->status == LINC_CONNECTING)
-			linc_main_iteration (TRUE);
-	}
+	LINCConnection *cnx = (LINCConnection *)obj;
 
-	d_printf ("Writev %ld bytes to fd %d\n", total_size, cnx->priv->fd);
+	d_printf ("dispose connection %p", obj);
 
-	g_return_val_if_fail (cnx->status == LINC_CONNECTED, -1);
+	linc_source_remove (cnx);
+	queue_free (cnx);
 
-#ifdef LINC_SSL_SUPPORT
-	if (cnx->options & LINC_CONNECTION_SSL) {
-		int i;
+	parent_class->dispose (obj);
+}
 
-		for (i = 0; i < nvecs; i++) {
-			if (linc_connection_write (
-				cnx, vecs[i].iov_base, vecs[i].iov_len))
-				return -1;
-		}
-		return 0;
-	} else
-#endif
-	{
-		int fd, vecs_left;
-		struct iovec *vptr;
-		gulong size_left;
-		
-		vptr = vecs;
-		vecs_left = nvecs;
-		size_left = total_size;
+static void
+linc_connection_finalize (GObject *obj)
+{
+	LINCConnection *cnx = (LINCConnection *)obj;
 
-		fd = cnx->priv->fd;
+	linc_close_fd (cnx);
 
-		while (size_left > 0) {
-			int n;
+	g_free (cnx->remote_host_info);
+	g_free (cnx->remote_serv_info);
 
-			n = writev (fd, vptr, MIN (vecs_left, WRITEV_IOVEC_LIMIT));
+	g_free (cnx->priv);
 
-			if (n < 0) {
-				if (errno == EINTR)
-					continue;
-
-				else if (errno == EAGAIN &&
-					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
-
-					linc_main_iteration (FALSE);
-
-				else if (errno == EBADF) {
-					g_warning ("Serious fd usage error %d", cnx->priv->fd);
-					return -1;
-				} else
-					return -1; /* Unhandlable error */
-
-			} else if (n == 0) /* CHECK: is this really an error condition */
-				return -1;
-
-			else {
-				size_left -= n;
-				if (size_left) {
-					while (n > vptr->iov_len) {
-						n -= vptr->iov_len;
-						vecs_left--;
-						vptr++;
-					}
-					vptr->iov_len -= n;
-				}
-			}
-
-			if (cnx->status != LINC_CONNECTED)
-				return -1;
-		}
-	}
-
-	return 0;
+	parent_class->finalize (obj);
 }
 
 static void
 linc_connection_init (LINCConnection *cnx)
 {
+	d_printf ("create new connection %p", cnx);
+
 	cnx->priv = g_new0 (LINCConnectionPrivate, 1);
 	cnx->priv->fd = -1;
 }
@@ -667,6 +715,15 @@ linc_connection_class_init (LINCConnectionClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
+
+	linc_connection_signals [BLOCKING] =
+		g_signal_new ("blocking",
+			      G_TYPE_FROM_CLASS (object_class),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (LINCConnectionClass, broken),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__ULONG,
+			      G_TYPE_NONE, 1, G_TYPE_ULONG);
 
 	parent_class = g_type_class_peek_parent (klass);
 }
@@ -696,4 +753,120 @@ linc_connection_get_type (void)
 	}  
 
 	return object_type;
+}
+
+
+LINCWriteOpts *
+linc_write_options_new (gboolean block_on_write)
+{
+	LINCWriteOpts *write_opts = g_new0 (LINCWriteOpts, 1);
+
+	write_opts->block_on_write = block_on_write;
+
+	return write_opts;
+}
+
+void
+linc_write_options_free (LINCWriteOpts *write_opts)
+{
+	g_free (write_opts);
+}
+
+void
+linc_connection_set_max_buffer (LINCConnection *cnx,
+				gulong          max_buffer_bytes)
+{
+	g_return_if_fail (cnx != NULL);
+
+	/* FIXME: we might want to check the current buffer size */
+	cnx->priv->max_buffer_bytes = max_buffer_bytes;
+}
+
+static gboolean
+linc_connection_io_handler (GIOChannel  *gioc,
+			    GIOCondition condition,
+			    gpointer     data)
+{
+	LINCConnection      *cnx = data;
+	LINCConnectionClass *klass;
+	int rv, n;
+	socklen_t n_size = sizeof(n);
+
+	g_object_ref (G_OBJECT (cnx));
+
+	klass = (LINCConnectionClass *) G_TYPE_INSTANCE_GET_CLASS (
+		data, LINC_TYPE_CONNECTION, LINCConnection);
+
+	if (cnx->status == LINC_CONNECTED &&
+	    condition & LINC_IN_CONDS && klass->handle_input) {
+		
+		d_printf ("Handle input on fd %d\n", cnx->priv->fd);
+		klass->handle_input (cnx);
+
+	} else if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
+		gboolean done_writes = TRUE;
+
+		d_printf ("IO Out - buffer space free ...");
+
+		if (cnx->priv->write_queue) {
+			QueuedWrite *qw = cnx->priv->write_queue->data;
+			LINCIOStatus status;
+
+			status = write_data (cnx, qw, TRUE);
+
+			d_printf ("Wrote queue %d on fd %d", status, cnx->priv->fd);
+
+			if (status == LINC_IO_OK) {
+				cnx->priv->write_queue = g_list_delete_link (
+					cnx->priv->write_queue, cnx->priv->write_queue);
+				queued_write_free (qw);
+
+			} else if (status == LINC_IO_FATAL_ERROR) {
+				d_printf ("Fatal error on queued write");
+				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+
+			} else
+				done_writes = FALSE;
+		}
+
+		if (done_writes) /* drop G_IO_OUT */
+			linc_watch_set_condition (cnx->priv->tag,
+						  LINC_ERR_CONDS | LINC_IN_CONDS);
+
+	} else if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
+
+		switch (cnx->status) {
+		case LINC_CONNECTING:
+			n = 0;
+			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
+			if (!rv && !n && condition == G_IO_OUT) {
+				d_printf ("State changed to connected on %d\n", cnx->priv->fd);
+
+				linc_watch_set_condition (
+					cnx->priv->tag,
+					LINC_ERR_CONDS | LINC_IN_CONDS);
+
+				linc_connection_state_changed (cnx, LINC_CONNECTED);
+				
+			} else {
+				d_printf ("Error connecting %d %d %d on fd %d\n",
+					   rv, n, errno, cnx->priv->fd);
+				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+			}
+			break;
+		case LINC_CONNECTED: {
+			d_printf ("Disconnect on err: %d\n", cnx->priv->fd);
+			linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+			break;
+		}
+		default:
+			break;
+		}
+	} else
+		g_warning ("Dropping state on fd %d on the floor (%d)",
+			   cnx->priv->fd, condition);
+
+	g_object_unref (G_OBJECT (cnx));
+
+	return TRUE;
 }
