@@ -26,6 +26,10 @@ AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)
 AC_SUBST(LT_AGE)
 
+dnl --with-ssl-dir option
+AC_ARG_WITH( ssl-dir, [  --with-ssl-dir=PATH     Specify path to OpenSSL installation ],
+             ssl_dir="$withval", ssl_dir="" )
+
 # For automake.
 
 AM_CONFIG_HEADER(config.h)
@@ -51,20 +55,35 @@ AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_AWK
 
+dnl Checks for libraries.
+
+dnl Check for OpenSSL libraries
+_save_ldflags="$LDFLAGS"
+
+if test x$ssl_dir != x ; then
+   LDFLAGS="$_save_ldflags -L$ssl_dir/lib"
+fi
+
+AC_CHECK_LIB(ssl,SSL_new,
+             [ LINC_SSL_SUPPORT=1 
+               SSL_LIBS="-lssl -lcrypto"
+               if test x$ssl_dir != x ; then
+                  SSL_LIBS="-L$ssl_dir/lib $SSL_LIBS"; 
+                  SSL_CFLAGS="-I$ssl_dir/include" 
+               fi ],,
+             "-lcrypto")
+
+LDFLAGS="$_save_ldflags"
+
+AC_SUBST(LINC_SSL_SUPPORT)
+AC_SUBST(SSL_LIBS)
+AC_SUBST(SSL_CFLAGS)
+
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
-AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h openssl/ssl.h)
-
-if test $ac_cv_header_openssl_ssl_h = yes; then
-	LINC_SSL_SUPPORT=1
-	SSL_LIBS="-lssl -lcrypto"
-else
-	LINC_SSL_SUPPORT=0
-fi
-AC_SUBST(LINC_SSL_SUPPORT)
-AC_SUBST(SSL_LIBS)
+AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
