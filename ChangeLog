@@ -1,6 +1,5 @@
-Please do not put your ChangeLog in here. CVS already does the work for
-us. If you would like to see a ChangeLog, just type 'rcs2log' in the top
-ORBit directory.
 
-This file is here merely to satisfy the whims of automake. :)
--- Elliot
+Please put your ChangeLog entry here.  I just tried to run the rcs2log
+command at home and all I got was "unkwnon host cvs.gnome.org".  Sadly
+I cant take my roommate off the phone and I can not connect.
+
