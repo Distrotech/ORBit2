@@ -352,7 +352,7 @@ CORBA_Object_non_existent(CORBA_Object _obj,
 {
   if(_obj == CORBA_OBJECT_NIL)
     return TRUE;
-  return ORBit_object_get_connection(_obj)?CORBA_TRUE:CORBA_FALSE;
+  return ORBit_object_get_connection(_obj)?CORBA_FALSE:CORBA_TRUE;
 }
 
 static gboolean

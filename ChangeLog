@@ -1,5 +1,11 @@
 2001-05-16  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-object.c (CORBA_Object_non_existent): 
+	reverse polarity.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_allocbuf):
+	fix silly allocbuf bug.
+
 	* test/everything/client.c: #include yet another
 	.c file - yuck.
 

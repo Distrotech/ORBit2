@@ -821,6 +821,8 @@ int main(int argc, char *argv[])
     factory = CORBA_OBJECT_NIL;
   }
 
+  fprintf (stderr, "\n\n\n --- Out of proc ---\n\n\n\n");
+
   /* Out of Proc */
   { /* read the ior from iorfile, and swizzle to an objref*/
     int size;
@@ -830,6 +832,9 @@ int main(int argc, char *argv[])
     fclose(infile);
     ior[size] = '\0';   /* insure that string is terminated correctly */
     factory = CORBA_ORB_string_to_object(orb, ior, &ev);
+    g_assert(ev._major == CORBA_NO_EXCEPTION);
+    if (CORBA_Object_non_existent (factory, &ev))
+	    g_error ("Start the server before running the client");
     g_assert(ev._major == CORBA_NO_EXCEPTION);
   }
 

@@ -33,7 +33,7 @@ gpointer
 ORBit_small_allocbuf (CORBA_TypeCode tc, CORBA_unsigned_long length)
 {
 	/* see above */
-	return ORBit_alloc_tcval (tc, length);
+	return ORBit_alloc_tcval (tc->subtypes [0], length);
 }
 
 void
