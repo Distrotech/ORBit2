@@ -132,6 +132,8 @@ IDLPassXlate::doStruct (IDL_tree  node,
 
 	// Create typecode and Any stuff
 	struct_create_any (strct);
+
+	m_header << endl;
 }
 
 void IDLPassXlate::struct_create_members (const IDLStruct &strct)
@@ -205,7 +207,6 @@ void IDLPassXlate::struct_create_typedefs (const IDLStruct &strct)
 			 << strct.get_cpp_identifier () << "_out;"
 			 << endl;
 	}
-	m_header << endl;
 }
 
 void IDLPassXlate::struct_create_any (const IDLStruct &strct)
@@ -220,9 +221,7 @@ void IDLPassXlate::struct_create_any (const IDLStruct &strct)
 	m_header << "const CORBA::TypeCode_ptr " << cpp_typecode << " = "
 		 << "(CORBA::TypeCode_ptr)" << c_typecode << ";" << endl;
 
-#if 0 // !!!
-	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(strct, m_state, *this) );
-#endif
+	ORBITCPP_MEMCHECK (new IDLWriteStructAnyFuncs (strct, m_state, *this));
 }
 
 
@@ -756,12 +755,10 @@ IDLPassXlate::doModule (IDL_tree  node,
 	m_header << indent << "} //namespace " << id << endl << endl;
 }
 
-#if 0 //!!!
 void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 	if (!scope.getTopLevelInterface())
 		runJobs(IDL_EV_TOPLEVEL);
 }
-#endif
 
 // IDLWriteArrayProps -------------------------------------------------------
 void IDLWriteArrayProps::run()
@@ -798,6 +795,14 @@ void IDLWriteArrayProps::run()
 	m_header << indent << array_id + "_copy (dest, source);" << endl;
 	m_header << --indent << "}" << endl << endl;
 }
+
+// IDLWriteAnyFuncs -------------------------------------------------------
+IDLWriteAnyFuncs::IDLWriteAnyFuncs (IDLCompilerState &state,
+				    IDLOutputPass    &pass):
+	IDLOutputJob ("", state, pass)
+{
+}
+
 
 void IDLWriteAnyFuncs::writeAnyFuncs (bool          pass_value,
 				      const string &cpptype, 
@@ -867,6 +872,33 @@ void IDLWriteAnyFuncs::writeExtractFunc (ostream      &ostr,
 	     << any_arg << ");" << endl;
 
 	ostr << --indent << endl << "}" << endl << endl;
+}
+
+// IDLWriteStructAnyFuncs -------------------------------------------------------
+IDLWriteStructAnyFuncs::IDLWriteStructAnyFuncs (const IDLStruct  &_struct,
+						IDLCompilerState &state,
+						IDLOutputPass    &pass):
+	IDLWriteAnyFuncs (state, pass),
+	m_element (_struct)
+{
+}
+
+#if 0 //!!!
+IDLWriteStructAnyFuncs::IDLWriteStructAnyFuncs (const IDLUnion   &_union,
+						IDLCompilerState &state,
+						IDLOutputPass    &pass):
+	IDLWriteAnyFuncs (state, pass),
+	m_element (_union)
+{
+}
+#endif
+
+void
+IDLWriteStructAnyFuncs::run()
+{
+	writeAnyFuncs (false,
+		       m_element.get_cpp_typename (),
+		       m_element.get_c_typename ());
 }
 
 void

@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -83,9 +84,7 @@ protected:
  
 	void doInterfaceStaticMethodDeclarations(IDLInterface &iface);
 	void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
-#if 0 //!!!
 	void enumHook(IDL_tree list,IDLScope &scope);
-#endif
 
 	void struct_create_members (const IDLStruct &strct);
 	void struct_create_converters (const IDLStruct &strct);
@@ -119,17 +118,31 @@ public:
 
 class IDLWriteAnyFuncs : public IDLOutputPass::IDLOutputJob {
 protected:
-	void writeAnyFuncs(bool pass_value, string const& cpptype, string const& ctype);
-	IDLWriteAnyFuncs(IDLCompilerState& state, IDLOutputPass &pass)
-		: IDLOutputJob("",state,pass) {}
+	IDLWriteAnyFuncs (IDLCompilerState &state,
+			  IDLOutputPass    &pass);
+
+	void writeAnyFuncs (bool          pass_value,
+			    const string &cpptype,
+			    const string &ctype);
 public:
 	enum FuncType {
 		FUNC_VALUE,
 		FUNC_COPY,
 		FUNC_NOCOPY
 	};
-	static void writeInsertFunc(ostream&, Indent&, FuncType, string, string const&);
-	static void writeExtractFunc(ostream&, Indent&, FuncType, string, string const&);
+	
+	static void writeInsertFunc (ostream      &ostr,
+				     Indent       &indent,
+				     FuncType      func,
+				     string        ident,
+				     const string &ctype);
+	
+	static void writeExtractFunc (ostream      &ostr,
+				      Indent       &indent,
+				      FuncType      func,
+				      string        ident,
+				      const string &ctype);
+	
 	void run() = 0;
 };
 
@@ -145,24 +158,26 @@ public:
 			m_enum.getQualifiedCIdentifier() );
 	}
 };
+#endif
 
 class IDLWriteStructAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLElement const & m_element;
 public:
-	IDLWriteStructAnyFuncs(IDLStruct const& _struct, IDLCompilerState &state, IDLOutputPass &pass)
-		: IDLWriteAnyFuncs(state, pass), m_element(_struct) {}
-	IDLWriteStructAnyFuncs(IDLUnion const& _union, IDLCompilerState &state, IDLOutputPass &pass)
-		: IDLWriteAnyFuncs(state, pass), m_element(_union) {}
+	IDLWriteStructAnyFuncs (const IDLStruct  &_struct,
+				IDLCompilerState &state,
+				IDLOutputPass    &pass);
+#if 0
+	IDLWriteStructAnyFuncs (const IDLUnion   &_union,
+				IDLCompilerState &state,
+				IDLOutputPass    &pass);
+#endif
 
-	void run() {
-		writeAnyFuncs(false, m_element.getQualifiedCPPIdentifier(),
-			m_element.getQualifiedCIdentifier() );
-	}
-
+	void run();
 };
 
 
+#if 0 //!!!
 typedef IDLWriteUnionAnyFuncs IDLWriteStructAnyFuncs;
 #endif
 
