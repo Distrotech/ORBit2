@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -25,75 +26,13 @@
  */
 
 #include "IDLType.hh"
-#include "IDLTypedef.hh"
 
 void
-IDLType::writeInitCode(ostream &ostr, Indent &indent, string const &ident) const {
-  // default is to do nothing
-}
-void
-IDLType::writeCPPDeepCopyCode(ostream &ostr, Indent &indent, string const &ident,string const &target) const {
-	ostr << indent << ident << "=" << target << ";" << endl;
-}
-
-void
-IDLType::writeCDeepCopyCode(ostream &ostr, Indent &indent, string const &ident,string const &target) const {
-	ostr << indent << ident << "=" << target << ";" << endl;
-}
-
-void
-IDLType::writeUnionAccessors(ostream &ostr,Indent &indent, string const &id, string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const{
-	string typespec,dcl;
-	getCPPStubDeclarator(IDL_PARAM_IN,"",typespec,dcl,activeTypedef);
-	ostr
-	<< indent << typespec << dcl << " " << id << "() const {" << endl;
-	ostr << ++indent << getNSScopedCPPTypeName() << " const &_tmp = reinterpret_cast< "
-		 << getNSScopedCPPTypeName() << " const &>(m_target._u." << id << ");" << endl;
-	ostr	
-	<< indent << "return _tmp;" << endl;
-	ostr
-	<< --indent << "}" << endl << endl;
-}
-
-void
-IDLType::writeUnionModifiers(ostream &ostr,Indent &indent, string const &id, string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const{
-	string typespec,dcl;
-	getCPPStubDeclarator(IDL_PARAM_IN,"param",typespec,dcl,activeTypedef);
-	ostr
-	<< indent << "void " << id << "(" << typespec << " " << dcl << "){" << endl;
-	ostr
-	<< ++indent << "_clear_member();" << endl	
-	<< indent << "_d(" << discriminatorVal << ");" << endl;	
-
-	ostr << indent << getNSScopedCTypeName() << " const &_tmp = reinterpret_cast< "
-		 << getNSScopedCTypeName() << " const &>(param);" << endl;
-	writeCDeepCopyCode(ostr,indent,"m_target._u."+id,"_tmp");
-	ostr
-	<< --indent << "}" << endl << endl;	
-}
-
-void
-IDLType::writeUnionReferents(ostream &ostr,Indent &indent, string const &id, string const &discriminatorVal,
-							IDLTypedef const *activeTypedef = NULL) const{
-}
-
-IDLType const &
-IDLType::getResolvedType() const {
-	IDLType const *type = this;
-	IDLTypedef const *td = dynamic_cast<IDLTypedef const*>(this);
-	while(td) {
-		type = &td->getAlias();
-		td = dynamic_cast<IDLTypedef const*>(type);
-		if( !td )
-			break;
-	}
-	return *type;
-}
-
-string
-IDLType::getQualifiedForwarder () const
+IDLType::const_decl_write (ostream          &ostr,
+			   Indent           &indent,
+			   const string     &cpp_id,
+			   const string     &value,
+			   const IDLTypedef *active_typedef) const
 {
-    return getNSScopedCPPTypeName ();
+	throw IDLExNoConstantOfThisType (""); // FIXME
 }

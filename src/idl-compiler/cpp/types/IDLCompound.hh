@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -38,7 +39,11 @@ public:
 	IDLCompound(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
 		: IDLScope(id,node,parentscope) {}
 
-	void writeCPackingCode(ostream &header,Indent &indent,ostream &module,Indent &mod_indent);
+	void write_packing_decl (ostream &ostr,
+				 Indent  &indent) const;
+
+	void write_packing_impl (ostream &ostr,
+				 Indent  &indent) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLCOMPOUND

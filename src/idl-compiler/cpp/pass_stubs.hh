@@ -48,9 +48,12 @@ public:
 	void runPass();
 
 protected:
+#if 0 //!!!
 	void doAttributePrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
+	void doAttributeStub(IDLInterface &iface,IDLInterface
+			     &of,IDL_tree node);
+#endif
 	void doOperationPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
-	void doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node);
 	void doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node);
 	void doInterfaceDownCall(IDLInterface &iface,IDLInterface &of);
 

@@ -48,189 +48,146 @@ public:
 	}
 	bool isBaseClass(IDLInterface *iface);
 
-  	virtual string getCPPStub() const {
-		//return getCPPIdentifier()+"_stub";
-		return getCPPIdentifier();
-	}
 
-	string getCPP_ptr() const {
-		return getCPPIdentifier()+"_ptr";
-	}
-	string getCPP_var() const {
-		return getCPPIdentifier()+"_var";
-	}
-	string getCPP_mgr() const {
-		return getCPPIdentifier()+"_mgr";
-	}
-	string getCPP_out() const {
-		return getCPPIdentifier()+"_out";
-	}
-	string getCPP_POA() {
-		if (getParentScope() == getRootScope()) return "POA_"+getCPPIdentifier();
-		else return getCPPIdentifier();
-	}
-	string getCPP_tie() {
-		return getCPP_POA() + "_tie";
-	}
-	virtual string getQualifiedCPPStub(IDLScope const *up_to = NULL) const {
-		// This is a dodgy hack - fixme!
-		string retval;
-		if(up_to == NULL)
-			retval = IDL_IMPL_STUB_NS + getQualifiedCPPIdentifier();
-		else if (up_to == getRootScope())
-			retval = IDL_IMPL_NS_ID "::" IDL_IMPL_STUB_NS_ID  + getQualifiedCPPIdentifier();
-		else
-			g_error("getQualifiedCPP_stub doesnt support an up_to unless it's rootScope");
-		return retval;
-	}
-
-	string getQualifiedCPP_ptr(IDLScope const *up_to = NULL) const {
-		return getQualifiedCPPIdentifier(up_to) + "_ptr";
-	}
-	string getQualifiedCPP_var(IDLScope const *up_to = NULL) const {
-		return getQualifiedCPPIdentifier(up_to) + "_var";
-	}
-	string getQualifiedCPP_mgr(IDLScope const *up_to = NULL) const {
-		return getQualifiedCPPIdentifier(up_to) + "_mgr";
-	}
-	string getQualifiedCPP_out(IDLScope const *up_to = NULL) const {
-		return getQualifiedCPPIdentifier(up_to) + "_out";
-	}
-
-	string getQualifiedCPPCast(string const &expr) const;
-
-	// cast with ref for smart pointer to normal ptr
-	string getQualifiedCPPSmartptrCast(string const &expr) const {
-		return "reinterpret_cast< "+getQualifiedCPP_ptr()+"&>("+expr+")";
-	}
-
-	bool requiresSmartPtr() const;
-
-	string getQualifiedCPP_POA() const {
-		return "POA_" + getQualifiedCPPIdentifier(getRootScope());
-	}
-	string getQualifiedC_POA() const {
-		return "POA_" + getQualifiedCIdentifier();
-	}
-	string getQualifiedC_epv() const {
-		return "POA_" + getQualifiedCIdentifier()+"__epv";
-	}
-	string getQualifiedC_vepv() const {
-		return "POA_" + getQualifiedCIdentifier()+"__vepv";
-	}
-	string getRepositoryId() const {
-		return IDL_IDENT_REPO_ID(IDL_INTERFACE(getNode()).ident);
-	};
-
-	void getCPPpoaNamespaceDecl(string &ns_begin,string &ns_end) const {
-		getParentScope()->getCPPNamespaceDecl(ns_begin,ns_end,"POA_");
-	}
-	string getCPPpoaIdentifier() const {
-		if (getParentScope() == getRootScope()) return "POA_"+getCPPIdentifier();
-		else return getCPPIdentifier();
-	}
-
-	// misc stuff
-	void getCPPMemberDeclarator (string const     &id,
-				     string           &typespec,
-				     string           &dcl,
-				     IDLTypedef const *activeTypedef = NULL) const;
-    
-	void writeTypedef(ostream &ostr,Indent &indent,IDLCompilerState &state,
-					  IDLElement &dest,IDLScope const &scope,
-					  IDLTypedef const *activeTypedef = NULL) const;
-
-	// Container accessors
-	string getQualifiedForwarder () const;
-	string getForwarder () const;
-	void writeForwarder (ostream &header_ostr,
-			     Indent  &header_indent,
-			     ostream &impl_ostr,
-			     Indent  &impl_indent) const;
 	
-	// struct / exception stuff
-	void getCPPStructCtorDeclarator(string const &id,string &typespec,string &dcl,
-									IDLTypedef const *activeTypedef = NULL) const {
-		typespec = getQualifiedCPP_ptr();
-		dcl = "_par_"+id;
-	}
-	void writeCPPStructCtor(ostream &ostr,Indent &indent,string const &id,
-							IDLTypedef const *activeTypedef = NULL) const {
-		ostr
-			<< indent << id << " = " << getQualifiedCPPCast("_par_"+id)
-			<< ';' << endl;
-	}
-	void writeCPPStructPacker(ostream &ostr,Indent &indent,string const &id,
-							  IDLTypedef const *activeTypedef = NULL) const;
-	void writeCPPStructUnpacker(ostream &ostr,Indent &indent,string const &id,
-								IDLTypedef const *activeTypedef = NULL) const;
+	////////////////////////////////////////////
+	// Stubs
+	string stub_decl_arg_get (const string     &cpp_id,
+				  IDL_param_attr    direction,
+				  const IDLTypedef *active_typedef = 0) const;
 
-	// sequence stuff
-	string getCTypeName() const {
-		return  getQualifiedCIdentifier();
-	}
+	string stub_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
-	// stub stuff
-	void getCPPStubDeclarator(IDL_param_attr attr,string const &id,
-							  string &typespec,string &dcl,
-							  IDLTypedef const *activeTypedef = NULL) const;
-	string getCPPStubParameterTerm(IDL_param_attr attr,string const &id,
-								   IDLTypedef const *activeTypedef = NULL) const;
+	void stub_impl_arg_pre (ostream        &ostr,
+				Indent         &indent,
+				const string   &cpp_id,
+				IDL_param_attr  direction) const;
+	
+	string stub_impl_arg_call (const string   &cpp_id,
+				   IDL_param_attr  direction) const;
+	
+	void stub_impl_arg_post (ostream        &ostr,
+				 Indent         &indent,
+				 const string   &cpp_id,
+				 IDL_param_attr  direction) const;
 
-	// stub return stuff
-	void getCPPStubReturnDeclarator(string const &id,string &typespec,string &dcl,
-									IDLTypedef const *activeTypedef = NULL) const {
-		typespec = getQualifiedCPP_ptr();
-		dcl = id;
-	}
-	void writeCPPStubReturnPrepCode(ostream &ostr,Indent &indent,
-									IDLTypedef const *activeTypedef = NULL) const {
-		ostr
-			<< indent << getNSScopedCTypeName()
-			<< " _retval = NULL;" << endl;
-	}
-	string getCPPStubReturnAssignment() const {
-		return "_retval = ";
-	}
-	void writeCPPStubReturnDemarshalCode(ostream &ostr,Indent &indent,
-										 IDLTypedef const *activeTypedef = NULL) const;
-	// skel stuff
-	void getCSkelDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl,
-							IDLTypedef const *activeTypedef = NULL) const;
-	void writeCPPSkelDemarshalCode(IDL_param_attr attr,string const &id,ostream &ostr,Indent &indent,
-								   IDLTypedef const *activeTypedef = NULL) const;
-	string getCPPSkelParameterTerm(IDL_param_attr attr,string const &id,
-								   IDLTypedef const *activeTypedef = NULL) const {
-		return "_" + id + "_ptr";
-	}
-	void writeCPPSkelMarshalCode(IDL_param_attr attr,string const &id,ostream &ostr,Indent &indent,
-								 IDLTypedef const *activeTypedef = NULL) const;
+	void stub_impl_ret_pre (ostream &ostr,
+				Indent  &indent) const;
 
-	// skel return stuff
-	void getCSkelReturnDeclarator(string const &id,string &typespec,string &dcl,
-								  IDLTypedef const *activeTypedef = NULL) const {
-		typespec = this->getNSScopedCTypeName();
-		dcl = id;
-	}
-	void writeCPPSkelReturnPrepCode(ostream &ostr,Indent &indent,bool passthru,
-									
-									IDLTypedef const *activeTypedef = NULL) const {
-		if (passthru)
-			ostr << indent << getQualifiedCIdentifier() << " _retval;" << endl;
-		else
-			ostr << indent << getQualifiedCPP_ptr()
-				<< " _retval = NULL;" << endl;
-	}
-	string getCPPSkelReturnAssignment(bool passthru,
-									  IDLTypedef const *activeTypedef = NULL) const {
-		return "_retval = ";
-	}
-	void writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,bool passthru,
-									   IDLTypedef const *activeTypedef = NULL) const;
+	void stub_impl_ret_call (ostream      &ostr,
+				 Indent       &indent,
+				 const string &c_call_expression) const;
 
-	string getInvalidReturn() const {
-		return "return NULL;";
-	}
+	void stub_impl_ret_post (ostream &ostr,
+				 Indent  &indent) const;
+	
+	////////////////////////////////////////////
+	// Skels
+
+	string skel_decl_arg_get (const string     &c_id,
+				  IDL_param_attr    direction,
+				  const IDLTypedef *active_typedef = 0) const;
+
+	string skel_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
+	
+	void skel_impl_arg_pre (ostream        &ostr,
+				Indent         &indent,
+				const string   &c_id,
+				IDL_param_attr  direction) const;
+	
+	string skel_impl_arg_call (const string   &c_id,
+				   IDL_param_attr  direction) const;
+	
+	void skel_impl_arg_post (ostream        &ostr,
+				 Indent         &indent,
+				 const string   &c_id,
+				 IDL_param_attr  direction) const;
+
+	void skel_impl_ret_pre (ostream &ostr,
+				Indent  &indent) const ;
+
+	void skel_impl_ret_call (ostream      &ostr,
+				 Indent       &indent,
+				 const string &cpp_call_expression) const;
+
+	void skel_impl_ret_post (ostream &ostr,
+				 Indent  &indent) const;
+
+
+	////////////////////////////////////////////
+	// Members of compund types
+
+	// Compund declaration
+	string get_cpp_member_typename () const;
+
+	string member_decl_arg_get () const;
+	
+	void member_impl_arg_copy (ostream      &ostr,
+				   Indent       &indent,
+				   const string &cpp_id) const;
+
+	// Compound conversion: C++ -> C
+	void member_pack_to_c_pre  (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const;
+
+	void member_pack_to_c_pack (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const;
+
+	void member_pack_to_c_post (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const;
+
+	
+	// Compound conversion: C -> C++
+	void member_unpack_from_c_pre  (ostream      &ostr,
+					Indent       &indent,
+					const string &member_id,
+					const string &c_struct_id) const;
+
+	void member_unpack_from_c_pack (ostream      &ostr,
+					Indent       &indent,
+					const string &member_id,
+					const string &c_struct_id) const;
+
+	void member_unpack_from_c_post  (ostream      &ostr,
+					 Indent       &indent,
+					 const string &member_id,
+					 const string &c_struct_id) const;
+
+public:
+	string get_cpp_stub_identifier () const;
+	string get_cpp_stub_typename () const;
+
+	string get_cpp_poa_identifier () const;
+	string get_cpp_poa_typename () const;
+
+	void get_cpp_poa_namespace (string &ns_begin, string &ns_end) const;
+
+	string get_c_poa_typename () const;
+	string get_c_poa_epv  () const;
+	string get_c_poa_vepv () const;
+
+	string get_cpp_typename_ptr () const;
+	string get_cpp_typename_var () const;
+	string get_cpp_typename_mgr () const;
+	string get_cpp_typename_out () const;
+	
+	string get_cpp_identifier_ptr () const;
+	string get_cpp_identifier_var () const;
+	string get_cpp_identifier_mgr () const;
+	string get_cpp_identifier_out () const;
+
+public:
+	void common_write_typedefs (ostream &ostr, Indent  &indent) const;
+
+protected:
+	bool need_smartptr () const;
+	void create_smartptr (ostream &ostr, Indent  &indent) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLINTERFACE

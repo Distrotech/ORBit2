@@ -30,6 +30,7 @@
 #include "error.hh"
 #include "pass_gather.hh"
 
+#include "types/IDLTypedef.hh"
 
 
 
@@ -63,7 +64,7 @@ IDLPassGather::doTypedef(IDL_tree node,IDLScope &scope) {
 
 
 
-
+#if 0 //!!!
 void 
 IDLPassGather::doStruct(IDL_tree node,IDLScope &scope) {
 	IDLStruct *idlStruct = new IDLStruct(
@@ -94,12 +95,6 @@ IDLPassGather::doUnion(IDL_tree node,IDLScope &scope) {
 
 
 
-void 
-IDLPassGather::doEnum(IDL_tree node,IDLScope &scope) {
-	IDLEnum *enm = new IDLEnum(IDL_IDENT(IDL_TYPE_ENUM(node).ident).str,node,&scope);
-	ORBITCPP_MEMCHECK(enm)
-}
-
 
 
 
@@ -110,18 +105,6 @@ IDLPassGather::doNative(IDL_tree node,IDLScope &scope) {
 
 
 
-
-void 
-IDLPassGather::doConstant(IDL_tree node,IDLScope &scope) {
-	string id;
-	IDLType *type = m_state.m_typeparser.parseTypeSpec(scope,
-		IDL_CONST_DCL(node).const_type);
-	type = m_state.m_typeparser.parseDcl(IDL_CONST_DCL(node).ident,type,id);
-	
-	ORBITCPP_MEMCHECK(
-	 	new IDLConstant(type,id,node,&scope)
-		);
-}
 
 
 
@@ -141,9 +124,25 @@ IDLPassGather::doAttribute(IDL_tree node,IDLScope &scope) {
 		new IDLAttribute(id,node,type_dcl,&scope);
 	}
 }
+#endif
 
+void 
+IDLPassGather::doConstant(IDL_tree node,IDLScope &scope) {
+	string id;
+	IDLType *type = m_state.m_typeparser.parseTypeSpec(scope,
+		IDL_CONST_DCL(node).const_type);
+	type = m_state.m_typeparser.parseDcl(IDL_CONST_DCL(node).ident,type,id);
+	
+	ORBITCPP_MEMCHECK(
+	 	new IDLConstant(type,id,node,&scope)
+		);
+}
 
-
+void 
+IDLPassGather::doEnum(IDL_tree node,IDLScope &scope) {
+	IDLEnum *enm = new IDLEnum(IDL_IDENT(IDL_TYPE_ENUM(node).ident).str,node,&scope);
+	ORBITCPP_MEMCHECK(enm)
+}
 
 void 
 IDLPassGather::doOperation(IDL_tree node,IDLScope &scope) {
@@ -161,12 +160,12 @@ IDLPassGather::doOperation(IDL_tree node,IDLScope &scope) {
 
 	while (parlist) {
 		IDLOperation::ParameterInfo pi;
-		pi.Direction = IDL_PARAM_DCL(IDL_LIST(parlist).data).attr;
-		pi.Type = m_state.m_typeparser.parseTypeSpec(scope,
+		pi.direction = IDL_PARAM_DCL(IDL_LIST(parlist).data).attr;
+		pi.type = m_state.m_typeparser.parseTypeSpec(scope,
 		                                 IDL_PARAM_DCL(IDL_LIST(parlist).data).param_type_spec);
-		pi.Type = m_state.m_typeparser.parseDcl(
+		pi.type = m_state.m_typeparser.parseDcl(
 		                                 IDL_PARAM_DCL(IDL_LIST(parlist).data).simple_declarator,
-		                                 pi.Type, pi.Identifier);
+		                                 pi.type, pi.id);
 
 
 		op->m_parameterinfo.push_back(pi);

@@ -35,9 +35,12 @@ class IDLBoolean
 : public IDLSimpleType,
   public IDLUnionDescriminator
 {
-	string getTypeName() const;
-	string getCTypeName() const;
-	virtual string getDefaultValue(set<string> const &labels) const;
+protected:
+	string get_cpp_typename () const;
+	string get_c_typename () const;
+
+public:
+	string getDefaultValue(set<string> const &labels) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLBOOLEAN

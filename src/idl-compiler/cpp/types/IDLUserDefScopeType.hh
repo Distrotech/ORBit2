@@ -28,8 +28,8 @@
 #ifndef ORBITCPP_TYPES_IDLUSERDEFSCOPETYPE
 #define ORBITCPP_TYPES_IDLUSERDEFSCOPETYPE
 
-#include "language.hh"
 #include "IDLType.hh"
+#include "IDLScope.hh"
 
 class IDLUserDefScopeType
 : public IDLScope,
@@ -39,14 +39,6 @@ public:
 	IDLUserDefScopeType(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
 		: IDLScope(id,node,parentscope) {}
 
-	string getNSScopedCTypeName() const {
-		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
-	}
-
-	string getNSScopedCPPTypeName() const {
-		return getQualifiedCPPIdentifier();
-	}
-	
 	bool isType() {
 		return true;
 	}

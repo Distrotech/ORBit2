@@ -27,314 +27,529 @@
 
 #include "IDLInterface.hh"
 
-bool
-IDLInterface::isBaseClass(IDLInterface *iface) {
-	BaseList::const_iterator first = m_allbases.begin(),last = m_allbases.end();
-	while (first != last)
-		if (*first++ == iface) return true;
-	return false;
+
+/***************************************************
+ * Internal
+ ***************************************************/
+
+namespace
+{
+	
+string get_c_id (const string &cpp_id)
+{
+	return "_c_" + cpp_id;
 }
 
-bool
-IDLInterface::requiresSmartPtr() const
+string get_cpp_id (const string &c_id)
 {
-	for(IDLInterface::BaseList::const_iterator it = m_allbases.begin(); it != m_allbases.end(); it++)
+	return "_cpp_" + c_id;
+}
+
+} // Anonymous namespace
+
+string
+IDLInterface::get_cpp_typename_ptr () const
+{
+	return get_cpp_typename () + "_ptr";
+}
+
+string
+IDLInterface::get_cpp_typename_var () const
+{
+	return get_cpp_typename () + "_var";
+}
+
+string
+IDLInterface::get_cpp_typename_mgr () const
+{
+	return get_cpp_typename () + "_mgr";
+}
+
+string
+IDLInterface::get_cpp_typename_out () const
+{
+	return get_cpp_typename () + "_out";
+}
+
+string
+IDLInterface::get_cpp_identifier_ptr () const
+{
+	return get_cpp_identifier () + "_ptr";
+}
+
+string
+IDLInterface::get_cpp_identifier_var () const
+{
+	return get_cpp_identifier () + "_var";
+}
+
+string
+IDLInterface::get_cpp_identifier_mgr () const
+{
+	return get_cpp_identifier () + "_mgr";
+}
+
+string
+IDLInterface::get_cpp_identifier_out () const
+{
+	return get_cpp_identifier () + "_out";
+}
+
+string
+IDLInterface::get_cpp_stub_identifier () const
+{
+	return get_cpp_identifier ();
+}
+
+string
+IDLInterface::get_cpp_stub_typename () const
+{
+	return IDL_IMPL_STUB_NS + get_cpp_typename ();
+}
+
+string
+IDLInterface::get_cpp_poa_identifier () const
+{
+	return get_cpp_identifier ();
+}
+
+string
+IDLInterface::get_cpp_poa_typename () const
+{
+	return "POA_" + get_cpp_typename ();
+}
+
+string
+IDLInterface::get_c_poa_typename () const
+{
+	return "POA_" + get_c_typename ();
+}
+
+string
+IDLInterface::get_c_poa_epv () const
+{
+	return get_c_poa_typename () + "__epv";
+}
+
+string
+IDLInterface::get_c_poa_vepv () const
+{
+	return get_c_poa_typename () + "__vepv";
+}
+
+void
+IDLInterface::get_cpp_poa_namespace (string &ns_begin,
+				     string &ns_end) const
+{
+	getParentScope()->getCPPNamespaceDecl (ns_begin, ns_end, "POA_");
+}
+
+/***************************************************
+ * Stub
+ ***************************************************/
+
+string
+IDLInterface::stub_decl_arg_get (const string     &cpp_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef) const
+{
+	string retval;
+	
+	switch (direction)
 	{
-		if( (*it)->m_all_mi_bases.begin() != (*it)->m_all_mi_bases.end() )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-
-void
-IDLInterface::writeTypedef(ostream &ostr,Indent &indent,IDLCompilerState &state,
-						   IDLElement &dest,IDLScope const &scope,
-						   IDLTypedef const *activeTypedef = NULL) const {
-	string id = dest.getCPPIdentifier();
-	ostr
-	<< indent << "typedef " << getCPPIdentifier() << ' ' << id << ';' << endl
-	<< indent << "typedef " << getCPP_ptr() << ' ' << id << "_ptr" << ';' <<  endl
-	<< indent << "typedef " << getCPP_mgr() << ' ' << id << "_mgr" << ';' <<  endl
-	<< indent << "typedef " << getCPP_var() << ' ' << id << "_var" << ';' <<  endl
-	<< indent << "typedef " << getCPP_out() << ' ' << id << "_out" << ';' <<  endl
-	<< indent << "typedef " << getCPPIdentifier() << "Ref " << id << "Ref" << ';' <<  endl;
-
-	// extra effort to typedef POA_ type
-	string ns_outer_begin,ns_outer_end,ns_inner_begin,ns_inner_end;
-	dest.getParentScope()->getCPPNamespaceDecl(ns_outer_begin,ns_outer_end);
-	dest.getParentScope()->getCPPNamespaceDecl(ns_inner_begin,ns_inner_end,"POA_");
-
-	ostr
-	<< indent << ns_outer_end << ns_inner_begin << endl;
-	indent++;
-	ostr
-	<< indent << "typedef " << getQualifiedCPP_POA() << ' ';
-	if (dest.getParentScope() == getRootScope())
-		ostr << "POA_";
-	ostr << id << ';' << endl;
-	
-	// *** FIXME what about the _tie class?
-
-	indent--;
-	ostr
-	<< indent << ns_inner_end << ns_outer_begin << endl;
-}
-
-
-
-
-void
-IDLInterface::writeCPPStructPacker(ostream &ostr,Indent &indent,string const &id,
-								      IDLTypedef const *activeTypedef = NULL) const {
-	ostr
-	<< indent << IDL_IMPL_NS "::release_guarded(_cstruct." << id << ");" << endl
-	<< indent << "_cstruct." << id << " = "
-	<< IDL_IMPL_NS "::duplicate_guarded(*" << id << ".in());" << endl;
-}
-
-
-
-
-void
-IDLInterface::writeCPPStructUnpacker(ostream &ostr,Indent &indent,string const &id,
-									    IDLTypedef const *activeTypedef = NULL) const {
-	ostr
-	<< id << " = "
-	<< getQualifiedCPPCast(IDL_IMPL_NS "::duplicate_guarded(_cstruct."+id+")")
-	<< ';' << endl;
-}
-
-
-
-
-void
-IDLInterface::getCPPStubDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl,
-								   IDLTypedef const *activeTypedef=NULL) const {
-	dcl = id;
-
-	switch (attr) {
 	case IDL_PARAM_IN:
-		typespec = getQualifiedCPP_ptr();
+		retval = get_cpp_typename_ptr () + " " + cpp_id;
 		break;
 	case IDL_PARAM_INOUT:
-		typespec = getQualifiedCPP_ptr();
-		dcl = '&' + dcl;
+		retval = get_cpp_typename_ptr () + " &" + cpp_id;
 		break;
 	case IDL_PARAM_OUT:
-		typespec = getQualifiedCPP_out();
+		retval = get_cpp_typename_out () + " " + cpp_id;
+		break;
+	}
+
+	return retval;
+}
+
+void
+IDLInterface::stub_impl_arg_pre (ostream        &ostr,
+				 Indent         &indent,
+				 const string   &cpp_id,
+				 IDL_param_attr  direction) const
+{
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		ostr << indent << "const " << get_c_typename () << " "
+		     << get_c_id (cpp_id)
+		     << " = " << cpp_id << "->_orbitcpp_get_c_object ();"
+		     << endl;
+		break;
+
+	case IDL_PARAM_INOUT:
+		ostr << indent << get_c_typename () << " "
+		     << get_c_id (cpp_id)
+		     << " = " << cpp_id << "->_orbitcpp_get_object ();"
+		     << endl;
+		break;
+
+	case IDL_PARAM_OUT:
+		ostr << indent << get_c_typename () << " "
+		     << get_c_id (cpp_id)
+		     << " = " << "CORBA_OBJECT_NIL;"
+		     << endl;
 		break;
 	}
 }
+	
+string
+IDLInterface::stub_impl_arg_call (const string   &cpp_id,
+				  IDL_param_attr  direction) const
+{
+	string retval;
+	
+	switch (direction)
+	{
+	case IDL_PARAM_INOUT:
+		retval = get_c_id (cpp_id);
+		break;
+	case IDL_PARAM_OUT:
+		retval = "&" + get_c_id (cpp_id);
+		break;
+	}
+
+	return retval;
+}
+	
+void
+IDLInterface::stub_impl_arg_post (ostream        &ostr,
+				  Indent         &indent,
+				  const string   &cpp_id,
+				  IDL_param_attr  direction) const
+{
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		// Do nothing
+		break;
+	case IDL_PARAM_INOUT:
+	case IDL_PARAM_OUT:
+		ostr << indent << cpp_id << " = "
+		     << get_cpp_stub_typename () << "::wrap"
+		     << " (" << get_c_id (cpp_id) << ");"
+		     << endl;
+	}
+}
+
 
 
 
 string
-IDLInterface::getCPPStubParameterTerm(IDL_param_attr    attr,
-				      string const     &id,
-				      IDLTypedef const *activeTypedef = NULL) const
+IDLInterface::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 {
-	string ctype = getNSScopedCTypeName();
-
-	switch (attr) {
-	case IDL_PARAM_IN:
-		return id + "->_orbitcpp_get_c_object ()";
-		return id + "->_orbitcpp_get_c_object()";
-	case IDL_PARAM_INOUT:
-		return "&(" + id + "->_orbitcpp_get_c_object ())";
-	case IDL_PARAM_OUT:
-		return "&(" + id + "->_orbitcpp_get_c_object ())";
-	}
-	return "";
 }
-
-
-void
-IDLInterface::writeCPPStubReturnDemarshalCode (ostream          &ostr,
-					       Indent           &indent,
-					       IDLTypedef const *activeTypedef = NULL) const
-{
-	ostr << indent << "return " << getQualifiedCPPStub ()
-	     << "::_orbitcpp_wrap (_retval, false);"
-	     << endl;
-}
-
-
-
-void
-IDLInterface::getCSkelDeclarator (IDL_param_attr    attr,
-				  string const     &id,
-				  string           &typespec,
-				  string           &dcl,
-				  IDLTypedef const *activeTypedef = NULL) const
-{
-	typespec = getNSScopedCTypeName();
-
-	switch (attr) {
-	case IDL_PARAM_IN:
-		dcl = id;
-		break;
-	case IDL_PARAM_INOUT:
-		dcl = '*' + id;
-		break;
-	case IDL_PARAM_OUT:
-		dcl = '*' + id;
-		break;
-	}
-}
-
-
-
-
-void
-IDLInterface::writeCPPSkelDemarshalCode (IDL_param_attr    attr,
-					 string const     &id,
-					 ostream          &ostr,
-					 Indent           &indent,
-					 IDLTypedef const *activeTypedef = NULL) const
-{
-	string ptr_name = "_" + id + "_ptr";
-	string ptr_decl = getQualifiedCPP_var () + " " + ptr_name;
 	
-	switch (attr) {
-		
+void
+IDLInterface::stub_impl_ret_pre (ostream &ostr,
+				 Indent  &indent) const
+{
+	// Do nothing
+}
+
+void
+IDLInterface::stub_impl_ret_call (ostream      &ostr,
+				  Indent       &indent,
+				  const string &c_call_expression) const
+{
+	ostr << indent << get_c_typename () << " _retval = "
+	     << c_call_expression << ";" << endl;
+}
+
+void
+IDLInterface::stub_impl_ret_post (ostream &ostr,
+				  Indent  &indent) const
+{
+	// WRITE ME
+}
+	
+
+
+
+/***************************************************
+ * Skel
+ ***************************************************/
+
+string
+IDLInterface::skel_decl_arg_get (const string     &c_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef) const
+{
+	switch (direction)
+	{
 	case IDL_PARAM_IN:
-		ostr << indent << ptr_decl << " = "
-		     << getQualifiedCPPCast (IDL_IMPL_NS "::duplicate_guarded (" + id + ")")
+		return get_c_typename () + " " + c_id;
+	case IDL_PARAM_INOUT:
+	case IDL_PARAM_OUT:
+		return get_c_typename () + " *" + c_id;
+	}
+}
+
+void
+IDLInterface::skel_impl_arg_pre (ostream        &ostr,
+				 Indent         &indent,
+				 const string   &c_id,
+				 IDL_param_attr  direction) const
+{
+	// WRITE ME
+}
+	
+string
+IDLInterface::skel_impl_arg_call (const string   &c_id,
+				  IDL_param_attr  direction) const
+{
+	// WRITE ME
+}
+	
+void
+IDLInterface::skel_impl_arg_post (ostream        &ostr,
+				  Indent         &indent,
+				  const string   &c_id,
+				  IDL_param_attr  direction) const
+{
+	// WRITE ME
+}
+
+
+
+
+string
+IDLInterface::skel_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+	// WRITE ME
+}
+
+void
+IDLInterface::skel_impl_ret_pre (ostream &ostr,
+				 Indent  &indent) const
+{
+	ostr << indent << get_cpp_typename_ptr () << " _retval"
+	     << ';' << endl;
+}
+
+void
+IDLInterface::skel_impl_ret_call (ostream      &ostr,
+				  Indent       &indent,
+				  const string &cpp_call_expression) const
+{
+	ostr << indent << " _retval = " << cpp_call_expression
+	     << ';' << endl;
+}
+
+void
+IDLInterface::skel_impl_ret_post (ostream &ostr,
+				  Indent  &indent) const
+{
+	// WRITE ME
+}
+
+
+/***************************************************
+ * Member
+ ***************************************************/
+
+string
+IDLInterface::get_cpp_member_typename () const
+{
+	return get_cpp_typename_mgr ();
+}
+
+string
+IDLInterface::member_decl_arg_get () const
+{
+	return get_cpp_typename_ptr ();
+}
+	
+void
+IDLInterface::member_impl_arg_copy (ostream      &ostr,
+				    Indent       &indent,
+				    const string &cpp_id) const
+{
+	// WRITE ME
+	ostr << indent << cpp_id << " = _par_" << cpp_id
+	     << ';' << endl;
+}
+
+void
+IDLInterface::member_pack_to_c_pre  (ostream      &ostr,
+				     Indent       &indent,
+				     const string &member_id,
+				     const string &c_struct_id) const
+{
+	// Do nothing
+}
+
+void
+IDLInterface::member_pack_to_c_pack (ostream      &ostr,
+				     Indent       &indent,
+				     const string &member_id,
+				     const string &c_struct_id) const
+{
+	string c_id = c_struct_id + '.' + member_id;
+	string cpp_id = member_id;
+	
+	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_object ()"
+	     << ';' << endl;
+}
+
+void
+IDLInterface::member_pack_to_c_post (ostream      &ostr,
+				Indent       &indent,
+				const string &member_id,
+				const string &c_struct_id) const
+{
+	// Do nothing
+}
+
+void
+IDLInterface::member_unpack_from_c_pre  (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const
+{
+	// Do nothing
+}
+
+void
+IDLInterface::member_unpack_from_c_pack (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const
+{
+	string c_id = c_struct_id + '.' + member_id;
+	string cpp_id = member_id;
+	
+	ostr << indent << cpp_id << " = "
+	     << get_cpp_stub_typename () << "::_orbitcpp_wrap ("
+	     << "::_orbitcpp::duplicate_guarded (" << c_id << ")"
+	     << ")"
+	     << ';' << endl;
+}
+
+void
+IDLInterface::member_unpack_from_c_post  (ostream      &ostr,
+				     Indent       &indent,
+				     const string &member_id,
+				     const string &c_struct_id) const
+{
+	// Do nothing
+}
+
+bool
+IDLInterface::need_smartptr () const
+{
+	for (IDLInterface::BaseList::const_iterator i = m_allbases.begin ();
+	     i != m_allbases.end (); i++)
+	{
+                if ((*i)->m_all_mi_bases.size())
+                        return true;
+	}
+	
+        return false;
+}
+
+void
+IDLInterface::create_smartptr (ostream &ostr,
+			       Indent  &indent) const
+{
+	string ptr_name = get_cpp_identifier_ptr ();
+	string stub_name = get_cpp_stub_typename ();
+	
+	ostr << indent << "class " << ptr_name
+	     << indent++ << "{" << endl;
+
+
+
+	ostr << indent << stub_name << " *m_target;" << endl;
+
+	ostr << --indent++ << "public:" << endl;
+
+	ostr << indent << ptr_name << "() : m_target (0) {};" << endl;
+	ostr << indent << ptr_name << "(" << stub_name <<" *ptr) : m_target(ptr) {};" << endl;
+
+	ostr << indent << ptr_name << " &operator =(" << stub_name << " *ptr)" << endl
+	     << indent++ << '{' << endl;
+	ostr << "m_target = ptr;" << endl
+	     << "return *this;" << endl
+	     << --indent << '}' << endl;
+
+	ostr << indent << stub_name << " * operator-> ()" << endl
+	     << indent++ << '{' << endl;
+	ostr << "return m_target;" << endl
+	     << --indent << '}' << endl;
+
+#if 0 // FIXME: Is this necessary?
+	// Commented out
+	ostr << indent << "// operator CORBA::Object * () " << endl
+	     << indent++ << "// {" << endl;
+	ostr << indent << "// return reinterpret_cast<CORBA::Object*>(m_target);"
+	     << --indent << "// }" << endl;
+
+
+	IDLInterface::BaseList::const_iterator
+	first, last = iface.m_allbases.end();
+
+	for (first = iface.m_allbases.begin();first != last;first++) {
+		m_header
+		<< indent << "//operator " << (*first)->getQualifiedCPPStub() << " *() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
+	}
+	
+	m_header
+	<< indent <<"// These shouldn't be necessary, but gcc 2.95.2 barfs without them"<<endl;
+	for (first = iface.m_allbases.begin();first != last;first++) {
+		m_header
+		<< indent << "//operator " << (*first)->getQualifiedCPP_var() << "() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
+	}
+	m_header
+		<< --indent << "};" << endl;
+#endif
+}
+
+void
+IDLInterface::common_write_typedefs (ostream &ostr,
+				     Indent  &indent) const
+{
+	// check the MI situation and write a smartptr if required.
+	if (need_smartptr ())
+	{
+		create_smartptr (ostr, indent);
+
+		ostr << indent << "typedef " IDL_IMPL_NS "::ObjectSmartPtr_var"
+		     << "<" << get_cpp_identifier () << ", " << get_cpp_identifier_ptr () << "> "
+		     << get_cpp_identifier () << "_var;" << endl;
+
+	} else {
+		
+		ostr << indent << "typedef " << get_cpp_stub_typename ()
+		     << "* " << get_cpp_identifier_ptr ()
 		     << ';' << endl;
-		break;
 		
-	case IDL_PARAM_INOUT:
-		ostr << indent << ptr_decl << " = "
-		     << getQualifiedCPPCast (IDL_IMPL_NS "::duplicate_guarded (*" + id +")")
+		ostr << indent << "typedef "IDL_IMPL_NS "::ObjectPtr_var"
+		     << "<" << get_cpp_identifier () << ", " << get_cpp_identifier_ptr () << "> "
+		     << get_cpp_identifier_var ()
 		     << ';' << endl;
-		break;
-		
-	case IDL_PARAM_OUT:
-		ostr << indent << ptr_decl << ';' << endl;
-		break;
 	}
-}
-
-
-
-
-void
-IDLInterface::writeCPPSkelMarshalCode (IDL_param_attr    attr,
-				       string const     &id,
-				       ostream          &ostr,
-				       Indent           &indent,
-				       IDLTypedef const *activeTypedef = NULL) const
-{
-	string ptrname = "_" + id + "_ptr";
-	switch (attr) {
-	case IDL_PARAM_INOUT:
-	case IDL_PARAM_OUT:
-		ostr << indent << "*" << id << " = "
-		     << ptrname << "._retn ()->_orbitcpp_get_c_object ();" << endl;
-	default:
-		break;
-	}
-}
-
-
-void
-IDLInterface::writeCPPSkelReturnMarshalCode (ostream          &ostr,
-					     Indent           &indent,
-					     bool              passthru,
-					     IDLTypedef const *activeTypedef = NULL) const
-{
-	ostr << indent << "return _retval->_orbitcpp_get_c_object ();" << endl;
-}
-
-string
-IDLInterface::getQualifiedCPPCast (string const &expr) const
-{
-	return getQualifiedCPPStub () + "::_orbitcpp_wrap ((" + expr + "), false)";
-}
-
-void
-IDLInterface::getCPPMemberDeclarator (string const     &id,
-				      string           &typespec,
-				      string           &dcl,
-				      IDLTypedef const *activeTypedef = NULL) const
-{
-	typespec = getQualifiedCPP_mgr (getRootScope ()) + "_forwarder";
-	dcl = id;
-}
-
-string
-IDLInterface::getForwarder () const
-{
-    return getCPPIdentifier () + "_forwarder";
-}
-
-string
-IDLInterface::getQualifiedForwarder () const
-{
-    return getNSScopedCPPTypeName () + "_forwarder";
-}
-
-void
-IDLInterface::writeForwarder (ostream &header_ostr,
-			      Indent  &header_indent,
-			      ostream &impl_ostr,
-			      Indent  &impl_indent) const
-{
-	// Forwarder header
-	header_ostr << header_indent << "class " << getForwarder () << endl
-		    << header_indent << "{" << endl;
-	header_ostr << ++header_indent << getCTypeName () << " &c_obj;" << endl;
-	header_ostr << --header_indent << "public:" << endl;
-	header_ostr << ++header_indent << getForwarder () << " ("
-		    << getCTypeName () << " &c_obj);" << endl;
-	header_ostr << header_indent << "void operator=" << " ("
-		    << getCPP_mgr () << " &cpp_obj);" << endl;
-	header_ostr << header_indent << "operator " << getCPP_mgr () << " () const;" << endl;
-	header_ostr << header_indent << getCPP_mgr () << " operator-> () const;" << endl;
-	header_ostr << --header_indent << "};" << endl << endl;
 	
-	// Forwarder implementation
-	string mgr_name =
-		getQualifiedCPPIdentifier (getRootScope ()) + "_mgr";
 	
-	impl_ostr << impl_indent << getQualifiedForwarder () << "::"
-		  << getForwarder () << " (" << getCTypeName () << " &c_obj_) :" << endl
-		  << impl_indent << "c_obj (c_obj_)" << endl
-		  << impl_indent << "{}" << endl << endl;
-	
-	impl_ostr << impl_indent << "void " << getQualifiedForwarder () << "::"
-		  << "operator= (" << mgr_name << " &cpp_obj)" << endl
-		  << impl_indent << "{" << endl
-		  << ++impl_indent << "c_obj =  cpp_obj->_orbitcpp_get_c_object ();" << endl
-		  << --impl_indent << "}" << endl << endl;
-	
-	impl_ostr << impl_indent << getQualifiedForwarder () << "::"
-		  << "operator " << mgr_name << " () const" << endl
-		  << impl_indent << "{" << endl
-		  << ++impl_indent << "return "
-		  << IDL_IMPL_STUB_NS << getNSScopedCPPTypeName ()
-		  << "::_orbitcpp_wrap (c_obj);" << endl
-		  << --impl_indent << "}" << endl << endl;
+	ostr << indent << "typedef " << get_cpp_identifier_var ()
+	     << " " << get_cpp_identifier_mgr ()
+	     << ';' << endl;
 
-	// We need to remove '::' from the beginning of
-	// getQualifiedForwarder for operator implementations to work
-	string forwarder_classname_raw = getQualifiedForwarder ();
-	string::iterator i = forwarder_classname_raw.begin ();
-	while (i != forwarder_classname_raw.end () && *i == ':')
-		i++;
+	ostr << indent << "typedef " IDL_IMPL_NS "::Object_ptr_out"
+	     << "<" << get_cpp_identifier () << ", " << get_cpp_identifier_ptr () << "> "
+	     << get_cpp_identifier_out ();
 
-	string forwarder_classname (i, forwarder_classname_raw.end ());
+	ostr << indent << "typedef " << get_cpp_identifier_ptr ()
+	     << " " << get_cpp_identifier () << "Ref"
+	     << ';' << endl;
 	
-	impl_ostr << impl_indent << mgr_name << " "
-		  << forwarder_classname << "::operator-> () const" << endl
-		  << impl_indent << "{" << endl
-		  << ++impl_indent << "return "
-		  << IDL_IMPL_STUB_NS << getNSScopedCPPTypeName ()
-		  << "::_orbitcpp_wrap (c_obj);" << endl
-		  << --impl_indent << "}" << endl << endl;
 }

@@ -50,24 +50,18 @@ IDLEnum::const_iterator IDLEnum::end() const
 	return m_elements.end();
 }
 
-string IDLEnum::getInvalidReturn() const
+string IDLEnum::getDefaultValue (set<string> const &labels) const
 {
-	return "return "
-		+ (*begin())->getNSScopedCTypeName() + ";";
-}
+	string result = "";
 
-
-string IDLEnum::getDefaultValue(set<string> const &labels)const {
-	const_iterator it=begin();
-	string result="";
-
-	while(it != end()){
-		string test = (*it)->getQualifiedCPPIdentifier();
-		if(labels.find(test) == labels.end()){
+	for (const_iterator i = begin (); i != end (); i++)
+	{
+		string test = (*i)->get_cpp_typename ();
+		if (labels.find (test) == labels.end ())
+		{
 			result = test;
 			break;
 		}
-		it++;
 	}
 
 	return result;

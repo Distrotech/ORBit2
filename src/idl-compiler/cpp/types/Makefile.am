@@ -13,48 +13,48 @@ if ENABLE_CPP
 noinst_LTLIBRARIES = libidl-cpp-types.la
 
 headers = \
-  IDLAny.hh \
-  IDLArray.hh \
-  IDLArrayList.hh \
+#  IDLAny.hh \
+#  IDLArray.hh \
+#  IDLArrayList.hh \
   IDLBoolean.hh \
   IDLCompound.hh \
   IDLEnum.hh \
   IDLException.hh \
   IDLInterface.hh \
   IDLObject.hh \
-  IDLSequence.hh \
-  IDLSequenceList.hh \
+#  IDLSequence.hh \
+#  IDLSequenceList.hh \
   IDLSimpleType.hh \
   IDLString.hh \
-  IDLStruct.hh \
+#  IDLStruct.hh \
   IDLType.hh \
-  IDLTypeCode.hh \
+#  IDLTypeCode.hh \
   IDLTypedef.hh \
-  IDLUnion.hh \
+#  IDLUnion.hh \
   IDLUserDefScopeType.hh \
   IDLUserDefSimpleType.hh \
   IDLUserDefType.hh \
   IDLVoid.hh
 
 modules = \
-  IDLAny.cc \
-  IDLArray.cc \
-  IDLArrayList.cc \
+#  IDLAny.cc \
+#  IDLArray.cc \
+#  IDLArrayList.cc \
   IDLBoolean.cc \
   IDLCompound.cc \
   IDLEnum.cc \
   IDLException.cc \
   IDLInterface.cc \
   IDLObject.cc \
-  IDLSequence.cc \
-  IDLSequenceList.cc \
+#  IDLSequence.cc \
+#  IDLSequenceList.cc \
   IDLSimpleType.cc \
   IDLString.cc \
-  IDLStruct.cc \
+#  IDLStruct.cc \
   IDLType.cc \
-  IDLTypeCode.cc \
+#  IDLTypeCode.cc \
   IDLTypedef.cc \
-  IDLUnion.cc \
+#  IDLUnion.cc \
   IDLUserDefScopeType.cc \
   IDLUserDefSimpleType.cc \
   IDLUserDefType.cc \

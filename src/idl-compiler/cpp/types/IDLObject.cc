@@ -25,3 +25,26 @@
  */
 
 #include "IDLObject.hh"
+
+IDLObject::IDLObject ():
+	IDLInterface ("Object",0,0)
+{
+}
+
+string
+IDLObject::get_idl_typename () const
+{
+	return "CORBA::Object";
+}
+
+string
+IDLObject::get_c_typename   () const
+{
+	return "CORBA_Object";
+}
+
+string
+IDLObject::get_cpp_typename () const
+{
+	return "::CORBA::Object";
+}

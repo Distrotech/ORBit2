@@ -48,10 +48,7 @@ public:
 	const_iterator begin() const;
 	const_iterator end() const;
 
-  string getInvalidReturn() const;
-
-	virtual string getDefaultValue(set<string> const &labels)const;
-
+	virtual string getDefaultValue(set<string> const &labels) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLENUM

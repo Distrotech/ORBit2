@@ -10,9 +10,11 @@ types. There are four operations:
    3. As return values of a CORBA interface's method
    4. As a member of another, composite type
 
+
 1. Definition
 This currently implemented in the pass_* source files, so we won't
 bother with them for the time being.
+
 
 2. As parameters to a CORBA interface's method
 3. As return values of a CORBA interface's method
@@ -30,3 +32,10 @@ Each type implements each of these steps, via the
 do nothing in the pre/post code -- for example, since atomic C++ types
 are simple typedefs of the C types, you can do a call instantly
 without any setup in pre/post-call time.
+
+
+4. As a member of another, composite type
+The steps needed are:
+   -- Getting the C++ type used for composite members of that type
+	(e.g. CORBA::Object --> CORBA::Object_ptr)
+   -- Converting from C++ member type to C member type and vice versa

@@ -43,6 +43,9 @@ public:
 	string getRepositoryId() {
 		return IDL_IDENT_REPO_ID(IDL_EXCEPT_DCL(getNode()).ident);
 	};
+
+	void stub_check_and_propagate (ostream &ostr,
+				       Indent  &indent) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLEXCEPTION
