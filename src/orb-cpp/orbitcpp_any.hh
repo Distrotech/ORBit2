@@ -27,12 +27,11 @@
 #define __ORBITCPP_ANY_HH
 
 #include <cstdlib>
-#include <orb/orbit.h>
-#include <orb/orbitcpp_types.hh>
-#include <orb/orbitcpp_object.hh>
-#include <orb/orbitcpp_exception.hh>
-//#include <orb/corba_typecode.h>
-#include <orb/orbitcpp_typecode.hh>
+#include <orbit/orbit.h>
+#include "orbitcpp_types.hh"
+#include "orbitcpp_object.hh"
+#include "orbitcpp_exception.hh"
+#include "orbitcpp_typecode.hh"
 
 namespace CORBA {
 	class Any;

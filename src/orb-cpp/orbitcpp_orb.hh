@@ -32,7 +32,7 @@
 
 
 
-#include <orb/orbitcpp_object.hh>
+#include "orbitcpp_object.hh"
 
 namespace CORBA {
 	CORBA::ORB_ptr ORB_init(int& argc, char** argv,

@@ -29,9 +29,9 @@
 
 
 
-#include <orb/orbitcpp_types.hh>
-#include <orb/orbitcpp_tools.hh>
-#include <orb/orbitcpp_smartptr.hh>
+#include "orbitcpp_types.hh"
+#include "orbitcpp_tools.hh"
+#include "orbitcpp_smartptr.hh"
 
 
 
@@ -61,7 +61,7 @@ namespace CORBA {
 		friend void release(Object_ptr o);
 	
 	protected:
-		CORBA_Object_struct m_target;
+		CORBA_Object_type m_target;
 		
 	public:
 		// begin ORBit-C++ extension

@@ -30,8 +30,9 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <orb/orbitcpp_tools.hh>
-#include <orb/orbitcpp_exception.hh>
+#include "orbitcpp_tools.hh"
+#include "orbitcpp_exception.hh"
+#include <orbit/orb-core/corba-orb.h>
 
 
 
@@ -64,10 +65,7 @@ void _orbitcpp::error(char *text) {
 }
 
 CORBA_TypeCode _orbitcpp::TypeCode_allocate() {
-	CORBA_TypeCode tc = g_new0(struct CORBA_TypeCode_struct,1);
-	CEnvironment ev;
-	ORBit_pseudo_object_init(&tc->parent,ORBIT_PSEUDO_TYPECODE,ev);
-	ev.propagate_sysex();
+	CORBA_TypeCode tc = CORBA_TypeCode_allocate();
 	return tc;
 }
 

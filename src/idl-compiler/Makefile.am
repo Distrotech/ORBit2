@@ -15,8 +15,11 @@ INCLUDES =                                    \
 	$(WARN_CFLAGS)                        \
 	$(ORBIT_IDL_CFLAGS)
 
-# FIXME: this should be conditional
+if ENABLE_CPP
 CPP_BACKEND_LIBS = cpp/libidl-cpp.la
+else
+CPP_BACKEND_LIBS =
+endif
 
 orbit_idl_2_LDADD =                          \
 	-lpopt -lm                           \

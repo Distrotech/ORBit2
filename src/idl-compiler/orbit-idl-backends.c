@@ -31,13 +31,17 @@
 #endif
 #include <string.h>
 
-/* FIXME: should be condtional */
+/* This should really be in a header file... */
+#ifdef ORBIT_ENABLE_CPP
 void orbit_idl_output_cpp (OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
+#endif
 
 static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
 	{ "c", &orbit_idl_output_c },
+#ifdef ORBIT_ENABLE_CPP
 	{ "c++", &orbit_idl_output_cpp },
 	{ "cpp", &orbit_idl_output_cpp },
+#endif
 	{ NULL, NULL }
 };
 

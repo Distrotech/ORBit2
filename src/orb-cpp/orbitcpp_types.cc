@@ -26,7 +26,7 @@
 
 
 
-#include <orb/orbitcpp_types.hh>
+#include "orbitcpp_types.hh"
 
 
 

@@ -32,19 +32,19 @@
 
 
 
-#include <orb/orbitcpp_constants.hh>
-#include <orb/orbitcpp_types.hh>
-#include <orb/orbitcpp_smartptr.hh>
-#include <orb/orbitcpp_tools.hh>
-#include <orb/orbitcpp_exception.hh>
-#include <orb/orbitcpp_object.hh>
-#include <orb/orbitcpp_orb.hh>
-#include <orb/orbitcpp_sequence.hh>
-#include <orb/orbitcpp_poa.hh>
-#include <orb/orbitcpp_any.hh>
+#include "orbitcpp_constants.hh"
+#include "orbitcpp_types.hh"
+#include "orbitcpp_smartptr.hh"
+#include "orbitcpp_tools.hh"
+#include "orbitcpp_exception.hh"
+#include "orbitcpp_object.hh"
+#include "orbitcpp_orb.hh"
+#include "orbitcpp_sequence.hh"
+#include "orbitcpp_poa.hh"
+#include "orbitcpp_any.hh"
 
 // hopefully this will be removed when the object_var stuff gets
 // sorted out.  - PD
-#include <orb/orbitcpp_var_smartptr.hh>
+#include "orbitcpp_var_smartptr.hh"
 
 #endif

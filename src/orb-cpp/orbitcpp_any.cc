@@ -24,19 +24,24 @@
  *  Description: CORBA Any implementation
  */
 #include <cwchar>
-#include <orb/orbit.h>
-#include <orb/orbitcpp.hh>
+#include <orbit/orbit.h>
+#include "orbitcpp.hh"
 #include "orbitcpp_any.hh"
+#include <string.h>
 
 
 /* ORBit_demarshal_allocate_mem cut & paste - this should ideally be
    global */
 
+/* FIXME: This is sure to be broken for ORBit2. */
 static gpointer
 ORBit_demarshal_allocate_mem(CORBA_TypeCode tc, gint nelements)
 {
-    size_t block_size;
     gpointer retval = NULL;
+
+	/* And it seems to be quite broken. */
+#if 0
+    size_t block_size;
 
     if(!nelements) return retval;
 
@@ -50,6 +55,7 @@ ORBit_demarshal_allocate_mem(CORBA_TypeCode tc, gint nelements)
 
 	*(CORBA_TypeCode *)((char *)retval-sizeof(ORBit_mem_info)-sizeof(CORBA_TypeCode)) = (CORBA_TypeCode)CORBA_Object_duplicate((CORBA_Object)tc, NULL);
     }
+#endif
 
     return retval;
 }

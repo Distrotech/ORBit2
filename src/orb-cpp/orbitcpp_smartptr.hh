@@ -33,8 +33,8 @@
 
 
 
-#include <orb/orbitcpp_types.hh>
-#include <orb/orbitcpp_tools.hh>
+#include "orbitcpp_types.hh"
+#include "orbitcpp_tools.hh"
 
 namespace CORBA {
 	class Object;
