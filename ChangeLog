@@ -1,3 +1,9 @@
+2003-07-29  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: disable linux/irda.h check / include,
+	causing misc. problems, and the code is unused anyway.
+	#118495.
+
 2003-07-29  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/orb-core/corba-loc.c (corbaloc_profile_iiop_parse):
