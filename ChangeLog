@@ -1,3 +1,8 @@
+2002-01-07  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/services/name/Makefile.am: install idl files in
+	$(datadir)/idl/orbit-2.0.
+
 2002-01-04  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testSegv): remove
