@@ -8,6 +8,10 @@ aclocal.m4
 stamp-h.in
 stamp-h
 config.h
+INSTALL
+missing
+mkinstalldirs
+install-sh
 Makefile
 Makefile.in
 configure

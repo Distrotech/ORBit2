@@ -27,6 +27,7 @@ INCLUDES =				\
 	-I$(top_srcdir)/include		\
 	-DORBIT2_INTERNAL_API		\
 	$(WARN_CFLAGS)			\
+	$(DISABLE_DEPRECATED_CFLAGS)	\
 	$(ORBIT_NAME_CFLAGS)
 
 CosNaming_built = 							\
