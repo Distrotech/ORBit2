@@ -1,3 +1,7 @@
+2001-08-16  Mark McLoughlin <mark@skynet.ie>
+
+	* configure.in: Cache ACLOCAL_FLAGS.
+
 2001-08-16  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: bump version to 0.1.2
