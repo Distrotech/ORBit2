@@ -28,6 +28,7 @@ module test {
 	const string CONST_STRING = "ConstString";
 	const float CONST_FLOAT = 1234.56;
 	const double CONST_DOUBLE = 1234.5678;
+	const long double CONST_LONG_DOUBLE = 1234.567891;
 	const boolean CONST_BOOLEAN = TRUE;
 	enum Colour { red, green, blue }; 
 	const Colour FAVORITE_COLOUR = red; 
@@ -152,6 +153,9 @@ module test {
 		string opString(in string inArg, inout string inoutArg, out string outArg);
 		long opLong(in long inArg, inout long inoutArg, out long outArg);
 		long long opLongLong(in long long inArg, inout long long inoutArg, out long long outArg);
+		float opFloat (in float inArg, inout float inoutArg, out float outArg);
+		double opDouble (in double inArg, inout double inoutArg, out double outArg);
+		long double opLongDouble (in long double inArg, inout long double inoutArg, out long double outArg);
 		AnEnum opEnum(in AnEnum inArg, inout AnEnum inoutArg, out AnEnum outArg);
 		void opException() raises(TestException);
 		oneway void opOneWay(in string inArg);
@@ -217,17 +221,24 @@ module test {
 
 	typedef string StrArray2[20];
 
-	union ArrayUnion switch(boolean) {
-	case 0: StrArray2 d;
+	union ArrayUnion switch(unsigned short) {
+	case 22: StrArray2 d;
 	};
 
+	typedef sequence <VariableLengthUnion> unionSeq;
+
 	interface UnionServer {
-		FixedLengthUnion opFixed(in FixedLengthUnion inArg, 
-								  inout FixedLengthUnion inoutArg,
-								  out FixedLengthUnion outArg);
-		VariableLengthUnion opVariable(in VariableLengthUnion inArg, 
-								  inout VariableLengthUnion inoutArg,
-								  out VariableLengthUnion outArg);
+		FixedLengthUnion opFixed (in FixedLengthUnion    inArg, 
+					  inout FixedLengthUnion inoutArg,
+					  out FixedLengthUnion   outArg);
+
+		VariableLengthUnion opVariable (in VariableLengthUnion    inArg, 
+						inout VariableLengthUnion inoutArg,
+						out VariableLengthUnion   outArg);
+
+		EnumUnion opMisc (in unionSeq     inSeq,
+				  in BooleanUnion inArg,
+				  out ArrayUnion  outArg);
 	};
 
 	interface AnyServer {

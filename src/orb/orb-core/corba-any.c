@@ -272,8 +272,9 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 }
 
 static glong
-ORBit_get_union_switch (CORBA_TypeCode tc, gconstpointer *val, 
-		       gboolean update)
+ORBit_get_union_switch (CORBA_TypeCode  tc,
+			gconstpointer  *val, 
+			gboolean        update)
 {
 	glong retval = 0; /* Quiet gcc */
 
@@ -319,9 +320,9 @@ ORBit_get_union_tag (CORBA_TypeCode union_tc,
 		     gconstpointer *val, 
 		     gboolean       update)
 {
-	glong discrim_val, case_val;
-	int i;
 	CORBA_TypeCode retval = CORBA_OBJECT_NIL;
+	glong          discrim_val;
+	int            i;
 
 	discrim_val = ORBit_get_union_switch (
 		union_tc->discriminator, val, update);
@@ -370,7 +371,6 @@ gboolean
 ORBit_demarshal_value (CORBA_TypeCode tc,
 		      gpointer *val,
 		      GIOPRecvBuffer *buf,
-		      gboolean dup_strings,
 		      CORBA_ORB orb)
 {
 	CORBA_long i;
@@ -495,7 +495,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_ANY);
 		decoded = *val;
 		decoded->_release = CORBA_FALSE;
-		if (ORBit_demarshal_any (buf, decoded, dup_strings, orb))
+		if (ORBit_demarshal_any (buf, decoded, orb))
 			return TRUE;
 		*val = ((guchar *)*val) + sizeof (CORBA_any);
 		break;
@@ -541,7 +541,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 	case CORBA_tk_struct:
 		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		for (i = 0; i < tc->sub_parts; i++) {
-			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, dup_strings, orb))
+			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, orb))
 				return TRUE;
 		}
 		break;
@@ -552,7 +552,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		int	        sz = 0;
 
 		discrim = *val = ALIGN_ADDRESS (*val, MAX (tc->discriminator->c_align, tc->c_align));
-		if (ORBit_demarshal_value (tc->discriminator, val, buf, dup_strings, orb))
+		if (ORBit_demarshal_value (tc->discriminator, val, buf, orb))
 			return TRUE;
 
 		subtc = ORBit_get_union_tag (tc, (gconstpointer*)&discrim, FALSE);
@@ -560,7 +560,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 
 		body = *val = ALIGN_ADDRESS (*val, tc->c_align);
-		if (ORBit_demarshal_value (subtc, &body, buf, dup_strings, orb))
+		if (ORBit_demarshal_value (subtc, &body, buf, orb))
 			return TRUE;
 
 		/* WATCHOUT: end subtc body may not be end of union */
@@ -580,12 +580,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		if ((buf->cur + i) > buf->end
 		    || (buf->cur + i) < buf->cur)
 			return TRUE;
-		if (dup_strings) {
-			*(char **)*val = CORBA_string_dup (buf->cur);
-		} else {
-			*(((ORBitMemHow *) (buf->cur))-1) = ORBIT_MEMHOW_NONE;
-			*(char **)*val = buf->cur;
-		}
+		*(char **)*val = CORBA_string_dup (buf->cur);
 		*val = ((guchar *)*val) + sizeof (CORBA_char *);
 		buf->cur += i;
 		break;
@@ -622,7 +617,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 
 			for (i = 0; i < p->_length; i++)
 				if (ORBit_demarshal_value (tc->subtypes[0], &subval,
-							   buf, dup_strings, orb))
+							   buf, orb))
 					return TRUE;
 		}
 
@@ -631,7 +626,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 	}
 	case CORBA_tk_array:
 		for (i = 0; i < tc->length; i++)
-			if (ORBit_demarshal_value (tc->subtypes[0], val, buf, dup_strings, orb))
+			if (ORBit_demarshal_value (tc->subtypes[0], val, buf, orb))
 				return TRUE;
 		break;
 	case CORBA_tk_fixed:
@@ -647,14 +642,13 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 gpointer
 ORBit_demarshal_arg (GIOPRecvBuffer *buf,
 		     CORBA_TypeCode tc,
-		     gboolean       dup_strings,
 		     CORBA_ORB      orb)
 {
 	gpointer retval, val;
 
 	retval = val = ORBit_alloc_by_tc (tc);
 
-	ORBit_demarshal_value (tc, &val, buf, dup_strings, orb);
+	ORBit_demarshal_value (tc, &val, buf, orb);
 
 	return retval;
 }
@@ -662,7 +656,6 @@ ORBit_demarshal_arg (GIOPRecvBuffer *buf,
 gboolean
 ORBit_demarshal_any (GIOPRecvBuffer *buf,
 		     CORBA_any      *retval,
-		     gboolean        dup_strings,
 		     CORBA_ORB       orb)
 {
 	gpointer val;
@@ -673,8 +666,7 @@ ORBit_demarshal_any (GIOPRecvBuffer *buf,
 		return TRUE;
 
 	val = retval->_value = ORBit_alloc_by_tc (retval->_type);
-	if (ORBit_demarshal_value (retval->_type, &val,
-				   buf, dup_strings, orb))
+	if (ORBit_demarshal_value (retval->_type, &val, buf, orb))
 		return TRUE;
 
 	return FALSE;

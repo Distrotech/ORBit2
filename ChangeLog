@@ -1,3 +1,47 @@
+2002-01-30  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-any.h: kill dup_strings
+	arg from demarshal funcs. Kill duplicated 
+	ORBit_demarshal_value.
+
+	* src/orb/GIOP/giop-recv-buffer.c:
+	(giop_IOP_ServiceContextList_demarshal): upd for dup_strings.
+
+	* src/orb/orb-core/corba-any.c:
+	(ORBit_get_union_tag): kill unused variable.
+	(ORBit_demarshal_value), (ORBit_demarshal_arg),
+	(ORBit_demarshal_any): kill dup_strings arg.
+
+	* src/orb/orb-core/orbit-small.c:
+	(ORBit_handle_exception_array): upd for dup_strings.
+	(ORBit_small_marshal_context): move branch to
+	(orbit_small_marshal): here. We rarely take this branch, so
+	lets kill the fuction call overhead for the common case.
+	(orbit_small_demarshal), (ORBit_small_invoke_adaptor): upd
+	for dup_strings change.
+
+	* test/everything/basicServer.c: (BasicServer_opString),
+	(BasicServer_opFloat), (BasicServer_opDouble),
+	(BasicServer_opLongDouble): implement floating point tests.
+
+	* test/everything/unionServer.c: (UnionServer_opMisc): impl another
+	union test.
+
+	* test/everything/client.c:
+	(testConst): test float, double and long double constants.
+	(testFloat), (testDouble), (testLongDouble): use floating point
+	tests.
+	(testMiscUnions): use new union test.
+	(testAnyException): add output.
+	(testAnyEquivalence): test ORBit_any_equivalent and ORBit_copy_value
+	code paths.
+	(test_BasicServer_opExceptionA): update vtable offset.
+	(run_tests): run new tests.
+
+	* test/everything/constants.h: add floating point constants.
+
+	* test/everything/everything.idl: add idl for new tests.
+
 2002-01-29  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-orb.c: clean up.

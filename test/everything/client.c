@@ -47,14 +47,14 @@ static void
 testConst (void)
 {
 	d_print ("Testing constants...\n");
-	g_assert (test_CONST_CHAR=='t');
-	g_assert (test_CONST_LONG==0x12345678);
-	g_assert (test_CONST_LONG_LONG==0x12345678);
-	g_assert (strcmp (test_CONST_STRING, "ConstString")==0);
-	/* I can never get constant floats to compare properly. */
-	/* g_assert (test_CONST_FLOAT==1234.56); */
-	g_assert (test_CONST_DOUBLE==1234.5678);
-	g_assert (test_FAVORITE_COLOUR==test_red);
+	g_assert (test_CONST_CHAR == 't');
+	g_assert (test_CONST_LONG == 0x12345678);
+	g_assert (test_CONST_LONG_LONG == 0x12345678);
+	g_assert (!strcmp (test_CONST_STRING, "ConstString"));
+	g_assert (test_CONST_FLOAT == 1234.56);
+	g_assert (test_CONST_DOUBLE == 1234.5678);
+	g_assert (test_CONST_LONG_DOUBLE == 1234.567891);
+	g_assert (test_FAVORITE_COLOUR == test_red);
 }
 
 static void
@@ -163,6 +163,72 @@ testLongLong (test_TestFactory   factory,
 	g_assert (inoutArg == constants_LONG_LONG_INOUT_OUT);
 	g_assert (outArg == constants_LONG_LONG_OUT);
 	g_assert (retn == constants_LONG_LONG_RETN);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
+testFloat (test_TestFactory   factory, 
+	   CORBA_Environment *ev)
+{
+	test_BasicServer objref;
+	CORBA_float inArg, inoutArg, outArg, retn;
+
+	d_print ("Testing floats...\n");
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	inArg = constants_FLOAT_IN;
+	inoutArg = constants_FLOAT_INOUT_IN;
+	retn = test_BasicServer_opFloat (objref, inArg, &inoutArg, &outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (inArg == constants_FLOAT_IN);
+	g_assert (inoutArg == constants_FLOAT_INOUT_OUT);
+	g_assert (outArg == constants_FLOAT_OUT);
+	g_assert (retn == constants_FLOAT_RETN);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
+testDouble (test_TestFactory   factory, 
+	    CORBA_Environment *ev)
+{
+	test_BasicServer objref;
+	CORBA_double inArg, inoutArg, outArg, retn;
+
+	d_print ("Testing doubles...\n");
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	inArg = constants_DOUBLE_IN;
+	inoutArg = constants_DOUBLE_INOUT_IN;
+	retn = test_BasicServer_opDouble (objref, inArg, &inoutArg, &outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (inArg == constants_DOUBLE_IN);
+	g_assert (inoutArg == constants_DOUBLE_INOUT_OUT);
+	g_assert (outArg == constants_DOUBLE_OUT);
+	g_assert (retn == constants_DOUBLE_RETN);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
+testLongDouble (test_TestFactory   factory, 
+	    CORBA_Environment *ev)
+{
+	test_BasicServer objref;
+	CORBA_long_double inArg, inoutArg, outArg, retn;
+
+	d_print ("Testing long doubles...\n");
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	inArg = constants_LONG_DOUBLE_IN;
+	inoutArg = constants_LONG_DOUBLE_INOUT_IN;
+	retn = test_BasicServer_opLongDouble (objref, inArg, &inoutArg, &outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (inArg == constants_LONG_DOUBLE_IN);
+	g_assert (inoutArg == constants_LONG_DOUBLE_INOUT_OUT);
+	g_assert (outArg == constants_LONG_DOUBLE_OUT);
+	g_assert (retn == constants_LONG_DOUBLE_RETN);
 	CORBA_Object_release (objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
@@ -633,6 +699,64 @@ testVariableLengthUnion (test_TestFactory   factory,
 }
 
 static void
+testMiscUnions (test_TestFactory   factory, 
+	        CORBA_Environment *ev)
+{
+	test_UnionServer   obj;
+	test_EnumUnion     retn;
+	test_unionSeq      inSeq;
+	test_BooleanUnion  inArg;
+	test_ArrayUnion   *outArg;
+	int                i;
+
+	d_print ("Testing misc type unions...\n");
+	obj = test_TestFactory_getUnionServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	inSeq._length  = inSeq._maximum = 3;
+	inSeq._buffer  = test_unionSeq_allocbuf (3);
+	inSeq._release = CORBA_TRUE;
+	inSeq._buffer [0]._d   = 4;
+	inSeq._buffer [0]._u.z = CORBA_TRUE;
+	inSeq._buffer [1]._d   = 2;
+	inSeq._buffer [1]._u.y = CORBA_string_dup ("blah");
+	inSeq._buffer [2]._d   = 55;
+	inSeq._buffer [2]._u.w = constants_LONG_IN;
+
+	inArg._d   = 1;
+	inArg._u.y = CORBA_string_dup ("blah de blah");
+
+	retn = test_UnionServer_opMisc (obj, &inSeq, &inArg, &outArg, ev);
+
+	g_assert (inSeq._length == 3);
+	g_assert (inSeq._buffer [0]._d == 4);
+	g_assert (inSeq._buffer [0]._u.z == CORBA_TRUE);
+	g_assert (inSeq._buffer [1]._d == 2);
+	g_assert (!strcmp (inSeq._buffer [1]._u.y, "blah"));
+	g_assert (inSeq._buffer [2]._d == 55);
+	g_assert (inSeq._buffer [2]._u.w == constants_LONG_IN);
+	g_assert (inArg._d == 1);
+	g_assert (!strcmp (inArg._u.y, "blah de blah"));
+
+	g_assert (outArg->_d == 22);
+	for (i = 0; i < 20; i++) {
+		char *tmp;
+
+		tmp = g_strdup_printf ("Numero %d", i);
+		g_assert (!strcmp (outArg->_u.d [i], tmp));
+		g_free (tmp);
+	}
+
+	g_assert (retn._d == test_red);
+	g_assert (retn._u.x == constants_LONG_IN);
+
+	CORBA_free (outArg);
+
+	CORBA_Object_release (obj, ev);
+  	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
 testFixedLengthArray (test_TestFactory   factory, 
 		      CORBA_Environment *ev)
 {
@@ -935,6 +1059,8 @@ testAnyException (test_TestFactory   factory,
 	CORBA_any *inArg; 
 	test_TestException *testex;
 
+	d_print ("Testing Any with exception...\n");
+
 	inArg = CORBA_any__alloc ();
 	testex = test_TestException__alloc ();  
 	inArg->_type = (CORBA_TypeCode) TC_test_TestException;
@@ -942,6 +1068,69 @@ testAnyException (test_TestFactory   factory,
 	CORBA_any_set_release (inArg, CORBA_TRUE);
 
 	CORBA_free (inArg);
+}
+
+static void
+testAnyEquivalence (test_TestFactory   factory, 
+		    CORBA_Environment *ev)
+{
+	test_unionSeq *aseq, *bseq;
+	CORBA_any     *a, *b;
+
+	d_print ("Testing Anys equivalence...\n");
+
+	a = CORBA_any__alloc ();
+	b = CORBA_any__alloc ();
+
+	a->_type = b->_type = (CORBA_TypeCode) TC_test_unionSeq;
+
+	aseq = test_unionSeq__alloc ();
+	bseq = test_unionSeq__alloc ();
+	aseq->_length  = aseq->_maximum = 3;
+	bseq->_length  = bseq->_maximum = 3;
+	aseq->_buffer  = test_unionSeq_allocbuf (3);
+	bseq->_buffer  = test_unionSeq_allocbuf (3);
+	bseq->_release = aseq->_release = CORBA_TRUE;
+	bseq->_buffer [0]._d   = aseq->_buffer [0]._d   = 4;
+	bseq->_buffer [0]._u.z = aseq->_buffer [0]._u.z = CORBA_TRUE;
+	bseq->_buffer [1]._d   = aseq->_buffer [1]._d   = 2;
+	aseq->_buffer [1]._u.y = CORBA_string_dup ("blah");
+	bseq->_buffer [1]._u.y = CORBA_string_dup ("blah");
+	bseq->_buffer [2]._d   = aseq->_buffer [2]._d   = 55;
+	bseq->_buffer [2]._u.w = aseq->_buffer [2]._u.w = constants_LONG_IN;
+
+	a->_value = aseq;
+	b->_value = bseq;
+
+	CORBA_any_set_release (a, CORBA_TRUE);
+	CORBA_any_set_release (b, CORBA_TRUE);
+
+	g_assert (ORBit_any_equivalent (a, b, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	bseq->_buffer [0]._u.z = CORBA_FALSE;
+
+	g_assert (!ORBit_any_equivalent (a, b, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_free (b);
+	b = NULL;
+	bseq = NULL;
+
+	b = ORBit_copy_value (a, TC_CORBA_any);
+
+	g_assert (b != NULL);
+	g_assert (ORBit_any_equivalent (a, b, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	bseq = (test_unionSeq *) b->_value;
+	bseq->_buffer [0]._u.z = CORBA_FALSE;
+
+	g_assert (!ORBit_any_equivalent (a, b, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_free (a);
+	CORBA_free (b);
 }
 
 static void
@@ -1218,7 +1407,7 @@ test_BasicServer_opExceptionA (CORBA_Object       obj,
 {
 	ORBit_IMethod *m_data;
 
-	m_data = &test_BasicServer__iinterface.methods._buffer[7];
+	m_data = &test_BasicServer__iinterface.methods._buffer [10];
 	/* if this failed, we re-ordered the IDL ... */
 	g_assert (!strcmp (m_data->name, "opException"));
 
@@ -1528,6 +1717,9 @@ run_tests (test_TestFactory   factory,
 		testString (factory, ev);
 		testLong (factory, ev);
 		testLongLong (factory, ev);
+		testFloat (factory, ev);
+		testDouble (factory, ev);
+		testLongDouble (factory, ev);
 		testEnum (factory, ev);
 		testException (factory, ev);
 		testFixedLengthStruct (factory, ev);
@@ -1539,6 +1731,7 @@ run_tests (test_TestFactory   factory,
 		testBoundedSequence (factory, ev);
 		testFixedLengthUnion (factory, ev);
 		testVariableLengthUnion (factory, ev);
+		testMiscUnions (factory, ev);
 		testFixedLengthArray (factory, ev);
 		testVariableLengthArray (factory, ev);
 		testAnyStrSeq (factory, ev);
@@ -1546,6 +1739,7 @@ run_tests (test_TestFactory   factory,
 		testAnyString (factory, ev);
 		testAnyStruct (factory, ev);
 		testAnyException (factory, ev);
+		testAnyEquivalence (factory, ev);
 		testSequenceOfAny (factory, ev);
 		testTypeCode (factory, ev);
 		testContext (factory, ev);

@@ -152,7 +152,7 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 			dprintf (MESSAGES, "de-marshal user exception\n");
 
 			data = ORBit_demarshal_arg (
-				rb, types->_buffer [i], TRUE, orb);
+				rb, types->_buffer [i], orb);
 
 			/* FIXME: might be fixed one day by cunning detection
 			   in CORBA_exception_set ... */
@@ -213,36 +213,34 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 			     ORBit_IMethod  *m_data,
 			     CORBA_Context   ctx)
 {
-	if (m_data->contexts._length > 0) {
-		int i;
-		/* Horrible inefficiency to get round the 'lete
-		   efficiency of the current impl */
-		ORBit_ContextMarshalItem *mlist;
+	int i;
+	/* Horrible inefficiency to get round the 'lete
+	   efficiency of the current impl */
+	ORBit_ContextMarshalItem *mlist;
 
-		mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
-				m_data->contexts._length);
+	mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
+			m_data->contexts._length);
 
-		tprintf (" context { ");
+	tprintf (" context { ");
 
-		for (i = 0; i < m_data->contexts._length; i++) {
-			char *val;
+	for (i = 0; i < m_data->contexts._length; i++) {
+		char *val;
 
-			mlist [i].str = m_data->contexts._buffer [i];
+		mlist [i].str = m_data->contexts._buffer [i];
 
-			val = g_hash_table_lookup (ctx->mappings, mlist [i].str);
-			tprintf ("( %s: '%s' )%s", mlist [i].str, val,
-				 i < m_data->contexts._length - 1 ? ", ": "");
+		val = g_hash_table_lookup (ctx->mappings, mlist [i].str);
+		tprintf ("( %s: '%s' )%s", mlist [i].str, val,
+			 i < m_data->contexts._length - 1 ? ", ": "");
 
-			mlist [i].len = strlen (mlist [i].str) + 1;
-		}
-
-		tprintf (" }");
-
-		/* Assumption, this doesn't whack mlist pointers into
-		   the send_buffer: verified */
-		ORBit_Context_marshal (
-			ctx, mlist, m_data->contexts._length, send_buffer);
+		mlist [i].len = strlen (mlist [i].str) + 1;
 	}
+
+	tprintf (" }");
+
+	/* Assumption, this doesn't whack mlist pointers into
+	   the send_buffer: verified */
+	ORBit_Context_marshal (
+		ctx, mlist, m_data->contexts._length, send_buffer);
 }
 
 #define BASE_TYPES \
@@ -284,7 +282,7 @@ typedef struct {
 #define do_marshal_value(a,b,c)     \
 	ORBit_marshal_value   ((a),(gconstpointer *)(b),(c))
 #define do_demarshal_value(a,b,c,e) \
-	ORBit_demarshal_value ((c),(b),(a),TRUE,(e))
+	ORBit_demarshal_value ((c),(b),(a),(e))
 
 static gboolean
 orbit_small_marshal (CORBA_Object           obj,
@@ -357,7 +355,8 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	tprintf (")");
 
-	ORBit_small_marshal_context (send_buffer, m_data, ctx);
+	if (m_data->contexts._length > 0)
+		ORBit_small_marshal_context (send_buffer, m_data, ctx);
 
 	do_giop_dump_send (send_buffer);
 
@@ -430,7 +429,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		case SEQ_ANY_TYPES:
 		case CORBA_tk_array:
 		default:
-			data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, orb);
+			data = ORBit_demarshal_arg (recv_buffer, tc, orb);
 			if (!data)
 				return MARSHAL_SYS_EXCEPTION_COMPLETE;
 
@@ -501,7 +500,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 					do_demarshal_value (recv_buffer, &arg, tc, orb);
 				} else
 					*(gpointer *)args [i] = p = ORBit_demarshal_arg (
-						recv_buffer, tc, TRUE, obj->orb);
+						recv_buffer, tc, obj->orb);
 
 				if (!trace_have_out++)
 					tprintf (" out: (");
@@ -724,8 +723,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 					break;
 				} /* drop through */
 			default:
-				args [i] = ORBit_demarshal_arg (
-					recv_buffer, a->tc, TRUE, orb);
+				args [i] = ORBit_demarshal_arg (recv_buffer, a->tc, orb);
 				p = args [i];
 				tprintf_trace_value (&p, tc);
 				break;
