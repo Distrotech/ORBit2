@@ -28,9 +28,11 @@
 #include <gmodule.h>
 #include <glib/garray.h>
 #include "../poa/orbit-poa-export.h"
+#include "orb-core-private.h"
 
 #undef DEBUG
 #undef TYPE_DEBUG
+#undef TRACE_DEBUG
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -93,6 +95,15 @@ dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
 }
 
 #endif /* DEBUG */
+
+#ifndef TRACE_DEBUG
+static inline void tprintf (const char *format, ...) { };
+#define tprintf_trace_value(a,b,c)
+#else
+#define tprintf(format...) fprintf(stderr, format)
+#define tprintf_trace_value(a,b,c) \
+	ORBit_trace_value ((gconstpointer *)(a), (b), (c))
+#endif
 
 static void
 ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
@@ -249,6 +260,8 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 		   efficiency of the current impl */
 		ORBit_ContextMarshalItem *mlist;
 
+		tprintf (" context { [impl. me] } ");
+
 		mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
 				m_data->contexts._length);
 
@@ -262,24 +275,6 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 			ctx, mlist, m_data->contexts._length, send_buffer);
 	}
 }
-
-/* CORBA_tk_, CORBA_ type, C-stack type, wire size in bits, wire size in bytes, print format */
-/*
- * For future use in an strace type utility.
- *
-#define _ORBIT_BASE_TYPE_MACRO							\
-	_ORBIT_HANDLE_TYPE (short, short, int, 16, 2, "%d");			\
-	_ORBIT_HANDLE_TYPE (long, long, int, 32, 4, "0x%x");			\
-	_ORBIT_HANDLE_TYPE (enum, long, int, 32, 4, "%d");			\
-	_ORBIT_HANDLE_TYPE (ushort, unsigned_short, unsigned int, 16, 2, "%u"); \
-	_ORBIT_HANDLE_TYPE (ulong, unsigned_long, unsigned int, 32, 4, "0x%x");	\
-	_ORBIT_HANDLE_TYPE (boolean, boolean, int, 8, 1, "%d");			\
-	_ORBIT_HANDLE_TYPE (char, char, int, 8, 1, "%c");			\
-	_ORBIT_HANDLE_TYPE (wchar, wchar, int, 16, 2, "%c");			\
-	_ORBIT_HANDLE_TYPE (octet, octet, int, 8, 1, "0x%x");			\
-	_ORBIT_HANDLE_TYPE (float, float, double, 32, 4, "%f");			\
-	_ORBIT_HANDLE_TYPE (double, double, double, 64, 8, "%g");
-*/
 
 #define BASE_TYPES \
 	     CORBA_tk_short: \
@@ -381,11 +376,18 @@ orbit_small_marshal (CORBA_Object           obj,
 		dump_arg (a, tc);
 
 		p = args [i];
-		
 		do_marshal_value (send_buffer, &p, tc, &mi);
+
+		p = args [i];
+		tprintf_trace_value (&p, tc, &mi);
+
+		if (m_data->arguments._buffer [i+1].flags)
+			tprintf (", ");
 
 		dprintf ("\n");
 	}
+
+	tprintf (")");
 
 	ORBit_small_marshal_context (send_buffer, m_data, ctx);
 
@@ -438,6 +440,8 @@ orbit_small_demarshal (CORBA_Object           obj,
 
 	dprintf ("Demarshal ");
 
+	tprintf (" => ");
+
 	if ((tc = m_data->ret)) {
 		dprintf ("ret: ");
 
@@ -450,6 +454,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		case BASE_TYPES:
 		case OBJ_STRING_TYPES:
 			do_demarshal_value (recv_buffer, &ret, tc, orb);
+/*			tprintf_trace_value (&ret, tc, NULL); */
 			dprintf ("base type / [p]obj / [w]string");
 			break;
 
@@ -585,6 +590,12 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 		goto system_exception;
 	}
 
+#ifdef TRACE_DEBUG
+	tprintf ("ORBit2: (");
+	ORBit_trace_objref (obj);
+	tprintf (")->%s (", m_data->name);
+#endif
+
 retry_request:
 	request_id = GPOINTER_TO_UINT (&obj);
 	completion_status = CORBA_COMPLETED_NO;
@@ -623,9 +634,11 @@ retry_request:
 		break;
 	};
  clean_out:
+	tprintf ("\n");
 	return;
 
  system_exception:
+	tprintf ("[System exception comm failure] )");
 	CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 				    completion_status);
 	goto clean_out;
@@ -1215,7 +1228,9 @@ load_module (const char *fname, const char *libname)
 			src = module->interfaces [i];
 			dest = &iinterfaces->_buffer [i];
 
-			ORBit_copy_value_core (&src, &dest, TC_ORBit_IInterface);
+			ORBit_copy_value_core ((gconstpointer *) &src,
+					       (gpointer *) &dest,
+					       TC_ORBit_IInterface);
 			dest = &iinterfaces->_buffer [i];
 			add_iinterface (dest);
 

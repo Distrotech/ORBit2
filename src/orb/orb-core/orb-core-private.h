@@ -33,4 +33,15 @@ void     IOP_profile_marshal( CORBA_Object obj, GIOPSendBuffer *buf, gpointer *p
 gboolean ORBit_demarshal_IOR( CORBA_ORB orb, GIOPRecvBuffer *buf,
 			      char **ret_type_id, GSList **ret_profiles);
 
+/*
+ * Trace code.
+ */ 
+
+void     ORBit_trace_objref   (const CORBA_Object   obj);
+void     ORBit_trace_any      (const CORBA_any     *any);
+void     ORBit_trace_typecode (const CORBA_TypeCode tc);
+void     ORBit_trace_value    (gconstpointer       *val,
+			       CORBA_TypeCode       tc,
+			       ORBit_marshal_value_info *mi);
+
 #endif
