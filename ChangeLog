@@ -1,3 +1,9 @@
+2002-03-20  Gregory Leblanc  <gleblanc@linuxweasel.com>
+
+	* ORBit.spec.in:  Lots of re-writing and such.
+	* configure.in: Added AC_SUBST for a couple of missing variables
+	used in the spec file 
+
 2002-03-20  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/iop-profiles.c:
