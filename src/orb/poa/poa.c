@@ -1237,6 +1237,66 @@ push_request_T (GIOPThread       *thread,
 		(thread, (gpointer *)pobj, (gpointer *)recv_buffer);
 }
 
+typedef struct {
+	ORBit_POAObject  pobj;
+	GIOPRecvBuffer  *recv_buffer;
+} PoaIdleClosure;
+
+static gboolean
+poa_invoke_at_idle (gpointer data)
+{
+	PoaIdleClosure *pcl = data;
+
+	ORBit_POAObject_invoke_incoming_request
+		(pcl->pobj, pcl->recv_buffer, NULL);
+
+	g_free (data);
+
+	return FALSE;
+}
+
+static void
+push_request_idle (ORBit_POAObject  *pobj,
+		   GIOPRecvBuffer  **recv_buffer)
+{
+	PoaIdleClosure *pcl = g_new (PoaIdleClosure, 1);
+
+	pcl->pobj = *pobj;
+	pcl->recv_buffer = *recv_buffer;
+
+	/* FIXME: track pending idle impls
+	 * for cleanup at shutdown ... */
+	g_idle_add (poa_invoke_at_idle, pcl);
+	
+	*pobj = NULL;
+	*recv_buffer = NULL;
+}
+
+static gboolean
+poa_recv_is_oneway (ORBit_POAObject pobj,
+		    GIOPRecvBuffer *recv_buffer)
+{
+	ORBit_IMethod            *m_data = NULL;
+	gpointer                  imp = NULL;
+	PortableServer_ClassInfo *klass;
+
+	g_return_val_if_fail (pobj != CORBA_OBJECT_NIL, FALSE);
+
+	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
+
+	if (!klass->impl_finder)
+		return FALSE;
+
+	klass->impl_finder ( pobj->servant,
+			     giop_recv_buffer_get_opname (recv_buffer),
+			     (gpointer *)&m_data, &imp);
+
+	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY)
+		return TRUE;
+
+	return FALSE;
+}
+
 static void
 ORBit_POA_handle_request (PortableServer_POA poa,
 			  GIOPRecvBuffer    *recv_buffer,
@@ -1284,36 +1344,36 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 				break;
 			case PortableServer_ORB_CTRL_MODEL: {
 				ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
-
-				switch (adaptor->thread_hint)
-				    {
-					case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
-						/* FIXME: we need to lookup the
-						   method name, and cf. the oneway flag */
-					case ORBIT_THREAD_HINT_ALL_AT_IDLE:
+				
+				switch (adaptor->thread_hint) {
+				case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
+					if (!poa_recv_is_oneway (pobj, recv_buffer))
 						push_request_T (giop_thread_get_main (),
 								&pobj, &recv_buffer);
-						break;
-					case ORBIT_THREAD_HINT_NONE:
-						if (giop_threaded ())
-							push_request_T (giop_thread_get_main (),
-									&pobj, &recv_buffer);
-						break;
-					default:
-						g_warning ("Binning incoming requests in threaded mode");
-						giop_recv_buffer_unuse (recv_buffer);
-						recv_buffer = NULL;
-						pobj = NULL;
-						break;
-				    }
-				break;
+					/* drop through */
+				case ORBIT_THREAD_HINT_ALL_AT_IDLE:
+					push_request_idle (&pobj, &recv_buffer);
+					break;
+				case ORBIT_THREAD_HINT_NONE:
+					if (giop_threaded ())
+						push_request_T (giop_thread_get_main (),
+								&pobj, &recv_buffer);
+					break;
+				default:
+					g_warning ("Binning incoming requests in threaded mode");
+					giop_recv_buffer_unuse (recv_buffer);
+					recv_buffer = NULL;
+					pobj = NULL;
+					break;
 				}
-			default:
-				g_assert_not_reached ();
 				break;
 			}
+		default:
+			g_assert_not_reached ();
+			break;
+		}
 	}
-
+	
  send_sys_ex:
 	ORBit_POAObject_invoke_incoming_request (pobj, recv_buffer, &env);
 
