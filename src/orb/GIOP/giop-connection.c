@@ -122,7 +122,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 	int n;
 	GIOPMessageInfo info;
-	gboolean retval = TRUE;
 
 	g_object_ref ((GObject *) cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
@@ -134,17 +133,16 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 		/* FIXME: holding cnx->incoming_mutex here can deadlock ! */
 		n = linc_connection_read (
-			lcnx, cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
+			lcnx, cnx->incoming_msg->cur,
+			cnx->incoming_msg->left_to_read, FALSE);
 
-		if (n < 0 || !cnx->incoming_msg->left_to_read) {
-			retval = FALSE;
-			goto out;
-
-		} else if (n == 0) {
+		if (n < 0 || /* error on read */
+		    n == 0 || /* short read == HUP on some platforms */
+		    !cnx->incoming_msg->left_to_read) { /* odd error case ? */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 			g_object_unref ((GObject *) cnx);
-			return FALSE;
+			return TRUE;
 		}
 
 		info = giop_recv_buffer_data_read (
@@ -169,7 +167,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 					   a refcount owned by a GIOPServer
 					   must be released */
 					g_object_unref (G_OBJECT (cnx));
-					retval = FALSE;
 					goto out;
 				}
 			}
@@ -182,7 +179,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		g_object_unref ((GObject *) cnx);
 	}
 
-	return retval;
+	return TRUE;
 }
 
 static void
