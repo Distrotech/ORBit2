@@ -1,0 +1,107 @@
+The ORBit2 FAQ - v 0.1
+  Michael Meeks (michael@ximian.com)
+
+
+* What is ORBit2 ?
+
+	ORBit2 is the next revision in the ORBit development plan. It
+is substantialy re-written, and contains a number of new, advanced
+features. One of these is an abstract IO layer split out into the
+separate 'linc' library. This allows features such as SSL operation
+and multiple new connection types.
+
+
+* Who is responsible ?
+
+        The bulk of the initial work is down to Elliot Lee, and
+various people whose ideas he fused liberaly Kennard White, Sebastian
+Wilhelmi - the polishing and recent work down to Mark McLoughlin,
+Martin Baulig and myself.
+
+
+* How is ORBit2 better than ORBit 'stable' ?
+
+In many ways:
+
+        + Targets CORBA 2.4 instead of CORBA 2.2
+        + Theoreticaly thread safe - see later.
+        + In conjunction with linc allows all manner of new transports
+        + Protection against malicious / badly formed wire data
+        + Type centric
+		+ smaller - stubs / skels are tiny: ~50% smaller.
+		+ generic operation, eg. method tracing
+		+ fast in-proc language bindings
+		+ marginaly slower currently.
+        + Uses glib mainloop
+        + "URL for IOR" to allow retrieving an IOR via HTTP
+        + Cleaner
+		+ lots of code cleaning and re-factoring
+		+ most CORBA interfaces generated from pseudo-IDL
+		+ a more pleasant directory structure
+		+ more complete implementations of many things
+        + Tested - fairly comprehensive stress testing.
+	+ No resource leakage of TypeCodes
+        + Lots of bugs fixed, and new ones created.
+
+
+* Is ORBit2 thread safe ?
+
+	ORBit2 is theoreticaly thread safe, ie. we thought about it a
+bit during the design - which is nominaly thread safe, we added a lot
+of locks, and we fixed deadlocks when they were found. It has yet to
+be tested in anger in a multi-threaded environment.
+
+** What is this re-enterancy thing ?
+
+	When a method is invoked, while the ORB is waiting for a
+return value or exception (if applicable) the ORB processes any other
+incoming requests in a re-enterant fashion. This occurs even during
+threaded operation currently.
+
+** Can I invoke methods from multiple threads ?
+
+	Yes, this should present no particular problem.
+
+** Can I receive invocations in multiple threads ?
+
+	Yes - assuming you have a glib mainloop ( or a linc_mainloop )
+running in one or several of your threads. The precice thread that the
+invocation is recieved in is unpredictable.
+
+** Can I have each invocation handled by a different thread ?
+
+	Currently no - there is tentative compile time support in the
+ORB for this mode of operation, but currently no effort has been put
+into this. If the compile time support for this is enabled, the
+mainloop and re-enterant processing is disabled.
+
+
+* How does the new 'type' system work ?
+
+	The new type system forms a fundamental part of ORBit2 and
+presents a major simplification.
+
+** What do you mean by 'type' data ?
+
+** How do we get type data for an interface ?
+
+** Why is a type based ORB better ?
+
+** Why is a type based ORB potentialy faster ?
+
+        An initial tentative API frozen release of ORBit2 has been
+made. Whilst it is expected that the C API will be stable - there are
+some as yet un-committed POA re-organisations that are pending.
+
+        These are unlikely to affect user code - even bonobo [ which
+grubs with ORBit2 very intimately ] should be unaffected by the
+pending patch - so, a fairly hard API freeze.
+
+        It is also possible, but unlikely, that the scripting API
+might need extending slightly.
+
+* What's new in ORBit2
+
+
+* Who do I adulate for all this ?
+
