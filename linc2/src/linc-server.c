@@ -77,7 +77,7 @@ linc_server_handle_io(GIOChannel *gioc,
 		      gpointer data)
 {
   LINCServer *server = data;
-  LINCServerClass *klass = (LINCServerClass *)G_OBJECT_CLASS(server);
+  LINCServerClass *klass = (LINCServerClass *)G_OBJECT_GET_CLASS(server);
   struct sockaddr *saddr;
   int addrlen, fd;
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
@@ -100,9 +100,14 @@ linc_server_handle_io(GIOChannel *gioc,
       return TRUE;
     }
 
+  g_assert(klass->create_connection);
   connection = klass->create_connection(server);
-  linc_connection_from_fd(connection, fd, server->proto, hnbuf, servbuf, FALSE,
-			  LINC_CONNECTED, server->create_options);
+  if(!linc_connection_from_fd(connection, fd, server->proto, hnbuf, servbuf,
+			      FALSE, LINC_CONNECTED, server->create_options))
+    {
+      g_object_unref(G_OBJECT(connection));
+      connection = NULL;
+    }
 
   return TRUE;
 }
@@ -143,7 +148,8 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     }
 
   n = 0;
-  if(proto->flags & LINC_PROTOCOL_NEEDS_BIND)
+  if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
+     || local_serv_info)
     n = bind(fd, ai->ai_addr, ai->ai_addrlen);
   freeaddrinfo(ai);
 
