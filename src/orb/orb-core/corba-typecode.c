@@ -534,7 +534,6 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   tc = g_new0(struct CORBA_TypeCode_struct, 1);
 
   ORBit_RootObject_init(&tc->parent, &ORBit_TypeCode_epv);
-  tc->parent.refs = 1;
 
   tc->kind=kind;
   switch(info->type)
@@ -548,6 +547,7 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
       encaps = giop_recv_buffer_use_encaps_buf(c);
       (info->decoder)(tc, encaps, ctx);
       ctx->current_idx = tmp_index;
+      giop_recv_buffer_unuse (encaps);
       break;
     case TK_SIMPLE:
       (info->decoder)(tc, c, ctx);

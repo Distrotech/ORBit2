@@ -792,12 +792,6 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
       }
 }
 
-static void
-ORBit_profile_free(IOP_Profile_info *p)
-{
-  g_free(p);
-}
-
 static GIOPRecvBuffer *gbuf = NULL;
 static IOP_ObjectKey_info *
 IOP_ObjectKey_demarshal(GIOPRecvBuffer *buf)
@@ -1033,6 +1027,14 @@ IOP_UnknownProfile_demarshal(IOP_ProfileId p, GIOPRecvBuffer *buf,
   return NULL;
 }
 
+static void
+IOP_UnknownProfile_free (IOP_Profile_info *p)
+{
+  IOP_UnknownProfile_info *info = (IOP_UnknownProfile_info *) p;
+
+  g_free (info->data._buffer);
+}
+
 static IOP_Profile_info *
 IOP_TAG_ORBIT_SPECIFIC_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
 				 CORBA_ORB orb)
@@ -1086,6 +1088,16 @@ IOP_TAG_ORBIT_SPECIFIC_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
   return NULL;
 }
 
+static void
+IOP_TAG_ORBIT_SPECIFIC_free (IOP_Profile_info *p)
+{
+  IOP_TAG_ORBIT_SPECIFIC_info *info = (IOP_TAG_ORBIT_SPECIFIC_info *) p;
+
+  g_free(info->oki);
+  g_free(info->unix_sock_path);
+  g_free(info);
+}
+
 static IOP_Profile_info *
 IOP_TAG_MULTIPLE_COMPONENTS_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
 				      CORBA_ORB orb)
@@ -1103,6 +1115,14 @@ IOP_TAG_MULTIPLE_COMPONENTS_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
     }
   giop_recv_buffer_unuse(buf);
   return (IOP_Profile_info*)retval;
+}
+
+static void
+IOP_TAG_MULTIPLE_COMPONENTS_free (IOP_Profile_info *p)
+{
+  IOP_TAG_MULTIPLE_COMPONENTS_info *info = (IOP_TAG_MULTIPLE_COMPONENTS_info *) p;
+
+  IOP_components_free (info->components);
 }
 
 static IOP_Profile_info *
@@ -1210,6 +1230,17 @@ IOP_TAG_GENERIC_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
   return NULL;
 }
 
+static void
+IOP_TAG_GENERIC_IOP_free (IOP_Profile_info *p)
+{
+  IOP_TAG_GENERIC_IOP_info *info = (IOP_TAG_GENERIC_IOP_info *) p;
+
+  IOP_components_free (info->components);
+  g_free (info->proto);
+  g_free (info->host);
+  g_free (info->service);
+}
+
 static IOP_Profile_info *
 IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
 			       CORBA_ORB orb)
@@ -1300,6 +1331,39 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
   eo2:
   giop_recv_buffer_unuse(buf);
   return NULL;
+}
+
+static void
+IOP_TAG_INTERNET_IOP_free (IOP_Profile_info *p)
+{
+  IOP_TAG_INTERNET_IOP_info *info = (IOP_TAG_INTERNET_IOP_info *) p;
+
+  IOP_components_free (info->components);
+  g_free (info->host);
+  g_free (info->oki);
+}
+
+static void
+ORBit_profile_free (IOP_Profile_info *p)
+{
+  switch (p->profile_type) {
+    case IOP_TAG_INTERNET_IOP:
+      IOP_TAG_INTERNET_IOP_free (p);
+      break;
+    case IOP_TAG_MULTIPLE_COMPONENTS:
+      IOP_TAG_MULTIPLE_COMPONENTS_free (p);
+      break;
+    case IOP_TAG_GENERIC_IOP:
+      IOP_TAG_GENERIC_IOP_free (p);
+      break;
+    case IOP_TAG_ORBIT_SPECIFIC:
+      IOP_TAG_ORBIT_SPECIFIC_free (p);
+      break;
+    default:
+      IOP_UnknownProfile_free (p);
+      break;
+  }
+  g_free (p);
 }
 
 static IOP_Profile_info *

@@ -814,6 +814,7 @@ int main(int argc, char *argv[])
   free (malloc (8)); /* -lefence */
 
   /* In Proc ... */
+#if 0
   {
     factory = get_server (orb, &ev);
     run_tests (factory, &ev, FALSE);
@@ -823,6 +824,7 @@ int main(int argc, char *argv[])
   }
 
   fprintf (stderr, "\n\n\n --- Out of proc ---\n\n\n\n");
+#endif
 
   /* Out of Proc */
   { /* read the ior from iorfile, and swizzle to an objref*/

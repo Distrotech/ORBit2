@@ -20,13 +20,13 @@ DIE=0
 }
 
 # Check for libtool
-(libtool --version | egrep "1.2") > /dev/null || 
-(libtool --version | egrep "1.3") > /dev/null || {
+(libtool --version | egrep "1.3") > /dev/null || 
+(libtool --version | egrep "1.4") > /dev/null || {
 	echo
-	echo "You must have at minimum libtool version 1.2 installed"
+	echo "You must have at minimum libtool version 1.3 installed"
 	echo "to compile ORBit. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
-	echo "ftp://alpha.gnu.org/gnu/libtool-1.2d.tar.gz"
+	echo "ftp://alpha.gnu.org/gnu/libtool-1.4.tar.gz"
 	DIE=1
 }
 

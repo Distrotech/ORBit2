@@ -18,8 +18,8 @@
 #include <orbit/GIOP/giop.h>
 #include <stdio.h>
 
-#define DEBUG
-#define DEBUG_LOCAL_TEST
+#undef DEBUG
+#undef DEBUG_LOCAL_TEST
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -585,7 +585,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 	    GIOP_LOCATION_FORWARD) {
 		
 		*cnx = ORBit_handle_location_forward (recv_buffer, obj);
-			
+
 		return _ORBIT_MARSHAL_RETRY;
 	} else {
 		ORBit_handle_exception_array (

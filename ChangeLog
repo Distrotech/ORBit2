@@ -1,3 +1,23 @@
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec): remove broken
+	ref set to 1.
+
+2001-05-17  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_profile_free): actualy free the sub-profiles.
+	(IOP_TAG_INTERNET_IOP_free, IOP_TAG_GENERIC_IOP_free),
+	(IOP_TAG_MULTIPLE_COMPONENTS_free, IOP_TAG_ORBIT_SPECIFIC_free): 
+	impl.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_IOP_ServiceContextList_free): impl.
+	(giop_recv_buffer_unuse): use it.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec): unuse
+	the encapsulated buffer after creation.
+
 2001-05-17  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-context.c (ORBit_Context_demarshal):

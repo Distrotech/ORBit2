@@ -131,6 +131,13 @@ giop_IOP_ServiceContextList_demarshal(GIOPRecvBuffer *buf, IOP_ServiceContextLis
   return FALSE;
 }
 
+static void
+giop_IOP_ServiceContextList_free (IOP_ServiceContextList *value)
+{
+	if (value)
+		g_free (value->_buffer);
+}
+
 gboolean
 giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
 {
@@ -581,14 +588,47 @@ giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
 void
 giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 {
-  if(!buf)
-    return;
+	if (!buf)
+		return;
 
-  if(buf->free_body)
-    {
-      g_free(buf->message_body); buf->message_body = NULL;
-    }
-  g_free(buf);
+	if (buf->free_body) {
+
+		g_free(buf->message_body);
+		buf->message_body = NULL;
+	}
+
+	switch (buf->giop_version) {
+	case GIOP_1_0:
+		break;
+	case GIOP_1_1:
+		switch(buf->msg.header.message_type) {
+		case GIOP_REPLY:
+			giop_IOP_ServiceContextList_free (&buf->msg.u.reply_1_1.service_context);
+			break;
+		case GIOP_REQUEST:
+			giop_IOP_ServiceContextList_free (&buf->msg.u.request_1_1.service_context);
+			break;
+		default:
+			break;
+		}
+		break;
+	case GIOP_1_2:
+		switch(buf->msg.header.message_type) {
+		case GIOP_REPLY:
+			giop_IOP_ServiceContextList_free (&buf->msg.u.reply_1_2.service_context);
+			break;
+		case GIOP_REQUEST:
+			giop_IOP_ServiceContextList_free (&buf->msg.u.request_1_2.service_context);
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	g_free (buf);
 }
 
 void
