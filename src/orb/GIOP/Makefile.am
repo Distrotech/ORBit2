@@ -4,6 +4,8 @@ noinst_LTLIBRARIES=libIIOP.la
 
 libIIOP_la_SOURCES=giop-connection.c \
 	giop-server.c \
-	giop-protocols.c
+	giop-protocols.c \
+	giop.c \
+	giop-private.h
 
 libIIOP_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)

@@ -5,6 +5,9 @@
 #include <orbit/IIOP/giop-protocol.h>
 #include <orbit/IIOP/giop-server.h>
 #include <netdb.h>
+#if ORBIT_SSL_SUPPORT
+#include <openssl/ssl.h>
+#endif
 
 typedef struct {
   GObject parent;
@@ -17,10 +20,15 @@ typedef struct {
   GIOPProtocolInfo *proto;
 
   char *remote_host_info, *remote_serv_info;
-  int fd;
+
+#if ORBIT_SSL_SUPPORT
+  SSL *ssl;
+#endif
 
   GIOPConnectionOptions options;
+  GIOPVersion giop_version;
   guint tag;
+  int fd;
   guint8 was_initiated : 1, is_auth : 1;
 } GIOPConnection;
 

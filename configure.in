@@ -105,7 +105,12 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
-AC_CHECK_HEADERS(netinet/in.h sys/un.h linux/irda.h)
+AC_CHECK_HEADERS(netinet/in.h sys/un.h linux/irda.h openssl/ssl.h)
+
+if test $ac_cv_header_openssl_ssl_h = yes; then
+	HAVE_ORBIT_SSL_SUPPORT=1
+fi
+AC_SUBST(HAVE_ORBIT_SSL_SUPPORT)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

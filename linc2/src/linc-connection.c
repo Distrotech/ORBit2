@@ -131,7 +131,8 @@ GIOPConnection *
 giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto,
 			const char *remote_host_info,
 			const char *remote_serv_info,
-			gboolean was_initiated)
+			gboolean was_initiated,
+			GIOPConnectionOptions options)
 {
   GIOPConnection *cnx;
 
@@ -142,12 +143,30 @@ giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto,
   cnx->is_auth = (proto->flags & GIOP_PROTOCOL_SECURE)?TRUE:FALSE;
   cnx->remote_host_info = g_strdup(remote_host_info);
   cnx->remote_serv_info = g_strdup(remote_serv_info);
+  cnx->options = options;
 
   giop_connection_list_add(cnx);
 
+#if ORBIT_SSL_SUPPORT
+  if(options & GIOP_CONNECTION_SSL)
+    {
+      cnx->ssl = SSL_new(giop_ssl_ctx);
+      SSL_set_fd(cnx->ssl, fd);
+    }
+#endif
+
   if(was_initiated)
     {
+#if ORBIT_SSL_SUPPORT
+      SSL_connect(cnx->ssl);
+#endif
       /* Send greeting message */
+    }
+  else
+    {
+#if ORBIT_SSL_SUPPORT
+      SSL_accept(cnx->ssl);
+#endif
     }
 
   return cnx;
@@ -158,7 +177,8 @@ giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto,
 GIOPConnection *
 giop_connection_initiate(const char *proto_name,
 			 const char *remote_host_info,
-			 const char *remote_serv_info)
+			 const char *remote_serv_info,
+			 GIOPConnectionOptions options)
 {
   GIOPConnection *retval = NULL;
   struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0,
@@ -190,7 +210,7 @@ giop_connection_initiate(const char *proto_name,
     goto out;
 
   retval = giop_connection_from_fd(fd, proto, remote_host_info,
-				   remote_serv_info, TRUE);
+				   remote_serv_info, TRUE, options);
 
  out:
   if(fd >= 0)
