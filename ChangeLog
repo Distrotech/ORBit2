@@ -1,3 +1,8 @@
+2003-08-06  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: don't link libIDL into the name
+	service; thanks Morten.
+
 2003-08-04  James Henstridge  <james@daa.com.au>
 
 	* src/services/imodule/orbit-imodule.c (build_cpp_args): add
