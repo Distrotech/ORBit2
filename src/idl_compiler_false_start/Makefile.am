@@ -28,7 +28,7 @@ orbit_idl_SOURCES = \
 	orbit-idl3.h \
 	orbit-idl-marshal.h
 
-t_SOURCES=t.c orbit-idl-utils.c
-t_LDADD = \
-	$(top_builddir)/libIDL/libIDL.la \
-	$(GLIB_LIBS) $(POPT_LIBS) -lm
+#t_SOURCES=t.c orbit-idl-utils.c
+#t_LDADD = \
+#	$(top_builddir)/libIDL/libIDL.la \
+#	$(GLIB_LIBS) $(POPT_LIBS) -lm
