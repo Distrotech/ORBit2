@@ -1,3 +1,34 @@
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_handle_fragmented): GIOP_FRAGMENTs
+	don't have message_id's we can get in the same way.
+	(concat_frags): fix mem copying.
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): more re-arrangement,
+	and death of sillies.
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): upd. frag_out to move
+	onto the next incoming buffer properly.
+
+2002-06-04  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_get_frag, giop_connection_add_frag),
+	(giop_connection_remove_frag): impl.
+	(alloc_buffer): split out of
+	(giop_recv_msg_reading_body): here.
+	(concat_frags): use it & impl.
+	(giop_recv_buffer_handle_fragmented): impl.
+	(giop_connection_handle_input): upd & fix nasty with
+	locking / leaking & msg_error path.
+
 2002-05-31  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-orb.c: (copy_case_value): handle
@@ -81,6 +112,7 @@
 	here and version to orbit-idl-2 correctly.
 
 2002-05-24  Richard Kinder <r_kinder@yahoo.com>
+
 	* src/orb/orb-core/orbhttp.c: cleanup magic numbers, closes #78938
 
 2002-05-22  Michael Meeks  <michael@ximian.com>
