@@ -24,10 +24,12 @@ typedef enum {
 #  define dprintf(args...)
 #  define tprintf(args...)
 #else
+/* This sucks for compatibility - fix your compiler */
 #define MESSAGES (OrbitDebugFlags)0
-#define TYPES (OrbitDebugFlags)0
-#define OBJECTS (OrbitDebugFlags)0
-#define GIOP (OrbitDebugFlags)0
+#define TYPES    (OrbitDebugFlags)0
+#define OBJECTS  (OrbitDebugFlags)0
+#define GIOP     (OrbitDebugFlags)0
+#define ERRORS   (OrbitDebugFlags)0
 static inline void dprintf (OrbitDebugFlags flags, const char *format, ...)
 {
 }
