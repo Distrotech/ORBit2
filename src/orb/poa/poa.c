@@ -897,7 +897,7 @@ traverse_cb(PortableServer_ObjectId *oid, ORBit_POAObject *pobj,
 static gboolean
 remove_cb(PortableServer_ObjectId *oid, ORBit_POAObject *pobj, gpointer dummy)
 {
-  if ( (pobj->life_flags & ORBit_LifeF_Destroyed) == 0 ) {
+  if ( pobj->life_flags & ORBit_LifeF_Destroyed ) {
     g_free( pobj );
     return TRUE;
   }

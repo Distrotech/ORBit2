@@ -62,7 +62,7 @@ g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
 void
 ORBit_register_objref( CORBA_Object obj )
 {
-  if( objrefs != NULL )
+  if( objrefs == NULL )
     objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
 
   g_hash_table_insert (objrefs, obj, obj);
@@ -71,12 +71,12 @@ ORBit_register_objref( CORBA_Object obj )
 static CORBA_Object
 ORBit_lookup_objref( CORBA_Object obj )
 {
-  CORBA_Object retval;
-
-  if( objrefs != NULL )
+  if( objrefs == NULL ) {
     objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
+    return NULL;
+    }
 
-  retval = g_hash_table_lookup(objrefs, obj);
+  return g_hash_table_lookup(objrefs, obj);
 }
 
 static void
