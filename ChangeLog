@@ -1,5 +1,8 @@
 2003-07-14  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (testSegv): fix silly -
+	amazing that gcc didn't catch this for me (!?)
+
 	* src/orb/GIOP/giop-recv-buffer.c: bin execinfo,
 	thanks Morten.
 

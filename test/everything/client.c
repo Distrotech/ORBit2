@@ -1781,12 +1781,13 @@ static void
 testSegv (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
+	gboolean broken = FALSE;
+	gboolean invoked = FALSE;
+
 	if (in_proc) 
 		return;
 
 	d_print ("Testing Fatal invocations ...\n");
-	gboolean broken = FALSE;
-	gboolean invoked = FALSE;
 
 	g_assert (ORBit_small_listen_for_broken (
 						 factory, G_CALLBACK (broken_cb), &broken) ==
