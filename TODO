@@ -6,3 +6,5 @@ src/orb/IIOP:
 	- Doesn't handle different GIOP 1.0+ versions
 	- Not threaded
 	- No support for different transports
+
+. marshal funcs use g_alloca, very buggy.
