@@ -1,3 +1,11 @@
+2002-09-24  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require linc >= 0.7.0
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_real_state_changed): remove
+	nasty locking silly workaround.
+
 2002-09-20  Mark McLoughlin  <mark@skynet.ie>
 
 	* ORBit.spec.in: remove name-client-2 and
