@@ -1,3 +1,11 @@
+2003-10-07  Ian McKellar  <yakk@yakk.net>
+
+	reviewed by: Michael Meeks  <michael@ximian.com>
+
+	* src/services/imodule/orbit-imodule.c:
+	(ORBit_iinterface_fill_iargs):
+	Fill in the iarg->name from the IDL.
+
 2003-10-06  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* src/services/imodule/orbit-imodule.c:

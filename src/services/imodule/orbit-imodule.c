@@ -116,6 +116,8 @@ ORBit_iinterface_fill_iargs (GHashTable  *typecodes,
 			g_assert_not_reached ();
 		}
 
+		iarg->name = CORBA_string_dup (IDL_IDENT (IDL_PARAM_DCL (parm).simple_declarator).str);
+
 		if (ORBit_imodule_type_is_fixed_length (
 				IDL_PARAM_DCL (parm).param_type_spec))
 			iarg->flags |= ORBit_I_COMMON_FIXED_SIZE;
