@@ -1540,6 +1540,33 @@ testMisc (test_TestFactory   factory,
 }
 
 static void
+testIOR (test_TestFactory   factory, 
+	 CORBA_Environment *ev)
+{
+	int i, count;
+	CORBA_Object objref;
+
+	d_print ("Testing IOR marshalling ...\n");
+
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* Check to see that the ORB correctly marshals various obj references */
+	count = test_BasicServer_getObjectCount (objref, ev);
+	for (i = 0; i < count; i++)
+	{
+		CORBA_Object test_obj;
+		test_obj = test_BasicServer_getObject (objref, i, ev);
+		if (ev->_major != CORBA_NO_EXCEPTION)
+			g_error ("Error demarshalling object number %d: %s",
+				 i, CORBA_exception_id (ev));
+	}
+
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
 testLifeCycle (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -2186,6 +2213,7 @@ run_tests (test_TestFactory   factory,
 			testPolicy (factory, thread_tests, ev);
 		}
 		testMisc (factory, ev);
+		testIOR (factory, ev);
 		testWithException (factory, ev);
 		testLifeCycle (factory, ev);
 	}
