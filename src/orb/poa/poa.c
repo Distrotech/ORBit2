@@ -920,14 +920,19 @@ ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
 IOP_ObjectKey_info*
 ORBit_POA_object_to_okey( ORBit_POAObject pobj )
 {
-  PortableServer_POA         poa = pobj->poa;
-  PortableServer_ObjectId    *oid = pobj->object_id;
+  PortableServer_POA         poa;
+  PortableServer_ObjectId    *oid;
   CORBA_octet*	             restbuf;
   IOP_ObjectKey_info         *retval;
   CORBA_sequence_CORBA_octet *okey;
   gulong                     okey_len, rlen;
   gint32	             keynum, *iptr;
   int			     restlen;
+
+  g_return_val_if_fail (pobj != NULL, NULL);
+
+  poa = pobj->poa;
+  oid = pobj->object_id;
 
   if ( poa->num_to_koid_map )
     {

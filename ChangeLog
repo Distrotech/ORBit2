@@ -1,3 +1,18 @@
+2001-07-12  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c (ORBit_register_objref):
+	assert profile_list != NULL.
+
+	* src/orb/poa/poa.c (ORBit_POA_object_to_okey): add precondition.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_TAG_ORBIT_SPECIFIC_marshal): use the local oki if we have it.
+	(IOP_TAG_INTERNET_IOP_marshal): use obj->oki where appropriate.
+	(IOP_generate_profiles): only set obj->oki if we have a pobj.
+
+	* NB. obj->oki == NULL for objects passed in remotely, need
+	to bear this in mind when re-marshaling the profiles.
+	
 2001-07-12  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-object.h,

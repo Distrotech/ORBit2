@@ -13,7 +13,6 @@
  */
 static GHashTable *objrefs = NULL;
 
-
 static guint
 g_CORBA_Object_hash(gconstpointer key)
 {
@@ -22,6 +21,7 @@ g_CORBA_Object_hash(gconstpointer key)
 
   retval = g_str_hash(_obj->type_id);
   g_slist_foreach(_obj->profile_list, IOP_profile_hash, &retval);
+
   return retval;
 }
 
@@ -65,6 +65,8 @@ ORBit_register_objref( CORBA_Object obj )
   if( objrefs == NULL )
     objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
 
+  g_assert (obj->profile_list != NULL);
+
   g_hash_table_insert (objrefs, obj, obj);
 }
 
@@ -74,7 +76,10 @@ ORBit_lookup_objref( CORBA_Object obj )
   if( objrefs == NULL ) {
     objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
     return NULL;
-    }
+  }
+
+  if (!obj->profile_list)
+    return NULL;
 
   return g_hash_table_lookup(objrefs, obj);
 }
@@ -389,6 +394,7 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
       if ( obj->profile_list == NULL )
 	  IOP_generate_profiles( obj );
       num_profiles = g_slist_length(obj->profile_list);
+      g_assert (num_profiles > 0);
     }
   else
     num_profiles = 0;
@@ -424,7 +430,6 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
     *obj = CORBA_OBJECT_NIL;
 
   return FALSE;
-
 }
 
 gpointer

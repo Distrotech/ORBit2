@@ -88,6 +88,7 @@ gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
 gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
 gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
 gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
+gpointer ORBit_freekids_via_TypeCode_T(CORBA_TypeCode tc, gpointer mem);
 
 void CORBA_free(gpointer mem);
 #endif

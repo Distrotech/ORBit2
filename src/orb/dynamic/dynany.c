@@ -177,8 +177,10 @@ DynamicAny_DynAny_release_fn (ORBit_RootObject robj)
 
 	if (dynany->any)
 		ORBit_free_T (dynany->any);
+	dynany->any = NULL;
 
 	g_slist_free (dynany->children);
+	dynany->children = NULL;
 
 	g_free (dynany);
 	g_free (robj);

@@ -1,6 +1,7 @@
 #include <orbit/orbit.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "iop-profiles.h"
 #include "../poa/orbit-poa-export.h"
@@ -70,7 +71,7 @@ IOP_profile_dump(CORBA_Object obj, gpointer p)
 		IOP_TAG_INTERNET_IOP_info *iiop = p;
 		IOP_ObjectKey_info        *oki;
 
-		oki = iiop->oki != NULL ? iiop->oki : obj->oki;
+		oki = iiop->oki ? iiop->oki : obj->oki;
 		
 		key = IOP_ObjectKey_dump (oki);
 		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
@@ -91,7 +92,7 @@ IOP_profile_dump(CORBA_Object obj, gpointer p)
 		IOP_TAG_ORBIT_SPECIFIC_info *os = p;
 		IOP_ObjectKey_info          *oki;
 		
-		oki = os->oki != NULL ? os->oki : obj->oki;
+		oki = os->oki ? os->oki : obj->oki;
 
 		key = IOP_ObjectKey_dump (os->oki);
 		g_string_printf (str, "P-OS %s:0x%x '%s'",
@@ -413,7 +414,7 @@ IOP_delete_profiles( GSList **profiles )
 
 void
 IOP_generate_profiles( CORBA_Object obj )
-  {
+{
   IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
   IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
   IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
@@ -436,12 +437,11 @@ IOP_generate_profiles( CORBA_Object obj )
     }
   }
 
-  /* only carry around one copy of the object key. */
-  if ( obj->oki == NULL )
-    obj->oki = ORBit_POA_object_to_okey( obj->pobj );
+  if (!obj->oki && obj->pobj)
+    obj->oki = ORBit_POA_object_to_okey (obj->pobj);
 
   /* share the profiles between everyone. */
-  if ( common_profiles != NULL ) {
+  if (common_profiles) {
     obj->profile_list = common_profiles;
     return;
   }
@@ -562,8 +562,8 @@ IOP_generate_profiles( CORBA_Object obj )
     }
 
  obj->profile_list = common_profiles;
- ORBit_register_objref( obj );
- }
+ ORBit_register_objref (obj);
+}
 
 /*
  * 'freedom' routines.
@@ -791,7 +791,7 @@ IOP_TAG_INTERNET_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &iiop->port, 2);
 
-  IOP_ObjectKey_marshal(obj, buf, iiop->oki);
+  IOP_ObjectKey_marshal(obj, buf, iiop->oki ? iiop->oki : obj->oki);
 
   IOP_components_marshal(obj, buf, iiop->components);
 }
@@ -845,7 +845,7 @@ IOP_TAG_ORBIT_SPECIFIC_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   giop_send_buffer_append(buf, osi->unix_sock_path, len);
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &osi->ipv6_port, 2);
-  IOP_ObjectKey_marshal(obj, buf, obj->oki);
+  IOP_ObjectKey_marshal(obj, buf, osi->oki ? osi->oki : obj->oki);
 }
 
 static void
