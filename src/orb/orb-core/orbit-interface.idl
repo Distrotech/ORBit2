@@ -46,6 +46,8 @@ module ORBit {
 		sequence<string>     base_interfaces;
 	};
 
+	typedef sequence<IInterface> IInterfaces;
+
 	exception NoIInterface {};
 }; /* module ORBit */
 

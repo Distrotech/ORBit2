@@ -978,24 +978,27 @@ copy_iinterface (const ORBit_IInterface *idata, gboolean shallow)
 	return ORBit_copy_value (idata, TC_ORBit_IInterface);
 }
 
-static GSList *types = NULL;
+static GSList *type_list = NULL;
 
 typedef struct {
 	char *name;
 	CORBA_sequence_CORBA_TypeCode *types;
+	CORBA_sequence_ORBit_IInterface *iinterfaces;
 } TypeList;
 
 static void
-add_types (ORBit_IModule *imodule, const char *libname)
+add_types (const char *libname,
+	   CORBA_sequence_CORBA_TypeCode *types,
+	   CORBA_sequence_ORBit_IInterface *iinterfaces)
 {
 	TypeList *tl = g_new0 (TypeList, 1);
 
 	tl->name = g_strdup (libname);
-	tl->types = ORBit_copy_value (
-		&imodule->types, TC_CORBA_sequence_CORBA_TypeCode);
+	tl->types = types;
+	tl->iinterfaces = iinterfaces;
 
 	/* FIXME: some g_atexit free loving ? */
-	types = g_slist_prepend (types, tl);
+	type_list = g_slist_prepend (type_list, tl);
 }
 
 static CORBA_sequence_CORBA_TypeCode *
@@ -1003,7 +1006,7 @@ get_types (const char *module_name)
 {
 	GSList *l;
 
-	for (l = types; l; l = l->next) {
+	for (l = type_list; l; l = l->next) {
 		TypeList *tl = l->data;
 
 		if (!strcmp (tl->name, module_name)) {
@@ -1011,6 +1014,28 @@ get_types (const char *module_name)
 
 			st = CORBA_sequence_CORBA_TypeCode__alloc ();
 			*st = *tl->types;
+			st->_release = FALSE;
+
+			return st;
+		}
+	}
+
+	return NULL;
+}
+
+static CORBA_sequence_ORBit_IInterface *
+get_iinterfaces (const char *module_name)
+{
+	GSList *l;
+
+	for (l = type_list; l; l = l->next) {
+		TypeList *tl = l->data;
+
+		if (!strcmp (tl->name, module_name)) {
+			CORBA_sequence_ORBit_IInterface *st;
+
+			st = CORBA_sequence_ORBit_IInterface__alloc ();
+			*st = *tl->iinterfaces;
 			st->_release = FALSE;
 
 			return st;
@@ -1144,24 +1169,43 @@ load_module (const char *fname, const char *libname)
 		return FALSE;
 
 	} else {
+		CORBA_sequence_ORBit_IInterface *iinterfaces;
+		CORBA_sequence_CORBA_TypeCode *types;
 		ORBit_IInterface **p;
+		gulong length, i;
 
 #ifdef TYPE_DEBUG
 		g_warning ("Loaded interfaces of serial %d from '%s'",
 			   module->version, fname);
 #endif
 
-		for (p = module->interfaces; p && *p; p++) {
-			ORBit_IInterface *idata = *p;
-			ORBit_IInterface *copy = copy_iinterface (idata, FALSE);
+		for (p = module->interfaces, length = 0; p && *p; p++)
+			length++;
 
-			add_iinterface (copy);
+		iinterfaces = CORBA_sequence_ORBit_IInterface__alloc ();
+		iinterfaces->_length = iinterfaces->_maximum = length;
+		iinterfaces->_buffer = CORBA_sequence_ORBit_IInterface_allocbuf (length);
+
+		for (i = 0; i < length; i++) {
+			ORBit_IInterface *src, *dest;
+
+			src = module->interfaces [i];
+			dest = &iinterfaces->_buffer [i];
+
+			ORBit_copy_value_core (&src, &dest, TC_ORBit_IInterface);
+			dest = &iinterfaces->_buffer [i];
+			add_iinterface (dest);
+
 #ifdef TYPE_DEBUG
-			g_warning ("Type '%s'", idata->tc->repo_id);
+			g_warning ("Type '%s'", dest->tc->repo_id);
 #endif
 		}
 
-		add_types (module, libname);
+		types = ORBit_copy_value (
+			&module->types, TC_CORBA_sequence_CORBA_TypeCode);
+
+
+		add_types (libname, types, iinterfaces);
 
 		/* FIXME: before we can close this,
 		   we need to deep copy typecodes - that is if
@@ -1213,4 +1257,10 @@ CORBA_sequence_CORBA_TypeCode *
 ORBit_small_get_types (const char *name)
 {
 	return get_types (name);
+}
+
+CORBA_sequence_ORBit_IInterface *
+ORBit_small_get_iinterfaces (const char *name)
+{
+	return get_iinterfaces (name);
 }
