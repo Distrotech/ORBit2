@@ -1,3 +1,14 @@
+2001-11-12  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump version to 0.1.8
+
+	* src/linc-connection.c
+	(linc_connection_read): set fatal error on
+	0 length reads, don't re-enter foolishly in
+	various places, return bytes_read on EAGAIN,
+	don't loop re-entering while waiting for
+	connected.
+
 2001-11-08  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.7
