@@ -59,7 +59,10 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
 
   g_hash_table_remove (objrefs, obj);
 
-  giop_connection_unref (obj->connection);
+  if (obj->connection) {
+/*    g_warning("Release object '%p's connection", obj);*/
+    giop_connection_unref (obj->connection);
+  }
 
   g_free (obj->type_id);
 
@@ -415,11 +418,11 @@ IOP_Profile_equal(gpointer d1, gpointer d2)
 		IOP_TAG_GENERIC_IOP_info *giop1 = d1;
 		IOP_TAG_GENERIC_IOP_info *giop2 = d2;
 
-		if (strcmp (giop1->proto, giop2->proto))
+		if (strcmp (giop1->service, giop2->service))
 			return FALSE;
 		if (strcmp (giop1->host, giop2->host))
 			return FALSE;
-		if (strcmp (giop1->service, giop2->service))
+		if (strcmp (giop1->proto, giop2->proto))
 			return FALSE;
 		break;
 	}
@@ -436,7 +439,9 @@ IOP_Profile_equal(gpointer d1, gpointer d2)
 			return FALSE;
 		break;
 	}
+	case IOP_TAG_MULTIPLE_COMPONENTS:
 	default:
+		g_warning ("No IOP_Profile_match for component");
 		return FALSE;
 		break;
 	}

@@ -39,20 +39,6 @@ giop_server_handle_create_connection(LINCServer *server)
   return (LINCConnection *)retval;
 }
 
-/* Sucking */
-extern void giop_connection_list_add(GIOPConnection *cnx);
-
-static void
-giop_server_handle_new_connection (LINCServer *server, LINCConnection *cnx)
-{
-  /* FIXME: This sucks great rocks through a straw - serious
-     encapsulation breakdown: hence the nasty private externs */
-  giop_connection_list_add (GIOP_CONNECTION (cnx));
-
-  if (((LINCServerClass *)parent_class)->new_connection)
-    ((LINCServerClass *)parent_class)->new_connection (server, cnx);
-}
-
 static void
 giop_server_destroy (GObject *obj)
 {
@@ -68,7 +54,6 @@ giop_server_class_init (GIOPServerClass *klass)
   G_OBJECT_CLASS(klass)->shutdown = giop_server_destroy;
 
   klass->parent_class.create_connection = giop_server_handle_create_connection;
-  klass->parent_class.new_connection    = giop_server_handle_new_connection;
 }
 
 GType

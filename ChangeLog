@@ -1,3 +1,27 @@
+2001-05-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_release_cb):
+	only unref the connection if it is valid.
+	(IOP_Profile_equal): re-order compares to accelerate & warn
+	on unknown profile.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_list_add):
+	re-privatize.
+
+	* src/orb/GIOP/giop-server.c (giop_server_handle_new_connection):
+	remove - was broken.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_data_read):
+	kill warning.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_handle_input):
+	if we return FALSE set the source tag to 0, since on return it
+	is removed.
+	(giop_connection_real_state_changed): add some source management
+	assertions.
+	(giop_connection_destroy): rename to
+	(giop_connection_shutdown): this.
+
 2001-05-20  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c

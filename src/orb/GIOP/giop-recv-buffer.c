@@ -910,6 +910,7 @@ giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth,
 	new_state = GIOP_MSG_READY;
       break;
     default:
+      new_state = 0;
       g_assert_not_reached();
       break;
     }

@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
-static void giop_connection_destroy    (GObject             *obj);
+static void giop_connection_shutdown    (GObject             *obj);
 static void giop_connection_class_init (GIOPConnectionClass *klass);
 static void giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status);
 
@@ -20,7 +20,7 @@ giop_connection_list_init(void)
   cnx_list.list = NULL;
 }
 
-void
+static void
 giop_connection_list_add(GIOPConnection *cnx)
 {
   cnx_list.list = g_list_prepend(cnx_list.list, cnx);
@@ -93,7 +93,7 @@ giop_connection_class_init (GIOPConnectionClass *klass)
   GObjectClass *object_class = (GObjectClass *)klass;
 
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
-  object_class->shutdown = giop_connection_destroy;
+  object_class->shutdown = giop_connection_shutdown;
   klass->parent_class.state_changed = giop_connection_real_state_changed;
 }
 
@@ -125,7 +125,7 @@ giop_connection_close (GIOPConnection *cnx)
 }
 
 static void
-giop_connection_destroy    (GObject             *obj)
+giop_connection_shutdown    (GObject             *obj)
 {
   GIOPConnection *cnx = (GIOPConnection *)obj;
 
@@ -194,6 +194,9 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
       O_MUTEX_UNLOCK(cnx->incoming_mutex);
     }
 
+  if (retval == FALSE)
+    cnx->incoming_tag = 0;
+
   return retval;
 }
 
@@ -208,6 +211,7 @@ giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus sta
   switch(status)
     {
     case LINC_CONNECTED:
+      g_assert (gcnx->incoming_tag == 0);
       gcnx->incoming_tag = g_io_add_watch(cnx->gioc, G_IO_IN, giop_connection_handle_input, cnx);
       break;
     case LINC_DISCONNECTED:
@@ -216,7 +220,7 @@ giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus sta
 	giop_recv_buffer_unuse(gcnx->incoming_msg);
       gcnx->incoming_msg = NULL;
       if(gcnx->incoming_tag)
-	g_source_remove(gcnx->incoming_tag);
+	g_assert (g_source_remove(gcnx->incoming_tag));
       gcnx->incoming_tag = 0;
       O_MUTEX_UNLOCK(gcnx->incoming_mutex);
       giop_recv_list_zap(gcnx);
