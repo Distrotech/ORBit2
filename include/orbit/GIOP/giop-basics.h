@@ -5,11 +5,6 @@
 
 G_BEGIN_DECLS
 
-#ifdef LINC_THREADSAFE
-#define ORBIT_THREADSAFE 1
-/* #define ORBIT_THREADED 1 */
-#endif
-
 #ifdef ORBIT2_INTERNAL_API
 
 typedef struct _GIOPRecvBuffer GIOPRecvBuffer;

@@ -225,9 +225,7 @@ giop_connection_initiate (gpointer orb_data,
 
 	CNX_LIST_LOCK;
 
-#ifndef ORBIT_THREADED
 	options |= LINC_CONNECTION_NONBLOCKING;
-#endif
 
 	cnx = giop_connection_list_lookup (
 		proto_name, remote_host_info,

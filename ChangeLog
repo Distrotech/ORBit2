@@ -1,3 +1,12 @@
+2003-03-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): bin last ORBIT_THREADED
+	conditionals.
+
+	* include/orbit/GIOP/giop-basics.h,
+	* src/orb/GIOP/giop-server.c (giop_server_new): ditto
+
 2003-03-29  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c (CORBA_ORB_run):
