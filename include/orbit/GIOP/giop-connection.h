@@ -53,6 +53,4 @@ void            giop_connection_unref         (GIOPConnection       *cnx);
 
 G_END_DECLS
 
-G_END_DECLS
-
 #endif

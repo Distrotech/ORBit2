@@ -1,5 +1,15 @@
 2002-06-18  Murray Cumming  <murrayc@usa.net>
 
+	* src/orb/orb-core/corba-orb.c: make CORBA_Typecode_allocate
+	non-static again.
+	* include/orbit/GIOP/giop-connection.h: remove extra G_END_DECLS.
+
+2002-06-18  Murray Cumming  <murrayc@usa.net>
+
+	* Restored the -lc++ command-line argument, lost during the merge.
+
+2002-06-18  Murray Cumming  <murrayc@usa.net>
+
 	* Reapplied Sam Couter's typecode patches, lost during the
 	merge from head. These patches are now stored at
 	murrayc.com/temp/orbit_cpp_patches/
