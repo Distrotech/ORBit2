@@ -11,6 +11,7 @@
 #include <time.h>
 #include <utime.h>
 #include <errno.h>
+#include <string.h>
 
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
@@ -32,10 +33,12 @@
 #endif
 
 static void af_unix_destroy(int fd, const char *host_info, const char *serv_info);
+#ifdef AF_IRDA
 static int irda_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
 static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
 			    int flags);
+#endif /* AF_IRDA */
 static void tcp_setup(int fd, LINCConnectionOptions cnx_flags);
 static int sys_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
 static int sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
