@@ -1,3 +1,8 @@
+2003-03-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_tmpdir_init):
+	use g_get_tmp_dir instead of hard-coding "/tmp".
+
 2003-03-25  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.7.0
