@@ -23,6 +23,8 @@ struct _GIOPThread {
 	GCond        *incoming;
 	GMainContext *wake_context;
 
+	gpointer      key;	/* ie. per POA, per Connection etc. */
+
 	GSList       *reply_list;
 	GSList       *request_queue;
 	void        (*request_handler) (gpointer poa_object,

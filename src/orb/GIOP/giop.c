@@ -13,6 +13,10 @@
 #include "giop-debug.h"
 #include <orbit/util/orbit-genrand.h>
 
+static GThreadPool *giop_thread_pool    = NULL;
+static GMutex      *giop_pool_hash_lock = NULL;
+static GHashTable  *giop_pool_hash      = NULL;
+
 const char giop_version_ids [GIOP_NUM_VERSIONS][2] = {
 	{1,0},
 	{1,1},
@@ -251,13 +255,14 @@ G_LOCK_DEFINE_STATIC (giop_thread_list);
 static GList *giop_thread_list = NULL;
 
 static GIOPThread *
-giop_thread_new (GMainContext *context)
+giop_thread_new (GMainContext *context, gpointer key)
 {
 	GIOPThread *tdata = g_new0 (GIOPThread, 1);
 
 	tdata->lock = g_mutex_new ();
 	tdata->incoming = g_cond_new ();
 	tdata->wake_context = context;
+	tdata->key = key;
 
 	G_LOCK (giop_thread_list);
 	giop_thread_list = g_list_prepend (giop_thread_list, tdata);
@@ -277,11 +282,53 @@ giop_thread_self (void)
 		return NULL;
 
 	if (!(tdata = g_private_get (giop_tdata_private))) {
-		tdata = giop_thread_new (NULL);
+		tdata = giop_thread_new (NULL, NULL);
 		g_private_set (giop_tdata_private, tdata);
 	}
 
 	return tdata;
+}
+
+static void
+giop_thread_key_release_T (gpointer key)
+{
+	g_hash_table_remove (giop_pool_hash, key);
+}
+
+void
+giop_thread_key_release (gpointer key)
+{
+	if (giop_is_threaded) {
+		g_mutex_lock (giop_pool_hash_lock);
+		giop_thread_key_release_T (key);
+		g_mutex_unlock (giop_pool_hash_lock);
+	}
+}
+
+void
+giop_thread_request_push_key (gpointer  key,
+			      gpointer *poa_object,
+			      gpointer *recv_buffer)
+{
+	GIOPThread *tdata, *new_tdata = NULL;
+
+	g_mutex_lock (giop_pool_hash_lock);
+
+	if (!(tdata = g_hash_table_lookup (giop_pool_hash, key))) {
+		new_tdata = giop_thread_new (NULL, key);
+		tdata = new_tdata;
+		dprintf (GIOP, "Create new thread %p for op", tdata);
+	} else
+		dprintf (GIOP, "Re-use thread %p for op", tdata);
+
+	giop_thread_request_push (tdata, poa_object, recv_buffer);
+
+	if (new_tdata) {
+		g_hash_table_insert (giop_pool_hash, key, new_tdata);
+		g_thread_pool_push (giop_thread_pool, tdata, NULL);
+	}
+
+	g_mutex_unlock (giop_pool_hash_lock);
 }
 
 /* FIXME: need to clean this up at shutdown */
@@ -304,6 +351,33 @@ giop_mainloop_handle_input (GIOChannel     *source,
 	return TRUE;
 }
 
+static void
+giop_request_handler_fn (gpointer data, gpointer user_data)
+{
+	gboolean done;
+	GIOPThread *tdata = user_data;
+
+	g_private_set (giop_tdata_private, tdata);
+
+	dprintf (GIOP, "Thread %p woken to handle request", tdata);
+
+	do {
+		giop_thread_request_process (tdata);
+
+		g_mutex_lock (giop_pool_hash_lock);
+		LINC_MUTEX_LOCK (tdata->lock);
+
+		if ((done = tdata->request_queue == NULL) && tdata->key)
+			giop_thread_key_release_T (tdata->key);
+
+		LINC_MUTEX_UNLOCK (tdata->lock);
+		g_mutex_unlock (giop_pool_hash_lock);
+
+	} while (!done);
+
+	dprintf (GIOP, "Thread %p returning to pool", tdata);
+}
+
 void
 giop_init (gboolean threaded, gboolean blank_wire_data)
 {
@@ -319,7 +393,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 		giop_tdata_private = g_private_new (NULL);
 
 		giop_main_thread = tdata = giop_thread_new (
-			g_main_context_default ()); /* main thread */
+			g_main_context_default (), NULL); /* main thread */
 
 		if (pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
@@ -330,6 +404,12 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 			giop_mainloop_handle_input, NULL);
 		
 		g_private_set (giop_tdata_private, tdata);
+
+		/* Setup thread pool for incoming requests */
+		giop_thread_pool = g_thread_pool_new
+			(giop_request_handler_fn, NULL, -1, FALSE, NULL);
+		giop_pool_hash_lock = linc_mutex_new ();
+		giop_pool_hash = g_hash_table_new (NULL, NULL);
 	}
 
 	giop_tmpdir_init ();

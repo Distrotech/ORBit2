@@ -1,4 +1,23 @@
+2003-05-07  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_dispose): release thread key.
+
+	* src/orb/poa/poa.c (pool_push_request_for_T): impl.
+	(ORBit_POA_handle_request): implement
+	PER_OBJECT,POA,CONNECTION,REQUEST policies.
+	(ORBit_POA_free_fn, ORBit_POAObject_release_cb):
+	de-register threading keys.
+
+	* src/orb/GIOP/giop.c (giop_thread_key_release_T)
+	(giop_request_handler_fn, giop_thread_key_release) 
+	(giop_thread_request_push_for): impl.
+	(giop_init): create the thread pool.
+
 2003-05-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_demarshal_object): add precondition.
 
 	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_get_connection_status): add

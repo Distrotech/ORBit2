@@ -137,6 +137,8 @@ giop_connection_dispose (GObject *obj)
 {
 	GIOPConnection *cnx = (GIOPConnection *) obj;
 
+	giop_thread_key_release (obj);
+
 	giop_connection_close (cnx);
 
 	giop_connection_destroy_frags (cnx);

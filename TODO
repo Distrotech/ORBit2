@@ -1,10 +1,13 @@
 TODO:
 
 * Threading 
+	+ Create a per-object policy 'PROCESS_REENTERANTLY', using our
+	  VPVID space; takes a boolean ... set it on the object ...
+	  [ make some libbonobo wrappers to improve the situation ]
+	+ CORBA_Object_non_existant - needs to do a blocking
+	  check for CONNECTED / DISCONNETED.
 	+ bin redundant forwards in poa.c
 	+ giop_recv_thread_fn - more work needed
-	+ unsafe bits
-		+ 'random' number generation - the per obj idx ?
 	+ Lock order:
 		POAManager
 			POAObject
