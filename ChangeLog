@@ -1,3 +1,6 @@
+2004-07-07  Frank Rehberger <frehberg@gnome-de.org>
+	* Add Version ORBit2-2.12.0
+
 2004-06-22  Chris Landrieu  <perotin101@yahoo.com>
 
 	* src/orb/orb-core/allocators.c (ORBit_freekids_via_TypeCode_T):
