@@ -36,7 +36,8 @@ linc_connection_get_type(void)
       
       object_type = g_type_register_static (G_TYPE_OBJECT,
                                             "LINCConnection",
-                                            &object_info);
+                                            &object_info,
+					    0);
     }  
 
   return object_type;
@@ -195,7 +196,8 @@ linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
   if(fd < 0)
     goto out;
-  fcntl(fd, F_SETFL, O_NONBLOCK);
+  if(options & LINC_CONNECTION_NONBLOCKING)
+    fcntl(fd, F_SETFL, O_NONBLOCK);
   fcntl(fd, F_SETFD, FD_CLOEXEC);
 
   rv = connect(fd, ai->ai_addr, ai->ai_addrlen);
@@ -233,8 +235,11 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
   int n;
   int written = 0;
 
-  while(cnx->status == LINC_CONNECTING)
-    g_main_iteration(TRUE);
+  if(cnx->options & LINC_CONNECTION_NONBLOCKING)
+    {
+      while(cnx->status == LINC_CONNECTING)
+	g_main_iteration(TRUE);
+    }
 
   if(cnx->status != LINC_CONNECTED)
     return -1;
@@ -254,8 +259,9 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 	    {
 	      gulong rv;
 	      rv = SSL_get_error(cnx->ssl, n);
-	      if(rv == SSL_ERROR_WANT_READ
-		 || rv == SSL_ERROR_WANT_WRITE)
+	      if((rv == SSL_ERROR_WANT_READ
+		  || rv == SSL_ERROR_WANT_WRITE)
+		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
 		g_main_iteration(FALSE);
 	      else
 		return -1;
@@ -263,7 +269,8 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 	  else
 #endif
 	    {
-	      if(errno == EAGAIN)
+	      if(errno == EAGAIN
+		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
 		g_main_iteration(FALSE);
 	      else
 		return -1;
@@ -287,8 +294,11 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 {
   int n;
 
-  while(cnx->status == LINC_CONNECTING)
-    g_main_iteration(TRUE);
+  if(cnx->options & LINC_CONNECTION_NONBLOCKING)
+    {
+      while(cnx->status == LINC_CONNECTING)
+	g_main_iteration(TRUE);
+    }
 
   g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
 
@@ -308,8 +318,9 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 	    {
 	      gulong rv;
 	      rv = SSL_get_error(cnx->ssl, n);
-	      if(rv == SSL_ERROR_WANT_READ
-		 || rv == SSL_ERROR_WANT_WRITE)
+	      if((rv == SSL_ERROR_WANT_READ
+		  || rv == SSL_ERROR_WANT_WRITE)
+		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
 		g_main_iteration(FALSE);
 	      else
 		return -1;
@@ -317,7 +328,8 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 	  else
 #endif
 	    {
-	      if(errno == EAGAIN)
+	      if(errno == EAGAIN
+		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
 		g_main_iteration(FALSE);
 	      else
 		return -1;
@@ -342,8 +354,11 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
   register struct iovec *vptr;
   register gulong size_left;
 
-  while(cnx->status == LINC_CONNECTING)
-    g_main_iteration(TRUE);
+  if(cnx->options & LINC_CONNECTION_NONBLOCKING)
+    {
+      while(cnx->status == LINC_CONNECTING)
+	g_main_iteration(TRUE);
+    }
 
   g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
 
@@ -370,7 +385,8 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
       n = writev(fd, vptr, MIN(vecs_left, WRITEV_IOVEC_LIMIT));
       if(n < 0)
 	{
-	  if(errno == EAGAIN)
+	  if(errno == EAGAIN
+	     && (cnx->options & LINC_CONNECTION_NONBLOCKING))
 	    g_main_iteration(FALSE); /* Try to give other things a
 					chance to run */
 	  else
