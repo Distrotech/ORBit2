@@ -197,7 +197,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "if (ev->_major == CORBA_NO_EXCEPTION) {\n");
     ck_skel_alloc_tmpvars(oi->out_skels, ci);
 
-    c_marshalling_generate(oi->out_skels, ci);
+    c_marshalling_generate(oi->out_skels, ci, TRUE);
 
     if(IDL_OP_DCL(tree).raises_expr) {
       IDL_tree curitem;
@@ -253,7 +253,7 @@ ck_output_except(IDL_tree tree, OIDL_C_Info *ci)
   if(IDL_EXCEPT_DCL(tree).members) {
     ck_skel_alloc_tmpvars(ei->demarshal, ci);
     fprintf(ci->fh, "%s *_ORBIT_exdata = ev->_params;\n", id);
-    c_marshalling_generate(ei->marshal, ci);
+    c_marshalling_generate(ei->marshal, ci, FALSE);
   }
 
   fprintf(ci->fh, "}\n");
@@ -388,7 +388,7 @@ cbe_skel_op_param_free(IDL_tree tree, OIDL_C_Info *ci, gboolean free_internal)
 
   switch(IDL_PARAM_DCL(tree).attr) {
   case IDL_PARAM_IN:
-    if(orbit_cbe_type_is_fixed_length(ts))
+    if(orbit_cbe_type_is_fixed_length(ts) || !orbit_cbe_type_contains_complex(ts))
       return;
     switch(IDL_NODE_TYPE(ts)) {
     case IDLN_TYPE_SEQUENCE:

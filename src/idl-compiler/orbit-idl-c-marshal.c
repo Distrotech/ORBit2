@@ -13,7 +13,7 @@ static void c_marshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_marshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 
 void
-c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
+c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean on_stack)
 {
   OIDL_C_Marshal_Info cmi;
 
@@ -21,6 +21,7 @@ c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 
   cmi.ci = ci;
   cmi.last_tail_align = 1;
+  cmi.alloc_on_stack = on_stack;
 
   c_marshal_generate(node, &cmi);
 }
@@ -56,7 +57,7 @@ c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 }
 
 static void
-c_marshal_append(FILE *of, OIDL_Marshal_Node *node, char *itemstr, char *sizestr)
+c_marshal_append(OIDL_C_Marshal_Info *cmi, OIDL_Marshal_Node *node, char *itemstr, char *sizestr)
 {
   gboolean indirect = NEEDS_INDIRECT(node), addrof = FALSE;
 
@@ -66,24 +67,29 @@ c_marshal_append(FILE *of, OIDL_Marshal_Node *node, char *itemstr, char *sizestr
 	 || (node != node->up->u.loop_info.contents)))
     addrof = TRUE;
 
-  if(indirect)
-     fprintf(of, "{ guchar *_ORBIT_t; _ORBIT_t = alloca(%s); memcpy(_ORBIT_t, %s(%s), %s);\n", sizestr, addrof?"&":"",
+  if(indirect && cmi->alloc_on_stack)
+     fprintf(cmi->ci->fh, "{ guchar *_ORBIT_t; _ORBIT_t = alloca(%s); memcpy(_ORBIT_t, %s(%s), %s);\n", sizestr, addrof?"&":"",
 	     itemstr, sizestr);
 
-  fprintf(of, "giop_message_buffer_append_mem(GIOP_MESSAGE_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
-	  (addrof && !indirect)?"&":"",
-	  indirect?"_ORBIT_t":itemstr, sizestr);
+  if(indirect && !cmi->alloc_on_stack) {
+    fprintf(cmi->ci->fh, "giop_send_buffer_append_mem_indirect(GIOP_SEND_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
+	    addrof?"&":"", itemstr, sizestr);
+  } else {
+    fprintf(cmi->ci->fh, "giop_message_buffer_append_mem(GIOP_MESSAGE_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
+	    (addrof && !indirect)?"&":"",
+	    indirect?"_ORBIT_t":itemstr, sizestr);
+  }
 
-  if(indirect)
-    fprintf(of, "}\n");
+  if(indirect && cmi->alloc_on_stack)
+    fprintf(cmi->ci->fh, "}\n");
 }
 
 #if 0
-#define AP(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, FALSE, FALSE, FALSE)
-#define APA(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, TRUE, FALSE, FALSE)
+#define AP(itemstr, sizestr) c_marshal_append(cmi, itemstr, sizestr, FALSE, FALSE, FALSE)
+#define APA(itemstr, sizestr) c_marshal_append(cmi, itemstr, sizestr, TRUE, FALSE, FALSE)
 
-#define API(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, FALSE, TRUE, FALSE)
-#define APIA(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, TRUE, TRUE, FALSE)
+#define API(itemstr, sizestr) c_marshal_append(cmi, itemstr, sizestr, FALSE, TRUE, FALSE)
+#define APIA(itemstr, sizestr) c_marshal_append(cmi, itemstr, sizestr, TRUE, TRUE, FALSE)
 #endif
 
 static void
@@ -109,7 +115,7 @@ c_marshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   ctmp = oidl_marshal_node_valuestr(node);
   g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
 
-  c_marshal_append(cmi->ci->fh, node, ctmp, tmpstr->str);
+  c_marshal_append(cmi, node, ctmp, tmpstr->str);
 
   g_free(ctmp);
   g_string_free(tmpstr, TRUE);
@@ -182,7 +188,7 @@ c_marshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
     g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
-    c_marshal_append(cmi->ci->fh, node->u.loop_info.contents, tmpstr2->str, tmpstr->str);
+    c_marshal_append(cmi, node->u.loop_info.contents, tmpstr2->str, tmpstr->str);
 
     g_string_free(tmpstr2, TRUE);
     g_string_free(tmpstr, TRUE);
@@ -236,7 +242,7 @@ c_marshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     ctmp = oidl_marshal_node_fqn(node);
     g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
 
-    c_marshal_append(cmi->ci->fh, node, ctmp, tmpstr->str);
+    c_marshal_append(cmi, node, ctmp, tmpstr->str);
 
   } else {
     GSList *ltmp;

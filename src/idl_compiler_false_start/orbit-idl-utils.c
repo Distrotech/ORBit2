@@ -821,6 +821,70 @@ orbit_cbe_type_is_fixed_length(IDL_tree ts)
   }
 }
 
+gboolean
+orbit_cbe_type_contains_complex(IDL_tree ts)
+{
+  gboolean has_complex = FALSE;
+  IDL_tree curitem;
+
+  ts = orbit_cbe_get_typespec(ts);
+
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_FLOAT:
+  case IDLN_TYPE_INTEGER:
+  case IDLN_TYPE_ENUM:
+  case IDLN_TYPE_CHAR:
+  case IDLN_TYPE_WIDE_CHAR:
+  case IDLN_TYPE_OCTET:
+  case IDLN_TYPE_BOOLEAN:
+  case IDLN_TYPE_STRING:
+  case IDLN_TYPE_WIDE_STRING:
+    return FALSE;
+    break;
+  case IDLN_TYPE_SEQUENCE:
+    return orbit_cbe_type_contains_complex(IDL_TYPE_SEQUENCE(ts).simple_type_spec);
+    break;
+  case IDLN_TYPE_OBJECT:
+  case IDLN_FORWARD_DCL:
+  case IDLN_INTERFACE:
+  case IDLN_TYPE_ANY:
+  case IDLN_TYPE_TYPECODE:
+    return TRUE;
+    break;
+  case IDLN_TYPE_UNION:
+    for(curitem = IDL_TYPE_UNION(ts).switch_body; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      has_complex |= orbit_cbe_type_contains_complex(IDL_LIST(IDL_CASE_STMT(IDL_LIST(curitem).data).element_spec).data);
+    }
+    return has_complex;
+    break;
+  case IDLN_EXCEPT_DCL:
+  case IDLN_TYPE_STRUCT:
+    for(curitem = IDL_TYPE_STRUCT(ts).member_list; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      has_complex |= orbit_cbe_type_contains_complex(IDL_LIST(curitem).data);
+    }
+    return has_complex;
+    break;
+  case IDLN_TYPE_ARRAY:
+    return orbit_cbe_type_contains_complex(IDL_TYPE_DCL(IDL_get_parent_node(ts, IDLN_TYPE_DCL, NULL)).type_spec);
+    break;
+  case IDLN_TYPE_DCL:
+    return orbit_cbe_type_contains_complex(IDL_TYPE_DCL(ts).type_spec);
+    break;
+  case IDLN_IDENT:
+  case IDLN_LIST:
+    return orbit_cbe_type_contains_complex(IDL_NODE_UP(ts));
+    break;
+  case IDLN_MEMBER:
+    return orbit_cbe_type_contains_complex(IDL_MEMBER(ts).type_spec);
+    break;
+  default:
+    g_warning("I'm not sure if type %s has a complex...", IDL_tree_type_names[IDL_NODE_TYPE(ts)]);
+    return FALSE;
+  }
+}
+
 IDL_tree
 orbit_cbe_get_typespec(IDL_tree node)
 {
