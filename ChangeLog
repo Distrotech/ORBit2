@@ -1,3 +1,20 @@
+2001-08-08  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/iop-profiles.c (IOP_component_free):
+	don't free the non-allocated oki - it's part of the
+	component's structure.
+
+	* include/orbit/orbit.h: add orbit_version.
+
+	* configure.in (then): kill HAVE_LIMITED_WRITEV check.
+
+	* include/orbit/orbit-config.h.in: kill HAVE_ALLOCA,
+	HAVE_LIMITED_WRITEV - unused.
+
+	* src/orb/orbit-init.c: setup orbit_version char *
+
+	* src/orb/Makefile.am: define ORBIT_VERSION.
+
 2001-08-08  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/orbit-small.c

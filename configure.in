@@ -184,34 +184,6 @@ fi
 dnl This generates warnings from autoconf...
 AC_C_BIGENDIAN
 
-AC_TRY_RUN([
-#include <fcntl.h>
-#include <sys/uio.h>
-#define NIOVECS 50
-int main(int argc, char *argv[])
-{
-	char dumbuf[20] = "\n";
-	struct iovec iovecs[NIOVECS];
-	int i,fd;
-
-	for(i = 0; i < NIOVECS; i++) {
-		iovecs[i].iov_base = dumbuf;
-		iovecs[i].iov_len = 1;
-	}
-
-	fd=open("/dev/null", O_WRONLY);
-	if(fd==-1)
-		return(1);
-
-	if(writev(fd, iovecs, NIOVECS) < 0)
-		return 1;
-
-	close(fd);
-	return 0;
-}
-], , AC_DEFINE(HAVE_LIMITED_WRITEV), AC_DEFINE(HAVE_LIMITED_WRITEV))
-AC_SUBST(HAVE_LIMITED_WRITEV)
-
 #######################
 # type alignment test #
 #######################

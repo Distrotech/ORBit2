@@ -22,6 +22,7 @@ ORBit_init_internals(CORBA_ORB orb, CORBA_Environment *ev)
   srand (t.tv_sec ^ t.tv_usec ^ getpid ());
 }
 
-unsigned int orbit_major_version=ORBIT_MAJOR_VERSION,
-	orbit_minor_version=ORBIT_MINOR_VERSION, 
-	orbit_micro_version=ORBIT_MICRO_VERSION;
+const char  *orbit_version       = ORBIT_VERSION;
+unsigned int orbit_major_version = ORBIT_MAJOR_VERSION;
+unsigned int orbit_minor_version = ORBIT_MINOR_VERSION; 
+unsigned int orbit_micro_version = ORBIT_MICRO_VERSION;

@@ -4,6 +4,7 @@ lib_LTLIBRARIES=libORBit-2.la
 
 INCLUDES=-I. -I$(srcdir) -I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
+	-DORBIT_VERSION=\"@ORBIT_VERSION@\" \
 	@GLIB_CFLAGS@ \
 	@LINC_CFLAGS@
 
