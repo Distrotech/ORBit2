@@ -1,6 +1,9 @@
-#ifndef GIOP_H
-#define GIOP_H 1
+#ifndef LINC_H
+#define LINC_H 1
 
-void giop_init(void);
+#include <linc/linc-config.h>
+#include <linc/linc-types.h>
+
+void linc_init(void);
 
 #endif

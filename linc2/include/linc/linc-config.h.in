@@ -1,0 +1,6 @@
+#ifndef LINC_CONFIG_H
+#define LINC_CONFIG_H 1
+
+#define LINC_SSL_SUPPORT @LINC_SSL_SUPPORT@
+
+#endif

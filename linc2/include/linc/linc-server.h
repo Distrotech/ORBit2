@@ -1,7 +1,7 @@
-#ifndef GIOP_SERVER_H
-#define GIOP_SERVER_H 1
+#ifndef LINC_SERVER_H
+#define LINC_SERVER_H 1
 
-#include <orbit/IIOP/giop-protocol.h>
+#include <linc/linc-protocol.h>
 
 typedef struct {
   GObject parent;
@@ -11,17 +11,18 @@ typedef struct {
 
   char *local_host_info, *local_serv_info;
 
-  GIOPProtocolInfo *proto;
+  LINCProtocolInfo *proto;
   guint tag;
   /* Options that incoming connections are created with */
-  GIOPConnectionOptions create_options;
-} GIOPServer;
+  LINCConnectionOptions create_options;
+} LINCServer;
 
 typedef struct {
   GObjectClass parent_class;
-} GIOPServerClass;
+} LINCServerClass;
 
-GType giop_server_get_type(void) G_GNUC_CONST;
-GIOPServer *giop_server_new(const char *proto_name, GIOPConnectionOptions create_options);
+GType linc_server_get_type(void) G_GNUC_CONST;
+LINCServer *linc_server_new(const char *proto_name,
+			    LINCConnectionOptions create_options);
 
 #endif

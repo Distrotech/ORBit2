@@ -1,0 +1,7 @@
+stamp-h.in
+Makefile.in
+configure
+config.h.in
+aclocal.m4
+obj
+

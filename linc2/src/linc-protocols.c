@@ -1,10 +1,11 @@
 #include "config.h"
-#include <orbit/IIOP/giop-protocol.h>
+#include <linc/linc-protocol.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -23,7 +24,7 @@ static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
 			    int flags);
 
-static GIOPProtocolInfo protocol_ents[] = {
+static LINCProtocolInfo protocol_ents[] = {
 #if defined(AF_INET) && defined(IPPROTO_TCP)
   {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, NULL, getaddrinfo /* also covers IPv6 & UNIX */, getnameinfo},
 #endif
@@ -31,16 +32,16 @@ static GIOPProtocolInfo protocol_ents[] = {
   {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0},
 #endif
 #ifdef AF_UNIX
-  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, GIOP_PROTOCOL_SECURE|GIOP_PROTOCOL_NEEDS_BIND, af_unix_destroy},
+  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, af_unix_destroy},
 #endif
 #ifdef AF_IRDA
-  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, GIOP_PROTOCOL_NEEDS_BIND, NULL, irda_getaddrinfo, irda_getnameinfo},
+  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, LINC_PROTOCOL_NEEDS_BIND, NULL, irda_getaddrinfo, irda_getnameinfo},
 #endif
   {NULL}
 };
 
-GIOPProtocolInfo * const
-giop_protocol_find(const char *name)
+LINCProtocolInfo * const
+linc_protocol_find(const char *name)
 {
   int i;
   for(i = 0; protocol_ents[i].name; i++)
@@ -52,8 +53,8 @@ giop_protocol_find(const char *name)
   return NULL;
 }
 
-GIOPProtocolInfo * const
-giop_protocol_find_num(const int family)
+LINCProtocolInfo * const
+linc_protocol_find_num(const int family)
 {
   int i;
   for(i = 0; protocol_ents[i].name; i++)
@@ -65,8 +66,17 @@ giop_protocol_find_num(const int family)
   return NULL;
 }
 
+static char linc_tmpdir[PATH_MAX] = "/tmp";
+
+void
+linc_set_tmpdir(const char *dir)
+{
+  const char *uname = g_get_user_name();
+  g_snprintf(linc_tmpdir, sizeof(linc_tmpdir), dir, uname, uname, uname);
+}
+
 int
-giop_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
+linc_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 		 char *host, size_t hostlen, char *serv, size_t servlen,
 		 int flags)
 {
@@ -82,7 +92,7 @@ giop_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 }
 
 int
-giop_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
+linc_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
 {
   int i, rv = EAI_NONAME, tmprv;
   gboolean keep_going;
@@ -103,18 +113,16 @@ giop_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 	    default:
 	      rv = tmprv;
 	      keep_going = FALSE;
-#ifdef AF_UNIX
+#if defined(AF_UNIX)
 	      if(!rv
 		 && !servname
 		 && (hints->ai_flags & AI_PASSIVE)
 		 && ((*res)->ai_family == AF_UNIX))
 		{
 		  struct sockaddr_un *sun = (struct sockaddr_un *)res->ai_addr;
-		  /* Special hack for ORBit usage */
 		  srand(time(NULL));
 		  g_snprintf(sun->sun_path, sizeof(sun->sun_path),
-			     "/tmp/orbit-%s/orb-%x%x",
-			     rand(), rand());
+			     "%s/linc-%x%x", linc_tmpdir, rand(), rand());
 		}
 #endif
 	      break;
