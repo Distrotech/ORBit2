@@ -1,3 +1,20 @@
+2004-04-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/iop-profiles.c
+	(CodeSetComponent_demarshal): don't spew a
+	g_warning, just a dprintf.
+	(IOP_UnknownComponent_marshal): actually marshal
+	the length of the sequence as well as the data.
+
+2004-04-21  Bill Haneman  <bill.haneman@sun.com>
+
+	* test/everything/basicServer.c
+	(TestFactory_getObjectCount, TestFactory_getObject):
+	hammer on some JavaORB stuff.
+
+	* test/everything/client.c (testIOR): impl.
+	(run_tests): upd.
+
 2004-04-13  Joe Marcus Clarke  <marcus@freebsd.org>
 
 	* ORBit-2.0.pc.in: add gthread dep.

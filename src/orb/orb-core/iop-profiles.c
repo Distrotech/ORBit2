@@ -7,6 +7,7 @@
 #include "iop-profiles.h"
 #include "orb-core-private.h"
 #include "../poa/orbit-poa-export.h"
+#include "orbit-debug.h"
 
 #undef DEBUG
 
@@ -810,6 +811,7 @@ IOP_UnknownComponent_marshal (CORBA_Object        obj,
 {
 	IOP_UnknownComponent_info *uci = (IOP_UnknownComponent_info *) ci;
 
+	giop_send_buffer_append (buf, &uci->data._length, 4);
 	giop_send_buffer_append (buf, uci->data._buffer, uci->data._length);
 }
 
@@ -1155,9 +1157,7 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 	buf->cur += 4;
 
 	if (sequence_length > 0) {
-		static int warned = 0;
-		if (!(warned++))
-			g_warning ("Ignoring incoming code_sets component");
+		dprintf (OBJECTS, "Ignoring incoming code_sets component");
 
 		if (buf->cur + sequence_length * 4 <= buf->end)
 			buf->cur += sequence_length * 4;

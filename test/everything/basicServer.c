@@ -193,6 +193,48 @@ BasicServer_testLargeStringSeq (PortableServer_Servant servant,
 {
 }
 
+/* Nasty IORs from JavaORB */
+static char* iorstrings[] = {
+		"IOR:010000001f00000049444c3a6f726269742f746573742f54657"
+	"374466163746f72793a312e300000030000000054424f6400000001"
+	"01020005000000554e495800000000160000006c6f63616c686f737"
+	"42e6c6f63616c646f6d61696e0000002d0000002f746d702f6f7262"
+	"69742d6d69636861656c2f6c696e632d363733322d302d373362323"
+	"966373333316662390000000000000000caaedfba58000000010102"
+	"002d0000002f746d702f6f726269742d6d69636861656c2f6c696e6"
+	"32d363733322d302d37336232396637333331666239000000001c00"
+	"000000000000331c40f8ba0fa828dc2928282828282808000000db7"
+	"e269601000000480000000100000002000000050000001c00000000"
+	"000000331c40f8ba0fa828dc2928282828282808000000db7e26960"
+	"1000000140000000100000001000105000000000901010000000000",
+		"IOR:000000000000002249444c3a4163636573736962696c6974792"
+	"f4170706c69636174696f6e3a312e30000000000000010000000000"
+	"000082000102000000000a3132372e302e302e3200837800000031a"
+	"fabcb00000000200d3e1d2600000001000000000000000100000008"
+	"526f6f74504f4100000000080000000100000000140000000000000"
+	"2000000010000002000000000000100010000000205010001000100"
+	"2000010109000000010001010000000026000000020002"
+};
+
+static CORBA_long
+BasicServer_getObjectCount (PortableServer_Servant  servant,
+			    CORBA_Environment      *ev)
+{
+	return G_N_ELEMENTS (iorstrings) + 1;
+}
+
+static CORBA_Object
+BasicServer_getObject (PortableServer_Servant  servant,
+		       const CORBA_long        which,
+		       CORBA_Environment      *ev)
+{
+	if (which < G_N_ELEMENTS (iorstrings))
+		return CORBA_ORB_string_to_object (global_orb, iorstrings[which], ev);
+	else
+		return CORBA_OBJECT_NIL;
+}
+
+
 POA_test_BasicServer__epv BasicServer_epv = {
 	NULL,
 	BasicServer__get_foo,
@@ -208,7 +250,9 @@ POA_test_BasicServer__epv BasicServer_epv = {
 	BasicServer_opException,
 	BasicServer_opOneWay,
 	NULL, /* noImplement */
-	BasicServer_testLargeStringSeq
+	BasicServer_testLargeStringSeq,
+	BasicServer_getObjectCount,
+	BasicServer_getObject,
 };
 
 PortableServer_ServantBase__epv BasicServer_base_epv = {NULL, simple_finalize, NULL};

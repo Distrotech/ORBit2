@@ -173,6 +173,9 @@ module test {
 		oneway void opOneWay(in string inArg);
 		void noImplement ();
 		void testLargeStringSeq (in StrSeq seq);
+
+		long   getObjectCount ();
+		Object getObject      (in long which);
 	};
 
 	interface StructServer : BasicServer {
