@@ -64,10 +64,11 @@ typedef struct {
 	const struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = {  \
 		{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},           \
 		CORBA_tk_##nom,                                         \
+		0, 0, c_align,						\
+		0, 0, NULL, NULL,					\
 		#nom,                                                   \
 		"IDL:CORBA/" #nom ":1.0",                               \
-		0, 0, NULL, NULL, NULL,                                 \
-		CORBA_OBJECT_NIL, -1, 0, 0, 0, c_align                  \
+		NULL, CORBA_OBJECT_NIL, -1				\
 }
 
 #define CORBA_tk_Object CORBA_tk_objref
@@ -79,17 +80,14 @@ typedef struct {
 
 const struct CORBA_TypeCode_struct TC_null_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
-	CORBA_tk_null,
-	"null",
-	"Null",
-	0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0, -1
+	CORBA_tk_null, 0, 0, -1, 0, 0, NULL,
+	CORBA_OBJECT_NIL, "null", "Null"
 };
+
 const struct CORBA_TypeCode_struct TC_void_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
-	CORBA_tk_void,
-	"void",
-	"IDL:CORBA/void:1.0",
-	0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0, -1
+	CORBA_tk_null, 0, 0, -1, 0, 0, NULL,
+	CORBA_OBJECT_NIL, "void", "IDL:CORBA/void:1.0"
 };
 
 DEF_TC_BASIC(char, ORBIT_ALIGNOF_CORBA_CHAR);

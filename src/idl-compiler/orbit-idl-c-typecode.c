@@ -983,11 +983,13 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 
 	fprintf (ci->fh, ",\n");
 
-	orbit_output_tcstruct_name (ci->fh, tci->ts, tci->array_gen_ctr);
+	/* flags */
+	fprintf (ci->fh, "0,\n");
 
-	fprintf (ci->fh, ",\n");
+	/* c_length */
+	fprintf (ci->fh, "0,\n");
 
-	orbit_output_tcstruct_repo_id (ci->fh, tci->ts, tci->array_gen_ctr);
+	orbit_output_tcstruct_c_align (ci->fh, tci->ts);
 
 	fprintf (ci->fh, ",\n");
 
@@ -999,19 +1001,27 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 
 	fprintf (ci->fh, ",\n");
 
-	orbit_output_tcstruct_subnames (ci->fh, tci->ts, subnames_id);
-
-	fprintf (ci->fh, ",\n");
-
 	orbit_output_tcstruct_subtypes (ci->fh, tci->ts, subtypes_id);
 
 	fprintf (ci->fh, ",\n");
 
-	orbit_output_tcstruct_sublabels (ci->fh, tci->ts, sublabels_id);
+	orbit_output_tcstruct_discriminator (ci->fh, tci->ts);
 
 	fprintf (ci->fh, ",\n");
 
-	orbit_output_tcstruct_discriminator (ci->fh, tci->ts);
+	orbit_output_tcstruct_name (ci->fh, tci->ts, tci->array_gen_ctr);
+
+	fprintf (ci->fh, ",\n");
+
+	orbit_output_tcstruct_repo_id (ci->fh, tci->ts, tci->array_gen_ctr);
+
+	fprintf (ci->fh, ",\n");
+
+	orbit_output_tcstruct_subnames (ci->fh, tci->ts, subnames_id);
+
+	fprintf (ci->fh, ",\n");
+
+	orbit_output_tcstruct_sublabels (ci->fh, tci->ts, sublabels_id);
 
 	fprintf (ci->fh, ",\n");
 
@@ -1024,10 +1034,6 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 	fprintf (ci->fh, ",\n");
 
 	orbit_output_tcstruct_digits_scale (ci->fh, tci->ts);
-
-	fprintf (ci->fh, ",\n");
-
-	orbit_output_tcstruct_c_align (ci->fh, tci->ts);
 
 	fprintf (ci->fh, "\n};\n");
 

@@ -1,5 +1,19 @@
 2001-11-26  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.3.99
+
+	* configure.in: bump serial.
+	
+2001-11-26  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(cbe_tc_generate): upd & re-order.
+
+	* include/orbit/orb-core/corba-typecode.h: give us
+	some space for expansion & re-order.
+
+2001-11-26  Michael Meeks  <michael@ximian.com>
+
 	* Version 2.3.98
 
 	* src/orb/util/orbit-options.c
