@@ -192,11 +192,11 @@ test_broken (void)
 }
 
 static GIOCondition
-knobble_watch (LincWatch *watch, GIOCondition new_cond)
+knobble_watch (LinkWatch *watch, GIOCondition new_cond)
 {
 	GIOCondition   old_cond;
-	LincUnixWatch *a = (LincUnixWatch *) watch->link_source;
-	LincUnixWatch *b = (LincUnixWatch *) watch->main_source;
+	LinkUnixWatch *a = (LinkUnixWatch *) watch->link_source;
+	LinkUnixWatch *b = (LinkUnixWatch *) watch->main_source;
 
 	g_assert (watch != NULL);
 
@@ -300,7 +300,7 @@ test_blocking (void)
 
 	fprintf (stderr, "Testing blocking code ...\n");
 
-	/* Create our own LincConnection to verify input */
+	/* Create our own LinkConnection to verify input */
 	test_server_cnx_type = test_get_blocking_cnx_type ();
 
 	create_server (&server);
@@ -352,7 +352,7 @@ test_blocking (void)
 static void
 test_local_ipv4 (void)
 {
-	LincSockLen saddr_len;
+	LinkSockLen saddr_len;
 	LinkProtocolInfo *proto;
 	struct sockaddr *saddr;
 	struct sockaddr_in ipv4_addr = { 0 };
@@ -455,7 +455,7 @@ test_hosts_lookup (void)
 	int i;
 	struct hostent *hent;
 	LinkProtocolInfo *proto;
-	LincSockLen saddr_len;
+	LinkSockLen saddr_len;
 	struct sockaddr_in *addr;
 		
 	hent = gethostbyname (link_get_local_hostname ());
@@ -484,7 +484,7 @@ test_host (void)
 {
 	char *portnum;
 	char *hostname;
-	LincSockLen saddr_len;
+	LinkSockLen saddr_len;
 	struct sockaddr *saddr;
 	LinkProtocolInfo *proto;
 
