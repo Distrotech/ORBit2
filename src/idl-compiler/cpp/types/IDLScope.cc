@@ -85,32 +85,34 @@ IDLScope::getItem(IDL_tree node) const {
 }
 
 IDLElement *
-IDLScope::getItem(string const &id) const {
-	ItemList::const_iterator first = m_items.begin(),last = m_items.end();
-
-	while (first != last) {
-		if ((*first)->getIDLIdentifier() == id) return *first;
-		first++;
+IDLScope::getItem (string const &id) const
+{
+	for (ItemList::const_iterator i = m_items.begin ();
+	     i != m_items.end (); i++)
+	{
+		if ((*i)->get_idl_identifier () == id) return *i;
 	}
-	return NULL;
+	
+	return 0;
 }
 
 IDLScope *
-IDLScope::getScope (string const &id, int &spos) const {
-	ScopeList::const_iterator first = m_scopes.begin(),last = m_scopes.end();
-
+IDLScope::getScope (string const &id,
+		    int          &spos) const
+{
 	int pos_counter = 0;
-	while (first != last) {
-		if ((*first)->getIDLIdentifier() == id && pos_counter >= spos) {
-			spos = pos_counter;
-			return *first;
-		}
 
-		first++;
-		pos_counter++;
+	for (ScopeList::const_iterator i = m_scopes.begin ();
+	     i != m_scopes.end (); i++, pos_counter++)
+	{
+		if ((*i)->get_idl_identifier () == id && pos_counter >= spos)
+		{
+			spos = pos_counter;
+			return *i;
+		}
 	}
 
-	return NULL;
+	return 0;
 }
 
 bool
@@ -144,7 +146,7 @@ IDLScope::getCPPNamespaceDecl(string &ns_begin,string &ns_end,
 
 	while (scope != rootscope) {
 		IDLScope const *nextscope = scope->getParentScope();
-		string id = scope->getCPPIdentifier();
+		string id = scope->get_cpp_identifier ();
 		if (nextscope == rootscope)
 			id.insert(0,prefix);
 		ns_begin.insert(0,"namespace " + id + "\n{\n");

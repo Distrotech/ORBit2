@@ -47,11 +47,11 @@ public:
 	////////////////////////////////////////////
 	// Stubs
 
-	string stub_decl_arg_get (const string   &cpp_id,
-				  IDL_param_attr  direction,
-				  IDLTypedef     *active_typedef = 0) const;
+	string stub_decl_arg_get (const string     &cpp_id,
+				  IDL_param_attr    direction,
+				  const IDLTypedef *active_typedef = 0) const;
 
-	string stub_decl_ret_get (IDLTypedef *active_typedef = 0) const;
+	string stub_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
 	void stub_impl_arg_pre (ostream        &ostr,
 				Indent         &indent,
@@ -79,11 +79,11 @@ public:
 	////////////////////////////////////////////
 	// Skels
 
-	string skel_decl_arg_get (const string   &c_id,
-				  IDL_param_attr  direction,
-				  IDLTypedef     *active_typedef = 0) const;
+	string skel_decl_arg_get (const string     &c_id,
+				  IDL_param_attr    direction,
+				  const IDLTypedef *active_typedef = 0) const;
 
-	string skel_decl_ret_get (IDLTypedef *active_typedef = 0) const;
+	string skel_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
 	void skel_impl_arg_pre (ostream        &ostr,
 				Indent         &indent,
@@ -115,6 +115,12 @@ public:
 
 	// Compund declaration
 	string get_cpp_member_typename () const;
+
+	string member_decl_arg_get () const;
+
+	void member_impl_arg_copy (ostream      &ostr,
+				   Indent       &indent,
+				   const string &cpp_id) const;
 
 	// Compound conversion: C++ -> C
 	void member_pack_to_c_pre  (ostream      &ostr,

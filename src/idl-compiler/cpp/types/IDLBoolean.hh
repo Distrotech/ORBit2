@@ -36,8 +36,8 @@ class IDLBoolean
   public IDLUnionDescriminator
 {
 protected:
-	string get_cpp_typename () const;
-	string get_c_typename () const;
+	string get_fixed_cpp_typename () const;
+	string get_fixed_c_typename () const;
 
 public:
 	string getDefaultValue(set<string> const &labels) const;
