@@ -1,3 +1,7 @@
+2001-10-29  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump required glib version.
+
 2001-10-27  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-typecode.c: re-order to kill
