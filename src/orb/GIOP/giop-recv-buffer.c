@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include <execinfo.h>
 #include "giop-private.h"
 #include "giop-debug.h"
 #include <orbit/GIOP/giop-types.h>
