@@ -1,3 +1,16 @@
+2002-01-31  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/GIOP/giop-debug.h: make giop dumping a runtime
+	debugging option.
+
+	* src/orb/GIOP/giop-recv-buffer.c: (giop_recv_msg_reading_body):
+	use dprintf (GIOP.. instead of giop_dprintf.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_setup_debug_flags):
+	add ORBIT_DEBUG_GIOP.
+
+	* src/orb/orb-core/orbit-debug.h: ditto.
+
 2002-01-30  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-any.h: kill dup_strings

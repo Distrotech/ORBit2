@@ -791,7 +791,7 @@ static gboolean
 giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 			    gboolean        is_auth)
 {
-	giop_dprintf ("Incoming IIOP data:\n");
+	dprintf (GIOP, "Incoming IIOP data:\n");
 
 	do_giop_dump (stderr, (guint8 *)buf, 12, 0);
 
