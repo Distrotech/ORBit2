@@ -1,3 +1,27 @@
+2002-06-19  Michael Meeks  <michael@ximian.com>
+
+	* test/test-linc.c (test_local_ipv4): upd.
+	(test_hosts_lookup, test_host): impl
+
+	* src/linc-protocols.c (linc_get_local_hostname):
+	rename from get_local_hostname & make module public.
+
+	* src/linc-server.c (linc_server_setup): upd. to use it.
+
+	* src/linc-connection.c
+	(linc_connection_initiate, linc_close_fd): handle EINTR
+	on close.
+
+	* src/linc-protocols.c (irda_find_device),
+	(linc_protocol_destroy_addr),
+	(linc_protocol_destroy_cnx): ditto.
+
+	* src/linc-server.c (linc_server_dispose),
+	(linc_server_accept_connection): ditto.
+
+	* src/linc-protocols.c (irda_getaddrinfo):
+	use g_strncpy not strcpy.
+
 2002-06-18  Michael Meeks  <michael@ximian.com>
 
 	* test/test-linc.c (test_local_ipv4): beef up &

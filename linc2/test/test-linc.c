@@ -355,7 +355,6 @@ test_local_ipv4 (void)
 	LINCProtocolInfo *proto;
 	struct sockaddr *saddr;
 	struct sockaddr_in ipv4_addr = { 0 };
-	static char local_host[NI_MAXHOST] = { 0 };
 
 	fprintf (stderr, " IPv4\n");
 	proto = linc_protocol_find ("IPv4");
@@ -368,11 +367,8 @@ test_local_ipv4 (void)
 		proto, (struct sockaddr *)&ipv4_addr,
 		sizeof (ipv4_addr)));
 
-	if (gethostname (local_host, NI_MAXHOST) == -1)
-		return;
-
 	saddr = linc_protocol_get_sockaddr (
-		proto, local_host, NULL, &saddr_len);
+		proto, linc_get_local_hostname (), NULL, &saddr_len);
 
 	g_assert (linc_protocol_is_local (proto, saddr, saddr_len));
 	g_free (saddr);
@@ -420,6 +416,80 @@ test_local (void)
 	test_local_ipv6 ();
 }
 
+static void
+test_hosts_lookup (void)
+{
+	int i;
+	guint8 *addr;
+	struct hostent *hent;
+		
+	hent = gethostbyname (linc_get_local_hostname ());
+	g_assert (hent != NULL);
+
+	fprintf (stderr, " official name '%s' aliases: ",
+		 hent->h_name);
+
+	for (i = 0; hent->h_aliases [i]; i++)
+		fprintf (stderr, " '%s'", hent->h_aliases [i]);
+	fprintf (stderr, "\n");
+
+	addr = hent->h_addr_list [0];
+
+	if (hent->h_length == 4)
+		i = 0;
+
+	else if (hent->h_length == 16) {
+
+		for (i = 0; i < 10; i++)
+			if (addr [i] != 0)
+				return;
+
+		if (addr [i++] != 0xff || addr [i++] != 0xff)
+			return;
+	}
+
+	if (addr [i + 0] == 127 &&
+	    addr [i + 1] == 0 &&
+	    addr [i + 2] == 0 &&
+	    addr [i + 3] == 1)
+		g_error ("The reverse lookup of your hostname "
+			 "is 127.0.0.1 you will not be able to "
+			 "do inter-machine comms.");
+}
+
+static void
+test_host (void)
+{
+	char *portnum;
+	char *hostname;
+	LincSockLen saddr_len;
+	struct sockaddr *saddr;
+	LINCProtocolInfo *proto;
+
+	proto = linc_protocol_find ("IPv4");
+	g_assert (proto != NULL);
+	g_assert (proto->get_sockinfo != NULL);
+
+	saddr = linc_protocol_get_sockaddr (
+		proto, linc_get_local_hostname (),
+		NULL, &saddr_len);
+	g_assert (saddr != NULL);
+
+	g_assert (linc_protocol_get_sockinfo (
+		proto, saddr, &hostname, &portnum));
+
+	g_free (saddr);
+
+	fprintf (stderr, " '%s': '%s' \n",
+		 linc_get_local_hostname (),
+		 hostname);
+
+	g_free (hostname);
+	g_free (portnum);
+
+	test_hosts_lookup ();
+}
+
 int
 main (int argc, char **argv)
 {	
@@ -430,6 +500,7 @@ main (int argc, char **argv)
 	test_broken ();
 	test_blocking ();
 	test_local ();
+	test_host ();
 
 	fprintf (stderr, "All tests passed successfully\n");
 	

@@ -68,6 +68,10 @@ struct _LincWatch {
 #define LINC_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
 #define LINC_IN_CONDS  (G_IO_PRI|G_IO_IN)
 
+#define LINC_CLOSE(fd)  while (close (fd) < 0 && errno == EINTR)
+
+const char      *linc_get_local_hostname    (void);
+
 struct sockaddr *linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 					     const char             *hostname,
 					     const char             *service,

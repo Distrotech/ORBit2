@@ -43,7 +43,8 @@ linc_close_fd (LINCConnection *cnx)
 {
 	if (cnx->priv->fd >= 0) {
 		d_printf ("Close %d\n", cnx->priv->fd);
-		close (cnx->priv->fd);
+
+		LINC_CLOSE (cnx->priv->fd);
 	}
 	cnx->priv->fd = -1;
 }
@@ -371,7 +372,7 @@ linc_connection_initiate (LINCConnection        *cnx,
  out:
 	if (!retval && fd >= 0) {
 		d_printf ("initiation failed\n");
-		close (fd);
+		LINC_CLOSE (fd);
 	}
 
 	g_free (saddr);
