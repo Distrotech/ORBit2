@@ -397,6 +397,16 @@ testIInterface (test_TestFactory   factory,
 	g_assert (tc->subtypes[0]->kind);
 
 	CORBA_free (tcs);
+
+	/* test subnames for unions correctly handle multiple case
+	 * labels pointing at the same sub type. */
+	tc = TC_test_FixedLengthUnion;
+	g_assert(tc->sub_parts == 5);
+	g_assert(!strcmp(tc->subnames[0], "x"));
+	g_assert(!strcmp(tc->subnames[1], "y"));
+	g_assert(!strcmp(tc->subnames[2], "z"));
+	g_assert(!strcmp(tc->subnames[3], "z"));
+	g_assert(!strcmp(tc->subnames[4], "v"));
 }
 
 static void
@@ -678,7 +688,6 @@ testFixedLengthUnion (test_TestFactory   factory,
   g_assert (outArg._u.x == constants_LONG_OUT);
   g_assert (retn._d == 'd');
   g_assert (retn._u.z == FALSE);
-
 
   CORBA_Object_release (objref, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
