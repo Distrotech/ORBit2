@@ -1,5 +1,9 @@
 2002-03-11  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/orb-cpp/orbitcpp_object.cc (_orbitcpp_wrap): Simplified
+	definition of _orbitcpp_wrap to use new take_copy argument of
+	C->C++ Object constructor
+
 	* src/idl-compiler/cpp/pass_stubs.cc (doInterface): Include
 	take_copy argument in wrapper stub constructors and forward it to parent
 	constructor
