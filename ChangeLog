@@ -1,3 +1,11 @@
+2001-12-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_handle_request): debug.
+
+	* src/orb/poa/poa.c (ORBit_POA_handle_request):
+	add debug.
+
 2002-01-03  Laszlo Peter  <laca@ireland.sun.com>
 
 	* test/test-performance.c: s/time/elapsed_time/ (conflicts with

@@ -5,9 +5,8 @@
 #include "corba-ops.h"
 #include "orb-core-private.h"
 #include "orb-core-export.h"
+#include "orbit-debug.h"
 #include "../util/orbit-purify.h"
-
-#undef DEBUG
 
 /*
  * HashTable of Object Adaptor generated refs that have 
@@ -140,7 +139,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 
 	retval = ORBit_lookup_objref (&fakeme);
 
-#ifdef DEBUG
+#ifdef OBJECT_DEBUG
 	g_warning ("Lookup '%s' (%p) == %p", type_id, profiles, retval);
 	{
 		GSList *l;
@@ -261,7 +260,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 			if (ORBit_try_connection (obj)) {
 				obj->object_key = objkey;
 				obj->connection->orb_data = obj->orb;
-#ifdef DEBUG
+#ifdef OBJECT_DEBUG
 				fprintf (stderr, "Initiated a connection to '%s' '%s' '%s'\n",
 					 proto, host, service);
 #endif
@@ -429,12 +428,12 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 		num_profiles = 0;
 	giop_send_buffer_append_aligned (buf, &num_profiles, 4);
 
-#ifdef DEBUG
+#ifdef OBJECT_DEBUG
 	fprintf (stderr, "Marshal object '%p'\n", obj);
 #endif
 	if (obj)
 		for (cur = obj->profile_list; cur; cur = cur->next) {
-#ifdef DEBUG
+#ifdef OBJECT_DEBUG
 			fprintf (stderr, "%s\n", IOP_profile_dump (obj, cur->data));
 #endif
 			IOP_profile_marshal (obj, buf, cur->data);

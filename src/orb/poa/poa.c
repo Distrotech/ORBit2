@@ -1023,7 +1023,7 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
 
 	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {
-		dprintf ("A serious exception occured on a oneway method");
+		tprintf ("A serious exception occured on a oneway method");
 		return;
 	}
 
@@ -1034,7 +1034,7 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 
 	ORBit_send_system_exception (send_buffer, ev);
 
-	dprintf ("Return exception:\n");
+	tprintf ("Return exception:\n");
 	do_giop_dump_send (send_buffer);
 	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
@@ -1280,6 +1280,9 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 	if (env._major == CORBA_SYSTEM_EXCEPTION) {
 		GIOPSendBuffer *reply_buf;
 
+		tprintf ("p %d, Method '%p' invoked with exception '%s'",
+			 getpid (), giop_recv_buffer_get_opname (recv_buffer), env._id);
+
 		reply_buf = giop_send_buffer_use_reply ( 
 			recv_buffer->connection->giop_version,
 			giop_recv_buffer_get_request_id (recv_buffer),
@@ -1290,7 +1293,7 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 	} else
 		g_assert (env._major == CORBA_NO_EXCEPTION);
 
-	CORBA_exception_free(&env);
+	CORBA_exception_free (&env);
 }
 
 /***************************************************************************
@@ -1430,19 +1433,21 @@ ORBit_POA_okey_to_objid (PortableServer_POA          poa,
     invoking the servant method.
 **/
 void
-ORBit_POAObject_post_invoke(ORBit_POAObject pobj)
+ORBit_POAObject_post_invoke (ORBit_POAObject pobj)
 {
-    if ( pobj->use_cnt > 0 )
-    	return;
-    if ( pobj->life_flags & ORBit_LifeF_DeactivateDo )
-      {
-	/* NOTE that the "desired" values of etherealize and cleanup
-	 * are stored in pobj->life_flags and they dont need
-	 * to be passed in again!
-	 */
-	ORBit_POA_deactivate_object(pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
-    	/* WATCHOUT: pobj may not exist anymore! */
-    }
+	if (pobj->use_cnt > 0)
+		return;
+
+	if (pobj->life_flags & ORBit_LifeF_DeactivateDo)  {
+		/* NOTE that the "desired" values of etherealize and cleanup
+		 * are stored in pobj->life_flags and they dont need
+		 * to be passed in again!
+		 */
+		ORBit_POA_deactivate_object (
+			pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
+
+		/* WATCHOUT: pobj may not exist anymore! */
+	}
 }
 
 /*

@@ -3,6 +3,7 @@
 
 #include <orbit/orbit.h>
 #include <orbit/poa/orbit-adaptor.h>
+#include "../orb-core/orbit-debug.h"
 
 static ORBit_ObjectAdaptor
 ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
@@ -39,9 +40,14 @@ ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 	objkey = giop_recv_buffer_get_objkey (recv_buffer);
 	adaptor = ORBit_adaptor_find (orb, objkey);
 
-	if (!adaptor || !objkey)
+	if (!adaptor || !objkey) {
+		tprintf ("Error: failed to find adaptor or objkey for "
+			 "object while invoking method '%s'",
+			 giop_recv_buffer_get_opname (recv_buffer));
 		return;
-
+	}
+	dprintf ("p %d: handle request '%s'\n", getpid (),
+		 giop_recv_buffer_get_opname (recv_buffer));
 	adaptor->handle_request (adaptor, recv_buffer, objkey);
 }
 
