@@ -1,3 +1,16 @@
+2001-07-08  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-object.c
+	(ORBit_RootObject_release): split out core to:
+	(ORBit_RootObject_release_T): here.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): use the non-locking release.
+
+	* src/orb/poa/poa.c (remove_cb): return FALSE instead of
+	nothing.
+	(ORBit_POAObject_release_cb): use non-locking release.
+
 2001-07-07  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-object.h,

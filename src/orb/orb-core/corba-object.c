@@ -60,10 +60,9 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
 
   /* obj->pobj != NULL, then obj is a POA generated reference */
   if ( obj->pobj != NULL ) {
-    ORBit_RootObject_release (obj->pobj);
+    ORBit_RootObject_release_T (obj->pobj);
     obj->profile_list = NULL;
-  }
-  else 
+  } else 
     ORBit_delete_profiles (&obj->profile_list);
 
   g_free (obj);
