@@ -14,7 +14,7 @@ remains to be written).
 
 . Finish DII. Write DSI.
 
-. CORBA_USER_EXCEPTION support.
+. Finish CORBA_USER_EXCEPTION support (waiting for typecode/any support).
 
 . Improve error handling.
 
