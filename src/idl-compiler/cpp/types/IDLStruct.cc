@@ -71,9 +71,23 @@ IDLStruct::typedef_decl_write (ostream          &ostr,
 			       Indent           &indent,
 			       IDLCompilerState &state,
 			       const IDLTypedef &target,
-			       const IDLTypedef *active_typedef = 0) const
+			       const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+
+	// Struct type typedef
+	ostr << indent << "typedef " << cpp_type
+	     << " " << target.get_cpp_identifier () << ";" << endl;
+
+	// _out typedef
+	ostr << indent << "typedef " << cpp_type << "_out"
+	     << " " << target.get_cpp_identifier () << "_out;" << endl;
+
+	if (!is_fixed ())
+		// _var typedef
+		ostr << indent << "typedef " << cpp_type << "_var"
+		     << " " << target.get_cpp_identifier () << "_var;" << endl;
 }
 
 string
@@ -410,8 +424,6 @@ IDLStruct::skel_impl_ret_pre (ostream          &ostr,
 			      Indent           &indent,
 			      const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
-
 	string cpp_typename = active_typedef ?
 		active_typedef->get_cpp_typename () : get_cpp_typename ();
 	
@@ -427,8 +439,6 @@ IDLStruct::skel_impl_ret_call (ostream          &ostr,
 			       const string     &cpp_call_expression,
 			       const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
-
 	ostr << indent << "_cpp_retval = " << cpp_call_expression
 	     << ";" << endl;
 }
@@ -438,8 +448,6 @@ IDLStruct::skel_impl_ret_post (ostream          &ostr,
 			       Indent           &indent,
 			       const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
-
 	string c_typename = active_typedef ?
 		active_typedef->get_c_typename () : get_c_typename ();
 	
@@ -488,16 +496,20 @@ IDLStruct::get_c_member_typename (const IDLTypedef *active_typedef) const
 string
 IDLStruct::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+
+	return "const " + cpp_type + " &";
 }
 
 void
 IDLStruct::member_impl_arg_copy (ostream          &ostr,
-			      Indent           &indent,
-			      const string     &cpp_id,
-			      const IDLTypedef *active_typedef) const
+				 Indent           &indent,
+				 const string     &cpp_id,
+				 const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	ostr << indent << cpp_id << " = "
+	     << "_par_" << cpp_id << ";" << endl;
 }
 
 void
