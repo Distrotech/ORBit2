@@ -1,19 +1,2 @@
-1999-01-27  Jeff Garzik  <jgarzik@pobox.com>
-
-	* orbit-c-backend.c, orbit-c-common.c, orbit-c-header.c,
-	  orbit-c-skeletons.c, orbit-c-skelimpl.c, orbit-c-stubs.c,
-	  orbit-c-typecode.c:
-	Fixes for Sun CC:
-	Remove non-constant initializers.
-	Add "break;" after 'default:' in switch statement always.
-	No C++ comments allowed.
-
-1999-01-26  Miguel de Icaza  <miguel@nuclecu.unam.mx>
-
-	* popt/configure.in: Use ac_cv_prog_gcc to figure out if this is gcc.
-
-1999-01-07  Miguel de Icaza  <miguel@nuclecu.unam.mx>
-
-	* src/orb/orb.c (ORBit_ORB_make_usock_connection): Some systems
-	return mkdir != 0 but set errno to zero.
-
+Do not touch this file. Run 'rcs2log' or use bonsai
+(http://cvs.gnome.org/)
