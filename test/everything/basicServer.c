@@ -139,6 +139,12 @@ BasicServer_opOneWay (PortableServer_Servant servant,
 	g_assert (!strcmp (str, constants_STRING_IN));
 }
 
+static void
+BasicServer_testLargeStringSeq (PortableServer_Servant servant,
+				const test_StrSeq     *seq,
+				CORBA_Environment     *ev)
+{
+}
 
 PortableServer_ServantBase__epv BasicServer_base_epv = {NULL,NULL,NULL};
 
@@ -153,7 +159,8 @@ POA_test_BasicServer__epv BasicServer_epv = {
   BasicServer_opEnum,
   BasicServer_opException,
   BasicServer_opOneWay,
-  NULL /* noImplement */
+  NULL, /* noImplement */
+  BasicServer_testLargeStringSeq
 };
 
 POA_test_BasicServer__vepv BasicServer_vepv = {&BasicServer_base_epv,&BasicServer_epv};

@@ -1,3 +1,12 @@
+2001-12-04  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/basicServer.c
+	(BasicServer_testLargeStringSeq): stub.
+
+	* test/everything/client.c
+	(make_large_str_seq): impl.
+	(testMisc): use it.
+
 2001-12-03  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/GIOP/giop.c: (giop_dump): tidy up

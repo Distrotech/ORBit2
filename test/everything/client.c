@@ -459,21 +459,17 @@ testUnboundedSequence (test_TestFactory   factory,
   retn = test_SequenceServer_opStrSeq (objref, &inArg, &inoutArg, &outArg, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  for (i=0;i<inArg._length;i++){
+  for (i=0;i<inArg._length;i++)
 	g_assert (strcmp (inArg._buffer[i], constants_SEQ_STRING_IN[i]) == 0);
-  }
 
-  for (i=0;i<inoutArg._length;i++){
+  for (i=0;i<inoutArg._length;i++)
 	g_assert (strcmp (inoutArg._buffer[i], constants_SEQ_STRING_INOUT_OUT[i]) == 0);
-  }
 
-  for (i=0;i<outArg->_length;i++){
+  for (i=0;i<outArg->_length;i++)
 	g_assert (strcmp (outArg->_buffer[i], constants_SEQ_STRING_OUT[i]) == 0);
-  }
 
-  for (i=0;i<retn->_length;i++){
+  for (i=0;i<retn->_length;i++)
 	g_assert (strcmp (retn->_buffer[i], constants_SEQ_STRING_RETN[i]) == 0);
-  }
 
   CORBA_free (inArg._buffer);
   CORBA_free (inoutArg._buffer);
@@ -997,6 +993,25 @@ testContext (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
+#define SEQ_SIZE 4096
+static test_StrSeq *
+make_large_str_seq (void)
+{
+	test_StrSeq *seq = test_StrSeq__alloc ();
+	int i;
+	static const char base_data[] = "This is a longish test string it could go on for ever and ever";
+
+	seq->_buffer = test_StrSeq_allocbuf (SEQ_SIZE);
+
+	for (i = 0; i < SEQ_SIZE; i++) {
+		int len = 3 + (int) ((sizeof (base_data) - 3.0) * rand () / (RAND_MAX + 1.0));
+		seq->_buffer [i] = CORBA_string_dup (base_data);
+		seq->_buffer [i] [len] = '\0';
+	}
+
+	return seq;
+}
+
 static void
 testMisc (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
@@ -1015,6 +1030,7 @@ testMisc (test_TestFactory   factory,
 	}
 	
 	if (!in_proc) {
+		test_StrSeq *seq;
 		test_BasicServer objref;
 
 		objref = test_TestFactory_getBasicServer (factory, ev);
@@ -1027,6 +1043,11 @@ testMisc (test_TestFactory   factory,
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/NO_IMPLEMENT:1.0"));
 		CORBA_exception_free (ev);
+		
+		seq = make_large_str_seq ();
+		test_BasicServer_testLargeStringSeq (objref, seq, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		CORBA_free (seq);
 
 		CORBA_Object_release (objref, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
