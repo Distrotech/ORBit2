@@ -17,3 +17,4 @@ orbit-naming-server
 gnome-name-server
 old-name-server
 my_cosnaming_built
+*-imodule.c

@@ -8,3 +8,4 @@ Makefile.in
 everything.h
 client
 server
+*-imodule.c

@@ -9,3 +9,4 @@ Makefile
 baa.h
 foo.h
 test-inhibit
+*-imodule.c
