@@ -12,6 +12,8 @@
 #include <signal.h>
 #include "linc-private.h"
 
+#undef WATCH_DEBUG
+
 static gboolean linc_threaded = FALSE;
 static gboolean linc_mutex_new_called = FALSE;
 GMainLoop      *linc_loop = NULL;
@@ -113,6 +115,10 @@ struct _LincWatch {
 	guint linc_id;
 };
 
+#ifdef WATCH_DEBUG
+static GSList *watches = NULL;
+#endif
+
 LincWatch *
 linc_io_add_watch (GIOChannel    *channel,
 		   GIOCondition   condition,
@@ -128,16 +134,22 @@ linc_io_add_watch (GIOChannel    *channel,
 
 	/* Linc loop */
 	source = g_io_create_watch (channel, condition);
+	g_source_set_can_recurse (source, TRUE);
 	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
 	w->linc_id = g_source_attach (source, linc_context);
 	g_source_unref (source);
 
 	/* Main loop */
 	source = g_io_create_watch (channel, condition);
+	g_source_set_can_recurse (source, TRUE);
 	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
 	w->main_id = g_source_attach (source, NULL);
 	g_source_unref (source);
 
+#ifdef WATCH_DEBUG
+	watches = g_slist_prepend (watches, w);
+#endif
+	
 	return w;
 }
 
@@ -146,6 +158,10 @@ linc_io_remove_watch (LincWatch *w)
 {
 	if (w) {
 		GSource *source;
+
+#ifdef WATCH_DEBUG
+		watches = g_slist_remove (watches, w);
+#endif
 
 		/* If these warnings fire, we're prolly returning
 		   TRUE from the source's handler somewhere in error */
@@ -171,6 +187,25 @@ linc_io_remove_watch (LincWatch *w)
 void
 linc_main_iteration (gboolean block_for_reply)
 {
+#ifdef WATCH_DEBUG
+	GSList *l;
+
+	g_assert (watches != NULL);
+
+	for (l = watches; l; l = l->next) {
+		LincWatch *w = l->data;
+		GSource *source = g_main_context_find_source_by_id (
+			linc_context, w->linc_id);
+		GPollFD *fd;
+
+		g_warning ("source %p", source);
+
+		fd = source->poll_fds->data;
+		g_warning ("pollrec fd %d, (0x%x, 0x%x)",
+			   fd->fd, fd->events, fd->revents);
+	}
+#endif
+
 	g_main_context_iteration (
 		linc_context, block_for_reply);
 }
@@ -191,9 +226,12 @@ GMutex *
 linc_mutex_new (void)
 {
 	linc_mutex_new_called = TRUE;
+
 #ifdef G_THREADS_ENABLED
 	if (linc_threaded && g_thread_supported ())
 		return g_mutex_new ();
 #endif
+
 	return NULL;
 }
+

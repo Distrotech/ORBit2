@@ -1,5 +1,12 @@
 2001-11-08  Michael Meeks  <michael@ximian.com>
 
+	* src/linc.c (linc_io_add_watch): setup sources as
+	recursive sources - so we can recurse !
+	(linc_main_iteration, linc_io_remove_watch),
+	(linc_io_add_watch): add conditional watch debugging.
+
+2001-11-08  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-connection.c (linc_connection_writev): remove
 	'register' optimization :-) fix SSL path, make the code
 	legible, handle EINTR, don't skip partialy written
