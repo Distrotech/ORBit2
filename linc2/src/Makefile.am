@@ -1,4 +1,5 @@
-lib_LTLIBRARIES=liblinc.la
+noinst_LTLIBRARIES=liblinc.la
+#lib_LTLIBRARIES=liblinc.la
 
 bin_PROGRAMS = linc-cleanup-sockets
 
