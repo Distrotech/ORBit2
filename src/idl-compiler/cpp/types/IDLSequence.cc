@@ -62,7 +62,7 @@ IDLSequence::typedef_decl_write (ostream          &ostr,
 	string cpp_type = target.get_cpp_identifier ();
 	string cpp_elem = m_element_type.get_cpp_member_typename ();
 	string c_elem = m_element_type.get_c_member_typename ();
-	string cpp_traits = cpp_elem + "_seq_elem_traits";
+	string cpp_traits = m_element_type.get_seq_traits_typename ();
 	string c_type = target.get_c_typename ();
 	
 	string base_type = IDL_IMPL_NS "::";

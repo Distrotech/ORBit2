@@ -221,6 +221,12 @@ IDLTypedef::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLTypedef::get_seq_traits_typename (const IDLTypedef *active_typedef) const
+{
+	return m_alias.get_seq_traits_typename (active_typedef ? active_typedef : this);
+}
+
+string
 IDLTypedef::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	return m_alias.member_decl_arg_get (active_typedef ? active_typedef : this);

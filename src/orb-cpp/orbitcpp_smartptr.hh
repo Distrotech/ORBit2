@@ -1053,6 +1053,18 @@ namespace CORBA {
 	typedef _orbitcpp::String_var<CORBA::Char>			String_var;
 	typedef _orbitcpp::String_var<CORBA::Char,true>		String_mgr;
 	typedef _orbitcpp::String_out<CORBA::Char>			String_out;
+
+	struct String_seq_elem_traits
+	{
+        void pack_elem (String_mgr &cpp_value, CORBA_char *&c_value) const {
+			c_value = CORBA::string_dup (cpp_value);
+		}
+
+        void unpack_elem (String_mgr &cpp_value, CORBA_char *&c_value) const {
+			cpp_value = CORBA::string_dup (c_value);
+        }
+	};
+
 	typedef _orbitcpp::String_var<CORBA::WChar>			WString_var;
 	typedef _orbitcpp::String_var<CORBA::WChar,true>	WString_mgr;
 	typedef _orbitcpp::String_out<CORBA::WChar>			WString_out;

@@ -271,6 +271,12 @@ IDLString::get_c_member_typename (const IDLTypedef *active_typedef) const
 }
 
 string
+IDLString::get_seq_traits_typename (const IDLTypedef *active_typedef) const
+{
+	return "CORBA::String_seq_elem_traits";
+}
+
+string
 IDLString::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	return "const char *";

@@ -29,21 +29,21 @@
 
 #include <orbit/orbit.h>
 
-#define ORBITCPP_DECLARE_SIMPLE_SEQ_TRAITS(CPPElem, CElem)		\
-    struct CPPElem##_seq_elem_traits					\
-    {									\
-	void pack_elem (CPPElem &cpp_value, CElem &c_value) const {	\
-	    c_value = (CElem) cpp_value;				\
-	}								\
-									\
-	void unpack_elem (CPPElem &cpp_value, CElem &c_value) const {	\
-	    cpp_value = (CPPElem) c_value;				\
-	}								\
-    };									\
+#define ORBITCPP_DECLARE_SIMPLE_SEQ_TRAITS(CPPElem, CElem)            \
+    struct CPPElem##_seq_elem_traits                                  \
+    {                                                                 \
+        void pack_elem (CPPElem &cpp_value, CElem &c_value) const {   \
+	        c_value = (CElem) cpp_value;                              \
+	    }                                                             \
+                                                                      \
+        void unpack_elem (CPPElem &cpp_value, CElem &c_value) const { \
+            cpp_value = (CPPElem) c_value;                            \
+        }                                                             \
+    };                                                                \
 
-#define ORBITCPP_DECLARE_SIMPLE(CPPType, CType)				\
-	typedef CType    CPPType;					\
-	typedef CPPType& CPPType##_out;					\
+#define ORBITCPP_DECLARE_SIMPLE(CPPType, CType)       \
+	typedef CType    CPPType;                         \
+	typedef CPPType& CPPType##_out;                   \
 	ORBITCPP_DECLARE_SIMPLE_SEQ_TRAITS(CPPType, CType)
 
 namespace CORBA {

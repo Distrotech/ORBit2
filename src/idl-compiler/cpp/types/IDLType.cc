@@ -36,3 +36,9 @@ IDLType::const_decl_write (ostream          &ostr,
 {
 	throw IDLExNoConstantOfThisType (""); // FIXME
 }
+
+string
+IDLType::get_seq_traits_typename (const IDLTypedef *active_typedef = 0) const
+{
+	return get_cpp_member_typename () + "_seq_elem_traits";
+}
