@@ -283,9 +283,10 @@ cbe_tc_generate(CBETCGenInfo *tci)
       case IDLN_TYPE_OBJECT:
       case IDLN_FORWARD_DCL:
 	curdcl = orbit_cbe_get_typespec(curdcl);
-	if(IDL_NODE_TYPE(curdcl) == IDLN_TYPE_OBJECT
-	   || IDL_NODE_TYPE(curdcl) == IDLN_INTERFACE
-	   || IDL_NODE_TYPE(curdcl) == IDLN_FORWARD_DCL) {
+
+	if (curdcl->declspec & IDLF_DECLSPEC_PIDL &&
+	    (IDL_NODE_TYPE(curdcl) == IDLN_INTERFACE
+	     || IDL_NODE_TYPE(curdcl) == IDLN_FORWARD_DCL)) {
 	  ctmp = g_strdup("Object");
 	  break;
 	}
@@ -322,13 +323,14 @@ cbe_tc_generate(CBETCGenInfo *tci)
       curdcl = IDL_CASE_STMT(IDL_LIST(curitem).data).element_spec;
       curdcl = IDL_MEMBER(curdcl).type_spec;
       switch(IDL_NODE_TYPE(orbit_cbe_get_typespec(curdcl))) {
-      case IDLN_TYPE_OBJECT:
       case IDLN_INTERFACE:
       case IDLN_FORWARD_DCL:
-	ctmp = g_strdup("Object");
-	break;
+	      if (curdcl->declspec & IDLF_DECLSPEC_PIDL) {
+		      ctmp = g_strdup("Object");
+		      break;
+	      }
       default:
-	ctmp = orbit_cbe_get_typespec_str(curdcl);
+	      ctmp = orbit_cbe_get_typespec_str(curdcl);
       }
 
       for(curlabel = IDL_CASE_STMT(IDL_LIST(curitem).data).labels;
@@ -351,13 +353,15 @@ cbe_tc_generate(CBETCGenInfo *tci)
       fprintf(tci->of, "static const CORBA_TypeCode anon_subtypes_array%d[] = ",
 	      subtypes_id);
       switch(IDL_NODE_TYPE(seqts)) {
-      case IDLN_TYPE_OBJECT:
       case IDLN_INTERFACE:
       case IDLN_FORWARD_DCL:
-	ctmp = g_strdup("Object");
-	break;
+	      if (seqts->declspec & IDLF_DECLSPEC_PIDL) {
+		      ctmp = g_strdup ("Object");
+		      break;
+	      }
       default:
-	ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tci->ts).simple_type_spec);
+	      ctmp = orbit_cbe_get_typespec_str (
+		      IDL_TYPE_SEQUENCE (tci->ts).simple_type_spec);
       }
     }
     fprintf(tci->of, "{(CORBA_TypeCode)&TC_%s_struct};\n", ctmp);
