@@ -122,6 +122,7 @@ LincWatch       *link_io_add_watch_fd       (int                     fd,
 					     GIOFunc                 func,
 					     gpointer                user_data);
 
+void             link_io_remove_watch       (LincWatch              *w);
 void             link_watch_set_condition   (LincWatch              *w,
 					     GIOCondition            condition);
 

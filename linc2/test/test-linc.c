@@ -443,10 +443,12 @@ verify_addr_is_loopback (guint8 *addr, int length)
 	if (addr [i + 0] == 127 &&
 	    addr [i + 1] == 0 &&
 	    addr [i + 2] == 0 &&
-	    addr [i + 3] == 1)
-		g_error ("The reverse lookup of your hostname "
-			 "is 127.0.0.1 you will not be able to "
-			 "do inter-machine comms.");
+	    addr [i + 3] == 1) {
+		g_warning (" --- The reverse lookup of your hostname "
+			   "is 127.0.0.1 you will not be able to "
+			   "do inter-machine comms. ---");
+		exit (0);
+	}
 }
 
 static void

@@ -160,53 +160,6 @@ link_io_add_watch_fd (int          fd,
 	return w;
 }
 
-/**
- * link_io_add_watch:
- * @channel: the GIOChannel to watch
- * @condition: the condition mask to watch for
- * @func: the function to invoke when a condition is met
- * @user_data: a user data closure
- * 
- * This routine creates a watch on an IO channel that operates both in
- * the standard glib mainloop, but also in the 'linc' mainloop so we
- * can iterate that without causing re-enterancy.
- *
- * This method is deprecated.
- * 
- * Return value: a pointer identifying the watch.
- **/
-LincWatch *
-link_io_add_watch (GIOChannel    *channel,
-		   GIOCondition   condition,
-		   GIOFunc        func,
-		   gpointer       user_data)
-{
-	LincWatch *w;
-	int       fd = g_io_channel_unix_get_fd(channel);
-
-	w = g_new (LincWatch, 1);
-
-	/* Linc loop */
-	w->link_source = link_source_create_watch (
-		link_main_get_context (), fd, channel,
-		condition, func, user_data);
-
-	/* Main loop */
-	if (!link_get_threaded ()) /* Main loop too */
-		w->main_source = link_source_create_watch (
-			NULL, fd, channel, condition, func, user_data);
-	else
-		w->main_source = NULL;
-
-	return w;
-}
-
-/**
- * link_io_remove_watch:
- * @watch: the handle of a watch on a GIOChannel
- * 
- * This removes a watch by it's handle in @w
- **/
 void
 link_io_remove_watch (LincWatch *w)
 {
