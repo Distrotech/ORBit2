@@ -253,3 +253,56 @@ orbit_cbe_get_typename(IDL_tree tree)
     return retval;
   }
 }
+
+void
+orbit_cbe_op_write_proto(FILE *of,
+			 IDL_tree op,
+			 const char *nom_prefix,
+			 gboolean for_epv)
+{
+  IDL_tree sub, ttmp;
+  char *id;
+
+  orbit_cbe_write_typespec(of, IDL_OP_DCL(op).op_type_spec);
+
+  ttmp = IDL_NODE_UP(IDL_OP_DCL(op).op_type_spec);
+  if(IDL_NODE_TYPE(ttmp) == IDLN_TYPE_ARRAY)
+    fprintf(of, "_slice*");
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(IDL_get_parent_node(op, IDLN_INTERFACE, NULL)).ident), "_", 0);
+
+  if(for_epv) {
+    fprintf(of, "(*%s%s)", nom_prefix?nom_prefix:"",
+	    IDL_IDENT(IDL_OP_DCL(op).ident).str);
+  } else {
+    fprintf(of, "%s%s_%s", nom_prefix?nom_prefix:"",
+	    id,
+	    IDL_IDENT(IDL_OP_DCL(op).ident).str);
+  }
+
+  fprintf(of, "(");
+
+  if(for_epv)
+    fprintf(of, "PortableServer_Servant _servant, ");
+  else
+    fprintf(of, "%s, ", id);
+
+  g_free(id);
+
+  for(sub = IDL_OP_DCL(op).parameter_dcls; sub; sub = IDL_LIST(sub).next) {
+    IDL_tree parm;
+
+    parm = IDL_LIST(sub).data;
+
+    orbit_cbe_write_typespec(of, IDL_PARAM_DCL(parm).param_type_spec);
+
+    ttmp = IDL_NODE_UP(IDL_OP_DCL(op).op_type_spec);
+    if(IDL_NODE_TYPE(ttmp) == IDLN_TYPE_ARRAY)
+      fprintf(of, "_slice*");
+
+    g_warning("XXX param ptr printing is broken");
+
+    fprintf(of, " %s, ", IDL_IDENT(IDL_PARAM_DCL(parm).simple_declarator).str);
+  }
+  fprintf(of, "CORBA_Environment *ev)");
+}
