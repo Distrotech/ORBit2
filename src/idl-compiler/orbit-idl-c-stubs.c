@@ -185,7 +185,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	  IDL_IDENT(IDL_OP_DCL(tree).ident).str);
   fprintf(ci->fh, "const struct iovec _ORBIT_operation_vec = {(gpointer)&_ORBIT_operation_name_data, %lu};\n",
 	  sizeof(CORBA_unsigned_long) +
-	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1);
+	  ALIGN_VALUE(strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
+		      sizeof(CORBA_unsigned_long)));
 
   orbit_cbe_alloc_tmpvars(oi->in_stubs, ci);
 

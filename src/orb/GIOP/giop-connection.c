@@ -21,21 +21,13 @@ giop_connection_list_init(void)
 static void
 giop_connection_list_add(GIOPConnection *cnx)
 {
-  O_MUTEX_LOCK(cnx_list.lock);
-
   cnx_list.list = g_list_prepend(cnx_list.list, cnx);
-
-  O_MUTEX_UNLOCK(cnx_list.lock);  
 }
 
 static void
 giop_connection_list_remove(GIOPConnection *cnx)
 {
-  O_MUTEX_LOCK(cnx_list.lock);
-
   cnx_list.list = g_list_remove(cnx_list.list, cnx);
-
-  O_MUTEX_UNLOCK(cnx_list.lock);
 }
 
 static GIOPConnection *
@@ -45,7 +37,6 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
   GList *ltmp;
   GIOPConnection *retval = NULL;
 
-  O_MUTEX_LOCK(cnx_list.lock);
   for(ltmp = cnx_list.list; ltmp && !retval; ltmp = ltmp->next)
     {
       GIOPConnection *cnx = ltmp->data;
@@ -59,7 +50,6 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
     }
   if(retval)
     g_object_ref(G_OBJECT(retval));
-  O_MUTEX_UNLOCK(cnx_list.lock);
 
   return retval;
 }
@@ -107,6 +97,8 @@ giop_connection_class_init (GIOPConnectionClass *klass)
 static void
 giop_connection_init       (GIOPConnection      *cnx)
 {
+  O_MUTEX_INIT(cnx->incoming_mutex);
+  O_MUTEX_INIT(cnx->outgoing_mutex);
 }
 
 static void
@@ -131,7 +123,9 @@ giop_connection_destroy    (GObject             *obj)
       giop_send_buffer_unuse(buf);
     }
 
+  O_MUTEX_UNLOCK(cnx->incoming_mutex);
   O_MUTEX_DESTROY(cnx->incoming_mutex);
+  O_MUTEX_UNLOCK(cnx->outgoing_mutex);
   O_MUTEX_DESTROY(cnx->outgoing_mutex);
 
   if(parent_class->shutdown)

@@ -154,6 +154,7 @@ giop_send_buffer_use_request(GIOPVersion giop_version,
       giop_send_buffer_append(buf, &giop_1_2_target_type, 2); /* We always use GIOP::KeyAddr addressing - the only sane way */
       giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
       giop_send_buffer_append(buf, object_key_vec->iov_base, object_key_vec->iov_len);
+      g_assert(!(object_key_vec->iov_len % 4));
       giop_send_buffer_append(buf, operation_vec->iov_base, operation_vec->iov_len);
       giop_send_buffer_append(buf, (const guchar *)iop_service_context_data, sizeof(iop_service_context_data));
       giop_send_buffer_align(buf, 8); /* alignment for the body */
