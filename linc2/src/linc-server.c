@@ -189,7 +189,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
 
   cnx->proto = proto;
   cnx->fd = fd;
-  if(!(create_options & LINC_CONNECTION_NONBLOCKING))
+  if((create_options & LINC_CONNECTION_NONBLOCKING))
   {
     gioc = g_io_channel_unix_new(fd);
     cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
