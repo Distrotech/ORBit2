@@ -1092,6 +1092,9 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 	}
     }
 
+  if(osi)
+    profiles = g_slist_append(profiles, osi);
+
   if(need_objkey_component)
     {
       mci = g_new0(IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
