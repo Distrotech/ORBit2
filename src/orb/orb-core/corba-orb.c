@@ -39,7 +39,7 @@ static char        *orbit_ipname             = NULL;
 static char        *orbit_debug_options      = NULL;
 static char        *orbit_naming_ref         = NULL;
 static GSList      *orbit_initref_list       = NULL; 
-/* static GSList      *orbit_use_corbaloc       = FALSE; */
+static GSList      *orbit_use_corbaloc       = FALSE;
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -406,10 +406,10 @@ CORBA_ORB_object_to_string (CORBA_ORB          orb,
 	}
 
 	/* FIXME, do nice integration */ 
-/* 	if (orbit_use_corbaloc) */
-/* 	{ */
-/* 		return ORBit_object_to_corbaloc (obj, ev); */
-/* 	} */
+	if (orbit_use_corbaloc)
+	{
+		return ORBit_object_to_corbaloc (obj, ev);
+	}
 	
 	buf = giop_send_buffer_use (orb->default_giop_version);
 
@@ -1312,6 +1312,6 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBSimpleUIDs",      ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
 	{ "ORBDebugFlags",      ORBIT_OPTION_STRING,  &orbit_debug_options },
 	{ "ORBInitRef",         ORBIT_OPTION_KEY_VALUE,  &orbit_initref_list},
-/* 	{ "ORBCorbaloc",        ORBIT_OPTION_BOOLEAN, &orbit_use_corbaloc}, */
+	{ "ORBCorbaloc",        ORBIT_OPTION_BOOLEAN, &orbit_use_corbaloc},
 	{ NULL,                 0,                    NULL },
 };
