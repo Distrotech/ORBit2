@@ -605,7 +605,48 @@ PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
 					const PortableServer_Servant p_servant,
 					CORBA_Environment *ev)
 {
+  PortableServer_ServantBase *servant = p_servant;
+  ORBit_POAObject *pobj = ORBIT_SERVANT_TO_POAOBJECT(servant);
+  int retain = _obj->p_servant_retention == PortableServer_RETAIN;
+  int implicit = _obj->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION;
+  int unique = _obj->p_id_uniqueness==PortableServer_UNIQUE_ID;
+  int policy_ok = retain && (unique || implicit);
+
+  if ( retain && unique && pobj )
+    {
+      /* pobj!=NULL --> servant active */
+      return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
+    }
+  else if ( retain && implicit && (!unique || pobj==0) )
+    {
+      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, /*isDef*/FALSE, ev);
+      ORBit_POA_activate_object(_obj, pobj, servant, ev);
+      /* XXX: seems like above activate could fail in many ways! */
+      return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
+    }
+  else
+    {
+      /* This case deals with "invoked in the context of
+       * executing a request." Note that there are no policy
+       * restrictions for this case. We must do a forward search
+       * looking for matching {servant}. If unique, we could 
+       * go backward from servant to pobj to use_cnt, but we
+       * dont do this since forward search is more general 
+       */
+      ORBit_POAInvocation	*ik = _obj->orb->poa_current_invocations;
+      for ( ; ik; ik = ik->prev)
+	{
+	  if ( ik->pobj->servant == p_servant )
+	    return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
+	}
+    }
+
+  CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
+		      policy_ok ? ex_PortableServer_POA_ServantNotActive
+		      : ex_PortableServer_POA_WrongPolicy,
+		      NULL);
   return NULL;
+
 }
 
 PortableServer_Servant
@@ -882,6 +923,81 @@ ORBit_POA_is_inuse(PortableServer_POA poa,
 void
 ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
 {
+  int	randlen;
+  guint32 *iptr;
+
+  g_assert( poa->p_id_assignment == PortableServer_SYSTEM_ID );
+  randlen = (poa->p_servant_retention == PortableServer_RETAIN)
+    ? poa->obj_rand_len : 0;
+  oid->_length = oid->_maximum = sizeof(guint32) + randlen;
+  oid->_buffer = CORBA_sequence_CORBA_octet_allocbuf(oid->_length);
+  oid->_release = CORBA_TRUE;
+  iptr = (guint32*)(oid->_buffer);
+  *iptr = ++(poa->next_sysid);
+  if ( randlen > 0 )
+    ORBit_genrand_buf( &poa->orb->genrand, oid->_buffer+sizeof(guint32),
+		       randlen);
+}
+
+IOP_ObjectKey_info*
+ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
+			/*in*/PortableServer_ObjectId *oid)
+{
+  guint32	keynum, *iptr;
+  int			restlen;
+  CORBA_octet*	restbuf;
+  IOP_ObjectKey_info *retval;
+  CORBA_sequence_CORBA_octet *okey;
+  gulong okey_len;
+
+  if ( poa->num_to_koid_map )
+    {
+      ORBit_POAKOid *koid = 0;
+      int randlen = poa->koid_rand_len;
+      /* search for existing mapping */
+      for (keynum=0; keynum < poa->num_to_koid_map->len; keynum++)
+	{
+	  if ( (koid=g_ptr_array_index(poa->num_to_koid_map, keynum))
+	       && koid->oid_length == oid->_length
+	       && memcmp( ORBIT_POAKOID_OidBufOf(koid), 
+			  oid->_buffer, oid->_length)==0 )
+	    break;
+	  koid = 0;
+	}
+      if ( koid==0 )
+	{
+	  /* create a new key-oid mapping */
+	  koid = g_malloc( sizeof(*koid) + oid->_length + randlen);
+	  keynum = poa->num_to_koid_map->len;
+	  g_ptr_array_add( poa->num_to_koid_map, koid);
+	  koid->oid_length = oid->_length;
+	  memcpy( ORBIT_POAKOID_OidBufOf(koid), oid->_buffer, oid->_length);
+	  if ( randlen )
+	    ORBit_genrand_buf( &poa->orb->genrand, ORBIT_POAKOID_RandBufOf(koid), randlen);
+	}
+
+      restlen = randlen;
+      restbuf = ORBIT_POAKOID_RandBufOf(koid);
+    }
+  else
+    {
+      keynum = 0 - oid->_length;
+      restlen = oid->_length;
+      restbuf = oid->_buffer;
+    }
+
+  okey_len = poa->poa_key._length + sizeof(ORBit_POA_Serial) + restlen;;
+  retval = g_malloc(G_STRUCT_OFFSET(IOP_ObjectKey_info, object_key_data._buffer)
+		    + okey_len);
+  okey = &retval->object_key;
+  okey->_length = okey_len;
+  okey->_buffer = retval->object_key_data._buffer;
+  okey->_release = CORBA_FALSE;
+  memcpy( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length);
+  iptr = (okey->_buffer+poa->poa_key._length);
+  *iptr = keynum;
+  memcpy( okey->_buffer + poa->poa_key._length + sizeof(guint32),
+	  restbuf, restlen);
 }
 
 CORBA_Object
@@ -890,7 +1006,67 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 		     const CORBA_RepositoryId intf,
 		     CORBA_Environment *ev)
 {
-  return NULL;
+  GSList *profiles=NULL, *ltmp;
+  CORBA_Object retval;
+  CORBA_ORB orb;
+  gboolean need_objkey_component;
+
+  g_assert( oid && type_id );
+
+  orb = obj->poa_manager->orb;
+
+  need_objkey_component = FALSE;
+    ORBit_POA_oid_to_okey(obj, oid, &object_info->object_key);
+  for(ltmp = orb->servers; ltmp; ltmp = ltmp->next)
+    {
+      LINCServer *serv = ltmp->data;
+
+      if
+    }
+
+  /* Do the local connection first, so it will be attempted first by
+	   the client parsing the IOR string
+	 */
+  if(orb->cnx.ipv6 || orb->cnx.usock) {
+    object_info = g_new0(ORBit_Object_info, 1);
+
+    object_info->profile_type=IOP_TAG_ORBIT_SPECIFIC;
+    object_info->iiop_major = 1;
+    object_info->iiop_minor = 0;
+
+#ifdef HAVE_IPV6
+    if(orb->cnx.ipv6) {
+      object_info->tag.orbitinfo.ipv6_port =
+	ntohs(IIOP_CONNECTION(orb->cnx.ipv6)->u.ipv6.location.sin6_port);
+    }
+#endif
+    if(orb->cnx.usock) {
+      object_info->tag.orbitinfo.unix_sock_path =
+	g_strdup(IIOP_CONNECTION(orb->cnx.usock)->u.usock.sun_path);
+    }
+    ORBit_set_object_key(object_info);
+    profiles=g_slist_append(profiles, object_info);
+  }
+
+  if(orb->cnx.ipv4) {
+    object_info=g_new0(ORBit_Object_info, 1);
+
+    object_info->profile_type = IOP_TAG_INTERNET_IOP;
+    object_info->iiop_major = 1;
+    object_info->iiop_minor = 0;
+    ORBit_POA_oid_to_okey(obj, oid, &object_info->object_key);
+
+    object_info->tag.iopinfo.host = g_strdup(IIOP_CONNECTION(orb->cnx.ipv4)->u.ipv4.hostname);
+    object_info->tag.iopinfo.port = ntohs(IIOP_CONNECTION(orb->cnx.ipv4)->u.ipv4.location.sin_port);
+
+    ORBit_set_object_key(object_info);
+    profiles=g_slist_append(profiles, object_info);
+  }
+
+  retval = ORBit_create_object_with_info(profiles, type_id, orb, ev);
+  /* We depend upon ORBit_CORBA_Object_new() to zero out retval */
+  return retval;
+  
 }
 
 ORBit_POAObject *

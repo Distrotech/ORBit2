@@ -13,6 +13,7 @@ struct PortableServer_POA_type {
 
   guint life_flags;
   int poaID;
+  int next_sysid;
   PortableServer_ObjectId poa_key; /* poaID + rand_data */
   char *name;
   CORBA_ORB orb;
