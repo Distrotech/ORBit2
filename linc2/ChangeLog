@@ -1,3 +1,7 @@
+2002-08-23  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.5.3
+
 2002-08-18  Havoc Pennington  <hp@pobox.com>
 
 	* autogen.sh: hardcode aclocal-1.4/automake-1.4 so that users with
@@ -8,7 +12,7 @@
 
 2002-08-05  Laurent Vivier  <Laurent.Vivier@bull.net>
 
-	* include/linc/linc-connection.h: sanitize remote_ info
+	* include/linc/linc-connection.h: sanitize remote_info
 	to gchar *
 
 2002-08-05  Michael Meeks  <michael@ximian.com>

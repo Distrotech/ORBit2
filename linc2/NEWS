@@ -1,3 +1,9 @@
+Version 0.5.3
+
+	* fixes
+		+ autoconf versioning (Havoc Pennington)
+		+ remote_info sanity (Laurent Vivier)
+
 Version 0.5.2
 
 	* fixes
