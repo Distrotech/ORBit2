@@ -35,11 +35,11 @@ class IDLSequence: public IDLType
 {
 protected:
 	const IDLType &m_element_type;
-	CORBA::ULong   m_length;
+	unsigned int   m_length;
 	
 public:
         IDLSequence (const IDLType &elementType,
-		     CORBA::ULong   length);
+		     unsigned int   length);
 	
 	bool is_fixed () const;
 	

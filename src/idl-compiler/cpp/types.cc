@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -215,13 +216,9 @@ IDLTypeParser::parseTypeSpec(IDLScope &scope,IDL_tree typespec) {
 				type = dynamic_cast<IDLType *>(item);
 				break;
 			}
-#if 0 //!!!
 		case IDLN_TYPE_SEQUENCE:
 			{
 				// parse the sequence element type
-
-      	//TODO: Sequences need to be fixed. murrayc. See
-				//http://lists.gnome.org/archives/orbit-list/2002-February/msg00131.html
 				IDLType *type_seq = parseTypeSpec(scope,IDL_TYPE_SEQUENCE(typespec).simple_type_spec);
 				IDLSequence* seq = 0;
 				if (IDL_TYPE_SEQUENCE(typespec).positive_int_const == NULL){
@@ -236,7 +233,6 @@ IDLTypeParser::parseTypeSpec(IDLScope &scope,IDL_tree typespec) {
 				type = seq;
 				break;
 			}
-#endif
 		case IDLN_TYPE_ARRAY:
 		    {
 				cout << "Array!";

@@ -45,7 +45,7 @@
 #include "types/IDLVoid.hh"
 #include "types/IDLString.hh"
 #include "types/IDLBoolean.hh"
-//#include "types/IDLSequence.hh"
+#include "types/IDLSequence.hh"
 #include "types/IDLObject.hh"
 #include "types/IDLTypeCode.hh"
 #include "types/IDLStruct.hh"

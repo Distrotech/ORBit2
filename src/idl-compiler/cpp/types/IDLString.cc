@@ -47,8 +47,10 @@ IDLString::typedef_decl_write (ostream          &ostr,
 			       const IDLTypedef &target,
 			       const IDLTypedef *active_typedef = 0) const
 {
-	ostr << indent << "typedef char * " << target.get_cpp_identifier ()
-	     << ';' << endl;
+	string target_id = target.get_cpp_identifier ();
+	
+	ostr << indent << "typedef char * " << target_id << ';' << endl;	
+	ostr << indent << "typedef ::CORBA::string_var " << target_id << "_var;" << endl;
 }
 
 string
