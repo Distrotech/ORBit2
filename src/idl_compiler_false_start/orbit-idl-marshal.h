@@ -82,7 +82,8 @@ typedef enum { MARSHAL_INLINE=1<<0, MARSHAL_FUNC=1<<1, MARSHAL_ANY=1<<2, MARSHAL
 
 typedef struct {
   OIDL_Marshal_Method mtype, dmtype;
-  int marshal_use_count, demarshal_use_count;
+  int use_count;
+  int size;
 } OIDL_Type_Marshal_Info;
 
 typedef struct {
