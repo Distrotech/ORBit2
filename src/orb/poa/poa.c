@@ -1315,7 +1315,6 @@ ORBit_POA_deactivate(PortableServer_POA poa, CORBA_boolean etherealize_objects,
 	info.do_etherealize = (poa->life_flags&ORBit_LifeF_DoEtherealize)
 		  		?CORBA_TRUE:CORBA_FALSE;
 	info.is_cleanup = TRUE;
-	g_hash_table_freeze(poa->oid_to_obj_map);
     	g_assert( poa->oid_to_obj_map );
 	g_hash_table_foreach(poa->oid_to_obj_map, (GHFunc)traverse_cb, &info);
     	done = info.num_in_use == 0 ? CORBA_TRUE : CORBA_FALSE;
