@@ -7,12 +7,12 @@ static void
 print_objkey (IOP_ObjectKey_info *oki)
 {
 	int i;
-	GString *str = g_string_sized_new (oki->object_key._length * 2 + 4);
+	GString *str = g_string_sized_new (oki->object_key._length * 2 + 8);
 
 	for (i = 0; i < oki->object_key._length; i++)
-		g_string_printfa (str, "%2x", oki->object_key._buffer [i]);
+		g_string_printfa (str, "%02x", oki->object_key._buffer [i]);
 
-	printf ("%s", str);
+	printf ("(%d) '%s'", oki->object_key._length, str->str);
 
 	g_string_free (str, TRUE);
 }

@@ -172,6 +172,11 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
 				      cnx);
     if(info != GIOP_MSG_UNDERWAY)
       {
+	if(info == GIOP_MSG_COMPLETE)
+	  {
+	    if (cnx->incoming_msg->msg.header.message_type == GIOP_REQUEST)
+	      ORBit_handle_request (cnx->orb_data, cnx->incoming_msg);
+	  }
 	cnx->incoming_msg = NULL;
 	if(info == GIOP_MSG_INVALID)
 	  {

@@ -1,6 +1,8 @@
 #include <orbit/orbit.h>
 #include "orbit-poa.h"
 #include <string.h>
+#include <stdlib.h>
+
 #include "orb-core-export.h"
 #include "orbit-poa-export.h"
 #include "corba-ops.h"

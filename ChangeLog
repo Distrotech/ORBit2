@@ -1,3 +1,31 @@
+2001-06-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/dynany.c
+	(CORBA_sequence_DynamicAny_NameValuePair_allocbuf),
+	(CORBA_sequence_DynamicAny_NameValuePair__alloc): impl.
+
+2001-06-25  Martin Baulig  <baulig@suse.de>
+
+	* src/orb/dynamic/dynany.c
+	(DynamicAny_DynStruct_set_members),
+	(DynamicAny_DynStruct_get_members): copy from
+	ORBit-martin-forked.
+
+2001-06-25  Michael Meeks  <michael@ximian.com>
+
+	* test/echo-server.c (main): remove hack.
+
+	* src/orb/orb-core/corba-orb.c (idle_fn),
+	(ORBit_ORB_idle_init): kill ugly hack.
+
+2001-06-25  Martin Baulig  <baulig@suse.de>
+
+	* src/orb/orb-core/corba-object.c: add include.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_handle_input): handle request as
+	it finished coming in.
+
 2001-06-23  Martin Baulig  <baulig@suse.de>
 
 	* configure.in: Don't output the .pc files twice.
