@@ -30,6 +30,5 @@ $(DYNAMIC_IDLOUT) runidl_dynamic: dynamic-defs.idl $(IDL)
 	for I in $(DYNAMIC_IDLOUT); do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done
-	cp -f dynamic-defs.h $(top_builddir)/include/orbit/dynamic/dynamic-defs.h
 
 EXTRA_DIST=dynamic-defs.idl

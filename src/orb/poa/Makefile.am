@@ -42,4 +42,3 @@ $(POA_IDLOUT): poa-defs.idl $(IDL)
 	for I in $(POA_IDLOUT) poa-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done
-	mv -f poa-defs.h $(top_builddir)/include/orbit/poa/poa-defs.h

@@ -1,3 +1,13 @@
+2001-06-19  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/include/Makefile.am: use --oldstyle
+
+	* src/orb/dynamic/Makefile.am: fix build.
+
+	* src/orb/poa/Makefile.am: fix build.
+
+	* test/Makefile.am: Fix build, kill -lefence.
+
 2001-05-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/Makefile.am: simplify makefile ugliness.

@@ -39,7 +39,6 @@ ior_decode_SOURCES=ior-decode.c
 
 DYNANY_IDLOUT=dynany.h dynany-common.c
 test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
-test_dynany_LDFLAGS=-lefence
 
 $(ECHO_IDLOUT): echo_built
 
