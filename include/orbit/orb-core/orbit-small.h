@@ -7,6 +7,8 @@
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orbit-interface.h>
 
+G_BEGIN_DECLS
+
 typedef struct {
 	CORBA_unsigned_long           version;
 	ORBit_IInterface            **interfaces;
@@ -96,5 +98,7 @@ void ORBit_small_demarshal_async     (ORBitAsyncQueueEntry  *aqe,
 				      gpointer               ret,
 				      gpointer              *args,
 				      CORBA_Environment     *ev);
+
+G_END_DECLS
 
 #endif /* CORBA_SMALL_H */

@@ -1,6 +1,10 @@
 #ifndef _ALLOCATORS_H_
 #define _ALLOCATORS_H_
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 #define CORBA_sequence_set_release(s,r) (s)->_release = r
 #define CORBA_sequence_get_release(s) (s)->_release
 
@@ -68,6 +72,8 @@ gpointer CORBA_any__freekids         (gpointer mem, gpointer dat);
 gpointer ORBit_freekids_via_TypeCode (CORBA_TypeCode tc, gpointer mem);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif /* _ALLOCATORS_H_ */
 

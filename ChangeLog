@@ -1,3 +1,8 @@
+2002-02-24  Sam Couter <scouter@bigpond.net.au>
+
+	* Add G_BEGIN_DECLS and G_END_DECLS to installed headers to allow
+	exported interfaces to be used from C++ code.
+
 2002-02-18  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/idl-compiler/orbit-idl-c-common.c:

@@ -5,6 +5,8 @@
 #include <orbit/orb-core/corba-any-type.h>
 #include <orbit/orb-core/orbit-object.h>
 
+G_BEGIN_DECLS
+
 #define CORBA_tk_recursive -1
 #define CORBA_tk_last (CORBA_tk_abstract_interface + 1)
 
@@ -84,5 +86,7 @@ gboolean    ORBit_decode_CORBA_TypeCode (CORBA_TypeCode *tc,
 const char *ORBit_tk_to_name            (CORBA_unsigned_long tk);
 
 #endif /*  ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

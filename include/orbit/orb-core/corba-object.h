@@ -1,6 +1,10 @@
 #ifndef CORBA_OBJECT_H
 #define CORBA_OBJECT_H 1
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 GIOPConnection *ORBit_object_get_connection (CORBA_Object    obj);
@@ -28,5 +32,7 @@ extern ORBit_IInterface CORBA_Object__iinterface;
 extern ORBit_IMethod    CORBA_Object__imethods[];
 
 #define CORBA_Object_IMETHODS_LEN 12
+
+G_END_DECLS
 
 #endif /* CORBA_OBJECT_H */

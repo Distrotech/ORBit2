@@ -3,6 +3,8 @@
 
 #include <orbit/GIOP/giop-types.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 /* This is also defined in IIOP-types.c */
@@ -23,5 +25,7 @@ G_INLINE_FUNC void giop_byteswap(guchar *outdata,
 #endif
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <orbit/GIOP/giop-types.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 typedef enum {
@@ -83,5 +85,7 @@ gboolean                    giop_connection_handle_input    (LINCConnection *lcn
 
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

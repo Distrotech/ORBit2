@@ -4,6 +4,8 @@
 #include <glib.h>
 #include <linc/linc.h>
 
+G_BEGIN_DECLS
+
 typedef enum {
 	ORBIT_ROT_NULL,
 	ORBIT_ROT_OBJREF,
@@ -58,5 +60,7 @@ void     ORBit_RootObject_release_T   (gpointer obj);
 extern GMutex *ORBit_RootObject_lifecycle_lock;
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif
