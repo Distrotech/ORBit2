@@ -1,15 +1,19 @@
 2005-01-27  Tor Lillqvist  <tml@novell.com>
 
-	* include/orbit/orb-core/corba-orb-type.h
-	* include/orbit/orb-core/corba-typecode.h: Drop the constness of
-	extern structs as it causes problems when building libORBit-2 as a
-	DLL on Win32 and Cygwin.
-
 	* src/idl-compiler/Makefile.am
 	* test/Makefile.am: No separate -lm on Win32.
 
 	* src/idl-compiler/orbit-idl-c-backend.c: mkdir() has different
 	prototype in Microsoft's C library.
+
+	Below changes from Cygwin port of ORBit2 by Gerrit P. Haase, see
+	www.cygwin.com/ml/cygwin-apps/2004-10/msg00030.html. They also
+	apply to native Win32.
+
+	* include/orbit/orb-core/corba-orb-type.h
+	* include/orbit/orb-core/corba-typecode.h: Drop the constness of
+	extern structs as it causes problems when building libORBit-2 as a
+	DLL on Win32 and Cygwin. 
 
 	* src/idl-compiler/orbit-idl-c-headers.c (ch_type_alloc_and_tc)
 	* src/idl-compiler/orbit-idl-c-typecode.c
@@ -17,6 +21,14 @@
 	orbit_output_tcstruct_anon_sublabels_array, cbe_tc_generate): Drop
 	constness from generated code, for Win32 DLL reasons as above.
 
+	* src/idl-compiler/orbit-idl-c-skels.c (cbe_skel_interface_print_relayers):
+	Workaround Win32 restriction, use a temporary variable. (See ld
+	documentation for --enable-auto-import, and for instance
+	http://sources.redhat.com/ml/binutils/2001-09/msg00130.html)
+
+	* src/idl-compiler/orbit-idl-main.c: Drop constness from
+	a poptOption array, for obscure Win32 DLL reasons.
+	
 2005-01-26  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Check also for utime.h, and sys/utime.h (where

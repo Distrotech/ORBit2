@@ -108,7 +108,7 @@ struct poptOption cl_cpp_callback_options[] = {
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
 
-static const
+static
 struct poptOption options[] = {
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_cpp_callback_options, 0, NULL, NULL},
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_libIDL_callback_options, 0, NULL, NULL},
