@@ -1,3 +1,15 @@
+2002-01-04  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testSegv): remove
+	race condition assert.
+
+	* test/everything/everything.idl: make segv
+	oneway.
+
+2002-01-03  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.101
+
 2001-12-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/orbit-adaptor.c
