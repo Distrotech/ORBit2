@@ -790,10 +790,9 @@ orbit_find_c_align (IDL_tree node)
 		c_align = ORBIT_ALIGNOF_CORBA_SHORT;
 		break;
 	case IDLN_TYPE_UNION: {
-		IDL_tree disriminator = IDL_TYPE_UNION (node).switch_type_spec;
 		IDL_tree l = IDL_TYPE_UNION (node).switch_body;
 
-		c_align = orbit_find_c_align (disriminator);
+		c_align = ORBIT_ALIGNOF_CORBA_STRUCT;
 
 		for (; l; l = IDL_LIST (l).next) {
 			IDL_tree subtype = IDL_MEMBER (IDL_CASE_STMT (
@@ -835,8 +834,8 @@ orbit_find_c_align (IDL_tree node)
 				    ORBIT_ALIGNOF_CORBA_POINTER);
 		break;
 	case IDLN_TYPE_ANY:
-		c_align =  MAX ( ORBIT_ALIGNOF_CORBA_STRUCT,
-			         ORBIT_ALIGNOF_CORBA_POINTER);
+		c_align =  MAX (ORBIT_ALIGNOF_CORBA_STRUCT,
+			        ORBIT_ALIGNOF_CORBA_POINTER);
 		break;
 	default:
 		g_error ("Can't find alignment %s\n", 
