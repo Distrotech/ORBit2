@@ -98,6 +98,8 @@ ORBit_objref_new(CORBA_ORB orb, const char *type_id, GSList *profiles)
   retval->profile_list = profiles;
   retval->orb = orb;
 
+  g_hash_table_insert (objrefs, retval, retval);
+
   return retval;
 }
 
@@ -301,6 +303,7 @@ _ORBit_object_get_connection(CORBA_Object obj)
       if(IOP_profile_get_info(obj, pi, &iiop_version, &proto,
 			      &host, &service, &is_ssl, &oki, tbuf))
 	{
+          g_warning ("Initiated new connection on '%s'", obj->type_id);
 	  obj->connection =
 	    giop_connection_initiate(proto, host, service,
 				     is_ssl?LINC_CONNECTION_SSL:0, iiop_version);
@@ -389,6 +392,18 @@ IOP_ObjectKey_equal(IOP_ObjectKey_info *a, IOP_ObjectKey_info *b)
 	return TRUE;
 }
 
+static gchar *
+IOP_ObjectKey_dump (IOP_ObjectKey_info *oki)
+{
+	int i;
+	GString *str = g_string_sized_new (oki->object_key._length * 2 + 4);
+
+	for (i = 0; i < oki->object_key._length; i++)
+		g_string_printfa (str, "%2x", oki->object_key._buffer [i]);
+
+	return g_string_free (str, FALSE);
+}
+
 static gboolean
 IOP_Profile_equal(gpointer d1, gpointer d2)
 {
@@ -449,6 +464,54 @@ IOP_Profile_equal(gpointer d1, gpointer d2)
 	return TRUE;
 }
 
+static gchar *
+IOP_Profile_dump(gpointer p)
+{
+	IOP_ProfileId t;
+	char         *key = NULL;
+	GString      *str = g_string_sized_new (64);
+
+	t = ((IOP_Profile_info *)p)->profile_type;
+
+	switch (t) {
+	case IOP_TAG_INTERNET_IOP: {
+		IOP_TAG_INTERNET_IOP_info *iiop = p;
+		
+		key = IOP_ObjectKey_dump (iiop->oki);
+		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
+				 iiop->host, iiop->port, key);
+		break;
+	}
+	
+	case IOP_TAG_GENERIC_IOP: {
+		IOP_TAG_GENERIC_IOP_info *giop = p;
+		
+		g_string_printf (str, "P-GIOP %s:%s:%s",
+				 giop->proto, giop->service,
+				 giop->host);
+		break;
+	}
+	
+	case IOP_TAG_ORBIT_SPECIFIC: {
+		IOP_TAG_ORBIT_SPECIFIC_info *os = p;
+		
+		key = IOP_ObjectKey_dump (os->oki);
+		g_string_printf (str, "P-OS %s:0x%x '%s'",
+				 os->unix_sock_path, os->ipv6_port,
+				 key);
+		break;
+	}
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+	default:
+		g_string_printf (str, "P-<None>");
+		break;
+	}
+
+	g_free (key);
+	
+	return g_string_free (str, FALSE);
+}
+
 static gboolean
 g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
 {
@@ -464,8 +527,15 @@ g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
     {
       for(cur2 = other_object->profile_list; cur2; cur2 = cur2->next)
 	{
-	  if(IOP_Profile_equal(cur1->data, cur2->data))
-	    return TRUE;
+           if(IOP_Profile_equal(cur1->data, cur2->data))
+	     {
+                char *a, *b;
+		a = IOP_Profile_dump (cur1->data);
+		b = IOP_Profile_dump (cur2->data);
+		fprintf (stderr, "Profiles match:\n'%s':%s\n'%s':%s\n",
+			 _obj->type_id, a, other_object->type_id, b);
+		return TRUE;
+	     }
 	}
     }
   

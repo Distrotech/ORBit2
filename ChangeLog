@@ -1,5 +1,11 @@
 2001-05-24  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-object.c (ORBit_objref_new): actualy
+	insert new object references into the objrefs hash.
+	(IOP_Profile_dump): impl.
+
+2001-05-24  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-object.c (CORBA_Object_release_cb):
 	only unref the connection if it is valid.
 	(IOP_Profile_equal): re-order compares to accelerate & warn
