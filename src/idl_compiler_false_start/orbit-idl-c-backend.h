@@ -22,5 +22,6 @@ void orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, O
 /* utils */
 void orbit_cbe_write_typespec(FILE *of, IDL_tree tree);
 char * orbit_cbe_get_typename(IDL_tree tree);
+void orbit_cbe_op_write_proto(FILE *of, IDL_tree op, const char *nom_prefix, gboolean for_epv);
 
 #endif
