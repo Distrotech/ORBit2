@@ -5,6 +5,9 @@
 	extern structs as it causes problems when building libORBit-2 as a
 	DLL on Win32 and Cygwin.
 
+	* src/idl-compiler/Makefile.am
+	* test/Makefile.am: No separate -lm on Win32.
+
 2005-01-26  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Check also for utime.h, and sys/utime.h (where
