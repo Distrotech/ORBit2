@@ -1,3 +1,12 @@
+2002-03-29  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/pass_skels.cc:
+	Corrected generated implementation of _this() to return
+	a reference to the already-activated servant if necessary,
+	using servant_to_id() and catching the exception.
+	Noticed that we don't seem to have any CORBA::ServantNotActive
+	exception, so I used CORBA::Exception for now.		
+
 2002-03-28  Murray Cumming  <murrayc@usa.net>
 
 	* Merged from HEAD again.

@@ -852,11 +852,21 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	m_module
 	<< mod_indent << iface.getQualifiedCPP_ptr() << " " << iface.getQualifiedCPP_POA() << "::" << " _this()" << endl
 	<< mod_indent << "{" << endl
-	<< ++mod_indent << "PortableServer::POA_var rootPOA = _default_POA();" << endl
-  << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object(this);" << endl
+	<< ++mod_indent << "PortableServer::POA_var rootPOA = _default_POA();" << endl << endl
+	<< mod_indent << "PortableServer::ObjectId_var oid;" << endl
+	<< mod_indent << "try" << endl
+   << mod_indent << "{" << endl
+	<< ++mod_indent << "// Try to get the ID of the existing servant:" << endl
+	<< mod_indent << "oid = rootPOA->servant_to_id(this);" << endl
+	<< --mod_indent << "}" << endl
+	<< mod_indent << "catch(const CORBA::Exception& ex) //TODO: catch(const CORBA::ServantNotActive& ex)" << endl
+	<< mod_indent << "{ " << endl
+	<< ++mod_indent <<  "// This must be the first time that this method was called, so we need to activate the servant:" << endl
+	<< mod_indent <<  "oid = rootPOA->activate_object(this);" << endl
+	<< --mod_indent << "}" << endl  << endl
 	<< mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference(oid);" << endl
 	<< mod_indent << stub_name << "* pDerived = new " << stub_name << "(object->_orbitcpp_get_c_object());" << endl
-  << mod_indent << "CORBA::release(object);" << endl
+	<< mod_indent << "CORBA::release(object);" << endl
 	<< mod_indent << "object = 0;" << endl
 	<< mod_indent << "return pDerived;" << endl
 	<< --mod_indent << "}" << endl << endl;
