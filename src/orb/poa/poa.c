@@ -717,12 +717,16 @@ PortableServer_ObjectId_to_wstring(PortableServer_ObjectId *id,
 }
 
 PortableServer_ObjectId *
-PortableServer_string_to_ObjectId(CORBA_char *str, CORBA_Environment *env)
+PortableServer_string_to_ObjectId (CORBA_char        *str,
+				   CORBA_Environment *env)
 {
-  PortableServer_ObjectId tmp;
-  tmp._length = strlen(str);
-  tmp._buffer = str;
-  return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup(&tmp);
+	PortableServer_ObjectId tmp;
+
+	tmp._length  = strlen (str);
+	tmp._buffer  = str;
+	tmp._release = CORBA_TRUE;
+  
+	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
 }
 
 PortableServer_ObjectId *
