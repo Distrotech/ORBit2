@@ -639,9 +639,11 @@ IOP_component_free (IOP_Component_info *c)
 }
 
 static void
-IOP_components_free (GSList *components)
+IOP_components_free (GSList **components)
 {
-	g_slist_foreach (components, (GFunc)IOP_component_free, NULL);
+	g_slist_foreach (*components, (GFunc)IOP_component_free, NULL);
+	g_slist_free (*components);
+	*components = NULL;
 }
 
 static void
@@ -649,7 +651,7 @@ IOP_TAG_MULTIPLE_COMPONENTS_free (IOP_Profile_info *p)
 {
 	IOP_TAG_MULTIPLE_COMPONENTS_info *info = (IOP_TAG_MULTIPLE_COMPONENTS_info *)p;
 
-	IOP_components_free (info->components);
+	IOP_components_free (&info->components);
 }
 
 static void
@@ -657,7 +659,7 @@ IOP_TAG_INTERNET_IOP_free (IOP_Profile_info *p)
 {
 	IOP_TAG_INTERNET_IOP_info *info = (IOP_TAG_INTERNET_IOP_info *)p;
 
-	IOP_components_free (info->components);
+	IOP_components_free (&info->components);
 	g_free (info->host);
 
 	if (info->object_key)
@@ -670,7 +672,7 @@ IOP_TAG_GENERIC_IOP_free (IOP_Profile_info *p)
 {
 	IOP_TAG_GENERIC_IOP_info *info = (IOP_TAG_GENERIC_IOP_info *)p;
 
-	IOP_components_free (info->components);
+	IOP_components_free (&info->components);
 	g_free (info->proto);
 	g_free (info->host);
 	g_free (info->service);
@@ -1202,61 +1204,61 @@ IOP_UnknownComponent_demarshal(IOP_ComponentId p, GIOPRecvBuffer *buf)
 }
 
 static gboolean
-IOP_components_demarshal(GIOPRecvBuffer *buf, GSList **components)
+IOP_components_demarshal (GIOPRecvBuffer *buf, GSList **components)
 {
-  GSList *retval;
-  CORBA_unsigned_long len, i;
-  IOP_ComponentId cid;
+	GSList             *retval;
+	IOP_ComponentId     cid;
+	CORBA_unsigned_long len, i;
 
-  *components = retval = NULL;
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    return TRUE;
-  len = *(CORBA_unsigned_long*)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    len = GUINT32_SWAP_LE_BE(len);
-  buf->cur += 4;
-  for(i = 0; i < len; i++)
-    {
-      IOP_Component_info *c;
+	*components = retval = NULL;
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+	if ((buf->cur + 4) > buf->end)
+		return TRUE;
+	len = *(CORBA_unsigned_long*) buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		len = GUINT32_SWAP_LE_BE (len);
+	buf->cur += 4;
 
-      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 4) > buf->end)
-	goto errout;
-      cid = *(CORBA_unsigned_long *)buf->cur;
-      if(giop_msg_conversion_needed(buf))
-	cid = GUINT32_SWAP_LE_BE(cid);
-      buf->cur += 4;
-      switch(cid)
-	{
-	case IOP_TAG_COMPLETE_OBJECT_KEY:
-	  c = IOP_TAG_COMPLETE_OBJECT_KEY_demarshal(cid, buf);
-	  break;
-	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
-	  c = IOP_TAG_GENERIC_SSL_SEC_TRANS_demarshal(cid, buf);
-	  break;
-	case IOP_TAG_SSL_SEC_TRANS:
-	  c = IOP_TAG_SSL_SEC_TRANS_demarshal(cid, buf);
-	  break;
-	case IOP_TAG_CODE_SETS:
-          c = IOP_TAG_CODE_SETS_demarshal(cid, buf);
-	  break;
-	default:
-	  c = IOP_UnknownComponent_demarshal(cid, buf);
-	  break;
+	for (i = 0; i < len; i++) {
+		IOP_Component_info *c;
+
+		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+		if ((buf->cur + 4) > buf->end)
+			goto errout;
+		cid = *(CORBA_unsigned_long *) buf->cur;
+		if (giop_msg_conversion_needed (buf))
+			cid = GUINT32_SWAP_LE_BE (cid);
+		buf->cur += 4;
+
+		switch (cid) {
+		case IOP_TAG_COMPLETE_OBJECT_KEY:
+			c = IOP_TAG_COMPLETE_OBJECT_KEY_demarshal (cid, buf);
+			break;
+		case IOP_TAG_GENERIC_SSL_SEC_TRANS:
+			c = IOP_TAG_GENERIC_SSL_SEC_TRANS_demarshal (cid, buf);
+			break;
+		case IOP_TAG_SSL_SEC_TRANS:
+			c = IOP_TAG_SSL_SEC_TRANS_demarshal (cid, buf);
+			break;
+		case IOP_TAG_CODE_SETS:
+			c = IOP_TAG_CODE_SETS_demarshal (cid, buf);
+			break;
+		default:
+			c = IOP_UnknownComponent_demarshal (cid, buf);
+			break;
+		}
+		if (c)
+			retval = g_slist_append (retval, c);
+		else
+			goto errout;
 	}
-      if(c)
-	retval = g_slist_append(retval, c);
-      else
-	goto errout;
-    }
 
-  *components = retval;
-  return FALSE;
+	*components = retval;
+	return FALSE;
 
  errout:
-  IOP_components_free(retval);
-  return TRUE;
+	IOP_components_free (&retval);
+	return TRUE;
 }
 
 static IOP_Profile_info *
@@ -1468,7 +1470,7 @@ IOP_TAG_GENERIC_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
  errout:
   if(retval)
     {
-      IOP_components_free(retval->components);
+      IOP_components_free (&retval->components);
       g_free(retval->proto);
       g_free(retval->host);
       g_free(retval->service);
@@ -1562,11 +1564,11 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
  errout:
   if(retval)
     {
-      IOP_components_free(retval->components);
-      g_free(retval->host);
-      ORBit_free(retval->object_key);
+      IOP_components_free (&retval->components);
+      g_free (retval->host);
+      ORBit_free (retval->object_key);
 
-      g_free(retval);
+      g_free (retval);
     }
 
   eo2:
@@ -1575,40 +1577,40 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
 }
 
 static IOP_Profile_info *
-IOP_profile_demarshal(GIOPRecvBuffer *buf, CORBA_ORB orb)
+IOP_profile_demarshal (GIOPRecvBuffer *buf, CORBA_ORB orb)
 {
-  IOP_ProfileId p;
-  IOP_Profile_info *retval;
+	IOP_ProfileId p;
+	IOP_Profile_info *retval;
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 
-  if((buf->cur + 4) > buf->end)
-    return NULL;
-  p = *(CORBA_unsigned_long *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    p = GUINT32_SWAP_LE_BE(p);
-  buf->cur += 4;
+	if ((buf->cur + 4) > buf->end)
+		return NULL;
 
-  switch(p)
-    {
-    case IOP_TAG_INTERNET_IOP:
-      retval = IOP_TAG_INTERNET_IOP_demarshal(p, buf, orb);
-      break;
-    case IOP_TAG_MULTIPLE_COMPONENTS:
-      retval = IOP_TAG_MULTIPLE_COMPONENTS_demarshal(p, buf, orb);
-      break;
-    case IOP_TAG_GENERIC_IOP:
-      retval = IOP_TAG_GENERIC_IOP_demarshal(p, buf, orb);
-      break;
-    case IOP_TAG_ORBIT_SPECIFIC:
-      retval = IOP_TAG_ORBIT_SPECIFIC_demarshal(p, buf, orb);
-      break;
-    default:
-      retval = IOP_UnknownProfile_demarshal(p, buf, orb);
-      break;
-    }
+	p = *(CORBA_unsigned_long *) buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		p = GUINT32_SWAP_LE_BE (p);
+	buf->cur += 4;
 
-  return retval;
+	switch (p) {
+	case IOP_TAG_INTERNET_IOP:
+		retval = IOP_TAG_INTERNET_IOP_demarshal (p, buf, orb);
+		break;
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+		retval = IOP_TAG_MULTIPLE_COMPONENTS_demarshal (p, buf, orb);
+		break;
+	case IOP_TAG_GENERIC_IOP:
+		retval = IOP_TAG_GENERIC_IOP_demarshal (p, buf, orb);
+		break;
+	case IOP_TAG_ORBIT_SPECIFIC:
+		retval = IOP_TAG_ORBIT_SPECIFIC_demarshal (p, buf, orb);
+		break;
+	default:
+		retval = IOP_UnknownProfile_demarshal (p, buf, orb);
+		break;
+	}
+
+	return retval;
 }
 
 gboolean
