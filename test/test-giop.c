@@ -167,18 +167,31 @@ run_test_hook_new_connection (GIOPServer     *server,
 static void
 run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 {
+#ifndef G_OS_WIN32
 	server = giop_server_new (GIOP_1_2, "UNIX", NULL, NULL, 0, orb);
+#else
+	server = giop_server_new (GIOP_1_2, "IPv4", NULL, NULL, 0, orb);
+#endif
 	server_cnx = NULL;
 	g_assert (LINK_IS_SERVER (server));
 
 	giop_debug_hook_new_connection = run_test_hook_new_connection;
 
+#ifndef G_OS_WIN32
 	cnx = giop_connection_initiate (
 		orb, "UNIX",
 		LINK_SERVER (server)->local_host_info,
 		LINK_SERVER (server)->local_serv_info,
 		LINK_CONNECTION_NONBLOCKING,
 		GIOP_1_2);
+#else
+	cnx = giop_connection_initiate (
+		orb, "IPv4",
+		LINK_SERVER (server)->local_host_info,
+		LINK_SERVER (server)->local_serv_info,
+		LINK_CONNECTION_NONBLOCKING,
+		GIOP_1_2);
+#endif
 	g_assert (cnx != NULL);
 
 	while (server_cnx == NULL)
