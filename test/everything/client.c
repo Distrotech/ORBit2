@@ -954,6 +954,77 @@ testMiscUnions (test_TestFactory   factory,
 }
 
 static void
+testUnionArray (test_TestFactory   factory, 
+	        CORBA_Environment *ev)
+{
+	test_UnionServer                  obj;
+	test_FixedLengthUnionArray_slice *retn;
+	test_FixedLengthUnionArray        inArg;
+	test_FixedLengthUnionArray        inoutArg;
+	test_FixedLengthUnionArray        outArg;
+
+	d_print ("Testing union array...\n");
+	obj = test_TestFactory_getUnionServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	inArg[0]._d = 'a';
+	inArg[0]._u.x = constants_LONG_IN;
+	inArg[1]._d = 'b';
+	inArg[1]._u.y = constants_CHAR_IN;
+	inArg[2]._d = 'c';
+	inArg[3]._d = 'e';
+	inArg[3]._u.v.a = constants_SHORT_IN;
+
+	inoutArg[0]._d = 'a';
+	inoutArg[0]._u.x = constants_LONG_INOUT_IN;
+	inoutArg[1]._d = 'b';
+	inoutArg[1]._u.y = constants_CHAR_INOUT_IN;
+	inoutArg[2]._d = 'c';
+	inoutArg[3]._d = 'e';
+	inoutArg[3]._u.v.a = constants_SHORT_INOUT_IN;
+	
+	retn = test_UnionServer_opFixedLengthUnionArray (obj, inArg, inoutArg, outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	g_assert (inArg[0]._d == 'a');
+	g_assert (inArg[0]._u.x == constants_LONG_IN);
+	g_assert (inArg[1]._d == 'b');
+	g_assert (inArg[1]._u.y == constants_CHAR_IN);
+	g_assert (inArg[2]._d == 'c');
+	g_assert (inArg[3]._d == 'e');
+	g_assert (inArg[3]._u.v.a == constants_SHORT_IN);
+
+	g_assert (inoutArg[0]._d == 'a');
+	g_assert (inoutArg[0]._u.x == constants_LONG_INOUT_OUT);
+	g_assert (inoutArg[1]._d == 'b');
+	g_assert (inoutArg[1]._u.y == constants_CHAR_INOUT_OUT);
+	g_assert (inoutArg[2]._d == 'c');
+	g_assert (inoutArg[3]._d == 'e');
+	g_assert (inoutArg[3]._u.v.a == constants_SHORT_INOUT_OUT);
+	
+	g_assert (outArg[0]._d == 'a');
+	g_assert (outArg[0]._u.x == constants_LONG_OUT);
+	g_assert (outArg[1]._d == 'b');
+	g_assert (outArg[1]._u.y == constants_CHAR_OUT);
+	g_assert (outArg[2]._d == 'c');
+	g_assert (outArg[3]._d == 'e');
+	g_assert (outArg[3]._u.v.a == constants_SHORT_OUT);
+	
+	g_assert (retn[0]._d == 'a');
+	g_assert (retn[0]._u.x == constants_LONG_RETN);
+	g_assert (retn[1]._d == 'b');
+	g_assert (retn[1]._u.y == constants_CHAR_RETN);
+	g_assert (retn[2]._d == 'c');
+	g_assert (retn[3]._d == 'e');
+	g_assert (retn[3]._u.v.a == constants_SHORT_RETN);
+	
+	CORBA_free (retn);
+	
+	CORBA_Object_release (obj, ev);
+  	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
 testLongArray (test_ArrayServer   objref,
 	       CORBA_Environment *ev)
 {
@@ -1012,6 +1083,35 @@ testOctetArray (test_ArrayServer   objref,
 }
 
 static void
+testFixedLengthStructArray (test_ArrayServer   objref,
+			    CORBA_Environment *ev)
+{
+  int i;
+  test_FixedLengthStructArray inArg, inoutArg, outArg;
+  test_FixedLengthStructArray_slice *retn;
+
+  for (i=0;i<test_SequenceLen;i++)
+	inArg[i].a = constants_SEQ_OCTET_IN[i];
+
+  for (i=0;i<test_SequenceLen;i++)
+	inoutArg[i].a = constants_SEQ_OCTET_INOUT_IN[i];
+
+  retn = test_ArrayServer_opFixedLengthStructArray (objref, inArg, inoutArg, outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inArg[i].a==constants_SEQ_OCTET_IN[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inoutArg[i].a==constants_SEQ_OCTET_INOUT_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (outArg[i].a==constants_SEQ_OCTET_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (retn[i].a==constants_SEQ_OCTET_RETN[i]);
+
+  CORBA_free (retn);
+}
+
+static void
 testFixedLengthArray (test_TestFactory   factory, 
 		      CORBA_Environment *ev)
 {
@@ -1023,25 +1123,21 @@ testFixedLengthArray (test_TestFactory   factory,
 
   testLongArray (objref, ev);
   testOctetArray (objref, ev);
+  testFixedLengthStructArray (objref, ev);
 
   CORBA_Object_release (objref, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 static void
-testVariableLengthArray (test_TestFactory   factory, 
-			 CORBA_Environment *ev)
+testStrArray (test_ArrayServer   objref,
+	      CORBA_Environment *ev)
 {
-  test_ArrayServer objref;
   test_StrArray inArg, inoutArg;
   test_StrArray_slice *outArg, *retn;
   test_StrArrayMultiDimensional_slice *multidim;
   int i, n0, n1, n2;
   
-  d_print ("Testing arrays with variable length members...\n");
-  objref = test_TestFactory_getArrayServer (factory, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
-
   for (i=0;i<test_SequenceLen;i++)
 	inArg[i] = CORBA_string_dup (constants_SEQ_STRING_IN[i]);
 
@@ -1059,9 +1155,6 @@ testVariableLengthArray (test_TestFactory   factory,
 
   CORBA_free (outArg);
   CORBA_free (retn);
-  CORBA_Object_release (objref, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
-
   
   multidim = test_StrArrayMultiDimensional__alloc ();
   for (n0 = 0; n0 < 2; n0++) {
@@ -1075,6 +1168,78 @@ testVariableLengthArray (test_TestFactory   factory,
 
 }
 
+static void
+testAlignHoleStructArray (test_ArrayServer   objref,
+			  CORBA_Environment *ev)
+{
+  int i;
+  test_AlignHoleStructArray inArg, inoutArg, outArg;
+  test_AlignHoleStructArray_slice *retn;
+
+  for (i=0;i<test_SequenceLen;i++)
+	inArg[i].a.a = constants_SEQ_OCTET_IN[i];
+  for (i=0;i<test_SequenceLen;i++)
+	inArg[i].a.b = constants_SEQ_OCTET_IN[i];
+  for (i=0;i<test_SequenceLen;i++)
+	inArg[i].b = constants_SEQ_OCTET_IN[i];
+
+  for (i=0;i<test_SequenceLen;i++)
+	inoutArg[i].a.a = constants_SEQ_OCTET_INOUT_IN[i];
+  for (i=0;i<test_SequenceLen;i++)
+	inoutArg[i].a.b = constants_SEQ_OCTET_INOUT_IN[i];
+  for (i=0;i<test_SequenceLen;i++)
+	inoutArg[i].b = constants_SEQ_OCTET_INOUT_IN[i];
+
+  retn = test_ArrayServer_opAlignHoleStructArray (objref, inArg, inoutArg, outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inArg[i].a.a==constants_SEQ_OCTET_IN[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inArg[i].a.b==constants_SEQ_OCTET_IN[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inArg[i].b==(CORBA_char)constants_SEQ_OCTET_IN[i]);
+
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inoutArg[i].a.a==constants_SEQ_OCTET_INOUT_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inoutArg[i].a.b==constants_SEQ_OCTET_INOUT_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inoutArg[i].b==(CORBA_char)constants_SEQ_OCTET_INOUT_OUT[i]);
+
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (outArg[i].a.a==constants_SEQ_OCTET_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (outArg[i].a.b==constants_SEQ_OCTET_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (outArg[i].b==(CORBA_char)constants_SEQ_OCTET_OUT[i]);
+
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (retn[i].a.a==constants_SEQ_OCTET_RETN[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (retn[i].a.b==constants_SEQ_OCTET_RETN[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (retn[i].b==(CORBA_char)constants_SEQ_OCTET_RETN[i]);
+
+  CORBA_free (retn);
+}
+
+static void
+testVariableLengthArray (test_TestFactory   factory, 
+			 CORBA_Environment *ev)
+{
+  test_ArrayServer objref;
+
+  d_print ("Testing arrays with variable length members...\n");
+  objref = test_TestFactory_getArrayServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  testStrArray (objref, ev);
+  testAlignHoleStructArray (objref, ev);
+
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
 
 static void
 testAnyLong (test_TestFactory   factory, 
@@ -2276,6 +2441,7 @@ run_tests (test_TestFactory   factory,
 		testFixedLengthUnion (factory, ev);
 		testVariableLengthUnion (factory, ev);
 		testMiscUnions (factory, ev);
+		testUnionArray (factory, ev);
 		testFixedLengthArray (factory, ev);
 		testVariableLengthArray (factory, ev);
 		testAnyStrSeq (factory, ev);

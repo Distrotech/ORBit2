@@ -1,3 +1,30 @@
+2005-02-11  Michael Meeks  <michael.meeks@novel.com>
+
+	* src/orb/dynamic/dynany.c
+	(DynamicAny_DynStruct_get_members),
+	(DynamicAny_DynStruct_set_members): add field
+	alignment logic now missing from ORBit_copy_value etc.
+
+2005-02-11  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_marshal_value, ORBit_demarshal_value),
+	(ORBit_copy_value_core, ORBit_value_equivalent):
+	re-work, bin pre-align: assume incoming ABI walking
+	data is aligned, do alignment only on outgoing
+	data & during struct/union walking.
+
+	* test/everything/arrayServer.c
+	(ArrayServer_opAlignHoleStructArray),
+	(ArrayServer_opStrArray): add.
+	* test/everything/unionServer.c
+	(UnionServer_opFixedLengthUnionArray): add
+
+	* test/everything/client.c (testUnionArray, testStrArray),
+	(testFixedLengthStructArray, testAlignHoleStructArray),
+	(testVariableLengthArray): add more beef to the regression
+	test suite.
+
 2005-02-08  Tor Lillqvist  <tml@novell.com>
 
 	* orbit2-zip.in: New file, expands to a script to be used for
