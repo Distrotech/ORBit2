@@ -14,7 +14,7 @@ ORBit_RootObject_duplicate(gpointer obj)
 {
   ORBit_RootObject robj = obj;
 
-  if(robj->refs != ORBIT_REFCOUNT_STATIC)
+  if(robj && robj->refs != ORBIT_REFCOUNT_STATIC)
     robj->refs++;
 
   return obj;

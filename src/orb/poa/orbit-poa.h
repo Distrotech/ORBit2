@@ -36,6 +36,14 @@ CORBA_Object ORBit_POA_obj_to_ref(PortableServer_POA poa,
 				  const CORBA_RepositoryId intf,
 				  CORBA_Environment *ev);
 void ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid);
+void ORBit_POA_activate_object(PortableServer_POA poa, 
+			       ORBit_POAObject *pobj,
+			       PortableServer_ServantBase *servant, 
+			       CORBA_Environment *ev);
+void ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
+				 CORBA_boolean do_etherealize,
+				 CORBA_boolean is_cleanup);
+extern int ORBit_class_assignment_counter;
 
 
 #endif

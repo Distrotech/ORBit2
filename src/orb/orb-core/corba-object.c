@@ -14,8 +14,28 @@ static void IOP_components_free(GSList *components);
 
 static GHashTable *objrefs = NULL;
 
+static void IOP_component_free(IOP_Component_info *c)
+{
+  switch(c->component_type)
+    {
+    case IOP_TAG_GENERIC_SSL_SEC_TRANS:
+      g_free(((IOP_TAG_GENERIC_SSL_SEC_TRANS_info*)c)->service);
+      break;
+    case IOP_TAG_COMPLETE_OBJECT_KEY:
+      g_free(((IOP_TAG_COMPLETE_OBJECT_KEY_info*)c)->oki);
+      break;
+    case IOP_TAG_SSL_SEC_TRANS:
+      break;
+    default:
+      g_free(((IOP_UnknownProfile_info*)c)->data._buffer);
+      break;
+    }
+  g_free(c);
+}
+
 static void IOP_components_free(GSList *components)
 {
+  g_slist_foreach(components, (GFunc)IOP_component_free, NULL);
 }
 
 static CORBA_unsigned_long
@@ -23,8 +43,6 @@ ORBit_classinfo_lookup_id(const char *type_id)
 {
   return 0;
 }
-
-#define ORBIT_SERVANT_TO_CLASSINFO(x) NULL
 
 static void
 CORBA_Object_release_cb(ORBit_RootObject robj)

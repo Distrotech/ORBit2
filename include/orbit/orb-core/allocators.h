@@ -66,7 +66,7 @@ typedef struct ORBit_MemPrefix_FreeFnc1_type {
 extern gpointer ORBit_alloc_core(size_t block_size,
 				 ORBit_MemHow how,
 				 size_t prefix_size,
-				 gpointer *prefixref,
+				 gpointer *prefix_ref,
 				 guint8 align);
 
 extern void ORBit_free(gpointer mem);

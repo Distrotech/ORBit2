@@ -65,7 +65,7 @@ typedef enum
 typedef CORBA_unsigned_long IOP_ServiceId;
 typedef struct {
   IOP_ServiceId context_id;
-  CORBA_sequence_octet context_data;
+  CORBA_sequence_CORBA_octet context_data;
 } IOP_ServiceContext;
 
 typedef struct {
@@ -75,13 +75,13 @@ typedef struct {
 } IOP_ServiceContextList;
 #endif
 
-typedef CORBA_sequence_octet CORBA_Principal;
+typedef CORBA_sequence_CORBA_octet CORBA_Principal;
 
 typedef struct {
   IOP_ServiceContextList service_context;
   CORBA_unsigned_long request_id;
   CORBA_boolean response_expected;
-  CORBA_sequence_octet object_key;
+  CORBA_sequence_CORBA_octet object_key;
   CORBA_char *operation;
   CORBA_Principal requesting_principal;
 } GIOPMsgRequest_1_0;
@@ -91,7 +91,7 @@ typedef struct {
   CORBA_unsigned_long request_id;
   CORBA_boolean response_expected;
   CORBA_char reserved[3];
-  CORBA_sequence_octet object_key;
+  CORBA_sequence_CORBA_octet object_key;
   CORBA_char *operation;
   CORBA_Principal requesting_principal;
 } GIOPMsgRequest_1_1;
@@ -125,7 +125,7 @@ typedef struct {
 
 typedef struct {
   CORBA_unsigned_long request_id;
-  CORBA_sequence_octet object_key;
+  CORBA_sequence_CORBA_octet object_key;
 } GIOPMsgLocateRequest_1_0;
 
 typedef GIOPMsgLocateRequest_1_0 GIOPMsgLocateRequest_1_1;

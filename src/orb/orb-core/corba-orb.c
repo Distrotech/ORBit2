@@ -44,6 +44,7 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 
   ORBit_RootObject_init((ORBit_RootObject)retval, &orb_if);
 
+  ORBit_genrand_init(&retval->genrand);
   retval->default_giop_version = GIOP_LATEST;
 
   for(info = linc_protocol_all(); info->name; info++)

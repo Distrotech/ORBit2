@@ -22,6 +22,30 @@ struct CORBA_TypeCode_struct {
 	CORBA_short scale;	     /* for fixed */
 };
 
+#define TC_null ((CORBA_TypeCode)&TC_null_struct)
+#define TC_void ((CORBA_TypeCode)&TC_void_struct)
+#define TC_CORBA_short ((CORBA_TypeCode)&TC_CORBA_short_struct)
+#define TC_CORBA_long ((CORBA_TypeCode)&TC_CORBA_long_struct)
+#define TC_CORBA_long_long ((CORBA_TypeCode)&TC_CORBA_long_long_struct)
+#define TC_CORBA_unsigned_short ((CORBA_TypeCode)&TC_CORBA_unsigned_short_struct)
+#define TC_CORBA_unsigned_long ((CORBA_TypeCode)&TC_CORBA_unsigned_long_struct)
+#define TC_CORBA_unsigned_long_long ((CORBA_TypeCode)&TC_CORBA_unsigned_long_long_struct)
+#define TC_CORBA_float ((CORBA_TypeCode)&TC_CORBA_float_struct)
+#define TC_CORBA_double ((CORBA_TypeCode)&TC_CORBA_double_struct)
+#define TC_CORBA_long_double ((CORBA_TypeCode)&TC_CORBA_long_double_struct)
+#define TC_CORBA_boolean ((CORBA_TypeCode)&TC_CORBA_boolean_struct)
+#define TC_CORBA_char ((CORBA_TypeCode)&TC_CORBA_char_struct)
+#define TC_CORBA_wchar ((CORBA_TypeCode)&TC_CORBA_wchar_struct)
+#define TC_CORBA_octet ((CORBA_TypeCode)&TC_CORBA_octet_struct)
+#define TC_CORBA_any ((CORBA_TypeCode)&TC_CORBA_any_struct)
+#define TC_CORBA_TypeCode ((CORBA_TypeCode)&TC_CORBA_TypeCode_struct)
+#define TC_CORBA_Principal ((CORBA_TypeCode)&TC_CORBA_Principal_struct)
+#define TC_CORBA_Object ((CORBA_TypeCode)&TC_CORBA_Object_struct)
+#define TC_CORBA_string ((CORBA_TypeCode)&TC_CORBA_string_struct)
+#define TC_CORBA_wstring ((CORBA_TypeCode)&TC_CORBA_wstring_struct)
+
+extern const struct CORBA_TypeCode_struct TC_null_struct;
+extern const struct CORBA_TypeCode_struct TC_void_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_char_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_wchar_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_string_struct;

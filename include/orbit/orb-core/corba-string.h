@@ -10,5 +10,5 @@ CORBA_char *CORBA_string_dup(const CORBA_char *str);
 /* Internals, do not use */
 gpointer CORBA_string__freekids(gpointer mem, gpointer data);
 
-CORBA_sequence_octet *ORBit_sequence_octet_dup(const CORBA_sequence_octet *seq);
+CORBA_sequence_CORBA_octet *ORBit_sequence_CORBA_octet_dup(const CORBA_sequence_CORBA_octet *seq);
 #endif

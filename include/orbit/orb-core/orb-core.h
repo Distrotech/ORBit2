@@ -7,6 +7,7 @@
 #include <orbit/orb-core/iop-defs.h>
 
 #include <orbit/orb-core/corba-orb.h>
+#include <orbit/orb-core/corba-string.h>
 
 #include <orbit/orb-core/corba-environment.h>
 #include <orbit/orb-core/corba-any.h>

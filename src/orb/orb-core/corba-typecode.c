@@ -21,6 +21,21 @@ struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = { \
 #define CORBA_tk_unsigned_long_long CORBA_tk_ulonglong
 #define CORBA_tk_unsigned_short CORBA_tk_ushort
 
+struct CORBA_TypeCode_struct TC_null_struct = {
+  {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
+  CORBA_tk_null,
+  "null",
+  "Null",
+  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0
+};
+struct CORBA_TypeCode_struct TC_void_struct = {
+  {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
+  CORBA_tk_void,
+  "void",
+  "IDL:CORBA/void:1.0",
+  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0
+};
+
 DEF_TC_BASIC(char);
 DEF_TC_BASIC(wchar);
 DEF_TC_BASIC(string);
