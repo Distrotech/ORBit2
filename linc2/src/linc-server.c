@@ -91,8 +91,8 @@ linc_server_class_init (LINCServerClass *klass)
   object_class->shutdown = linc_server_destroy;
   klass->create_connection = linc_server_create_connection;
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
-  closure = g_signal_type_closure_new(G_OBJECT_CLASS_TYPE(klass),
-				      G_STRUCT_OFFSET(LINCServerClass, new_connection));
+  closure = g_signal_type_cclosure_new(G_OBJECT_CLASS_TYPE(klass),
+				       G_STRUCT_OFFSET(LINCServerClass, new_connection));
 
   ptype = G_TYPE_OBJECT;
   server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
