@@ -78,6 +78,88 @@ static void               ORBit_POA_deactivate_object_T   (PortableServer_POA  p
 							   CORBA_boolean       do_etherealize,
 							   CORBA_boolean       is_cleanup);
      
+
+static CORBA_Object
+ORBit_POA_obj_to_ref (PortableServer_POA  poa,
+                      ORBit_POAObject     pobj,
+                      const CORBA_char   *intf,
+                      CORBA_Environment  *ev);
+
+static void
+ORBit_POA_invocation_stack_push (PortableServer_POA  poa,
+                                 ORBit_POAObject     pobj)
+{
+ 	LINK_MUTEX_LOCK (poa->orb->lock);
+	poa->orb->current_invocations =
+		g_slist_prepend (poa->orb->current_invocations, pobj);
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
+}
+                                                                                
+static void
+ORBit_POA_invocation_stack_pop (PortableServer_POA  poa,
+                                ORBit_POAObject pobj)
+{
+	/* FIXME, we know it is the top element to be removed */ 
+	LINK_MUTEX_LOCK (poa->orb->lock);
+	poa->orb->current_invocations =
+		g_slist_remove (poa->orb->current_invocations, pobj);
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
+}
+
+static  PortableServer_ObjectId*
+ORBit_POA_invocation_stack_lookup_objid (PortableServer_POA          poa,
+                                         PortableServer_ServantBase *servant)
+{
+	PortableServer_ObjectId *objid = NULL;
+	GSList *l;
+
+	LINK_MUTEX_LOCK (poa->orb->lock);
+	for (l = poa->orb->current_invocations; l; l = l->next) {
+		ORBit_POAObject pobj = l->data;
+		
+		if (pobj->servant == servant)
+			objid = ORBit_sequence_CORBA_octet_dup (pobj->object_id);
+	}
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
+
+	return objid;
+}
+
+static  CORBA_Object
+ORBit_POA_invocation_stack_lookup_objref (PortableServer_POA           poa,
+                                          PortableServer_ServantBase *servant)
+{
+	CORBA_Object  result = CORBA_OBJECT_NIL; 
+	GSList *l;
+
+	LINK_MUTEX_LOCK (poa->orb->lock);
+	for (l = poa->orb->current_invocations; l; l = l->next) {
+		ORBit_POAObject pobj = l->data;
+		
+		if (pobj->servant == servant)
+			result = ORBit_POA_obj_to_ref (poa, pobj, NULL, NULL);
+	}
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
+
+	return result;
+}
+
+/* FIXME, I would prefer if argument would be of type PortableServer_POA */ 
+static  ORBit_POAObject
+ORBit_POA_invocation_stack_peek (CORBA_ORB        orb)
+{
+	ORBit_POAObject pobj = CORBA_OBJECT_NIL;
+
+	LINK_MUTEX_LOCK (orb->lock);
+	if (orb->current_invocations == NULL)
+		pobj = CORBA_OBJECT_NIL;
+	else
+		pobj = (ORBit_POAObject) orb->current_invocations->data;
+	LINK_MUTEX_UNLOCK (orb->lock);
+	
+	return pobj;
+}
+
 /* PortableServer_Current interface */
 static void
 ORBit_POACurrent_free_fn (ORBit_RootObject obj_in)
@@ -117,16 +199,12 @@ ORBit_POACurrent_get_object (PortableServer_Current  obj,
 	ORBit_POAObject pobj = CORBA_OBJECT_NIL;
 
 	g_assert (obj && obj->parent.interface->type == ORBIT_ROT_POACURRENT);
-
-	LINK_MUTEX_LOCK (obj->orb->lock);
-	if (obj->orb->current_invocations == NULL)
+	
+	if ( ! (pobj = ORBit_POA_invocation_stack_peek (obj->orb)))
 		CORBA_exception_set_system
 			(ev, ex_PortableServer_Current_NoContext,
 			 CORBA_COMPLETED_NO);
-	else
-		pobj = (ORBit_POAObject) obj->orb->current_invocations->data;
-	LINK_MUTEX_UNLOCK (obj->orb->lock);
-
+	
 	return pobj;
 }
 
@@ -1225,10 +1303,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	}
 
 	pobj->use_cnt++;
-	LINK_MUTEX_LOCK (poa->orb->lock);
-	poa->orb->current_invocations =
-		g_slist_prepend (poa->orb->current_invocations, pobj);
-	LINK_MUTEX_UNLOCK (poa->orb->lock);
+	ORBit_POA_invocation_stack_push (poa, pobj);
 	
 	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
 
@@ -1296,10 +1371,8 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 			break;
 		}
 
-	LINK_MUTEX_LOCK (poa->orb->lock);
-	poa->orb->current_invocations =
-		g_slist_remove (poa->orb->current_invocations, pobj);
-	LINK_MUTEX_UNLOCK (poa->orb->lock);
+	ORBit_POA_invocation_stack_pop (poa, pobj);
+
 	pobj->use_cnt--;
 
 	if (pobj->life_flags & ORBit_LifeF_NeedPostInvoke)
@@ -2174,7 +2247,6 @@ PortableServer_POA_servant_to_id (PortableServer_POA            poa,
 		objid = ORBit_sequence_CORBA_octet_dup (pobj->object_id);
 
 	} else {
-		GSList *l;
 		/*
 		 * FIXME:
 		 * This handles case 3 of the spec; but is broader:
@@ -2183,14 +2255,9 @@ PortableServer_POA_servant_to_id (PortableServer_POA            poa,
 		 * The stricter form could be implemented, 
 		 * but it would only add more code...
 		 */
-		LINK_MUTEX_LOCK (poa->orb->lock);
-		for (l = poa->orb->current_invocations; l; l = l->next) {
-			ORBit_POAObject pobj = l->data;
+		
+		objid = ORBit_POA_invocation_stack_lookup_objid (poa, servant);
 
-			if (pobj->servant == servant)
-				objid = ORBit_sequence_CORBA_octet_dup (pobj->object_id);
-		}
-		LINK_MUTEX_UNLOCK (poa->orb->lock);
 	}
 
 	if (!objid)
@@ -2238,7 +2305,6 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 
 		result = ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 	} else {
-		GSList *l;
 		/*
 		 * FIXME:
 		 * This case deals with "invoked in the context of
@@ -2248,14 +2314,10 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 		 * go backward from servant to pobj to use_cnt, but we
 		 * dont do this since forward search is more general 
 		 */
-		LINK_MUTEX_LOCK (poa->orb->lock);
-		for (l = poa->orb->current_invocations; l; l = l->next) {
-			ORBit_POAObject pobj = l->data;
 
-			if (pobj->servant == servant)
-				result = ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
-		}
-		LINK_MUTEX_UNLOCK (poa->orb->lock);
+		
+		result = ORBit_POA_invocation_stack_lookup_objref (poa, servant);
+
 	}
 
 	if (result == CORBA_OBJECT_NIL)

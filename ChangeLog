@@ -1,3 +1,12 @@
+2003-11-03  Frank Rehberger  <frehberg@xtradyne.com>
+ 
+        * src/orb/poa/poa.c (ORBit_POA_invocation_stack_pop)
+        (ORBit_POA_invocation_stack_push)
+        (ORBit_POA_invocation_stack_lookup_objid)
+        (ORBit_POA_invocation_stack_lookup_objref)
+        (ORBit_POA_invocation_stack_peek): refactore code managing
+        invocation stack; done for later thread aware management of stack.
+ 
 2003-11-03  Justin Schoeman <justin@expertron.co.za>
 
 	* src/orb/orb-core/corba-orb.c (ORBit_initial_references_by_user):
