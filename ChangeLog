@@ -1,3 +1,32 @@
+2003-10-27  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testPolicy): impl.
+
+	* src/orb/orb-core/orbit-policy.c
+	(ORBit_object_get_policy, ORBit_object_set_policy): impl.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): push/pop the policy if
+	there is one associated with an object.
+
+	* src/orb/GIOP/giop.c (giop_thread_queue_process):
+	move it here, rename, re-hash, fix leak.
+	(giop_thread_queue_empty_T): implement.
+	(giop_thread_request_process): move into process_queue.
+	(giop_mainloop_handle_input): upd.
+	(giop_invoke_async): push the async reply to the
+	right thread, cleanly.
+	(giop_thread_queue_tail_wakeup): impl.
+	(giop_list_pop): re-implement, bin GQueue - it's more bloated,
+	and sucks harder than GList.
+	(giop_thread_free): free policy queue.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_get): handle switch to threaded
+	IO in mid wait properly.
+	(giop_recv_handle_queued_input): move this to giop.c
+	(handle_reply): bin process_now
+
 2003-10-24  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (giop_shutdown): allow

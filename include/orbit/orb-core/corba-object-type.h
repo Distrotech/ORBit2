@@ -19,6 +19,7 @@ struct CORBA_Object_type {
 	GSList                        *profile_list;      /* l */
 	GSList                        *forward_locations; /* l */
 	ORBit_ObjectKey               *object_key;        /* l */
+	struct _ORBitPolicy           *invoke_policy;     /* l */
 
 	CORBA_ORB                      orb;
 	ORBit_OAObject                 adaptor_obj;

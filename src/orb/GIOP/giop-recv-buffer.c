@@ -690,13 +690,14 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 {
 	GIOPThread *tdata = giop_thread_self ();
 
+ thread_switch:
 	if (giop_thread_io ()) {
 		ent_lock (ent);
 
 		for (; !check_got (ent); ) {
-			if (!g_queue_is_empty (tdata->request_queue)) {
+			if (!giop_thread_queue_empty_T (tdata)) {
 				ent_unlock (ent);
-				giop_recv_handle_queued_input ();
+				giop_thread_queue_process (tdata);
 				ent_lock (ent);
 			} else
 				g_cond_wait (tdata->incoming, tdata->lock);
@@ -707,10 +708,15 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 	} else { /* non-threaded */
 
 		while (!ent->buffer && ent->cnx &&
-		       (ent->cnx->parent.status != LINK_DISCONNECTED))
+		       (ent->cnx->parent.status != LINK_DISCONNECTED) &&
+		       !giop_thread_io())
 			link_main_iteration (TRUE);
+
+		if (giop_thread_io())
+			goto thread_switch;
 	}
 
+	giop_thread_queue_tail_wakeup (tdata);
 	giop_recv_list_destroy_queue_entry (ent);
 
 	return ent->buffer;
@@ -1011,9 +1017,8 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 	return error;
 }
 
-/* FIXME: bin process_now */
 static gboolean
-handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
+handle_reply (GIOPRecvBuffer *buf)
 {
 	GList                 *l;
 	gboolean               error;
@@ -1266,7 +1271,7 @@ giop_connection_handle_input (LinkConnection *lcnx)
 	case GIOP_REPLY:
 	case GIOP_LOCATEREPLY:
 		dprintf (MESSAGES, "handling reply\n");
-		if (handle_reply (buf, FALSE)) /* dodgy inbound data, pull the cnx */
+		if (handle_reply (buf)) /* dodgy inbound data, pull the cnx */
 			link_connection_state_changed (lcnx, LINK_DISCONNECTED);
 		break;
 
@@ -1334,32 +1339,4 @@ giop_recv_buffer_use_buf (void)
 	buf->left_to_read = 12;
 
 	return buf;
-}
-
-void
-giop_recv_handle_queued_input (void)
-{
-	GIOPThread *tdata = giop_thread_self ();
-
-	dprintf (MESSAGES, "handle queued input\n");
-
-	for (;;) {
-		GIOPMessageQueueEntry *ent;
-
-		LINK_MUTEX_LOCK (tdata->lock); /* ent_lock */
-		
-		ent = g_queue_pop_head (tdata->async_ents);
-
-		LINK_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
-
-		dprintf (MESSAGES, "Queue pop %p => %p", ent, ent ? ent->buffer : NULL);
-		if (ent)
-			giop_invoke_async (ent);
-
-		else {
-			dprintf (MESSAGES, "process a genuine XT request\n");
-			giop_thread_request_process (tdata);
-			return;
-		}
-	}
 }

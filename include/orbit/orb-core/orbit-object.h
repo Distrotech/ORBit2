@@ -20,7 +20,8 @@ typedef enum {
 	ORBIT_ROT_DYNANY,
 	ORBIT_ROT_OAOBJECT,
 	ORBIT_ROT_ORBGROUP,
-	ORBIT_ROT_POACURRENT
+	ORBIT_ROT_POACURRENT,
+	ORBIT_ROT_CLIENT_POLICY
 } ORBit_RootObject_Type;
 
 typedef struct ORBit_RootObject_struct *ORBit_RootObject;

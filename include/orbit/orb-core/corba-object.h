@@ -9,6 +9,7 @@ G_BEGIN_DECLS
 
 GIOPConnection *ORBit_object_get_connection (CORBA_Object    obj);
 
+
 void            ORBit_marshal_object        (GIOPSendBuffer *buf,
 					     CORBA_Object    obj);
 gboolean        ORBit_demarshal_object      (CORBA_Object   *obj,
@@ -22,18 +23,8 @@ CORBA_Object    ORBit_objref_new            (CORBA_ORB       orb,
 #endif /* ORBIT2_INTERNAL_API */
 
 /*
- * CORBA_Object interface type data.
+ * Client invocation policy API
  */
-#include <orbit/orb-core/orbit-interface.h>
-
-#define CORBA_OBJECT_SMALL_GET_TYPE_ID    12
-#define CORBA_OBJECT_SMALL_GET_IINTERFACE 13
-
-extern ORBit_IInterface CORBA_Object__iinterface;
-extern ORBit_IMethod    CORBA_Object__imethods[];
-
-#define CORBA_Object_IMETHODS_LEN 12
-
 typedef struct _ORBitPolicy ORBitPolicy;
 
 /* An extended policy - blocks re-enterancy by default */
@@ -47,8 +38,22 @@ ORBitPolicy *ORBit_policy_ref         (ORBitPolicy *p);
 void         ORBit_policy_unref       (ORBitPolicy *p);
 void         ORBit_object_set_policy  (CORBA_Object obj,
 				       ORBitPolicy *p);
+ORBitPolicy *ORBit_object_get_policy  (CORBA_Object obj);
 void         ORBit_policy_push        (ORBitPolicy *p);
 void         ORBit_policy_pop         (void);
+
+/*
+ * CORBA_Object interface type data.
+ */
+#include <orbit/orb-core/orbit-interface.h>
+
+#define CORBA_OBJECT_SMALL_GET_TYPE_ID    12
+#define CORBA_OBJECT_SMALL_GET_IINTERFACE 13
+
+extern ORBit_IInterface CORBA_Object__iinterface;
+extern ORBit_IMethod    CORBA_Object__imethods[];
+
+#define CORBA_Object_IMETHODS_LEN 12
 
 G_END_DECLS
 

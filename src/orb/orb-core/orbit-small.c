@@ -586,6 +586,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	ORBit_OAObject          adaptor_obj;
 	GIOPRecvBuffer         *recv_buffer = NULL;
 	CORBA_Object            xt_proxy = CORBA_OBJECT_NIL;
+	ORBitPolicy            *invoke_policy = CORBA_OBJECT_NIL;
 
 	if (!obj) {
 		dprintf (MESSAGES, "Cannot invoke method on null object\n");
@@ -593,6 +594,9 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 					    CORBA_COMPLETED_NO);
 		goto clean_out;
 	}
+
+	if ((invoke_policy = ORBit_object_get_policy (obj)))
+		ORBit_policy_push (invoke_policy);
 
 	adaptor_obj = obj->adaptor_obj;
 
@@ -673,6 +677,10 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	tprintf_end_method ();
 	if (cnx)
 		giop_connection_unref (cnx);
+	if (invoke_policy) {
+		ORBit_policy_pop ();
+		ORBit_policy_unref (invoke_policy);
+	}
 	return;
 
  system_exception:
