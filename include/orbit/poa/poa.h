@@ -132,7 +132,6 @@ void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
 
 PortableServer_ClassInfo *ORBit_classinfo_lookup (const char *type_id);
 void ORBit_POAObject_post_invoke (ORBit_POAObject obj);
-void ORBit_POA_object_shutdown   (ORBit_POAObject pobj);
 
 #endif /* ORBIT2_INTERNAL_API */
 
