@@ -1,3 +1,9 @@
+2002-04-10  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: remove poll & basename checks,
+	socklen_t check, inet_aton check,
+	we don't need them.
+
 2002-04-09  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-typecode.c (tc_dec):

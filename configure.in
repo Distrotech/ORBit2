@@ -150,30 +150,12 @@ AC_TYPE_SIZE_T
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS(poll basename)
 AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
 
 AC_CHECK_LIB(popt, poptStrippedArgv, POPT_LIBS=-lpopt, AC_MSG_ERROR([You must have popt version 1.5 or greater installed.]))
 AC_SUBST(POPT_LIBS)
 AC_CHECK_HEADER(popt.h,,AC_MSG_ERROR([Failed to find popt.h - you may have to adjust your environment]))
-
-# AC_CHECK_TYPE doesn't work here.
-AC_MSG_CHECKING([for socklen_t])
-AC_TRY_COMPILE(
-  [#include <sys/types.h>
-#include <sys/socket.h>],
-  [socklen_t len;],
-  [AC_MSG_RESULT(yes)],
-  [AC_DEFINE(socklen_t, size_t)
-   AC_MSG_RESULT(no)])
-
-AC_CHECK_FUNC(inet_aton,,[AC_CHECK_LIB(resolv,inet_aton)])
-if test x$ac_cv_func_inet_aton = xno && test x$ac_cv_lib_resolv_inet_aton = xno
-then :
-else
-  AC_DEFINE(HAVE_INET_ATON)
-fi
 
 dnl This generates warnings from autoconf...
 AC_C_BIGENDIAN
