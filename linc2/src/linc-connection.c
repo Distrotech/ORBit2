@@ -534,7 +534,7 @@ link_connection_do_initiate (LinkConnection        *cnx,
 	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0)
 		goto out;
 
-	rv = LINC_TEMP_FAILURE_RETRY (connect (fd, saddr, saddr_len));
+	LINC_TEMP_FAILURE_RETRY (connect (fd, saddr, saddr_len), rv);
 	if (rv && errno != EINPROGRESS)
 		goto out;
 
@@ -727,9 +727,9 @@ link_connection_read (LinkConnection *cnx,
 			n = SSL_read (cnx->priv->ssl, buf, len);
 		else
 #endif
-			n = LINC_TEMP_FAILURE_RETRY (read (cnx->priv->fd, 
+			LINC_TEMP_FAILURE_RETRY (read (cnx->priv->fd, 
 							 buf, 
-							 len));
+							 len), n);
 
 		g_assert (n <= len);
 
@@ -853,9 +853,9 @@ write_data_T (LinkConnection *cnx, QueuedWrite *qw)
 				       qw->vecs->iov_len);
 		else
 #endif
-			n = LINC_TEMP_FAILURE_RETRY (writev (cnx->priv->fd,
+			LINC_TEMP_FAILURE_RETRY (writev (cnx->priv->fd,
 							     qw->vecs,
-							     MIN (qw->nvecs, LINK_IOV_MAX)));
+							     MIN (qw->nvecs, LINK_IOV_MAX)), n);
 
 		d_printf ("wrote %d bytes\n", n);
 

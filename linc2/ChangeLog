@@ -1,3 +1,16 @@
+2004-05-26  Padraig O'Briain  <padraig.obriain@sun.com>
+
+	* src/linc-private.c (LINC_TEMP_FAILURE_RETRY): Change macro to
+	not use __extension__ which does not build on Solaris when not using
+	gcc.
+	* src/linc-connection.c (linc_connection_do_initiiate,
+	link_server_accept_connection, write_data_T): Update because of
+	change to macro LINC_TEMP_FAILURE_RETRY.
+	* src/linc-server.c (link_server_accept_connection): Update because of
+	change to macro LINC_TEMP_FAILURE_RETRY.
+
+	Fixes bug #143129.
+
 2004-05-21  Frank Rehberger  <frehberg@gnome-de.org>
 
 	* src/linc-private.h (LINC_TEMP_FAILURE_RETRY): macro retries IO
@@ -44,7 +57,6 @@
 	(link_connection_exec_cnx_unref): do yet more locking.
 
 2003-11-14  Padraig O'Briain  <padraig.obriain@sun.com>
-
 	* linc2/src/linc-server.c (link_server_handle_io): Add comment
 	about change of g_error to g_warning for bug #126209.
 
