@@ -1,3 +1,13 @@
+2001-05-18  Martin Baulig  <baulig@suse.de>
+
+	* ORBit-2.0.pc.in: Use `ORBit-2.0' as package name.
+	* ORBit-CosNaming-2.0.pc.in: Use `ORBit-CosNaming-2.0' as name.
+
+	* Makefile.am: Install the .pc files.
+
+	* src/orb/orb-core/Makefile.am: Added explicit dependency
+	`$(top_builddir)/include/orbit/orb-core/orbit-interface.h: runidl_iface'.
+
 2001-05-19  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value): 

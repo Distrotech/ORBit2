@@ -43,6 +43,7 @@ OPS_IDLOUT=corba-ops-stubs.c corba-ops-common.c corba-ops.h corba-ops-skels.c
 IFACE_IDLOUT=orbit-interface.h orbit-interface-common.c
 
 $(top_builddir)/include/orbit/orb-core/corba-defs.h: runidl
+$(top_builddir)/include/orbit/orb-core/orbit-interface.h: runidl_iface
 
 $(IDLOUT): runidl
 

@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 
-Name: ORBit-CosNaming
+Name: ORBit-CosNaming-2.0
 Description: High-performance CORBA Object Request Broker - Naming Service.
 Version: @VERSION@
 Requires: ORBit-2.0
