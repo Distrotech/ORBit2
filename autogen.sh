@@ -20,7 +20,8 @@ DIE=0
 }
 
 # Check for libtool
-(libtool --version | egrep "1.2") > /dev/null || {
+(libtool --version | egrep "1.2") > /dev/null || 
+(libtool --version | egrep "1.3") > /dev/null || {
 	echo
 	echo "You must have at minimum libtool version 1.2 installed"
 	echo "to compile ORBit. Download the appropriate package for"
