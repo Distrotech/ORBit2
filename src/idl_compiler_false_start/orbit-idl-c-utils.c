@@ -437,7 +437,6 @@ orbit_cbe_get_const(IDL_tree tree)
     g_string_sprintf(tmpstr, "%s%s", opc, ctmp);
     g_free(ctmp);
     break;
-#if 0
   case IDLN_IDENT:
     {
       char *id;
@@ -446,7 +445,6 @@ orbit_cbe_get_const(IDL_tree tree)
       g_free(id);
     }
     break;
-#endif
   default:
     g_error("We were asked to print a constant for %s", IDL_tree_type_names[tree->_type]);
     break;
