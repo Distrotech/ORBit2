@@ -1,3 +1,44 @@
+2003-06-19  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* Makefile.shared: Moved the target 'distclean-local' out of the
+	MAINTAINER_MODE conditional because, since the deps are always
+	generated (regardless of maintainer mode), they should be always
+	be deleted too; This avoids the "files left in build directory
+	after distclean" automake 1.7 error.
+
+	* test/Makefile.am (DYNANY_IDLOUT): Added skels and stubs sources.
+
+	* docs/api/ORBit2-sections.txt: New file, ORBit2 API sections.
+
+	* docs/api/ORBit2-docs.sgml: New file, main ORBit2 API docbook source.
+
+	* docs/api/Makefile.am: New makefile, to build ORBit2 API docs.
+
+	* linc2/configure.in, linc2/acconfig.h, linc2/autogen.sh: Removed
+	these files: they're no longer used, and are getting in the way.
+
+	* autogen.sh: Use (include) generic gnome autogen; Require
+	automake >= 1.6 because of gtk-doc.
+
+	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Added --enable-gtk-doc,
+	to make distcheck work.
+
+	* configure.in: Write linc2/include/linc/linc-config.h; gtk-doc
+	detection. Write docs/api/Makefile.
+
+	* test/poa/Makefile.am: Avoid "blank line following trailing
+	backslash" automake warning.
+
+	* test/everything/Makefile.am (BUILT_SOURCES): Removed duplicate
+	definition.
+	(CLEANFILES): Also removed this duplicate definition.
+
+	* src/orb/dynamic/Makefile.am: Removed duplicate definition of
+	DYNAMIC_IDLOUT.
+
+	* src/orb/orb-core/Makefile.am (IDL_COMPILER): Removed, twice;
+	already defined in Makefile.shared.
+
 2003-06-19  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: add gthread to ORBIT_LIBS etc.

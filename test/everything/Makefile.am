@@ -77,8 +77,6 @@ CLEANFILES = ${BUILT_SOURCES} iorfile
 
 TESTS = $(srcdir)/test.sh
 
-BUILT_SOURCES = $(EVERYTHING_IDLOUT)
-CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = $(IDL_FILES) test.sh $(included_src)
 
 dist-hook:

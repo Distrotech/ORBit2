@@ -14,6 +14,7 @@ if MAINTAINER_MODE
 IDL_DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
 IDL_DEP_FILES = $(IDL_FILES:%.idl=.deps/%.idl.P)
 -include $(IDL_DEP_FILES)
+endif
+
 distclean-local:
 	-rm -rf .deps
-endif

@@ -313,6 +313,11 @@ dnl
 dnl        --------- end linc bits ---------
 dnl
 
+
+dnl ----- gtk-doc ------
+GTK_DOC_CHECK([1.0])
+
+
 AC_OUTPUT([
 Makefile
 orbit2-config
@@ -353,12 +358,14 @@ test/poa/Makefile
 docs/Makefile
 docs/devel/Makefile
 docs/internals/Makefile
+docs/api/Makefile
 
 linc2/Makefile
 linc2/src/Makefile
 linc2/test/Makefile
 linc2/include/Makefile
 linc2/include/linc/Makefile
+linc2/include/linc/linc-config.h
 ])
 
 echo "ORBit configuration:

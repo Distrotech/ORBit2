@@ -1,3 +1,8 @@
+2003-06-19  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* include/linc/linc-config.h: Removed this file; it is generated
+	from linc-config.h.in.
+
 2003-06-09  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c
