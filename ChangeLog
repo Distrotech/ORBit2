@@ -1,3 +1,10 @@
+2003-11-10  Justin Schoeman <justin@expertron.co.za>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_use_buf,
+	giop_recv_buffer_unuse): Add a reference to the connection on
+	giop_recv_buffer_use_buf, and remove it on giop_recv_buffer_unuse.
+	Prevents a connection shutdown while a request is being handled.
+
 2003-11-06  Padraig O'Briain <padraig.obriain@sun.com>
 
 	* linc2/src/linc-server.c (link_server_handle_io): Change g_error

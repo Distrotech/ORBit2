@@ -46,7 +46,7 @@ struct _GIOPRecvBuffer {
 };
 
 #define         giop_msg_conversion_needed(msg)     giop_endian_conversion_needed(GIOP_MSG(msg)->header.flags)
-GIOPRecvBuffer *giop_recv_buffer_use_buf           (void);
+GIOPRecvBuffer *giop_recv_buffer_use_buf           (GIOPConnection        *cnx);
 GIOPRecvBuffer *giop_recv_buffer_use_encaps_buf    (GIOPRecvBuffer        *buf);
 GIOPRecvBuffer *giop_recv_buffer_use_encaps        (guchar                *mem,
 						    gulong                 len);
