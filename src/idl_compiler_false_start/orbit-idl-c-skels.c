@@ -222,11 +222,11 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
     fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
 
-    /* Free the vars */
     cbe_skel_op_params_free(tree, ci);
 
     fprintf(ci->fh, "}\n");
-  }
+  } else
+    cbe_skel_op_params_free(tree, ci);
 
   fprintf(ci->fh, "}\n");
 

@@ -152,11 +152,12 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   c_demarshal_generate(node->u.loop_info.length_var, cmi);
 
   if(cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)) {
-    if(!(node->u.loop_info.contents->flags & MN_COALESCABLE)) {
+    if(!(node->u.loop_info.contents->flags & MN_COALESCABLE)
+       || (cmi->endian_swap_pass && (node->u.loop_info.contents->flags & MN_ENDIAN_DEPENDANT))) {
       fprintf(cmi->ci->fh, "%s%s = alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
 	      ctmp_contents, ctmp_len);
       if(node->flags & MN_ISSEQ)
-	fprintf(cmi->ci->fh, "%s._release = CORBA_TRUE;\n", ctmp);
+	fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
     }
   } else {
     char *tname, *tcname;
@@ -193,7 +194,10 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
        && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)
        && ((node->flags & MN_ISSEQ) /* Doesn't work for arrays. */
 	   || (node->flags & MN_ISSTRING))) {
-      fprintf(cmi->ci->fh, "%s = _ORBIT_curptr;\n", tmpstr2->str);
+      char *ctmp_typename;
+      fprintf(cmi->ci->fh, "%s = (", tmpstr2->str);
+      orbit_cbe_write_typespec(cmi->ci->fh, node->u.loop_info.contents->tree);
+      fprintf(cmi->ci->fh, "*)_ORBIT_curptr;\n");
     } else {      
       fprintf(cmi->ci->fh, "memcpy(%s, _ORBIT_curptr, %s);\n", tmpstr2->str, tmpstr->str);
     }
