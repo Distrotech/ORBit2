@@ -763,30 +763,19 @@ CORBA_boolean
 CORBA_ORB_work_pending(CORBA_ORB _obj,
 		       CORBA_Environment * ev)
 {
-  return g_main_pending();
+  return linc_main_pending();
 }
 
 void
 CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
 {
-  g_main_iteration(FALSE);
+  linc_main_iteration(FALSE);
 }
 
 void
 CORBA_ORB_run (CORBA_ORB _obj, CORBA_Environment * ev)
 {
-    g_main_loop_run (g_main_loop_new (NULL, TRUE));
-/*  while (1)
-    {
-      GIOPRecvBuffer *in_buf;
-
-      in_buf = giop_recv_buffer_use ();
-
-      if (in_buf->msg.header.message_type == GIOP_REQUEST)
-	ORBit_handle_request (_obj, in_buf);
-
-      giop_recv_buffer_unuse (in_buf);
-      }*/
+  linc_main_loop_run ();
 }
 
 void

@@ -1,3 +1,26 @@
+2001-07-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c: remove redundant
+	DEBUG_LOCAL_TEST macro ...
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_real_state_changed): use
+	linc watches.
+
+2001-07-18  Michael Meeks  <michael@ximian.com>
+
+	* test/echo-server.c (main): use CORBA_ORB_run.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_perform_work, CORBA_ORB_work_pending),
+	(CORBA_ORB_run): use new linc_main stuff instead of
+	g_main.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_get): use linc_main_iteration, this
+	requires the latest CVS linc.
+	(giop_recv_buffer_use): ditto.
+
 2001-07-18  Mark McLoughlin <mark@skynet.ie>
 
 	* src/idl-compiler/orbit-idl-c-headers.c(ch_output_native),

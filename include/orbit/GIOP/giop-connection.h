@@ -30,7 +30,7 @@ struct _GIOPConnection {
   gpointer orb_data;
 
   GIOPVersion giop_version;
-  guint incoming_tag;
+  LincWatch  *incoming_tag;
 };
 
 typedef struct {
