@@ -1,3 +1,11 @@
+2004-05-21  Frank Rehberger  <frehberg@gnome-de.org>
+
+	* src/linc-private.h (LINC_TEMP_FAILURE_RETRY): macro retries IO
+	operation in case of EINTR IO-error.
+	* src/linc-connection.c (link_connection_do_initiate,
+	link_server_accept_connection): wrap IO read/write operations with
+	LINC_TEMP_FAILURE_RETRY
+
 2004-03-04  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.10.0

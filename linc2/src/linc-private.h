@@ -112,6 +112,14 @@ struct _LinkWatch {
 #define LINK_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
 #define LINK_IN_CONDS  (G_IO_PRI|G_IO_IN)
 
+/* taken from  glibc  */ 
+# define LINC_TEMP_FAILURE_RETRY(expression) \
+  (__extension__                                                              \
+    ({ long int __result;                                                     \
+       do __result = (long int) (expression);                                 \
+       while (__result == -1L && errno == EINTR);                             \
+       __result; }))
+
 #define LINK_CLOSE(fd)  while (close (fd) < 0 && errno == EINTR)
 
 const char      *link_get_local_hostname    (void);
