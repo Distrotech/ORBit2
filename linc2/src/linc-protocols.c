@@ -113,9 +113,13 @@ linc_get_tmpdir (void)
 
 #if defined(AF_INET6) && defined(RES_USE_INET6)
 #define LINC_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
+#define LINC_RESOLV_UNSET_IPV6   _res.options &= ~RES_USE_INET6
 #else
 #define LINC_RESOLV_SET_IPV6
+#define LINC_RESOLV_UNSET_IPV6
 #endif
+
+
 
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
 const char *
@@ -284,18 +288,27 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 	saddr->sin_port   = htons (atoi (portnum));
 
 	if ((saddr->sin_addr.s_addr = inet_addr (hostname)) == INADDR_NONE) {
+	        int i;
 
-		LINC_RESOLV_SET_IPV6;
+		LINC_RESOLV_UNSET_IPV6;
 		if (!(_res.options & RES_INIT))
 			res_init();
 		
 		host = gethostbyname (hostname);
-		if (!host ||
-		    !ipv4_addr_from_addr (&saddr->sin_addr,
-					  (guint8 *)host->h_addr_list [0],
-					  host->h_length)) {
-			g_free (saddr);
-			return NULL;
+		if (!host) {
+		  g_free (saddr);
+		  return NULL;
+		}
+
+		for(i = 0; host->h_addr_list[i]; i++)
+		    if(ipv4_addr_from_addr (&saddr->sin_addr,
+					    (guint8 *)host->h_addr_list [i],
+					    host->h_length))
+		      break;
+
+		if(!host->h_addr_list[i]) {
+		  g_free (saddr);
+		  return NULL;
 		}
 	}
 
