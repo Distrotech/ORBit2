@@ -443,7 +443,6 @@ testIsA (test_TestFactory   factory,
 	g_assert (CORBA_Object_is_a (factory, "IDL:omg.org/CORBA/Object:1.0", ev));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	/*
 	ds = test_TestFactory_getDerivedServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
@@ -461,7 +460,6 @@ testIsA (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	CORBA_Object_release (ds, ev);
-	*/
 }
 
 static void
