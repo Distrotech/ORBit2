@@ -10,7 +10,6 @@ INCLUDES=-I$(top_builddir) -I$(top_builddir)/include \
 	-DDEBUG
 
 orbit_idl_DEPENDENCIES = $(top_builddir)/libIDL/libIDL.la
-orbit_idl_LDFLAGS =
 orbit_idl_LDADD = \
 	$(top_builddir)/libIDL/libIDL.la \
 	@GLIB_LIBS@ \
