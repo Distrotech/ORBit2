@@ -29,22 +29,24 @@ static void
 ORBit_Context_free_fn(ORBit_RootObject obj_in)
 {
   CORBA_Context ctx = (CORBA_Context)obj_in;
-    if(ctx->children) {
+  if(ctx->children)
+    {
       g_slist_foreach(ctx->children, (GFunc)free_child, ctx);
       g_slist_free(ctx->children);
     }
 
-    if(ctx->mappings) {
+  if(ctx->mappings)
+    {
       g_hash_table_foreach_remove(ctx->mappings, free_entry, ctx);
       g_hash_table_destroy(ctx->mappings);
     }
 
-    if(ctx->parent_ctx != CORBA_OBJECT_NIL)
-      ctx->parent_ctx->children = g_slist_remove(ctx->parent_ctx->children, ctx->the_name);
+  if(ctx->parent_ctx != CORBA_OBJECT_NIL)
+    ctx->parent_ctx->children = g_slist_remove(ctx->parent_ctx->children, ctx->the_name);
 	  
-    g_free(ctx->the_name);
+  g_free(ctx->the_name);
 	  
-    g_free(ctx);
+  g_free(ctx);
 }
 
 static const ORBit_RootObject_Interface CORBA_Context_epv =
@@ -110,15 +112,16 @@ CORBA_Context_set_values(CORBA_Context ctx,
 {
   int i;
 
-  for(i = 0; i < values->list->len; i++) {
-    CORBA_NamedValue *nvp;
+  for(i = 0; i < values->list->len; i++)
+    {
+      CORBA_NamedValue *nvp;
 
-    nvp = ((CORBA_NamedValue *)values->list->data) + i;
+      nvp = ((CORBA_NamedValue *)values->list->data) + i;
 
-    g_assert(nvp->argument._type == TC_CORBA_string);
+      g_assert(nvp->argument._type == TC_CORBA_string);
 
-    CORBA_Context_set_one_value(ctx, nvp->name, nvp->argument._value, ev);
-  }
+      CORBA_Context_set_one_value(ctx, nvp->name, nvp->argument._value, ev);
+    }
 }
 
 typedef struct {
@@ -134,14 +137,15 @@ list_has_key(CORBA_NVList list, const char *key)
 {
   int i;
 
-  for(i = 0; i < list->list->len; i++) {
-    CORBA_NamedValue *nvp;
+  for(i = 0; i < list->list->len; i++)
+    {
+      CORBA_NamedValue *nvp;
 
-    nvp = ((CORBA_NamedValue *)list->list->data) + i;
+      nvp = ((CORBA_NamedValue *)list->list->data) + i;
 
-    if(!strcmp(nvp->name, key))
-      return TRUE;
-  }
+      if(!strcmp(nvp->name, key))
+	return TRUE;
+    }
 
   return FALSE;
 }
@@ -155,7 +159,9 @@ search_props(gpointer key, gpointer value, CTXSearchInfo *csi)
   if(list_has_key(csi->values, key))
     return;
 
-  CORBA_NVList_add_item(csi->values, key, TC_CORBA_string, &value, strlen(value) + 1, CORBA_IN_COPY_VALUE, NULL);
+  CORBA_NVList_add_item(csi->values, key, TC_CORBA_string,
+			(CORBA_OpaqueValue)&value,
+			strlen(value) + 1, CORBA_IN_COPY_VALUE, NULL);
 }
 
 static void
@@ -166,31 +172,35 @@ ctx_get_values(CORBA_Context ctx, CORBA_Flags op_flags,
 {
   gboolean go_up = FALSE;
 
-  if(is_wc >= 0) {
-    CTXSearchInfo csi;
+  if(is_wc >= 0)
+    {
+      CTXSearchInfo csi;
   
-    csi.ctx = ctx;
-    csi.prop_name = prop_name;
-    csi.values = *values;
-    csi.ev = ev;
-    csi.len = is_wc;
+      csi.ctx = ctx;
+      csi.prop_name = prop_name;
+      csi.values = *values;
+      csi.ev = ev;
+      csi.len = is_wc;
 
-    if(ctx->mappings)
-      g_hash_table_foreach(ctx->mappings, (GHFunc)search_props, &csi);
+      if(ctx->mappings)
+	g_hash_table_foreach(ctx->mappings, (GHFunc)search_props, &csi);
 
-    go_up = TRUE;
-
-  } else {
-    char *val = NULL;
-
-    if(ctx->mappings)
-      val = g_hash_table_lookup(ctx->mappings, prop_name);
-
-    if(val)
-      CORBA_NVList_add_item(*values, prop_name, TC_CORBA_string, &val, strlen(val) + 1, CORBA_IN_COPY_VALUE, ev);
-    else
       go_up = TRUE;
-  }
+
+    }
+  else
+    {
+      char *val = NULL;
+
+      if(ctx->mappings)
+	val = g_hash_table_lookup(ctx->mappings, prop_name);
+
+      if(val)
+	CORBA_NVList_add_item(*values, prop_name, TC_CORBA_string,
+			      (CORBA_OpaqueValue)&val, strlen(val) + 1, CORBA_IN_COPY_VALUE, ev);
+      else
+	go_up = TRUE;
+    }
 
   if(go_up
      && ctx->parent_ctx
@@ -211,15 +221,17 @@ CORBA_Context_get_values(CORBA_Context ctx,
 
   CORBA_ORB_create_list(CORBA_OBJECT_NIL, 0, values, ev);
 
-  if(start_scope && *start_scope) {
-    while(ctx && (!ctx->the_name || strcmp(ctx->the_name, start_scope)))
-      ctx = ctx->parent_ctx;
+  if(start_scope && *start_scope)
+    {
+      while(ctx && (!ctx->the_name || strcmp(ctx->the_name, start_scope)))
+	ctx = ctx->parent_ctx;
 
-    if(!ctx) {
-      CORBA_exception_set_system(ev, ex_CORBA_INV_IDENT, CORBA_COMPLETED_NO);
-      return;
+      if(!ctx)
+	{
+	  CORBA_exception_set_system(ev, ex_CORBA_INV_IDENT, CORBA_COMPLETED_NO);
+	  return;
+	}
     }
-  }
 
   ctmp = strchr(prop_name, '*');
   if(ctmp)
@@ -267,24 +279,28 @@ CORBA_Context_delete_values(CORBA_Context ctx,
   else
     wc_pos = -1;
 
-  if(wc_pos >= 0) {
-    CTXSearchInfo csi;
+  if(wc_pos >= 0)
+    {
+      CTXSearchInfo csi;
 
-    memset(&csi, 0, sizeof(csi));
-    csi.ctx = ctx;
-    csi.prop_name = prop_name;
-    csi.ev = ev;
-    csi.len = wc_pos;
+      memset(&csi, 0, sizeof(csi));
+      csi.ctx = ctx;
+      csi.prop_name = prop_name;
+      csi.ev = ev;
+      csi.len = wc_pos;
 
-    g_hash_table_foreach(ctx->mappings, (GHFunc)delete_props, &csi);
-  } else {
-    gpointer old_nom, old_value;
-
-    if(g_hash_table_lookup_extended(ctx->mappings, prop_name, &old_nom, &old_value)) {
-      g_free(old_nom);
-      g_free(old_value);
+      g_hash_table_foreach(ctx->mappings, (GHFunc)delete_props, &csi);
     }
-  }
+  else
+    {
+      gpointer old_nom, old_value;
+
+      if(g_hash_table_lookup_extended(ctx->mappings, prop_name, &old_nom, &old_value))
+	{
+	  g_free(old_nom);
+	  g_free(old_value);
+	}
+    }
 }
 
 void
@@ -307,38 +323,41 @@ CORBA_Context_delete(CORBA_Context ctx, const CORBA_Flags del_flags,
 
 void
 ORBit_Context_marshal(CORBA_Context ctx, ORBit_ContextMarshalItem *mlist,
-			   CORBA_unsigned_long nitems, GIOPSendBuffer *buf)
+		      CORBA_unsigned_long nitems, GIOPSendBuffer *buf)
 {
   int i;
   CORBA_unsigned_long *real_nitems, ltmp;
 
   giop_send_buffer_align(buf, sizeof(nitems));
-  real_nitems = giop_send_buffer_append_indirect(buf, &nitems, sizeof(nitems));
-  if(!ctx->mappings) {
-    *real_nitems = 0;
-    return;
-  }
+  real_nitems = (gpointer)
+    giop_send_buffer_append_indirect(buf, &nitems, sizeof(nitems));
+  if(!ctx->mappings)
+    {
+      *real_nitems = 0;
+      return;
+    }
 
-  for(*real_nitems = i = 0; i < nitems; i++) {
-    char *value;
+  for(*real_nitems = i = 0; i < nitems; i++)
+    {
+      char *value;
 
-    value = g_hash_table_lookup(ctx->mappings, mlist[i].str);
-    if(!value)
-      continue;
+      value = g_hash_table_lookup(ctx->mappings, mlist[i].str);
+      if(!value)
+	continue;
 
-    /* Key */
-    giop_send_buffer_align(buf, sizeof(mlist[i].len));
-    giop_send_buffer_append(buf, &mlist[i].len, sizeof(mlist[i].len));
-    giop_send_buffer_append(buf, mlist[i].str, mlist[i].len);
-    (*real_nitems)++;
+      /* Key */
+      giop_send_buffer_align(buf, sizeof(mlist[i].len));
+      giop_send_buffer_append(buf, &mlist[i].len, sizeof(mlist[i].len));
+      giop_send_buffer_append(buf, mlist[i].str, mlist[i].len);
+      (*real_nitems)++;
 
-    /* Value */
-    ltmp = strlen(value) + 1;
-    giop_send_buffer_align(buf, sizeof(ltmp));
-    giop_send_buffer_append_indirect(buf, &ltmp, sizeof(ltmp));
-    giop_send_buffer_append(buf, value, ltmp);
-    (*real_nitems)++;
-  }
+      /* Value */
+      ltmp = strlen(value) + 1;
+      giop_send_buffer_align(buf, sizeof(ltmp));
+      giop_send_buffer_append_indirect(buf, &ltmp, sizeof(ltmp));
+      giop_send_buffer_append(buf, value, ltmp);
+      (*real_nitems)++;
+    }
 }
 
 #define ALIGNFOR(x) recv_buffer->cur = ALIGN_ADDRESS(recv_buffer->cur, sizeof(x))
@@ -350,7 +369,7 @@ ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
   CORBA_unsigned_long nstrings, keylen, vallen, i;
   char *key, *value;
 
-  ORBit_RootObject_init(initme, &CORBA_Context_epv);
+  ORBit_RootObject_init(ORBIT_ROOT_OBJECT(initme), &CORBA_Context_epv);
   initme->parent.refs = ORBIT_REFCOUNT_STATIC;
 
   initme->parent_ctx = parent;
@@ -370,46 +389,52 @@ ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
   else
     {
       initme->mappings = NULL;
-      return TRUE;
+      goto errout;
     }
 
   g_hash_table_freeze(initme->mappings);
-  for(i = 0; i < nstrings; ) {
-    buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-    if((buf->cur + 4) > buf->end)
-      goto errout;
-    keylen = *(CORBA_unsigned_long *)buf->cur;
-    if(giop_msg_conversion_needed(buf))
-      keylen = GUINT32_SWAP_LE_BE(keylen);
-    buf->cur += 4;
-    if((buf->cur + keylen) > buf->end
-       || (buf->cur + keylen) < buf->cur)
-      goto errout;
-    key = buf->cur;
-    buf->cur += keylen;
-    i++;
+  for(i = 0; i < nstrings; )
+    {
+      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+      if((buf->cur + 4) > buf->end)
+	goto errout;
+      keylen = *(CORBA_unsigned_long *)buf->cur;
+      if(giop_msg_conversion_needed(buf))
+	keylen = GUINT32_SWAP_LE_BE(keylen);
+      buf->cur += 4;
+      if((buf->cur + keylen) > buf->end
+	 || (buf->cur + keylen) < buf->cur)
+	goto errout;
+      key = buf->cur;
+      buf->cur += keylen;
+      i++;
 
-    if(i >= nstrings)
-      break;
+      if(i >= nstrings)
+	break;
 
-    buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-    if((buf->cur + 4) > buf->end)
-      goto errout;
-    vallen = *(CORBA_unsigned_long *)buf->cur;
-    if(giop_msg_conversion_needed(buf))
-      vallen = GUINT32_SWAP_LE_BE(vallen);
-    if((buf->cur + vallen) > buf->end
-       || (buf->cur + vallen) < buf->cur)
-      goto errout;
-    value = buf->cur;
-    buf->cur += vallen;
-    i++;
+      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+      if((buf->cur + 4) > buf->end)
+	goto errout;
+      vallen = *(CORBA_unsigned_long *)buf->cur;
+      if(giop_msg_conversion_needed(buf))
+	vallen = GUINT32_SWAP_LE_BE(vallen);
+      if((buf->cur + vallen) > buf->end
+	 || (buf->cur + vallen) < buf->cur)
+	goto errout;
+      value = buf->cur;
+      buf->cur += vallen;
+      i++;
 
-    g_hash_table_insert(initme->mappings, key, value);
-  }
+      g_hash_table_insert(initme->mappings, key, value);
+    }
 
   g_hash_table_thaw(initme->mappings);
+  return FALSE;
+
  errout:
+  if(initme->mappings)
+    g_hash_table_destroy(initme->mappings);
+  return TRUE;
 }
 
 void

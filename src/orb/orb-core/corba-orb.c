@@ -91,8 +91,7 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
 
   g_return_val_if_fail(ev, NULL);
 
-  if(!obj
-     || !_obj
+  if(!obj || !_obj
      || ORBIT_ROOT_OBJECT_TYPE(obj) != ORBIT_ROT_OBJREF)
     {
       CORBA_exception_set_system(ev,
@@ -236,8 +235,7 @@ CORBA_ORB_get_next_response(CORBA_ORB _obj, CORBA_Request * req,
 CORBA_boolean
 CORBA_ORB_get_service_information(CORBA_ORB _obj,
 				  const CORBA_ServiceType service_type,
-				  CORBA_ServiceInformation **
-				  service_information,
+				  CORBA_ServiceInformation **service_information,
 				  CORBA_Environment * ev)
 {
   return CORBA_FALSE;
@@ -289,6 +287,14 @@ CORBA_ORB_resolve_initial_references(CORBA_ORB _obj,
   return CORBA_OBJECT_NIL;
 }
 
+static CORBA_TypeCode
+CORBA_TypeCode_allocate(void)
+{
+  CORBA_TypeCode tc = g_new0(struct CORBA_TypeCode_struct,1);
+  ORBit_RootObject_init(&tc->parent, &ORBit_TypeCode_epv);
+  return ORBit_RootObject_duplicate(tc);
+}
+
 CORBA_TypeCode
 CORBA_ORB_create_struct_tc(CORBA_ORB _obj,
 			   const CORBA_RepositoryId id,
@@ -296,7 +302,45 @@ CORBA_ORB_create_struct_tc(CORBA_ORB _obj,
 			   const CORBA_StructMemberSeq *members,
 			   CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+  int i;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc == NULL)
+    goto tc_alloc_failed;
+
+  tc->subtypes = g_new0(CORBA_TypeCode, members->_length);
+  if(tc->subtypes == NULL)
+    goto subtypes_alloc_failed;
+
+  tc->subnames = g_new0(const char *, members->_length);
+  if(tc->subnames == NULL)
+    goto subnames_alloc_failed;
+
+  tc->kind = CORBA_tk_struct;
+  tc->name = g_strdup(name);
+  tc->repo_id = g_strdup(id);
+  tc->sub_parts = members->_length;
+  tc->length = members->_length;
+
+  for(i = 0; i<members->_length; i++) {
+    CORBA_StructMember *mem = (CORBA_StructMember *)&(members->_buffer[i]);
+
+    g_assert(&(mem->type) != NULL);
+
+    tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
+    tc->subnames[i] = g_strdup(mem->name);
+  }
+
+  return(tc);
+
+ subnames_alloc_failed:
+  g_free(tc->subtypes);
+ subtypes_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return NULL;
 }
 
 CORBA_TypeCode
@@ -308,7 +352,61 @@ CORBA_ORB_create_union_tc(CORBA_ORB _obj,
 			  const CORBA_UnionMemberSeq *
 			  members, CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+  int i;
+
+  tc=CORBA_TypeCode_allocate();
+
+  if(tc == NULL)
+    goto tc_alloc_failed;
+
+  tc->discriminator = ORBit_RootObject_duplicate(discriminator_type);
+		
+  tc->subtypes=g_new0(CORBA_TypeCode, members->_length);
+  if(tc->subtypes==NULL)
+    goto subtypes_alloc_failed;
+
+  tc->subnames=g_new0(const char *, members->_length);
+  if(tc->subnames==NULL)
+    goto subnames_alloc_failed;
+
+  tc->sublabels=g_new0(CORBA_any, members->_length);
+  if(tc->sublabels == NULL)
+    goto sublabels_alloc_failed;
+
+  tc->kind=CORBA_tk_union;
+  tc->name=g_strdup(name);
+  tc->repo_id=g_strdup(id);
+  tc->sub_parts=members->_length;
+  tc->length=members->_length;
+  tc->default_index=-1;
+
+  for(i=0;i<members->_length;i++) {
+    CORBA_UnionMember *mem=(CORBA_UnionMember *)&(members->_buffer[i]);
+
+    g_assert(&(mem->label)!=NULL);
+    memcpy(&(tc->sublabels[i]), &(mem->label), (size_t)sizeof(CORBA_any));
+    g_assert(&(mem->type)!=NULL);
+    tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
+    tc->subnames[i]=g_strdup(mem->name);
+
+    if(mem->label._type->kind==CORBA_tk_octet) {
+      tc->default_index=i;
+    }
+  }
+
+  return(tc);
+
+ sublabels_alloc_failed:
+  g_free(tc->sublabels);
+ subnames_alloc_failed:
+  g_free(tc->subtypes);
+ subtypes_alloc_failed:
+  ORBit_free(tc->discriminator);
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return NULL;
 }
 
 CORBA_TypeCode
@@ -318,7 +416,33 @@ CORBA_ORB_create_enum_tc(CORBA_ORB _obj,
 			 const CORBA_EnumMemberSeq *
 			 members, CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+  int i;
+
+  tc = CORBA_TypeCode_allocate();
+  if(tc == NULL)
+    goto tc_alloc_failed;
+
+  tc->subnames=g_new0(const char *, members->_length);
+  if(tc->subnames==NULL)
+    goto subnames_alloc_failed;
+
+  tc->kind = CORBA_tk_enum;
+  tc->name = g_strdup(name);
+  tc->repo_id = g_strdup(id);
+  tc->sub_parts = members->_length;
+  tc->length = members->_length;
+
+  for(i=0;i<members->_length;i++)
+    tc->subnames[i]=g_strdup(members->_buffer[i]);
+
+  return(tc);
+
+ subnames_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return(NULL);
 }
 
 CORBA_TypeCode
@@ -329,7 +453,31 @@ CORBA_ORB_create_alias_tc(CORBA_ORB _obj,
 			  original_type,
 			  CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc = CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    goto tc_alloc_failed;
+	
+	/* Can't use chunks here, because it's sometimes an array. Doh! */
+  tc->subtypes=g_new0(CORBA_TypeCode, 1);
+  if(tc->subtypes==NULL)
+    goto subtypes_alloc_failed;
+
+  tc->kind=CORBA_tk_alias;
+  tc->name=g_strdup(name);
+  tc->repo_id=g_strdup(id);
+  tc->sub_parts=1;
+  tc->length=1;
+
+  tc->subtypes[0] = ORBit_RootObject_duplicate(original_type);
+
+  return(tc);
+ subtypes_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return NULL;
 }
 
 CORBA_TypeCode
@@ -340,7 +488,52 @@ CORBA_ORB_create_exception_tc(CORBA_ORB _obj,
 			      members,
 			      CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+  int i;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    goto tc_alloc_failed;
+
+  if (members->_length == 0)
+    {
+      tc->subtypes = NULL;
+      tc->subnames = NULL;
+    }
+  else
+    {
+      tc->subtypes=g_new0(CORBA_TypeCode, members->_length);
+      if(tc->subtypes==NULL)
+	goto subtypes_alloc_failed;
+
+      tc->subnames=g_new0(const char *, members->_length);
+      if(tc->subnames==NULL)
+	goto subnames_alloc_failed;
+    }
+
+  tc->kind=CORBA_tk_except;
+  tc->name=g_strdup(name);
+  tc->repo_id=g_strdup(id);
+  tc->sub_parts=members->_length;
+  tc->length=members->_length;
+
+  for(i=0;i<members->_length;i++) {
+    CORBA_StructMember *mem=(CORBA_StructMember *)&(members->_buffer[i]);
+
+    g_assert(mem->type != NULL);
+    tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
+    tc->subnames[i]=g_strdup(mem->name);
+  }
+
+  return(tc);
+
+ subnames_alloc_failed:
+  g_free(tc->subtypes);
+ subtypes_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return(NULL);
 }
 
 CORBA_TypeCode
@@ -349,7 +542,20 @@ CORBA_ORB_create_interface_tc(CORBA_ORB _obj,
 			      const CORBA_Identifier name,
 			      CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+	CORBA_TypeCode tc;
+
+	tc=CORBA_TypeCode_allocate();
+	if(tc==NULL) {
+		CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY,
+					   CORBA_COMPLETED_NO);
+		return(NULL);
+	}
+
+	tc->kind=CORBA_tk_objref;
+	tc->name=g_strdup(name);
+	tc->repo_id=g_strdup(id);
+
+	return(tc);
 }
 
 CORBA_TypeCode
@@ -357,7 +563,19 @@ CORBA_ORB_create_string_tc(CORBA_ORB _obj,
 			   const CORBA_unsigned_long bound,
 			   CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    {
+      CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+      return(NULL);
+    }
+
+  tc->kind=CORBA_tk_string;
+  tc->length=bound;
+
+  return(tc);
 }
 
 CORBA_TypeCode
@@ -365,7 +583,19 @@ CORBA_ORB_create_wstring_tc(CORBA_ORB _obj,
 			    const CORBA_unsigned_long bound,
 			    CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    {
+      CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+      return(NULL);
+    }
+
+  tc->kind=CORBA_tk_wstring;
+  tc->length=bound;
+
+  return(tc);
 }
 
 CORBA_TypeCode
@@ -374,7 +604,20 @@ CORBA_ORB_create_fixed_tc(CORBA_ORB _obj,
 			  const CORBA_short scale,
 			  CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    {
+      CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+      return(NULL);
+    }
+
+  tc->kind=CORBA_tk_fixed;
+  tc->digits=digits;
+  tc->scale=scale;
+
+  return(tc);
 }
 
 CORBA_TypeCode
@@ -385,7 +628,29 @@ CORBA_ORB_create_sequence_tc(CORBA_ORB _obj,
 			     element_type,
 			     CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    goto tc_alloc_failed;
+
+  tc->subtypes=g_new0(CORBA_TypeCode, 1);
+  if(tc->subtypes==NULL)
+    goto subtypes_alloc_failed;
+
+  tc->kind=CORBA_tk_sequence;
+  tc->sub_parts=1;
+  tc->length=bound;
+
+  tc->subtypes[0] = ORBit_RootObject_duplicate(element_type);
+
+  return(tc);
+
+ subtypes_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return(NULL);
 }
 
 CORBA_TypeCode
@@ -394,7 +659,31 @@ CORBA_ORB_create_recursive_sequence_tc(CORBA_ORB _obj,
 				       const CORBA_unsigned_long offset,
 				       CORBA_Environment *ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    goto tc_alloc_failed;
+
+  tc->subtypes=g_new0(CORBA_TypeCode, 1);
+  if(tc->subtypes==NULL)
+    goto subtypes_alloc_failed;
+
+  tc->kind=CORBA_tk_sequence;
+  tc->sub_parts=1;
+  tc->length=bound;
+
+  tc->subtypes[0] = CORBA_TypeCode_allocate();
+  tc->subtypes[0]->kind=CORBA_tk_recursive;
+  tc->subtypes[0]->recurse_depth=offset;
+
+  return(tc);
+
+ subtypes_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return(NULL);
 }
 
 CORBA_TypeCode
@@ -403,7 +692,29 @@ CORBA_ORB_create_array_tc(CORBA_ORB _obj,
 			  const CORBA_TypeCode element_type,
 			  CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_TypeCode tc;
+
+  tc=CORBA_TypeCode_allocate();
+  if(tc==NULL)
+    goto tc_alloc_failed;
+
+  tc->subtypes=g_new0(CORBA_TypeCode, 1);
+  if(tc->subtypes==NULL)
+    goto subtypes_alloc_failed;
+
+  tc->kind=CORBA_tk_array;
+  tc->sub_parts=1;
+  tc->length=length;
+
+  tc->subtypes[0] = ORBit_RootObject_duplicate(element_type);
+
+  return(tc);
+
+ subtypes_alloc_failed:
+  ORBit_RootObject_release(tc);
+ tc_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
+  return(NULL);
 }
 
 CORBA_TypeCode

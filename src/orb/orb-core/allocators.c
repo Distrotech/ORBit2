@@ -133,20 +133,20 @@ ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
 gpointer
 ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
 {
-    size_t			element_size;
-    ORBit_MemPrefix_TypeCode	*pre;
-    gpointer 			mem;
+  size_t			element_size;
+  ORBit_MemPrefix_TypeCode	*pre;
+  gpointer 			mem;
 
-    if ( num_elements==0
-      || (element_size = ORBit_gather_alloc_info(tc)) == 0 ) {
-    	return 0;
-    }
-    mem = ORBit_alloc_core(element_size*num_elements,
-      ORBIT_MEMHOW_TYPECODE|num_elements, sizeof(*pre), (gpointer)&pre,
-      /*align*/0);
-    ORBIT_MEM_MAGICSET(pre->magic);
-    pre->tc = ORBit_RootObject_duplicate(tc);
-    return mem;
+  if ( num_elements==0
+       || (element_size = ORBit_gather_alloc_info(tc)) == 0 ) {
+    return 0;
+  }
+  mem = ORBit_alloc_core(element_size*num_elements,
+			 ORBIT_MEMHOW_TYPECODE|num_elements, sizeof(*pre), (gpointer)&pre,
+			 /*align*/0);
+  ORBIT_MEM_MAGICSET(pre->magic);
+  pre->tc = ORBit_RootObject_duplicate(tc);
+  return mem;
 }
 
 /******************************************************************/
@@ -169,96 +169,96 @@ ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
 gpointer
 ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
 {
-	int i;
-	guchar *retval = NULL;
-	CORBA_TypeCode	subtc;
+  int i;
+  guchar *retval = NULL;
+  CORBA_TypeCode	subtc;
 
-	switch(tc->kind) {
-	case CORBA_tk_any:
-		{
-			CORBA_any *pval = mem;
-			if(pval->_release)
-				CORBA_free(pval->_value);
-			pval->_value = 0;
-			ORBit_RootObject_release(pval->_type);
-			pval->_type = 0;
-			retval = (guchar *)(pval + 1);
-		}
-		break;
-	case CORBA_tk_TypeCode:
-	case CORBA_tk_objref:
-		{
-			CORBA_Object	*pval = mem;
-			ORBit_RootObject_release(*pval);
-			*pval = 0;
-			retval = ((guchar *)mem) + sizeof(*pval);
-		}
-		break;
-	case CORBA_tk_Principal:
-		{
-			CORBA_Principal *pval = mem;
-			if(pval->_release)
-				CORBA_free(pval->_buffer);
-			pval->_buffer = 0;
-			retval = (guchar *)(pval + 1);
-		}
-		break;
-	case CORBA_tk_except:
-	case CORBA_tk_struct:
-		for(i = 0; i < tc->sub_parts; i++) {
-			subtc = tc->subtypes[i];
-			mem = ALIGN_ADDRESS(mem, ORBit_find_alignment(subtc));
-			mem = ORBit_freekids_via_TypeCode(subtc, mem);
-		}
-		retval = mem;
-		break;
-	case CORBA_tk_union:
-		{
-		    int sz = 0;
-		    int al = 1;
-		    gconstpointer cmem = mem;
-		    subtc = ORBit_get_union_tag(tc, &cmem, TRUE);
-		    for(i = 0; i < tc->sub_parts; i++) {
-		        al = MAX(al, ORBit_find_alignment(tc->subtypes[i]));
-		        sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
-		    }
-		    mem = ALIGN_ADDRESS(cmem, al);
-		    ORBit_freekids_via_TypeCode(subtc, mem);
-		    /* the end of the body (subtc) may not be the
-		     * same as the end of the union */
-		    retval = ((guchar *)mem) + sz;
-		}
-		break;
-	case CORBA_tk_wstring:
-	case CORBA_tk_string:
-		{
-			CORBA_char **pval = mem;
-			CORBA_free(*pval);
-			*pval = 0;
-			retval = (guchar *)mem + sizeof(*pval);
-		}
-		break;
-	case CORBA_tk_sequence:
-		{
-			CORBA_sequence_CORBA_octet *pval = mem;
-			if(pval->_release)
-				CORBA_free(pval->_buffer);
-			pval->_buffer = 0;
-			retval = (guchar *)mem + sizeof(*pval);
-		}
-		break;
-	case CORBA_tk_array:
-		for(i = 0; i < tc->length; i++) {
-			mem = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
-		}
-		retval = mem;
-		break;
-	case CORBA_tk_alias:
-		retval = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
-		break;
-	default:
-		retval = ((guchar *)mem) + ORBit_gather_alloc_info(tc);
-		break;
-	}
-	return (gpointer)retval;
+  switch(tc->kind) {
+  case CORBA_tk_any:
+    {
+      CORBA_any *pval = mem;
+      if(pval->_release)
+	CORBA_free(pval->_value);
+      pval->_value = 0;
+      ORBit_RootObject_release(pval->_type);
+      pval->_type = 0;
+      retval = (guchar *)(pval + 1);
+    }
+    break;
+  case CORBA_tk_TypeCode:
+  case CORBA_tk_objref:
+    {
+      CORBA_Object	*pval = mem;
+      ORBit_RootObject_release(*pval);
+      *pval = 0;
+      retval = ((guchar *)mem) + sizeof(*pval);
+    }
+    break;
+  case CORBA_tk_Principal:
+    {
+      CORBA_Principal *pval = mem;
+      if(pval->_release)
+	CORBA_free(pval->_buffer);
+      pval->_buffer = 0;
+      retval = (guchar *)(pval + 1);
+    }
+    break;
+  case CORBA_tk_except:
+  case CORBA_tk_struct:
+    for(i = 0; i < tc->sub_parts; i++) {
+      subtc = tc->subtypes[i];
+      mem = ALIGN_ADDRESS(mem, ORBit_find_alignment(subtc));
+      mem = ORBit_freekids_via_TypeCode(subtc, mem);
+    }
+    retval = mem;
+    break;
+  case CORBA_tk_union:
+    {
+      int sz = 0;
+      int al = 1;
+      gconstpointer cmem = mem;
+      subtc = ORBit_get_union_tag(tc, &cmem, TRUE);
+      for(i = 0; i < tc->sub_parts; i++) {
+	al = MAX(al, ORBit_find_alignment(tc->subtypes[i]));
+	sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
+      }
+      mem = ALIGN_ADDRESS(cmem, al);
+      ORBit_freekids_via_TypeCode(subtc, mem);
+      /* the end of the body (subtc) may not be the
+       * same as the end of the union */
+      retval = ((guchar *)mem) + sz;
+    }
+    break;
+  case CORBA_tk_wstring:
+  case CORBA_tk_string:
+    {
+      CORBA_char **pval = mem;
+      CORBA_free(*pval);
+      *pval = 0;
+      retval = (guchar *)mem + sizeof(*pval);
+    }
+    break;
+  case CORBA_tk_sequence:
+    {
+      CORBA_sequence_CORBA_octet *pval = mem;
+      if(pval->_release)
+	CORBA_free(pval->_buffer);
+      pval->_buffer = 0;
+      retval = (guchar *)mem + sizeof(*pval);
+    }
+    break;
+  case CORBA_tk_array:
+    for(i = 0; i < tc->length; i++) {
+      mem = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
+    }
+    retval = mem;
+    break;
+  case CORBA_tk_alias:
+    retval = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
+    break;
+  default:
+    retval = ((guchar *)mem) + ORBit_gather_alloc_info(tc);
+    break;
+  }
+  return (gpointer)retval;
 }

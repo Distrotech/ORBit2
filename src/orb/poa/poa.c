@@ -1137,13 +1137,109 @@ ORBit_POA_oid_to_obj(PortableServer_POA poa,
   return pobj;
 }
 
+static void
+ORBit_POA_set_life(PortableServer_POA poa, 
+		   CORBA_boolean etherealize_objects, int action_do)
+{
+  if ( (poa->life_flags 
+	& (ORBit_LifeF_DeactivateDo|ORBit_LifeF_DestroyDo))==0 )
+    {
+      if ( etherealize_objects )
+	poa->life_flags |= ORBit_LifeF_DoEtherealize;
+    }
+  poa->life_flags |= action_do;
+}
+
+static void
+ORBit_POA_remove_child(PortableServer_POA poa,
+		       PortableServer_POA child_poa,
+		       CORBA_Environment *ev)
+{
+	g_assert( child_poa->parent_poa == poa );
+	g_hash_table_remove(poa->child_poas, child_poa->name);
+	child_poa->parent_poa = CORBA_OBJECT_NIL;
+	ORBit_RootObject_release(poa);
+}
+
 gboolean
 ORBit_POA_destroy(PortableServer_POA poa,
 		  CORBA_boolean etherealize_objects,
 		  CORBA_Environment *ev)
 {
-  ORBit_POAManager_unregister_poa(poa->poa_manager, poa, ev);
-  return FALSE;
+  int	cpidx;
+  int numobjs, totrefs;
+
+  ORBit_POA_set_life(poa, etherealize_objects, ORBit_LifeF_DestroyDo);
+  if ( poa->life_flags & ORBit_LifeF_Destroyed )
+    return TRUE;	/* already did it */
+  if ( poa->life_flags & (ORBit_LifeF_Deactivating|ORBit_LifeF_Destroying) )
+    return FALSE;	/* recursion */
+  poa->life_flags |= ORBit_LifeF_Destroying;
+
+  /* Destroying the children is tricky, b/c they may die
+     * while we are traversing. We traverse over the
+     * ORB's global list (rather than poa->child_poas) 
+     * to avoid walking into dead children.
+     */
+  for (cpidx=0; cpidx < poa->orb->poas->len; cpidx++ ) {
+    PortableServer_POA cpoa = g_ptr_array_index(poa->orb->poas, cpidx);
+    if ( cpoa && cpoa->parent_poa == poa ) {
+      ORBit_POA_destroy(cpoa, etherealize_objects, ev);
+    }
+  }
+  /* Get rid of our default servant, if we have one.
+     * This usage is non-standard.
+     * It does not make any attempt to etherialize the servant.
+     */
+  PortableServer_POA_set_servant(poa, NULL, ev);
+
+  /*
+     * Get rid of all our RETAINed children.
+     */
+  if ( poa->child_poas 
+       || poa->use_cnt
+       || !ORBit_POA_deactivate(poa, etherealize_objects, ev) ) {
+    poa->life_flags &= ~ORBit_LifeF_Destroying;
+    return CORBA_FALSE;
+  }
+
+  /* We're commited at this point.
+     * Remove links so POA's name can be re-used. Most memory
+     * will be free'd up during POA_release. */
+  if(poa->poa_manager)
+    ORBit_POAManager_unregister_poa(poa->poa_manager, poa, ev);
+  if ( poa->parent_poa )
+    ORBit_POA_remove_child(poa->parent_poa, poa, ev);
+
+  if ( poa->orb && poa->poaID >= 0 ) {
+    g_ptr_array_index(poa->orb->poas, poa->poaID) = NULL;
+    poa->poaID = -1;
+  }
+
+  /* each objref holds a POAObj, and each POAObj holds a ref 
+     * to the POA. In addition, the app can hold open refs
+     * to the POA itself.
+     */
+  numobjs = poa->oid_to_obj_map ? g_hash_table_size(poa->oid_to_obj_map) : 0;
+  totrefs = poa->parent.refs;
+  g_assert( totrefs > numobjs );
+  if ( poa->orb && poa == g_ptr_array_index(poa->orb->poas, 0) ) {
+    /* The ORB still has refs to the RootPOA, and must hold onto
+     * it for various reasons. We check for remaining refs to
+     * the RootPOA within the ORB code later.
+	 */
+    totrefs = numobjs+1;	/* HACK */
+  }
+  if ( totrefs > 1 ) {
+    g_warning("POA_do_destroy: Application still has "
+	      "%d refs to POA %s and %d refs to objects within the POA.",
+	      totrefs - 1 - numobjs, poa->name, numobjs);
+  }
+  poa->life_flags |= ORBit_LifeF_Destroyed;
+  poa->life_flags &= ~ORBit_LifeF_Destroying;
+  ORBit_RootObject_release(poa);
+  return CORBA_TRUE;
+
 }
 
 void
@@ -1153,16 +1249,63 @@ ORBit_POA_add_child(PortableServer_POA poa,
 {
 }
 
-void
-ORBit_POA_deactivate(PortableServer_POA poa,
-		     CORBA_boolean etherealize_objects,
+/**
+    Returns TRUE if POA (and all its objects) are sucessfully
+    deactivated (and optionally etherealized). Returns FALSE
+    if this cannot be performed because some object is currently
+    in-use servicing some request. Note that deactivating
+    has no affect of children POAs.
+**/
+CORBA_boolean
+ORBit_POA_deactivate(PortableServer_POA poa, CORBA_boolean etherealize_objects,
 		     CORBA_Environment *ev)
 {
+    CORBA_boolean	done = CORBA_TRUE;
+
+    ORBit_POA_set_life(poa, etherealize_objects, ORBit_LifeF_DeactivateDo);
+    if ( poa->life_flags & ORBit_LifeF_Deactivated )
+	return TRUE;	/* already did it */
+    if ( poa->life_flags & ORBit_LifeF_Deactivating )
+	return FALSE;	/* recursion */
+    poa->life_flags |= ORBit_LifeF_Deactivating;
+
+    /* bounce all pending requested (OBJECT_NOT_EXIST
+     * exceptions raised); none should get requeued. */
+    ORBit_POA_handle_held_requests(poa);
+    g_assert( poa->held_requests == 0 );
+
+    if ( poa->p_servant_retention == PortableServer_RETAIN ) {
+	TraverseInfo	info;
+	info.num_in_use = 0;
+	info.do_deact = 1;
+	info.poa = poa;
+	info.do_etherealize = (poa->life_flags&ORBit_LifeF_DoEtherealize)
+		  		?CORBA_TRUE:CORBA_FALSE;
+	info.is_cleanup = TRUE;
+	g_hash_table_freeze(poa->oid_to_obj_map);
+    	g_assert( poa->oid_to_obj_map );
+	g_hash_table_foreach(poa->oid_to_obj_map, (GHFunc)traverse_cb, &info);
+    	done = info.num_in_use == 0 ? CORBA_TRUE : CORBA_FALSE;
+    }
+    if ( done )
+    	poa->life_flags |= ORBit_LifeF_Deactivated;
+    poa->life_flags &= ~ORBit_LifeF_Deactivating;
+    return done;
 }
 
 void
 ORBit_POA_handle_held_requests(PortableServer_POA poa)
 {
+  GSList	*reqlist = poa->held_requests, *req;
+  poa->held_requests = 0;
+  /* zero out the held_requests first, because a given request may
+     * get re-queued below.
+     */
+  for ( req=reqlist; req; req=req->next) {
+    GIOPRecvBuffer *buf = req->data;
+    ORBit_handle_request(poa->orb, buf);
+  }
+  g_slist_free(reqlist);
 }
 
 static void

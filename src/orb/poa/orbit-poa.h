@@ -24,9 +24,9 @@ void ORBit_POA_handle_held_requests(PortableServer_POA poa);
 gboolean ORBit_POA_is_inuse(PortableServer_POA poa,
 			    CORBA_boolean consider_children,
 			    CORBA_Environment *ev);
-void ORBit_POA_deactivate(PortableServer_POA poa,
-			  CORBA_boolean etherealize_objects,
-			  CORBA_Environment *ev);
+CORBA_boolean ORBit_POA_deactivate(PortableServer_POA poa,
+				   CORBA_boolean etherealize_objects,
+				   CORBA_Environment *ev);
 gboolean ORBit_POA_destroy(PortableServer_POA poa,
 			   CORBA_boolean etherealize_objects,
 			   CORBA_Environment *ev);
