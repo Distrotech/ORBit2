@@ -4,7 +4,7 @@ SUBDIRS=libIDL src include test docs
 
 bin_SCRIPTS=orbit-config
 
-EXTRA_DIST=ORBit.spec.in ORBit.m4
+EXTRA_DIST=ORBit.spec.in ORBit2.m4
 
 dist-hook: ORBit.spec
 	cp ORBit.spec $(distdir)
@@ -13,4 +13,4 @@ rpms: distcheck
 	rpm -ta $(top_builddir)/@PACKAGE@-@VERSION@.tar.gz
 
 m4datadir=$(datadir)/aclocal
-m4data_DATA=ORBit.m4
+m4data_DATA=ORBit2.m4

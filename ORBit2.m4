@@ -1,7 +1,7 @@
-dnl AM_PATH_ORBIT([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
-dnl Test for ORBit, and define ORBIT_CFLAGS and ORBIT_LIBS
+dnl AM_PATH_ORBIT2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
+dnl Test for ORBit2, and define ORBIT_CFLAGS and ORBIT_LIBS
 dnl
-AC_DEFUN(AM_PATH_ORBIT,
+AC_DEFUN(AM_PATH_ORBIT2,
 [dnl 
 dnl Get the cflags and libraries from the orbit-config script
 dnl
@@ -66,7 +66,7 @@ dnl checks the results of orbit-config to some extent
 dnl
       rm -f conf.orbittest
       AC_TRY_RUN([
-#include <orb/orbit.h>
+#include <orbit/orbit.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -162,7 +162,7 @@ main ()
           CFLAGS="$CFLAGS $ORBIT_CFLAGS"
           LIBS="$LIBS $ORBIT_LIBS"
           AC_TRY_LINK([
-#include <orb/orbit.h>
+#include <orbit/orbit.h>
 #include <stdio.h>
 ],      [ return ((orbit_major_version) || (orbit_minor_version) || (orbit_micro_version)); ],
         [ echo "*** The test program compiled, but did not run. This usually means"
