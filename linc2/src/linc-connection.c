@@ -471,7 +471,6 @@ linc_connection_read (LINCConnection *cnx,
 
 		} else if (n == 0) {
 			d_printf ("we got EOF on fd %d\n", cnx->priv->fd);
-			linc_connection_state_changed (cnx, LINC_DISCONNECTED);
 			return LINC_IO_FATAL_ERROR;
 		} else {
 			buf += n;
