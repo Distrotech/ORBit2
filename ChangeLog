@@ -1,2 +1,9 @@
-Do not touch this file for now. Run 'rcs2log' or use bonsai
-(http://cvs.gnome.org/)
+1999-01-26  Miguel de Icaza  <miguel@nuclecu.unam.mx>
+
+	* popt/configure.in: Use ac_cv_prog_gcc to figure out if this is gcc.
+
+1999-01-07  Miguel de Icaza  <miguel@nuclecu.unam.mx>
+
+	* src/orb/orb.c (ORBit_ORB_make_usock_connection): Some systems
+	return mkdir != 0 but set errno to zero.
+
