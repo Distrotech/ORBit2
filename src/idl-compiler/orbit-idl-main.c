@@ -58,7 +58,7 @@ static char *cl_output_directory = "";
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
 static GString *cl_cpp_args;
 
-static char *c_output_formatter = INDENT_COMMAND;
+static char *c_output_formatter = NULL;
 
 /* Callbacks for popt */
 static void
@@ -126,7 +126,7 @@ struct poptOption options[] = {
   {"add-imodule", '\0', POPT_ARG_NONE, &cl_add_imodule, 0, "Output an imodule file", NULL},
   {"skeleton-impl", '\0', POPT_ARG_NONE, &cl_enable_skeleton_impl, 0, "Output skeleton implementation", NULL},
   {"backenddir", '\0', POPT_ARG_STRING, &cl_backend_dir, 0, "Override IDL backend library directory", "DIR"},
-  {"c-output-formatter", '\0', POPT_ARG_STRING, &c_output_formatter, 0, "Program to use to format output (normally, indent)", "PROGRAM"},
+  {"c-output-formatter", '\0', POPT_ARG_STRING, &c_output_formatter, 0, "DEPRECATED and IGNORED", "PROGRAM"},
   {"onlytop", '\0', POPT_ARG_NONE, &cl_onlytop, 0, "Inhibit includes", NULL},
   {"pidl", '\0', POPT_ARG_NONE, &cl_is_pidl, 0, "Treat as Pseudo IDL", NULL},
   {"nodefskels", '\0', POPT_ARG_NONE, &cl_disable_defs_skels, 0, "Don't output defs for skels in header", NULL},
@@ -148,9 +148,6 @@ int main(int argc, const char *argv[])
   /* Argument parsing, etc. */
   cl_cpp_args = g_string_new("-D__ORBIT_IDL__ ");
 
-  if(getenv("C_OUTPUT_FORMATTER"))
-    c_output_formatter = getenv("C_OUTPUT_FORMATTER");
-
   pcon = poptGetContext ("orbit-idl-2", argc, argv, options, 0);
   poptSetOtherOptionHelp (pcon, "<IDL files>");
 
@@ -171,6 +168,9 @@ int main(int argc, const char *argv[])
 		  VERSION, ORBIT_CONFIG_SERIAL);
 	  exit (0);
   }
+
+  if (c_output_formatter != NULL)
+	  g_warning ("Please do not use the 'c-output-formatter' option. It is ignored and will soon go away.");
 
   /* Prep our run info for the backend */
   rinfo.cpp_args = cl_cpp_args->str;
@@ -194,7 +194,6 @@ int main(int argc, const char *argv[])
     rinfo.enabled_passes =
       OUTPUT_COMMON | OUTPUT_HEADERS | OUTPUT_IMODULE;
 
-  rinfo.output_formatter = c_output_formatter;
   rinfo.output_language = cl_output_lang;
   rinfo.header_guard_prefix = cl_header_guard_prefix;
   rinfo.output_directory = cl_output_directory;

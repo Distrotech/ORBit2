@@ -1,3 +1,21 @@
+2004-12-28  Jules Colding  <colding@omesc.com>
+
+	* src/idl-compiler/orbit-idl-c-skelimpl.c (cbe_ski_do_list): Prevent excessive 
+	output of newlines for skelimpl files.
+
+2004-12-27  Jules Colding  <colding@omesc.com>
+
+	* configure.in: Remove support for external indentation command.
+
+	* src/idl-compiler/orbit-idl-main.c: Removed all traces of the output formatter 
+	command line option but leave a warning.
+
+	* src/idl-compiler/orbit-idl-c-backend.c (out_for_pass): "popen ==> fopen" for 
+	all output files. The reason is to avoid opening a pipe as we don't want to use
+	an externally invoked indentation process.
+
+	* src/idl-compiler/orbit-idl3-types.h: Removed output_formatter.
+
 2004-12-22  Jules Colding  <colding@omesc.com>
 
 	* test/everything/everything.idl: Added test for bug#161879.

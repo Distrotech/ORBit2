@@ -62,10 +62,7 @@ orbit_idl_output_c (IDL_tree       tree,
 	orbit_idl_output_c_deps(tree, rinfo, &ci);
 	break;
       }
-      if (1 << i == OUTPUT_DEPS)
-	fclose(ci.fh);
-      else 
-	pclose(ci.fh);
+      fclose(ci.fh);
     }
   }
   g_string_free(ci.ext_dcls,TRUE);
@@ -124,7 +121,6 @@ out_for_pass (const char    *input_filename,
 {
 	FILE *fp;
 	char *output_filename;
-	char *cmdline;
 	gchar *output_full_path = NULL;
 
 
@@ -157,20 +153,11 @@ out_for_pass (const char    *input_filename,
 		output_full_path = g_build_path (G_DIR_SEPARATOR_S, rinfo->output_directory, output_filename, NULL);
 		g_free (output_filename);
 
-		cmdline = g_alloca (strlen (rinfo->output_formatter) +
-				    strlen (output_full_path) +
-				    sizeof(" > "));
-		sprintf (cmdline, "%s > %s", rinfo->output_formatter, output_full_path);
+		fp = fopen (output_full_path, "w");
+		if (fp == NULL)
+			g_error ("failed to fopen '%s': %s\n", output_full_path, strerror(errno));
 
 		g_free (output_full_path);
-
-		/* Many versions of cpp do evil translating internal
-		* strings, producing bogus output, so clobber LC_ALL */
-		putenv ("LC_ALL=C");
-		fp = popen (cmdline, "w");
-
-		if (fp == NULL)
-			g_error ("failed to popen '%s': %s\n", cmdline, strerror(errno));
 	}
 
 	return fp;
