@@ -203,6 +203,8 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		 STATE_NAME (cnx->status), STATE_NAME (status),
 		 cnx->priv->fd);
 
+	cnx->status = status;
+
 	switch (status) {
 	case LINC_CONNECTED:
 #ifdef LINC_SSL_SUPPORT
@@ -232,8 +234,6 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 			       linc_connection_signals [BROKEN], 0);
 		break;
 	}
-
-	cnx->status = status;
 }
 
 /*
