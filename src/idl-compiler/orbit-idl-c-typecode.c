@@ -416,10 +416,11 @@ cbe_tc_generate(CBETCGenInfo *tci)
   if(!strncmp(tci->structname, "anon", 4)) /* For anonymous typecodes, don't
 					      export the struct */
     fprintf(tci->of, "static ");
-
-  fprintf (tci->of, "#ifdef ORBIT_IDL_C_IMODULE\n");
-  fprintf (tci->of, "static\n");
-  fprintf (tci->of, "#endif\n");
+  else {
+    fprintf (tci->of, "#ifdef ORBIT_IDL_C_IMODULE\n");
+    fprintf (tci->of, "static\n");
+    fprintf (tci->of, "#endif\n");
+  }
   fprintf(tci->of, "const struct CORBA_TypeCode_struct %s_struct = {\n",
 	  tci->structname);
 
