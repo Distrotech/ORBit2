@@ -761,6 +761,9 @@ void testContext(test_TestFactory factory,
   CORBA_Object_release (outArg, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
+  CORBA_Object_release ((CORBA_Object)ctx, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
   CORBA_Object_release (objref, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }

@@ -20,13 +20,13 @@ giop_connection_list_init(void)
   cnx_list.list = NULL;
 }
 
-static void
+void
 giop_connection_list_add(GIOPConnection *cnx)
 {
   cnx_list.list = g_list_prepend(cnx_list.list, cnx);
 }
 
-static void
+void
 giop_connection_list_remove(GIOPConnection *cnx)
 {
   cnx_list.list = g_list_remove(cnx_list.list, cnx);

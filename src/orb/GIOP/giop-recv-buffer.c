@@ -592,7 +592,6 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 		return;
 
 	if (buf->free_body) {
-
 		g_free(buf->message_body);
 		buf->message_body = NULL;
 	}

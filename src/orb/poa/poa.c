@@ -1997,7 +1997,6 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
       g_assert(ev->_major == CORBA_NO_EXCEPTION);
     }
 
-  giop_recv_buffer_unuse(recv_buffer);
   CORBA_exception_free(ev);
 }
 

@@ -1,6 +1,20 @@
 2001-05-18  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-server.c (giop_server_handle_new_connection): impl.
+	(giop_server_class_init): hook it up.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_run): 
+	unuse reliably here.
+
+	* src/orb/poa/poa.c (ORBit_handle_request):
+	remove the unuse.
+
+	* src/orb/orb-core/corba-context.c (CORBA_Context_new): fix leak.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/poa.c (PortableServer_POA_find_POA): bugfix.
+	(ORBit_POA_is_inuse): 
 
 	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): duplicate
 	the ORB before returning it.

@@ -2,6 +2,8 @@
  * FIXME: We need some global I/F -> m_data lookup action
  * FIXME: We need to map interface inheritance.
  * FIXME: Add #ifdef ORBIT_PURIFY support.
+ * FIXME: remove the redundant marshal_fn
+ * FIXME: (de-)allocate the return value properly.
  */
 
 #include "config.h"
@@ -836,6 +838,10 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 	giop_send_buffer_write (send_buffer, recv_buffer->connection);
 	giop_send_buffer_unuse (send_buffer);
+
+/*	FIXME: requires thought.
+	if (m_data->ret)
+	CORBA_free (retval) */
 
 	if (ev->_major == CORBA_NO_EXCEPTION) { /* Free data */
 		for (i = 0; i < m_data->arguments._length; i++) {

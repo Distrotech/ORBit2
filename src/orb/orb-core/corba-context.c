@@ -71,7 +71,7 @@ CORBA_Context_new(CORBA_Context parent, const char *name, CORBA_Environment *ev)
   if(parent)
     parent->children = g_slist_prepend(parent->children, retval);
 
-  return retval;
+  return CORBA_Object_duplicate ((CORBA_Object) retval, ev);
 }
 
 void
