@@ -1,11 +1,11 @@
 #ifndef LINC_CONNECTION_H
 #define LINC_CONNECTION_H 1
 
-#include <sys/uio.h>
-#include <netdb.h>
-
+#include <glib-object.h>
 #include <linc/linc-types.h>
 #include <linc/linc-protocol.h>
+
+#include <sys/uio.h>
 
 #ifdef LINC_SSL_SUPPORT
 #include <openssl/ssl.h>

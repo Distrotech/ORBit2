@@ -1,6 +1,9 @@
 #ifndef LINC_SERVER_H
 #define LINC_SERVER_H 1
 
+#include <glib-object.h>
+#include <linc/linc-types.h>
+#include <linc/linc-threads.h>
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 

@@ -3,6 +3,7 @@
 
 #include <linc/linc-config.h>
 #include <linc/linc-types.h>
+#include <linc/linc-threads.h>
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 #include <linc/linc-server.h>

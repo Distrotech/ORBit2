@@ -1,3 +1,26 @@
+2001-08-18  Mark McLoughlin <mark@skynet.ie>
+
+	* configure.in: added --enable-linc-threadsafe
+	option. Defaults to yes.
+
+	* include/linc/linc-config.h.in: added
+	LINC_ENABLE_THREADSAFE def.
+
+	* include/linc/linc-connection.h,
+	  include/linc/linc-server.h,
+	  include/linc/linc-server.h,
+	  include/linc/linc-types.h,
+	  include/linc/linc-threads.h,
+	  include/linc/linc.h: split out threaded
+	stuff into linc-threads.h. Removed _GNU_SOURCE,
+	_XOPEN_SOURCE and _REENTRANT defines. Cleaned
+	up a little.
+
+	* linc/include/linc/Makefile.am: added linc-threads.h.
+
+	* src/Makefile.am: add -D_GNU_SOURCE for
+	PTHREAD_MUTEX_RECURSIVE.
+
 2001-08-16  Mark McLoughlin <mark@skynet.ie>
 
 	* configure.in: Cache ACLOCAL_FLAGS.
