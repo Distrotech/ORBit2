@@ -39,6 +39,12 @@ void       link_signal           (void);
 gboolean   link_thread_io        (void);
 gboolean   link_thread_safe      (void);
 
+#ifdef G_OS_WIN32
+void link_map_winsock_error_to_errno (void);
+#endif
+
+int  link_pipe (int *handles); /* Creates a pipe on Unix, a TCP socket pair on Windows */
+
 G_END_DECLS
 
 #endif /* _LINK_H_ */

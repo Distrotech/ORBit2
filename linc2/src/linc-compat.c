@@ -8,10 +8,12 @@
  */
 #include "config.h"
 
+#include <linc/linc.h>
+
 #include "linc-compat.h"
 #include "linc-debug.h"
 
-#ifdef HAVE_WINSOCK2_H
+#ifdef G_OS_WIN32
 
 /* Map some WinSock error codes to errno values. Only those that
  * correspond to real errno values that the linc2 source code checks
@@ -32,9 +34,17 @@ link_map_winsock_error_to_errno (void)
 	}
 }
 
+#endif
+
 int
-link_socketpair (int *handles)
+link_pipe (int *handles)
 {
+#ifndef G_OS_WIN32
+
+  return pipe (nhandles);
+
+#else
+
   SOCKET temp, socket1 = -1, socket2 = -1;
   struct sockaddr_in saddr;
   int len;
@@ -175,9 +185,9 @@ link_socketpair (int *handles)
   closesocket (temp);
 
   return -1;
-}
 
 #endif
+}
 
 const char *
 link_strerror (int number)
