@@ -593,7 +593,7 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 #ifdef AF_IRDA
-static boolean
+static gboolean
 linc_protocol_get_sockinfo_irda (const LINCProtocolInfo  *proto,
 				 const struct sockaddr   *saddr,
 				 gchar                  **hostname,
