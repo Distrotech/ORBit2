@@ -16,13 +16,13 @@ libORBitservicesinclude_HEADERS = 					\
 	CosNaming.idl
 
 libORBitCosNaming_2_la_LDFLAGS = \
-	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+	-version-info $(LT_VERSION)
 
-INCLUDES = -I. \
-	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	 $(GLIB_CFLAGS) \
-	$(LINC_CFLAGS)
+INCLUDES =                           \
+	-I.                          \
+	-I$(top_builddir)/include    \
+	-I$(top_srcdir)/include      \
+	$(ORBIT_NAME_CFLAGS)
 
 CosNaming_built = 							\
 	CosNaming.h 							\
@@ -39,11 +39,11 @@ CLEANFILES=my_cosnaming_built $(BUILT_SOURCES)
 DEPS = 	$(top_builddir)/src/orb/libORBit-2.la			\
 	libORBitCosNaming-2.la
 
-LDADDS = \
+LDADDS =                                                        \
 	$(top_builddir)/src/orb/libORBit-2.la			\
 	libORBitCosNaming-2.la					\
-	@GLIB_LIBS@ 						\
-	-lm
+	-lm                                                     \
+	$(ORBIT_NAME_LIBS)
 
 $(srcdir)/name-client.c $(srcdir)/orbit-name-server.c \
 $(srcdir)/boot.c: CosNaming.h

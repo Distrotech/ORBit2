@@ -1,5 +1,31 @@
 2001-09-24  Mark McLoughlin <mark@skynet.ie>
 
+	* Makefile.am(SUBDIRS): remove libIDL - this is to built 
+	seperately.
+
+	* configure.in: cleanup libtool versioning. Use pkg-config
+	to check for dependancies. Remove libIDL config call.
+
+	* ORBit-2.0.pc.in, ORBit-CosNaming-2.0.pc.in, 
+	  ORBit.spec.in: update.
+
+	* src/idl-compiler/Makefile.am: update and remove all libIDL
+	build rules.
+
+	* src/orb/Makefile.am: update and don't use libtool's -release
+	flag which makes binary compatibility impossible.
+
+	* src/orb/GIOP/Makefile.am: update. Don't supply version-info
+	to libtool.
+
+	* src/orb/dynamic/Makefile.am, src/orb/orb-core/Makefile.am,
+	  src/orb/poa/Makefile.am, src/orb/util/Makefile.am,
+	  src/services/name/Makefile.am, test/Makefile.am,
+	  test/everything/Makefile.am, test/inhibit/Makefile.am,
+	  test/poa/Makefile.am: update.
+	
+2001-09-24  Mark McLoughlin <mark@skynet.ie>
+
 	* test/Makefile.am: -lm for test-dynany.
 
 2001-09-21  Mark McLoughlin <mark@skynet.ie>

@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = 1.3
 
-SUBDIRS=libIDL src include test docs
+SUBDIRS=src include test docs
 
 bin_SCRIPTS=orbit2-config
 

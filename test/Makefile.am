@@ -1,9 +1,10 @@
 SUBDIRS = everything inhibit poa
 
-INCLUDES=-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	$(LINC_CFLAGS) \
-	$(GLIB_CFLAGS)
+INCLUDES =                          \
+	-I$(top_srcdir)/include     \
+	-I$(top_builddir)/include   \
+	$(ORBIT_CFLAGS)
+
 bin_PROGRAMS=ior-decode-2 typelib-dump
 noinst_PROGRAMS=test1 \
 	echo-client echo-server \

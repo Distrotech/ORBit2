@@ -1,11 +1,10 @@
 noinst_LTLIBRARIES=liborb-util.la
 
-INCLUDES=  \
+INCLUDES =                                                  \
 	-I$(top_srcdir)/include                             \
 	-I$(top_builddir)/include                           \
-	$(GLIB_CFLAGS)                                      \
-	$(LINC_CFLAGS)                                      \
-	-DORBIT_SYSTEM_RCFILE=\"$(sysconfdir)/orbitrc\"
+	-DORBIT_SYSTEM_RCFILE=\"$(sysconfdir)/orbitrc\"     \
+	$(ORBIT_CFLAGS)
 
 liborb_util_la_SOURCES= \
 	genrand.c       \

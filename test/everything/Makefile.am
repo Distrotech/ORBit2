@@ -6,20 +6,20 @@ EVERYTHING_BUILT = \
 	everything-stubs.c  \
 	everything-common.c
 
-INCLUDES = \
-	-I$(top_srcdir)/include		\
-	-I$(top_builddir)/include		\
-	-I$(top_builddir)/src		\
-	-I$(top_builddir)/src/ORBitutil \
-	-I$(top_srcdir)/src/orb		\
-	-I$(top_srcdir)/src		\
-	$(LINC_CFLAGS)			\
-	${GLIB_CFLAGS}
+INCLUDES =                                 \
+	-I$(top_srcdir)/include            \
+	-I$(top_builddir)/include          \
+	-I$(top_builddir)/src              \
+	-I$(top_builddir)/src/ORBitutil    \
+	-I$(top_srcdir)/src/orb            \
+	-I$(top_srcdir)/src                \
+	$(ORBIT_CFLAGS)
+
 #	-DORBIT_STUB_DEBUG_LOCAL
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
-	$(LINC_LIBS)					\
-	${GLIB_LIBS}
+	$(ORBIT_LIBS)
+
 #  -lefence
 
 client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
