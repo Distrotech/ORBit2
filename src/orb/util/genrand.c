@@ -139,7 +139,7 @@ genuid_glib_pseudo (guchar *buffer, int length)
 		buffer [i] = g_rand_int_range (glib_prng, 0, 255);
 
 		if (i < sizeof (guint32))
-			buffer [i] ^= ((guchar *) inc) [i];
+			buffer [i] ^= ((guchar *) &inc) [i];
 	}
 
 	xor_buffer (buffer, length);

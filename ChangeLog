@@ -1,3 +1,10 @@
+2002-02-05  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-any.c: (ORBit_get_union_switch):
+	don't assume pointers are correctly alligned.
+
+	* src/orb/util/genrand.c: (genuid_glib_pseudo): fix silly.
+
 2002-02-04  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-context.c

@@ -284,14 +284,26 @@ ORBit_get_union_switch (CORBA_TypeCode  tc,
 	switch (tc->kind) {
 	case CORBA_tk_ulong:
 	case CORBA_tk_long:
-	case CORBA_tk_enum:
-		retval = *(CORBA_long *)*val;
-		if (update) *val = ((guchar *)*val) + sizeof (CORBA_long);
+	case CORBA_tk_enum: {
+		CORBA_long tmp;
+
+		memcpy (&tmp, *val, sizeof (CORBA_long));
+		retval = (glong) tmp;
+
+		if (update)
+			*val = ((guchar *)*val) + sizeof (CORBA_long);
+		}
 		break;
 	case CORBA_tk_ushort:
-	case CORBA_tk_short:
-		retval = *(CORBA_short *)*val;
-		if (update) *val = ((guchar *)*val) + sizeof (CORBA_short);
+	case CORBA_tk_short: {
+		CORBA_short tmp;
+
+		memcpy (&tmp, *val, sizeof (CORBA_short));
+		retval = (glong) tmp;
+
+		if (update)
+			*val = ((guchar *)*val) + sizeof (CORBA_short);
+		}
 		break;
 	case CORBA_tk_char:
 	case CORBA_tk_boolean:
