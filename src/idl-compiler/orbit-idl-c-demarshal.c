@@ -173,7 +173,7 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     tname = orbit_cbe_get_typename(node->tree);
     tcname = orbit_cbe_get_typename(node->u.loop_info.contents->tree);
     if(node->flags & MN_ISSEQ) {
-      if(!strncmp(tcname, "CORBA_", strlen("CORBA_")))
+      if(orbit_cbe_type_is_builtin(node->u.loop_info.contents->tree))
 	fprintf(cmi->ci->fh, "%s._buffer = CORBA_sequence_%s_allocbuf(%s);\n", ctmp, tcname+strlen("CORBA_"), ctmp_len);
       else
 	fprintf(cmi->ci->fh, "%s._buffer = CORBA_sequence_%s_allocbuf(%s);\n", ctmp, tcname, ctmp_len);

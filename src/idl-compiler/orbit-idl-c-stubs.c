@@ -2,6 +2,8 @@
 
 #include "orbit-idl-c-backend.h"
 
+#define BACKWARDS_COMPAT_0_4
+
 static void cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci);
 
 void
@@ -101,7 +103,31 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
 
-  /* XXX fixup location forward system */
+  /* Check if we can do a direct call, and if so, do it */
+  {
+    IDL_tree curitem;
+    char *id;
+
+    curitem = IDL_get_parent_node(tree, IDLN_INTERFACE, 0);
+    g_assert(curitem);
+    id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
+				 "_", 0);
+    fprintf(ci->fh, "if(_obj->servant && _obj->vepv && %s__classid)\n{\n",
+	    id);
+    fprintf(ci->fh, "%s((POA_%s__epv *)_obj->vepv[%s__classid])->%s(_obj->servant, ",
+	    IDL_OP_DCL(tree).op_type_spec?"return ":"",
+	    id, id, IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+    g_free(id);
+    for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      fprintf(ci->fh, "%s, ",
+	      IDL_IDENT(IDL_PARAM_DCL(IDL_LIST(curitem).data).simple_declarator).str);
+    }
+    fprintf(ci->fh, "ev);\n");
+
+    fprintf(ci->fh, "%s\n}\n", IDL_OP_DCL(tree).op_type_spec?"":"return;");
+  }
+
   fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
@@ -132,7 +158,11 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   c_marshalling_generate(oi->in_stubs, ci);
 
+#ifdef BACKWARDS_COMPAT_0_4
+  fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
+#else
   fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) goto _ORBIT_system_exception;\n");
+#endif
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_MAYBE;\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
   fprintf(ci->fh, "}\n");
@@ -171,23 +201,35 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "return;\n");
 
   fprintf(ci->fh, "_ORBIT_system_exception:\n");
+#ifdef BACKWARDS_COMPAT_0_4
+  fprintf(ci->fh, "CORBA_exception_set_system(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status);\n");
+  fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+  fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
+#else
   fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
+#endif
   fprintf(ci->fh, "return;\n");
 
-  fprintf(ci->fh, "_ORBIT_msg_exception:\n");
-  /* deal with LOCATION_FORWARD exceptions */
-  fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status == GIOP_LOCATION_FORWARD) {\n");
-  fprintf(ci->fh, "_cnx = ORBit_handle_location_forward(_ORBIT_recv_buffer, _obj);\n");
-  fprintf(ci->fh, "_ORBIT_recv_buffer = NULL;\n");
-  fprintf(ci->fh, "\ngoto _ORBIT_retry_request;\n");
-  fprintf(ci->fh, "} else {\n");
+  if(!IDL_OP_DCL(tree).f_oneway) {
+    fprintf(ci->fh, "_ORBIT_msg_exception:\n");
+    /* deal with LOCATION_FORWARD exceptions */
+    fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status == GIOP_LOCATION_FORWARD) {\n");
+#ifdef BACKWARDS_COMPAT_0_4
+    fprintf(ci->fh, "if (_obj->forward_locations != NULL) ORBit_delete_profiles(_obj->forward_locations);\n");
+    fprintf(ci->fh, "_obj->forward_locations = ORBit_demarshal_IOR(_ORBIT_recv_buffer);\n");
+    fprintf(ci->fh, "_cnx = ORBit_object_get_forwarded_connection(_obj);\n");
+    fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+#else
+    fprintf(ci->fh, "_cnx = ORBit_handle_location_forward(_ORBIT_recv_buffer, _obj);\n");
+#endif
+    fprintf(ci->fh, "\ngoto _ORBIT_retry_request;\n");
+    fprintf(ci->fh, "} else {\n");
 
-  /* This should also pass a structure that lists info about the
-     operation-specific exceptions raised. */
-  fprintf(ci->fh, "ORBit_handle_exception(_ORBIT_recv_buffer, ev, %s, _obj->orb);\n",
-	  IDL_OP_DCL(tree).raises_expr?"_ORBIT_user_exceptions":"NULL");
-  fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
-  fprintf(ci->fh, "return;\n  }\n");
+    fprintf(ci->fh, "ORBit_handle_exception(_ORBIT_recv_buffer, ev, %s, _obj->orb);\n",
+	    IDL_OP_DCL(tree).raises_expr?"_ORBIT_user_exceptions":"NULL");
+    fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+    fprintf(ci->fh, "return;\n  }\n");
+  }
 
   fprintf(ci->fh, "}\n");
 }

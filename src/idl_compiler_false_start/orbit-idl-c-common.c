@@ -2,8 +2,6 @@
 
 #include "orbit-idl-c-backend.h"
 
-/* TODO:
- */
 static void cc_output_tcs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void cc_tc_prep(IDL_tree tree, OIDL_C_Info *ci);
@@ -278,13 +276,14 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 static void
 cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  IDL_tree sub, ts;
+  IDL_tree sub, ts, tts;
   int i, n;
   char *ctmp;
   gboolean fixlen;
 
   cc_alloc_prep(tree, ci);
   ts = IDL_TYPE_DCL(tree).type_spec;
+  tts = orbit_cbe_get_typespec(ts);
   ctmp = orbit_cbe_get_typename(ts);
 
   fixlen = orbit_cbe_type_is_fixed_length(ts);
@@ -299,8 +298,8 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     case IDLN_IDENT:
       ident = node;
       if(fixlen
-	 || IDL_NODE_TYPE(ts) == IDLN_TYPE_STRING
-	 || IDL_NODE_TYPE(ts) == IDLN_TYPE_WIDE_STRING) continue;
+	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
+	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) continue;
       break;
     case IDLN_TYPE_ARRAY:
       ident = IDL_TYPE_ARRAY(node).ident;
