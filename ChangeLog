@@ -1,3 +1,7 @@
+2003-05-03  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.7.1
+
 2003-04-29  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (main, run_tests): pull

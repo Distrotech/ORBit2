@@ -1,3 +1,22 @@
+ORBit2-2.7.1
+
+	* bug fixes
+		+ tail align fix (Herbert Valerio Riedel)
+		+ request ID fix (Herbert)
+		+ thread hint fix (Gustavo Carneiro)
+		+ build fixes (Richard Kinder)
+		+ packed type marshal fix (Michael Haubenwallner)
+		+ purifing mode fixes (Michael)
+		+ use g_get_tmp_dir (Michael)
+	* features
+		+ much improved thread safey (Michael)
+		+ improved tests (Michael)
+		+ locate request impl. (Herbert)
+		+ GIOP cleans (Herbert)
+		+ configurable init msg limit (Michael)
+		+ cygwin support (Masahiro Sakai)
+		+ code cleans (Richard Kinder)
+
 ORBit2-2.5.1
 
 	* bug fixes
