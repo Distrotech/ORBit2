@@ -609,7 +609,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 			xt_proxy = ORBit_objref_get_proxy (obj);
 			obj = xt_proxy;
 		}
-	}
+	} else
+		giop_thread_new_check (NULL);
 
 	cnx = ORBit_object_get_connection (obj);
 

@@ -23,14 +23,18 @@ G_BEGIN_DECLS
 
 extern GMainLoop *link_loop;
 
-void       link_init             (gboolean       init_threads);
+void       link_init             (gboolean    thread_safe);
+void       link_set_io_thread    (gboolean    io_in_thread);
 void       link_shutdown         (void);
-void       link_main_iteration   (gboolean       block_for_reply);
+void       link_main_iteration   (gboolean    block_for_reply);
 gboolean   link_main_pending     (void);
 void       link_main_loop_run    (void);
 GMainLoop *link_main_get_loop    (void);
-guint      link_main_idle_add    (GSourceFunc    function,
-				  gpointer       data);
+guint      link_main_idle_add    (GSourceFunc function,
+				  gpointer    data);
+
+gboolean   link_thread_io        (void);
+gboolean   link_thread_safe      (void);
 
 G_END_DECLS
 

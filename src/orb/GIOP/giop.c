@@ -192,12 +192,16 @@ giop_tmpdir_init (void)
 	g_free (dirname);
 }
 
-static gboolean giop_is_threaded = FALSE;
+gboolean
+giop_thread_safe (void)
+{
+	return link_thread_safe ();
+}
 
 gboolean
-giop_threaded (void)
+giop_thread_io (void)
 {
-	return giop_is_threaded;
+	return link_thread_io ();
 }
 
 void
@@ -306,7 +310,7 @@ giop_thread_self (void)
 {
 	GIOPThread *tdata;
 
-	if (!giop_is_threaded)
+	if (!giop_thread_safe ())
 		return NULL;
 
 	if (!(tdata = g_private_get (giop_tdata_private))) {
@@ -326,7 +330,7 @@ giop_thread_key_release_T (gpointer key)
 void
 giop_thread_key_release (gpointer key)
 {
-	if (giop_is_threaded) {
+	if (giop_thread_safe ()) {
 		g_mutex_lock (giop_pool_hash_lock);
 		giop_thread_key_release_T (key);
 		g_mutex_unlock (giop_pool_hash_lock);
@@ -434,7 +438,6 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 {
 	if (threaded)
 		g_warning ("\n --- you're entering a whole world of pain --- ");
-	giop_is_threaded = threaded;
 	link_init (threaded);
 
 	if (threaded) {
@@ -507,10 +510,10 @@ giop_invoke_async (GIOPMessageQueueEntry *ent)
 	GIOPRecvBuffer *buf = ent->buffer;
 
 	dprintf (GIOP, "About to invoke %p:%p (%d) (%p:%p)",
-		 ent, ent->async_cb, giop_is_threaded,
+		 ent, ent->async_cb, giop_thread_io(),
 		 ent->src_thread, giop_main_thread);
 
-	if (!giop_is_threaded)
+	if (!giop_thread_io ())
 		ent->async_cb (ent);
 
 	else if (ent->src_thread == giop_main_thread) {
@@ -546,7 +549,7 @@ static GMainLoop *giop_main_loop = NULL;
 void
 giop_main_run (void)
 {
-	if (giop_is_threaded) {
+	if (giop_thread_io ()) {
 		g_assert (giop_thread_self () == giop_main_thread);
 		g_assert (giop_main_loop == NULL);
 		giop_main_loop = g_main_loop_new (NULL, TRUE);
@@ -560,7 +563,7 @@ giop_main_run (void)
 void
 giop_shutdown (void)
 {
-	if (!giop_is_threaded)
+	if (!giop_thread_io ())
 		giop_connections_shutdown ();
 
 	if (link_loop) /* break into the linc loop */
@@ -568,7 +571,7 @@ giop_shutdown (void)
 	if (giop_main_loop)
 		g_main_loop_quit (giop_main_loop);
 
-	if (giop_is_threaded) {
+	if (giop_thread_safe ()) {
 		if (!giop_thread_self ()->wake_context)
 			g_error ("Must shutdown ORB from main thread");
 
@@ -640,9 +643,24 @@ giop_thread_get_main (void)
 void
 giop_thread_set_main_handler (gpointer request_handler)
 {
-	if (!giop_is_threaded)
+	if (!giop_thread_safe ())
 		return;
 	g_assert (giop_main_thread != NULL);
 
 	giop_main_thread->request_handler = request_handler;
+}
+
+void
+giop_thread_new_check (GIOPThread *opt_self)
+{
+	if (!link_thread_safe ())
+		return;
+
+	if (!opt_self)
+		opt_self = giop_thread_self ();
+
+	if (opt_self &&
+	    opt_self != giop_thread_get_main () &&
+	    !link_thread_io ())
+		link_set_io_thread (TRUE);
 }

@@ -1301,7 +1301,7 @@ pool_push_request_for_T (gpointer          key_object,
 			 ORBit_POAObject  *pobj,
 			 GIOPRecvBuffer  **recv_buffer)
 {
-	g_assert (giop_threaded ());
+	g_assert (giop_thread_io ());
 	giop_thread_request_push_key
 		(key_object, (gpointer *)pobj, (gpointer *)recv_buffer);
 }			 
@@ -1407,7 +1407,7 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 	else {
 		switch (poa->p_thread) {
 			case PortableServer_SINGLE_THREAD_MODEL:
-				if (giop_threaded ())
+				if (giop_thread_io ())
 					push_request_T (giop_thread_get_main (),
 							&pobj, &recv_buffer);
 				break;
@@ -1442,7 +1442,7 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 					break;
 
 				case ORBIT_THREAD_HINT_NONE:
-					if (giop_threaded ())
+					if (giop_thread_io ())
 						push_request_T (giop_thread_get_main (),
 								&pobj, &recv_buffer);
 					break;
@@ -1462,9 +1462,9 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 	}
 	
  send_sys_ex:
-	ORBit_POAObject_invoke_incoming_request (pobj, recv_buffer, &env);
-
 	POA_UNLOCK (poa);
+
+	ORBit_POAObject_invoke_incoming_request (pobj, recv_buffer, &env);
 }
 
 static PortableServer_Servant
@@ -2325,10 +2325,13 @@ gboolean
 ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj)
 {
 	gpointer key = NULL;
+	GIOPThread *self;
 	PortableServer_POA poa = pobj->poa;
 
 	if (!poa)
 		return TRUE;
+
+	self = giop_thread_self ();
 
 	switch (poa->p_thread) {
 	case PortableServer_SINGLE_THREAD_MODEL:
@@ -2361,8 +2364,10 @@ ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj)
 	}
 	}
 
+	giop_thread_new_check (self);
+
 	if (!key)
-		return giop_thread_self () == giop_thread_get_main ();
+		return (self == giop_thread_get_main ());
 	else
 		return giop_thread_same_key (key, TRUE);
 }
@@ -2387,6 +2392,7 @@ get_c_method (CORBA_Object obj,
 	if (!ORBit_poa_allow_cross_thread_call (pobj))
 		return NULL;
 
+	/* FIXME: we should use a different flag */
 	if (!(ORBit_small_flags & ORBIT_SMALL_FAST_LOCALS))
 		return NULL;
 

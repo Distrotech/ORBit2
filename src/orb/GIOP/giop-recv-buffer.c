@@ -625,6 +625,10 @@ giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 {
 #warning We need to hold a cnx ref on ent, and release it here.
 	LINK_MUTEX_LOCK (giop_queued_messages_lock);
+#ifdef DEBUG
+	g_warning ("Remove XX:%p:(%p) - %d", ent, ent->async_cb,
+		   g_list_length (giop_queued_messages));
+#endif
 	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
 	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
 }
@@ -673,7 +677,7 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 {
 	GIOPThread *tdata = giop_thread_self ();
 
-	if (tdata) {
+	if (giop_thread_io ()) {
 		ent_lock (ent);
 
 		for (; !check_got (ent); ) {
@@ -1064,7 +1068,7 @@ handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 		ent_lock (ent);
 		ent->buffer = buf;
 
-		if (giop_threaded () && !ent->async_cb)
+		if (giop_thread_io () && !ent->async_cb)
 			giop_thread_push_recv (ent);
 
 		else if (ent->async_cb)

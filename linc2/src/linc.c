@@ -16,14 +16,19 @@
 #include "linc-debug.h"
 #include "linc-private.h"
 
-static gboolean link_threaded = FALSE;
-static gboolean link_mutex_new_called = FALSE;
-GMainLoop      *link_loop = NULL;
+/* whether we do locking or not */
+static gboolean link_is_thread_safe = TRUE;
+/* an inferior loop/context for std. processing */
+GMainLoop             *link_loop = NULL;
 static GMainContext   *link_context = NULL;
+/* an inferior context for the I/O thread */
+static GThread        *link_io_thread = NULL;
+static GMainLoop      *link_thread_loop = NULL;
 static GMainContext   *link_thread_context = NULL;
 
+/* a big global lock for link */
 static GMutex  *link_main_lock;
-/* commands for the I/O loop */
+/* command dispatch to the I/O loop */
 static GMutex  *link_cmd_queue_lock = NULL;
 static GCond   *link_cmd_queue_cond = NULL;
 static GList   *link_cmd_queue = NULL;
@@ -32,25 +37,31 @@ static int link_wakeup_fds[2] = { -1, -1 };
 #define LINK_WAKEUP_POLL  link_wakeup_fds [0]
 #define LINK_WAKEUP_WRITE link_wakeup_fds [1]
 static GSource *link_main_source = NULL;
-static GThread *link_io_thread = NULL;
 
 #ifdef LINK_SSL_SUPPORT
 SSL_METHOD *link_ssl_method;
 SSL_CTX    *link_ssl_ctx;
 #endif
 
-static void link_dispatch_command (gpointer data);
+static void link_dispatch_command (gpointer data, gboolean immediate);
 
-/**
- * link_get_threaded:
- * 
- *   This routine returns TRUE if threading is enabled for
- * the ORB.
- **/
 gboolean
-link_get_threaded (void)
+link_thread_io (void)
 {
-	return link_threaded;
+	gboolean result;
+
+	/* FIXME: use a read/write lock for better performance */
+	link_lock ();
+	result = link_io_thread != NULL;
+	link_unlock ();
+
+	return result;
+}
+
+gboolean
+link_thread_safe (void)
+{
+	return link_is_thread_safe;
 }
 
 static gboolean
@@ -80,7 +91,7 @@ link_mainloop_handle_input (GIOChannel   *source,
 
 		sync = cmd_is_sync (l->data);
 
-		link_dispatch_command (l->data);
+		link_dispatch_command (l->data, FALSE);
 
 		if (sync) {
 			((LinkSyncCommand *)l->data)->complete = TRUE;
@@ -99,7 +110,7 @@ link_exec_command (LinkCommand *cmd)
 	int  res = 0;
 
 	if (link_in_io_thread ()) {
-		link_dispatch_command (cmd);
+		link_dispatch_command (cmd, TRUE);
 		return;
 	}
 
@@ -107,11 +118,10 @@ link_exec_command (LinkCommand *cmd)
 
 	if (LINK_WAKEUP_WRITE == -1) { /* shutdown main loop */
 		LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
-		link_dispatch_command (cmd);
+		link_dispatch_command (cmd, TRUE);
 		return;
 	}
 
-	/* FIXME: if (link_cmd_queue) - no need to wake mainloop */
 	if (!link_cmd_queue) {
 		char c = 'A'; /* magic */
 		while ((res = write (LINK_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
@@ -132,53 +142,19 @@ link_exec_command (LinkCommand *cmd)
 			 res, errno, errno, LINK_WAKEUP_WRITE);
 }
 
-static gpointer
-link_io_thread_fn (gpointer data)
-{
-	link_main_loop_run ();
-
-	/* FIXME: need to be able to quit without waiting ... */
-
-	/* Asked to quit - so ...
-	 * a) stop accepting inputs [ kill servers ]
-	 * b) flush outgoing queued data etc. (oneways)
-	 * c) unref all leakable resources.
-	 */
-
-	/* A tad of shutdown */
-	LINK_MUTEX_LOCK (link_cmd_queue_lock);
-	if (LINK_WAKEUP_WRITE >= 0) {
-		close (LINK_WAKEUP_WRITE);
-		close (LINK_WAKEUP_POLL);
-		LINK_WAKEUP_WRITE = -1;
-		LINK_WAKEUP_POLL = -1;
-	}
-	LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
-
-	if (link_main_source) {
-		g_source_destroy (link_main_source);
-		g_source_unref (link_main_source);
-		link_main_source = NULL;
-	}
-
-	return NULL;
-}
-
 /**
  * link_init:
- * @init_threads: if we want threading enabled.
+ * @thread_safe: if we want thread safety enabled.
  * 
  * Initialize linc.
  **/
 void
-link_init (gboolean init_threads)
+link_init (gboolean thread_safe)
 {
-	if ((init_threads || link_threaded) &&
-	    !g_thread_supported ())
+	if (thread_safe && !g_thread_supported ())
 		g_thread_init (NULL);
 
-	if (!link_threaded && init_threads)
-		link_threaded = TRUE;
+	link_is_thread_safe = (thread_safe && g_thread_supported());
 
 	g_type_init ();
 
@@ -235,27 +211,8 @@ link_init (gboolean init_threads)
 
 	link_main_lock = link_mutex_new ();
 	link_cmd_queue_lock = link_mutex_new ();
-	if (link_threaded)
+	if (link_is_thread_safe)
 		link_cmd_queue_cond = g_cond_new ();
-
-	if (init_threads) {
-		GError *error = NULL;
-
-		if (pipe (link_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
-			g_error ("Can't create CORBA main-thread wakeup pipe");
-
-		link_main_source = link_source_create_watch
-			(link_context, LINK_WAKEUP_POLL,
-			 NULL, (G_IO_IN | G_IO_PRI),
-			 link_mainloop_handle_input, NULL);
-
-		link_io_thread = g_thread_create_full
-			(link_io_thread_fn, NULL, 0, TRUE, FALSE,
-			 G_THREAD_PRIORITY_NORMAL, &error);
-
-		if (!link_io_thread || error)
-			g_error ("Failed to create linc worker thread");
-	}
 }
 
 /**
@@ -299,49 +256,17 @@ link_main_loop_run (void)
 /**
  * link_mutex_new:
  * 
- * Creates a mutes, iff threads are supported, initialized and
- * link_set_threaded has been called.
+ * Creates a mutex, iff threads are supported, initialized etc.
  * 
  * Return value: a new GMutex, or NULL if one is not required.
  **/
 GMutex *
 link_mutex_new (void)
 {
-	link_mutex_new_called = TRUE;
-
-#ifdef G_THREADS_ENABLED
-	if (link_threaded && g_thread_supported ())
+	if (link_is_thread_safe)
 		return g_mutex_new ();
-#endif
-
-	return NULL;
-}
-
-/**
- * link_main_idle_add:
- * @function: method to call at idle
- * @data: user data.
- * 
- * Add an idle handler to the linc mainloop.
- * 
- * Return value: id of handler
- **/
-guint 
-link_main_idle_add (GSourceFunc    function,
-		    gpointer       data)
-{
-	guint id;
-	GSource *source;
-  
-	g_return_val_if_fail (function != NULL, 0);
-
-	source = g_idle_source_new ();
-
-	g_source_set_callback (source, function, data, NULL);
-	id = g_source_attach (source, link_context);
-	g_source_unref (source);
-
-	return id;
+	else
+		return NULL;
 }
 
 gboolean
@@ -349,12 +274,6 @@ link_in_io_thread (void)
 {
 	return (!link_io_thread ||
 		g_thread_self() == link_io_thread);
-}
-
-GMainLoop *
-link_main_get_loop (void)
-{
-	return link_loop;
 }
 
 GMainContext *
@@ -382,6 +301,9 @@ link_shutdown (void)
 	if (link_loop) /* break into the linc loop */
 		g_main_loop_quit (link_loop);
 
+	if (link_thread_loop)
+		g_main_loop_quit (link_thread_loop);
+
 	if (link_io_thread) {
 		g_thread_join (link_io_thread);
 		link_io_thread = NULL;
@@ -394,33 +316,85 @@ link_thread_io_context (void)
 	return link_thread_context;
 }
 
-static void
-link_exec_set_io_thread (gpointer data)
+static gpointer
+link_io_thread_fn (gpointer data)
 {
+	g_main_loop_run (link_thread_loop);
+
+	/* FIXME: need to be able to quit without waiting ... */
+
+	/* Asked to quit - so ...
+	 * a) stop accepting inputs [ kill servers ]
+	 * b) flush outgoing queued data etc. (oneways)
+	 * c) unref all leakable resources.
+	 */
+
+	/* A tad of shutdown */
+	LINK_MUTEX_LOCK (link_cmd_queue_lock);
+	if (LINK_WAKEUP_WRITE >= 0) {
+		close (LINK_WAKEUP_WRITE);
+		close (LINK_WAKEUP_POLL);
+		LINK_WAKEUP_WRITE = -1;
+		LINK_WAKEUP_POLL = -1;
+	}
+	LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
+
+	if (link_main_source) {
+		g_source_destroy (link_main_source);
+		g_source_unref (link_main_source);
+		link_main_source = NULL;
+	}
+
+	return NULL;
+}
+
+static void
+link_exec_set_io_thread (gpointer data, gboolean immediate)
+{
+	GError *error = NULL;
 	gboolean to_io_thread = TRUE;
 
 	link_lock ();
+	g_mutex_lock (link_cmd_queue_lock);
 	
-	g_warning ("FIXME: spawn new I/O thread ...");
-	link_thread_context = NULL;
+	link_thread_context = g_main_context_new ();
+	link_thread_loop = g_main_loop_new (link_thread_context, TRUE);
 
 	link_connections_move_io_T (to_io_thread);
 	link_servers_move_io_T     (to_io_thread);
 
+	if (pipe (link_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
+		g_error ("Can't create CORBA main-thread wakeup pipe");
+
+	link_main_source = link_source_create_watch
+		(link_thread_context, LINK_WAKEUP_POLL,
+		 NULL, (G_IO_IN | G_IO_PRI),
+		 link_mainloop_handle_input, NULL);
+	
+	link_io_thread = g_thread_create_full
+		(link_io_thread_fn, NULL, 0, TRUE, FALSE,
+		 G_THREAD_PRIORITY_NORMAL, &error);
+	
+	if (!link_io_thread || error)
+		g_error ("Failed to create linc worker thread");
+
+	g_main_loop_quit (link_loop);
+
+	g_mutex_unlock (link_cmd_queue_lock);
 	link_unlock ();
 }
 
 void
-link_set_io_thread (gboolean new_thread)
+link_set_io_thread (gboolean io_in_thread)
 {
-	static gboolean io_in_thread = FALSE;
+	static gboolean is_io_in_thread = FALSE;
 	LinkCommand *cmd = g_new0 (LinkCommand, 1);
 
 	g_warning ("FIXME: guard from double entry");
 
-	if (io_in_thread)
+	if (is_io_in_thread)
 		return;
-	io_in_thread = TRUE;
+	is_io_in_thread = TRUE;
 
 	cmd->type = LINK_COMMAND_SET_IO_THREAD;
 
@@ -428,18 +402,18 @@ link_set_io_thread (gboolean new_thread)
 }
 
 static void
-link_dispatch_command (gpointer data)
+link_dispatch_command (gpointer data, gboolean immediate)
 {
 	LinkCommand *cmd = data;
 	switch (cmd->type) {
 	case LINK_COMMAND_SET_CONDITION:
-		link_connection_exec_set_condition (data);
+		link_connection_exec_set_condition (data, immediate);
 		break;
 	case LINK_COMMAND_DISCONNECT:
-		link_connection_exec_disconnect (data);
+		link_connection_exec_disconnect (data, immediate);
 		break;
 	case LINK_COMMAND_SET_IO_THREAD:
-		link_exec_set_io_thread (data);
+		link_exec_set_io_thread (data, immediate);
 		break;
 	default:
 		g_error ("Unimplemented (%d)", cmd->type);

@@ -286,12 +286,11 @@ CORBA_ORB_init (int *argc, char **argv,
 	}
 #endif /* G_ENABLE_DEBUG */
 
-	genuid_init ();
-
 	giop_recv_set_limit (orbit_initial_recv_limit);
 	giop_init (threaded,
 		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
+	genuid_init ();
 	_ORBit_object_init ();
 	ORBit_poa_init ();
 

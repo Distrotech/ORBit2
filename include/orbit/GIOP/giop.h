@@ -19,7 +19,8 @@ void        giop_init              (gboolean threaded,
 				    gboolean blank_wire_data);
 void        giop_main_run          (void);
 void        giop_shutdown          (void);
-gboolean    giop_threaded          (void);
+gboolean    giop_thread_safe       (void);
+gboolean    giop_thread_io         (void);
 GIOPThread *giop_thread_self       (void);
 void        giop_thread_push_recv  (GIOPMessageQueueEntry *ent);
 void        giop_invoke_async      (GIOPMessageQueueEntry *ent);
@@ -39,6 +40,7 @@ gboolean    giop_thread_same_key         (gpointer    key,
 					  gboolean    no_key_default);
 void        giop_thread_key_release      (gpointer    key);
 void        giop_thread_request_process  (GIOPThread *tdata);
+void        giop_thread_new_check        (GIOPThread *opt_self);
 
 #endif /* ORBIT2_INTERNAL_API */
 
