@@ -9,9 +9,9 @@ INCLUDES=-I$(top_builddir) -I$(top_builddir)/include \
 	-DORBITLIBDIR="\"$(orbitlibdir)\"" \
 	-DDEBUG
 
-orbit_idl_DEPENDENCIES = $(top_builddir)/libIDL/libIDL.la
+orbit_idl_DEPENDENCIES = $(top_builddir)/libIDL/libIDL-2.la
 orbit_idl_LDADD = \
-	$(top_builddir)/libIDL/libIDL.la \
+	$(top_builddir)/libIDL/libIDL-2.la \
 	@GLIB_LIBS@ \
 	-lpopt -lm
 
@@ -39,5 +39,5 @@ orbit_idl_SOURCES=orbit-idl-main.c \
 
 include_DATA=orbit-idl2.h
 
-$(top_builddir)/libIDL/libIDL.la:
-	$(MAKE) -C $(top_builddir)/libIDL libIDL.la
+$(top_builddir)/libIDL/libIDL-2.la:
+	$(MAKE) -C $(top_builddir)/libIDL libIDL-2.la
