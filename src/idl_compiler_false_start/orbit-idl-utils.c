@@ -346,6 +346,9 @@ orbit_idl_print_node(IDL_tree node, int indent_level)
   case IDLN_TYPE_TYPECODE:
     g_print("TYPE TypeCode\n");
     break;
+  case IDLN_CODEFRAG:
+    g_print("CODEFRAG\n");
+    break;
   default:
     g_print("unhandled %d\n", IDL_NODE_TYPE(node));
   }
