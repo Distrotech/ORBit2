@@ -1,5 +1,15 @@
 2002-05-27  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.4.0
+
+2002-05-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_zap): unuse the buffer, don't print
+	a message that we're leaking it.
+
+2002-05-27  Michael Meeks  <michael@ximian.com>
+
 	* test/everything/client.c (main): re-instate
 	run_tests [doh] (testIsA): impl. (run_tests): use it.
 

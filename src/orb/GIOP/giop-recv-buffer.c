@@ -512,7 +512,7 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		next = l->next;
 
 		if (ent->cnx == cnx) {
-			g_warning ("leak buffer %p ?", ent->buffer);
+			giop_recv_buffer_unuse (ent->buffer);
 			ent->buffer = NULL;
 #ifdef ORBIT_THREADED
 			notify = g_slist_prepend (notify, ent);
