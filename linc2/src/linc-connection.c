@@ -231,11 +231,16 @@ linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
     return FALSE;
 
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
+/* FIXME: it seems slightly whacked out that socket returns fd == 0 to me. */
+/*  g_warning ("Socket: %d, '%s'", fd, proto_name); */
   if(fd < 0)
     goto out;
-  if(options & LINC_CONNECTION_NONBLOCKING)
-    fcntl(fd, F_SETFL, O_NONBLOCK);
-  fcntl(fd, F_SETFD, FD_CLOEXEC);
+  if(options & LINC_CONNECTION_NONBLOCKING) {
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+      goto out;
+  }
+  if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+    goto out;
 
   rv = connect(fd, ai->ai_addr, ai->ai_addrlen);
   if(rv && errno != EINPROGRESS)
@@ -243,7 +248,6 @@ linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
 
   retval = linc_connection_from_fd(cnx, fd, proto, remote_host_info,
 				   remote_serv_info, TRUE, rv?LINC_CONNECTING:LINC_CONNECTED, options);
-
  out:
   if(!cnx)
     {
