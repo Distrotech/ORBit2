@@ -3,6 +3,10 @@ TODO:
 * Threading 
 	+ orb->current_invocations needs to be per-thread ...
 	  also, we should push a stack-data pointer.
+	+ Need to emit 'broken' connection - via the listen/unlisten
+	  stuff in the main thread ... [ and garentee the same
+	  invariants as previously ? cnx status etc. ? ]
+
 	+ Split class_info registration out of the skels - shrink
 	  the POA_..._init method to a single chained method call,
 	  do some locking on that - esp. for __classid init.
@@ -14,11 +18,6 @@ TODO:
 	  check for CONNECTED / DISCONNETED.
 	+ bin redundant forwards in poa.c
 	+ giop_recv_thread_fn - more work needed
-	+ Lock order:
-		POAManager
-			POAObject
-				POA (OAObject)
-					ORB lock
 	+ ** ERROR **: Need to handle zapped cnx' async callbacks
 
 

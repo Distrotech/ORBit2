@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include <orbit/orbit.h>
 #include <orb-core-export.h>
@@ -16,6 +17,10 @@
 
 #define POA_LOCK(poa)   LINC_MUTEX_LOCK(poa->base.lock)
 #define POA_UNLOCK(poa) LINC_MUTEX_UNLOCK(poa->base.lock)
+
+static GMutex     *ORBit_class_assignment_lock    = NULL;
+static GHashTable *ORBit_class_assignments        = NULL;
+static guint       ORBit_class_assignment_counter = 0;
 
 static PortableServer_Servant ORBit_POA_ServantManager_use_servant(
 				     PortableServer_POA poa,
@@ -58,9 +63,6 @@ static void               ORBit_POA_deactivate_object       (PortableServer_POA 
 							     ORBit_POAObject     pobj,
 							     CORBA_boolean       do_etherealize,
 							     CORBA_boolean       is_cleanup);
-
-static GHashTable *ORBit_class_assignments = NULL;
-static guint ORBit_class_assignment_counter = 0;
 
 /* PortableServer_Current interface */
 static void
@@ -117,12 +119,17 @@ ORBit_POACurrent_get_object (PortableServer_Current  obj,
 PortableServer_ClassInfo *
 ORBit_classinfo_lookup (const char *type_id)
 {
-	if (!ORBit_class_assignments)
-		return NULL;
+	PortableServer_ClassInfo *ci = NULL;
 
-	return g_hash_table_lookup (ORBit_class_assignments, type_id);
+	LINC_MUTEX_LOCK   (ORBit_class_assignment_lock);
+	if (ORBit_class_assignments)
+		ci = g_hash_table_lookup (ORBit_class_assignments, type_id);
+	LINC_MUTEX_UNLOCK (ORBit_class_assignment_lock);
+
+	return ci;
 }
 
+/* Deprecated & not thread-safe */
 void
 ORBit_classinfo_register (PortableServer_ClassInfo *ci)
 {
@@ -141,6 +148,56 @@ ORBit_classinfo_register (PortableServer_ClassInfo *ci)
 
 	g_hash_table_insert (ORBit_class_assignments,
 			     (gpointer) ci->class_name, ci);
+}
+
+void
+ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
+			   PortableServer_ServantBase *servant,
+			   void                      (*opt_finalize) (PortableServer_Servant,
+								      CORBA_Environment *),
+			   CORBA_unsigned_long         class_offset,
+			   CORBA_unsigned_long         first_parent_id,
+			   ...)
+{
+	va_list args;
+	CORBA_unsigned_long id;
+
+	va_start (args, first_parent_id);
+
+	/*
+	 * FIXME: a double check/lock/write barrier pattern
+	 * would be far faster here.
+	 */
+	LINC_MUTEX_LOCK (ORBit_class_assignment_lock);
+
+	ORBit_classinfo_register (ci);
+	if (!ci->vepvmap) {
+		CORBA_unsigned_long offset;
+
+		ci->vepvmap = g_new0 (ORBit_VepvIdx, 
+				      *(ci->class_id) + 1);
+
+		ci->vepvmap[*(ci->class_id)] = class_offset;
+		
+		for (id = first_parent_id; id;) {
+
+			offset = va_arg (args, CORBA_unsigned_long);
+			
+			g_assert (id <= *(ci->class_id));
+			ci->vepvmap [id] = offset;
+
+			id = va_arg (args, CORBA_unsigned_long);
+		}
+	}
+	
+	LINC_MUTEX_UNLOCK (ORBit_class_assignment_lock);
+
+	if (!servant->vepv[0]->finalize)
+		servant->vepv[0]->finalize = opt_finalize;
+
+	ORBIT_SERVANT_SET_CLASSINFO (servant, ci);
+
+	va_end (args);
 }
 
 static void
@@ -2259,6 +2316,7 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 void
 ORBit_poa_init (void)
 {
+	ORBit_class_assignment_lock = linc_mutex_new ();
 	_ORBit_poa_manager_lock = linc_mutex_new ();
 	giop_thread_set_main_handler (ORBit_POAObject_invoke_incoming_request);
 }

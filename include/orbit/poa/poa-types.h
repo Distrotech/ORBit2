@@ -49,6 +49,9 @@ struct ORBit_POAObject_type {
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
+#define ORBIT_VEPV_OFFSET(vepv_type,epv_member) \
+	((CORBA_unsigned_long) ((long)((guint8 *) &((vepv_type *) 0)->epv_member)) / sizeof (GFunc))
+
 #define ORBIT_SERVANT_TO_CLASSINFO(servant) ( 				\
   (PortableServer_ClassInfo*) 						\
   ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )	\

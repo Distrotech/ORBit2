@@ -125,7 +125,15 @@ CORBA_wchar *PortableServer_ObjectId_to_wstring(PortableServer_ObjectId *oid,
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
-void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
+/* DEPRECATED */
+void ORBit_classinfo_register  (PortableServer_ClassInfo   *ci);
+void ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
+				PortableServer_ServantBase *servant,
+				void                      (*opt_finalize) (PortableServer_Servant,
+									   CORBA_Environment *),
+				CORBA_unsigned_long         class_offset,
+				CORBA_unsigned_long         first_parent_id,
+				...);
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
