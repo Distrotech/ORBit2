@@ -113,71 +113,105 @@ void
 IDLPassXlate::doStruct (IDL_tree  node,
 			IDLScope &scope)
 {
-	IDLStruct &idlStruct = (IDLStruct &) *scope.getItem(node);
+	IDLStruct &strct = (IDLStruct &) *scope.getItem(node);
 
-	m_header << indent << "struct " << idlStruct.get_cpp_identifier () << endl
+	m_header << indent << "struct " << strct.get_cpp_identifier () << endl
 		 << indent++ << "{" << endl;
 
 	// Create members
-	struct_create_members (idlStruct);
+	struct_create_members (strct);
 
+	// Create conversion methods
+	struct_create_converters (strct);
+	
+	// End struct definition
 	m_header << --indent << "};" << endl;
 	
-#if 0
-	// Member accessors
-	struct_create_accessors (idlStruct);
-	struct_create_constructor (idlStruct);
-	
-	if(idlStruct.isVariableLength()) {
-		m_header << endl
-			 << indent << "void* operator new(size_t)" << endl
-			 << indent++ << "{" << endl
-			 << indent << "return "
-			 << IDL_IMPL_C_NS_NOTUSED
-			 << idlStruct.getQualifiedCIdentifier() << "__alloc();" << endl;
-		m_header << --indent << "};" << endl << endl;
-		m_header << indent << "void operator delete(void* c_struct)" << endl
-			 << indent++ << "{" << endl
-			 << indent <<  "::CORBA_free(c_struct);" << endl;
-		m_header << --indent << "};" << endl << endl;
-			
-	}
-	
-	
-	m_header
-	<< --indent << "};" << endl << endl; 
-#endif
 	// Create _out and _var typedef
-	if (idlStruct.is_fixed ())
+	struct_create_typedefs (strct);
+
+	// Create typecode and Any stuff
+	struct_create_any (strct);
+}
+
+void IDLPassXlate::struct_create_members (const IDLStruct &strct)
+{
+	for (IDLStruct::const_iterator i = strct.begin (); i != strct.end (); i++)
+	{
+		IDLMember &member = (IDLMember &) **i;
+		
+		m_header << indent << member.getType ()->get_cpp_member_typename ()
+			 << " " << member.get_cpp_identifier ()
+			 << ";" << endl;
+	}
+	m_header << endl;
+
+	// Create default empty constructor
+	m_header << indent << strct.get_cpp_identifier () << "() {};"
+		 << endl;
+}
+
+void IDLPassXlate::struct_create_converters (const IDLStruct &strct)
+{
+	// Create C->C++ constructor
+	string construct_arg = "const " + strct.get_c_typename () + " &_c_struct";
+	
+	m_header << indent << "explicit " << strct.get_cpp_identifier ()
+		 << " (" << construct_arg << ");" << endl << endl;
+
+	m_module << mod_indent << strct.get_cpp_method_prefix ()
+		 << "::" << strct.get_c_identifier ()
+		 << " (" << construct_arg << ")" << endl;
+	m_module << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "_orbitcpp_unpack (_c_struct);" << endl;
+	m_module << --mod_indent << "}" << endl;
+
+	// Create packers
+	strct.write_packing_decl (m_header, indent);
+	strct.write_packing_impl (m_module, mod_indent);
+}
+
+void IDLPassXlate::struct_create_typedefs (const IDLStruct &strct)
+{
+	if (strct.is_fixed ())
 	{
 		m_header << indent << "typedef "
-			 << idlStruct.get_cpp_identifier () << "& "
-			 << idlStruct.get_cpp_identifier () << "_out;"
+			 << strct.get_cpp_identifier () << "& "
+			 << strct.get_cpp_identifier () << "_out;"
 			 << endl;
 	} else {
 		string data_prefix = IDL_IMPL_NS "::Data";
-		string data_var = data_prefix + "_var< " + idlStruct.get_cpp_identifier () + ">";
-		string data_out = data_prefix + "_out< " + idlStruct.get_cpp_identifier () + ">";
+		string data_var = data_prefix + "_var< " + strct.get_cpp_identifier () + ">";
+		string data_out = data_prefix + "_out< " + strct.get_cpp_identifier () + ">";
 		
 		m_header << indent << "typedef " << data_var << " "
-			 << idlStruct.get_cpp_identifier () << "_var;"
+			 << strct.get_cpp_identifier () << "_var;"
 			 << endl;
 
 		m_header << indent << "typedef " << data_out << " "
-			 << idlStruct.get_cpp_identifier () << "_out;"
+			 << strct.get_cpp_identifier () << "_out;"
 			 << endl;
 	}
 	m_header << endl;
-	
+}
+
+void IDLPassXlate::struct_create_any (const IDLStruct &strct)
+{
 	m_header << indent;
-	if (scope.getTopLevelInterface())
+	if (strct.getTopLevelInterface())
 		m_header << "static ";
-	m_header << "const CORBA::TypeCode_ptr _tc_" << idlStruct.get_c_identifier () << " = " 
-		 << "(CORBA::TypeCode_ptr)TC_" + idlStruct.get_c_typename () + ";" << endl;
+
+	string cpp_typecode = "_tc_" + strct.get_c_identifier ();
+	string c_typecode = "TC_" + strct.get_c_typename ();
+	
+	m_header << "const CORBA::TypeCode_ptr " << cpp_typecode << " = "
+		 << "(CORBA::TypeCode_ptr)" << c_typecode << ";" << endl;
+
 #if 0 // !!!
-	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(idlStruct, m_state, *this) );
+	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(strct, m_state, *this) );
 #endif
 }
+
 
 #if 0
 void 
@@ -715,19 +749,6 @@ void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 		runJobs(IDL_EV_TOPLEVEL);
 }
 #endif
-
-void IDLPassXlate::struct_create_members (const IDLStruct &strct)
-{
-	for (IDLStruct::const_iterator i = strct.begin (); i != strct.end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		
-		m_header << indent << member.getType ()->get_cpp_member_typename ()
-			 << " " << member.get_cpp_identifier ()
-			 << ";" << endl;
-	}
-	m_header << endl;
-}
 
 // IDLWriteArrayProps -------------------------------------------------------
 void IDLWriteArrayProps::run()

@@ -112,9 +112,43 @@ IDLStruct::stub_impl_arg_pre (ostream          &ostr,
 {
 #warning "WRITE ME"
 
+	string c_type = active_typedef ?
+		active_typedef->get_c_typename () : get_c_typename ();
+
+	// Try to use casts if possible, otherwise use real conversion methods
 	if (!conversion_required ())
-		// Do nothing
-		return;
+	{
+		string cast;
+		
+		switch (direction)
+		{
+		case IDL_PARAM_IN:
+			cast = "(const " + c_type + "*)";
+			c_type = "const " + c_type;
+			break;
+		case IDL_PARAM_INOUT:
+		case IDL_PARAM_OUT:
+			cast = "(" + c_type + "*)";
+			break;
+		}
+		
+		ostr << indent << c_type << " *_c_" << cpp_id << " = "
+		     << cast + "&" + cpp_id << ";" << endl;
+
+	} else {
+		
+		switch (direction)
+		{
+		case IDL_PARAM_IN:
+		case IDL_PARAM_INOUT:
+			ostr << indent << c_type << " *_c_" << cpp_id << " = "
+			     << cpp_id << "._orbitcpp_pack ();" << endl;
+			break;
+		case IDL_PARAM_OUT:
+			ostr << indent << c_type << " *_c_" << cpp_id << ";" << endl;
+			break;
+		}
+	}
 }
 	
 string
@@ -124,29 +158,7 @@ IDLStruct::stub_impl_arg_call (const string     &cpp_id,
 {
 #warning "WRITE ME"
 
-	string c_type = active_typedef ?
-		active_typedef->get_c_typename () : get_c_typename ();
-	string retval;
-	
-	if (!conversion_required ())
-	{
-		string cast;
-		
-		switch (direction)
-		{
-		case IDL_PARAM_IN:
-			cast = "(const " + c_type + "*)";
-			break;
-		case IDL_PARAM_INOUT:
-		case IDL_PARAM_OUT:
-			cast = "(" + c_type + "*)";
-			break;
-		}
-
-		retval = cast + "&" + cpp_id;
-	}
-
-	return retval;
+	return "_c_" + cpp_id;
 }
 	
 void
@@ -160,6 +172,27 @@ IDLStruct::stub_impl_arg_post (ostream          &ostr,
 	if (!conversion_required ())
 		// Do nothing
 		return;
+
+	// Load back values
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		// Do nothing
+		break;
+	case IDL_PARAM_INOUT:
+		ostr << indent << cpp_id << "._orbitcpp_unpack "
+		     << "(*_c_" << cpp_id << ");" << endl;
+		break;
+	case IDL_PARAM_OUT:
+		ostr << indent << cpp_id << "._orbitcpp_unpack "
+		     << "(**_c_" << cpp_id << ");" << endl;
+		break;
+	}
+	
+	if (!is_fixed ())
+	{
+		ostr << indent << "CORBA_free (_c_" << cpp_id << ");" << endl;
+	}
 }
 
 
@@ -253,9 +286,45 @@ IDLStruct::skel_impl_arg_pre (ostream          &ostr,
 {
 #warning "WRITE ME"
 
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+	string cpp_id = "_cpp_" + c_id;
+	
+	// Try to use casts if possible, otherwise use real conversion methods
 	if (!conversion_required ())
-		// Do nothing
-		return;
+	{
+		string cast;
+		
+		switch (direction)
+		{
+		case IDL_PARAM_IN:
+			cast = "(const " + cpp_type + "*)";
+			cpp_type = "const " + cpp_type;
+			break;
+		case IDL_PARAM_INOUT:
+		case IDL_PARAM_OUT:
+			cast = "(" + cpp_type + "*)";
+			break;
+		}
+		
+		ostr << indent << cpp_type << " *" << cpp_id << " = "
+		     << cast + "&" + c_id << ";" << endl;
+
+	} else {
+		
+		ostr << indent << cpp_type << " " << cpp_id << ";" << endl;
+
+		switch (direction)
+		{
+		case IDL_PARAM_IN:
+		case IDL_PARAM_INOUT:
+			ostr << indent << cpp_id << "._orbitcpp_unpack (*"
+			     << c_id << ");" << endl;
+			break;
+		case IDL_PARAM_OUT:
+			break;
+		}
+	}
 }
 	
 string
@@ -264,29 +333,11 @@ IDLStruct::skel_impl_arg_call (const string     &c_id,
 			       const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
-	string cpp_typename = active_typedef ?
-		active_typedef->get_cpp_typename () : get_cpp_typename ();
-	string retval;
-	
-	if (!conversion_required ())
-	{
-		string cast;
-		
-		switch (direction)
-		{
-		case IDL_PARAM_IN:
-			cast = "(const " + cpp_typename + "*)";
-			break;
-		case IDL_PARAM_INOUT:
-		case IDL_PARAM_OUT:
-			cast = "(" + cpp_typename + "*)";
-			break;
-		}
 
-		retval = "*" + cast + c_id;
-	}
-
-	return retval;
+	if (is_fixed ())
+		return "*_cpp_" + c_id;
+	else
+		return "_cpp_" + c_id;
 }
 	
 void
