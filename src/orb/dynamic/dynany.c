@@ -1455,6 +1455,107 @@ DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
 	}
 }
 
+DynamicAny_NameDynAnyPairSeq *
+DynamicAny_DynStruct_get_members_as_dyn_any (DynamicAny_DynStruct obj,
+					     CORBA_Environment   *ev)
+{
+	DynAny *dynany;
+	int i;
+	gpointer src;
+	DynamicAny_NameDynAnyPairSeq *retval;
+	CORBA_TypeCode tc;
+
+	o_return_val_if_fail (obj != NULL, NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_val_if_fail (dynany != NULL &&
+			      dynany->any != NULL &&
+			      dynany->any->_type != NULL, NULL);
+
+	if (dynany_kind_mismatch (dynany, CORBA_tk_struct, ev))
+		return NULL;
+
+	tc = dynany->any->_type;
+
+	src = dynany->any->_value;
+	if (!src)
+		return NULL;
+
+	retval = CORBA_sequence_DynamicAny_NameDynAnyPair__alloc ();
+	retval->_buffer = CORBA_sequence_DynamicAny_NameDynAnyPair_allocbuf (tc->sub_parts);
+	retval->_length = tc->sub_parts;
+
+	for (i = 0; i < tc->sub_parts; i++) {
+		DynamicAny_DynAny *dyn;
+		CORBA_TypeCode     subtc = tc->subtypes [i];
+		gpointer           to;
+
+		retval->_buffer [i].id = CORBA_string_dup (tc->subnames [i]);
+
+		retval->_buffer [i].value = dynany_create (subtc, src, dynany, ev);
+	}
+
+	return retval;
+}
+
+void
+DynamicAny_DynStruct_set_members_as_dyn_any (DynamicAny_DynStruct                obj,
+					     const DynamicAny_NameDynAnyPairSeq *value,
+					     CORBA_Environment                  *ev)
+{
+	DynAny *dynany;
+	int i;
+	gpointer dest;
+	CORBA_TypeCode tc;
+
+	o_return_if_fail (obj != NULL);
+	o_return_if_fail (value != NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_if_fail (dynany != NULL &&
+			  dynany->any != NULL &&
+			  dynany->any->_type != NULL);
+
+	if (dynany_kind_mismatch (dynany, CORBA_tk_struct, ev))
+		return;
+
+	tc = dynany->any->_type;
+
+	if (value->_length != tc->sub_parts) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_DynamicAny_DynAny_TypeMismatch, NULL);
+		return;
+	}
+
+	dynany_invalidate (dynany, FALSE, TRUE);
+
+	for (i = 0; i < value->_length; i++) {
+		DynamicAny_NameDynAnyPair current = value->_buffer [i];
+		DynAny *dyn = GET_DYNANY (current.value);
+
+		if (strcmp (current.id, tc->subnames [i])) {
+			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+					     ex_DynamicAny_DynAny_TypeMismatch, NULL);
+			return;
+		}
+
+		if (!CORBA_TypeCode_equal (dyn->any->_type, tc->subtypes [i], ev)) {
+			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+					     ex_DynamicAny_DynAny_InvalidValue, NULL);
+			return;
+		}
+	}
+
+	dest = dynany->any->_value;
+	for (i = 0; i < value->_length; i++) {
+		DynamicAny_NameDynAnyPair current = value->_buffer [i];
+		DynAny *dyn = GET_DYNANY (current.value);
+		gconstpointer src = dyn->any->_value;
+
+		ORBit_copy_value_core (&src, &dest, tc->subtypes [i]);
+	}
+}
+
 /* 9.2.7 */
 
 DynamicAny_DynAny

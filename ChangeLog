@@ -1,3 +1,11 @@
+2001-07-31  Martin Baulig  <baulig@suse.de>
+
+	* src/orb/dynany.c
+	(DynamicAny_DynStruct_set_members_as_dyn_any): Impl.
+	(DynamicAny_DynStruct_get_members_as_dyn_any): Impl.
+
+	* tests/test-dynany.c: Added tests for them.
+
 2001-07-31  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (find_tc): impl.
