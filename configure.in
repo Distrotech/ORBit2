@@ -127,7 +127,7 @@ if ! $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
 fi
 
 LOCAL_LINC_LIBS='$(top_builddir)/linc2/src/liblinc.la'
-LOCAL_LINC_CFLAGS='-I$(top_srcdir)/linc2/include'
+LOCAL_LINC_CFLAGS='-I$(top_srcdir)/linc2/include -I$(top_builddir)/linc2/include'
 AC_SUBST(LOCAL_LINC_LIBS)
 AC_SUBST(LOCAL_LINC_CFLAGS)
 

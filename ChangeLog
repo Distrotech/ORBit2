@@ -1,3 +1,9 @@
+2003-09-16  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: add $(top_builddir)/linc2/include
+	to LOCAL_LINC_CFLAGS - how did distcheck not pick
+	this up ?
+
 2003-09-09  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.8.1
