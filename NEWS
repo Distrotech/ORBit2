@@ -1,3 +1,16 @@
+ORBit2-2.4.3
+
+	* bug fixes
+		+ de-marshal sequences efficiently (Michael)
+		+ autotools versioning (Havoc Pennington)
+
+ORBit2-2.4.2
+
+	* bug fixes
+		+ '_' prefixes on Object builtins (Darren Kenny)
+		+ idl-compiler fixes for AIX (Laurent Vivier)
+		+ more regression tests (Michael)
+
 ORBit2-2.4.1
 
 	* bug fixes
