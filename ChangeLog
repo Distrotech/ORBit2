@@ -1,3 +1,11 @@
+2002-02-28  Sam Couter <scouter@bigpond.net.au>
+
+	* src/orb/orb-core/corba-typecode.c: Copied TypeCode operations from
+	STABLE, modified CORBA_TypeCode_member_label to fit the new TypeCode
+	struct.
+	* test/everything/client.c: Added tests for the TypeCode operations
+	to the testTypeCode() function.
+
 2002-02-27  Murray Cumming  <murrayc@usa.net>
 
 	* Some C identifiers, such as Bonobo_NotSupported do not seem to be 

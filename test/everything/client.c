@@ -1139,7 +1139,11 @@ testTypeCode (test_TestFactory   factory,
 	      CORBA_Environment *ev)
 {
 	test_AnyServer objref;
-	CORBA_TypeCode inArg, inoutArg, outArg, retn;
+	CORBA_TypeCode inArg, inoutArg, outArg, retn, tc;
+	char *str;
+	CORBA_any *any;
+	CORBA_long l;
+	CORBA_unsigned_long ul;
 
 	d_print ("Testing TypeCodes...\n");
 	objref = test_TestFactory_getAnyServer (factory, ev);
@@ -1155,6 +1159,159 @@ testTypeCode (test_TestFactory   factory,
 	g_assert (CORBA_TypeCode_equal (inoutArg, TC_test_TestException, ev));
 	g_assert (CORBA_TypeCode_equal (outArg, TC_test_AnEnum, ev));  
 	g_assert (CORBA_TypeCode_equal (retn, TC_test_VariableLengthStruct, ev));
+
+	g_assert (CORBA_TypeCode_kind(inArg, ev) == CORBA_tk_union);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_kind(inoutArg, ev) == CORBA_tk_except);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_kind(outArg, ev) == CORBA_tk_enum);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_kind(retn, ev) == CORBA_tk_struct);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	str = CORBA_TypeCode_id(inArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "IDL:orbit/test/ArrayUnion:1.0") == 0);
+	str = CORBA_TypeCode_id(inoutArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "IDL:orbit/test/TestException:1.0") == 0);
+	str = CORBA_TypeCode_id(outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "IDL:orbit/test/AnEnum:1.0") == 0);
+	str = CORBA_TypeCode_id(retn, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "IDL:orbit/test/VariableLengthStruct:1.0") == 0);
+
+	str = CORBA_TypeCode_name(inArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "ArrayUnion") == 0);
+	str = CORBA_TypeCode_name(inoutArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "TestException") == 0);
+	str = CORBA_TypeCode_name(outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "AnEnum") == 0);
+	str = CORBA_TypeCode_name(retn, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "VariableLengthStruct") == 0);
+
+	g_assert (CORBA_TypeCode_member_count(inArg, ev) == 1);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_member_count(inoutArg, ev) == 4);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_member_count(outArg, ev) == 5);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_member_count(retn, ev) == 1);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	str = CORBA_TypeCode_member_name(inArg, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "d") == 0);
+	str = CORBA_TypeCode_member_name(inoutArg, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "reason") == 0);
+	str = CORBA_TypeCode_member_name(inoutArg, 1, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "number") == 0);
+	str = CORBA_TypeCode_member_name(inoutArg, 2, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "aseq") == 0);
+	str = CORBA_TypeCode_member_name(inoutArg, 3, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "factory") == 0);
+	str = CORBA_TypeCode_member_name(outArg, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "ENUM_IN") == 0);
+	str = CORBA_TypeCode_member_name(outArg, 1, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "ENUM_INOUT_IN") == 0);
+	str = CORBA_TypeCode_member_name(outArg, 2, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "ENUM_INOUT_OUT") == 0);
+	str = CORBA_TypeCode_member_name(outArg, 3, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "ENUM_OUT") == 0);
+	str = CORBA_TypeCode_member_name(outArg, 4, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "ENUM_RETN") == 0);
+	str = CORBA_TypeCode_member_name(retn, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (strcmp(str, "a") == 0);
+
+	tc = CORBA_TypeCode_member_type(inArg, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_test_StrArray2, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	tc = CORBA_TypeCode_member_type(inoutArg, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_CORBA_string, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	tc = CORBA_TypeCode_member_type(inoutArg, 1, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_CORBA_long, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	tc = CORBA_TypeCode_member_type(inoutArg, 2, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_test_LongSeq, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	tc = CORBA_TypeCode_member_type(inoutArg, 3, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_test_TestFactory, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	tc = CORBA_TypeCode_member_type(retn, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_CORBA_string, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	any = CORBA_TypeCode_member_label(inArg, 0, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(any->_type, TC_CORBA_unsigned_short, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (*(CORBA_unsigned_short*)any->_value == 22);
+
+	tc = CORBA_TypeCode_discriminator_type(inArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_CORBA_unsigned_short, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	l = CORBA_TypeCode_default_index(inArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (l == -1);
+
+	/* The next two tests are out of order because the length() test relies
+	 * on content_type(). So I should test content_type() first.
+	 */
+	tc = CORBA_TypeCode_content_type(TC_test_StrSeq, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_CORBA_sequence_CORBA_string, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	tc = CORBA_TypeCode_content_type(tc, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equal(tc, TC_CORBA_string, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* I just happen to know that these two sequences are created as alias
+	 * types. So I want the real type.
+	 */
+	tc = CORBA_TypeCode_content_type(TC_test_StrSeq, ev);
+	ul = CORBA_TypeCode_length(tc, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (ul == 0);
+	tc = CORBA_TypeCode_content_type(TC_test_BoundedStructSeq, ev);
+	ul = CORBA_TypeCode_length(tc, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (ul == 2);
+
+#if 0
+	/* I don't have any fixed TypeCodes to test this on. */
+	us = CORBA_TypeCode_fixed_digits(xxx, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (us == xxx);
+
+	s = CORBA_TypeCode_fixed_scale(xxx, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (s == xxx);
+#endif
 
 	CORBA_Object_release ((CORBA_Object)inArg, ev);
 	CORBA_Object_release ((CORBA_Object)inoutArg, ev);
