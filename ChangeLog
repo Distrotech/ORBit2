@@ -1,3 +1,13 @@
+2003-05-30  <waschk@informatik.uni-rostock.de>
+
+	* test/everything/Makefile.am
+	(Everything_module_la_LDFLAGS): avoid version.
+
+2003-05-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_stub_n):
+	validate the index into the sequence.
+	
 2003-05-29  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c

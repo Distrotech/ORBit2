@@ -561,8 +561,14 @@ ORBit_small_invoke_stub_n (CORBA_Object        object,
 			   CORBA_Context       ctx,
 			   CORBA_Environment  *ev)
 {
-	/* FIXME: validate on the sequence length ? */
-	ORBit_small_invoke_stub (object, &methods->_buffer[index], ret, args, ctx, ev);
+	if (index < 0 || index > methods->_length) {
+		dprintf (MESSAGES, "Cannot invoke OOB method (%ld,%ld)\n",
+			 index, methods->_length);
+		CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
+					    CORBA_COMPLETED_NO);
+
+	} else
+		ORBit_small_invoke_stub (object, &methods->_buffer[index], ret, args, ctx, ev);
 }
 
 void
