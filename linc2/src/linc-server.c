@@ -70,7 +70,6 @@ linc_server_init (LINCServer *cnx)
 {
 	cnx->priv = g_new0 (LINCServerPrivate, 1);
 
-	cnx->priv->mutex = linc_mutex_new ();
 	cnx->priv->fd = -1;
 }
 
@@ -82,12 +81,6 @@ linc_server_dispose (GObject *obj)
 
 	d_printf ("Dispose / close server fd %d\n", cnx->priv->fd);
 
-#ifdef G_THREADS_ENABLED
-	if (cnx->priv->mutex) {
-		g_mutex_free (cnx->priv->mutex);
-		cnx->priv->mutex = NULL;
-	}
-#endif
 	if (cnx->priv->tag) {
 		LincWatch *thewatch = cnx->priv->tag;
 		cnx->priv->tag = NULL;
@@ -105,7 +98,7 @@ linc_server_dispose (GObject *obj)
 
 		cnx->priv->connections = l->next;
 		g_slist_free_1 (l);
-		g_object_unref (o);
+		linc_object_unref (o);
 	}
 
 	parent_class->dispose (obj);
@@ -208,11 +201,7 @@ linc_server_handle_io (GIOChannel  *gioc,
 	if (!(condition & LINC_IN_CONDS))
 		g_error ("error condition on server fd is %#x", condition);
 
-	LINC_MUTEX_LOCK (server->priv->mutex);
-
 	accepted = linc_server_accept_connection (server, &connection);
-
-	LINC_MUTEX_UNLOCK (server->priv->mutex);
 
 	if (!accepted) {
 		GValue parms[2];

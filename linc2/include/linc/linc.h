@@ -27,9 +27,8 @@ GMutex    *linc_object_get_mutex (void);
 gpointer   linc_object_ref       (gpointer object);
 void       linc_object_unref     (gpointer object);
 
-/* Deprecated */
-void       linc_set_threaded     (gboolean       threaded);
 void       linc_init             (gboolean       init_threads);
+void       linc_shutdown         (void);
 
 LincWatch *linc_io_add_watch     (GIOChannel    *channel,
 				  GIOCondition   condition,
@@ -42,6 +41,9 @@ void       linc_main_loop_run    (void);
 GMainLoop *linc_main_get_loop    (void);
 guint      linc_main_idle_add    (GSourceFunc    function,
 				  gpointer       data);
+
+/* Deprecated */
+void       linc_set_threaded     (gboolean       threaded);
 
 G_END_DECLS
 

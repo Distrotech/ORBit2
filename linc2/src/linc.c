@@ -9,6 +9,9 @@
  * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
  *                 Sun Microsystems, Inc.
  */
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
 #include <signal.h>
 #include "linc-debug.h"
 #include "linc-private.h"
@@ -18,6 +21,16 @@ static gboolean linc_mutex_new_called = FALSE;
 GMainLoop      *linc_loop = NULL;
 GMainContext   *linc_context = NULL;
 static GMutex  *linc_lifecycle_mutex = NULL;
+
+/* commands for the I/O loop */
+static GMutex  *linc_cmd_queue_lock = NULL;
+static GList   *linc_cmd_queue = NULL;
+
+static int linc_wakeup_fds[2] = { -1, -1 };
+#define LINC_WAKEUP_POLL  linc_wakeup_fds [0]
+#define LINC_WAKEUP_WRITE linc_wakeup_fds [1]
+static GSource *linc_main_source = NULL;
+static GThread *linc_io_thread = NULL;
 
 #ifdef LINC_SSL_SUPPORT
 SSL_METHOD *linc_ssl_method;
@@ -53,6 +66,99 @@ linc_set_threaded (gboolean threaded)
 		g_error ("You need to set this before using the ORB");
 
 	linc_threaded = threaded;
+}
+
+static void
+linc_dispatch_command (gpointer data)
+{
+	LINCCommand *cmd = data;
+	switch (cmd->type) {
+	case LINC_COMMAND_SET_CONDITION:
+		linc_connection_exec_set_condition (data);
+		break;
+	case LINC_COMMAND_DISCONNECT:
+		linc_connection_exec_disconnect (data);
+		break;
+	default:
+		g_error ("Unimplemented (%d)", cmd->type);
+		break;
+	}
+}
+
+static gboolean
+linc_mainloop_handle_input (GIOChannel   *source,
+			    GIOCondition  condition,
+			    gpointer      data)
+{
+	char c;
+	GList *l;
+
+	g_mutex_lock (linc_cmd_queue_lock);
+
+	/* FIXME: read a big, non-blocking slurp here */
+	read (LINC_WAKEUP_POLL, &c, sizeof (c));
+
+	for (l = linc_cmd_queue; l; l = l->next)
+		linc_dispatch_command (l->data);
+
+	g_list_free (linc_cmd_queue);
+	linc_cmd_queue = NULL;
+
+	g_mutex_unlock (linc_cmd_queue_lock);
+
+	return TRUE;
+}
+
+void
+linc_exec_command (LINCCommand *cmd)
+{
+	char c = 'A'; /* magic */
+	int  res;
+
+	if (!linc_threaded) {
+		linc_dispatch_command (cmd);
+		return;
+	}
+
+	LINC_MUTEX_LOCK   (linc_cmd_queue_lock);
+	linc_cmd_queue = g_list_append (linc_cmd_queue, cmd);
+	LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
+
+	while ((res = write (LINC_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
+	       (errno == EAGAIN || errno == EINTR));
+	if (res < 0)
+		g_error ("Failed to write to linc wakeup socket %d 0x%x(%d) (%d)",
+			 res, errno, errno, LINC_WAKEUP_WRITE);
+}
+
+static gpointer
+linc_io_thread_fn (gpointer data)
+{
+	linc_main_loop_run ();
+
+	/* FIXME: need to be able to quit without waiting ... */
+
+	/* Asked to quit - so ...
+	 * a) stop accepting inputs [ kill servers ]
+	 * b) flush outgoing queued data etc. (oneways)
+	 * c) unref all leakable resources.
+	 */
+
+	/* A tad of shutdown */
+	if (LINC_WAKEUP_WRITE >= 0) {
+		close (LINC_WAKEUP_WRITE);
+		close (LINC_WAKEUP_POLL);
+		LINC_WAKEUP_WRITE = -1;
+		LINC_WAKEUP_POLL = -1;
+	}
+
+	if (linc_main_source) {
+		g_source_destroy (linc_main_source);
+		g_source_unref (linc_main_source);
+		linc_main_source = NULL;
+	}
+
+	return NULL;
 }
 
 /**
@@ -124,7 +230,27 @@ linc_init (gboolean init_threads)
 	linc_ssl_ctx = SSL_CTX_new (linc_ssl_method);
 #endif
 
+	linc_cmd_queue_lock =  linc_mutex_new ();
 	linc_lifecycle_mutex = linc_mutex_new ();
+
+	if (init_threads) {
+		GError *error = NULL;
+
+		if (pipe (linc_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
+			g_error ("Can't create CORBA main-thread wakeup pipe");
+
+		linc_main_source = linc_source_create_watch
+			(linc_context, LINC_WAKEUP_POLL,
+			 NULL, (G_IO_IN | G_IO_PRI),
+			 linc_mainloop_handle_input, NULL);
+
+		linc_io_thread = g_thread_create_full
+			(linc_io_thread_fn, NULL, 0, TRUE, FALSE,
+			 G_THREAD_PRIORITY_NORMAL, &error);
+
+		if (!linc_io_thread || error)
+			g_error ("Failed to create linc worker thread");
+	}
 }
 
 /**
@@ -302,4 +428,29 @@ GMainContext *
 linc_main_get_context (void)
 {
 	return linc_context;
+}
+
+gboolean
+linc_mutex_is_locked (GMutex *lock)
+{
+	gboolean result = TRUE;
+
+	if (lock && g_mutex_trylock (lock)) {
+		result = FALSE;
+		g_mutex_unlock (lock);
+	}
+
+	return result;
+}
+
+void
+linc_shutdown (void)
+{
+	if (linc_loop) /* break into the linc loop */
+		g_main_loop_quit (linc_loop);
+
+	if (linc_io_thread) {
+		g_thread_join (linc_io_thread);
+		linc_io_thread = NULL;
+	}
 }
