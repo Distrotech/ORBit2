@@ -172,16 +172,15 @@ IDLUserDefSimpleType::skel_impl_arg_call (const string   &c_id,
 					  IDL_param_attr  direction) const
 {
 	string retval;
-	string expr = "(" + get_cpp_typename () + ")" + c_id;
 	
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		retval =  expr;
+		retval =  "(" + get_cpp_typename () + ")" + c_id;
 		break;
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
-		retval = "*" + expr;
+		retval = "*(" + get_cpp_typename () + "*)" + c_id;
 		break;
 	}
 	
