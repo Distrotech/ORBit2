@@ -23,6 +23,13 @@
 
 #include "linc-private.h"
 
+struct _LINCServerPrivate {
+	int        fd;
+	GMutex    *mutex;
+	LincWatch *tag;
+	GSList    *connections;
+};
+
 #undef DEBUG
 
 enum {
@@ -68,8 +75,10 @@ my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
 static void
 linc_server_init (LINCServer *cnx)
 {
-	cnx->mutex = linc_mutex_new ();
-	cnx->fd = -1;
+	cnx->priv = g_new0 (LINCServerPrivate, 1);
+
+	cnx->priv->mutex = linc_mutex_new ();
+	cnx->priv->fd = -1;
 }
 
 static void
@@ -79,28 +88,28 @@ linc_server_dispose (GObject *obj)
 	LINCServer *cnx = (LINCServer *)obj;
 
 #ifdef G_THREADS_ENABLED
-	if (cnx->mutex) {
-		g_mutex_free (cnx->mutex);
-		cnx->mutex = NULL;
+	if (cnx->priv->mutex) {
+		g_mutex_free (cnx->priv->mutex);
+		cnx->priv->mutex = NULL;
 	}
 #endif
-	if (cnx->tag) {
-		linc_io_remove_watch (cnx->tag);
-		cnx->tag = NULL;
+	if (cnx->priv->tag) {
+		linc_io_remove_watch (cnx->priv->tag);
+		cnx->priv->tag = NULL;
 	}
 
-	if (cnx->fd >= 0) {
+	if (cnx->priv->fd >= 0) {
 		if (cnx->proto->destroy)
 			cnx->proto->destroy (
-				cnx->fd, cnx->local_host_info,
+				cnx->priv->fd, cnx->local_host_info,
 				cnx->local_serv_info);
-		close (cnx->fd);
-		cnx->fd = -1;
+		close (cnx->priv->fd);
+		cnx->priv->fd = -1;
 	}
 
-	for (; (l = cnx->connections); ) {
+	for (; (l = cnx->priv->connections); ) {
 		GObject *o = l->data;
-		cnx->connections = l->next;
+		cnx->priv->connections = l->next;
 		g_slist_free_1 (l);
 		g_object_unref (o);
 	}
@@ -115,6 +124,8 @@ linc_server_finalize (GObject *obj)
 
 	g_free (cnx->local_host_info);
 	g_free (cnx->local_serv_info);
+
+	g_free (cnx->priv);
 
 	parent_class->finalize (obj);
 }
@@ -138,7 +149,7 @@ linc_server_accept_connection (LINCServer      *server,
 	addrlen = server->proto->addr_len;
 	saddr = g_alloca (addrlen);
 
-	fd = accept (server->fd, saddr, &addrlen);
+	fd = accept (server->priv->fd, saddr, &addrlen);
 	if (fd < 0)
 		return FALSE; /* error */
 
@@ -170,8 +181,8 @@ linc_server_accept_connection (LINCServer      *server,
 		return FALSE;
 	}
 
-	server->connections = g_slist_prepend (
-		server->connections, *connection);
+	server->priv->connections = g_slist_prepend (
+		server->priv->connections, *connection);
 
 	return TRUE;
 }
@@ -188,11 +199,11 @@ linc_server_handle_io (GIOChannel  *gioc,
 	if (condition != G_IO_IN)
 		g_error ("condition on server fd is %#x", condition);
 
-	LINC_MUTEX_LOCK (server->mutex);
+	LINC_MUTEX_LOCK (server->priv->mutex);
 
 	accepted = linc_server_accept_connection (server, &connection);
 
-	LINC_MUTEX_UNLOCK (server->mutex);
+	LINC_MUTEX_UNLOCK (server->priv->mutex);
 
 	if (!accepted) {
 		GValue parms[2];
@@ -334,14 +345,14 @@ linc_server_setup (LINCServer            *cnx,
 	g_free (saddr);
 
 	cnx->proto = proto;
-	cnx->fd = fd;
+	cnx->priv->fd = fd;
 
 	if ((create_options & LINC_CONNECTION_NONBLOCKING)) {
 		gioc = g_io_channel_unix_new (fd);
 
-		g_assert (cnx->tag == NULL);
+		g_assert (cnx->priv->tag == NULL);
 
-		cnx->tag = linc_io_add_watch (
+		cnx->priv->tag = linc_io_add_watch (
 			gioc, 
 			G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
 			linc_server_handle_io, cnx);

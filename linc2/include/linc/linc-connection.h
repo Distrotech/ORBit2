@@ -22,10 +22,6 @@ G_BEGIN_DECLS
 #include <linc/linc-types.h>
 #include <linc/linc-protocol.h>
 
-#ifdef LINC_SSL_SUPPORT
-#include <openssl/ssl.h>
-#endif
-
 #define LINC_TYPE_CONNECTION            (linc_connection_get_type())
 #define LINC_TYPE_IS_CONNECTION(type)   (G_TYPE_FUNDAMENTAL (type) == LINC_TYPE_CONNECTION)
 #define LINC_CONNECTION(object)	        (LINC_IS_CONNECTION (object) ? ((LINCConnection*) (object)) : \
@@ -39,46 +35,42 @@ G_BEGIN_DECLS
 
 typedef enum { LINC_CONNECTING, LINC_CONNECTED, LINC_DISCONNECTED } LINCConnectionStatus;
 
+typedef struct _LINCConnectionPrivate LINCConnectionPrivate;
+
 typedef struct {
-	GObject parent;
+	GObject                 parent;
 
 	const LINCProtocolInfo *proto;
 
-	char *remote_host_info; /* These are bogus fields */
-	char *remote_serv_info; /* These need removing sometime */
+	LINCConnectionStatus    status;
+	LINCConnectionOptions   options;
+	guint                   was_initiated : 1;
+	guint                   is_auth : 1;
 
-#ifdef LINC_SSL_SUPPORT
-	SSL *ssl;
-#endif
+	guchar                 *remote_host_info;
+	guchar                 *remote_serv_info;
 
-	GIOChannel *gioc;
-	LincWatch  *tag;
-	int         fd;
-
-	LINCConnectionStatus status;
-	LINCConnectionOptions options;
-	guint8 was_initiated : 1, is_auth : 1;
-	gpointer priv;
+	LINCConnectionPrivate  *priv;
 } LINCConnection;
 
 typedef struct {
 	GObjectClass parent_class;
 
 	/* subclasses should call parent impl first */
-	void     (* state_changed) (LINCConnection *cnx, LINCConnectionStatus status);
-
-	gboolean (* handle_input)  (LINCConnection *cnx);
+	void     (* state_changed) (LINCConnection      *cnx,
+				    LINCConnectionStatus status);
+	gboolean (* handle_input)  (LINCConnection      *cnx);
 
 	/* signals */
-	void     (* broken) (LINCConnection *cnx);
+	void     (* broken)        (LINCConnection      *cnx);
 } LINCConnectionClass;
 
 GType    linc_connection_get_type (void) G_GNUC_CONST;
 
 gboolean linc_connection_from_fd  (LINCConnection *cnx, int fd,
 				   const LINCProtocolInfo *proto,
-				   char *remote_host_info,
-				   char *remote_serv_info,
+				   gchar   *remote_host_info,
+				   gchar   *remote_serv_info,
 				   gboolean was_initiated,
 				   LINCConnectionStatus status,
 				   LINCConnectionOptions options);

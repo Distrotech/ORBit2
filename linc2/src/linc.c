@@ -18,6 +18,7 @@ static gboolean linc_threaded = FALSE;
 static gboolean linc_mutex_new_called = FALSE;
 GMainLoop      *linc_loop = NULL;
 GMainContext   *linc_context = NULL;
+static GMutex  *linc_lifecycle_mutex = NULL;
 
 #ifdef LINC_SSL_SUPPORT
 SSL_METHOD *linc_ssl_method;
@@ -108,6 +109,8 @@ linc_init (gboolean init_threads)
 	linc_ssl_method = SSLv23_method ();
 	linc_ssl_ctx = SSL_CTX_new (linc_ssl_method);
 #endif
+
+	linc_lifecycle_mutex = linc_mutex_new ();
 }
 
 struct _LincWatch {
@@ -281,3 +284,42 @@ linc_mutex_new (void)
 	return NULL;
 }
 
+GMutex *
+linc_object_get_mutex (void)
+{
+	return linc_lifecycle_mutex;
+}
+
+gpointer
+linc_object_ref (GObject *object)
+{
+	gpointer ret;
+
+	LINC_MUTEX_LOCK   (linc_lifecycle_mutex);
+
+	ret = g_object_ref (object);
+
+	LINC_MUTEX_UNLOCK (linc_lifecycle_mutex);
+
+	return ret;
+}
+
+void
+linc_object_unref (GObject *object)
+{
+	LINC_MUTEX_LOCK   (linc_lifecycle_mutex);
+
+	g_object_unref (object);
+
+	/* FIXME: we need to do our own ref counting here
+	 * so finalization doesn't happen whilst holding
+	 * this lock ! can't use these methods until then */
+
+	LINC_MUTEX_UNLOCK (linc_lifecycle_mutex);
+}
+
+GMainLoop *
+linc_main_get_loop (void)
+{
+	return linc_loop;
+}

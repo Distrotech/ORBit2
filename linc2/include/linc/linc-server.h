@@ -30,30 +30,33 @@ G_BEGIN_DECLS
 #define LINC_IS_SERVER_CLASS(class) (((GTypeClass*) (class)) != NULL && \
 				     LINC_TYPE_IS_SERVER (((GTypeClass*) (class))->g_type))
 
+typedef struct _LINCServerPrivate LINCServerPrivate;
+
 typedef struct {
-	GObject  parent;
-	int      fd;
-	GMutex  *mutex;
-	char    *local_host_info;
-	char    *local_serv_info;
+	GObject                 parent;
 
 	const LINCProtocolInfo *proto;
-	LincWatch              *tag;
+
+	char                   *local_host_info;
+	char                   *local_serv_info;
+
 	/* Options that incoming connections are created with */
 	LINCConnectionOptions   create_options;
-	GSList                 *connections;
-	gpointer                priv;
+
+	LINCServerPrivate      *priv;
 } LINCServer;
 
 typedef struct {
 	GObjectClass       parent_class;
 
-	LINCConnection *(* create_connection) (LINCServer *server);
+	LINCConnection *(* create_connection) (LINCServer     *server);
 
-	void            (* new_connection)    (LINCServer *server, LINCConnection *cnx);
+	void            (* new_connection)    (LINCServer     *server,
+					       LINCConnection *cnx);
 } LINCServerClass;
 
 GType    linc_server_get_type (void) G_GNUC_CONST;
+
 gboolean linc_server_setup    (LINCServer *cnx,
 			       const char *proto_name,
 			       const char *local_host_info,
