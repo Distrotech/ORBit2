@@ -1,5 +1,31 @@
 2001-11-16  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: require a linc we can work with.
+	
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection): use giop_connection_unref.
+	(ORBit_objref_find): release the object key - don't
+	leak it.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): prune cruft.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_remove_by_orb): unref the
+	connection here as well as a close.
+	(giop_connection_unref): hold the right locks.
+	(giop_connection_list_remove): don't take the locks.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): don't close what might be a
+	shared connection; it'll happen on dispose anyway, use
+	giop_connection_unref to get locking right.
+
+	* src/orb/orb-core/corba-context.c: make it all
+	look pretty.
+
+2001-11-16  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/poa.c (PortableServer_POA_servant_to_reference): 
 	dup the reference we return if we return the same twice ...
 

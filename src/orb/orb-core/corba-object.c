@@ -102,13 +102,9 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	IOP_delete_profiles (&obj->profile_list);
 	IOP_delete_profiles (&obj->forward_locations);
 
-	ORBit_POA_object_shutdown (obj->adaptor_obj);
+	ORBit_POA_object_shutdown ((ORBit_POAObject) obj->adaptor_obj);
 	
-	if (obj->connection) {
-/*    g_warning("Release object '%p's connection", obj); */
-		giop_connection_close (obj->connection);
-		g_object_unref (G_OBJECT (obj->connection));
-	}
+	giop_connection_unref (obj->connection);
 
 	p_free (obj, struct CORBA_Object_type);
 }
@@ -154,8 +150,10 @@ ORBit_objref_find (CORBA_ORB   orb,
 		retval->profile_list = profiles;
 		retval->object_key   = fakeme.object_key;
 		ORBit_register_objref (retval);
-	} else
+	} else {
+		ORBit_free_T (fakeme.object_key);
 		IOP_delete_profiles (&profiles);
+	}
 
 	retval = ORBit_RootObject_duplicate_T (retval);
 
@@ -245,9 +243,11 @@ ORBit_try_connection (CORBA_Object obj)
 			break;
 
 		case LINC_DISCONNECTED:
-			if (obj->connection)
-				g_object_unref (G_OBJECT (obj->connection));
-			obj->connection = NULL;
+			if (obj->connection) {
+				giop_connection_unref (obj->connection);
+				obj->connection = NULL;
+			}
+
 			return FALSE;
 			break;
 		}
@@ -373,9 +373,9 @@ CORBA_Object_non_existent (CORBA_Object       obj,
 }
 
 CORBA_boolean
-CORBA_Object_is_equivalent(CORBA_Object       obj,
-			   CORBA_Object       other_object,
-			   CORBA_Environment *ev)
+CORBA_Object_is_equivalent (CORBA_Object       obj,
+			    CORBA_Object       other_object,
+			    CORBA_Environment *ev)
 {
 	return g_CORBA_Object_equal (obj, other_object);
 }

@@ -98,19 +98,23 @@ CORBA_Context_set_one_value (CORBA_Context      ctx,
 			     const CORBA_char  *value,
 			     CORBA_Environment *ev)
 {
-  gpointer old_nom, old_value;
-  g_return_if_fail(ev != NULL);
+	gpointer old_nom, old_value;
 
-  if(!ctx->mappings)
-    ctx->mappings = g_hash_table_new(g_str_hash, g_str_equal);
+	g_return_if_fail (ev != NULL);
 
-  if(g_hash_table_lookup_extended(ctx->mappings, prop_name, &old_nom, &old_value)) {
-    g_hash_table_remove (ctx->mappings, prop_name);
-    g_free(old_nom);
-    g_free(old_value);
-  }
+	if (!ctx->mappings)
+		ctx->mappings = g_hash_table_new (g_str_hash, g_str_equal);
 
-  g_hash_table_insert(ctx->mappings, g_strdup(prop_name), g_strdup(value));
+	if (g_hash_table_lookup_extended (
+		ctx->mappings, prop_name, &old_nom, &old_value)) {
+		g_hash_table_remove (ctx->mappings, prop_name);
+		g_free (old_nom);
+		g_free (old_value);
+	}
+
+	g_hash_table_insert (ctx->mappings,
+			     g_strdup (prop_name),
+			     g_strdup (value));
 }
 
 void
@@ -182,42 +186,41 @@ ctx_get_values (CORBA_Context      ctx,
 		gint               is_wc,
 		CORBA_Environment *ev)
 {
-  gboolean go_up = FALSE;
+	gboolean go_up = FALSE;
 
-  if(is_wc >= 0)
-    {
-      CTXSearchInfo csi;
+	if (is_wc >= 0) {
+		CTXSearchInfo csi;
   
-      csi.ctx = ctx;
-      csi.prop_name = prop_name;
-      csi.values = *values;
-      csi.ev = ev;
-      csi.len = is_wc;
+		csi.ctx = ctx;
+		csi.prop_name = prop_name;
+		csi.values = *values;
+		csi.ev = ev;
+		csi.len = is_wc;
 
-      if(ctx->mappings)
-	g_hash_table_foreach(ctx->mappings, (GHFunc)search_props, &csi);
+		if (ctx->mappings)
+			g_hash_table_foreach (
+				ctx->mappings, (GHFunc) search_props, &csi);
 
-      go_up = TRUE;
+		go_up = TRUE;
+	} else {
+		char *val = NULL;
 
-    }
-  else
-    {
-      char *val = NULL;
+		if (ctx->mappings)
+			val = g_hash_table_lookup (ctx->mappings, prop_name);
 
-      if(ctx->mappings)
-	val = g_hash_table_lookup(ctx->mappings, prop_name);
+		if (val)
+			CORBA_NVList_add_item (
+				*values, prop_name, TC_CORBA_string,
+				(CORBA_OpaqueValue) &val,
+				strlen (val) + 1, CORBA_IN_COPY_VALUE, ev);
+		else
+			go_up = TRUE;
+	}
 
-      if(val)
-	CORBA_NVList_add_item(*values, prop_name, TC_CORBA_string,
-			      (CORBA_OpaqueValue)&val, strlen(val) + 1, CORBA_IN_COPY_VALUE, ev);
-      else
-	go_up = TRUE;
-    }
-
-  if(go_up
-     && ctx->parent_ctx
-     && !(op_flags & CORBA_CTX_RESTRICT_SCOPE))
-    ctx_get_values(ctx->parent_ctx, op_flags, prop_name, values, is_wc, ev);
+	if (go_up && ctx->parent_ctx &&
+	    !(op_flags & CORBA_CTX_RESTRICT_SCOPE))
+		ctx_get_values (ctx->parent_ctx, op_flags,
+				prop_name, values, is_wc, ev);
 }
 
 void
@@ -278,40 +281,37 @@ CORBA_Context_delete_values (CORBA_Context      ctx,
 			     const CORBA_char  *prop_name,
 			     CORBA_Environment *ev)
 {
-  char *ctmp;
-  int wc_pos;
+	char *ctmp;
+	int   wc_pos;
 
-  if(!ctx->mappings)
-    return;
+	if (!ctx->mappings)
+		return;
 
-  ctmp = strchr(prop_name, '*');
-  if(ctmp)
-    wc_pos = ctmp - prop_name;
-  else
-    wc_pos = -1;
+	ctmp = strchr (prop_name, '*');
+	if (ctmp)
+		wc_pos = ctmp - prop_name;
+	else
+		wc_pos = -1;
 
-  if(wc_pos >= 0)
-    {
-      CTXSearchInfo csi;
+	if (wc_pos >= 0) {
+		CTXSearchInfo csi;
 
-      memset(&csi, 0, sizeof(csi));
-      csi.ctx = ctx;
-      csi.prop_name = prop_name;
-      csi.ev = ev;
-      csi.len = wc_pos;
+		memset (&csi, 0, sizeof (csi));
+		csi.ctx = ctx;
+		csi.prop_name = prop_name;
+		csi.ev = ev;
+		csi.len = wc_pos;
 
-      g_hash_table_foreach(ctx->mappings, (GHFunc)delete_props, &csi);
-    }
-  else
-    {
-      gpointer old_nom, old_value;
+		g_hash_table_foreach (ctx->mappings, (GHFunc) delete_props, &csi);
+	} else {
+		gpointer old_nom, old_value;
 
-      if(g_hash_table_lookup_extended(ctx->mappings, prop_name, &old_nom, &old_value))
-	{
-	  g_free(old_nom);
-	  g_free(old_value);
+		if (g_hash_table_lookup_extended (
+			ctx->mappings, prop_name, &old_nom, &old_value)) {
+			g_free (old_nom);
+			g_free (old_value);
+		}
 	}
-    }
 }
 
 void
