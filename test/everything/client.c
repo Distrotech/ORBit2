@@ -1264,14 +1264,14 @@ testMisc (test_TestFactory   factory,
 		CORBA_char *ior;
 		CORBA_Object o2;
 
-		ior = CORBA_ORB_object_to_string (global_orb, factory, &ev);
+		ior = CORBA_ORB_object_to_string (global_orb, factory, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-		o2 = CORBA_ORB_string_to_object (global_orb, ior, &ev);
+		o2 = CORBA_ORB_string_to_object (global_orb, ior, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		
 		g_assert (o2 == factory);
-		CORBA_Object_release (o2, &ev);
+		CORBA_Object_release (o2, ev);
 	}
 	
 	test_BasicServer_noImplement (objref, ev);

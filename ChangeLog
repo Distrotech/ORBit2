@@ -1,3 +1,15 @@
+2002-04-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (async_recv_cb):
+	handle a NULL callback.
+
+	* test/everything/client.c (testMisc): fix
+	ev mis-direction.
+
+	* configure.in (DISABLE_DEPRECATED_CFLAGS): add.
+
+	* */Makefile.am: add deprecated cflag guards.
+
 2002-04-15  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.3.108
