@@ -54,24 +54,24 @@ typedef struct {
 
 static
 test_BasicServer
-TestFactory_getBasicServer(PortableServer_Servant servant,
-			   CORBA_Environment *ev)
+TestFactory_getBasicServer (PortableServer_Servant servant,
+			    CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->basicServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant *) servant;
+
+	return CORBA_Object_duplicate (this->basicServerRef, ev);
 }
 
 static
 CORBA_char *
-TestFactory_getBasicServerIOR(PortableServer_Servant servant,
-			      CORBA_Environment *ev)
+TestFactory_getStructServerIOR (PortableServer_Servant servant,
+				CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  
+	test_TestFactory_Servant *this = (test_TestFactory_Servant *) servant;
 
-  return CORBA_ORB_object_to_string (
-	  ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant)->poa->orb,
-	  this->basicServerRef,ev);
+	return CORBA_ORB_object_to_string (
+		ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant)->poa->orb,
+		this->structServerRef, ev);
 }
 
 static
@@ -149,8 +149,8 @@ PortableServer_ServantBase__epv TestFactory_base_epv = {NULL,test_TestFactory__f
 POA_test_TestFactory__epv TestFactory_epv = {
   NULL,
   TestFactory_getBasicServer,
-  TestFactory_getBasicServerIOR,
   TestFactory_getStructServer,
+  TestFactory_getStructServerIOR,
   TestFactory_getSequenceServer,
   TestFactory_getUnionServer,
   TestFactory_getArrayServer,

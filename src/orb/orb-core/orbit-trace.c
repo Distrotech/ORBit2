@@ -5,6 +5,14 @@
 #include "orb-core-private.h"
 #include "orbit-debug.h"
 
+#ifdef TRACE_DEBUG
+#  include <unistd.h>
+#endif
+
+#ifdef TRACE_TIMING
+#  include <sys/time.h>
+#endif
+
 /*
  * Flip this switch to debug the
  * debug code.
@@ -191,6 +199,25 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 	}
 
 	*val = ((guchar *)*val) + ORBit_gather_alloc_info (tc);
+}
+
+void
+ORBit_trace_header (CORBA_Object   object,
+		    ORBit_IMethod *m_data)
+{
+#ifdef TRACE_TIMING
+	struct timeval t;
+#endif
+
+	tprintf ("p%4x ", getpid ());
+
+#ifdef TRACE_TIMING
+	gettimeofday (&t, NULL);
+	tprintf ("%lu.%lu ", t.tv_sec, t.tv_usec);
+#endif
+	tprintf (": (");
+	ORBit_trace_objref (object);
+	tprintf (")->%s (", m_data->name);
 }
 
 #endif /* TRACE_DEBUG */

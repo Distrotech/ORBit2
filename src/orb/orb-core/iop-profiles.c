@@ -9,6 +9,10 @@
 
 #undef DEBUG
 
+/* FIXME: this whole module is horribly unneccesary - if we just
+   used the wire structures more intelligently we could store
+   everything far more sensibly */
+
 /*
  * common set of profiles for Ojbect Adaptor generated refs
  */
@@ -1001,9 +1005,6 @@ IOP_profile_marshal (CORBA_Object obj, GIOPSendBuffer *buf, gpointer *p)
  * demarshalling routines.
  */
 
-/* FIXME: WTF ! */
-static GIOPRecvBuffer *gbuf = NULL;
-
 static ORBit_ObjectKey*
 IOP_ObjectKey_demarshal (GIOPRecvBuffer *buf)
 {
@@ -1035,6 +1036,24 @@ IOP_ObjectKey_demarshal (GIOPRecvBuffer *buf)
 	memcpy (objkey->_buffer, buf->cur, len);
 
 	buf->cur += len;
+
+	return objkey;
+}
+
+ORBit_ObjectKey *
+IOP_ObjectKey_copy (ORBit_ObjectKey *src)
+{
+	ORBit_ObjectKey *objkey;
+
+	if (!src)
+		return NULL;
+
+	objkey           = CORBA_sequence_CORBA_octet__alloc ();
+	objkey->_length  = objkey->_maximum = src->_length;
+	objkey->_buffer  = CORBA_sequence_CORBA_octet_allocbuf (src->_length);
+	objkey->_release = CORBA_TRUE;
+
+	memcpy (objkey->_buffer, src->_buffer, src->_length);
 
 	return objkey;
 }
@@ -1624,8 +1643,6 @@ ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
   CORBA_unsigned_long len, num_profiles;
   int i;
 
-  gbuf = buf;
-  
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
   if((buf->cur + 4) > buf->end)
     goto errout;
@@ -1666,4 +1683,184 @@ ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
  errout:
   IOP_delete_profiles(&profiles);
   return TRUE;
+}
+
+static void
+IOP_TAG_COMPLETE_OBJECT_KEY_copy (IOP_TAG_COMPLETE_OBJECT_KEY_info *dest,
+				  const IOP_TAG_COMPLETE_OBJECT_KEY_info *src)
+{
+	dest->object_key = IOP_ObjectKey_copy (src->object_key);
+}
+
+static void
+IOP_TAG_GENERIC_SSL_SEC_TRANS_copy (IOP_TAG_GENERIC_SSL_SEC_TRANS_info *dest,
+				    const IOP_TAG_GENERIC_SSL_SEC_TRANS_info *src)
+{
+	dest->service = g_strdup (src->service);
+}
+
+static void
+IOP_TAG_SSL_SEC_TRANS_copy (IOP_TAG_SSL_SEC_TRANS_info *dest,
+			    const IOP_TAG_SSL_SEC_TRANS_info *src)
+{
+	dest->port = src->port;
+	dest->target_supports = src->target_supports;
+	dest->target_requires = src->target_requires;
+}
+
+static void
+IOP_TAG_CODE_SETS_copy (IOP_TAG_CODE_SETS_info *dest,
+			const IOP_TAG_CODE_SETS_info *src)
+{
+	/* no-op */
+}
+
+static void
+IOP_UnknownComponent_copy (IOP_UnknownComponent_info *dest,
+			   const IOP_UnknownComponent_info *src)
+{
+	gconstpointer src_data = &src->data;
+	gpointer      dest_data = &dest->data;
+
+	ORBit_copy_value_core (
+		&src_data, &dest_data, TC_CORBA_sequence_CORBA_octet);
+}
+
+static IOP_Component_info *
+IOP_component_copy (IOP_Component_info *src)
+{
+#define CPY(src,type) \
+	G_STMT_START {  \
+	        type##_info *ret = g_new0 (type##_info, 1); \
+		ret->parent.component_type = src->component_type; \
+		type##_copy (ret, (type##_info *) src);	    \
+							    \
+	       	return (IOP_Component_info *) ret;	    \
+	} G_STMT_END
+
+	switch (src->component_type) {
+	case IOP_TAG_COMPLETE_OBJECT_KEY:
+		CPY (src, IOP_TAG_COMPLETE_OBJECT_KEY);
+		break;
+	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
+		CPY (src, IOP_TAG_GENERIC_SSL_SEC_TRANS);
+		break;
+	case IOP_TAG_SSL_SEC_TRANS:
+		CPY (src, IOP_TAG_SSL_SEC_TRANS);
+		break;
+	case IOP_TAG_CODE_SETS:
+		CPY (src, IOP_TAG_CODE_SETS);
+		break;
+	default:
+		CPY (src, IOP_UnknownComponent);
+		break;
+	}
+#undef CPY
+}
+
+static GSList *
+IOP_components_copy (GSList *components)
+{
+	GSList *ret = NULL, *l;
+
+	for (l = components; l; l = l->next)
+		ret = g_slist_prepend (ret, IOP_component_copy (l->data));
+
+	return ret;
+}
+
+static void
+IOP_TAG_INTERNET_IOP_copy (IOP_TAG_INTERNET_IOP_info       *dest,
+			   const IOP_TAG_INTERNET_IOP_info *src)
+{
+	dest->iiop_version = src->iiop_version;
+	dest->port = src->port;
+	dest->object_key = IOP_ObjectKey_copy (src->object_key);
+	dest->components = IOP_components_copy (src->components);
+}
+
+static void
+IOP_TAG_GENERIC_IOP_copy (IOP_TAG_GENERIC_IOP_info       *dest,
+			  const IOP_TAG_GENERIC_IOP_info *src)
+{
+	dest->iiop_version = src->iiop_version;
+	dest->proto = g_strdup (src->proto);
+	dest->host = g_strdup (src->host);
+	dest->service = g_strdup (src->service);
+	dest->components = IOP_components_copy (src->components);
+}
+
+static void
+IOP_TAG_ORBIT_SPECIFIC_copy (IOP_TAG_ORBIT_SPECIFIC_info       *dest,
+			     const IOP_TAG_ORBIT_SPECIFIC_info *src)
+{
+	dest->unix_sock_path = g_strdup (src->unix_sock_path);
+	dest->ipv6_port = src->ipv6_port;
+	dest->object_key = IOP_ObjectKey_copy (src->object_key);
+}
+
+static void
+IOP_TAG_MULTIPLE_COMPONENTS_copy (IOP_TAG_MULTIPLE_COMPONENTS_info       *dest,
+				  const IOP_TAG_MULTIPLE_COMPONENTS_info *src)
+{
+	dest->components = IOP_components_copy (src->components);
+}
+
+static void
+IOP_UnknownProfile_copy (IOP_UnknownProfile_info *dest,
+			 const IOP_UnknownProfile_info *src)
+{
+	gconstpointer src_data = &src->data;
+	gpointer      dest_data = &dest->data;
+
+	ORBit_copy_value_core (
+		&src_data, &dest_data, TC_CORBA_sequence_CORBA_octet);
+}
+
+static IOP_Profile_info *
+IOP_profile_copy (IOP_Profile_info *src)
+{
+#define CPY(src,type) \
+	G_STMT_START {  \
+	        type##_info *ret = g_new0 (type##_info, 1); \
+		ret->parent.profile_type = src->profile_type; \
+		type##_copy (ret, (type##_info *) src);	    \
+							    \
+	       	return (IOP_Profile_info *) ret;	    \
+	} G_STMT_END
+
+	switch (src->profile_type) {
+	case IOP_TAG_INTERNET_IOP:
+		CPY (src, IOP_TAG_INTERNET_IOP);
+		break;
+
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+		CPY (src, IOP_TAG_MULTIPLE_COMPONENTS);
+		break;
+
+	case IOP_TAG_GENERIC_IOP:
+		CPY (src, IOP_TAG_GENERIC_IOP);
+		break;
+
+	case IOP_TAG_ORBIT_SPECIFIC:
+		CPY (src, IOP_TAG_ORBIT_SPECIFIC);
+		break;
+
+	default:
+		CPY (src, IOP_UnknownProfile);
+		break;
+	}
+#undef CPY
+}
+
+GSList *
+IOP_profiles_copy (GSList *profile_list)
+{
+	GSList *ret = NULL;
+	GSList *l;
+
+	for (l = profile_list; l; l = l->next)
+		ret = g_slist_prepend (ret, IOP_profile_copy (l->data));
+
+	return ret;
 }
