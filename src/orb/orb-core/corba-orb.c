@@ -1089,7 +1089,7 @@ CORBA_ORB_shutdown (CORBA_ORB           orb,
 {
 	PortableServer_POA root_poa;
 
-	if (init_level > 0)
+	if (init_level > 1)
 		return;
 
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
