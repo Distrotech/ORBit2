@@ -1,5 +1,10 @@
 2001-10-30  Mark McLoughlin  <mark@skynet.ie>
 
+	* include/orbit/util/orbit-util.h: make ALIGN_ADDRESS publicly
+	available. It seems bonobo-config uses it. hmmm.
+
+2001-10-30  Mark McLoughlin  <mark@skynet.ie>
+
 	* include/orbit/*/*.h: wrap all internal defines in #ifdef
 	ORBIT2_INTERNAL_API and all defines for the benefits of
 	stubs/skels in #ifdef ORBIT2_STUBS_API.

@@ -6,8 +6,6 @@
 #include <orbit/util/basic_types.h>
 #include <orbit/util/orbit-genrand.h>
 
-#ifdef ORBIT2_INTERNAL_API
-
 /* Align a value upward to a boundary, expressed as a number of bytes.
    E.g. align to an 8-byte boundary with argument of 8.  */
 
@@ -22,6 +20,8 @@
 
 #define ALIGN_ADDRESS(this, boundary) \
   ((gpointer)ALIGN_VALUE(this, boundary))
+
+#ifdef ORBIT2_INTERNAL_API
 
 gulong ORBit_wchar_strlen(CORBA_wchar *wstr);
 
