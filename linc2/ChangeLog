@@ -1,3 +1,8 @@
+2003-06-29  Dave Camp  <dave@ximian.com>
+
+	* src/linc-connection.c (link_connection_broken_idle): Pass
+	bc->user_data to the callback rather than l->data.
+
 2003-06-28  Dave Camp  <dave@ximian.com>
 
 	* src/linc-connection.c (link_connection_remove_broken_cb): Fixed
