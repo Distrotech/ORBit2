@@ -34,7 +34,7 @@ PACKAGE=ORBit
 #LT_AGE=`expr $ORBIT_BINARY_AGE - $ORBIT_INTERFACE_AGE`
 LT_RELEASE=$ORBIT_VERSION
 LT_CURRENT=$ORBIT_INTERFACE_AGE
-LT_REVISION=$ORBIT_
+LT_REVISION=$ORBIT_BINARY_AGE
 LT_AGE=`expr $ORBIT_INTERFACE_AGE - $ORBIT_BINARY_AGE`
 
 # Increment this every time a feature is added in the .idl compiler
@@ -104,7 +104,8 @@ AC_PROG_AWK
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
-AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h tcpd.h)
+AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
+AC_CHECK_HEADERS(netinet/in.h sys/un.h linux/irda.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
