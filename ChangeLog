@@ -1,3 +1,18 @@
+2002-03-13  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/pass_xlate.cc (doStruct): create accessors
+	for structures, and initialize accessors in constructor
+
+	* src/orb-cpp/orbitcpp_orb.cc (string_to_object): Added
+	const std::string& overload
+
+	* src/idl-compiler/cpp/types/IDLType.hh (class IDLType): Added new
+	method to create and access C <-> C++ forwarders (currently only
+	implemented for simple types (a no-op) and interfaces)
+
+	* src/idl-compiler/cpp/types/IDLInterface.cc
+	(writeCPPSkelReturnMarshalCode): Return C objects from skeletons
+
 2002-03-12  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/pass_xlate.cc: Include _forwarder classes

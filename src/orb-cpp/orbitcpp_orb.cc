@@ -75,7 +75,11 @@ CORBA::ORB::string_to_object(const char* str)
 	return new CORBA::Object(o);
 }
 
-
+CORBA::Object_ptr
+CORBA::ORB::string_to_object(const std::string &str)
+{
+	return string_to_object(str.c_str ());
+}
 
 
 char *

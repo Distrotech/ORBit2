@@ -91,3 +91,9 @@ IDLType::getResolvedType() const {
 	}
 	return *type;
 }
+
+string
+IDLType::getQualifiedForwarder () const
+{
+    return getNSScopedCPPTypeName () + "_forwarder";
+}

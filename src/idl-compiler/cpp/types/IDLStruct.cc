@@ -161,12 +161,13 @@ IDLStruct::getCPPStubParameterTerm(IDL_param_attr attr,string const &id,
 	switch (attr) {
 	case IDL_PARAM_IN:
 	case IDL_PARAM_INOUT:
-		return idlGetCast("&"+id,typespec+dcl);
+	    //return idlGetCast("&"+id,typespec+dcl);
 	case IDL_PARAM_OUT:
-		if(isVariableLength())
-			return idlGetCast("&"+id+".ptr()",typespec+dcl);
-		else
-			return idlGetCast("&"+id,typespec+dcl);
+	    //if(isVariableLength())
+	    //return idlGetCast("&"+id+".ptr()",typespec+dcl);
+//		else
+//			return idlGetCast("&"+id,typespec+dcl);
+		return id + "._orbitcpp_get_c_struct ()";
 	}
 	return "";
 }
@@ -254,12 +255,14 @@ IDLStruct::getCPPSkelParameterTerm(IDL_param_attr attr,string const &id,
 	switch (attr) {
 	case IDL_PARAM_IN:
 	case IDL_PARAM_INOUT:
-		return idlGetCast("*"+id,typespec+dcl);
+	    //return idlGetCast("*"+id,typespec+dcl);
 	case IDL_PARAM_OUT:
-		if(isVariableLength())
-			return idlGetCast("*"+id,getQualifiedCPPIdentifier()+"*&");
-		else
-			return idlGetCast("*"+id,typespec+dcl);
+	    //if(isVariableLength())
+	    //	return idlGetCast("*"+id,getQualifiedCPPIdentifier()+"*&");
+	    //else
+	    //	return idlGetCast("*"+id,typespec+dcl);
+		return getNSScopedCPPTypeName () +
+		    "::_orbitcpp_wrap (*" + id + ")";
 	}
 	return "";
 }
@@ -321,4 +324,13 @@ IDLStruct::getInvalidReturn() const {
 	else
 		return "return reinterpret_cast< "
 			+ getNSScopedCTypeName() + "&>(_retval);\n";
+}
+
+void
+IDLStruct::writeForwarder (ostream &header_ostr,
+			   Indent  &header_indent,
+			   ostream &impl_ostr,
+			   Indent  &impl_indent) const
+{
+	// FIXME: Write this
 }

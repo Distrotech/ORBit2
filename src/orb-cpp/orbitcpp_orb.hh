@@ -33,6 +33,7 @@
 
 
 #include "orbitcpp_object.hh"
+#include <string>
 
 namespace CORBA {
 	CORBA::ORB_ptr ORB_init(int& argc, char** argv,
@@ -63,6 +64,7 @@ namespace CORBA {
 		}
 
 		Object_ptr string_to_object(const char* str);
+		Object_ptr string_to_object(const std::string &str);
 		char* object_to_string(Object_ptr obj);
 	
 // *** FIXME implement all this stuff
