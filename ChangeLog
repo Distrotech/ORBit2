@@ -1,3 +1,28 @@
+2003-04-15  Masahiro Sakai  <sakai@tom.sfc.keio.ac.jp>
+
+	* Makefile.shared: append $(EXEEXT) to IDL_COMPILER.
+
+	* configure.in: call AC_LIBTOOL_WIN32_DLL.
+
+	* configure.in: call AC_PROG_CC earlier. because AM_PROG_LIBTOOL
+	needs it.
+
+	* src/orb/GIOP/giop.c (test_safe_socket_dir): disable permission
+	checking on Cygwin.
+
+	* src/orb/Makefile.am: add -no-undefined to libORBit_2_la_LDFLAGS.
+
+	* src/services/imodule/Makefile.am: add -no-undefined to
+	libORBit_imodule_2_la_LDFLAGS and write dependency libraries in 
+	libORBit_imodule_2_la_LIBADD explicitly.
+
+	* src/services/name/Makefile.am: add -no-undefined to
+	libORBitCosNaming_2_la_LDFLAGS and write dependency libraries in
+	libORBitCosNaming_2_la_LIBADD explicitly.
+
+	* test/everything/Makefile.am: add -no-undefined to 
+	Everything_module_la_LDFLAGS.
+
 2003-04-10  Michael Meeks  <michael@ximian.com>
 
 	* docs/FAQ: update threading bits.

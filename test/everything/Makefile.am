@@ -26,8 +26,8 @@ INCLUDES =                                 \
 
 #	-DORBIT_STUB_DEBUG_LOCAL
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la				\
-	$(top_builddir)/src/services/imodule/libORBit-imodule-2.la	\
+LDADD = $(top_builddir)/src/services/imodule/libORBit-imodule-2.la	\
+	$(top_builddir)/src/orb/libORBit-2.la				\
 	$(ORBIT_IDL_LIBS)						\
 	$(ORBIT_LIBS)
 
@@ -55,7 +55,7 @@ orbittypelibdir = $(libdir)/orbit-2.0
 orbittypelib_LTLIBRARIES = Everything_module.la
 
 Everything_module_la_LDFLAGS = \
-	-export-dynamic -module
+	-export-dynamic -module -no-undefined
 Everything_module_la_SOURCES = \
 	everything-imodule.c
 Everything_module_la_LIBADD = \
