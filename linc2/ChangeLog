@@ -1,5 +1,10 @@
 2001-10-24  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-connection.c (linc_connection_class_init): 
+	fix ref counting on parent type.
+
+2001-10-24  Michael Meeks  <michael@ximian.com>
+
 	* src/linc.c (linc_init): fix brainlessness.
 
 2001-10-24  Michael Meeks  <michael@ximian.com>
