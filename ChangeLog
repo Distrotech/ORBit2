@@ -1,3 +1,8 @@
+2002-10-28  Marion Schuenemann <schuenemann@fokus.gmd.de>
+
+	* src/services/name/boot.c (main): move ORB
+	  init up the heap, so we can use eg. ORBIIOPIPName
+
 2002-10-24  Michael Meeks  <michael@ximian.com>
 
 	* test/echo-client-t.c (echo_client_thread):
