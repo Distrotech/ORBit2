@@ -1,3 +1,11 @@
+ORBit2-2.9.2
+
+	* bug fixes
+		+ threaded client deadlock (Michael)
+		+ skelimpl leak fix (Frank)
+		+ forward request double free (Michael)
+		+ thread queue processing (Frank)
+
 ORBit2-2.9.1
 
 	* bug fixes

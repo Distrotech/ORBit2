@@ -515,6 +515,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 		if (pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
+		fcntl (WAKEUP_WRITE, F_SETFL, O_NONBLOCK);
 
 		giop_main_source = link_source_create_watch (
 			g_main_context_default (), WAKEUP_POLL,
@@ -553,23 +554,12 @@ wakeup_mainloop (void)
 }
 
 void
-giop_incoming_signal_T (GIOPThread *tdata)
+giop_incoming_signal_T (GIOPThread *tdata, GIOPMsgType t)
 {
 	g_cond_signal (tdata->incoming);
 
-	if (tdata->wake_context)
+	if (t != GIOP_REPLY && tdata->wake_context)
 		wakeup_mainloop ();
-}
-
-void
-giop_thread_push_recv (GIOPMessageQueueEntry *ent)
-{
-	g_return_if_fail (ent != NULL);
-	g_return_if_fail (ent->buffer != NULL);
-	g_return_if_fail (ent->src_thread != NULL);
-
-	/* someone already waiting on the stack */
-	giop_incoming_signal_T (ent->src_thread);
 }
 
 void
@@ -594,7 +584,7 @@ giop_invoke_async (GIOPMessageQueueEntry *ent)
 
 		buf = NULL;
 		tdata->async_ents = g_list_prepend (tdata->async_ents, ent);
-		giop_incoming_signal_T (tdata);
+		giop_incoming_signal_T (tdata, GIOP_REQUEST);
 		
 		g_mutex_unlock (tdata->lock); /* ent_unlock */
 	}
@@ -743,7 +733,7 @@ giop_thread_queue_process (GIOPThread *tdata)
 		}
 	}
 
-	dprintf (MESSAGES, "Queue pop %p, %p, %d", ent, qe);
+	dprintf (MESSAGES, "Queue pop %p, %p, %d", ent, qe, no_policy);
 	
 	LINK_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
 
@@ -791,7 +781,7 @@ giop_thread_request_push (GIOPThread *tdata,
 	LINK_MUTEX_LOCK (tdata->lock);
 
 	tdata->request_queue = g_list_append (tdata->request_queue, qe);
-	giop_incoming_signal_T (tdata);
+	giop_incoming_signal_T (tdata, GIOP_REQUEST);
 
 	LINK_MUTEX_UNLOCK (tdata->lock);
 }

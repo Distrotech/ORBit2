@@ -1,3 +1,19 @@
+2003-12-10  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_init): make the
+	write pipe non-blocking.
+	(giop_thread_queue_process): fix printf.
+	(giop_thread_push_recv): kill.
+	(giop_incoming_signal_T): add 'type' param; we
+	know people are waiting for replies and don't need
+	wakeup.
+	(giop_invoke_async, giop_thread_request_push):
+	annotate as requests not replies.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(handle_reply): in-line giop_thread_push_recv
+	for simplicity & mark as a reply type.
+
 2003-12-10  Alexander Larsson  <alexl@redhat.com>
 
 	* src/orb/GIOP/giop.c (first_valid_request):

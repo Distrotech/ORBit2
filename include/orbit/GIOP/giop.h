@@ -22,10 +22,9 @@ void        giop_shutdown          (void);
 gboolean    giop_thread_safe       (void);
 gboolean    giop_thread_io         (void);
 GIOPThread *giop_thread_self       (void);
-void        giop_thread_push_recv  (GIOPMessageQueueEntry *ent);
 void        giop_invoke_async      (GIOPMessageQueueEntry *ent);
 void        giop_recv_set_limit    (glong limit);
-void        giop_incoming_signal_T (GIOPThread *tdata);
+void        giop_incoming_signal_T (GIOPThread *tdata, GIOPMsgType t);
 
 typedef struct _GIOPQueue GIOPQueue;
 GIOPThread *giop_thread_get_main  (void);

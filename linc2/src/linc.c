@@ -425,7 +425,7 @@ link_set_io_thread (gboolean io_in_thread)
 
 	cmd.cmd.type = LINK_COMMAND_SET_IO_THREAD;
 
-	link_exec_command (&cmd);
+	link_exec_command (&cmd.cmd);
 }
 
 static void
