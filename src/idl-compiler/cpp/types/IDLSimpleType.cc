@@ -129,7 +129,7 @@ void
 IDLSimpleType::stub_impl_ret_post (ostream &ostr,
 				   Indent  &indent) const
 {
-	// Do nothing
+	ostr << indent << "return _retval;" << endl;
 }
 	
 
@@ -225,7 +225,7 @@ void
 IDLSimpleType::skel_impl_ret_post (ostream &ostr,
 				   Indent  &indent) const
 {
-	// WRITE ME
+	ostr << indent << "return _retval;" << endl;
 }
 
 string
