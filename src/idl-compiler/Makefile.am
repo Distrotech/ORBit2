@@ -29,6 +29,7 @@ orbit_idl_SOURCES=orbit-idl-main.c \
         orbit-idl-c-skels.c \
         orbit-idl-c-headers.c \
         orbit-idl-c-common.c \
+	orbit-idl-c-imodule.c \
         orbit-idl-c-skelimpl.c \
         orbit-idl-c-utils.c \
         orbit-idl-c-typecode.c \
