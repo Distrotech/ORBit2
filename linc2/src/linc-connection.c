@@ -667,7 +667,8 @@ linc_connection_flush_write_queue (LINCConnection *cnx)
 				done_writes = FALSE;
 			}
 		}
-	}
+	} else
+		LINC_MUTEX_UNLOCK (cnx->priv->write_lock);
 
 	d_printf ("Blocked write queue %s\n", done_writes ?
 		  "flushed & empty" : "still active");
