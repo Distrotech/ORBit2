@@ -359,7 +359,7 @@ linc_connection_read (LINCConnection *cnx,
 		else
 #endif
 			n = read (cnx->fd, buf, len);
-		
+
 		if (n < 0) {
 #ifdef LINC_SSL_SUPPORT
 			if (cnx->options & LINC_CONNECTION_SSL) {
@@ -379,10 +379,15 @@ linc_connection_read (LINCConnection *cnx,
 				if (errno == EINTR)
 					continue;
 
-				if (errno == EAGAIN &&
-				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
+				else if (errno == EAGAIN &&
+					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
 					return bytes_read;
-				else
+
+				else if (errno == EBADF) {
+					g_warning ("Serious fd usage error %d", cnx->fd);
+					return -1;
+
+				} else
 					return -1;
 			}
 
@@ -460,7 +465,11 @@ linc_connection_write (LINCConnection *cnx,
 					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
 					linc_main_iteration (FALSE);
 
-				else
+				else if (errno == EBADF) {
+					g_warning ("Serious fd usage error %d", cnx->fd);
+					return -1;
+
+				} else
 					return -1;
 			}
 		} else if (n == 0)
@@ -538,7 +547,11 @@ linc_connection_writev (LINCConnection *cnx,
 				else if (errno == EAGAIN &&
 					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
 					linc_main_iteration (FALSE);
-				else
+
+				else if (errno == EBADF) {
+					g_warning ("Serious fd usage error %d", cnx->fd);
+					return -1;
+				} else
 					return -1; /* Unhandlable error */
 
 			} else if (n == 0)
