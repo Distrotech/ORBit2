@@ -17,7 +17,8 @@ POA_TESTS_SRCS = poatest-basic01.c \
 
 #                 poatest-basic05.c \
 
-TESTS = poatest-basic01 \
+TESTS = test-poa \
+	poatest-basic01 \
         poatest-basic02 \
         poatest-basic03 \
         poatest-basic04 \
@@ -32,7 +33,7 @@ noinst_PROGRAMS=	\
         poatest-basic11 \
         poatest-basic05
 
-check_PROGRAMS = $(TESTS) test-poa
+check_PROGRAMS = $(TESTS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 

@@ -190,7 +190,9 @@ void
 giop_connections_shutdown (void)
 {
 #warning FIXME: Need to shutdown linc connections ...
+#ifdef G_ENABLE_DEBUG
 	g_warning ("FIXME: Need to shutdown linc connections ...");
+#endif
 #if 0
 	GList *l, *to_close;
 
