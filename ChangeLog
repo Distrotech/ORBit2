@@ -1,3 +1,10 @@
+2001-07-18  Mark McLoughlin <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-headers.c(ch_output_native),
+	  src/idl-compiler/orbit-idl-c-stubs.c(cs_small_output_stub):
+	add a couple of '\n's to the generated code. We shouldn't rely
+	on indent to fix up broken code.
+
 2001-07-18  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c 
