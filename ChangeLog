@@ -1,5 +1,12 @@
 2002-05-11  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/orb-cpp/orbitcpp_types.hh: Generate seq elem traits for
+	built-in simple types
+
+	* src/orb-cpp/orbitcpp_sequence.hh: Removed sequence traits from
+	the design -- only element traits are used now, sequence traits
+	are moved to virtual methods
+
 	* src/idl-compiler/cpp/: Re-enabling random sequence-related stuff
 
 2002-05-10  Diego Sevilla Ruiz  <dsevilla@um.es>
