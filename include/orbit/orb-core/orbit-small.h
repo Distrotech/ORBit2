@@ -54,17 +54,17 @@ typedef void (*ORBitAsyncInvokeFunc) (CORBA_Object          object,
 				      CORBA_Environment    *ev);
 
 /* Various bits for Async work */
-void              ORBit_small_invoke_async        (CORBA_Object           obj,
-						   ORBit_IMethod         *m_data,
-						   ORBitAsyncInvokeFunc   fn,
-						   gpointer               user_data,
-						   gpointer              *args,
-						   CORBA_Context          ctx,
-						   CORBA_Environment     *ev);
+void ORBit_small_invoke_async        (CORBA_Object           obj,
+				      ORBit_IMethod         *m_data,
+				      ORBitAsyncInvokeFunc   fn,
+				      gpointer               user_data,
+				      gpointer              *args,
+				      CORBA_Context          ctx,
+				      CORBA_Environment     *ev);
 
-void              ORBit_small_demarshal_async     (ORBitAsyncQueueEntry  *aqe,
-						   gpointer               ret,
-						   gpointer              *args,
-						   CORBA_Environment     *ev);
+void ORBit_small_demarshal_async     (ORBitAsyncQueueEntry  *aqe,
+				      gpointer               ret,
+				      gpointer              *args,
+				      CORBA_Environment     *ev);
 
 #endif /* CORBA_SMALL_H */

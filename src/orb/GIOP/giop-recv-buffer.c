@@ -33,6 +33,7 @@ giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 #endif
 
   buf->connection = cnx;
+
   switch(buf->msg.header.message_type)
     {
     case GIOP_REPLY:
@@ -59,11 +60,15 @@ giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 			  giop_queued_messages, ltmp);
 		  g_list_free_1 (ltmp);
 		  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+		  cnx->incoming_msg = NULL;
+		  LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 
 #ifdef DEBUG
 		  g_warning ("Call %p:%p:%p", ltmp, ent, ent->u.unthreaded.cb);
 #endif
 		  ent->u.unthreaded.cb (ent);
+
+		  LINC_MUTEX_LOCK (cnx->incoming_mutex);
 	  } else
 		  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 #endif
@@ -658,7 +663,7 @@ giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
 }
 
 void
-giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
+giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 {
 	if (!buf)
 		return;

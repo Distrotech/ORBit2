@@ -124,6 +124,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	GIOPMessageInfo info;
 	gboolean retval = TRUE;
 
+	g_object_ref ((GObject *) cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
 
 	do {
@@ -138,10 +139,11 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		if (n < 0 || !cnx->incoming_msg->left_to_read) {
 			retval = FALSE;
 			goto out;
-		}
-		else if (n == 0) {
+
+		} else if (n == 0) {
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
+			g_object_unref ((GObject *) cnx);
 			return FALSE;
 		}
 
@@ -150,7 +152,8 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 		if (info != GIOP_MSG_UNDERWAY) {
 			if (info == GIOP_MSG_COMPLETE) {
-				if (cnx->incoming_msg->msg.header.message_type == GIOP_REQUEST) {
+				if (cnx->incoming_msg &&
+				    cnx->incoming_msg->msg.header.message_type == GIOP_REQUEST) {
 					ORBit_handle_request (cnx->orb_data, cnx->incoming_msg);
 					giop_recv_buffer_unuse (cnx->incoming_msg);
 				}
@@ -167,15 +170,17 @@ giop_connection_handle_input (LINCConnection *lcnx)
 					   must be released */
 					g_object_unref (G_OBJECT (cnx));
 					retval = FALSE;
-					cnx = NULL;
+					goto out;
 				}
 			}
 		}
 	} while (cnx && cnx->incoming_msg);
 
  out:
-	if (cnx)
+	if (cnx) {
 		LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+		g_object_unref ((GObject *) cnx);
+	}
 
 	return retval;
 }

@@ -50,8 +50,8 @@ module test {
 
 	interface TestFactory {
 		BasicServer getBasicServer();
-		string getBasicServerIOR();
 		StructServer getStructServer();
+		string getStructServerIOR();
 		SequenceServer getSequenceServer();
 		UnionServer getUnionServer();
 		ArrayServer getArrayServer();

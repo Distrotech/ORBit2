@@ -321,11 +321,7 @@ orbit_small_marshal (CORBA_Object           obj,
 	CORBA_TypeCode           tc;
 	int                      i;
 
-#ifdef TRACE_DEBUG
-	tprintf ("p%4x : (", getpid ());
-	ORBit_trace_objref (obj);
-	tprintf (")->%s (", m_data->name);
-#endif
+	tprintf_header (obj, m_data);
 
 	{
 		int          align;
@@ -677,10 +673,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	has_context = (m_data->contexts._length > 0);
 
-#ifdef TRACE_DEBUG
-	tprintf ("p%4x : (%p)->%s (",
-		 getpid (), adaptor_obj, m_data->name);
-#endif
+	tprintf_header (adaptor_obj->objref, m_data);
 
 	if ((tc = m_data->ret)) {
 		
@@ -1104,10 +1097,15 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	GIOPConnection         *cnx;
 	ORBitAsyncQueueEntry   *aqe = g_new (ORBitAsyncQueueEntry, 1);
 
-	cnx = ORBit_object_get_connection (obj);
+	if (obj->adaptor_obj) /* a local object, we need a remote handle */
+		aqe->obj = ORBit_objref_get_proxy (obj);
+	else
+		aqe->obj = ORBit_RootObject_duplicate (obj);
+
+	cnx = ORBit_object_get_connection (aqe->obj);
 
 	if (!cnx) {
-		dprintf ("Null connection on object '%p'\n", obj);
+		tprintf ("Null connection on object '%p'\n", aqe->obj);
 		aqe->completion_status = CORBA_COMPLETED_NO;
 		goto system_exception;
 	}
@@ -1123,7 +1121,7 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	else if (fn)
 		g_warning ("oneway method being invoked async with a callback");
 
-	if (!orbit_small_marshal (obj, cnx, &aqe->mqe, request_id,
+	if (!orbit_small_marshal (aqe->obj, cnx, &aqe->mqe, request_id,
 				  m_data, args, ctx))
 		goto system_exception;
 
@@ -1133,7 +1131,6 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	aqe->completion_status = CORBA_COMPLETED_MAYBE;
 	aqe->fn = fn;
 	aqe->user_data = user_data;
-	aqe->obj = ORBit_RootObject_duplicate (obj);
 	/* FIXME: perenial ORBit_IMethod lifecycle issues */
 	aqe->m_data = /* ORBit_RootObject_duplicate */ (m_data);
 

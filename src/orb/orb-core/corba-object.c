@@ -165,6 +165,35 @@ ORBit_objref_find (CORBA_ORB   orb,
 	return retval;
 }
 
+/**
+ * ORBit_objref_get_proxy:
+ * @obj: the local object
+ * 
+ *  Creates a 'remote' alike object for the fully local
+ * object reference, so that we can deal with it
+ * asynchronously. Defeats the orb cleverness to stop this,
+ * doesn't register in the global object / profile hash.
+ *
+ *  You almost certainly don't want to use this routine.
+ * 
+ * Return value: a proxy object
+ **/
+CORBA_Object
+ORBit_objref_get_proxy (CORBA_Object obj)
+{
+	CORBA_Object iobj;
+
+	if (!obj->profile_list)
+		IOP_generate_profiles (obj);
+
+	/* We need a pseudo-remote reference */
+	iobj = ORBit_objref_new (obj->orb, obj->type_id);
+	iobj->profile_list = IOP_profiles_copy (obj->profile_list);
+	iobj->object_key = IOP_ObjectKey_copy (obj->object_key);
+
+	return ORBit_RootObject_duplicate (iobj);
+}
+
 void
 ORBit_start_servers (CORBA_ORB orb)
 {
@@ -234,7 +263,8 @@ ORBit_try_connection (CORBA_Object obj)
 }
 
 GIOPConnection *
-ORBit_object_get_connection (CORBA_Object obj) {
+ORBit_object_get_connection (CORBA_Object obj)
+{
 	GSList *plist, *cur;
 	char tbuf[20];
 	/* Information we have to come up with */
@@ -251,8 +281,7 @@ ORBit_object_get_connection (CORBA_Object obj) {
 	if (!obj->forward_locations) {
 		plist = obj->profile_list;
 		objkey = obj->object_key;
-	}
-	else {
+	} else {
 		plist = obj->forward_locations;
 		objkey = IOP_profiles_sync_objkey (plist);
 	}
@@ -327,9 +356,10 @@ CORBA_Object_duplicate (CORBA_Object       obj,
 }
 
 void
-CORBA_Object_release(CORBA_Object _obj, CORBA_Environment * ev)
+CORBA_Object_release (CORBA_Object        obj,
+		      CORBA_Environment *ev)
 {
-  ORBit_RootObject_release(_obj);
+	ORBit_RootObject_release (obj);
 }
 
 CORBA_boolean
@@ -382,92 +412,93 @@ CORBA_Object_create_request (CORBA_Object         _obj,
 }
 
 CORBA_Policy
-CORBA_Object_get_policy(CORBA_Object _obj,
-			const CORBA_PolicyType policy_type,
-			CORBA_Environment * ev)
+CORBA_Object_get_policy (CORBA_Object           obj,
+			 const CORBA_PolicyType policy_type,
+			 CORBA_Environment     *ev)
 {
-  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
-  return CORBA_OBJECT_NIL;
+	CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+	return CORBA_OBJECT_NIL;
 }
 
 CORBA_DomainManagersList *
-CORBA_Object_get_domain_managers(CORBA_Object _obj,
-				 CORBA_Environment * ev)
+CORBA_Object_get_domain_managers (CORBA_Object      obj,
+				 CORBA_Environment *ev)
 {
-  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
-  return NULL;
+	CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+	return NULL;
 }
 
 CORBA_Object
-CORBA_Object_set_policy_overrides(CORBA_Object _obj,
-				  const CORBA_PolicyList *policies,
-				  const CORBA_SetOverrideType set_add,
-				  CORBA_Environment * ev)
+CORBA_Object_set_policy_overrides (CORBA_Object                obj,
+				   const CORBA_PolicyList     *policies,
+				   const CORBA_SetOverrideType set_add,
+				   CORBA_Environment          *ev)
 {
-  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
-  return CORBA_OBJECT_NIL;
+	CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+	return CORBA_OBJECT_NIL;
 }
 
 void
-ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
+ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 {
-  CORBA_unsigned_long type_len, num_profiles;
-  GSList *cur;
-  char *typeid;
+	GSList *cur;
+	char *typeid;
+	CORBA_unsigned_long type_len;
+	CORBA_unsigned_long num_profiles;
 
-  if(obj)
-    typeid = obj->type_id;
-  else
-    typeid = "";
-  type_len = strlen(typeid) + 1;
-  giop_send_buffer_append_aligned (buf, &type_len, 4);
-  giop_send_buffer_append(buf, typeid, type_len);
-  if(obj)
-    {
-      if ( obj->profile_list == NULL )
-	  IOP_generate_profiles( obj );
-      num_profiles = g_slist_length(obj->profile_list);
-      g_assert (num_profiles > 0);
-    }
-  else
-    num_profiles = 0;
-  giop_send_buffer_append_aligned(buf, &num_profiles, 4);
+	if (obj)
+		typeid = obj->type_id;
+	else
+		typeid = "";
+
+	type_len = strlen (typeid) + 1;
+	giop_send_buffer_append_aligned (buf, &type_len, 4);
+	giop_send_buffer_append (buf, typeid, type_len);
+
+	if (obj) {
+		if (!obj->profile_list)
+			IOP_generate_profiles (obj);
+		num_profiles = g_slist_length (obj->profile_list);
+		g_assert (num_profiles > 0);
+	} else
+		num_profiles = 0;
+	giop_send_buffer_append_aligned (buf, &num_profiles, 4);
 
 #ifdef DEBUG
-  fprintf (stderr, "Marshal object '%p'\n", obj);
+	fprintf (stderr, "Marshal object '%p'\n", obj);
 #endif
-  if(obj)
-    for(cur = obj->profile_list; cur; cur = cur->next)
-      {
+	if (obj)
+		for (cur = obj->profile_list; cur; cur = cur->next) {
 #ifdef DEBUG
-        fprintf (stderr, "%s\n", IOP_profile_dump (obj, cur->data));
+			fprintf (stderr, "%s\n", IOP_profile_dump (obj, cur->data));
 #endif
-	IOP_profile_marshal(obj, buf, cur->data);
-      }
+			IOP_profile_marshal (obj, buf, cur->data);
+		}
 }
 
 gboolean
-ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
-		       CORBA_ORB orb)
+ORBit_demarshal_object (CORBA_Object   *obj,
+			GIOPRecvBuffer *buf,
+			CORBA_ORB       orb)
 {
-  GSList *profiles;
-  char *type_id;
+	char   *type_id;
+	GSList *profiles;
 
-  if(ORBit_demarshal_IOR(orb, buf, &type_id, &profiles))
-    return TRUE;
+	if (ORBit_demarshal_IOR (orb, buf, &type_id, &profiles))
+		return TRUE;
 
-  if(type_id)
-    *obj = ORBit_objref_find(orb, type_id, profiles);
-  else
-    *obj = CORBA_OBJECT_NIL;
+	if (type_id)
+		*obj = ORBit_objref_find (orb, type_id, profiles);
+	else
+		*obj = CORBA_OBJECT_NIL;
 
-  return FALSE;
+	return FALSE;
 }
 
 gpointer
-CORBA_Object__freekids(gpointer mem, gpointer dat)
+CORBA_Object__freekids (gpointer mem, gpointer dat)
 {
-  return mem + sizeof(CORBA_Object);
+	return mem + sizeof (CORBA_Object);
 }
 
 CORBA_boolean

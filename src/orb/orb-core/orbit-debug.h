@@ -14,6 +14,12 @@
 #undef TRACE_DEBUG
 
 /*
+ * Define this to get microsecond time stamps on
+ * each method invocation, a-la strace -ttt
+ */
+#undef TRACE_TIMING
+
+/*
  * Flip this switch if you want tyeplib
  * related warnings.
  */
@@ -53,6 +59,7 @@ dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
 
 static inline void tprintf (const char *format, ...) { };
 #define tprintf_trace_value(a,b)
+#define tprintf_header(obj,md)
 
 #else /* TRACE_DEBUG */
 
@@ -63,8 +70,11 @@ void     ORBit_trace_any      (const CORBA_any     *any);
 void     ORBit_trace_typecode (const CORBA_TypeCode tc);
 void     ORBit_trace_value    (gconstpointer       *val,
                                CORBA_TypeCode       tc);
+void     ORBit_trace_header   (CORBA_Object         object,
+			       ORBit_IMethod       *m_data);
 
 #define tprintf(format...) fprintf(stderr, format)
+#define tprintf_header(obj,md) ORBit_trace_header(obj,md)
 #define tprintf_trace_value(a,b) \
 		ORBit_trace_value ((gconstpointer *)(a), (b))
 

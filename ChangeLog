@@ -1,3 +1,51 @@
+2001-10-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_handle_input): 
+	hold a ref on the connection whilst handling the input.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_push): 
+	release the incoming mutex around the ent. call,
+	set the cnx->incoming_msg to NULL much earlier.
+
+	* src/orb/orb-core/iop-profiles.c (IOP_profiles_copy): impl.
+	(ORBit_demarshal_IOR): kill redundant gbuf = buf, no nasty
+	global variables thank you.
+	(IOP_ObjectKey_copy, IOP_components_copy),
+	(IOP_TAG_COMPLETE_OBJECT_KEY_copy),
+	(IOP_TAG_GENERIC_SSL_SEC_TRANS_copy),
+	(IOP_TAG_SSL_SEC_TRANS_copy, IOP_TAG_CODE_SETS_copy),
+	(IOP_UnknownComponent_copy, IOP_component_copy),
+	(IOP_components_copy, IOP_TAG_INTERNET_IOP_copy),
+	(IOP_TAG_GENERIC_IOP_copy),
+	(IOP_TAG_ORBIT_SPECIFIC_copy),
+	(IOP_TAG_MULTIPLE_COMPONENTS_copy),
+	(IOP_TAG_UnknownProfile_copy),
+	(IOP_profile_copy, IOP_profiles_copy): impl.
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_release):
+	misc. style cleans.
+	(ORBit_objref_get_proxy): impl. to make a local object
+	able to access itself as if remote.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_async): if we have no local profiles,
+	create some.
+
+	* test/everything/client.c (testAsync): beef up regression
+	tests to catch the above.
+
+	* test/everything/client.c (testAsync): perform
+	some normal work while waiting for the async
+	method result.
+	Lots of stylistic seds.
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_header): impl & add timing information.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor),
+	(orbit_small_marshal): use it
+
 2001-10-16  jacob berkman  <jacob@ximian.com>
 
 	* src/orb/orb-core/Makefile.am: fix to dist from a clean checkout

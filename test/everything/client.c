@@ -43,174 +43,171 @@
 #endif
 
 CORBA_ORB orb;
+gboolean  in_proc;
 
-void testConst()
+void
+testConst (void)
 {
-  d_print("Testing constants...\n");
-  g_assert(test_CONST_CHAR=='t');
-  g_assert(test_CONST_LONG==0x12345678);
-  g_assert(test_CONST_LONG_LONG==0x12345678);
-  g_assert(strcmp(test_CONST_STRING,"ConstString")==0);
-  /* I can never get constant floats to compare properly. */
-  /* g_assert(test_CONST_FLOAT==1234.56); */
-  g_assert(test_CONST_DOUBLE==1234.5678);
-  g_assert(test_FAVORITE_COLOUR==test_red);
-
+	d_print ("Testing constants...\n");
+	g_assert (test_CONST_CHAR=='t');
+	g_assert (test_CONST_LONG==0x12345678);
+	g_assert (test_CONST_LONG_LONG==0x12345678);
+	g_assert (strcmp (test_CONST_STRING, "ConstString")==0);
+	/* I can never get constant floats to compare properly. */
+	/* g_assert (test_CONST_FLOAT==1234.56); */
+	g_assert (test_CONST_DOUBLE==1234.5678);
+	g_assert (test_FAVORITE_COLOUR==test_red);
 }
 
 
-void testAttribute(test_TestFactory factory, 
-		   CORBA_Environment *ev)
+void
+testAttribute (test_TestFactory factory, 
+	       CORBA_Environment *ev)
 {  
-  test_BasicServer objref;
-  CORBA_char *val;
-  CORBA_long lval;
-  d_print("Testing attributes...\n");
-  objref = test_TestFactory_getBasicServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(objref != CORBA_OBJECT_NIL);
-  g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  val = test_BasicServer__get_foo(objref,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);  
-  g_assert(strcmp(val,constants_STRING_RETN)==0);	
-  CORBA_free(val);
-  test_BasicServer__set_foo(objref,constants_STRING_IN,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	test_BasicServer objref;
+	CORBA_char *val;
+	CORBA_long lval;
+	d_print ("Testing attributes...\n");
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (objref != CORBA_OBJECT_NIL);
+	g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	val = test_BasicServer__get_foo (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);  
+	g_assert (strcmp (val, constants_STRING_RETN)==0);	
+	CORBA_free (val);
+	test_BasicServer__set_foo (objref, constants_STRING_IN, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  lval = test_BasicServer__get_bah(objref,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);  
-  g_assert(lval == constants_LONG_RETN);
+	lval = test_BasicServer__get_bah (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);  
+	g_assert (lval == constants_LONG_RETN);
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testString(test_TestFactory factory, 
-		CORBA_Environment *ev)
+void
+testString (test_TestFactory   factory, 
+	    CORBA_Environment *ev)
 {
-  test_BasicServer objref;
-  const CORBA_char *in;
-  CORBA_char *ior;
-  CORBA_char *inout, *out, *retn; 
+	test_BasicServer objref;
+	const CORBA_char *in;
+	CORBA_char *inout, *out, *retn; 
 
-  d_print("Testing strings...\n");
+	d_print ("Testing strings...\n");
+	objref = test_TestFactory_getBasicServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  ior = test_TestFactory_getBasicServerIOR (factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-
-  objref = CORBA_ORB_string_to_object (orb, ior, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(objref != CORBA_OBJECT_NIL);
-  CORBA_free(ior);
-
-  in = constants_STRING_IN;
-  inout = CORBA_string_dup(constants_STRING_INOUT_IN);
-  retn = test_BasicServer_opString(objref,in,&inout,&out,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	in = constants_STRING_IN;
+	inout = CORBA_string_dup (constants_STRING_INOUT_IN);
+	retn = test_BasicServer_opString (objref, in, &inout, &out, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  g_assert(strcmp(in,constants_STRING_IN)==0);
-  g_assert(strcmp(inout,constants_STRING_INOUT_OUT)==0);
-  g_assert(strcmp(out,constants_STRING_OUT)==0);
-  g_assert(strcmp(retn,constants_STRING_RETN)==0);	
+	g_assert (strcmp (in, constants_STRING_IN)==0);
+	g_assert (strcmp (inout, constants_STRING_INOUT_OUT)==0);
+	g_assert (strcmp (out, constants_STRING_OUT)==0);
+	g_assert (strcmp (retn, constants_STRING_RETN)==0);	
 
-  test_BasicServer_opOneWay (objref, constants_STRING_IN, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	test_BasicServer_opOneWay (objref, constants_STRING_IN, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  CORBA_free(inout);
-  CORBA_free(out);
-  CORBA_free(retn);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_free (inout);
+	CORBA_free (out);
+	CORBA_free (retn);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 
-void testLong(test_TestFactory factory, 
-	      CORBA_Environment *ev)
+void
+testLong (test_TestFactory   factory, 
+	  CORBA_Environment *ev)
 {
   test_BasicServer objref;
-  CORBA_long inArg,inoutArg,outArg,retn;
-  d_print("Testing longs...\n");
-  objref = test_TestFactory_getBasicServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_long inArg, inoutArg, outArg, retn;
+  d_print ("Testing longs...\n");
+  objref = test_TestFactory_getBasicServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   inArg = constants_LONG_IN;
   inoutArg = constants_LONG_INOUT_IN;
-  retn = test_BasicServer_opLong(objref,inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(inArg == constants_LONG_IN);
-  g_assert(inoutArg == constants_LONG_INOUT_OUT);
-  g_assert(outArg == constants_LONG_OUT);
-  g_assert(retn == constants_LONG_RETN);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_BasicServer_opLong (objref, inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (inArg == constants_LONG_IN);
+  g_assert (inoutArg == constants_LONG_INOUT_OUT);
+  g_assert (outArg == constants_LONG_OUT);
+  g_assert (retn == constants_LONG_RETN);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testLongLong(test_TestFactory factory, 
+void testLongLong (test_TestFactory factory, 
 		  CORBA_Environment *ev)
 {
   test_BasicServer objref;
-  CORBA_long_long inArg,inoutArg,outArg,retn;
-  d_print("Testing long longs...\n");
-  objref = test_TestFactory_getBasicServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_long_long inArg, inoutArg, outArg, retn;
+  d_print ("Testing long longs...\n");
+  objref = test_TestFactory_getBasicServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   inArg = constants_LONG_LONG_IN;
   inoutArg = constants_LONG_LONG_INOUT_IN;
-  retn = test_BasicServer_opLongLong(objref,inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(inArg == constants_LONG_LONG_IN);
-  g_assert(inoutArg == constants_LONG_LONG_INOUT_OUT);
-  g_assert(outArg == constants_LONG_LONG_OUT);
-  g_assert(retn == constants_LONG_LONG_RETN);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_BasicServer_opLongLong (objref, inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (inArg == constants_LONG_LONG_IN);
+  g_assert (inoutArg == constants_LONG_LONG_INOUT_OUT);
+  g_assert (outArg == constants_LONG_LONG_OUT);
+  g_assert (retn == constants_LONG_LONG_RETN);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testEnum(test_TestFactory factory, 
+void testEnum (test_TestFactory factory, 
 	      CORBA_Environment *ev)
 {
   test_BasicServer objref;
-  test_AnEnum inArg,inoutArg,outArg,retn;
-  d_print("Testing enums...\n");
-  objref = test_TestFactory_getBasicServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  test_AnEnum inArg, inoutArg, outArg, retn;
+  d_print ("Testing enums...\n");
+  objref = test_TestFactory_getBasicServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   inArg = test_ENUM_IN;
   inoutArg = test_ENUM_INOUT_IN;
-  retn = test_BasicServer_opEnum(objref,inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(inArg == test_ENUM_IN);
-  g_assert(inoutArg == test_ENUM_INOUT_OUT);
-  g_assert(outArg == test_ENUM_OUT);
-  g_assert(retn == test_ENUM_RETN);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_BasicServer_opEnum (objref, inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (inArg == test_ENUM_IN);
+  g_assert (inoutArg == test_ENUM_INOUT_OUT);
+  g_assert (outArg == test_ENUM_OUT);
+  g_assert (retn == test_ENUM_RETN);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testException(test_TestFactory factory, 
+void testException (test_TestFactory factory, 
 		   CORBA_Environment *ev)
 {
   test_BasicServer objref;
   test_TestException *ex;
-  d_print("Testing exceptions...\n");
-  objref = test_TestFactory_getBasicServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing exceptions...\n");
+  objref = test_TestFactory_getBasicServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  test_BasicServer_opException(objref,ev);
+  test_BasicServer_opException (objref, ev);
   
-  g_assert(ev->_major == CORBA_USER_EXCEPTION);
-  g_assert(strcmp(CORBA_exception_id(ev),ex_test_TestException) == 0);
-  ex = CORBA_exception_value(ev);
-  g_assert(strcmp(ex->reason,constants_STRING_IN) == 0);
-  g_assert(ex->number == constants_LONG_IN);
-  g_assert(ex->aseq._length == 1);
-  g_assert(ex->aseq._buffer[0] == constants_LONG_IN);
+  g_assert (ev->_major == CORBA_USER_EXCEPTION);
+  g_assert (strcmp (CORBA_exception_id (ev), ex_test_TestException) == 0);
+  ex = CORBA_exception_value (ev);
+  g_assert (strcmp (ex->reason, constants_STRING_IN) == 0);
+  g_assert (ex->number == constants_LONG_IN);
+  g_assert (ex->aseq._length == 1);
+  g_assert (ex->aseq._buffer[0] == constants_LONG_IN);
 
-  CORBA_exception_free(ev);
-  CORBA_Object_release(objref, ev);  
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_exception_free (ev);
+  CORBA_Object_release (objref, ev);  
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 gboolean
-find_tc (CORBA_sequence_CORBA_TypeCode *tcs,
+find_tc (CORBA_sequence_CORBA_TypeCode *tcs, 
 	 const char                    *repo_id)
 {
 	int i;
@@ -231,8 +228,8 @@ testIInterface (test_TestFactory   factory,
 	ORBit_IInterface *iinterface;
 	CORBA_sequence_CORBA_TypeCode *tcs;
 
-	d_print("Testing IInterface code...\n");
-	objref = test_TestFactory_getStructServer (factory,ev);
+	d_print ("Testing IInterface code...\n");
+	objref = test_TestFactory_getStructServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	/* Check nil check is working ! */
@@ -254,7 +251,7 @@ testIInterface (test_TestFactory   factory,
 	/* Scripting stuff */
 
 	/* Get real type id */
-	g_assert ((type_id = ORBit_small_get_type_id (objref, ev)));
+	g_assert ( (type_id = ORBit_small_get_type_id (objref, ev)));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (!strcmp (type_id, "IDL:orbit/test/StructServer:1.0"));
 	CORBA_free (type_id);
@@ -264,14 +261,14 @@ testIInterface (test_TestFactory   factory,
 		objref, "foo_bar_jelly", ev);
 	g_assert (ev->_major != CORBA_NO_EXCEPTION);
 	g_assert (iinterface == NULL);
-	g_assert (!strcmp(ev->_id, ex_ORBit_NoIInterface));
+	g_assert (!strcmp (ev->_id, ex_ORBit_NoIInterface));
 	CORBA_exception_free (ev);
 
 	iinterface = ORBit_small_get_iinterface (
 		objref, "IDL:orbit/test/StructServer:1.0", ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (iinterface != NULL);
-	g_assert (!strcmp(iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
+	g_assert (!strcmp (iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
 	CORBA_free (iinterface);
 
 	CORBA_Object_release (objref, ev);
@@ -283,8 +280,8 @@ testIInterface (test_TestFactory   factory,
 		g_warning ("Failed to load '" TYPELIB_NAME "'");
 	iinterface = ORBit_small_get_iinterface ( 
 		objref, "IDL:orbit/test/StructServer:1.0", ev);
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
-	g_assert(iinterface != NULL);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (iinterface != NULL);
 	CORBA_free (iinterface);
 
 	tcs = ORBit_small_get_types (TYPELIB_NAME);
@@ -297,81 +294,88 @@ void
 testFixedLengthStruct (test_TestFactory   factory, 
 		       CORBA_Environment *ev)
 {
-  test_StructServer objref;
-  test_FixedLengthStruct inArg,inoutArg,outArg,retn;
+	test_StructServer objref;
+	test_FixedLengthStruct inArg, inoutArg, outArg, retn;
+	CORBA_char *ior;
 
-  d_print("Testing struct code ...\n");
-  objref = test_TestFactory_getStructServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	d_print ("Testing struct code ...\n");
+	ior = test_TestFactory_getStructServerIOR (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+  
+	objref = CORBA_ORB_string_to_object (orb, ior, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (objref != CORBA_OBJECT_NIL);
+	CORBA_free (ior);
 
-  inArg.a = constants_SHORT_IN;
-  inoutArg.a = constants_SHORT_INOUT_IN;
+
+	inArg.a = constants_SHORT_IN;
+	inoutArg.a = constants_SHORT_INOUT_IN;
   
-  retn = test_StructServer_opFixed(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	retn = test_StructServer_opFixed (objref, &inArg, &inoutArg, &outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  g_assert(inArg.a == constants_SHORT_IN);
-  g_assert(inoutArg.a == constants_SHORT_INOUT_OUT);
-  g_assert(outArg.a == constants_SHORT_OUT);
-  g_assert(retn.a == constants_SHORT_RETN);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (inArg.a == constants_SHORT_IN);
+	g_assert (inoutArg.a == constants_SHORT_INOUT_OUT);
+	g_assert (outArg.a == constants_SHORT_OUT);
+	g_assert (retn.a == constants_SHORT_RETN);
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testVariableLengthStruct(test_TestFactory factory, 
+void testVariableLengthStruct (test_TestFactory factory, 
 			      CORBA_Environment *ev)
 {
   test_StructServer objref;
-  test_VariableLengthStruct inArg,inoutArg, *outArg, *retn;
-  d_print("Testing variable length structs...\n");
-  objref = test_TestFactory_getStructServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  test_VariableLengthStruct inArg, inoutArg, *outArg, *retn;
+  d_print ("Testing variable length structs...\n");
+  objref = test_TestFactory_getStructServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   inArg.a = (CORBA_char*)constants_STRING_IN;  /* const cast */
-  inoutArg.a = CORBA_string_dup(constants_STRING_INOUT_IN);
+  inoutArg.a = CORBA_string_dup (constants_STRING_INOUT_IN);
   
-  retn = test_StructServer_opVariable(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_StructServer_opVariable (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  g_assert(strcmp(inArg.a,constants_STRING_IN)==0);
-  g_assert(strcmp(inoutArg.a,constants_STRING_INOUT_OUT)==0);
-  g_assert(strcmp(outArg->a,constants_STRING_OUT)==0);
-  g_assert(strcmp(retn->a,constants_STRING_RETN)==0);	
+  g_assert (strcmp (inArg.a, constants_STRING_IN)==0);
+  g_assert (strcmp (inoutArg.a, constants_STRING_INOUT_OUT)==0);
+  g_assert (strcmp (outArg->a, constants_STRING_OUT)==0);
+  g_assert (strcmp (retn->a, constants_STRING_RETN)==0);	
 
-  CORBA_free(inoutArg.a);
-  CORBA_free(outArg);
-  CORBA_free(retn);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_free (inoutArg.a);
+  CORBA_free (outArg);
+  CORBA_free (retn);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 
-void testCompoundStruct(test_TestFactory factory, 
+void testCompoundStruct (test_TestFactory factory, 
 			CORBA_Environment *ev)
 {
   test_StructServer objref;
-  test_CompoundStruct inArg,inoutArg, *outArg, *retn;
-  d_print("Testing compound structs...\n");
-  objref = test_TestFactory_getStructServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  test_CompoundStruct inArg, inoutArg, *outArg, *retn;
+  d_print ("Testing compound structs...\n");
+  objref = test_TestFactory_getStructServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  inArg.a.a = CORBA_string_dup(constants_STRING_IN);
-  inoutArg.a.a = CORBA_string_dup(constants_STRING_INOUT_IN);
+  inArg.a.a = CORBA_string_dup (constants_STRING_IN);
+  inoutArg.a.a = CORBA_string_dup (constants_STRING_INOUT_IN);
   
-  retn = test_StructServer_opCompound(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_StructServer_opCompound (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  g_assert(strcmp(inArg.a.a,constants_STRING_IN)==0);
-  g_assert(strcmp(inoutArg.a.a,constants_STRING_INOUT_OUT)==0);
-  g_assert(strcmp(outArg->a.a,constants_STRING_OUT)==0);
-  g_assert(strcmp(retn->a.a,constants_STRING_RETN)==0);	
+  g_assert (strcmp (inArg.a.a, constants_STRING_IN)==0);
+  g_assert (strcmp (inoutArg.a.a, constants_STRING_INOUT_OUT)==0);
+  g_assert (strcmp (outArg->a.a, constants_STRING_OUT)==0);
+  g_assert (strcmp (retn->a.a, constants_STRING_RETN)==0);	
   
-  CORBA_free(inArg.a.a);
-  CORBA_free(inoutArg.a.a);
-  CORBA_free(outArg);
-  CORBA_free(retn);  
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_free (inArg.a.a);
+  CORBA_free (inoutArg.a.a);
+  CORBA_free (outArg);
+  CORBA_free (retn);  
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 void
@@ -382,14 +386,14 @@ testStructAny (test_TestFactory   factory,
 	test_StructAny   *a;
 
 	d_print ("Testing 'any' structs...\n");
-	objref = test_TestFactory_getStructServer (factory,ev);
+	objref = test_TestFactory_getStructServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	a = test_StructServer_opStructAny (objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	g_assert (!strcmp (a->a, constants_STRING_IN));
-	g_assert (*(CORBA_long *)a->b._value == constants_LONG_IN);
+	g_assert (* (CORBA_long *)a->b._value == constants_LONG_IN);
   
 	CORBA_free (a);  
 
@@ -397,57 +401,57 @@ testStructAny (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testUnboundedSequence(test_TestFactory factory, 
+void testUnboundedSequence (test_TestFactory factory, 
 			   CORBA_Environment *ev)
 {
   test_SequenceServer objref;
   test_StrSeq inArg, inoutArg, *outArg, *retn;
   guint i;
-  d_print("Testing unbounded sequences...\n");
-  objref = test_TestFactory_getSequenceServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing unbounded sequences...\n");
+  objref = test_TestFactory_getSequenceServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
-  inArg._buffer = CORBA_sequence_CORBA_string_allocbuf(2);
+  inArg._buffer = CORBA_sequence_CORBA_string_allocbuf (2);
   inArg._length = 2;
-  CORBA_sequence_set_release(&inArg, CORBA_TRUE);
+  CORBA_sequence_set_release (&inArg, CORBA_TRUE);
 
   for (i=0;i<inArg._length;i++){
-	inArg._buffer[i] = CORBA_string_dup(constants_SEQ_STRING_IN[i]);
+	inArg._buffer[i] = CORBA_string_dup (constants_SEQ_STRING_IN[i]);
   }
 
-  inoutArg._buffer = CORBA_sequence_CORBA_string_allocbuf(2);
+  inoutArg._buffer = CORBA_sequence_CORBA_string_allocbuf (2);
   inoutArg._length = 2;
-  CORBA_sequence_set_release(&inoutArg, CORBA_TRUE);
+  CORBA_sequence_set_release (&inoutArg, CORBA_TRUE);
 
   for (i=0;i<inoutArg._length;i++){
-	inoutArg._buffer[i] = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[i]);
+	inoutArg._buffer[i] = CORBA_string_dup (constants_SEQ_STRING_INOUT_IN[i]);
   }
 
-  retn = test_SequenceServer_opStrSeq(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_SequenceServer_opStrSeq (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
   for (i=0;i<inArg._length;i++){
-	g_assert(strcmp(inArg._buffer[i],constants_SEQ_STRING_IN[i]) == 0);
+	g_assert (strcmp (inArg._buffer[i], constants_SEQ_STRING_IN[i]) == 0);
   }
 
   for (i=0;i<inoutArg._length;i++){
-	g_assert(strcmp(inoutArg._buffer[i],constants_SEQ_STRING_INOUT_OUT[i]) == 0);
+	g_assert (strcmp (inoutArg._buffer[i], constants_SEQ_STRING_INOUT_OUT[i]) == 0);
   }
 
   for (i=0;i<outArg->_length;i++){
-	g_assert(strcmp(outArg->_buffer[i],constants_SEQ_STRING_OUT[i]) == 0);
+	g_assert (strcmp (outArg->_buffer[i], constants_SEQ_STRING_OUT[i]) == 0);
   }
 
   for (i=0;i<retn->_length;i++){
-	g_assert(strcmp(retn->_buffer[i],constants_SEQ_STRING_RETN[i]) == 0);
+	g_assert (strcmp (retn->_buffer[i], constants_SEQ_STRING_RETN[i]) == 0);
   }
 
-  CORBA_free(inArg._buffer);
-  CORBA_free(inoutArg._buffer);
-  CORBA_free(outArg);
-  CORBA_free(retn);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_free (inArg._buffer);
+  CORBA_free (inoutArg._buffer);
+  CORBA_free (outArg);
+  CORBA_free (retn);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 void
@@ -457,65 +461,65 @@ testBoundedSequence (test_TestFactory   factory,
   test_SequenceServer objref;
   test_BoundedStructSeq inArg, inoutArg, *outArg, *retn;
   guint i;
-  d_print("Testing bounded sequences...\n");
-  objref = test_TestFactory_getSequenceServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing bounded sequences...\n");
+  objref = test_TestFactory_getSequenceServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   
-  inArg._buffer  = CORBA_sequence_test_CompoundStruct_allocbuf(2);
+  inArg._buffer  = CORBA_sequence_test_CompoundStruct_allocbuf (2);
   inArg._length  = 2;
   inArg._maximum = 2;
-  CORBA_sequence_set_release(&inoutArg, CORBA_TRUE);
+  CORBA_sequence_set_release (&inoutArg, CORBA_TRUE);
 
   for (i=0;i<inArg._length;i++){
-	inArg._buffer[i].a.a = CORBA_string_dup(constants_SEQ_STRING_IN[i]);
+	inArg._buffer[i].a.a = CORBA_string_dup (constants_SEQ_STRING_IN[i]);
   }
 
-  inoutArg._buffer  = CORBA_sequence_test_CompoundStruct_allocbuf(2);
+  inoutArg._buffer  = CORBA_sequence_test_CompoundStruct_allocbuf (2);
   inoutArg._length  = 2;
   inoutArg._maximum = 2;
-  CORBA_sequence_set_release(&inoutArg, CORBA_TRUE);
+  CORBA_sequence_set_release (&inoutArg, CORBA_TRUE);
 
   for (i=0;i<inoutArg._length;i++){
-	inoutArg._buffer[i].a.a = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[i]);
+	inoutArg._buffer[i].a.a = CORBA_string_dup (constants_SEQ_STRING_INOUT_IN[i]);
   }
 
-  retn = test_SequenceServer_opBoundedStructSeq(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_SequenceServer_opBoundedStructSeq (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
 
   for (i=0;i<inArg._length;i++){
-	g_assert(strcmp(inArg._buffer[i].a.a,constants_SEQ_STRING_IN[i]) == 0);
+	g_assert (strcmp (inArg._buffer[i].a.a, constants_SEQ_STRING_IN[i]) == 0);
   }
 
   for (i=0;i<inoutArg._length;i++){
-	g_assert(strcmp(inoutArg._buffer[i].a.a,constants_SEQ_STRING_INOUT_OUT[i]) == 0);
+	g_assert (strcmp (inoutArg._buffer[i].a.a, constants_SEQ_STRING_INOUT_OUT[i]) == 0);
   }
 
   for (i=0;i<outArg->_length;i++){
-	g_assert(strcmp(outArg->_buffer[i].a.a,constants_SEQ_STRING_OUT[i]) == 0);
+	g_assert (strcmp (outArg->_buffer[i].a.a, constants_SEQ_STRING_OUT[i]) == 0);
   }
 
   for (i=0;i<retn->_length;i++){
-	g_assert(strcmp(retn->_buffer[i].a.a,constants_SEQ_STRING_RETN[i]) == 0);
+	g_assert (strcmp (retn->_buffer[i].a.a, constants_SEQ_STRING_RETN[i]) == 0);
   }
 
-  CORBA_free(inArg._buffer);
-  CORBA_free(inoutArg._buffer);
-  CORBA_free(outArg);
-  CORBA_free(retn);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_free (inArg._buffer);
+  CORBA_free (inoutArg._buffer);
+  CORBA_free (outArg);
+  CORBA_free (retn);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testFixedLengthUnion(test_TestFactory factory, 
+void testFixedLengthUnion (test_TestFactory factory, 
 			  CORBA_Environment *ev)
 {
   test_UnionServer objref;
   test_FixedLengthUnion inArg, inoutArg, outArg, retn;
-  d_print("Testing fixed length unions...\n");
-  objref = test_TestFactory_getUnionServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing fixed length unions...\n");
+  objref = test_TestFactory_getUnionServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   inArg._u.x = constants_LONG_IN;
   inArg._d = 'a';
@@ -523,58 +527,58 @@ void testFixedLengthUnion(test_TestFactory factory,
   inoutArg._u.y = 't';
   inoutArg._d = 'b';
   
-  retn = test_UnionServer_opFixed(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_UnionServer_opFixed (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  g_assert(inArg._d == 'a');
-  g_assert(inArg._u.x == constants_LONG_IN);
-  g_assert(inoutArg._d == 'c');
-  g_assert(inoutArg._u.z == TRUE);
-  g_assert(outArg._d == 'a');
-  g_assert(outArg._u.x == constants_LONG_OUT);
-  g_assert(retn._d == 'd');
-  g_assert(retn._u.z == FALSE);
+  g_assert (inArg._d == 'a');
+  g_assert (inArg._u.x == constants_LONG_IN);
+  g_assert (inoutArg._d == 'c');
+  g_assert (inoutArg._u.z == TRUE);
+  g_assert (outArg._d == 'a');
+  g_assert (outArg._u.x == constants_LONG_OUT);
+  g_assert (retn._d == 'd');
+  g_assert (retn._u.z == FALSE);
 
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testVariableLengthUnion(test_TestFactory factory, 
+void testVariableLengthUnion (test_TestFactory factory, 
 			     CORBA_Environment *ev)
 {
   test_UnionServer objref;
   test_VariableLengthUnion inArg, inoutArg, *outArg, *retn;
-  d_print("Testing variable length unions...\n");
-  objref = test_TestFactory_getUnionServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing variable length unions...\n");
+  objref = test_TestFactory_getUnionServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   inArg._u.x = constants_LONG_IN;
   inArg._d = 1;
 
-  inoutArg._u.y = CORBA_string_dup(constants_STRING_INOUT_IN);
+  inoutArg._u.y = CORBA_string_dup (constants_STRING_INOUT_IN);
   inoutArg._d = 2;
   
-  retn = test_UnionServer_opVariable(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_UnionServer_opVariable (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  g_assert(inArg._d == 1);
-  g_assert(inArg._u.x == constants_LONG_IN);
-  g_assert(inoutArg._d == 3);
-  g_assert(inoutArg._u.z == TRUE);
-  g_assert(outArg->_d == 1);
-  g_assert(outArg->_u.x == constants_LONG_OUT);
-  g_assert(retn->_d == 4);
-  g_assert(retn->_u.z == FALSE);
+  g_assert (inArg._d == 1);
+  g_assert (inArg._u.x == constants_LONG_IN);
+  g_assert (inoutArg._d == 3);
+  g_assert (inoutArg._u.z == TRUE);
+  g_assert (outArg->_d == 1);
+  g_assert (outArg->_u.x == constants_LONG_OUT);
+  g_assert (retn->_d == 4);
+  g_assert (retn->_u.z == FALSE);
 
-  CORBA_free(outArg);
-  CORBA_free(retn);
+  CORBA_free (outArg);
+  CORBA_free (retn);
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testFixedLengthArray(test_TestFactory factory, 
+void testFixedLengthArray (test_TestFactory factory, 
 			  CORBA_Environment *ev)
 {
   
@@ -582,76 +586,76 @@ void testFixedLengthArray(test_TestFactory factory,
   test_LongArray inArg, inoutArg, outArg;
   test_LongArray_slice *retn;
   int i;
-  d_print("Testing arrays with fixed length members...\n");
-  objref = test_TestFactory_getArrayServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing arrays with fixed length members...\n");
+  objref = test_TestFactory_getArrayServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<constants_SEQLEN;i++)
 	inArg[i] = constants_SEQ_LONG_IN[i];
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<constants_SEQLEN;i++)
 	inoutArg[i] = constants_SEQ_LONG_INOUT_IN[i];
 
-  retn = test_ArrayServer_opLongArray(objref,inArg,inoutArg,outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_ArrayServer_opLongArray (objref, inArg, inoutArg, outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for(i=0;i<constants_SEQLEN;i++)
-	g_assert(inArg[i]==constants_SEQ_LONG_IN[i]);
-  for(i=0;i<constants_SEQLEN;i++)
-	g_assert(inoutArg[i]==constants_SEQ_LONG_INOUT_OUT[i]);
-  for(i=0;i<constants_SEQLEN;i++)
-	g_assert(outArg[i]==constants_SEQ_LONG_OUT[i]);
-  for(i=0;i<constants_SEQLEN;i++)
-	g_assert(retn[i]==constants_SEQ_LONG_RETN[i]);
+  for (i=0;i<constants_SEQLEN;i++)
+	g_assert (inArg[i]==constants_SEQ_LONG_IN[i]);
+  for (i=0;i<constants_SEQLEN;i++)
+	g_assert (inoutArg[i]==constants_SEQ_LONG_INOUT_OUT[i]);
+  for (i=0;i<constants_SEQLEN;i++)
+	g_assert (outArg[i]==constants_SEQ_LONG_OUT[i]);
+  for (i=0;i<constants_SEQLEN;i++)
+	g_assert (retn[i]==constants_SEQ_LONG_RETN[i]);
 
-  CORBA_free(retn);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_free (retn);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testVariableLengthArray(test_TestFactory factory, 
+void testVariableLengthArray (test_TestFactory factory, 
 			     CORBA_Environment *ev)
 {
   test_ArrayServer objref;
   test_StrArray inArg, inoutArg;
   test_StrArray_slice *outArg, *retn;
   test_StrArrayMultiDimensional_slice *multidim;
-  int i,n0,n1,n2;
+  int i, n0, n1, n2;
   
-  d_print("Testing arrays with variable length members...\n");
-  objref = test_TestFactory_getArrayServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing arrays with variable length members...\n");
+  objref = test_TestFactory_getArrayServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for(i=0;i<constants_SEQLEN;i++)
-	inArg[i] = CORBA_string_dup(constants_SEQ_STRING_IN[i]);
+  for (i=0;i<constants_SEQLEN;i++)
+	inArg[i] = CORBA_string_dup (constants_SEQ_STRING_IN[i]);
 
-  for(i=0;i<constants_SEQLEN;i++)
-	inoutArg[i] = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[i]);
+  for (i=0;i<constants_SEQLEN;i++)
+	inoutArg[i] = CORBA_string_dup (constants_SEQ_STRING_INOUT_IN[i]);
 
-  retn = test_ArrayServer_opStrArray(objref,inArg,inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_ArrayServer_opStrArray (objref, inArg, inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<constants_SEQLEN;i++)
 	CORBA_free (inArg[i]); 
 
-  for(i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<constants_SEQLEN;i++)
         CORBA_free (inoutArg[i]);
 
-  CORBA_free(outArg);
-  CORBA_free(retn);
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_free (outArg);
+  CORBA_free (retn);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   
-  multidim = test_StrArrayMultiDimensional__alloc();
+  multidim = test_StrArrayMultiDimensional__alloc ();
   for (n0 = 0; n0 < 2; n0++) {
 	for (n1 = 0; n1 < 3; n1++) {
 	  for (n2 = 0; n2 < 5; n2++) {
-		multidim[n0][n1][n2] = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[0]);
+		multidim[n0][n1][n2] = CORBA_string_dup (constants_SEQ_STRING_INOUT_IN[0]);
 	  }
 	}
   }
-  CORBA_free(multidim);
+  CORBA_free (multidim);
 
 }
 
@@ -663,103 +667,103 @@ void testAnyLong (test_TestFactory factory,
   CORBA_any inArg, inoutArg, *outArg, *retn;
   CORBA_long tmp, tmp1;
 
-  d_print("Testing any with longs...\n");
-  objref = test_TestFactory_getAnyServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing any with longs...\n");
+  objref = test_TestFactory_getAnyServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   tmp = constants_LONG_IN;
   inArg._type = (CORBA_TypeCode)TC_CORBA_long;
   inArg._value = &tmp;
-  CORBA_any_set_release(&inArg, CORBA_FALSE);
+  CORBA_any_set_release (&inArg, CORBA_FALSE);
 
   inoutArg._type = (CORBA_TypeCode)TC_CORBA_long;
   tmp1 = constants_LONG_INOUT_IN;
   inoutArg._value = &tmp1;
-  CORBA_any_set_release(&inoutArg, CORBA_FALSE);
+  CORBA_any_set_release (&inoutArg, CORBA_FALSE);
     
-  retn = test_AnyServer_opAnyLong(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_AnyServer_opAnyLong (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  g_assert( CORBA_TypeCode_equal(inArg._type,TC_CORBA_long,ev) );
-  g_assert(*(CORBA_long*)inArg._value == constants_LONG_IN);
+  g_assert ( CORBA_TypeCode_equal (inArg._type, TC_CORBA_long, ev) );
+  g_assert (* (CORBA_long*)inArg._value == constants_LONG_IN);
 
-  g_assert( CORBA_TypeCode_equal(inoutArg._type,TC_CORBA_long,ev) );
-  g_assert(*(CORBA_long*)inoutArg._value == constants_LONG_INOUT_OUT);
+  g_assert ( CORBA_TypeCode_equal (inoutArg._type, TC_CORBA_long, ev) );
+  g_assert (* (CORBA_long*)inoutArg._value == constants_LONG_INOUT_OUT);
 
-  g_assert( CORBA_TypeCode_equal(outArg->_type,TC_CORBA_long,ev) );
-  g_assert(*(CORBA_long*)outArg->_value == constants_LONG_OUT);
+  g_assert ( CORBA_TypeCode_equal (outArg->_type, TC_CORBA_long, ev) );
+  g_assert (* (CORBA_long*)outArg->_value == constants_LONG_OUT);
 
-  g_assert( CORBA_TypeCode_equal(retn->_type,TC_CORBA_long,ev) );
-  g_assert(*(CORBA_long*)retn->_value == constants_LONG_RETN);
+  g_assert ( CORBA_TypeCode_equal (retn->_type, TC_CORBA_long, ev) );
+  g_assert (* (CORBA_long*)retn->_value == constants_LONG_RETN);
 
-  if(CORBA_any_get_release(&inArg)){
-	CORBA_free(inArg._value);
-	CORBA_Object_release((CORBA_Object)inArg._type, ev);
+  if (CORBA_any_get_release (&inArg)){
+	CORBA_free (inArg._value);
+	CORBA_Object_release ((CORBA_Object)inArg._type, ev);
   }
 
-  if(CORBA_any_get_release(&inoutArg)){
-	CORBA_free(inoutArg._value);
-	CORBA_Object_release((CORBA_Object)inoutArg._type, ev);
+  if (CORBA_any_get_release (&inoutArg)){
+	CORBA_free (inoutArg._value);
+	CORBA_Object_release ((CORBA_Object)inoutArg._type, ev);
   }
 
-  CORBA_free(outArg);
-  CORBA_free(retn);
+  CORBA_free (outArg);
+  CORBA_free (retn);
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testAnyString(test_TestFactory factory, 
+void testAnyString (test_TestFactory factory, 
 		   CORBA_Environment *ev)
 {
   test_AnyServer objref;
   CORBA_any inArg, inoutArg, *outArg, *retn;
 
-  d_print("Testing any with strings...\n");
-  objref = test_TestFactory_getAnyServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing any with strings...\n");
+  objref = test_TestFactory_getAnyServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   inArg._type = (CORBA_TypeCode)TC_CORBA_string;
   inArg._value = &constants_STRING_IN;
-  CORBA_any_set_release(&inArg, CORBA_FALSE);
+  CORBA_any_set_release (&inArg, CORBA_FALSE);
 
   inoutArg._type = (CORBA_TypeCode)TC_CORBA_string;
   inoutArg._value = &constants_STRING_INOUT_IN;
-  CORBA_any_set_release(&inoutArg, CORBA_FALSE);
+  CORBA_any_set_release (&inoutArg, CORBA_FALSE);
   
-  retn = test_AnyServer_opAnyString(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_AnyServer_opAnyString (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  g_assert(CORBA_TypeCode_equal(inArg._type,TC_CORBA_string,ev));
-  g_assert(strcmp(*(CORBA_char **)inArg._value,constants_STRING_IN) == 0);
+  g_assert (CORBA_TypeCode_equal (inArg._type, TC_CORBA_string, ev));
+  g_assert (strcmp (* (CORBA_char **)inArg._value, constants_STRING_IN) == 0);
 
-  g_assert(CORBA_TypeCode_equal(inoutArg._type,TC_CORBA_string,ev) );
-  g_assert(strcmp(*(CORBA_char **)inoutArg._value,constants_STRING_INOUT_OUT) == 0);
+  g_assert (CORBA_TypeCode_equal (inoutArg._type, TC_CORBA_string, ev) );
+  g_assert (strcmp (* (CORBA_char **)inoutArg._value, constants_STRING_INOUT_OUT) == 0);
 
-  g_assert(CORBA_TypeCode_equal(outArg->_type,TC_CORBA_string,ev) );
-  g_assert(strcmp(*(CORBA_char **)outArg->_value,constants_STRING_OUT) == 0);
+  g_assert (CORBA_TypeCode_equal (outArg->_type, TC_CORBA_string, ev) );
+  g_assert (strcmp (* (CORBA_char **)outArg->_value, constants_STRING_OUT) == 0);
 
-  g_assert(CORBA_TypeCode_equal(retn->_type,TC_CORBA_string,ev) );
-  g_assert(strcmp(*(CORBA_char **)retn->_value,constants_STRING_RETN) == 0);
+  g_assert (CORBA_TypeCode_equal (retn->_type, TC_CORBA_string, ev) );
+  g_assert (strcmp (* (CORBA_char **)retn->_value, constants_STRING_RETN) == 0);
 
-  if(CORBA_any_get_release(&inArg)){
-	CORBA_free(inArg._value);
-	CORBA_Object_release((CORBA_Object)inArg._type, ev);
+  if (CORBA_any_get_release (&inArg)){
+	CORBA_free (inArg._value);
+	CORBA_Object_release ((CORBA_Object)inArg._type, ev);
   }
 
-  if(CORBA_any_get_release(&inoutArg)){
-	CORBA_free(inoutArg._value);
-	CORBA_Object_release((CORBA_Object)inoutArg._type, ev);
+  if (CORBA_any_get_release (&inoutArg)){
+	CORBA_free (inoutArg._value);
+	CORBA_Object_release ((CORBA_Object)inoutArg._type, ev);
   }
 
-  CORBA_free(outArg);
-  CORBA_free(retn);
+  CORBA_free (outArg);
+  CORBA_free (retn);
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testAnyStruct(test_TestFactory factory, 
+void testAnyStruct (test_TestFactory factory, 
 		   CORBA_Environment *ev)
 {
   test_AnyServer objref;
@@ -767,60 +771,60 @@ void testAnyStruct(test_TestFactory factory,
   test_VariableLengthStruct inArgStruct; 
   test_VariableLengthStruct * inoutArgStruct;
 
-  d_print("Testing any with structs...\n");
+  d_print ("Testing any with structs...\n");
 
-  objref = test_TestFactory_getAnyServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  objref = test_TestFactory_getAnyServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  inoutArgStruct = test_VariableLengthStruct__alloc();
-  inArgStruct.a=(CORBA_char*)constants_STRING_IN; /* const cast */
+  inoutArgStruct = test_VariableLengthStruct__alloc ();
+  inArgStruct.a= (CORBA_char*)constants_STRING_IN; /* const cast */
   inArg._type = (CORBA_TypeCode)TC_test_VariableLengthStruct;
   inArg._value = &inArgStruct;
-  CORBA_any_set_release(&inArg, CORBA_FALSE);
+  CORBA_any_set_release (&inArg, CORBA_FALSE);
 
 
-  inoutArgStruct->a = CORBA_string_dup(constants_STRING_INOUT_IN);
+  inoutArgStruct->a = CORBA_string_dup (constants_STRING_INOUT_IN);
   inoutArg._type = (CORBA_TypeCode)TC_test_VariableLengthStruct;
   inoutArg._value = inoutArgStruct;
-  CORBA_any_set_release(&inoutArg, CORBA_TRUE);
+  CORBA_any_set_release (&inoutArg, CORBA_TRUE);
 
-  retn = test_AnyServer_opAnyStruct(objref,&inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_AnyServer_opAnyStruct (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   
-  g_assert(CORBA_TypeCode_equal(inArg._type,TC_test_VariableLengthStruct,ev));
-  g_assert(strcmp((*(test_VariableLengthStruct*)inArg._value).a,constants_STRING_IN) == 0);
+  g_assert (CORBA_TypeCode_equal (inArg._type, TC_test_VariableLengthStruct, ev));
+  g_assert (strcmp ((* (test_VariableLengthStruct*)inArg._value).a, constants_STRING_IN) == 0);
 
-  g_assert(CORBA_TypeCode_equal(inoutArg._type,TC_test_VariableLengthStruct,ev) );
-  g_assert(strcmp((*(test_VariableLengthStruct*)inoutArg._value).a,constants_STRING_INOUT_OUT) == 0);
+  g_assert (CORBA_TypeCode_equal (inoutArg._type, TC_test_VariableLengthStruct, ev) );
+  g_assert (strcmp ((* (test_VariableLengthStruct*)inoutArg._value).a, constants_STRING_INOUT_OUT) == 0);
 
-  g_assert(CORBA_TypeCode_equal(outArg->_type,TC_test_VariableLengthStruct,ev) );
-  g_assert(strcmp((*(test_VariableLengthStruct*)outArg->_value).a,constants_STRING_OUT) == 0);
+  g_assert (CORBA_TypeCode_equal (outArg->_type, TC_test_VariableLengthStruct, ev) );
+  g_assert (strcmp ((* (test_VariableLengthStruct*)outArg->_value).a, constants_STRING_OUT) == 0);
 
-  g_assert(CORBA_TypeCode_equal(retn->_type,TC_test_VariableLengthStruct,ev) );
-  g_assert(strcmp((*(test_VariableLengthStruct*)retn->_value).a,constants_STRING_RETN) == 0);
+  g_assert (CORBA_TypeCode_equal (retn->_type, TC_test_VariableLengthStruct, ev) );
+  g_assert (strcmp ((* (test_VariableLengthStruct*)retn->_value).a, constants_STRING_RETN) == 0);
 
 
-  if(CORBA_any_get_release(&inArg)){
+  if (CORBA_any_get_release (&inArg)){
 	/* This shouldn't be called */
-	CORBA_free(inArg._value);
-	CORBA_Object_release((CORBA_Object)inArg._type, ev);
+	CORBA_free (inArg._value);
+	CORBA_Object_release ((CORBA_Object)inArg._type, ev);
   }
 
-  if(CORBA_any_get_release(&inoutArg)){
-	CORBA_free(inoutArg._value);
-	CORBA_Object_release((CORBA_Object)inoutArg._type, ev);
+  if (CORBA_any_get_release (&inoutArg)){
+	CORBA_free (inoutArg._value);
+	CORBA_Object_release ((CORBA_Object)inoutArg._type, ev);
   }
 
-  CORBA_free(outArg);
-  CORBA_free(retn);
+  CORBA_free (outArg);
+  CORBA_free (retn);
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 }
 
-void testSequenceOfAny(test_TestFactory factory, 
+void testSequenceOfAny (test_TestFactory factory, 
 		       CORBA_Environment *ev)
 {
   /* this test just checks the memory management for seq of any */
@@ -828,111 +832,111 @@ void testSequenceOfAny(test_TestFactory factory,
   test_AnySeq anyseq;
   int i;
 
-  d_print("Testing Sequence of Any...\n");
+  d_print ("Testing Sequence of Any...\n");
 
-  anyseq._buffer  = CORBA_sequence_CORBA_any_allocbuf(2);
+  anyseq._buffer  = CORBA_sequence_CORBA_any_allocbuf (2);
   anyseq._length  = 2;
-  CORBA_sequence_set_release(&anyseq, CORBA_TRUE);
+  CORBA_sequence_set_release (&anyseq, CORBA_TRUE);
   
   for (i=0;i<anyseq._length;i++){
 	anyseq._buffer[i]._type = (CORBA_TypeCode)TC_CORBA_string;
 	anyseq._buffer[i]._value = &constants_STRING_IN;
-	CORBA_any_set_release(&anyseq._buffer[i], CORBA_FALSE);
+	CORBA_any_set_release (&anyseq._buffer[i], CORBA_FALSE);
   }
   
-  CORBA_free(anyseq._buffer);
+  CORBA_free (anyseq._buffer);
 }
 
 /**
    This test tests memory management of exceptions in anys
  */
-void testAnyException(test_TestFactory factory, 
+void testAnyException (test_TestFactory factory, 
 		      CORBA_Environment *ev)
 {
   CORBA_any *inArg; 
   test_TestException * testex;
 
-  inArg = CORBA_any__alloc();
-  testex = test_TestException__alloc();  
+  inArg = CORBA_any__alloc ();
+  testex = test_TestException__alloc ();  
   inArg->_type = (CORBA_TypeCode) TC_test_TestException;
   inArg->_value = testex;
-  CORBA_any_set_release(inArg,CORBA_TRUE);
+  CORBA_any_set_release (inArg, CORBA_TRUE);
 
-  CORBA_free(inArg);
+  CORBA_free (inArg);
 }
 
-void testTypeCode(test_TestFactory factory, 
+void testTypeCode (test_TestFactory factory, 
 		  CORBA_Environment *ev)
 {
   test_AnyServer objref;
   CORBA_TypeCode inArg, inoutArg, outArg, retn;
 
-  d_print("Testing TypeCodes...\n");
-  objref = test_TestFactory_getAnyServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  d_print ("Testing TypeCodes...\n");
+  objref = test_TestFactory_getAnyServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   inArg = TC_test_ArrayUnion;
   inoutArg = TC_test_AnyServer;
   
-  retn = test_AnyServer_opTypeCode(objref,inArg,&inoutArg,&outArg,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  retn = test_AnyServer_opTypeCode (objref, inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  g_assert(CORBA_TypeCode_equal(inArg,TC_test_ArrayUnion,ev) );
-  g_assert(CORBA_TypeCode_equal(inoutArg,TC_test_TestException,ev) );  
-  g_assert(CORBA_TypeCode_equal(outArg,TC_test_AnEnum,ev) );  
-  g_assert(CORBA_TypeCode_equal(retn,TC_test_VariableLengthStruct,ev) );
+  g_assert (CORBA_TypeCode_equal (inArg, TC_test_ArrayUnion, ev) );
+  g_assert (CORBA_TypeCode_equal (inoutArg, TC_test_TestException, ev) );  
+  g_assert (CORBA_TypeCode_equal (outArg, TC_test_AnEnum, ev) );  
+  g_assert (CORBA_TypeCode_equal (retn, TC_test_VariableLengthStruct, ev) );
 
-  CORBA_Object_release((CORBA_Object)inArg, ev);
-  CORBA_Object_release((CORBA_Object)inoutArg, ev);
-  CORBA_Object_release((CORBA_Object)outArg, ev);
-  CORBA_Object_release((CORBA_Object)retn, ev);
+  CORBA_Object_release ((CORBA_Object)inArg, ev);
+  CORBA_Object_release ((CORBA_Object)inoutArg, ev);
+  CORBA_Object_release ((CORBA_Object)outArg, ev);
+  CORBA_Object_release ((CORBA_Object)retn, ev);
 
-  CORBA_Object_release(objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testContext(test_TestFactory factory, 
+void testContext (test_TestFactory factory, 
 		 CORBA_Environment *ev)
 {
   test_ContextServer objref;
   CORBA_Object inArg, inoutArg, outArg, retn;
   CORBA_Context ctx;
 
-  d_print("Testing Contexts...\n");
+  d_print ("Testing Contexts...\n");
 
-  objref = test_TestFactory_getContextServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  objref = test_TestFactory_getContextServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   inArg = inoutArg = outArg = retn = CORBA_OBJECT_NIL;
 
   CORBA_Context_create_child (CORBA_OBJECT_NIL, "Whatever", &ctx, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   CORBA_Context_set_one_value (ctx, "foo", "foo1", ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   CORBA_Context_set_one_value (ctx, "foo", "foo2", ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   CORBA_Context_set_one_value (ctx, "bar", "baaaa", ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   retn = test_ContextServer_opWithContext (
 	  objref, inArg, &inoutArg, &outArg, ctx, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   CORBA_Object_release (retn, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   CORBA_Object_release (inArg, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   CORBA_Object_release (inoutArg, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
   CORBA_Object_release (outArg, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  CORBA_Object_release ((CORBA_Object)ctx, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release ( (CORBA_Object)ctx, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   CORBA_Object_release (objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 void
@@ -954,11 +958,11 @@ testMisc (test_TestFactory   factory,
 	if (!factory->adaptor_obj) {
 		test_BasicServer objref;
 
-		objref = test_TestFactory_getBasicServer(factory,ev);
-		g_assert(ev->_major == CORBA_NO_EXCEPTION);
-		g_assert(objref != CORBA_OBJECT_NIL);
-		g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
-		g_assert(ev->_major == CORBA_NO_EXCEPTION);
+		objref = test_TestFactory_getBasicServer (factory, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		g_assert (objref != CORBA_OBJECT_NIL);
+		g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 		test_BasicServer_noImplement (objref, ev);
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
@@ -970,12 +974,12 @@ testMisc (test_TestFactory   factory,
 	}
 		
 	/* Check we are building full type data */
-	if (strcmp (TC_test_ObjectStruct->subtypes [0]->repo_id,
+	if (strcmp (TC_test_ObjectStruct->subtypes [0]->repo_id, 
 		    "IDL:orbit/test/DerivedServer:1.0"))
 		g_warning ("Martin's bug needs fixing");
 	
 	/* Check a daft one seen in CORBA_exception_free */
-	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION, 
 			     ex_test_SimpleException, NULL);
 	CORBA_exception_free (ev);
 	g_assert (ev->_id == NULL);
@@ -1001,9 +1005,9 @@ testMisc (test_TestFactory   factory,
 static int done = 0;
 
 static void
-test_BasicServer_opExceptionA_cb (CORBA_Object          object,
-				  ORBit_IMethod        *m_data,
-				  ORBitAsyncQueueEntry *aqe,
+test_BasicServer_opExceptionA_cb (CORBA_Object          object, 
+				  ORBit_IMethod        *m_data, 
+				  ORBitAsyncQueueEntry *aqe, 
 				  gpointer              user_data, 
 				  CORBA_Environment    *ev)
 {
@@ -1015,10 +1019,10 @@ test_BasicServer_opExceptionA_cb (CORBA_Object          object,
 	ORBit_small_demarshal_async (aqe, NULL, NULL, ev);
 
 	g_assert (ev->_major == CORBA_USER_EXCEPTION);
-	g_assert (strcmp (CORBA_exception_id (ev),ex_test_TestException) == 0);
+	g_assert (strcmp (CORBA_exception_id (ev), ex_test_TestException) == 0);
 
 	ex = CORBA_exception_value (ev);
-	g_assert (strcmp (ex->reason,constants_STRING_IN) == 0);
+	g_assert (strcmp (ex->reason, constants_STRING_IN) == 0);
 	g_assert (ex->number == constants_LONG_IN);
 	g_assert (ex->aseq._length == 1);
 	g_assert (ex->aseq._buffer[0] == constants_LONG_IN);
@@ -1028,7 +1032,7 @@ test_BasicServer_opExceptionA_cb (CORBA_Object          object,
 
 
 static void
-test_BasicServer_opExceptionA (CORBA_Object       obj,
+test_BasicServer_opExceptionA (CORBA_Object       obj, 
 			       CORBA_Environment *ev)
 {
 	ORBit_IMethod *m_data;
@@ -1038,14 +1042,14 @@ test_BasicServer_opExceptionA (CORBA_Object       obj,
 	g_assert (!strcmp (m_data->name, "opException"));
 
 	ORBit_small_invoke_async (
-		obj, m_data, test_BasicServer_opExceptionA_cb,
+		obj, m_data, test_BasicServer_opExceptionA_cb, 
 		NULL, NULL, NULL, ev);
 }
 
 static void
-test_BasicServer_opStringA_cb (CORBA_Object          object,
-			       ORBit_IMethod        *m_data,
-			       ORBitAsyncQueueEntry *aqe,
+test_BasicServer_opStringA_cb (CORBA_Object          object, 
+			       ORBit_IMethod        *m_data, 
+			       ORBitAsyncQueueEntry *aqe, 
 			       gpointer              user_data, 
 			       CORBA_Environment    *ev)
 {
@@ -1059,7 +1063,7 @@ test_BasicServer_opStringA_cb (CORBA_Object          object,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	ORBit_small_demarshal_async (aqe, ret, args, ev);
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
   
 	g_assert (!strcmp (inout_str, constants_STRING_INOUT_OUT));
 	g_assert (!strcmp (out_str, constants_STRING_OUT));
@@ -1069,9 +1073,9 @@ test_BasicServer_opStringA_cb (CORBA_Object          object,
 }
 
 static void
-test_BasicServer_opStringA (CORBA_Object       obj,
-			    const CORBA_char  *in_str,
-			    const CORBA_char  *inout_str,
+test_BasicServer_opStringA (CORBA_Object       obj, 
+			    const CORBA_char  *in_str, 
+			    const CORBA_char  *inout_str, 
 			    CORBA_Environment *ev)
 {
 	gpointer args[] = { &in_str, &inout_str, NULL };
@@ -1082,7 +1086,7 @@ test_BasicServer_opStringA (CORBA_Object       obj,
 	g_assert (!strcmp (m_data->name, "opString"));
 
 	ORBit_small_invoke_async (
-		obj, m_data, test_BasicServer_opStringA_cb,
+		obj, m_data, test_BasicServer_opStringA_cb, 
 		NULL, args, NULL, ev);
 }
 
@@ -1093,35 +1097,42 @@ testAsync (test_TestFactory   factory,
 {
 	test_BasicServer objref;
 
-	d_print("Testing Async invocations ...\n");
-	objref = test_TestFactory_getBasicServer (factory,ev);
+	d_print ("Testing Async invocations ...\n");
+	objref = test_TestFactory_getBasicServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	if (in_proc) {
+		g_assert (objref->profile_list == NULL);
+		g_assert (ORBit_object_get_connection (objref) == NULL);
+	}
 			      
 	done = 0;
-	test_BasicServer_opExceptionA (objref, ev);
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	test_BasicServer_opStringA (
+		objref, constants_STRING_IN, 
+		constants_STRING_INOUT_IN, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* While waiting do some normal methods */
+	testString (factory, ev);
 
 	while (!done)
 		linc_main_iteration (TRUE);
 
 	done = 0;
-	test_BasicServer_opStringA (
-		objref, constants_STRING_IN,
-		constants_STRING_INOUT_IN, ev);
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	test_BasicServer_opExceptionA (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	while (!done)
 		linc_main_iteration (TRUE);
 
-	CORBA_Object_release(objref, ev);  
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, ev);  
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 
 static void
-run_tests (test_TestFactory   factory,
-	   CORBA_Environment *ev,
-	   gboolean           in_proc)
+run_tests (test_TestFactory   factory, 
+	   CORBA_Environment *ev)
 {
 	int i;
 
@@ -1191,27 +1202,34 @@ main (int argc, char *argv [])
 	free (malloc (8)); /* -lefence */
 
 	/* In Proc ... */
+	in_proc = TRUE;
+
 #ifndef TIMING_RUN
+	fprintf (stderr, "\n --- In proc ---\n\n\n");
 	{
 		factory = get_server (orb, &ev);
-		run_tests (factory, &ev, FALSE);
+		g_assert (factory->profile_list == NULL);
+		g_assert (ORBit_object_get_connection (factory) == NULL);
+		run_tests (factory, &ev);
 		CORBA_Object_release (factory, &ev);
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 		factory = CORBA_OBJECT_NIL;
 	}
-	fprintf (stderr, "\n\n\n --- Out of proc ---\n\n\n\n");
+	fprintf (stderr, "\n\n --- Out of proc ---\n\n\n");
 #endif
 
 	/* Out of Proc */
+	in_proc = FALSE;
+
 	{ /* read the ior from iorfile, and swizzle to an objref*/
 		int   size;
 		char  ior [1024];
-		FILE *infile = fopen ("iorfile","rb");
+		FILE *infile = fopen ("iorfile", "rb");
 
 		if (!infile)
 			g_error ("Start the server before running the client");
 
-		size = fread (ior,1,1024,infile);
+		size = fread (ior, 1, 1024, infile);
 		fclose (infile);
 		ior [size] = '\0';   /* insure that string is terminated correctly */
 
@@ -1223,7 +1241,7 @@ main (int argc, char *argv [])
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 	}
 
-	run_tests (factory, &ev, FALSE);
+	run_tests (factory, &ev);
 
 #ifdef PROFILING
 	sleep (1000);
@@ -1241,3 +1259,4 @@ main (int argc, char *argv [])
 
 	return 0;
 }
+

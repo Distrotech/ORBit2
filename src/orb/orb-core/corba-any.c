@@ -887,22 +887,22 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
 }
 
 gpointer
-ORBit_copy_value(gconstpointer value, CORBA_TypeCode tc)
+ORBit_copy_value (gconstpointer value, CORBA_TypeCode tc)
 {
-  gpointer retval, newval;
+	gpointer retval, newval;
 
-  retval = newval = ORBit_alloc_tcval(tc, 1);
-  ORBit_copy_value_core(&value, &newval, tc);
+	retval = newval = ORBit_alloc_tcval (tc, 1);
+	ORBit_copy_value_core (&value, &newval, tc);
 
-  return retval;
+	return retval;
 }
 
 void
-CORBA_any__copy(CORBA_any *out, const CORBA_any *in)
+CORBA_any__copy (CORBA_any *out, const CORBA_any *in)
 {
-  out->_type = ORBit_RootObject_duplicate(in->_type);
-  out->_value = ORBit_copy_value(in->_value, in->_type);
-  out->_release = CORBA_TRUE;
+	out->_type = ORBit_RootObject_duplicate (in->_type);
+	out->_value = ORBit_copy_value (in->_value, in->_type);
+	out->_release = CORBA_TRUE;
 }
 
 #define ALIGN_COMPARE(a,b,tk,type,align)	\

@@ -8,8 +8,9 @@ CORBA_TypeCode ORBit_get_union_tag(CORBA_TypeCode union_tc, gconstpointer *val,
 size_t ORBit_gather_alloc_info(CORBA_TypeCode tc);
 void ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc);
 
-void ORBit_register_objref( CORBA_Object obj );
-void ORBit_start_servers( CORBA_ORB orb );
+void         ORBit_register_objref  (CORBA_Object obj);
+CORBA_Object ORBit_objref_get_proxy (CORBA_Object obj);
+void         ORBit_start_servers    (CORBA_ORB    orb);
 
 /*
  * profile methods.
@@ -18,7 +19,8 @@ void             IOP_generate_profiles    (CORBA_Object     obj);
 void             IOP_register_profiles    (CORBA_Object     obj,
 					   GSList          *profiles);
 void             IOP_delete_profiles      (GSList         **profiles);
-ORBit_ObjectKey* IOP_profiles_sync_objkey (GSList          *profiles);
+ORBit_ObjectKey *IOP_profiles_sync_objkey (GSList          *profiles);
+ORBit_ObjectKey *IOP_ObjectKey_copy       (ORBit_ObjectKey *src);
 gboolean         IOP_ObjectKey_equal      (ORBit_ObjectKey *a,
 					   ORBit_ObjectKey *b);
 gboolean         IOP_profile_get_info     (CORBA_Object     obj,
@@ -40,13 +42,14 @@ gboolean         IOP_profile_equal        (CORBA_Object    obj1,
 void             IOP_profile_marshal      (CORBA_Object    obj,
 					   GIOPSendBuffer *buf,
 					   gpointer       *p);
+GSList          *IOP_profiles_copy        (GSList         *profile_list);
 
 
-gboolean ORBit_demarshal_IOR( CORBA_ORB orb, GIOPRecvBuffer *buf,
+gboolean ORBit_demarshal_IOR (CORBA_ORB orb, GIOPRecvBuffer *buf,
 			      char **ret_type_id, GSList **ret_profiles);
 
 char   **ORBit_get_typelib_paths (void);
 
-gboolean ORBit_proto_use (const char *name);
+gboolean ORBit_proto_use         (const char *name);
 
 #endif
