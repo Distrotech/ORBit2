@@ -27,6 +27,7 @@
 #include "constants.h"
 #include "orb-core/orb-core-private.h"
 #include "orbit-imodule.h"
+#include "orbit/orbit.h"
 
 #define NUM_RUNS 1
 
