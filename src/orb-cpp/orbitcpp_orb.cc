@@ -49,6 +49,7 @@ CORBA::ORB_ptr CORBA::ORB_init(int& argc, char** argv, const char* orb_identifie
 	CEnvironment ev;
 	CORBA_ORB o = CORBA_ORB_init(&argc, argv, const_cast<char*>(orb_identifier), ev);
 	ev.propagate_sysex();
+
 	return new ORB(o);
 }
 

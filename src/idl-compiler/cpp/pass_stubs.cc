@@ -383,7 +383,7 @@ IDLPassStubs::doInterface(IDLInterface &iface) {
   //Constructor implemention:
   m_module <<
   IDL_IMPL_NS_ID << "::" << IDL_IMPL_STUB_NS_ID << iface.getQualifiedCPPIdentifier() << "::" << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject)" << endl
-	<< ": CORBA::Object(cobject)" << endl
+	<< ": " << iface.m_bases[0]->getQualifiedCPPStub() << "(cobject)" << endl
 	<< "{}" << endl
   << endl;
 
