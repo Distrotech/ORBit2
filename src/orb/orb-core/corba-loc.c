@@ -400,6 +400,26 @@ as_corbaloc (GSList *profile_list)
 	return valid;
 }
 
+static IOP_TAG_SSL_SEC_TRANS_info*
+get_ssl_component (GSList *components)
+{
+	GSList          *cur    = NULL;
+	
+	for (cur = components; cur; cur = cur->next) {
+		IOP_Component_info *comp = cur->data;
+		
+		switch (comp->component_type) {
+		case IOP_TAG_SSL_SEC_TRANS:
+			return (IOP_TAG_SSL_SEC_TRANS_info*) comp;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return NULL;
+}
+	
 CORBA_char*
 ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 {
@@ -424,22 +444,33 @@ ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 		
 		switch (info->profile_type) {
 		case IOP_TAG_INTERNET_IOP: { 
-			IOP_TAG_INTERNET_IOP_info  *iiop = cur->data;
-			gint i = 0;
+			IOP_TAG_INTERNET_IOP_info  *iiop     = cur->data;
+			IOP_TAG_SSL_SEC_TRANS_info *ssl_info = NULL;
+			gint       i = 0;
 			
 			if (!first_profile)
 				g_string_append_printf (str, ",");
 			first_profile = FALSE;
 
-			g_string_append_printf (str, "iiop:%s:%d/",
-						      iiop->host, iiop->port);
+			if (!(ssl_info = get_ssl_component (iiop->components))) {
+				g_assert (ssl_info->port != 0);
+
+				g_string_append_printf (str, "ssliop:%s:%d/",
+							iiop->host, 
+							ssl_info->port);
+
+			} else {
+				g_string_append_printf (str, "iiop:%s:%d/",
+							iiop->host, 
+							iiop->port);
+			}
 
 			/* url encoding */ 
 			for (i = 0; i < object_key->_length; i++)
 				g_string_append_printf (str, "%%%02x", 
-							      object_key->_buffer [i]);
-			break;
-		}
+							object_key->_buffer [i]);
+		}	
+
 		case IOP_TAG_ORBIT_SPECIFIC: {
 			IOP_TAG_ORBIT_SPECIFIC_info *os = cur->data;
 			gint i = 0;

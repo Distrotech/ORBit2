@@ -25,17 +25,6 @@ g_CORBA_Object_hash (gconstpointer key)
 {
 	/* type_id is not reliable: cf. corbaloc */
 
-	/*	guint        retval;
-		CORBA_Object obj = (gpointer) key;
-		
-		retval = obj->type_qid;
-		
-		g_assert (obj->object_key != NULL);
-		retval ^= IOP_ObjectKey_hash (obj->object_key);
-		
-		return retval; 
-	*/
-	
 	CORBA_Object obj = (gpointer) key;
 
 	g_assert (obj->object_key != NULL);
