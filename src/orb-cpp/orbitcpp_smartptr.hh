@@ -59,7 +59,7 @@ namespace _orbitcpp {
 	class ObjectPtr_var : public Dummy_var {
 	private:
 		O_ptr	m_objectref;
-  
+
 	public:
 		ObjectPtr_var()
 			: m_objectref(O::_nil()) {

@@ -40,11 +40,16 @@ using namespace _orbitcpp;
 
 // public functions -----------------------------------------------------------
 
-CORBA::ORB_ptr CORBA::ORB_init(int& argc, char** argv,const char* orb_identifier) {
+CORBA::ORB::ORB(CORBA_ORB cobject)
+{
+  m_target = cobject;
+}
+
+CORBA::ORB_ptr CORBA::ORB_init(int& argc, char** argv, const char* orb_identifier) {
 	CEnvironment ev;
-	CORBA_ORB o = CORBA_ORB_init(&argc, argv,const_cast<char*>(orb_identifier),ev);
+	CORBA_ORB o = CORBA_ORB_init(&argc, argv, const_cast<char*>(orb_identifier), ev);
 	ev.propagate_sysex();
-	return reinterpret_cast<ORB_ptr>(o);
+	return new ORB(o);
 }
 
 
@@ -60,12 +65,13 @@ CORBA::release(ORB_ptr orb) {
 
 // ORB ------------------------------------------------------------------------
 CORBA::Object_ptr
-CORBA::ORB::string_to_object(const char* str) {
+CORBA::ORB::string_to_object(const char* str)
+{
 	CEnvironment ev;
-	CORBA_Object o =
-	    CORBA_ORB_string_to_object(m_target, const_cast<char*>(str), ev);
+	CORBA_Object o = CORBA_ORB_string_to_object(m_target, const_cast<char*>(str), ev);
 	ev.propagate_sysex();
-	return reinterpret_cast<Object_ptr>(o);
+
+	return new CORBA::Object(o);
 }
 
 
@@ -85,11 +91,10 @@ CORBA::ORB::object_to_string(Object_ptr obj) {
 CORBA::Object_ptr
 CORBA::ORB::resolve_initial_references(const char* str) {
 	CEnvironment ev;
-	CORBA_Object obj =
-		CORBA_ORB_resolve_initial_references(m_target, const_cast<char*>(str), ev);
+	CORBA_Object obj = CORBA_ORB_resolve_initial_references(m_target, const_cast<char*>(str), ev);
 	ev.propagate_sysex();
 
-	return reinterpret_cast<CORBA::Object_ptr>(obj);
+	return new CORBA::Object(obj);
 }
 
 

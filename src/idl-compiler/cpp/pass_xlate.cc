@@ -547,12 +547,15 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 	m_header << endl;
 
 	// check the MI situation and write a smartptr if required.
-    if (iface.requiresSmartPtr()) {
+	if (iface.requiresSmartPtr())
+	{
 		doInterfacePtrClass(iface);
 		m_header
 		<< indent << "typedef "IDL_IMPL_NS "::ObjectSmartPtr_var<" << ifname << ',' << _ptrname << "> "
 		<< ifname << "_var;" << endl;
-	} else {
+	}
+	else
+	{
 		m_header
 		<< indent << "typedef " << iface.getQualifiedCPPStub() << " *" << _ptrname << ';' << endl;
 		m_header
@@ -669,7 +672,7 @@ IDLPassXlate::doInterfacePtrClass(IDLInterface &iface) {
 	m_header
 		<< --indent << "}" << endl;
 	m_header
-		<< indent << "operator CORBA::Object *() {return reinterpret_cast<CORBA::Object *>(m_target);}" << endl;
+		<< indent << "//operator CORBA::Object *() {return reinterpret_cast<CORBA::Object *>(m_target);}" << endl;
 
 
 	IDLInterface::BaseList::const_iterator
@@ -677,14 +680,14 @@ IDLPassXlate::doInterfacePtrClass(IDLInterface &iface) {
 
 	for (first = iface.m_allbases.begin();first != last;first++) {
 		m_header
-		<< indent << "operator " << (*first)->getQualifiedCPPStub() << " *() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
+		<< indent << "//operator " << (*first)->getQualifiedCPPStub() << " *() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
 	}
 	
 	m_header
 	<< indent <<"// These shouldn't be necessary, but gcc 2.95.2 barfs without them"<<endl;
 	for (first = iface.m_allbases.begin();first != last;first++) {
 		m_header
-		<< indent << "operator " << (*first)->getQualifiedCPP_var() << "() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
+		<< indent << "//operator " << (*first)->getQualifiedCPP_var() << "() { return reinterpret_cast< " << (*first)->getQualifiedCPPStub() << " *>(m_target);}" << endl;
 	}
 	m_header
 		<< --indent << "};" << endl;
