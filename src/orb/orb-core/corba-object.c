@@ -420,9 +420,14 @@ CORBA_Object_non_existent (CORBA_Object       obj,
 		return FALSE;
 
 	cnx = ORBit_object_get_connection (obj);
-	retval = cnx ? CORBA_FALSE : CORBA_TRUE;
-	if (cnx)
+
+	if (cnx) {
+		LinkConnectionStatus status;
+		status = link_connection_wait_connected (LINK_CONNECTION (cnx));
+		retval = (status == LINK_CONNECTED) ? FALSE : TRUE;
 		giop_connection_unref (cnx);
+	} else
+		retval = TRUE;
 
 	return retval;
 }
