@@ -1,3 +1,8 @@
+2001-07-24  Martin Baulig  <baulig@suse.de>
+
+	* src/idl-compiler/orbit-idl-c-imodule.c: Correctly calculate
+	the length of the __base_types array.
+
 2001-07-24  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c (shallow_copy_iinterface): impl.
