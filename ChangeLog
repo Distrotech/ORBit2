@@ -1,3 +1,30 @@
+2001-09-19  Havoc Pennington  <hp@redhat.com>
+
+	* src/idl-compiler/Makefile.am (orbit_idl_2_SOURCES): don't
+	install orbit-idl2.h, apparently it isn't used. 
+
+	* ORBit-CosNaming-2.0.pc.in (Libs): update
+
+	* ORBit-2.0.pc.in (orbit_idl): orbit-idl-2
+	
+	* test/Makefile.am (ior_decode_2_SOURCES): rename ior-decode to
+	ior-decode-2
+
+	* src/services/name/Makefile.am (libORBitservicesincludedir): put 
+	ORBitservices inside /usr/include/orbit to avoid ORBit1 conflicts
+	(lib_LIBRARIES): rename libname-server to libname-server-2
+
+	* src/orb/poa/Makefile.am (IDL): s/orbit-idl/orbit-idl-2/
+
+	* src/orb/orb-core/Makefile.am: s/orbit-idl/orbit-idl-2/
+
+	* Makefile.shared (IDL_COMPILER): s/orbit-idl/orbit-idl-2/
+
+	* src/idl-compiler/Makefile.am: s/orbit-idl/orbit-idl-2/
+
+	* src/services/name/Makefile.am: s/name-client/name-client-2/
+	s/orbit-name-server/orbit-name-server-2/
+
 2001-09-19  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/Makefile.am: revert Darin's patch. That

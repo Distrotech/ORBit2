@@ -1,6 +1,5 @@
-bin_PROGRAMS=orbit-idl
+bin_PROGRAMS=orbit-idl-2
 
-includedir=$(prefix)/include
 orbitlibdir=$(libdir)/orbit-idl
 
 INCLUDES=-I$(top_builddir) -I$(top_builddir)/include \
@@ -9,13 +8,13 @@ INCLUDES=-I$(top_builddir) -I$(top_builddir)/include \
 	-DORBITLIBDIR="\"$(orbitlibdir)\"" \
 	-DDEBUG -DVERSION=\"$(ORBIT_VERSION)\"
 
-orbit_idl_DEPENDENCIES = $(top_builddir)/libIDL/libIDL-2.la
-orbit_idl_LDADD = \
+orbit_idl_2_DEPENDENCIES = $(top_builddir)/libIDL/libIDL-2.la
+orbit_idl_2_LDADD = \
 	$(top_builddir)/libIDL/libIDL-2.la \
 	@GLIB_LIBS@ \
 	-lpopt -lm
 
-orbit_idl_SOURCES=orbit-idl-main.c \
+orbit_idl_2_SOURCES=orbit-idl-main.c \
 		   orbit-idl-driver.c \
 		   orbit-idl-backends.c \
 		   orbit-idl-passes.c \
@@ -37,9 +36,8 @@ orbit_idl_SOURCES=orbit-idl-main.c \
         orbit-idl-c-demarshal.c \
         orbit-idl-c-deps.c \
 	orbit-idl-marshal.c \
-	orbit-idl-marshal.h
-
-include_DATA=orbit-idl2.h
+	orbit-idl-marshal.h	\
+	orbit-idl2.h
 
 $(top_builddir)/libIDL/libIDL-2.la:
 	$(MAKE) -C $(top_builddir)/libIDL libIDL-2.la

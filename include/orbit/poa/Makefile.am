@@ -1,4 +1,4 @@
-poaincludedir=$(includedir)/orbit/poa
+poaincludedir=$(includedir)/orbit-2.0/orbit/poa
 poainclude_HEADERS= \
 	poa-types.h	\
 	poa.h		\
