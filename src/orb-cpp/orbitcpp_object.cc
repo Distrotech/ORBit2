@@ -37,7 +37,7 @@ using namespace _orbitcpp;
 
 
 
-CORBA_Object CORBA::Object::_orbitcpp_get_c_object()
+CORBA_Object& CORBA::Object::_orbitcpp_get_c_object()
 {
 	return m_target;
 }

@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -133,35 +134,44 @@ IDLInterface::getCPPStubDeclarator(IDL_param_attr attr,string const &id,string &
 
 
 string
-IDLInterface::getCPPStubParameterTerm(IDL_param_attr attr, string const &id, IDLTypedef const *activeTypedef = NULL) const
+IDLInterface::getCPPStubParameterTerm(IDL_param_attr    attr,
+				      string const     &id,
+				      IDLTypedef const *activeTypedef = NULL) const
 {
 	string ctype = getNSScopedCTypeName();
 
 	switch (attr) {
 	case IDL_PARAM_IN:
+		return id + "->_orbitcpp_get_c_object ()";
 		return id + "->_orbitcpp_get_c_object()";
 	case IDL_PARAM_INOUT:
-		return "&reinterpret_cast< "+ctype+">("+id+")";
+		return "&(" + id + "->_orbitcpp_get_c_object ())";
 	case IDL_PARAM_OUT:
-		return id;
+		return "&(" + id + "->_orbitcpp_get_c_object ())";
 	}
 	return "";
 }
 
 
 void
-IDLInterface::writeCPPStubReturnDemarshalCode(ostream &ostr,Indent &indent,
-											  IDLTypedef const *activeTypedef = NULL) const {
-	// must return stub ptr and not ptr in order to work when smart pointers are used
-	ostr
-		<< indent << "return " << getQualifiedCPPStub () << "::_orbitcpp_wrap(_retval);" << endl;
+IDLInterface::writeCPPStubReturnDemarshalCode (ostream          &ostr,
+					       Indent           &indent,
+					       IDLTypedef const *activeTypedef = NULL) const
+{
+	ostr << indent << "return " << getQualifiedCPPStub ()
+	     << "::_orbitcpp_wrap (_retval, false);"
+	     << endl;
 }
 
 
 
 void
-IDLInterface::getCSkelDeclarator(IDL_param_attr attr,string const &id,string &typespec,string &dcl,
-								 IDLTypedef const *activeTypedef = NULL) const {
+IDLInterface::getCSkelDeclarator (IDL_param_attr    attr,
+				  string const     &id,
+				  string           &typespec,
+				  string           &dcl,
+				  IDLTypedef const *activeTypedef = NULL) const
+{
 	typespec = getNSScopedCTypeName();
 
 	switch (attr) {
@@ -181,26 +191,31 @@ IDLInterface::getCSkelDeclarator(IDL_param_attr attr,string const &id,string &ty
 
 
 void
-IDLInterface::writeCPPSkelDemarshalCode(IDL_param_attr attr,string const &id,ostream &ostr,Indent &indent,
-										IDLTypedef const *activeTypedef = NULL) const {
+IDLInterface::writeCPPSkelDemarshalCode (IDL_param_attr    attr,
+					 string const     &id,
+					 ostream          &ostr,
+					 Indent           &indent,
+					 IDLTypedef const *activeTypedef = NULL) const
+{
+	string ptr_name = "_" + id + "_ptr";
+	string ptr_decl = getQualifiedCPP_var () + " " + ptr_name;
+	
 	switch (attr) {
+		
 	case IDL_PARAM_IN:
-		ostr
-		<< indent << getQualifiedCPP_var() << " _" << id << "_ptr = "
-		<< getQualifiedCPPCast(IDL_IMPL_NS "::duplicate_guarded("+id+")")
-		<< ';' << endl;
+		ostr << indent << ptr_decl << " = "
+		     << getQualifiedCPPCast (IDL_IMPL_NS "::duplicate_guarded (" + id + ")")
+		     << ';' << endl;
 		break;
+		
 	case IDL_PARAM_INOUT:
-		ostr
-		<< indent << getQualifiedCPP_var() << " _" << id << "_ptr = "
-		<< getQualifiedCPPCast(IDL_IMPL_NS "::duplicate_guarded(*"+id+")")
-		<< ';' << endl;
+		ostr << indent << ptr_decl << " = "
+		     << getQualifiedCPPCast (IDL_IMPL_NS "::duplicate_guarded (*" + id +")")
+		     << ';' << endl;
 		break;
+		
 	case IDL_PARAM_OUT:
-		ostr
-		<< indent << getQualifiedCPP_var() << " _" << id << "_ptr = "
-		<< getQualifiedCPPCast("CORBA_OBJECT_NIL")
-		<< ';' << endl;
+		ostr << indent << ptr_decl << ';' << endl;
 		break;
 	}
 }
@@ -209,14 +224,18 @@ IDLInterface::writeCPPSkelDemarshalCode(IDL_param_attr attr,string const &id,ost
 
 
 void
-IDLInterface::writeCPPSkelMarshalCode(IDL_param_attr attr,string const &id,ostream &ostr,Indent &indent,
-									  IDLTypedef const *activeTypedef = NULL) const {
-	string ptrname = " _" + id + "_ptr";
+IDLInterface::writeCPPSkelMarshalCode (IDL_param_attr    attr,
+				       string const     &id,
+				       ostream          &ostr,
+				       Indent           &indent,
+				       IDLTypedef const *activeTypedef = NULL) const
+{
+	string ptrname = "_" + id + "_ptr";
 	switch (attr) {
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
-		ostr
-		<< indent << '*' << id << " = *" << ptrname << "._retn();" << endl;
+		ostr << indent << "*" << id << " = "
+		     << ptrname << "._retn ()->_orbitcpp_get_c_object ();" << endl;
 	default:
 		break;
 	}
@@ -224,14 +243,20 @@ IDLInterface::writeCPPSkelMarshalCode(IDL_param_attr attr,string const &id,ostre
 
 
 void
-IDLInterface::writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,bool passthru,
-									   IDLTypedef const *activeTypedef = NULL) const {
+IDLInterface::writeCPPSkelReturnMarshalCode (ostream          &ostr,
+					     Indent           &indent,
+					     bool              passthru,
+					     IDLTypedef const *activeTypedef = NULL) const
+{
 	if (passthru)
 		ostr << indent << "return _retval;" << endl;
-	else {
-		// this is a hack to ensure the cast works with MI smart ptrs	
-		ostr << indent << "::CORBA::Object_ptr _tmp = _retval;" << endl;
-		ostr << indent << "return reinterpret_cast< " << getNSScopedCTypeName() << ">(_tmp);" << endl;
-	}
+	else 
+		ostr << indent << "return " << getQualifiedCPPCast ("_retval")
+		     << ";" << endl;
 }
 
+string
+IDLInterface::getQualifiedCPPCast (string const &expr) const
+{
+	return getQualifiedCPPStub () + "::_orbitcpp_wrap ((" + expr + "), false)";
+}
