@@ -1,3 +1,15 @@
+2001-08-14  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_output_const_dcl): try and get libIDL to give us some
+	useful information - right !
+
+	* src/idl-compiler/orbit-idl-driver.c
+	(orbit_idl_to_backend): set rinfo->namespace.
+
+	* src/orb/orb-core/corba-any.c (ORBit_copy_value_core): fix
+	heinous _buffer = TRUE bug.
+
 2001-08-13  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testMisc): invoke a non
