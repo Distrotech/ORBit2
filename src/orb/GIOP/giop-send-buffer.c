@@ -18,7 +18,11 @@ static const char giop_zero_buf [GIOP_CHUNK_ALIGN * 10] = {0};
 void
 giop_send_buffer_init (gboolean wipe)
 {
+#ifdef ORBIT_PURIFY
+	giop_blank_wire_data = TRUE;
+#else
 	giop_blank_wire_data = wipe;
+#endif
 	send_buffer_list_lock = linc_mutex_new ();
 }
 
