@@ -1,5 +1,14 @@
 2003-06-06  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_unlisten_for_broken_full): split from
+	(ORBit_small_unlisten_for_broken): here, and allow
+	a 'user_data' to be specified ie. make the method
+	actually useful.
+	(ORBit_small_invoke_stub_n): fix warning.
+
+2003-06-06  Michael Meeks  <michael@ximian.com>
+
 	* test/poa/test-poa.c: add.
 
 	* src/orb/poa/poa.c (ORBit_POA_copy_policies): impl.
