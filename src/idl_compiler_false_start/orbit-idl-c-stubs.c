@@ -410,6 +410,8 @@ cbe_stub_op_param_free(FILE *of, IDL_tree node, GString *tmpstr)
   case IDLN_TYPE_STRING:
     fprintf(of, "CORBA_free(%s);\n", tmpstr->str);
     break;
+  case IDLN_INTERFACE:
+  case IDLN_FORWARD_DCL:
   case IDLN_TYPE_OBJECT:
     fprintf(of, "CORBA_Object_release(%s, ev);\n", tmpstr->str);
     break;
