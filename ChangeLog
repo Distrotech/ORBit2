@@ -14,7 +14,7 @@
 	* src/orb/poa/poa.c (ORBit_c_stub_invoke): init ev.
 	here too; same reason; upd. locking comments.
 
-2004-01-14  The Written Word  <bugzilla-gnome@thewrittenword.com>
+2004-01-14  Albert Chin-A-Young  <china@thewrittenword.com>
 
 	* include/orbit/GIOP/giop-recv-buffer.h: guint for
 	single bitfield.
