@@ -214,11 +214,8 @@ ORBit_try_connection (CORBA_Object obj)
 			break;
 
 		case LINC_DISCONNECTED:
-			if (obj->connection) {
-				giop_connection_unref (obj->connection);
-				obj->connection = NULL;
-			}
-
+			giop_connection_unref (obj->connection);
+			obj->connection = NULL;
 			return FALSE;
 			break;
 		}

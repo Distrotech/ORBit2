@@ -1036,7 +1036,7 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 
 	dprintf ("Return exception:\n");
 	do_giop_dump_send (send_buffer);
-	giop_send_buffer_write (send_buffer, recv_buffer->connection);
+	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
 }
 
@@ -1285,7 +1285,7 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 			giop_recv_buffer_get_request_id (recv_buffer),
 			CORBA_SYSTEM_EXCEPTION);
 		ORBit_send_system_exception (reply_buf, &env);
-		giop_send_buffer_write (reply_buf, recv_buffer->connection);
+		giop_send_buffer_write (reply_buf, recv_buffer->connection, FALSE);
 		giop_send_buffer_unuse (reply_buf);
 	} else
 		g_assert (env._major == CORBA_NO_EXCEPTION);
