@@ -1,3 +1,9 @@
+2003-11-06  Padraig O'Briain <padraig.obriain@sun.com>
+
+	* linc2/src/linc-server.c (link_server_handle_io): Change g_error
+	to g_warning to avoid crash if revents field reset between check()
+	and dispatch(). Fixes bug #126209.
+
 2003-10-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
