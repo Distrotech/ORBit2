@@ -1,5 +1,10 @@
 2001-07-26  Michael Meeks  <michael@ximian.com>
 
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(cbe_tc_generate): fix duplicate static bug.
+
+2001-07-26  Michael Meeks  <michael@ximian.com>
+
 	* src/idl-compiler/orbit-idl-main.c (main): only
 	output imodule information if explicitely asked,
 	and then only output the neccessary.

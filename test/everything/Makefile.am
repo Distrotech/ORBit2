@@ -1,5 +1,7 @@
 noinst_PROGRAMS = client server
 
+orbittypelibdir = $(libdir)/orbit
+
 EVERYTHING_BUILT = \
 	everything.h        \
 	everything-skels.c  \
@@ -36,11 +38,9 @@ included_src = \
 	arrayServer.c    \
 	anyServer.c
 
-# FIXME: regression test this properly ...
-# orbittypelibdir = $(libdir)/orbit
-# orbittypelib_LTLIBRARIES = Everything_module.la
-#
-# Everything_module_la_SOURCES = everything-imodule.c
+orbittypelib_LTLIBRARIES = Everything_module.la
+Everything_module_la_SOURCES = everything-imodule.c
+Everything_module_la_LDFLAGS = --export-dynamic -module
 
 server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
 server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
@@ -49,6 +49,9 @@ ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 
 ${EVERYTHING_BUILT}: everything.idl $(ORBIT_IDL)
 	$(ORBIT_IDL) $(srcdir)/everything.idl
+
+everything-imodule.c : everything.idl $(ORBIT_IDL)
+	$(ORBIT_IDL) --imodule $(srcdir)/everything.idl
 
 CLEANFILES = ${EVERYTHING_BUILT} iorfile
 BUILT_SOURCES = ${EVERYTHING_BUILT}
