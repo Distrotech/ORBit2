@@ -15,6 +15,15 @@
 #include "config.h"
 #include <linc/linc.h>
 
+#ifdef LINC_SSL_SUPPORT
+
+#include <openssl/ssl.h>
+#include <openssl/bio.h>
+extern SSL_METHOD *linc_ssl_method;
+extern SSL_CTX *linc_ssl_ctx;
+
+#endif /* LINC_SSL_SUPPORT */
+
 /*
  * Really raw internals, exported for the tests
  */
@@ -55,15 +64,6 @@ struct _LincWatch {
 	GSource *main_source;
 	GSource *linc_source;
 };
-
-#ifdef LINC_SSL_SUPPORT
-
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-extern SSL_METHOD *linc_ssl_method;
-extern SSL_CTX *linc_ssl_ctx;
-
-#endif /* LINC_SSL_SUPPORT */
 
 #define LINC_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
 #define LINC_IN_CONDS  (G_IO_PRI|G_IO_IN)

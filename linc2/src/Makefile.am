@@ -12,7 +12,7 @@ liblinc_la_SOURCES =		\
 	linc.c			\
 	linc-connection.c	\
 	linc-debug.h		\
-	linc-hacks.h		\
+	linc-compat.h		\
 	linc-private.h		\
 	linc-protocols.c	\
 	linc-server.c		\
