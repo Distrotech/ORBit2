@@ -122,9 +122,7 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     else {
       fprintf(cmi->ci->fh, "%s = (", ctmp);
       orbit_cbe_write_node_typespec(cmi->ci->fh, node);
-      fprintf(cmi->ci->fh, ")GUINT%d_SWAP_LE_BE(*((", n);
-      orbit_cbe_write_node_typespec(cmi->ci->fh, node);
-      fprintf(cmi->ci->fh, "*)_ORBIT_curptr));");
+      fprintf(cmi->ci->fh, ")GUINT%d_SWAP_LE_BE(*((guint%d *)_ORBIT_curptr));", n, %d);
     }
   } else {
     fprintf(cmi->ci->fh, "%s = *((", ctmp);
