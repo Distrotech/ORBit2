@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Singleton accessor for the test factory
+/* Singleton accessor for the test factory */
 test_TestFactory getFactoryInstance(CORBA_Environment *ev);
 
 

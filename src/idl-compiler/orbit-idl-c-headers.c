@@ -660,7 +660,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
       break;
     case IDLN_TYPE_STRING:
     case IDLN_TYPE_WIDE_STRING:
-      // No aliased alloc for strings
+      /* No aliased alloc for strings */
       fprintf(ci->fh, "#define %s__freekids CORBA_string__freekids\n", ctmp);
       break;
     case IDLN_TYPE_ANY:
