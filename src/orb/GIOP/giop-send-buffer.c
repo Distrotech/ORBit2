@@ -124,7 +124,7 @@ GIOPSendBuffer *
 giop_send_buffer_use_request(GIOPVersion giop_version,
 			     CORBA_unsigned_long request_id,
 			     CORBA_boolean response_expected,
-			     const struct iovec *object_key_vec,
+			     const CORBA_sequence_CORBA_octet *objkey,
 			     const struct iovec *operation_vec,
 			     const struct iovec *principal_vec)
 {
@@ -150,8 +150,9 @@ giop_send_buffer_use_request(GIOPVersion giop_version,
       giop_send_buffer_append(buf, (const guchar *)iop_service_context_data, sizeof(iop_service_context_data));
       giop_send_buffer_append(buf, &buf->msg.u.request_1_0.request_id, sizeof(CORBA_unsigned_long));
       giop_send_buffer_append(buf, &buf->msg.u.request_1_0.response_expected, sizeof(CORBA_boolean));
+      giop_send_buffer_append_aligned(buf, &objkey->_length, sizeof(CORBA_unsigned_long));
+      giop_send_buffer_append(buf, objkey->_buffer, objkey->_length);
       giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-      giop_send_buffer_append(buf, object_key_vec->iov_base, object_key_vec->iov_len);
       giop_send_buffer_append(buf, operation_vec->iov_base, operation_vec->iov_len);
       giop_send_buffer_append(buf, principal_vec->iov_base, principal_vec->iov_len);
       break;
@@ -161,9 +162,9 @@ giop_send_buffer_use_request(GIOPVersion giop_version,
       giop_send_buffer_append(buf, &buf->msg.u.request_1_0.response_expected, sizeof(CORBA_boolean));
       giop_send_buffer_append(buf, giop_zero_buf, 3);
       giop_send_buffer_append(buf, &giop_1_2_target_type, 2); /* We always use GIOP::KeyAddr addressing - the only sane way */
+      giop_send_buffer_append_aligned(buf, &objkey->_length, sizeof(CORBA_unsigned_long));
+      giop_send_buffer_append(buf, objkey->_buffer, objkey->_length);
       giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-      giop_send_buffer_append(buf, object_key_vec->iov_base, object_key_vec->iov_len);
-      g_assert(!(object_key_vec->iov_len % 4));
       giop_send_buffer_append(buf, operation_vec->iov_base, operation_vec->iov_len);
       giop_send_buffer_append(buf, (const guchar *)iop_service_context_data, sizeof(iop_service_context_data));
       giop_send_buffer_align(buf, 8); /* alignment for the body */
@@ -216,7 +217,7 @@ giop_send_buffer_use_cancel_request(void);
 GIOPSendBuffer *
 giop_send_buffer_use_locate_request(GIOPVersion giop_version,
 				    CORBA_unsigned_long request_id,
-				    const struct iovec *object_key_vec)
+				    const CORBA_sequence_CORBA_octet *objkey)
 {
   GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
 
@@ -229,12 +230,13 @@ giop_send_buffer_use_locate_request(GIOPVersion giop_version,
     {
     case GIOP_1_0:
     case GIOP_1_1:
-      giop_send_buffer_append(buf, object_key_vec->iov_base, object_key_vec->iov_len);
+      giop_send_buffer_append_aligned(buf, &objkey->_length, sizeof(CORBA_unsigned_long));
+      giop_send_buffer_append(buf, objkey->_buffer, objkey->_length);
       break;
     case GIOP_1_2:
       giop_send_buffer_append(buf, &giop_1_2_target_type, sizeof(giop_1_2_target_type));
-      giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-      giop_send_buffer_append(buf, object_key_vec->iov_base, object_key_vec->iov_len);
+      giop_send_buffer_append_aligned(buf, &objkey->_length, sizeof(CORBA_unsigned_long));
+      giop_send_buffer_append(buf, objkey->_buffer, objkey->_length);
     default:
       break;
     }

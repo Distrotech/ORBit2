@@ -1,8 +1,8 @@
 #ifndef __ORBIT_ADAPTOR_H__
 #define __ORBIT_ADAPTOR_H__
 
-void                ORBit_handle_request            (CORBA_ORB orb, 
-						     GIOPRecvBuffer *recv_buffer);
+void                ORBit_handle_request            (CORBA_ORB          orb, 
+						     GIOPRecvBuffer    *recv_buffer);
 
 void                ORBit_small_handle_request      (ORBit_OAObject     adaptor_obj,
 						     CORBA_Identifier   opname,
@@ -12,9 +12,9 @@ void                ORBit_small_handle_request      (ORBit_OAObject     adaptor_
 						     GIOPRecvBuffer    *recv_buffer,
 						     CORBA_Environment *ev);
 
-gboolean            ORBit_OAObject_is_active        (ORBit_OAObject adaptor_obj);
+gboolean            ORBit_OAObject_is_active        (ORBit_OAObject     adaptor_obj);
 
-IOP_ObjectKey_info* ORBit_OAObject_object_to_objkey (ORBit_OAObject adaptor_obj);
+ORBit_ObjectKey    *ORBit_OAObject_object_to_objkey (ORBit_OAObject     adaptor_obj);
 
 void                ORBit_OAObject_invoke           (ORBit_OAObject     adaptor_obj,
 						     gpointer           ret,
@@ -27,9 +27,9 @@ void                ORBit_OAObject_invoke           (ORBit_OAObject     adaptor_
  * ORBit_OAObject
  */
 
-typedef gboolean            (*ORBitStateCheckFunc) (ORBit_OAObject adaptor_obj);
+typedef gboolean            (*ORBitStateCheckFunc) (ORBit_OAObject     adaptor_obj);
 
-typedef IOP_ObjectKey_info* (*ORBitKeyGenFunc)     (ORBit_OAObject  adaptor_obj);
+typedef ORBit_ObjectKey    *(*ORBitKeyGenFunc)     (ORBit_OAObject     adaptor_obj);
 
 typedef void                (*ORBitInvokeFunc)     (ORBit_OAObject     adaptor_obj,
 						    gpointer           ret,
@@ -74,17 +74,18 @@ struct ORBit_OAObject_type {
  */
 
 typedef struct ORBit_ObjectAdaptor_type *ORBit_ObjectAdaptor;
+typedef CORBA_sequence_CORBA_octet       ORBit_AdaptorKey;
 
 typedef void (*ORBitReqHandlerFunc) (ORBit_ObjectAdaptor         adaptor,
 				     GIOPRecvBuffer             *recv_buffer,
-				     CORBA_sequence_CORBA_octet *objkey);
+				     ORBit_ObjectKey            *objkey);
 
 struct ORBit_ObjectAdaptor_type {
 	struct ORBit_RootObject_struct parent;
 
 	ORBitReqHandlerFunc            handle_request;
 
-	CORBA_sequence_CORBA_octet     adaptor_key;
+	ORBit_AdaptorKey               adaptor_key;
 };
 
 #endif /* __ORBIT_ADAPTOR_H__ */

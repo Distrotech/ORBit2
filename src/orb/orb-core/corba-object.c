@@ -99,7 +99,7 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   }
 
   g_free (obj->type_id);
-  g_free (obj->oki);
+  CORBA_free (obj->object_key);
 
   IOP_delete_profiles (&obj->profile_list);
   IOP_delete_profiles (&obj->forward_locations);
@@ -219,7 +219,7 @@ ORBit_object_get_connection (CORBA_Object obj)
   GSList *plist, *cur;
   char tbuf[20];
   /* Information we have to come up with */
-  IOP_ObjectKey_info *oki;
+  ORBit_ObjectKey *objkey;
   char *proto = NULL, *host, *service;
   gboolean is_ssl = FALSE;
   GIOPVersion iiop_version = GIOP_1_2;
@@ -237,7 +237,7 @@ ORBit_object_get_connection (CORBA_Object obj)
     {
       gpointer *pinfo = cur->data;
       if(IOP_profile_get_info(obj, pinfo, &iiop_version, &proto,
-			      &host, &service, &is_ssl, &oki, tbuf))
+			      &host, &service, &is_ssl, &objkey, tbuf))
 	{
 	  obj->connection =
 	    giop_connection_initiate(proto, host, service,
@@ -245,7 +245,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 
 	  if(ORBit_try_connection(obj))
 	    {
-	      obj->oki = oki;
+	      obj->object_key = objkey;
 	      obj->connection->orb_data = obj->orb;
 	      return obj->connection;
 	    }
