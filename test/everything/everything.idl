@@ -50,6 +50,7 @@ module test {
 	interface ContextServer;
 	interface DeadReferenceObj;
 	interface PingPongServer;
+	interface LifeCycleServer;
 
 	interface TestFactory {
 		BasicServer getBasicServer();
@@ -68,7 +69,12 @@ module test {
 		TransientObj createTransientObj();
 		DeadReferenceObj createDeadReferenceObj();
 		PingPongServer createPingPongServer ();
+	        LifeCycleServer createLifeCycleServer ();
 		void noOp ();
+	};
+
+	interface LifeCycleServer {
+		void deactivateOnReturn();
 	};
 
 	interface DeadReferenceObj {

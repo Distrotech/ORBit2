@@ -47,6 +47,7 @@ included_src = \
 	basicServer.c    \
 	contextServer.c  \
 	deadReference.c  \
+	lifeCycle.c	 \
 	derivedServer.c  \
 	pingServer.c     \
 	sequenceServer.c \

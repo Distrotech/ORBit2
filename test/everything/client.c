@@ -1537,6 +1537,23 @@ testMisc (test_TestFactory   factory,
 	}
 }
 
+static void
+testLifeCycle (test_TestFactory   factory, 
+	       CORBA_Environment *ev)
+{
+	test_LifeCycleServer objref;
+
+	d_print ("Testing LifeCycle bits...\n");
+
+	objref = test_TestFactory_createLifeCycleServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	test_LifeCycleServer_deactivateOnReturn (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release (objref, ev);
+}
+
 static volatile int done = 0;
 
 static void
@@ -2078,6 +2095,7 @@ run_tests (test_TestFactory   factory,
 		if (!in_proc)
 			testPingPong (factory, thread_tests, ev);
 		testMisc (factory, ev);
+		testLifeCycle (factory, ev);
 	}
 	
 #if NUM_RUNS > 1

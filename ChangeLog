@@ -1,3 +1,15 @@
+2003-09-30  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/server.c
+	(TestFactory_createLifeCycleServer): impl
+	* test/everything/lifeCycle.c: add module.
+	* test/everything/client.c (testLifeCycle): impl.
+	(run_tests): upd. - try to catch Ettore's bug - to no
+	avail.
+
+	* src/idl-compiler/orbit-idl-main.c: at least return
+	error status on an error ...
+
 2003-09-29  Michael Meeks  <michael@ximian.com>
 
 	* test/test-mem.c (main_func): release refs we own.
