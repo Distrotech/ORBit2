@@ -1,3 +1,9 @@
+2001-08-04  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_handle_request): fix potential segv.
+	on NULL objkey.
+
 2001-08-02  Martin Baulig  <baulig@suse.de>
 
 	* src/orb/orb-core/orbit-interface.idl:
