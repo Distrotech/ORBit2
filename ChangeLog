@@ -1,3 +1,14 @@
+2001-11-16  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/poa/poa.h: kill ORBit_POA_object_to_shutdown.
+
+	* src/orb/orb-core/corba-object.c: 
+	(CORBA_Object_release_cb): upd.
+
+	* src/orb/poa/poa.c:
+	(PortableServer_POA_id_to_reference): duplicate returned
+	reference.
+
 2001-11-16  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/server.c (main): kill sleep.

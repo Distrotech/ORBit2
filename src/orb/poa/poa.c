@@ -751,7 +751,7 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 	CORBA_Object             objref;
 	const char              *type_id = intf;
 
-	g_assert (pobj && ((ORBit_OAObject) pobj)->objref == NULL);
+	g_assert (pobj && !pobj->base.objref);
 
 	if (!type_id) {
 		g_assert (pobj->servant);
@@ -762,29 +762,13 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 
 	oid = pobj->object_id;
 
-	objref = ORBit_objref_new (poa->poa_manager->orb,
-				   g_quark_from_string (type_id));
+	pobj->base.objref = ORBit_objref_new (poa->poa_manager->orb,
+					      g_quark_from_string (type_id));
 
-	/* released by ORBit_POA_object_shutdown called from
-	 * CORBA_Object_release */
-	objref->adaptor_obj = ORBit_RootObject_duplicate (pobj);
+	/* released by CORBA_Object_release */
+	pobj->base.objref->adaptor_obj = ORBit_RootObject_duplicate (pobj);
 
-	((ORBit_OAObject)pobj)->objref = ORBit_RootObject_duplicate (objref);
-
-	return objref;
-}
-
-void
-ORBit_POA_object_shutdown (ORBit_POAObject pobj)
-{
-	if (pobj) {
-		/* FIXME: should we de-activate here ? it's only
-		 * wasting space in the hash surely
-		 * ORBit_POA_deactivate_object (
-		 *	pobj->poa, pobj, FALSE, FALSE); */
-		pobj->base.objref = NULL;
-		ORBit_RootObject_release_T (pobj);
-	}
+	return ORBit_RootObject_duplicate (pobj->base.objref);
 }
 
 PortableServer_POA
@@ -1955,7 +1939,7 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 	}
 
 	if (retain && unique && pobj)
-		if (((ORBit_OAObject) pobj)->objref)
+		if (pobj->base.objref)
 			return ORBit_RootObject_duplicate (
 				pobj->base.objref);
 		else
@@ -2098,8 +2082,8 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		return NULL;
 
-	if (((ORBit_OAObject)pobj)->objref != CORBA_OBJECT_NIL)
-		return ((ORBit_OAObject)pobj)->objref;
+	if (pobj->base.objref)
+		return ORBit_RootObject_duplicate (pobj->base.objref);
 
 	return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 }

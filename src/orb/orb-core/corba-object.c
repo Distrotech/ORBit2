@@ -102,8 +102,12 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	IOP_delete_profiles (&obj->profile_list);
 	IOP_delete_profiles (&obj->forward_locations);
 
-	ORBit_POA_object_shutdown ((ORBit_POAObject) obj->adaptor_obj);
-	
+	if (obj->adaptor_obj) {
+		obj->adaptor_obj->objref = NULL;
+
+		ORBit_RootObject_release_T (obj->adaptor_obj);
+	}
+
 	giop_connection_unref (obj->connection);
 
 	p_free (obj, struct CORBA_Object_type);
