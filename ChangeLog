@@ -1,3 +1,16 @@
+2004-12-17  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value):
+	don't fail de-marshalling null & void - just do nothing.
+	(ORBit_copy_value_core): just copy nothing for void & null
+	- instead of breaking the val pointer.
+
+2004-10-02  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* test/everything/client.c (testAnySequence),
+	* test/everything/server.c (SequenceServer_opAnySeq):
+	implement test for TC_void bug.
+	
 2004-12-13  Joe McCann  <joem@gentoo.org>
 
 	* configure.in: bump libIDL dep to 0.8.2.

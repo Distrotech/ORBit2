@@ -131,11 +131,36 @@ SequenceServer_opMassiveSeq (PortableServer_Servant servant,
 	return retn;
 }
 
+static test_AnySeq *
+SequenceServer_opAnySeq (PortableServer_Servant servant,
+                         CORBA_Environment     *ev)
+{
+	test_AnySeq *retn;
+	CORBA_long i;
+	CORBA_long n = 1000;
+
+	retn = test_AnySeq__alloc ();
+	retn->_buffer = test_AnySeq_allocbuf (n);
+	retn->_length = n;
+	CORBA_sequence_set_release (retn, CORBA_TRUE);
+
+	for (i = 0; i < retn->_length; i++) {
+		if (i < 500)
+			retn->_buffer[i]._type = TC_void;
+		else
+			retn->_buffer[i]._type = TC_null;
+		retn->_buffer[i]._value = NULL;
+		retn->_buffer[i]._release = CORBA_FALSE;
+        }
+	return retn;
+}
+
 POA_test_SequenceServer__epv SequenceServer_epv = {
 	NULL,
 	SequenceServer_opStrSeq,
 	SequenceServer_opBoundedStructSeq,
 	SequenceServer_opMassiveSeq,
+	SequenceServer_opAnySeq,
 };
 
 PortableServer_ServantBase__epv SequenceServer_base_epv = {NULL, simple_finalize, NULL};
