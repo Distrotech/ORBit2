@@ -288,6 +288,9 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fixlen = orbit_cbe_type_is_fixed_length(ts);
 
+  if(fixlen)
+    return;
+
   for(sub = IDL_TYPE_DCL(tree).dcls; sub; sub = IDL_LIST(sub).next) {
     IDL_tree node, ident, ttmp;
     char *tname;
@@ -297,8 +300,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     switch(IDL_NODE_TYPE(node)) {
     case IDLN_IDENT:
       ident = node;
-      if(fixlen
-	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
+      if(IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
 	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) continue;
       break;
     case IDLN_TYPE_ARRAY:

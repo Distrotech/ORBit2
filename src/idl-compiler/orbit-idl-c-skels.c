@@ -101,12 +101,9 @@ cbe_print_var_dcl(FILE *of, IDL_tree tree, gboolean for_skels)
 
     fprintf(of, " _ORBIT_retval");
   } else {
-
     ts = orbit_cbe_get_typespec(IDL_PARAM_DCL(tree).param_type_spec);
 
-    orbit_cbe_write_typespec(of,
-			     IDL_PARAM_DCL(tree).param_type_spec);
-
+    orbit_cbe_write_typespec(of, IDL_PARAM_DCL(tree).param_type_spec);
 
     r = oidl_attr_to_paramrole(IDL_PARAM_DCL(tree).attr);
 

@@ -112,7 +112,7 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   c_demarshal_alignfor(node, cmi);
 
   if(cmi->endian_swap_pass
-     && (node->u.datum_info.datum_size > 1)) {
+     && (node->flags & MN_ENDIAN_DEPENDANT)) {
     int n;
 
     n = node->u.datum_info.datum_size * 8;
@@ -177,7 +177,8 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     g_free(tname);
   }
 
-  if(node->u.loop_info.contents->flags & MN_COALESCABLE) {
+  if((!cmi->endian_swap_pass || !(node->u.loop_info.contents->flags & MN_ENDIAN_DEPENDANT))
+     && (node->u.loop_info.contents->flags & MN_COALESCABLE)) {
     GString *tmpstr, *tmpstr2;
 
     c_demarshal_alignfor(node->u.loop_info.contents, cmi);
@@ -188,7 +189,10 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
     g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
-    if(cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)) {
+    if(cmi->alloc_on_stack
+       && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)
+       && ((node->flags & MN_ISSEQ) /* Doesn't work for arrays. */
+	   || (node->flags & MN_ISSTRING))) {
       fprintf(cmi->ci->fh, "%s = _ORBIT_curptr;\n", tmpstr2->str);
     } else {      
       fprintf(cmi->ci->fh, "memcpy(%s, _ORBIT_curptr, %s);\n", tmpstr2->str, tmpstr->str);
@@ -284,13 +288,12 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 static void
 c_demarshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  if(!cmi->endian_swap_pass
+  if((!cmi->endian_swap_pass || !(node->flags & MN_ENDIAN_DEPENDANT))
      && node->name
      && (node->flags & MN_COALESCABLE)) {
     char *ctmp, *ctmp2;
 
     ctmp = oidl_marshal_node_valuestr(node);
-
 
     c_demarshal_alignfor(node, cmi);
 

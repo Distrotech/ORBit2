@@ -63,7 +63,8 @@ c_marshal_append(OIDL_C_Marshal_Info *cmi, OIDL_Marshal_Node *node, char *itemst
 
   if(((node->type == MARSHAL_DATUM)
       || (node->type == MARSHAL_SET))
-     && ((node->up->type != MARSHAL_LOOP)
+     && (!node->up
+	 || (node->up->type != MARSHAL_LOOP)
 	 || (node != node->up->u.loop_info.contents)))
     addrof = TRUE;
 
