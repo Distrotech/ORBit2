@@ -79,12 +79,13 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 {
 	string id;
 
-	IDL_tree dcl_list = IDL_TYPE_DCL(node).dcls;
 	bool first_dcl = true;
-
-	while (dcl_list) {
+	
+	for (IDL_tree dcl_list = IDL_TYPE_DCL(node).dcls;
+	     dcl_list; dcl_list = IDL_LIST(dcl_list).next)
+	{
 		IDLTypedef &td = (IDLTypedef &) *scope.getItem(IDL_LIST(dcl_list).data);
-
+		
 #if 0 //!!!
 		if (first_dcl)
 		{
@@ -103,10 +104,10 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 			 << "_tc_" << td.get_cpp_identifier () << " = " 
 			 << "(CORBA::TypeCode_ptr)TC_" << td.get_c_typename ()
 			 << ';' << endl << endl;
-		
-		dcl_list = IDL_LIST(dcl_list).next;
-	}
 
+		// Create traits classes
+		ORBITCPP_MEMCHECK(new IDLWriteCPPTraits (td, m_state, *this));
+	}
 }
 
 void 
@@ -132,6 +133,9 @@ IDLPassXlate::doStruct (IDL_tree  node,
 
 	// Create typecode and Any stuff
 	struct_create_any (strct);
+
+	// Create traits classes
+	ORBITCPP_MEMCHECK(new IDLWriteCPPTraits (strct, m_state, *this));
 
 	m_header << endl;
 }
@@ -416,6 +420,7 @@ IDLPassXlate::doEnum (IDL_tree  node,
 		 << "(CORBA::TypeCode_ptr)TC_" << idlEnum.get_c_typename ()
 		 << ';' << endl;
 	
+	ORBITCPP_MEMCHECK(new IDLWriteCPPTraits (idlEnum, m_state, *this));
 	ORBITCPP_MEMCHECK(new IDLWriteEnumAnyFuncs (idlEnum, m_state, *this));
 }
 
@@ -475,7 +480,7 @@ IDLPassXlate::doException (IDL_tree  node,
 	IDLException::iterator first = except.begin(),last = except.end();
 	while (first != last) {
 		IDLMember &member = (IDLMember &) **first++;
-		member.getType()->writeCPPSpecCode(m_header,indent,m_state);
+ 		member.getType()->writeCPPSpecCode(m_header,indent,m_state);
 	}
 #endif
 
@@ -486,9 +491,38 @@ IDLPassXlate::doException (IDL_tree  node,
 	m_header << --indent << "public:" << endl;
 	indent++;
 
+	exception_create_members (except);
+
+	m_header << endl << indent << "// methods" << endl;
+
+	exception_create_constructors (except);
+	
+	m_header << indent << "void _raise ()" << endl
+		 << indent++ << "{" << endl;
+	m_header << indent << "throw *this;" << endl;
+	m_header << --indent << '}' << endl << endl;
+
+	m_header << indent << "static " << except.get_cpp_identifier () << " *_narrow "
+		 << "(" << IDL_CORBA_NS "::Exception *ex)" << endl
+		 << indent++ << "{" << endl;
+	m_header << indent << "return dynamic_cast"
+		 << "<" << except.get_cpp_identifier () << "*> (ex)"
+		 << ';' << endl;
+	m_header << --indent << '}' << endl;
+
+	exception_create_converters (except);
+	
+	m_header << --indent << "};" << endl << endl;
+
+	exception_create_any (except);	
+}
+
+void
+IDLPassXlate::exception_create_members (const IDLException &ex)
+{
 	m_header << indent << "// members" << endl;
 
-	for (IDLException::iterator i = except.begin (); i != except.end (); i++)
+	for (IDLException::const_iterator i = ex.begin (); i != ex.end (); i++)
 	{
 		IDLMember &member = (IDLMember &) **i;
 
@@ -497,20 +531,23 @@ IDLPassXlate::doException (IDL_tree  node,
 			 << " " << member.get_cpp_identifier ()
 			 << ';' << endl;
 	}
+}
 
-	m_header << endl << indent << "// methods" << endl
-		 << indent << "// copy ctor, dtor and assignment op will be auto-generated" << endl
-		 << indent << except.get_cpp_identifier () << "() { }" << endl;
+void
+IDLPassXlate::exception_create_constructors (const IDLException &ex)
+{
+	m_header << indent << "// copy ctor, dtor and assignment op will be auto-generated" << endl
+		 << indent << ex.get_cpp_identifier () << "() { }" << endl;
 
-	if (except.size ())
+	if (ex.size ())
 	{
 		// Create member init constructor
 		
 		string constructor_args;
-		IDLException::const_iterator back = except.end ();
+		IDLException::const_iterator back = ex.end ();
 		back--;
-		for (IDLException::const_iterator i = except.begin ();
-		     i != except.end (); i++)
+		for (IDLException::const_iterator i = ex.begin ();
+		     i != ex.end (); i++)
 		{
 			IDLMember &member = (IDLMember &) **i;
 
@@ -522,17 +559,17 @@ IDLPassXlate::doException (IDL_tree  node,
 				constructor_args += ", ";
 		}
 
-		m_header << indent << except.get_cpp_identifier ()
+		m_header << indent << ex.get_cpp_identifier ()
 			 << " (" << constructor_args << ")"
 			 << ';' << endl << endl;
 		
-		m_module << mod_indent << except.get_cpp_typename ()
-			 << "::" << except.get_cpp_identifier ()
+		m_module << mod_indent << ex.get_cpp_typename ()
+			 << "::" << ex.get_cpp_identifier ()
 			 << " (" << constructor_args << ")" << endl
 			 << mod_indent++ << '{' << endl;
 
-		for (IDLException::const_iterator i = except.begin ();
-		     i != except.end (); i++)
+		for (IDLException::const_iterator i = ex.begin ();
+		     i != ex.end (); i++)
 		{
 			IDLMember &member = (IDLMember &) **i;
 
@@ -542,53 +579,49 @@ IDLPassXlate::doException (IDL_tree  node,
 			
 		m_module << --mod_indent << '}' << endl << endl;
 	}
+}
 
-	m_header << indent << "void _raise ()" << endl
-		 << indent++ << "{" << endl;
-	m_header << indent << "throw *this;" << endl;
-	m_header << --indent << '}' << endl << endl;
-
-	m_header << indent << "void _orbitcpp_set (::CORBA_Environment *ev)" << endl
-		 << indent++ << "{" << endl;
-	if (except.size ())
+void
+IDLPassXlate::exception_create_converters (const IDLException &ex)
+{
+	// _orbitcpp_set
+	m_header << indent << "void _orbitcpp_set (::CORBA_Environment *ev);" << endl;
+	
+	m_module << mod_indent << "void " << ex.get_cpp_typename ()
+		 << "::_orbitcpp_set (::CORBA_Environment *ev)"
+		 << mod_indent++ << '{' << endl;
+	if (ex.size ())
 	{
-		m_header << indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
-			 << '"' << except.getRepositoryId() << '"'
+		m_module << mod_indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
+			 << '"' << ex.getRepositoryId() << '"'
 			 << ", _orbitcpp_pack ())"
 			 << ';' << endl;
 	} else {
-		m_header << indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
-			 << '"' << except.getRepositoryId() << '"'
+		m_module << mod_indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
+			 << '"' << ex.getRepositoryId() << '"'
 			 << ", 0)"
 			 << ';' << endl;
 	}
-	m_header << --indent << '}' << endl << endl;
+	m_module << --mod_indent << '}' << endl << endl;
 
-	m_header << indent << "static " << except.get_cpp_identifier () << " *_narrow "
-		 << "(" << IDL_CORBA_NS "::Exception *ex)" << endl
-		 << indent++ << "{" << endl;
-	m_header << indent << "return dynamic_cast"
-		 << "<" << except.get_cpp_identifier () << "*> (ex)"
-		 << ';' << endl;
-	m_header << --indent << '}' << endl;
-
-	except.write_packing_decl (m_header, indent);
-	except.write_packing_impl (m_module, mod_indent);
-
-	m_header << --indent << "};" << endl << endl;
-	
-	m_header << indent;
-	if (scope.getTopLevelInterface ())
-		m_header << "static ";
-
-	m_header << "const CORBA::TypeCode_ptr _tc_" << except.get_cpp_identifier () << " = " 
-		 << "(CORBA::TypeCode_ptr)TC_" + except.get_c_typename ()
-		 << ';' << endl;
-
-	ORBITCPP_MEMCHECK( new IDLWriteExceptionAnyFuncs(except, m_state, *this) );
+	// _orbitcpp_pack
+	ex.write_packing_decl (m_header, indent);
+	ex.write_packing_impl (m_module, mod_indent);
 }
 
+void
+IDLPassXlate::exception_create_any (const IDLException &ex)
+{
+	m_header << indent;
+	if (ex.getTopLevelInterface())
+		m_header << "static ";
 
+	m_header << "const CORBA::TypeCode_ptr _tc_" << ex.get_cpp_identifier () << " = " 
+		 << "(CORBA::TypeCode_ptr)TC_" + ex.get_c_typename ()
+		 << ';' << endl << endl;
+	
+	ORBITCPP_MEMCHECK (new IDLWriteExceptionAnyFuncs(ex, m_state, *this));
+}
 
 
 void 
@@ -647,6 +680,9 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	// Write typedefs
 	iface.common_write_typedefs (m_header, indent);
 	m_header << endl;
+
+	// Write sequence elem traits
+	ORBITCPP_MEMCHECK (new IDLWriteCPPTraits (iface, m_state, *this));
 	
 	// generate type container
 	m_header << indent << "class " << iface.get_cpp_identifier ();
@@ -676,7 +712,7 @@ IDLPassXlate::doInterface (IDL_tree  node,
 
 	m_header << indent << "const CORBA::TypeCode_ptr _tc_"
 		 << iface.get_cpp_identifier () << " = " 
-		 << "(CORBA::TypeCode_ptr)TC_" + iface.get_c_typename () + ";" << endl;
+		 << "(CORBA::TypeCode_ptr)TC_" + iface.get_c_typename () + ";" << endl << endl;
 
 	ORBITCPP_MEMCHECK (new IDLWriteIfaceAnyFuncs (iface, m_state, *this));
 
@@ -758,6 +794,57 @@ IDLPassXlate::doModule (IDL_tree  node,
 void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 	if (!scope.getTopLevelInterface())
 		runJobs(IDL_EV_TOPLEVEL);
+}
+
+// IDLWriteCPPTraits -------------------------------------------------------
+IDLWriteCPPTraits::IDLWriteCPPTraits (const IDLElement &element,
+				      IDLCompilerState &state,
+				      IDLOutputPass    &pass) :
+	IDLOutputJob (IDL_EV_TOPLEVEL, state, pass),
+	m_element (element)
+{
+}
+
+void
+IDLWriteCPPTraits::run ()
+{
+	g_assert (dynamic_cast<const IDLType*>(&m_element));
+	const IDLType &type = *dynamic_cast<const IDLType*>(&m_element);
+	
+	string cpp_id = m_element.get_cpp_identifier ();
+	string c_id = m_element.get_c_typename ();
+	
+	// Write sequence elem traits
+	string elem_cpp = type.get_cpp_member_typename ();
+	string elem_c = type.get_c_member_typename ();
+
+	string seq_elem_traits_id = cpp_id + "_seq_elem_traits";
+	string seq_elem_traits_prefix = m_element.get_cpp_method_prefix () + "_seq_elem_traits";
+	
+	m_header << indent << "struct " << seq_elem_traits_id << endl
+		 << indent++ << "{" << endl;
+	
+	// pack_elem (C++ -> C)
+	m_header << indent << "void pack_elem (" << elem_cpp << " &cpp_value, "
+		 << elem_c << " &c_value);" << endl;
+	m_module << mod_indent << "void " << seq_elem_traits_prefix
+		 << "::pack_elem (" << elem_cpp << " &cpp_value, "
+		 << elem_c << " &c_value)" << endl
+		 << mod_indent++ << "{" << endl;
+	type.member_pack_to_c (m_module, mod_indent, "cpp_value", "c_value");
+	m_module << --mod_indent << "}" << endl << endl;
+
+	// unpack_elem (C -> C++)
+	m_header << indent << "void unpack_elem (" << elem_cpp << " &cpp_value, "
+		 << elem_c << " &c_value);" << endl;
+	m_module << mod_indent << "void " << seq_elem_traits_prefix
+		 << "::unpack_elem (" << elem_cpp << " &cpp_value, "
+		 << elem_c << " &c_value)" << endl
+		 << mod_indent++ << "{" << endl;
+	type.member_unpack_from_c (m_module, mod_indent, "cpp_value", "c_value");
+	m_module << --mod_indent << "}" << endl << endl;
+	
+	m_header << --indent << "};" << endl << endl;
 }
 
 // IDLWriteArrayProps -------------------------------------------------------

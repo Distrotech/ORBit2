@@ -86,24 +86,26 @@ protected:
 	void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
 	void enumHook(IDL_tree list,IDLScope &scope);
 
-	void struct_create_members (const IDLStruct &strct);
+	void struct_create_members    (const IDLStruct &strct);
 	void struct_create_converters (const IDLStruct &strct);
-	void struct_create_typedefs (const IDLStruct &strct);
-	void struct_create_any (const IDLStruct &strct);
+	void struct_create_typedefs   (const IDLStruct &strct);
+	void struct_create_any        (const IDLStruct &strct);
+
+	void exception_create_members      (const IDLException &ex);
+	void exception_create_constructors (const IDLException &ex);
+	void exception_create_converters   (const IDLException &ex);
+	void exception_create_any          (const IDLException &ex);
 };
 
-#if 0 //!!!
-class IDLWriteCPPSpecCode : public IDLOutputPass::IDLOutputJob {
-	IDLType const	&m_type;
+class IDLWriteCPPTraits: public IDLOutputPass::IDLOutputJob
+{
+	const IDLElement &m_element;
 public:
-	IDLWriteCPPSpecCode(IDLType const &type,IDLCompilerState &state,IDLOutputPass &pass) 
-		: IDLOutputJob(IDL_EV_TOPLEVEL,state,pass),m_type(type) {
-	}
-	void run() {
-		m_type.writeCPPSpecCode(m_header, indent, m_state);
-	}
+	IDLWriteCPPTraits (const IDLElement &element,
+			   IDLCompilerState &state,
+			   IDLOutputPass    &pass);
+	void run();
 };
-#endif
 
 class IDLWriteArrayProps : public IDLOutputPass::IDLOutputJob {
 	IDLArray const	&m_array;

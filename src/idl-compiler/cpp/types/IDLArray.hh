@@ -41,7 +41,7 @@ public:
 
 private:
         Dimensions     m_dims;
-        IDLType const &m_element_type;
+        const IDLType &m_element_type;
 
 	friend class IDLArrayList;
 	
