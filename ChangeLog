@@ -1,3 +1,9 @@
+2003-03-03  Michael Meeks  <michael@localhost.localdomain>
+
+	* src/orb/poa/poa.c (ORBit_POA_handle_request):
+	add HINT_ONEWAY_AT_IDLE and HINT_ALL_AT_IDLE
+	thread hints - currently ONEWAY doesn't distinguish.
+
 2003-02-14  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/poa/orbit-adaptor.h: add
