@@ -66,6 +66,8 @@ GIOPMessageInfo giop_recv_buffer_data_read(GIOPRecvBuffer *buf,
 					   int n, gboolean is_auth,
 					   GIOPConnection *cnx);
 
+guint giop_recv_buffer_reply_status(GIOPRecvBuffer *buf);
+
 extern inline guint giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
 {
   switch(buf->msg.header.version[1])
