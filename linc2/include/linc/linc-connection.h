@@ -16,8 +16,18 @@
 
 G_BEGIN_DECLS
 
-#include <sys/uio.h>
-#include <netdb.h>
+#ifdef G_OS_WIN32
+#  include <winsock2.h>
+#  undef interface		/* #defined as struct! */
+
+#  define iovec _WSABUF
+#  define iov_len len
+#  define iov_base buf
+
+#else
+#  include <sys/uio.h>
+#  include <netdb.h>
+#endif
 
 #include <linc/linc-types.h>
 #include <linc/linc-protocol.h>
