@@ -75,6 +75,7 @@ module test {
 
 	interface LifeCycleServer {
 		void deactivateOnReturn();
+		void deactivateUnrefOnReturn();
 	};
 
 	interface DeadReferenceObj {

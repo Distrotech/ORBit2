@@ -1542,8 +1542,30 @@ testLifeCycle (test_TestFactory   factory,
 	       CORBA_Environment *ev)
 {
 	test_LifeCycleServer objref;
+	ORBit_IMethod       *method;
 
 	d_print ("Testing LifeCycle bits...\n");
+
+	objref = test_TestFactory_createLifeCycleServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		
+	d_print (" pre gnome 2.4 stubs ...\n");
+
+	if (in_proc) {
+		method = &test_LifeCycleServer__iinterface.methods._buffer[1];
+		g_assert (!strcmp (method->name, "deactivateUnrefOnReturn"));
+	} else {
+		method = &test_LifeCycleServer__iinterface.methods._buffer[0];
+		g_assert (!strcmp (method->name, "deactivateOnReturn"));
+	}
+	
+	ORBit_small_invoke_stub (objref, method, NULL, NULL, NULL, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	if (!in_proc)
+		CORBA_Object_release (objref, ev);
+
+	d_print (" post gnome 2.4 stubs ...\n");
 
 	objref = test_TestFactory_createLifeCycleServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
