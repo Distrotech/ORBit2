@@ -234,8 +234,9 @@ AC_CONFIG_SUBDIRS(popt)
 
 AC_SUBST(pkglibdir)
 
-AC_OUTPUT(Makefile
+AC_OUTPUT([Makefile
 orbit-config
+ORBit.spec
 src/Makefile
 src/idl-compiler/Makefile
 src/orb/Makefile
@@ -246,4 +247,9 @@ src/orb/dynamic/Makefile
 src/orb/poa/Makefile
 include/Makefile
 include/orbit/Makefile
-ORBit.spec)
+include/orbit/IIOP/Makefile
+include/orbit/util/Makefile
+docs/Makefile
+docs/devel/Makefile
+docs/internals/Makefile
+])
