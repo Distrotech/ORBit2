@@ -7,12 +7,14 @@ typedef struct {
   GSList *oplist;
   gint curlevel;
   gboolean small;
+  int idx;
 } CBESkelInterfaceTraverseInfo;
 
 typedef struct {
   char *iface_id;
   char *opname;
   IDL_tree op;
+  int      idx;
 } CBESkelOpInfo;
 
 static void ck_output_skels(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci, int *idx);
@@ -284,10 +286,12 @@ static void
 ck_output_small_skel(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 {
   char *opname, *ifname;
-  IDL_tree intf, curitem;
+  IDL_tree intf;
   gboolean has_args, has_retval;
 
   g_return_if_fail (idx != NULL);
+
+  g_assert (! IDL_OP_DCL(tree).context_expr);
 
   intf = IDL_get_parent_node(tree, IDLN_INTERFACE, NULL);
   has_args   = IDL_OP_DCL(tree).parameter_dcls != NULL;
@@ -296,46 +300,29 @@ ck_output_small_skel(IDL_tree tree, OIDL_C_Info *ci, int *idx)
   opname = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(tree).ident), "_", 0);
   ifname = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(intf).ident), "_", 0);
 
-  fprintf(ci->fh, "void _ORBIT_skel_%s(POA_%s * _ORBIT_servant, "
-	  "GIOPRecvBuffer *_ORBIT_recv_buffer, "
-	  "CORBA_Environment *ev, ", opname, ifname);
+  fprintf(ci->fh, "void _ORBIT_skel_small_%s(POA_%s * _ORBIT_servant, "
+	  "gpointer            _ORBIT_retval,"
+	  "gpointer           *_ORBIT_args,"
+	  "CORBA_Environment  *ev,\n", opname, ifname);
   orbit_cbe_op_write_proto(ci->fh, tree, "_impl_", TRUE);
   fprintf(ci->fh, ")\n");
   fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "ORBit_IMethod *m_data = &%s__itype.methods._buffer [%d];\n", ifname, *idx);
 
-  if(IDL_OP_DCL(tree).op_type_spec)
-    cbe_print_var_dcl(ci->fh, tree);
-  for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
-    IDL_tree param = IDL_LIST(curitem).data;
-    cbe_print_var_dcl(ci->fh, param);
+  if(has_retval) {
+    fprintf(ci->fh, "*(");
+    orbit_cbe_write_param_typespec(ci->fh, tree);
+    fprintf(ci->fh, " *)_ORBIT_retval = ");
   }
-
-  if (has_args)
-    cbe_small_output_args (tree, ci->fh, "_args", "");
-
-  fprintf (ci->fh, "ORBit_small_pre_skel (_ORBIT_recv_buffer,"
-	   "m_data, %s, %s, ev);\n",
-	   has_retval ? "&_ORBIT_retval" : "NULL",
-	   has_args ? "_args" : "NULL");
-
-  if(has_retval)
-    fprintf(ci->fh, "_ORBIT_retval = ");
 
   fprintf(ci->fh, "_impl_%s(_ORBIT_servant, ", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
-  for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
-    cbe_skel_op_dcl_print_call_param(IDL_LIST(curitem).data, ci);
-    fprintf(ci->fh, ", ");
-  }
+  
+  cbe_small_unflatten_args (tree, ci->fh, "_ORBIT_args");
+
   if(IDL_OP_DCL(tree).context_expr)
     fprintf(ci->fh, "&_ctx, ");
+
   fprintf(ci->fh, "ev);\n");
 
-  fprintf (ci->fh, "ORBit_small_post_skel (_ORBIT_recv_buffer,"
-	   "m_data, %s, %s, ev);\n",
-	   has_retval ? "&_ORBIT_retval" : "NULL",
-	   has_args ? "_args" : "NULL");
-	   
   fprintf (ci->fh, "}\n");
 
   g_free(opname);
@@ -656,6 +643,7 @@ cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
       newopi = g_new0(CBESkelOpInfo, 1);
       newopi->iface_id = g_strdup(iface_id);
       newopi->opname = g_strdup(IDL_IDENT(IDL_OP_DCL(curdcl).ident).str);
+      newopi->idx = iti->idx++;
       iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
 					  (GCompareFunc)cbe_skel_compare_op_dcls);
       break;
@@ -667,12 +655,14 @@ cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
 	newopi = g_new0(CBESkelOpInfo, 1);
 	newopi->iface_id = g_strdup(iface_id);
 	newopi->opname = g_strdup_printf("_get_%s", IDL_IDENT(curattrdcl).str);
+	newopi->idx = iti->idx++;
 	iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
 					    (GCompareFunc)cbe_skel_compare_op_dcls);
 	if(!IDL_ATTR_DCL(curdcl).f_readonly) {
 	  newopi = g_new0(CBESkelOpInfo, 1);
 	  newopi->iface_id = g_strdup(iface_id);
 	  newopi->opname = g_strdup_printf("_set_%s", IDL_IDENT(curattrdcl).str);
+	  newopi->idx = iti->idx++;
 	  iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
 					      (GCompareFunc)cbe_skel_compare_op_dcls);
 	}
@@ -722,11 +712,16 @@ cbe_skel_interface_print_relayers(const CBESkelInterfaceTraverseInfo *iti)
 	g_error("two ops with same name!!!!");
     } else {
       if(strlen(opi->opname + iti->curlevel))
-	fprintf(iti->ci->fh, "if(strcmp((opname + %d), \"%s\")) break;\n", iti->curlevel + 1, opi->opname + iti->curlevel+1);
+	fprintf(iti->ci->fh, "if(strcmp((opname + %d), \"%s\")) break;\n",
+		iti->curlevel + 1, opi->opname + iti->curlevel+1);
       fprintf(iti->ci->fh, "*impl = (gpointer)servant->vepv->%s_epv->%s;\n",
 	      opi->iface_id, opi->opname);
-      fprintf(iti->ci->fh, "return (ORBitSkeleton)_ORBIT_skel_%s_%s;\n",
-	      opi->iface_id, opi->opname);
+      if (iti->small)
+        fprintf(iti->ci->fh, "return (ORBitSmallSkeleton)_ORBIT_skel_small_%s_%s;\n",
+	        opi->iface_id, opi->opname);
+      else
+        fprintf(iti->ci->fh, "return (ORBitSkeleton)_ORBIT_skel_%s_%s;\n",
+	        opi->iface_id, opi->opname);
     }
     fprintf(iti->ci->fh, "break;\n");
     g_slist_free(subiti.oplist);
@@ -741,14 +736,18 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Inf
   CBESkelInterfaceTraverseInfo iti;
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
-  fprintf(ci->fh, "static ORBitSkeleton get_skel_%s(POA_%s *servant,\nGIOPRecvBuffer *_ORBIT_recv_buffer,\ngpointer *impl)\n", id, id);
-  fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "gchar *opname = giop_recv_buffer_get_opname(_ORBIT_recv_buffer);\n\n");
+  if (rinfo->small_skels) {
+    fprintf(ci->fh, "static ORBitSmallSkeleton get_skel_small_%s(POA_%s *servant,\nconst char *opname,\gpointer *impl)\n{\n", id, id);
+  } else {
+    fprintf(ci->fh, "static ORBitSkeleton get_skel_%s(POA_%s *servant,\nGIOPRecvBuffer *_ORBIT_recv_buffer,\ngpointer *impl)\n{\n", id, id);
+    fprintf(ci->fh, "gchar *opname = giop_recv_buffer_get_opname(_ORBIT_recv_buffer);\n\n");
+  }
 
   iti.ci = ci;
   iti.oplist = NULL;
   iti.curlevel = 0;
   iti.small = rinfo->small_skels;
+  iti.idx = 0;
 
   IDL_tree_traverse_parents(tree,
 			    (GFunc)cbe_skel_interface_add_relayer, &iti);

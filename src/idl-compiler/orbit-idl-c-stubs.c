@@ -122,7 +122,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 
 	{
 		if (has_args)
-			cbe_small_output_args (tree, of, "_args", "");
+			cbe_small_flatten_args (tree, of, "_args");
 
 		fprintf (of, "ORBit_small_invoke_stub (_obj, "
 			 "&%s__itype.methods._buffer [%d], NULL, ", id, *idx);

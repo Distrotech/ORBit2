@@ -1,5 +1,10 @@
 2001-05-10  Michael Meeks  <michael@ximian.com>
 
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_write_param_typespec_str): split from
+	(orbit_cbe_write_param_typespec_raw): here.
+	(cs_small_unflatten_ref, cbe_small_unflatten_args): impl.
+
 	* include/orbit/poa/poa-types.h:
 	add ORBit_small_impl_finder, add ORBitSmallSkeleton.
 
