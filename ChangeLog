@@ -1,3 +1,22 @@
+2003-10-10  Michael Meeks  <michael@ximian.com>
+
+	* ORBit.spec.in: fix from Joe Pranevich.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_thread_fn): prune cruft.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connections_shutdown): axe.
+
+	* src/orb/GIOP/giop.c (giop_shutdown): call
+	linc_connections_close.
+
+	* src/orb/poa/poa.c (get_c_method): re-order check
+	for ORBIT_ADAPTOR_POA to pre the cast, check that we're
+	not walking over the end of vepvmap_cache.
+	(ORBit_skel_class_register): setup VEPV_CACHE_SIZE
+	using the 0'th element of vepvcache.	
+
 2003-10-01  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POA_destroy_T): make

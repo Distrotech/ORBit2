@@ -1336,29 +1336,6 @@ giop_recv_buffer_use_buf (void)
 	return buf;
 }
 
-
-/*
- * This thread handles all input when in threaded mode.
- */
-gpointer
-giop_recv_thread_fn (gpointer data)
-{
-	link_main_loop_run ();
-
-	/* FIXME: need to be able to quit without waiting ... */
-
-	/* Asked to quit - so ...
-	 * a) stop accepting inputs [ kill servers ]
-	 * b) flush outgoing queued data etc. (oneways)
-	 * c) unref all leakable resources.
-	 */
-
-	/* a) - needs re-structuring of cnx creation */
-	giop_connections_shutdown ();
-
-	return NULL;
-}
-
 void
 giop_recv_handle_queued_input (void)
 {
