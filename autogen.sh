@@ -46,6 +46,8 @@ do
   echo processing $i
   (cd $i; aclocal; autoheader; automake; autoheader; autoconf)
 done
+
+echo "Running ./configure --enable-maintainer-mode" "$@"
 ./configure --enable-maintainer-mode "$@"
 
 echo 
