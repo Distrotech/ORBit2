@@ -782,6 +782,7 @@ concat_frags (GList *list)
 	GList *l;
 	guchar *ptr;
 	gulong length = 0;
+	gulong initial_length;
 	GIOPRecvBuffer *head;
 
 	head = list->data;
@@ -793,11 +794,13 @@ concat_frags (GList *list)
 		length += buf->end - buf->cur;
 	}
 
+	initial_length = (head->end - head->end);
 	g_assert (head->free_body);
 	alloc_buffer (head, head->message_body, length);
 	head->left_to_read = 0;
 
-	ptr = head->end;
+	ptr = head->cur + initial_length;
+
 	for (l = list->next; l; l = l->next) {
 		gulong len;
 		GIOPRecvBuffer *buf = l->data;
@@ -830,12 +833,28 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 	CORBA_long message_id;
 	GIOPRecvBuffer *buf = *ret_buf;
 
+	giop_1_1 = (buf->giop_version == GIOP_1_1);
+
 	switch (buf->msg.header.message_type) {
 	case GIOP_REPLY:
 	case GIOP_LOCATEREPLY:
 	case GIOP_REQUEST:
 	case GIOP_LOCATEREQUEST:
+		message_id = giop_recv_buffer_get_request_id (buf);
+		break;
 	case GIOP_FRAGMENT:
+		if (!giop_1_1) {
+			buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+
+			if ((buf->cur + 4) > buf->end)
+				return TRUE;
+			if (giop_msg_conversion_needed (buf))
+				message_id = GUINT32_SWAP_LE_BE (*((guint32 *)buf->cur));
+			else
+				message_id = *(guint32 *) buf->cur;
+			buf->cur += 4;
+		} else
+			message_id = 0;
 		break;
 	default:
 		g_warning ("Bogus fragment packet type %d",
@@ -843,26 +862,12 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 		return TRUE;
 	}
 
-	if ((giop_1_1 = (buf->giop_version == GIOP_1_1)))
-		message_id = giop_recv_buffer_get_request_id (buf);
-
-	else {
-		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
-
-		if ((buf->cur + 4) > buf->end)
-			return TRUE;
-		if (giop_msg_conversion_needed (buf))
-			message_id = GUINT16_SWAP_LE_BE (*(guint32 *) buf->cur);
-		else
-			message_id = *(guint32 *) buf->cur;
-		buf->cur += 4;
-	}
-
 	if (!(list = giop_connection_get_frag (cnx, message_id, giop_1_1)))
 		giop_connection_add_frag (cnx, buf);
 
 	else {
 		*ret_buf = list->data;
+		g_assert ((*ret_buf)->msg.header.message_type != GIOP_FRAGMENT);
 
 		g_list_append (list, buf);
 			
@@ -1060,8 +1065,11 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				if (MORE_FRAGMENTS_FOLLOW (buf)) {
 					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
-					else
+					else {
+						cnx->incoming_msg = NULL;
+						LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 						goto frag_out;
+					}
 
 				} else if (buf->msg.header.message_type == GIOP_FRAGMENT) {
 					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
@@ -1113,17 +1121,14 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		break;
 
 	default:
-		if (!warned++) {
+		if (!warned++)
 			g_warning ("dropping an out of bound input buffer "
 				   "on the floor 0x%x", buf->msg.header.message_type);
-			giop_dump_recv (buf);
-		}
 		giop_recv_buffer_unuse (buf);
 		break;
 	}
+
  frag_out:	
-	cnx->incoming_msg = NULL;
-	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 	g_object_unref ((GObject *) cnx);
 
 	return TRUE;

@@ -1,6 +1,13 @@
 2002-06-05  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_handle_fragmented): GIOP_FRAGMENTs
+	don't have message_id's we can get in the same way.
+	(concat_frags): fix mem copying.
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_connection_handle_input): more re-arrangement,
 	and death of sillies.
 
