@@ -275,6 +275,11 @@ test/Makefile
         test/cpp/structs/with_interfaces/generated/Makefile
       test/cpp/structs/with_string/Makefile
         test/cpp/structs/with_string/generated/Makefile
+    test/cpp/sequences/Makefile
+      test/cpp/sequences/atomic_types/Makefile
+        test/cpp/sequences/atomic_types/generated/Makefile
+      test/cpp/sequences/string/Makefile
+        test/cpp/sequences/string/generated/Makefile
 
 test/everything/Makefile
 test/inhibit/Makefile
