@@ -1,6 +1,6 @@
 Summary:	High-performance CORBA Object Request Broker.
 Name:		ORBit2
-Version:	@VERSION@
+Version:	@ORBIT_VERSION@
 Release:	1
 Source:		ftp://ftp.labs.redhat.com/pub/ORBit/ORBit-%{version}.tar.gz
 Group:		System Environment/Libraries
@@ -118,7 +118,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/aclocal/*
 
 %changelog
-* Tue Spe 18 2001 Jens Finke <jens@gnome.org>
+* Mon Sep 24 2001 Mark McLoughlin <mark@skynet.ie>
+- use ORBIT_VERSION instead of VERSION
+
+* Tue Sep 18 2001 Jens Finke <jens@gnome.org>
 - Changed package name to ORBit2.
 - Updated spec file to match gpp standard.
 - Removed all hardcoded paths, use rpm macros instead.

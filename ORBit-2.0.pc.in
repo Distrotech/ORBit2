@@ -7,7 +7,7 @@ orbit_idl=@bindir@/orbit-idl-2
 
 Name: ORBit-2.0
 Description: High-performance CORBA Object Request Broker.
-Version: @VERSION@
+Version: @ORBIT_VERSION@
 Requires: linc glib-2.0 gmodule-2.0
-Libs: -L${libdir} -lORBit-2 @LINC_LIBS@ @LIBS@ -lm
+Libs: -L${libdir} -lORBit-2 @ORBIT_LIBS@ @LIBS@ -lm
 Cflags: -I${includedir}/orbit-2.0 -DORBIT2=1

@@ -1,7 +1,7 @@
-INCLUDES=-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	$(LINC_CFLAGS) \
-	$(GLIB_CFLAGS)
+INCLUDES =                         \
+	-I$(top_srcdir)/include    \
+	-I$(top_builddir)/include  \
+	$(ORBIT_CFLAGS)
 
 POA_TESTS_SRCS = poatest-basic01.c \
                  poatest-basic02.c \

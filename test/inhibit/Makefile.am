@@ -1,10 +1,10 @@
 noinst_PROGRAMS=					\
 	test-inhibit
 
-INCLUDES=-I$(top_srcdir)/include		\
-	-I$(top_builddir)/include		\
-	$(LINC_CFLAGS)				\
-	$(GLIB_CFLAGS)
+INCLUDES =                           \
+	-I$(top_srcdir)/include	     \
+	-I$(top_builddir)/include    \
+	$(ORBIT_CFLAGS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la
 
