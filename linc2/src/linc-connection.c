@@ -71,7 +71,6 @@ linc_connection_connected (GIOChannel  *gioc,
 	LINCConnectionClass *klass;
 	int rv, n;
 	socklen_t n_size = sizeof(n);
-	gboolean retval = TRUE;
 	gboolean disconnected = FALSE;
 
 	g_object_ref (G_OBJECT (cnx));
@@ -81,9 +80,10 @@ linc_connection_connected (GIOChannel  *gioc,
 	if (cnx->status == LINC_CONNECTED &&
 	    condition & IN_CONDS &&
 	    klass->handle_input)
-		retval = klass->handle_input (cnx);
 
-	if (retval && (condition & (ERR_CONDS | G_IO_OUT))) {
+		klass->handle_input (cnx);
+
+	else if (condition & (ERR_CONDS | G_IO_OUT)) {
 
 		switch (cnx->status) {
 		case LINC_CONNECTING:
@@ -96,7 +96,6 @@ linc_connection_connected (GIOChannel  *gioc,
 					cnx->gioc, ERR_CONDS,
 					linc_connection_connected, cnx);
 
-				retval = FALSE;
 			} else {
 				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
 				disconnected = TRUE;
@@ -114,7 +113,7 @@ linc_connection_connected (GIOChannel  *gioc,
 
 	g_object_unref (G_OBJECT (cnx));
 
-	return retval;
+	return TRUE;
 }
 
 /*
@@ -132,6 +131,7 @@ linc_connection_connected (GIOChannel  *gioc,
  * Also perform SSL specific operations if the connection has move into
  * the #LINC_CONNECTED state.
  */
+
 static void
 linc_connection_class_state_changed (LINCConnection      *cnx,
 				     LINCConnectionStatus status)
@@ -318,64 +318,60 @@ int
 linc_connection_read (LINCConnection *cnx, guchar *buf,
 		      int len, gboolean block_for_full_read)
 {
-  int n;
-  int written = 0;
+	int n;
+	int written = 0;
 
-  if (!len)
-    return 0;
+	if (!len)
+		return 0;
 
-  if(cnx->options & LINC_CONNECTION_NONBLOCKING)
-    {
-      while(cnx->status == LINC_CONNECTING)
-	linc_main_iteration(TRUE);
-    }
-
-  if(cnx->status != LINC_CONNECTED)
-    return -1;
-
-  do {
-#ifdef LINC_SSL_SUPPORT
-    if(cnx->options & LINC_CONNECTION_SSL)
-      n = SSL_read(cnx->ssl, buf, len);
-    else
-#endif
-      n = read(cnx->fd, buf, len);
-
-      if(n < 0)
-	{
-#ifdef LINC_SSL_SUPPORT
-	  if(cnx->options & LINC_CONNECTION_SSL)
-	    {
-	      gulong rv;
-	      rv = SSL_get_error(cnx->ssl, n);
-	      if((rv == SSL_ERROR_WANT_READ
-		  || rv == SSL_ERROR_WANT_WRITE)
-		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		linc_main_iteration(FALSE);
-	      else
-		return -1;
-	    }
-	  else
-#endif
-	    {
-	      if(errno == EAGAIN
-		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		linc_main_iteration(FALSE);
-	      else
-		return -1;
-	    }
+	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
+		while (cnx->status == LINC_CONNECTING)
+			linc_main_iteration (TRUE);
 	}
-      else if(n == 0)
-	return 0;
-      else
-	{
-	  buf += n;
-	  len -= n;
-	  written += n;
-	}
-  } while(len > 0 && block_for_full_read);
 
-  return written;
+	if (cnx->status != LINC_CONNECTED)
+		return -1;
+
+	do {
+#ifdef LINC_SSL_SUPPORT
+		if (cnx->options & LINC_CONNECTION_SSL)
+			n = SSL_read (cnx->ssl, buf, len);
+		else
+#endif
+			n = read (cnx->fd, buf, len);
+
+		if (n < 0) {
+#ifdef LINC_SSL_SUPPORT
+			if (cnx->options & LINC_CONNECTION_SSL) {
+				gulong rv;
+				rv = SSL_get_error (cnx->ssl, n);
+				if ((rv == SSL_ERROR_WANT_READ
+				     || rv == SSL_ERROR_WANT_WRITE)
+				    && (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					linc_main_iteration (FALSE);
+				else
+					return -1;
+			} else
+#endif
+			{
+				if (errno == EAGAIN
+				   && (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					linc_main_iteration (FALSE);
+				else
+					return -1;
+			}
+
+		} else if (n == 0)
+			return 0;
+
+		else {
+			buf += n;
+			len -= n;
+			written += n;
+		}
+	} while (len > 0 && block_for_full_read);
+
+	return written;
 }
 
 int
