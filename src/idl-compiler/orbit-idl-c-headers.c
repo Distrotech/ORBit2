@@ -505,6 +505,9 @@ void ch_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   case IDLN_TYPE_STRUCT:
     ch_output_type_struct(tree, rinfo, ci);
     break;
+  case IDLN_TYPE_ENUM:
+    ch_output_type_enum (tree, rinfo, ci);
+    break;
   default:
     break;
   }
