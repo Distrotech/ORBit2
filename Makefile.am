@@ -4,9 +4,10 @@ SUBDIRS=src include test docs
 
 bin_SCRIPTS=orbit2-config
 
-EXTRA_DIST =            \
-	ORBit2.m4       \
-	HACKING         \
+EXTRA_DIST =                   \
+	ORBit2.m4              \
+	ORBit.spec             \
+	HACKING                \
 	MAINTAINERS
 
 rpms: distcheck
