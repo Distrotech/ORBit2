@@ -454,6 +454,15 @@ giop_send_buffer_use (GIOPVersion giop_version)
 		buf = ltmp->data;
 		g_slist_free_1 (ltmp);
 		buf->num_used = buf->indirect_left = 0;
+
+		if (giop_blank_wire_data) {
+			int i;
+
+			for (i = 0; i < buf->num_indirects_used; i++)
+				memset (buf->indirects [i].ptr, 0,
+					buf->indirects [i].size);
+		}
+
 		buf->num_indirects_used = 0;
 	} else {
 		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
@@ -466,13 +475,6 @@ giop_send_buffer_use (GIOPVersion giop_version)
 		buf->iovecs = g_new (struct iovec, 8);
 	}
 
-	if (giop_blank_wire_data) {
-		int i;
-
-		for (i = 0; i < buf->num_indirects_alloced; i++)
-			memset (buf->indirects [i].ptr, 0,
-				buf->indirects [i].size);
-	}
 
 	memcpy (buf->msg.header.version,
 		giop_version_ids [giop_version], 2);
