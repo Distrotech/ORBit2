@@ -1,3 +1,8 @@
+2001-06-29  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/poa/poa.c: fixed a couple of porblems
+	with yesterday's commit.
+
 2001-06-28  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/poa/poa-types.h,
