@@ -652,7 +652,7 @@ linc_connection_dispose (GObject *obj)
 {
 	LINCConnection *cnx = (LINCConnection *)obj;
 
-	d_printf ("dispose connection %p", obj);
+	d_printf ("dispose connection %p\n", obj);
 
 	linc_source_remove (cnx);
 	queue_free (cnx);
@@ -678,7 +678,7 @@ linc_connection_finalize (GObject *obj)
 static void
 linc_connection_init (LINCConnection *cnx)
 {
-	d_printf ("create new connection %p", cnx);
+	d_printf ("create new connection %p\n", cnx);
 
 	cnx->priv = g_new0 (LINCConnectionPrivate, 1);
 	cnx->priv->fd = -1;
@@ -794,7 +794,7 @@ linc_connection_io_handler (GIOChannel  *gioc,
 	} else if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
 		gboolean done_writes = TRUE;
 
-		d_printf ("IO Out - buffer space free ...");
+		d_printf ("IO Out - buffer space free ...\n");
 
 		if (cnx->priv->write_queue) {
 			QueuedWrite *qw = cnx->priv->write_queue->data;
@@ -802,20 +802,27 @@ linc_connection_io_handler (GIOChannel  *gioc,
 
 			status = write_data (cnx, qw, TRUE);
 
-			d_printf ("Wrote queue %d on fd %d", status, cnx->priv->fd);
+			d_printf ("Wrote queue %d on fd %d\n", status, cnx->priv->fd);
 
 			if (status == LINC_IO_OK) {
 				cnx->priv->write_queue = g_list_delete_link (
 					cnx->priv->write_queue, cnx->priv->write_queue);
 				queued_write_free (qw);
 
+				done_writes = (cnx->priv->write_queue == NULL);
+
 			} else if (status == LINC_IO_FATAL_ERROR) {
 				d_printf ("Fatal error on queued write");
 				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
 
-			} else
+			} else {
+				d_printf ("Write blocked\n");
 				done_writes = FALSE;
+			}
 		}
+
+		d_printf ("Blocked write queue %s\n", done_writes ?
+			  "flushed & empty" : "still active");
 
 		if (done_writes) /* drop G_IO_OUT */
 			linc_watch_set_condition (cnx->priv->tag,

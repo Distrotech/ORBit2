@@ -79,7 +79,7 @@ linc_server_dispose (GObject *obj)
 	GSList     *l;
 	LINCServer *cnx = (LINCServer *)obj;
 
-	d_printf ("Dispose / close server fd %d", cnx->priv->fd);
+	d_printf ("Dispose / close server fd %d\n", cnx->priv->fd);
 
 #ifdef G_THREADS_ENABLED
 	if (cnx->priv->mutex) {
