@@ -511,16 +511,15 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
   if(tmi->dmtype & MARSHAL_FUNC)
     {
       pi.flags = PI_BUILD_FUNC;
-      pi.where = MW_Null|MW_Heap;
+      pi.where = MW_Null;
       node = marshal_populate(tree, NULL, &pi);
-      node->nptrs = 1;
+      node->name = "_ORBIT_val";
+      node->nptrs = oidl_param_numptrs(tree, DATA_IN);
+
       orbit_idl_do_node_passes(node, TRUE);
 
-      node->name = "_ORBIT_val";
-      node->nptrs = oidl_param_numptrs(tree, DATA_OUT);
-
-      fprintf(ci->fh, " %s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_OUT);
+      fprintf(ci->fh, "void %s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
       fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev)\n{\n");
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
       orbit_cbe_alloc_tmpvars(node, ci);

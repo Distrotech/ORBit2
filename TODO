@@ -7,6 +7,8 @@ idl-compiler:
 		- write standard routines for "print out the variables I need". Also make all immediate children of a toplevel
 		just be MN_NEED_TMPVAR and allocate that way...
 	. Fix the demarshalling code to use the hints (fun fun!)
+	. Right now the skels put an 'if(ev->_major == CORBA_NO_EXCEPTION)' for every item that needs freeing.
+	Group things up properly.
 
 	bounds checking
 	. need some sort of expression tree thing

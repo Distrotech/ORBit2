@@ -471,7 +471,10 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
     fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+#if 0
     orbit_cbe_alloc_tmpvars(ei->demarshal, ci);
+#endif
+
     fprintf(ci->fh, "%s *_ORBIT_exdata = %s__alloc();\n", id, id);
     c_demarshalling_generate(ei->demarshal, ci, FALSE, FALSE);
   }

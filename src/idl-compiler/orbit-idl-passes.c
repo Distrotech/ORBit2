@@ -14,6 +14,7 @@ static void oidl_pass_set_alignment(OIDL_Marshal_Node *node);
 static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
 static void oidl_pass_del_tail_update(OIDL_Marshal_Node *node); /* Must run after coalescibility */
 static void oidl_pass_set_first_curptr_usage(OIDL_Marshal_Node *node);
+static void oidl_pass_choose_where(OIDL_Marshal_Node *node);
 
 static void oidl_node_pass_tmpvars(OIDL_Marshal_Node *top);
 
@@ -31,6 +32,7 @@ static struct {
   {"Extra update removal", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_del_tail_update, FOR_OUT},
   {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, oidl_node_pass_tmpvars, FOR_IN|FOR_OUT},
   {"First curptr usage", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_first_curptr_usage, FOR_IN|FOR_OUT},
+  {"Memory allocation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_choose_where, FOR_OUT},
   {NULL, NULL}
 };
 
@@ -172,9 +174,8 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_demarshal)
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
-    for(node = tree; node; node = IDL_LIST(node).next) {
+    for(node = tree; node; node = IDL_LIST(node).next)
       oidl_pass_run_for_ops(IDL_LIST(node).data, func, is_demarshal);
-    }
     break;
   case IDLN_MODULE:
     oidl_pass_run_for_ops(IDL_MODULE(tree).definition_list, func, is_demarshal);
@@ -467,15 +468,12 @@ oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
     if(node->flags & (MN_ISSEQ|MN_ISSTRING)) break;
     elements_ok = TRUE;
     check_marshal = FALSE;
-    if(!(node->u.loop_info.loop_var->flags & MN_NOMARSHAL)) {
+    if(!(node->u.loop_info.loop_var->flags & MN_NOMARSHAL))
       elements_ok = elements_ok && (node->u.loop_info.loop_var->flags & MN_COALESCABLE);
-    }
-    if(!(node->u.loop_info.length_var->flags & MN_NOMARSHAL)) {
+    if(!(node->u.loop_info.length_var->flags & MN_NOMARSHAL))
       elements_ok = elements_ok && (node->u.loop_info.length_var->flags & MN_COALESCABLE);
-    }
-    if(!(node->u.loop_info.contents->flags & MN_NOMARSHAL)) {
+    if(!(node->u.loop_info.contents->flags & MN_NOMARSHAL))
       elements_ok = elements_ok && (node->u.loop_info.contents->flags & MN_COALESCABLE);
-    }
     if(elements_ok)
       node->flags |= MN_COALESCABLE;
     break;
@@ -843,4 +841,150 @@ static void
 oidl_pass_set_first_curptr_usage(OIDL_Marshal_Node *node)
 {
   oidl_node_pass_set_first_curptr_usage(node);
+}
+
+static void
+oidl_pass_choose_where_sub_held(OIDL_Marshal_Node *node)
+{
+  if(node->flags & MN_NOMARSHAL)
+    return;
+
+  switch(node->type)
+    {
+    case MARSHAL_LOOP:
+      if(((node->flags & (MN_ISSTRING|MN_COALESCABLE)) == (MN_ISSTRING|MN_COALESCABLE))
+	 && (node->where & MW_Msg))
+	{
+	  node->where = MW_Msg;
+	  return;
+	}
+
+    default:
+      node->where = MW_Null;
+      break;
+    }
+}
+
+static void
+oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
+{
+  OIDL_Marshal_Node *sub;
+  GSList *ltmp;
+
+  if(!node) return;
+  if(node->use_count)
+    return;
+
+  if(node->flags & MN_NOMARSHAL)
+    {
+      node->where = MW_Auto;
+      return;
+    }
+
+  node->use_count++;
+
+  switch(node->type) {
+  case MARSHAL_LOOP:
+    oidl_pass_choose_where(node->u.loop_info.loop_var);
+    oidl_pass_choose_where(node->u.loop_info.length_var);
+    oidl_pass_choose_where(node->u.loop_info.contents);
+    oidl_pass_choose_where_sub_held(node->u.loop_info.loop_var);
+    oidl_pass_choose_where_sub_held(node->u.loop_info.length_var);
+    if((node->u.loop_info.contents->flags & MN_COALESCABLE)
+       && (node->u.loop_info.contents->where & MW_Msg))
+      node->u.loop_info.contents->where = MW_Msg;
+    else if(!(node->u.loop_info.contents->flags & (MN_ISSEQ|MN_ISSTRING))
+	    && (node->u.loop_info.contents->where & MW_Null))
+      node->u.loop_info.contents->where = MW_Null;
+    else if((node->u.loop_info.contents->where & MW_Alloca))
+      node->u.loop_info.contents->where = MW_Alloca;
+    else
+      node->u.loop_info.contents->where = MW_Heap;
+    break;
+  case MARSHAL_SET:
+    {
+      for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
+	sub = ltmp->data;
+	oidl_pass_choose_where(sub);
+	if(node->flags & MN_TOPLEVEL)
+	  {
+	    switch(sub->type)
+	      {
+	      case MARSHAL_SWITCH:
+	      case MARSHAL_SET:
+		if((sub->flags & MN_COALESCABLE)
+		   && (sub->where & MW_Msg))
+		  sub->where = MW_Msg;
+		else if(sub->where & MW_Auto)
+		  sub->where = MW_Auto;
+		else if(sub->flags & MN_PARAM_INOUT)
+		  sub->where = MW_Null;
+		else
+		  sub->where = MW_Heap;
+		break;
+	      case MARSHAL_LOOP:
+		if((sub->where & MW_Msg)
+		   && ((sub->flags & (MN_ISSEQ|MN_COALESCABLE)) == MN_COALESCABLE))
+		  {
+		    /* We can only use MW_Msg for strings and coalescable arrays */
+		    sub->where = MW_Msg;
+		  }
+		else if(sub->where & MW_Auto)
+		  sub->where = MW_Auto;
+		else if((sub->flags & MN_PARAM_INOUT)
+			&& (sub->flags & MN_ISSEQ))
+		  sub->where = MW_Null;
+		else
+		  sub->where = MW_Heap;
+		break;
+	      case MARSHAL_COMPLEX:
+	      case MARSHAL_DATUM:
+		if((sub->where & MW_Auto)
+		   && !(sub->flags & MN_PARAM_INOUT))
+		  sub->where = MW_Auto;
+		else
+		  sub->where = MW_Null;
+		break;
+	      default:
+		g_assert_not_reached();
+		break;
+	      }
+	  }
+	else
+	  oidl_pass_choose_where_sub_held(sub);
+      }
+    }
+    break;
+  case MARSHAL_SWITCH:
+    oidl_pass_choose_where(node->u.switch_info.discrim);
+    oidl_pass_choose_where_sub_held(node->u.switch_info.discrim);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_choose_where, NULL);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_choose_where_sub_held, NULL);
+    break;
+  case MARSHAL_CASE:
+    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_choose_where, NULL);
+    oidl_pass_choose_where(node->u.case_info.contents);
+    oidl_pass_choose_where_sub_held(node->u.case_info.contents);
+    break;
+  case MARSHAL_COMPLEX:
+  case MARSHAL_DATUM:
+  case MARSHAL_CONST:
+  default:
+    break;
+  }
+  node->use_count--;
+}
+
+static void
+oidl_pass_choose_where(OIDL_Marshal_Node *node)
+{
+  oidl_node_pass_choose_where(node);
+  if(node->name)
+    {
+      /* handle the very top level node when it matters */
+      if(node->where & MW_Heap)
+	node->where = MW_Heap;
+      else
+	node->where = MW_Null;
+    }
 }

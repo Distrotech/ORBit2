@@ -100,6 +100,9 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
   }
 
   switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_MEMBER:
+    return orbit_cbe_get_typespec_str(IDL_MEMBER(tree).type_spec);
+    break;
   case IDLN_TYPE_ANY:
     retval = "CORBA_any";
     break;
