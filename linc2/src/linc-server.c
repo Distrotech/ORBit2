@@ -289,7 +289,7 @@ linc_server_setup (LINCServer            *cnx,
 #endif
 
 	if (linc_getnameinfo (saddr, saddr_len, hnbuf, 
-			      sizeof(hnbuf), servbuf, sizeof(servbuf), 
+			      sizeof (hnbuf), servbuf, sizeof (servbuf), 
 			      NI_NUMERICSERV)) {
 
 		g_free (saddr);
