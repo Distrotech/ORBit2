@@ -1,3 +1,16 @@
+Version 2.3.105
+
+	* Changes
+		+ object debugging (Michael)
+		+ expand in-proc trace debugging (Michael)
+		+ genuid cleanups (Michael, Mark)
+		+ minor typecode idl comiler cleanup (Mark)
+
+	* Bugs
+		+ Makefile.shared disting problem (Michael)
+		+ context removing bug (Michael)
+		+ various Any comparing bugs (Michael, Mark)
+
 Version 2.3.104
 
 	* runtime GIOP debugging (Mark)	
