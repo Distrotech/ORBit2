@@ -44,7 +44,7 @@ fi
 for i in .
 do 
   echo processing $i
-  (cd $i; aclocal; automake; autoconf)
+  (cd $i; aclocal; autoheader; automake; autoheader; autoconf)
 done
 ./configure --enable-maintainer-mode "$@"
 
