@@ -146,9 +146,22 @@ void IDLPassXlate::struct_create_members (const IDLStruct &strct)
 	}
 	m_header << endl;
 
-	// Create default empty constructor
-	m_header << indent << strct.get_cpp_identifier () << "() {};"
-		 << endl;
+	// Create default constructor
+	m_header << indent << strct.get_cpp_identifier () << "();" << endl;
+
+	m_module << mod_indent << strct.get_cpp_method_prefix ()
+		 << "::" << strct.get_cpp_identifier () << "()" << endl
+		 << mod_indent++ << "{" << endl;
+	
+	for (IDLStruct::const_iterator i = strct.begin (); i != strct.end (); i++)
+	{
+		IDLMember &member = (IDLMember &) **i;
+
+		member.getType ()->member_init_cpp (m_module, mod_indent,
+						    member.get_cpp_identifier ());
+	}
+
+	m_module << --mod_indent << "}" << endl << endl;
 }
 
 void IDLPassXlate::struct_create_converters (const IDLStruct &strct)
