@@ -29,23 +29,23 @@
  */
 #define POATEST_EX(ev)         ((ev) && (ev)->_major != CORBA_NO_EXCEPTION)
 
-#define POATEST_PRINT_EX(str, ev)                                            \
-        G_STMT_START {                                                       \
-           switch ( (ev)->_major ) {                                         \
-              case CORBA_NO_EXCEPTION :                                      \
-                 fprintf( stderr, str "No exception.\n" );                   \
-                 break;                                                      \
-              case CORBA_USER_EXCEPTION :                                    \
-                 fprintf( stderr, str "User Exception : %s\n",               \
-                                               CORBA_exception_id((ev)) );   \
-                 break;                                                      \
-              case CORBA_SYSTEM_EXCEPTION :                                  \
-                 fprintf( stderr, str "System Exception : %s\n",             \
-                                               CORBA_exception_id((ev)) );   \
-                 break;                                                      \
-              default :                                                      \
-                 break;                                                      \
-              }                                                              \
-        } G_STMT_END;
+#define POATEST_PRINT_EX(str, ev)                                             \
+	G_STMT_START {                                                        \
+		switch ((ev)->_major) {                                       \
+		case CORBA_NO_EXCEPTION :                                     \
+			fprintf (stderr, str "No exception.\n");              \
+			break;                                                \
+		case CORBA_USER_EXCEPTION :                                   \
+			fprintf (stderr, str "User Exception : %s\n",         \
+						CORBA_exception_id ((ev)));   \
+			break;                                                \
+		case CORBA_SYSTEM_EXCEPTION :                                 \
+			fprintf (stderr, str "System Exception : %s\n",       \
+						CORBA_exception_id ((ev)));   \
+			break;                                                \
+		default :                                                     \
+			break;                                                \
+		}                                                             \
+	} G_STMT_END;
 
 #endif /* __POATEST_EXCEPTION_H__ */
