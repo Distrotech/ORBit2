@@ -1,5 +1,15 @@
 2001-07-11  Mark McLoughlin <mark@skynet.ie>
 
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_type_alloc_and_tc): do the allocbuf thing.
+
+	* src/orb/dynamic/dynany.c,
+	  src/orb/poa/poa.c,
+	  test/poa/poatest-exception.h: kill temporary
+	hacks for the above.
+
+2001-07-11  Mark McLoughlin <mark@skynet.ie>
+
         * src/idl-compiler/orbit-idl-c-backend.h,
           src/idl-compiler/orbit-idl-c-common.c,
           src/idl-compiler/orbit-idl-c-demarshal.c,

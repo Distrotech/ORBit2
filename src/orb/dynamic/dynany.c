@@ -1624,11 +1624,7 @@ DynamicAny_DynSequence_get_elements (DynamicAny_DynSequence obj,
 	
 	src = s->_buffer;
 	retval = DynamicAny_AnySeq__alloc ();
-	/*
-	 * FIXME : idl compiler needs sorting
 	retval->_buffer = DynamicAny_AnySeq_allocbuf (s->_length);
-	 */
-	retval->_buffer = CORBA_sequence_CORBA_any_allocbuf (s->_length);	
 	retval->_length = s->_length;
 	subtc = dynany->any->_type->subtypes [0];
 
@@ -1793,22 +1789,3 @@ DynamicAny_DynArray_set_elements (DynamicAny_DynArray      obj,
 {
 	g_assert (!"Not yet implemented");
 }
-
-#if 0
-CORBA_sequence_DynamicAny_NameValuePair *
-CORBA_sequence_DynamicAny_NameValuePair__alloc (void)
-{
-	return ORBit_small_alloc (
-		TC_CORBA_sequence_DynamicAny_NameValuePair);
-}
-#endif
-
-#if 0
-DynamicAny_NameValuePair *
-CORBA_sequence_DynamicAny_NameValuePair_allocbuf (CORBA_unsigned_long len)
-{
-	return ORBit_small_allocbuf (
-		TC_CORBA_sequence_DynamicAny_NameValuePair, len);
-}
-
-#endif

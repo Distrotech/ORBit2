@@ -7,12 +7,6 @@
 #include "orbit-poa-export.h"
 #include "corba-ops.h"
 
-/*
- * FIXME FIXME FIXME
- * idl compiler needs sorting
- */
-#define PortableServer_ObjectId_allocbuf CORBA_sequence_CORBA_octet_allocbuf
-
 static PortableServer_Servant ORBit_POA_ServantManager_use_servant(
 				     PortableServer_POA poa,
 				     ORBit_POAObject *pobj,
