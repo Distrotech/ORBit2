@@ -10,4 +10,4 @@ INCLUDES =				\
 TESTS = test-linc
 
 test_linc_SOURCES = test-linc.c
-test_linc_LDADD = ../src/liblinc.la
+test_linc_LDADD = ../src/liblinc.la $(LINC_LIBS) $(SSL_LIBS)
