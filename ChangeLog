@@ -1,3 +1,12 @@
+2001-06-23  Martin Baulig  <baulig@suse.de>
+
+	* configure.in: Don't output the .pc files twice.
+
+	* src/idl-compiler/Makefile.am: s/libIDL.la/libIDL-2.la/g.
+
+	* test/inhibit/Makefile.am: Removed $(IDLOUT), test_any_built
+	and $(TEST_ANY_IDLOUT) so this actually works.
+
 2001-06-19  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-stubs.c (cs_small_output_stub): 

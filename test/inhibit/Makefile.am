@@ -29,7 +29,7 @@ baa_built: baa.idl $(IDL)
 
 TESTS=test-inhibit
 
-BUILT_SOURCES=$(BAA_IDLOUT) $(FOO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT)
-CLEANFILES=foo_built baa_built test1_built test_any_built $(BUILT_SOURCES)
+BUILT_SOURCES=$(BAA_IDLOUT) $(FOO_IDLOUT)
+CLEANFILES=foo_built baa_built test1_built $(BUILT_SOURCES)
 
 EXTRA_DIST=foo.idl baa.idl
