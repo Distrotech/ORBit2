@@ -3,6 +3,8 @@
 
 #include <glib.h>
 
+#define ORBIT_USER_RCFILE ".orbitrc"
+
 typedef enum {
 	ORBIT_OPTION_NONE,
 	ORBIT_OPTION_STRING,
@@ -16,8 +18,8 @@ typedef struct {
 	gpointer           arg;
 } ORBit_option;
 
-void ORBit_option_parse (int           *argc,
-			 char         **argv,
-			 ORBit_option  *options);
+void ORBit_option_parse (int                 *argc,
+			 char               **argv,
+			 const ORBit_option  *option_list);
 
 #endif /* __ORBIT_OPTIONS_H__ */

@@ -915,7 +915,7 @@ ORBit_proto_use (const char *name)
 {
 
 	if ((orbit_use_ipv4   && !strcmp ("IPv4", name)) ||
-	    (orbit_use_ipv6   && !strcmp ("IPv4", name)) || 
+	    (orbit_use_ipv6   && !strcmp ("IPv6", name)) || 
 	    (orbit_use_usocks && !strcmp ("UNIX", name)) || 
 	    (orbit_use_irda   && !strcmp ("IrDA", name)) || 
 	    (orbit_use_ipv6   && !strcmp ("SSL",  name)))
@@ -925,8 +925,6 @@ ORBit_proto_use (const char *name)
 }
 
 static ORBit_option orbit_supported_options[] = {
-	{"ORBNoSystemRC",   ORBIT_OPTION_NONE,    NULL}, /* FIXME: unimplemented */
-	{"ORBNoUserRC",     ORBIT_OPTION_NONE,    NULL}, /* FIXME: unimplemented */
 	{"ORBid",           ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
 	{"ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
 	{"ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
