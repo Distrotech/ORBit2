@@ -1,5 +1,8 @@
 2003-06-09  Michael Meeks  <michael@ximian.com>
 
+	* include/orbit/orb-core/corba-object-type.h:
+	internalize the CORBA_Object layout.
+
 	* src/orb/poa/orbit-adaptor.c
 	(ORBit_ObjectAdaptor_set_thread_hintv): split
 	(ORBit_ObjectAdaptor_set_thread_hint): impl.
