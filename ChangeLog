@@ -1,3 +1,8 @@
+2001-10-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POA_handle_request): make it
+	more robust vs. NULL pobjs.
+
 2001-10-29  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: bump required glib version.
