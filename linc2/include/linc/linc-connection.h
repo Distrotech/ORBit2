@@ -110,9 +110,10 @@ LINCIOStatus linc_connection_writev   (LINCConnection       *cnx,
 
 void         linc_connection_state_changed (LINCConnection      *cnx,
 					    LINCConnectionStatus status);
-LINCConnectionStatus
-	     linc_connection_get_status    (LINCConnection *cnx);
-void         linc_connection_disconnect    (LINCConnection *cnx);
+
+LINCConnectionStatus linc_connection_get_status     (LINCConnection *cnx);
+void                 linc_connection_disconnect     (LINCConnection *cnx);
+LINCConnectionStatus linc_connection_wait_connected (LINCConnection *cnx);
 
 /*
  * Proposed new blocking API ...
@@ -122,7 +123,6 @@ void           linc_connection_set_max_buffer    (LINCConnection *cnx,
 LINCWriteOpts *linc_write_options_new            (gboolean        block_on_write);
 /* Space for future expansion: timeout, individual msg. buffering constraints etc. */
 void           linc_write_options_free           (LINCWriteOpts  *write_opts);
-
 
 G_END_DECLS
 
