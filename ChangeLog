@@ -1,3 +1,7 @@
+2001-11-25  Havoc Pennington  <hp@redhat.com>
+
+	* src/orb/poa/Makefile.am (main_src): add poa-macros.h
+
 2001-11-22  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (run_tests): disable
