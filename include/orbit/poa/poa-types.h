@@ -22,9 +22,6 @@ typedef struct {
   PortableServer_Servant servant;
   gpointer poa;
   gpointer object_id;
-  int *use_count;
-  GFunc death_callback;
-  gpointer user_data;
 #ifdef ORBIT_BYPASS_MAPCACHE
 	ORBit_VepvIdx*	vepvmap_cache;
 #endif
