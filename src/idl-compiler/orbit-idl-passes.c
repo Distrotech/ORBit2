@@ -1,60 +1,73 @@
 #include "config.h"
 #include "orbit-idl2.h"
 
-typedef void (*OIDL_Pass_Func)(IDL_tree tree, gpointer data);
+typedef void (*OIDL_Pass_Func)(IDL_tree tree, gpointer data, gboolean is_out);
 
-static void oidl_pass_make_allocs(IDL_tree tree);
-static void oidl_pass_make_updates(IDL_tree tree);
-static void oidl_pass_tmpvars(IDL_tree tree);
-static void oidl_pass_run_for_ops(IDL_tree tree, GFunc func);
+static void oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out);
+
+static void orbit_idl_collapse_sets(OIDL_Marshal_Node *node);
+static void oidl_pass_make_updates(OIDL_Marshal_Node *node);
+static void oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out);
 static void oidl_pass_set_coalescibility(OIDL_Marshal_Node *node);
 static void oidl_pass_set_alignment(OIDL_Marshal_Node *node);
+static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
 
 static struct {
   const char *name;
   OIDL_Pass_Func func;
   gpointer data;
+  enum { FOR_IN=1, FOR_OUT=2 } dirs;
 } idl_passes[] = {
-  {"Allocation", (OIDL_Pass_Func)oidl_pass_make_allocs, NULL},
-  {"Position updates", (OIDL_Pass_Func)oidl_pass_make_updates, NULL},
-  {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, NULL},
-  {"Set collapsing", (OIDL_Pass_Func)oidl_pass_run_for_ops, orbit_idl_collapse_sets},
-  {"Alignment calculation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_alignment},
-  {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility},
+  {"Position updates", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_make_updates, FOR_OUT},
+  {"Set collapsing", (OIDL_Pass_Func)oidl_pass_run_for_ops, orbit_idl_collapse_sets, FOR_IN|FOR_OUT},
+  {"Alignment calculation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_alignment, FOR_IN|FOR_OUT},
+  {"Endian dependancy", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_endian_dependant, FOR_IN|FOR_OUT},
+  {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility, FOR_IN|FOR_OUT},
+  {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, NULL, FOR_IN|FOR_OUT},
   {NULL, NULL}
 };
 
 void
-orbit_idl_do_passes(IDL_tree tree)
+orbit_idl_do_passes(IDL_tree tree, OIDL_Run_Info *rinfo)
 {
   int i;
 
-#if defined(DEBUG) && 0
-  oidl_marshal_tree_dump(tree, 0);
-#endif
-
   for(i = 0; idl_passes[i].name; i++) {
-
-    idl_passes[i].func(tree, idl_passes[i].data);
+    if(idl_passes[i].dirs & FOR_IN)
+      idl_passes[i].func(tree, idl_passes[i].data, 0);
   }
 
-#if defined(DEBUG) && 0
-  oidl_marshal_tree_dump(tree, 0);
-#endif
+  for(i = 0; idl_passes[i].name; i++) {
+    if(idl_passes[i].dirs & FOR_OUT)
+      idl_passes[i].func(tree, idl_passes[i].data, 1);
+  }
+
+  if(rinfo->debug_level > 2)
+    oidl_marshal_tree_dump(tree, 0);
 }
 
 static void
-oidl_pass_make_allocs(IDL_tree tree)
+orbit_idl_assign_tmpvar_names(OIDL_Marshal_Node *node, int *counter)
 {
+  if(!(node->flags & MN_NEED_TMPVAR))
+    return;
+
+  /* Special case TODO - if loop contents are coalescable, don't need to have a tmpvar for the loop var */
+
+  node->name = g_strdup_printf("_ORBIT_tmpvar_%d", *counter);
+  node->flags |= MN_NSROOT;
+
+  (*counter)++;
 }
 
 static void
-oidl_pass_make_updates(IDL_tree tree)
+orbit_idl_tmpvars_assign(OIDL_Marshal_Node *top, int *counter)
 {
+  orbit_idl_node_foreach(top, (GFunc)orbit_idl_assign_tmpvar_names, counter);
 }
 
 static void
-oidl_pass_tmpvars(IDL_tree tree)
+oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
 {
   IDL_tree node;
 
@@ -63,21 +76,28 @@ oidl_pass_tmpvars(IDL_tree tree)
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
-      oidl_pass_tmpvars(IDL_LIST(node).data);
+      oidl_pass_tmpvars(IDL_LIST(node).data, dummy, is_out);
     }
     break;
   case IDLN_MODULE:
-    oidl_pass_tmpvars(IDL_MODULE(tree).definition_list);
+    oidl_pass_tmpvars(IDL_MODULE(tree).definition_list, dummy, is_out);
     break;
   case IDLN_INTERFACE:
-    oidl_pass_tmpvars(IDL_INTERFACE(tree).body);
+    oidl_pass_tmpvars(IDL_INTERFACE(tree).body, dummy, is_out);
     break;
   case IDLN_OP_DCL:
     {
-      int counter = 0;
+      OIDL_Op_Info *oi;
 
-      orbit_idl_tmpvars_assign(((OIDL_Op_Info *)tree->data)->in, &counter);
-      orbit_idl_tmpvars_assign(((OIDL_Op_Info *)tree->data)->out, &counter);
+      oi = tree->data;
+
+      if(is_out) {
+	if(oi->out)
+	  orbit_idl_tmpvars_assign(oi->out, &oi->counter);
+      } else {
+	if(oi->in)
+	  orbit_idl_tmpvars_assign(oi->in, &oi->counter);
+      }
     }
     break;
   case IDLN_ATTR_DCL:
@@ -87,9 +107,9 @@ oidl_pass_tmpvars(IDL_tree tree)
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
 	attr_name = IDL_LIST(curnode).data;
 
-	oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op1);
+	oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op1, dummy, is_out);
 	if(((OIDL_Attr_Info *)attr_name->data)->op2)
-	  oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op2);
+	  oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op2, dummy, is_out);
       }
     }
     break;
@@ -99,7 +119,7 @@ oidl_pass_tmpvars(IDL_tree tree)
 }
 
 static void
-oidl_pass_run_for_ops(IDL_tree tree, GFunc func)
+oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
 {
   IDL_tree node;
 
@@ -108,24 +128,26 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func)
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
-      oidl_pass_run_for_ops(IDL_LIST(node).data, func);
+      oidl_pass_run_for_ops(IDL_LIST(node).data, func, is_out);
     }
     break;
   case IDLN_MODULE:
-    oidl_pass_run_for_ops(IDL_MODULE(tree).definition_list, func);
+    oidl_pass_run_for_ops(IDL_MODULE(tree).definition_list, func, is_out);
     break;
   case IDLN_INTERFACE:
-    oidl_pass_run_for_ops(IDL_INTERFACE(tree).body, func);
+    oidl_pass_run_for_ops(IDL_INTERFACE(tree).body, func, is_out);
     break;
   case IDLN_OP_DCL:
     {
       OIDL_Op_Info *oi = (OIDL_Op_Info *)tree->data;
 
-      if(oi->in)
-	func(oi->in, NULL);
-
-      if(oi->out)
-	func(oi->out, NULL);
+      if(is_out) {
+	if(oi->out)
+	  func(oi->out, NULL);
+      } else {
+	if(oi->in)
+	  func(oi->in, NULL);
+      }
     }
     break;
   case IDLN_ATTR_DCL:
@@ -135,9 +157,9 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func)
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
 	attr_name = IDL_LIST(curnode).data;
 
-	oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op1, func);
+	oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op1, func, is_out);
 	if(((OIDL_Attr_Info *)attr_name->data)->op2)
-	  oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op2, func);
+	  oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op2, func, is_out);
       }
     }
     break;
@@ -274,13 +296,6 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
     node->iiop_head_align = node->u.case_info.contents->iiop_head_align;
     node->iiop_tail_align = node->u.case_info.contents->iiop_tail_align;
     break;
-  case MARSHAL_UPDATE:
-    oidl_pass_set_alignment(node->u.update_info.amount);
-    node->arch_head_align = node->u.update_info.amount->arch_head_align;
-    node->arch_tail_align = node->u.update_info.amount->arch_tail_align;
-    node->iiop_head_align = node->u.update_info.amount->iiop_head_align;
-    node->iiop_tail_align = node->u.update_info.amount->iiop_tail_align;
-    break;
   case MARSHAL_CONST:
     node->arch_head_align = node->arch_tail_align = node->iiop_head_align = node->iiop_tail_align = 1;
     break;
@@ -327,14 +342,14 @@ oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
   case MARSHAL_SET:
     {
       GSList *ltmp;
-      elements_ok = FALSE;
+      elements_ok = TRUE;
 
       for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
 	sub = ltmp->data;
 	oidl_pass_set_coalescibility(sub);
 	if(sub->flags & MN_NOMARSHAL) continue;
 
-	elements_ok = elements_ok || (sub->flags & MN_COALESCABLE);
+	elements_ok = elements_ok && (sub->flags & MN_COALESCABLE);
       }
 
       if(!elements_ok) break;
@@ -370,13 +385,153 @@ oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
 	node->flags |= MN_COALESCABLE;
     }
     break;
-  case MARSHAL_UPDATE:
-    oidl_pass_set_coalescibility(node->u.update_info.amount);
-    if((node->u.update_info.amount->flags & MN_COALESCABLE)
-       && !(node->u.update_info.amount->flags & MN_NOMARSHAL))
-      node->flags |= MN_COALESCABLE;
+  case MARSHAL_CASE:
+    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_set_coalescibility, NULL);
+    oidl_pass_set_coalescibility(node->u.case_info.contents);
     break;
   case MARSHAL_COMPLEX:
+    break;
+  default:
+    break;
+  }
+}
+
+static gboolean
+oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
+{
+  GSList *ltmp;
+  gboolean btmp = FALSE;
+
+  switch(node->type) {
+  case MARSHAL_DATUM:
+    if(node->u.datum_info.datum_size > 1)
+      node->flags |= MN_ENDIAN_DEPENDANT;
+    break;
+  case MARSHAL_SET:
+    for(ltmp = node->u.set_info.subnodes; !btmp && ltmp; ltmp = g_slist_next(ltmp))
+      btmp = btmp || oidl_pass_set_endian_dependant(ltmp->data);
+    if(btmp)
+      node->flags |= MN_ENDIAN_DEPENDANT;
+    break;
+  case MARSHAL_LOOP:
+    if(oidl_pass_set_endian_dependant(node->u.loop_info.loop_var)
+       || oidl_pass_set_endian_dependant(node->u.loop_info.length_var)
+       || oidl_pass_set_endian_dependant(node->u.loop_info.contents))
+      node->flags |= MN_ENDIAN_DEPENDANT;      
+    break;
+  case MARSHAL_SWITCH:
+    {
+      GSList *ltmp;
+      btmp = oidl_pass_set_endian_dependant(node->u.switch_info.discrim);
+
+      for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp))
+	btmp = btmp && oidl_pass_set_endian_dependant(ltmp->data);
+
+      if(btmp)
+	node->flags |= MN_ENDIAN_DEPENDANT;
+    }    
+    break;
+  case MARSHAL_CASE:
+    if(oidl_pass_set_endian_dependant(node->u.case_info.contents))
+      node->flags |= MN_ENDIAN_DEPENDANT;
+    break;
+  default:
+    btmp = FALSE;
+    break;
+  }
+
+  return btmp;
+}
+
+static void
+orbit_idl_collapse_sets(OIDL_Marshal_Node *node)
+{
+  GSList *ltmp;
+  OIDL_Marshal_Node *ntmp;
+
+  if(!node) return;
+
+#define SET_SIZE(node) g_slist_length(((OIDL_Marshal_Node *)node)->u.set_info.subnodes)
+
+#define COLLAPSE_NODE(anode) \
+if(!(anode)->name \
+   && (anode)->type == MARSHAL_SET \
+   && SET_SIZE((anode)) == 1) { \
+(anode) = (anode)->u.set_info.subnodes->data; \
+(anode)->up = node; \
+}
+
+  switch(node->type) {
+  case MARSHAL_SET:
+    for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
+      ntmp = ltmp->data;
+      orbit_idl_collapse_sets(ntmp);
+      if(ntmp->type == MARSHAL_SET
+	 && SET_SIZE(ntmp) == 1) {
+	ltmp->data = ntmp->u.set_info.subnodes->data;
+	ntmp = ltmp->data;
+	ntmp->up = node;
+      }
+    }
+    break;
+  case MARSHAL_LOOP:
+    orbit_idl_collapse_sets(node->u.loop_info.loop_var);
+    COLLAPSE_NODE(node->u.loop_info.loop_var);
+    orbit_idl_collapse_sets(node->u.loop_info.length_var);
+    COLLAPSE_NODE(node->u.loop_info.length_var);
+    orbit_idl_collapse_sets(node->u.loop_info.contents);
+    COLLAPSE_NODE(node->u.loop_info.contents);
+    break;
+  case MARSHAL_SWITCH:
+    orbit_idl_collapse_sets(node->u.switch_info.discrim);
+    COLLAPSE_NODE(node->u.switch_info.discrim);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)orbit_idl_collapse_sets, NULL);
+    break;
+  case MARSHAL_CASE:
+    orbit_idl_collapse_sets(node->u.case_info.contents);
+    COLLAPSE_NODE(node->u.case_info.contents);
+    break;
+  default:
+    break;
+  }
+}
+
+static void
+oidl_pass_make_updates(OIDL_Marshal_Node *node)
+{
+  OIDL_Marshal_Node *sub;
+
+  if(node->flags & MN_NOMARSHAL) return;
+
+  switch(node->type) {
+  case MARSHAL_DATUM:
+    node->flags |= MN_DEMARSHAL_UPDATE_AFTER;
+    break;
+  case MARSHAL_LOOP:
+    oidl_pass_make_updates(node->u.loop_info.loop_var);
+    oidl_pass_make_updates(node->u.loop_info.length_var);
+    oidl_pass_make_updates(node->u.loop_info.contents);
+    break;
+  case MARSHAL_SET:
+    {
+      GSList *ltmp;
+
+      for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
+	sub = ltmp->data;
+	oidl_pass_make_updates(sub);
+      }
+    }
+    break;
+  case MARSHAL_SWITCH:
+    oidl_pass_make_updates(node->u.switch_info.discrim);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_make_updates, NULL);
+    break;
+  case MARSHAL_CASE:
+    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_make_updates, NULL);
+    oidl_pass_make_updates(node->u.case_info.contents);
+    break;
+  case MARSHAL_COMPLEX:
+    break;
   default:
     break;
   }

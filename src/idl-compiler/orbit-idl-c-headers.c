@@ -351,8 +351,9 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
   ch_type_alloc_and_tc(tree, ci, TRUE);
 
   ctmp = orbit_cbe_get_typename(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-  fprintf(ci->fh, "extern %s *CORBA_sequence_%s_allocbuf(CORBA_unsigned_long len);\n",
-	  ctmp, (!strncmp(ctmp, "CORBA_", strlen("CORBA_")))?(ctmp+strlen("CORBA_")):ctmp);
+  orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+  fprintf(ci->fh, " *CORBA_sequence_%s_allocbuf(CORBA_unsigned_long len);\n",
+	  (!strncmp(ctmp, "CORBA_", strlen("CORBA_")))?(ctmp+strlen("CORBA_")):ctmp);
 
   fprintf(ci->fh, "#endif\n");
 

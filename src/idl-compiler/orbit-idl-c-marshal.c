@@ -2,6 +2,8 @@
 
 #include "orbit-idl-c-backend.h"
 
+/* XXX TODO: fix looping's assumptions about alignment to be min(contents->tail, length_var->tail) */
+
 #define NEEDS_INDIRECT(node) (((node)->flags & MN_LOOPED) && ((node)->flags & MN_NEED_TMPVAR))
 
 static void c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
@@ -46,8 +48,6 @@ c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     c_marshal_set(node, cmi);
     break;
   case MARSHAL_CONST:
-  case MARSHAL_UPDATE:
-  case MARSHAL_ALLOCATE:
   default:
     g_error("We're supposed to marshal a %d node?", node->type);
     break;
@@ -55,27 +55,33 @@ c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 }
 
 static void
-c_marshal_append(FILE *of, char *itemstr, char *sizestr, gboolean aligned, gboolean indirect)
+c_marshal_append(FILE *of, OIDL_Marshal_Node *node, char *itemstr, char *sizestr)
 {
-  if(indirect)
-    fprintf(of, "{ gpointer t; t = alloca(%s); memcpy(t, %s, %s);\n", sizestr, itemstr, sizestr);
+  gboolean indirect = NEEDS_INDIRECT(node), addrof = FALSE;
 
-  fprintf(of, "giop_%s_buffer_append_mem%s%s(GIOP_%s_BUFFER(_ORBIT_send_buffer), %s, %s);\n",
-	  indirect?"send":"message",
-	  indirect?"_indirect":"",
-	  aligned?"_a":"",
-	  indirect?"SEND":"MESSAGE",
-	  itemstr, sizestr);
+  if(indirect)
+     fprintf(of, "{ guchar *_ORBIT_t; _ORBIT_t = alloca(%s); memcpy(_ORBIT_t, %s, %s);\n", sizestr, itemstr, sizestr);
+
+  if((node->type == MARSHAL_DATUM)
+     && ((node->up->type != MARSHAL_LOOP)
+	 || (node != node->up->u.loop_info.contents)))
+    addrof = TRUE;
+
+  fprintf(of, "giop_message_buffer_append_mem(GIOP_MESSAGE_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
+	  (addrof && !indirect)?"&":"",
+	  indirect?"_ORBIT_t":itemstr, sizestr);
 
   if(indirect)
     fprintf(of, "}\n");
 }
 
-#define AP(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, FALSE, FALSE)
-#define APA(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, TRUE, FALSE)
+#if 0
+#define AP(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, FALSE, FALSE, FALSE)
+#define APA(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, TRUE, FALSE, FALSE)
 
-#define API(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, FALSE, TRUE)
-#define APIA(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, TRUE, TRUE)
+#define API(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, FALSE, TRUE, FALSE)
+#define APIA(itemstr, sizestr) c_marshal_append(cmi->ci->fh, itemstr, sizestr, TRUE, TRUE, FALSE)
+#endif
 
 static void
 c_marshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
@@ -97,13 +103,10 @@ c_marshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   c_marshal_alignfor(node, cmi);
   tmpstr = g_string_new(NULL);
 
-  ctmp = oidl_marshal_node_fqn(node);
+  ctmp = oidl_marshal_node_valuestr(node);
   g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
 
-  if(NEEDS_INDIRECT(node))
-    API(ctmp, tmpstr->str);
-  else
-    AP(ctmp, tmpstr->str);
+  c_marshal_append(cmi->ci->fh, node, ctmp, tmpstr->str);
 
   g_free(ctmp);
   g_string_free(tmpstr, TRUE);
@@ -120,7 +123,7 @@ c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
   last_tail_align = cmi->last_tail_align;
 
-  ctmp = oidl_marshal_node_fqn(node->u.switch_info.discrim);
+  ctmp = oidl_marshal_node_valuestr(node->u.switch_info.discrim);
   fprintf(cmi->ci->fh, "switch(%s) {\n", ctmp);
   g_free(ctmp);
 
@@ -150,18 +153,21 @@ c_marshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   char *ctmp, *ctmp_len, *ctmp_loop, *ctmp_contents;
 
-  ctmp = oidl_marshal_node_fqn(node);
-  ctmp_loop = oidl_marshal_node_fqn(node->u.loop_info.loop_var);
-  ctmp_len = oidl_marshal_node_fqn(node->u.loop_info.length_var);
-  ctmp_contents = oidl_marshal_node_fqn(node->u.loop_info.contents);
+  ctmp = oidl_marshal_node_valuestr(node);
+  ctmp_loop = oidl_marshal_node_valuestr(node->u.loop_info.loop_var);
+  ctmp_len = oidl_marshal_node_valuestr(node->u.loop_info.length_var);
+  ctmp_contents = oidl_marshal_node_valuestr(node->u.loop_info.contents);
 
-  if(node->flags & MN_ISSTRING)
+  if(node->flags & MN_ISSTRING) {
     fprintf(cmi->ci->fh, "%s = strlen(%s) + 1;\n", ctmp_len, ctmp);
+  }
 
   c_marshal_generate(node->u.loop_info.length_var, cmi);
 
   if(node->u.loop_info.contents->flags & MN_COALESCABLE) {
     GString *tmpstr, *tmpstr2;
+
+    c_marshal_alignfor(node->u.loop_info.contents, cmi);
 
     tmpstr = g_string_new(NULL);
     tmpstr2 = g_string_new(NULL);
@@ -170,16 +176,12 @@ c_marshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
     g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
-    c_marshal_alignfor(node->u.loop_info.contents, cmi);
-
-    if(NEEDS_INDIRECT(node->u.loop_info.contents)) /* We use our LOOPED flag, not the contents */
-      API(tmpstr2->str, tmpstr->str);
-    else
-      AP(tmpstr2->str, tmpstr->str);
+    c_marshal_append(cmi->ci->fh, node->u.loop_info.contents, tmpstr2->str, tmpstr->str);
 
     g_string_free(tmpstr2, TRUE);
     g_string_free(tmpstr, TRUE);
   } else {
+    cmi->last_tail_align = MIN(cmi->last_tail_align, node->u.loop_info.contents->iiop_tail_align);
     fprintf(cmi->ci->fh, "for(%s = 0; %s < %s; %s++) {\n", ctmp_loop, ctmp_loop, ctmp_len, ctmp_loop);
     c_marshal_generate(node->u.loop_info.loop_var, cmi);
     c_marshal_generate(node->u.loop_info.contents, cmi);
@@ -207,10 +209,8 @@ c_marshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
     ctmp = oidl_marshal_node_fqn(node);
     g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
-    if(NEEDS_INDIRECT(node))
-      API(ctmp, tmpstr->str);
-    else
-      AP(ctmp, tmpstr->str);
+
+    c_marshal_append(cmi->ci->fh, node, ctmp, tmpstr->str);
 
   } else {
     GSList *ltmp;
