@@ -1,3 +1,11 @@
+2002-02-21  Murray Cumming  <murrayc@usa.net>
+
+	* Corba::Object and Corba::Orb now have pointers to the 
+	underlying structs instead of struct instances. The actual
+	struct declarations are hidden. It should still be possible to
+	cast between C and C++ instances, using cast operators and copy
+	constructors.
+
 2002-01-23  Murray Cumming  <murrayc@usa.net>
 
 	* Applied Richard Andrews's patches which make the C++ skels 

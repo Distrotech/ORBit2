@@ -37,6 +37,34 @@ using namespace _orbitcpp;
 
 
 
+CORBA::Object::operator CORBA_Object() {
+	return m_target;
+}
+
+CORBA_Object CORBA::Object::_orbitcpp_get_c_object() {
+	return m_target;
+}
+
+CORBA::Object::Object() {
+}
+
+CORBA::Object::~Object() {
+}
+
+CORBA::Object_ptr CORBA::Object::_duplicate(Object_ptr o) {
+	return reinterpret_cast<CORBA::Object_ptr>(
+		_orbitcpp::duplicate_guarded(*o)
+	);
+}
+
+CORBA::Object_ptr CORBA::Object::_narrow(Object_ptr o) {
+	return _duplicate(o);
+}
+
+CORBA::Object_ptr CORBA::Object::_nil() {
+	return CORBA_OBJECT_NIL;
+}
+
 
 void 
 CORBA::Object::operator delete(void* c_objref) {
