@@ -520,8 +520,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 
-	parent_class = g_type_class_ref (
-		g_type_parent (G_TYPE_FROM_CLASS (klass)));
+	parent_class = g_type_class_peek_parent (klass);
 }
 
 GType

@@ -14,10 +14,10 @@
 #undef DEBUG
 
 enum {
-  NEW_CONNECTION,
-  LAST_SIGNAL
+	NEW_CONNECTION,
+	LAST_SIGNAL
 };
-static guint server_signals[LAST_SIGNAL] = {0};
+static guint server_signals [LAST_SIGNAL] = { 0 };
 
 static GObjectClass *parent_class = NULL;
 
@@ -29,30 +29,28 @@ my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
                                   gpointer      invocation_hint,
                                   gpointer      marshal_data)
 {
-  typedef void (*GSignalFunc_VOID__OBJECT) (gpointer     data1,
-					    GObject     *arg_1,
-                                             gpointer     data2);
-  register GSignalFunc_VOID__OBJECT callback;
-  register GCClosure *cc = (GCClosure*) closure;
-  register gpointer data1, data2;
+	typedef void (*GSignalFunc_VOID__OBJECT) (gpointer     data1,
+						  GObject     *arg_1,
+						  gpointer     data2);
+	register GSignalFunc_VOID__OBJECT callback;
+	register GCClosure *cc = (GCClosure*) closure;
+	register gpointer data1, data2;
 
-  g_return_if_fail (n_param_values >= 2);
+	g_return_if_fail (n_param_values >= 2);
 
-  if (G_CCLOSURE_SWAP_DATA (closure))
-    {
-      data1 = closure->data;
-      data2 = g_value_peek_pointer (param_values + 0);
-    }
-  else
-    {
-      data1 = g_value_peek_pointer (param_values + 0);
-      data2 = closure->data;
-    }
-  callback = (GSignalFunc_VOID__OBJECT) (marshal_data ? marshal_data : cc->callback);
+	if (G_CCLOSURE_SWAP_DATA (closure)) {
+		data1 = closure->data;
+		data2 = g_value_peek_pointer (param_values + 0);
+	} else {
+		data1 = g_value_peek_pointer (param_values + 0);
+		data2 = closure->data;
+	}
+	callback = (GSignalFunc_VOID__OBJECT) (
+		marshal_data ? marshal_data : cc->callback);
 
-  callback (data1,
-            g_value_peek_pointer (param_values + 1),
-            data2);
+	callback (data1,
+		  g_value_peek_pointer (param_values + 1),
+		  data2);
 }
 
 static void
@@ -316,9 +314,9 @@ linc_server_setup (LINCServer            *cnx,
 		g_assert (cnx->tag == NULL);
 
 		cnx->tag = linc_io_add_watch (
-				gioc, 
-				G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-				linc_server_handle_io, cnx);
+			gioc, 
+			G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+			linc_server_handle_io, cnx);
 
 		g_io_channel_unref(gioc);
 	}
@@ -333,51 +331,51 @@ linc_server_setup (LINCServer            *cnx,
 static void
 linc_server_class_init (LINCServerClass *klass)
 {
-  GObjectClass *object_class = (GObjectClass *)klass;
-  GClosure *closure;
-  GType ptype;
+	GType         ptype;
+	GClosure     *closure;
+	GObjectClass *object_class = (GObjectClass *) klass;
 
-  object_class->dispose = linc_server_dispose;
-  klass->create_connection = linc_server_create_connection;
-  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
-  closure = g_signal_type_cclosure_new(G_OBJECT_CLASS_TYPE(klass),
-				       G_STRUCT_OFFSET(LINCServerClass, new_connection));
+	object_class->dispose    = linc_server_dispose;
+	klass->create_connection = linc_server_create_connection;
 
-  ptype = G_TYPE_OBJECT;
-  server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
-						 G_OBJECT_CLASS_TYPE(klass),
-						 G_SIGNAL_RUN_LAST, closure,
-						 NULL, NULL,
-						 my_cclosure_marshal_VOID__OBJECT,
-						 G_TYPE_NONE,
-						 1, &ptype);
+	parent_class = g_type_class_peek_parent (klass);
+	closure = g_signal_type_cclosure_new (
+		G_OBJECT_CLASS_TYPE (klass),
+		G_STRUCT_OFFSET (LINCServerClass, new_connection));
+
+	ptype = G_TYPE_OBJECT;
+	server_signals [NEW_CONNECTION] = g_signal_newv (
+		"new_connection",
+		G_OBJECT_CLASS_TYPE (klass),
+		G_SIGNAL_RUN_LAST, closure,
+		NULL, NULL,
+		my_cclosure_marshal_VOID__OBJECT,
+		G_TYPE_NONE,
+		1, &ptype);
 }
 
 GType
-linc_server_get_type(void)
+linc_server_get_type (void)
 {
-  static GType object_type = 0;
+	static GType object_type = 0;
 
-  if (!object_type)
-    {
-      static const GTypeInfo object_info =
-      {
-        sizeof (LINCServerClass),
-        (GBaseInitFunc) NULL,
-        (GBaseFinalizeFunc) NULL,
-        (GClassInitFunc) linc_server_class_init,
-        NULL,           /* class_finalize */
-        NULL,           /* class_data */
-        sizeof (LINCServer),
-        0,              /* n_preallocs */
-        (GInstanceInitFunc) linc_server_init,
-      };
+	if (!object_type) {
+		static const GTypeInfo object_info = {
+			sizeof (LINCServerClass),
+			(GBaseInitFunc) NULL,
+			(GBaseFinalizeFunc) NULL,
+			(GClassInitFunc) linc_server_class_init,
+			NULL,           /* class_finalize */
+			NULL,           /* class_data */
+			sizeof (LINCServer),
+			0,              /* n_preallocs */
+			(GInstanceInitFunc) linc_server_init,
+		};
       
-      object_type = g_type_register_static (G_TYPE_OBJECT,
-                                            "LINCServer",
-                                            &object_info,
-					    0);
-    }  
+		object_type = g_type_register_static (
+			G_TYPE_OBJECT, "LINCServer",
+			&object_info, 0);
+	}  
 
-  return object_type;
+	return object_type;
 }
