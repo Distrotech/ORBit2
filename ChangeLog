@@ -1,3 +1,10 @@
+2003-10-29  Justin Schoeman <justin@expertron.co.za>
+
+	* src/orb/orb-core/orbit-object.c (ORBit_RootObject_shutdown): fix
+	declaration of valid_running when G_ENABLE_DEBUG is defined.
+	* src/orb/GIOP/giop.c (giop_thread_request_push_key): make sure
+	tdata is set before calling giop_thread_key_add_T.
+
 2003-10-27  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testPolicy): impl.
