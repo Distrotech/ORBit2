@@ -473,15 +473,18 @@ ORBit_POA_deactivate (PortableServer_POA poa,
 }
 
 void
-ORBit_POA_handle_held_requests(PortableServer_POA poa)
+ORBit_POA_handle_held_requests (PortableServer_POA poa)
 {
 	GSList *reqlist = poa->held_requests, *req;
-	poa->held_requests = 0;
-	/* zero out the held_requests first, because a given request may
-	 * get re-queued below.
+
+	poa->held_requests = NULL;
+	/*
+	 * zero out the held_requests first, because a given
+	 * request may get re-queued below.
 	 */
 	for (req = reqlist; req; req = req->next) {
 		GIOPRecvBuffer *buf = req->data;
+
 		ORBit_handle_request (poa->orb, buf);
 	}
 	g_slist_free (reqlist);
@@ -880,41 +883,42 @@ ORBit_POA_create_object (PortableServer_POA             poa,
 }
 
 /*
-    Normally this is called for normal servants in RETAIN mode. 
-    However, it may also be invoked on the default servant when
-    it is installed. In this later case, it may be either RETAIN
-    or NON_RETAIN.
-*/
+ *    Normally this is called for normal servants in RETAIN mode. 
+ *  However, it may also be invoked on the default servant when
+ *  it is installed. In this later case, it may be either RETAIN
+ *  or NON_RETAIN.
+ */
 static void
-ORBit_POA_activate_object(PortableServer_POA poa, 
-			  ORBit_POAObject pobj,
-			  PortableServer_ServantBase *servant, 
-			  CORBA_Environment *ev) 
+ORBit_POA_activate_object (PortableServer_POA          poa, 
+			   ORBit_POAObject             pobj,
+			   PortableServer_ServantBase *servant, 
+			   CORBA_Environment          *ev) 
 {
-    GSList **obj_list;
+	GSList **obj_list;
 
-    g_assert( pobj->servant == 0 );	/* must not be already active */
-    g_assert( (poa->life_flags & ORBit_LifeF_DeactivateDo) == 0 );
-    g_assert( pobj->use_cnt == 0 );
-    /* XXX: above should be an exception? */
-    {
-	PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
-	if ( ci->vepvmap==0 ) {
-	    ci->vepvmap 
-	      = g_new0(ORBit_VepvIdx, ORBit_class_assignment_counter+1);
-	    ci->vepvlen = ORBit_class_assignment_counter + 1;
-	    ci->init_vepvmap(ci->vepvmap);
+	g_assert (pobj->servant == 0);	/* must not be already active */
+	g_assert ((poa->life_flags & ORBit_LifeF_DeactivateDo) == 0);
+	g_assert (pobj->use_cnt == 0);
+
+	/* FIXME: above should be an exception? */
+	{
+		PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO (servant);
+		if (ci->vepvmap == NULL) {
+			ci->vepvmap = g_new0 (ORBit_VepvIdx, ORBit_class_assignment_counter + 1);
+			ci->vepvlen = ORBit_class_assignment_counter + 1;
+			ci->init_vepvmap (ci->vepvmap);
+		}
+#ifdef ORBIT_BYPASS_MAPCACHE
+		pobj->vepvmap_cache = ci->vepvmap;
+#endif
 	}
-#  ifdef ORBIT_BYPASS_MAPCACHE
-	pobj->vepvmap_cache = ci->vepvmap;
-#  endif
-    }
-    pobj->servant = servant;
-    obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(servant);
-    *obj_list = g_slist_append(*obj_list,pobj);
+	pobj->servant = servant;
 
-    /* released in ORBit_POA_deactivate_object */
-    ORBit_RootObject_duplicate(pobj);
+	obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR (servant);
+	*obj_list = g_slist_append (*obj_list, pobj);
+
+	/* released in ORBit_POA_deactivate_object */
+	ORBit_RootObject_duplicate (pobj);
 }
 
 /*
@@ -1304,17 +1308,17 @@ ORBit_POA_handle_request (PortableServer_POA poa,
  ***************************************************************************/
 
 static PortableServer_Servant
-ORBit_POA_ServantManager_use_servant( PortableServer_POA poa,
-				      ORBit_POAObject pobj,
-				      CORBA_Identifier opname,
+ORBit_POA_ServantManager_use_servant( PortableServer_POA                    poa,
+				      ORBit_POAObject                       pobj,
+				      CORBA_Identifier                      opname,
 				      PortableServer_ServantLocator_Cookie *the_cookie,
-				      PortableServer_ObjectId *oid,
-				      CORBA_Environment *ev )
+				      PortableServer_ObjectId              *oid,
+				      CORBA_Environment                    *ev)
 {
   PortableServer_ServantBase *retval;
   GSList                     **obj_list;
 
-  if(poa->p_servant_retention == PortableServer_RETAIN)
+  if (poa->p_servant_retention == PortableServer_RETAIN)
     {
       POA_PortableServer_ServantActivator *sm;
       POA_PortableServer_ServantActivator__epv *epv;
@@ -1322,24 +1326,23 @@ ORBit_POA_ServantManager_use_servant( PortableServer_POA poa,
       sm = (POA_PortableServer_ServantActivator *)poa->servant_manager;
       epv = sm->vepv->PortableServer_ServantActivator_epv;
       retval = epv->incarnate(sm, oid, poa, ev);
-      if ( retval )
+      if (retval)
 	{
 
 	  /* XXX: two POAs sharing servant and having
 	   *      different uniqueness policies ??
 	   *  see note 11.3.5.1
 	   */
-	  if((poa->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
-             (ORBIT_SERVANT_TO_POAOBJECT_LIST(retval) != NULL))
+	  if ((poa->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
+	      ORBIT_SERVANT_TO_POAOBJECT_LIST(retval) != NULL)
 	    {
-	      CORBA_exception_set_system(ev,
-					 ex_CORBA_OBJ_ADAPTER,
-					 CORBA_COMPLETED_NO);
+	      CORBA_exception_set_system (ev, ex_CORBA_OBJ_ADAPTER,
+					  CORBA_COMPLETED_NO);
 	      return NULL;
             }
 
-	  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(retval);
-	  *obj_list = g_slist_append(*obj_list,pobj);
+	  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR (retval);
+	  *obj_list = g_slist_append (*obj_list, pobj);
 
           /* released by ORBit_POA_deactivate_object */
 	  ORBit_RootObject_duplicate (pobj);
@@ -1351,29 +1354,27 @@ ORBit_POA_ServantManager_use_servant( PortableServer_POA poa,
       POA_PortableServer_ServantLocator *sm;
       POA_PortableServer_ServantLocator__epv *epv;
 
-      sm = (POA_PortableServer_ServantLocator *)poa->servant_manager;
+      sm = (POA_PortableServer_ServantLocator *) poa->servant_manager;
       epv = sm->vepv->PortableServer_ServantLocator_epv;
-      retval = epv->preinvoke(sm, oid, poa, opname, the_cookie, ev);
+      retval = epv->preinvoke (sm, oid, poa, opname, the_cookie, ev);
 
-      if ( retval )
+      if (retval)
 	{
-	  /* XXX:  Is this right?
-	   *       Is it the same as above? 
-	   */
-	  if((poa->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
-             (ORBIT_SERVANT_TO_POAOBJECT_LIST(retval) != NULL))
+	  /* FIXME:  Is this right?
+	   *       Is it the same as above? */
+	  if ((poa->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
+	      ORBIT_SERVANT_TO_POAOBJECT_LIST(retval) != NULL)
 	    {
-	      CORBA_exception_set_system(ev,
-					 ex_CORBA_OBJ_ADAPTER,
-					 CORBA_COMPLETED_NO);
+	      CORBA_exception_set_system (ev, ex_CORBA_OBJ_ADAPTER,
+					  CORBA_COMPLETED_NO);
 	      return NULL;
             }
 
-	  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(retval);
-	  *obj_list = g_slist_append(*obj_list,pobj);
+	  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR (retval);
+	  *obj_list = g_slist_append (*obj_list, pobj);
 
           /* released by ORBit_POA_ServantManager_unuse_servant */
-	  ORBit_RootObject_duplicate(pobj);
+	  ORBit_RootObject_duplicate (pobj);
 	  pobj->servant = retval;
 	}
     }
@@ -1382,29 +1383,30 @@ ORBit_POA_ServantManager_use_servant( PortableServer_POA poa,
 }
 
 static void
-ORBit_POA_ServantManager_unuse_servant( PortableServer_POA poa,
-					ORBit_POAObject pobj,
-					CORBA_Identifier opname,
+ORBit_POA_ServantManager_unuse_servant (PortableServer_POA                   poa,
+					ORBit_POAObject                      pobj,
+					CORBA_Identifier                     opname,
 					PortableServer_ServantLocator_Cookie cookie,
-					PortableServer_ObjectId *oid,
-					PortableServer_Servant servant,
-					CORBA_Environment *ev )
+					PortableServer_ObjectId             *oid,
+					PortableServer_Servant               servant,
+					CORBA_Environment                   *ev)
 {
   POA_PortableServer_ServantLocator *sm;
   POA_PortableServer_ServantLocator__epv *epv;
   PortableServer_ServantBase *serv = servant;
   GSList **obj_list;
 
-  g_assert(poa->p_servant_retention == PortableServer_NON_RETAIN);
+  g_assert (poa->p_servant_retention == PortableServer_NON_RETAIN);
 
   sm = (POA_PortableServer_ServantLocator *)poa->servant_manager;
   epv = sm->vepv->PortableServer_ServantLocator_epv;
 
   pobj->servant = NULL;
-  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(serv);	
-  *obj_list = g_slist_remove(*obj_list,pobj);
-  ORBit_RootObject_release(pobj);
-  epv->postinvoke(sm, oid, poa, opname, cookie, servant, ev);
+  obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR (serv);	
+  *obj_list = g_slist_remove (*obj_list, pobj);
+  ORBit_RootObject_release (pobj);
+
+  epv->postinvoke (sm, oid, poa, opname, cookie, servant, ev);
 }
 
 static gboolean
@@ -1428,10 +1430,10 @@ ORBit_POA_okey_to_objid (PortableServer_POA          poa,
 	return TRUE;
 }
 
-/**
-    This function is invoked from the generated stub code, after
-    invoking the servant method.
-**/
+/*
+ * This function is invoked from the generated stub code, after
+ * invoking the servant method.
+ */
 void
 ORBit_POAObject_post_invoke (ORBit_POAObject pobj)
 {
@@ -1454,7 +1456,6 @@ ORBit_POAObject_post_invoke (ORBit_POAObject pobj)
  * C Language Mapping Specific Methods.
  * Section 1.26.2 (C Language Mapping Specification).
  */
-
 CORBA_char*
 PortableServer_ObjectId_to_string (PortableServer_ObjectId *id, 
 				   CORBA_Environment       *ev)
@@ -1504,7 +1505,7 @@ PortableServer_string_to_ObjectId (CORBA_char        *str,
 	tmp._length  = strlen (str);
 	tmp._buffer  = str;
   
-	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
+	return (PortableServer_ObjectId *) ORBit_sequence_CORBA_octet_dup (&tmp);
 }
 
 PortableServer_ObjectId*
@@ -1514,15 +1515,15 @@ PortableServer_wstring_to_ObjectId (CORBA_wchar       *str,
 	PortableServer_ObjectId tmp;
 	int                     i;
 
-	for(i = 0; str[i]; i++);
+	for (i = 0; str[i]; i++);
 
 	tmp._length = i*2;
-	tmp._buffer = g_alloca(tmp._length);
+	tmp._buffer = g_alloca (tmp._length);
 
-	for(i = 0; str[i]; i++)
+	for (i = 0; str[i]; i++)
 		tmp._buffer[i] = str[i];
 
-	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
+	return (PortableServer_ObjectId *) ORBit_sequence_CORBA_octet_dup (&tmp);
 }
 
 /*
