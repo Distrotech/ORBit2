@@ -362,7 +362,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       if(fixlen)
 	continue;
       if(IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
-	 	|| IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) 
+	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING)
 	 continue;	/* why? - because strings don't need alloc functions */
       break;
     case IDLN_TYPE_ARRAY:
@@ -436,9 +436,13 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   cc_output_allocs(IDL_TYPE_SEQUENCE(tree).simple_type_spec, rinfo, ci);
 
+#if 0
   ctmp = orbit_cbe_get_typespec_str(tree);
   ctmp2 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+#endif
   ctmp3 = orbit_cbe_get_typespec_str(tts);
+  ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp3);
+  ctmp2 = g_strdup(ctmp3);
 
   fprintf(ci->fh, "#if ");
   orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);
@@ -466,7 +470,7 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   elements_are_fixed = orbit_cbe_type_is_fixed_length(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   fprintf(ci->fh, "%s* %s_allocbuf(CORBA_unsigned_long len)\n", ctmp2, ctmp);
-      fprintf(ci->fh, "{\n%s* retval = ", ctmp2);
+  fprintf(ci->fh, "{\n%s* retval = ", ctmp2);
   if(elements_are_fixed) {
       fprintf(ci->fh, "ORBit_alloc_simple(sizeof(%s)*len);\n", ctmp2);
   } else {
@@ -524,7 +528,7 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
       orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
       fprintf(ci->fh, " _ORBIT_val, CORBA_Environment *ev)\n{\n");
       orbit_cbe_alloc_tmpvars(node, ci);
-      c_marshalling_generate(node, ci, TRUE);
+      c_marshalling_generate(node, ci, FALSE);
       fprintf(ci->fh, "}\n");
     }
 

@@ -9,7 +9,7 @@ CORBA_string_alloc(CORBA_unsigned_long len)
 }
 
 CORBA_char *
-CORBA_string_dup(CORBA_char *str)
+CORBA_string_dup(const CORBA_char *str)
 {
   CORBA_char *retval;
   CORBA_unsigned_long len;

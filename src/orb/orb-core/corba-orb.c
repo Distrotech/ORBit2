@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <orbit/orbit.h>
 #include <string.h>
+#include "../orbit-init.h"
 
 static void
 CORBA_ORB_release_fn(ORBit_RootObject robj)
@@ -65,6 +66,7 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
     }
 
   retval->poas = g_ptr_array_new();
+  ORBit_init_internals(retval, ev);
 
   return retval;
 }
@@ -505,7 +507,7 @@ CORBA_ORB_set_initial_reference(CORBA_ORB orb, CORBA_ORB_ObjectId identifier,
     orb->initial_refs = g_hash_table_new(g_str_hash, g_str_equal);
 
   if(g_hash_table_lookup_extended(orb->initial_refs, identifier,
-				  &findkey, &findval))
+				  (gpointer *)&findkey, (gpointer *)&findval))
     {
       if(!findval->free_name)
 	findkey = NULL;
