@@ -1,8 +1,31 @@
 #include "config.h"
 #include "orbit-idl2.h"
 
+/* OK, the deal is that node->where should tell possible allocation strategies when demarshalling
+
+   What determines 'where'?
+   . If we are an atomic type, it is the container
+   . If we are a complex type, it is the Populate_Info + container
+
+   . For inout params, we can only use MW_Msg for sequence buffers and strings
+   . We can't use MW_Auto for inout stuff, and MW_Alloca requires some conniving.
+
+   Are there any cases where a marshal method is valid in a child but not a parent?
+   . MW_Msg only applies to coalescable items.
+
+   The process of figuring out where to stick a variable goes like this:
+   If it is a toplevel:
+      If it is looped and marshallable, then use MW_Alloca
+      else use MW_Auto
+   else:
+      The container always has to do the allocating, not the contained.
+      Types of containers are loop & switch - a set is sort of a container but it just passes the allocations on from its parent.
+
+*/
+
 static OIDL_Marshal_Node *
-oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, const char *name)
+oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, const char *name, OIDL_Populate_Info *pi,
+		      OIDL_Marshal_Where where_mask)
 {
   OIDL_Marshal_Node *retval;
 
@@ -12,6 +35,7 @@ oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, co
   retval->type = type;
   retval->name = (char *)name;
   retval->arch_head_align = retval->arch_tail_align = retval->iiop_head_align = retval->iiop_tail_align = 1;
+  retval->where = pi->where & where_mask;
 
   if(parent)
     retval->flags |= (parent->flags & (MN_LOOPED));
@@ -194,6 +218,7 @@ OIDL_Marshal_Node *
 marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *pi)
 {
   OIDL_Marshal_Node *retval = NULL;
+  OIDL_Populate_Info subpi = *pi;
 
   if(!tree) return NULL;
 
@@ -209,7 +234,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
 	    break;
 	  case MARSHAL_FUNC:
 	  case MARSHAL_ANY:
-	    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+	    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi, MW_Any);
 	    retval->u.complex_info.type = CX_MARSHAL_METHOD;
 	    retval->tree = tree;
 	    goto out;
@@ -220,37 +245,37 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
 	  }
     }
 
-  pi->flags &= ~PI_BUILD_FUNC;
+  subpi.flags &= ~PI_BUILD_FUNC;
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_INTEGER:
-    retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL, pi, MW_Any);
     retval->u.const_info.amount = IDL_INTEGER(tree).value;
     retval->tree = tree;
     retval->flags |= MN_NOMARSHAL;
     break;
   case IDLN_TYPE_OCTET:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     retval->u.datum_info.datum_size = sizeof(CORBA_octet);
     retval->tree = tree;
     break;
   case IDLN_TYPE_BOOLEAN:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     retval->u.datum_info.datum_size = sizeof(CORBA_boolean);
     retval->tree = tree;
     break;
   case IDLN_TYPE_CHAR:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     retval->u.datum_info.datum_size = sizeof(CORBA_char);
     retval->tree = tree;
     break;
   case IDLN_TYPE_WIDE_CHAR:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     retval->u.datum_info.datum_size = sizeof(CORBA_wchar);
     retval->tree = tree;
     break;
   case IDLN_TYPE_FLOAT:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     switch(IDL_TYPE_FLOAT(tree).f_type) {
     case IDL_FLOAT_TYPE_FLOAT:
       retval->u.datum_info.datum_size = sizeof(CORBA_float);
@@ -268,7 +293,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
     retval->tree = tree;
     break;
   case IDLN_TYPE_INTEGER:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     switch(IDL_TYPE_INTEGER(tree).f_type) {
     case IDL_INTEGER_TYPE_SHORT:
       retval->u.datum_info.datum_size = sizeof(CORBA_short);
@@ -286,22 +311,23 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
     retval->tree = tree;
     break;
   case IDLN_TYPE_ENUM:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL, pi, MW_Any);
     retval->u.datum_info.datum_size = sizeof(CORBA_long);
     retval->tree = tree;
     break;
   case IDLN_TYPE_STRING:
   case IDLN_TYPE_WIDE_STRING:
-    retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL, pi, MW_Null|MW_Auto|MW_Heap);
     retval->flags |= MN_ISSTRING;
-    retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, &subpi, MW_Auto);
     retval->u.loop_info.length_var->u.datum_info.datum_size = sizeof(CORBA_long);
     retval->u.loop_info.length_var->flags |= MN_NEED_TMPVAR;
-    retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, &subpi, MW_Auto);
     retval->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_long);
     retval->u.loop_info.loop_var->flags |= MN_NEED_TMPVAR|MN_NOMARSHAL|MN_LOOPED;
-    retval->u.loop_info.contents = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.contents = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, &subpi, MW_Any);
     retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_octet);
+    retval->u.loop_info.contents->where &= MW_Msg|MW_Heap;
     retval->tree = tree;
     if(parent)
       retval->flags &= ~(parent->flags & MN_LOOPED);
@@ -312,7 +338,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
       IDL_tree curlevel;
 
       for(curlevel = IDL_TYPE_ARRAY(tree).size_list; curlevel; curlevel = IDL_LIST(curlevel).next) {
-	newsub = oidl_marshal_node_new(cursub, MARSHAL_LOOP, NULL);
+	newsub = oidl_marshal_node_new(cursub, MARSHAL_LOOP, NULL, retval?pi:&subpi, MW_Any);
 	if(cursub != parent)
 	  newsub->flags |= MN_LOOPED;
 
@@ -322,31 +348,31 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
 	cursub->u.loop_info.contents = newsub;
 	cursub = newsub;
 
-	cursub->u.loop_info.loop_var = oidl_marshal_node_new(cursub, MARSHAL_DATUM, NULL);
+	cursub->u.loop_info.loop_var = oidl_marshal_node_new(cursub, MARSHAL_DATUM, NULL, &subpi, MW_Auto);
 	cursub->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_long);
 	cursub->u.loop_info.loop_var->flags |= MN_NOMARSHAL|MN_NEED_TMPVAR;
 
-	cursub->u.loop_info.length_var = marshal_populate(IDL_LIST(curlevel).data, cursub, pi);
+	cursub->u.loop_info.length_var = marshal_populate(IDL_LIST(curlevel).data, cursub, &subpi);
 	cursub->u.loop_info.length_var->flags |= MN_NOMARSHAL;
       }
 
-      cursub->u.loop_info.contents = marshal_populate(orbit_idl_get_array_type(tree), cursub, pi);
+      cursub->u.loop_info.contents = marshal_populate(orbit_idl_get_array_type(tree), cursub, &subpi);
     }
     retval->tree = tree;
     break;
   case IDLN_TYPE_SEQUENCE:
-    retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL, pi, MW_Any);
     retval->flags |= MN_ISSEQ|MN_LOOPED;
 
-    retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, pi, MW_Auto);
     retval->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_unsigned_long);
     retval->u.loop_info.loop_var->flags |= MN_NOMARSHAL|MN_NEED_TMPVAR;
 
-    retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
+    retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, pi, MW_Auto|MW_Null);
     retval->u.loop_info.length_var->u.datum_info.datum_size = sizeof(CORBA_unsigned_long);
     retval->u.loop_info.length_var->name = "_length";
 
-    retval->u.loop_info.contents = marshal_populate(IDL_TYPE_SEQUENCE(tree).simple_type_spec, retval, pi);
+    retval->u.loop_info.contents = marshal_populate(IDL_TYPE_SEQUENCE(tree).simple_type_spec, retval, &subpi);
     retval->u.loop_info.contents->flags |= MN_LOOPED;
     retval->tree = tree;
     if(parent)
@@ -362,14 +388,14 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
       if ( isRecur && tree->data) {
 	return tree->data;
       } else {
-	  retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
+	  retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL, pi, MW_Any);
 	  retval->tree = tree;
 	  if(isRecur)
 	    retval->flags |= MN_RECURSIVE_TOP;
 	  tree->data = retval;
 	  for(curitem = IDL_TYPE_STRUCT(tree).member_list; curitem; curitem = IDL_LIST(curitem).next) {
 	    OIDL_Marshal_Node *newnode
-	     = marshal_populate(IDL_LIST(curitem).data, retval, pi);
+	     = marshal_populate(IDL_LIST(curitem).data, retval, &subpi);
 	    retval->u.set_info.subnodes 
 	      = g_slist_append(retval->u.set_info.subnodes, newnode);
 	  }
@@ -385,16 +411,16 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
       if ( isRecur && tree->data) {
 	return tree->data;
       } else {
-	  retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
+	  retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL, pi, MW_Any);
 	  retval->tree = tree;
 	  if(isRecur)
 	    retval->flags |= MN_RECURSIVE_TOP;
 	  tree->data = retval;
-	  retval->u.switch_info.discrim = marshal_populate(IDL_TYPE_UNION(tree).switch_type_spec, retval, pi);
+	  retval->u.switch_info.discrim = marshal_populate(IDL_TYPE_UNION(tree).switch_type_spec, retval, &subpi);
 	  retval->u.switch_info.discrim->name = "_d";
 	  for(ntmp = IDL_TYPE_UNION(tree).switch_body; ntmp; ntmp = IDL_LIST(ntmp).next) {
 	    OIDL_Marshal_Node * newnode
-	      = marshal_populate(IDL_LIST(ntmp).data, retval, pi);
+	      = marshal_populate(IDL_LIST(ntmp).data, retval, &subpi);
 	    retval->u.switch_info.cases 
 	      = g_slist_append(retval->u.switch_info.cases, newnode);
 	  }
@@ -408,15 +434,15 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
       IDL_tree curitem, curnode;
       OIDL_Marshal_Node *tnode = NULL; /* Quiet gcc */
 
-      retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
+      retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL, pi, MW_Any);
       
       for(curitem = IDL_MEMBER(tree).dcls; curitem; curitem = IDL_LIST(curitem).next) {
 	curnode = IDL_LIST(curitem).data;
 
 	if(IDL_NODE_TYPE(curnode) == IDLN_IDENT) {
-	  tnode = marshal_populate(IDL_MEMBER(tree).type_spec, retval, pi);
+	  tnode = marshal_populate(IDL_MEMBER(tree).type_spec, retval, &subpi);
 	} else if(IDL_NODE_TYPE(curnode) == IDLN_TYPE_ARRAY) {
-	  tnode = marshal_populate(curnode, retval, pi);
+	  tnode = marshal_populate(curnode, retval, &subpi);
 	} else
 	  g_error("A member that is not an ident nor an array?");
 
@@ -430,12 +456,12 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
   case IDLN_CASE_STMT:
     {
       IDL_tree ntmp;
-      retval = oidl_marshal_node_new(parent, MARSHAL_CASE, "_u");
-      retval->u.case_info.contents = marshal_populate(IDL_CASE_STMT(tree).element_spec, retval, pi);
+      retval = oidl_marshal_node_new(parent, MARSHAL_CASE, "_u", pi, MW_Any);
+      retval->u.case_info.contents = marshal_populate(IDL_CASE_STMT(tree).element_spec, retval, &subpi);
       for(ntmp = IDL_CASE_STMT(tree).labels; ntmp; ntmp = IDL_LIST(ntmp).next) {
 	OIDL_Marshal_Node * newnode;
 
-	newnode = marshal_populate(IDL_LIST(ntmp).data, retval, pi);
+	newnode = marshal_populate(IDL_LIST(ntmp).data, retval, &subpi);
 
 	retval->u.case_info.labels = g_slist_append(retval->u.case_info.labels, newnode);
       }
@@ -444,39 +470,39 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
     }
     break;
   case IDLN_IDENT:
-    retval = marshal_populate(IDL_get_parent_node(tree, IDLN_ANY, NULL), parent, pi);
+    retval = marshal_populate(IDL_get_parent_node(tree, IDLN_ANY, NULL), parent, &subpi);
     retval->tree = tree;
     break;
   case IDLN_LIST:
-    retval = marshal_populate(IDL_get_parent_node(tree, IDLN_ANY, NULL), parent, pi);
+    retval = marshal_populate(IDL_get_parent_node(tree, IDLN_ANY, NULL), parent, &subpi);
     break;
   case IDLN_TYPE_DCL:
-    retval = marshal_populate(IDL_TYPE_DCL(tree).type_spec, parent, pi);
+    retval = marshal_populate(IDL_TYPE_DCL(tree).type_spec, parent, &subpi);
     break;
   case IDLN_PARAM_DCL:
-    retval = marshal_populate(IDL_PARAM_DCL(tree).param_type_spec, parent, pi);
+    retval = marshal_populate(IDL_PARAM_DCL(tree).param_type_spec, parent, &subpi);
     g_assert(retval);
     g_assert(!retval->name);
     retval->name = IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str;
     break;
   case IDLN_TYPE_FIXED:
-    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi, MW_Any);
     retval->u.complex_info.type = CX_CORBA_FIXED;
     retval->tree = tree;
     break;
   case IDLN_TYPE_ANY:
-    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi, MW_Any);
     retval->u.complex_info.type = CX_CORBA_ANY;
     retval->tree = tree;
     break;
   case IDLN_TYPE_TYPECODE:
-    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi, MW_Any);
     retval->u.complex_info.type = CX_CORBA_TYPECODE;
     retval->tree = tree;
     break;
   case IDLN_TYPE_OBJECT:
   case IDLN_INTERFACE:
-    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi, MW_Any);
     retval->u.complex_info.type = CX_CORBA_OBJECT;
     retval->tree = tree;
     break;
@@ -487,12 +513,12 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
   case IDLN_FIXED:
   case IDLN_FLOAT:
   case IDLN_BOOLEAN:
-    retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL, pi, MW_Any);
     retval->tree = tree;
     break;
   case IDLN_NATIVE:
     /* we dont have access to runinfo from here -- should warn if not PIDL */
-    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi, MW_Any);
     retval->u.complex_info.type = CX_NATIVE;
     retval->tree = tree;
     break;
@@ -527,16 +553,17 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
 {
   OIDL_Marshal_Node *retval;
   IDL_tree curitem, curparam, ts;
-  OIDL_Populate_Info pi;
+  OIDL_Populate_Info pi = {NULL};
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
 
   if(!(IDL_OP_DCL(tree).parameter_dcls
        || IDL_OP_DCL(tree).context_expr)) return NULL;
 
-  retval = oidl_marshal_node_new(NULL, MARSHAL_SET, NULL);
-
   pi.ctxt = ctxt;
+
+  retval = oidl_marshal_node_new(NULL, MARSHAL_SET, NULL, &pi, MW_Any);
+
   for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
     OIDL_Marshal_Node *sub;
 
@@ -579,7 +606,7 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
 
     for(i = 0, curitem = IDL_OP_DCL(tree).context_expr; curitem; curitem = IDL_LIST(curitem).next, i++) /* */ ;
 
-    mnode = oidl_marshal_node_new(retval, MARSHAL_COMPLEX, NULL);
+    mnode = oidl_marshal_node_new(retval, MARSHAL_COMPLEX, NULL, &pi, MW_Any);
     mnode->u.complex_info.type = CX_CORBA_CONTEXT;
     mnode->u.complex_info.context_item_count = i;
 
@@ -594,14 +621,14 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
 {
   OIDL_Marshal_Node *retval, *rvnode;
   IDL_tree curitem, curparam;
-  OIDL_Populate_Info pi;
+  OIDL_Populate_Info pi = {NULL};
   gboolean isSlice;
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
 
-  retval = oidl_marshal_node_new(NULL, MARSHAL_SET, NULL);
-
   pi.ctxt = ctxt;
+  retval = oidl_marshal_node_new(NULL, MARSHAL_SET, NULL, &pi, MW_Any);
+
   if(IDL_OP_DCL(tree).op_type_spec) {
     if(is_skels)
       pi.where = MW_Null;
@@ -664,7 +691,7 @@ OIDL_Marshal_Node *
 orbit_idl_marshal_populate_except_marshal(IDL_tree tree, OIDL_Marshal_Context *ctxt)
 {
   OIDL_Marshal_Node *retval;
-  OIDL_Populate_Info pi;
+  OIDL_Populate_Info pi = {NULL};
 
   pi.ctxt = ctxt;
   pi.where = MW_Null;
@@ -679,7 +706,7 @@ OIDL_Marshal_Node *
 orbit_idl_marshal_populate_except_demarshal(IDL_tree tree, OIDL_Marshal_Context *ctxt)
 {
   OIDL_Marshal_Node *retval;
-  OIDL_Populate_Info pi;
+  OIDL_Populate_Info pi = {NULL};
 
   pi.ctxt = ctxt;
   pi.where = MW_Heap|MW_Null;
