@@ -21,3 +21,5 @@ empty-server
 dynany.h
 test-dynany
 *-imodule.c
+ior
+typelib-dump

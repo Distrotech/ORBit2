@@ -1,5 +1,18 @@
 2001-08-10  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c 
+	(ORBit_handle_exception_array): set the typecode in the
+	CORBA_Environment as we demarshal.
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_typecode): upd.
+	(ORBit_trace_any): impl.
+
+	* src/orb/orb-core/orbit-small.c (orbit_small_demarshal):
+	more trace debug: out parameters & exceptions.
+
+2001-08-10  Michael Meeks  <michael@ximian.com>
+
 	* test/everything/test.sh: trash /tmp/orbit-$USER before
 	we start ...
 
