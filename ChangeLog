@@ -1,5 +1,10 @@
 2001-12-07  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-any.c:
+	(ORBit_demarshal_value): do byteswap if neccessary.
+
+2001-12-07  Mark McLoughlin  <mark@skynet.ie>
+
 	* include/orbit/GIOP/giop-recv-buffer.h:
 	  include/orbit/GIOP/giop-send-buffer.h:
 	  src/orb/orb-core/orbit-debug.h:
