@@ -1,3 +1,7 @@
+2003-03-24  Richard Kinder <r_kinder@yahoo.com>
+        * src/orb/poa/poa.c: Change return values for ORBit_POA_is_inuse and
+        ORBit_POA_destroy to gboolean's, not CORBA_boolean's. Fixes #109066
+
 2003-03-18  Archana Shah  <archana.shah@wipro.com>
 
 	* /configure.in: Put a check to read the argument for, 

@@ -159,7 +159,7 @@ ORBit_POA_is_inuse (PortableServer_POA  poa,
 	gboolean is_inuse = FALSE;
 
 	if (poa->use_cnt > 0) 
-		return CORBA_TRUE;
+		return TRUE;
 
 	if (consider_children && poa->child_poas)
 		g_hash_table_foreach (poa->child_poas,
@@ -330,7 +330,7 @@ ORBit_POA_destroy (PortableServer_POA  poa,
 	poa->life_flags &= ~ORBit_LifeF_Destroying;
 	ORBit_RootObject_release (poa);
 
-	return CORBA_TRUE;
+	return TRUE;
 }
 
 typedef struct TraverseInfo {
