@@ -164,8 +164,8 @@ IDLTypedef::skel_impl_arg_post (ostream          &ostr,
 				IDL_param_attr    direction,
 				const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_arg_pre (ostr, indent, c_id, direction,
-				   active_typedef ? active_typedef : this);
+	m_alias.skel_impl_arg_post (ostr, indent, c_id, direction,
+				    active_typedef ? active_typedef : this);
 }
 
 
@@ -201,8 +201,8 @@ IDLTypedef::skel_impl_ret_post (ostream          &ostr,
 				Indent           &indent,
 				const IDLTypedef *active_typedef) const
 {
-	m_alias.skel_impl_ret_pre (ostr, indent,
-				   active_typedef ? active_typedef : this);
+	m_alias.skel_impl_ret_post (ostr, indent,
+				    active_typedef ? active_typedef : this);
 }
 
 
@@ -236,68 +236,23 @@ IDLTypedef::member_impl_arg_copy (ostream          &ostr,
 }
 
 void
-IDLTypedef::member_pack_to_c_pre  (ostream          &ostr,
-				   Indent           &indent,
-				   const string     &cpp_id,
-				   const string     &c_id,
-				   const IDLTypedef *active_typedef) const
+IDLTypedef::member_pack_to_c (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const string     &c_id,
+			      const IDLTypedef *active_typedef) const
 {
-	m_alias.member_pack_to_c_pre (ostr, indent, cpp_id, c_id,
+	m_alias.member_pack_to_c (ostr, indent, cpp_id, c_id,
+				  active_typedef ? active_typedef : this);
+}
+
+void
+IDLTypedef::member_unpack_from_c (ostream          &ostr,
+				  Indent           &indent,
+				  const string     &cpp_id,
+				  const string     &c_id,
+				  const IDLTypedef *active_typedef) const
+{
+	m_alias.member_unpack_from_c (ostr, indent, cpp_id, c_id,
 				      active_typedef ? active_typedef : this);
 }
-
-void
-IDLTypedef::member_pack_to_c_pack (ostream          &ostr,
-				   Indent           &indent,
-				   const string     &cpp_id,
-				   const string     &c_id,
-				   const IDLTypedef *active_typedef) const
-{
-	m_alias.member_pack_to_c_pack (ostr, indent, cpp_id, c_id,
-				       active_typedef ? active_typedef : this);
-}
-
-void
-IDLTypedef::member_pack_to_c_post (ostream          &ostr,
-				   Indent           &indent,
-				   const string     &cpp_id,
-				   const string     &c_id,
-				   const IDLTypedef *active_typedef) const
-{
-	m_alias.member_pack_to_c_post (ostr, indent, cpp_id, c_id,
-				       active_typedef ? active_typedef : this);
-}
-
-void
-IDLTypedef::member_unpack_from_c_pre  (ostream          &ostr,
-				       Indent           &indent,
-				       const string     &cpp_id,
-				       const string     &c_id,
-				       const IDLTypedef *active_typedef) const
-{
-	m_alias.member_unpack_from_c_pre (ostr, indent, cpp_id, c_id,
-					  active_typedef ? active_typedef : this);
-}
-
-void
-IDLTypedef::member_unpack_from_c_pack (ostream          &ostr,
-				       Indent           &indent,
-				       const string     &cpp_id,
-				       const string     &c_id,
-				       const IDLTypedef *active_typedef) const
-{
-	m_alias.member_unpack_from_c_pack (ostr, indent, cpp_id, c_id,
-					   active_typedef ? active_typedef : this);
-}
-
-void
-IDLTypedef::member_unpack_from_c_post (ostream          &ostr,
-				       Indent           &indent,
-				       const string     &cpp_id,
-				       const string     &c_id,
-				       const IDLTypedef *active_typedef) const
-{
-	m_alias.member_unpack_from_c_post (ostr, indent, cpp_id, c_id,
-					   active_typedef ? active_typedef : this);
-}
-

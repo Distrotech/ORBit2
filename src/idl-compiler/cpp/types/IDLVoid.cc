@@ -218,61 +218,21 @@ IDLVoid::member_impl_arg_copy (ostream          &ostr,
 }
 
 void
-IDLVoid::member_pack_to_c_pre  (ostream          &ostr,
+IDLVoid::member_pack_to_c (ostream          &ostr,
+			   Indent           &indent,
+			   const string     &cpp_id,
+			   const string     &c_id,
+			   const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_unpack_from_c  (ostream          &ostr,
 				Indent           &indent,
 				const string     &cpp_id,
 				const string     &c_id,
 				const IDLTypedef *active_typedef) const
-{
-	throw IDLExVoid ();
-}
-
-void
-IDLVoid::member_pack_to_c_pack (ostream          &ostr,
-				Indent           &indent,
-				const string     &cpp_id,
-				const string     &c_id,
-				const IDLTypedef *active_typedef) const
-{
-	throw IDLExVoid ();
-}
-
-void
-IDLVoid::member_pack_to_c_post (ostream          &ostr,
-				Indent           &indent,
-				const string     &cpp_id,
-				const string     &c_id,
-				const IDLTypedef *active_typedef) const
-{
-	throw IDLExVoid ();
-}
-
-void
-IDLVoid::member_unpack_from_c_pre  (ostream          &ostr,
-				    Indent           &indent,
-				    const string     &cpp_id,
-				    const string     &c_id,
-				    const IDLTypedef *active_typedef) const
-{
-	throw IDLExVoid ();
-}
-
-void
-IDLVoid::member_unpack_from_c_pack (ostream          &ostr,
-				    Indent           &indent,
-				    const string     &cpp_id,
-				    const string     &c_id,
-				    const IDLTypedef *active_typedef) const
-{
-	throw IDLExVoid ();
-}
-
-void
-IDLVoid::member_unpack_from_c_post  (ostream          &ostr,
-				     Indent           &indent,
-				     const string     &cpp_id,
-				     const string     &c_id,
-				     const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }

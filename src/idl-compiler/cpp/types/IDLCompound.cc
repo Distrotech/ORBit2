@@ -70,34 +70,13 @@ IDLCompound::write_packing_impl (ostream &ostr,
 	     << "(" << c_id << " &_c_struct) const" << endl
 	     << indent++ << '{' << endl;
 
-	// We create the output in three cycles to allow _pre and _post operations
 	for (const_iterator i = begin (); i != end (); i++)
 	{
 		IDLMember &member = (IDLMember &) **i;
 		string cpp_id = member.get_cpp_identifier ();
 		string c_id = "_c_struct." + member.get_c_identifier ();
 		
-		member.getType ()->member_pack_to_c_pre (ostr, indent, cpp_id, c_id);
-	}
-	ostr << endl;
-
-	for (const_iterator i = begin (); i != end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		string cpp_id = member.get_cpp_identifier ();
-		string c_id = "_c_struct." + member.get_c_identifier ();
-
-		member.getType ()->member_pack_to_c_pack (ostr, indent, cpp_id, c_id);
-	}
-	ostr << endl;
-
-	for (const_iterator i = begin (); i != end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		string cpp_id = member.get_cpp_identifier ();
-		string c_id = "_c_struct." + member.get_c_identifier ();
-
-		member.getType ()->member_pack_to_c_post (ostr, indent, cpp_id, c_id);
+		member.getType ()->member_pack_to_c (ostr, indent, cpp_id, c_id);
 	}
 	ostr << endl;
 	
@@ -109,34 +88,13 @@ IDLCompound::write_packing_impl (ostream &ostr,
 	     << "(const " << c_id << " &_c_struct)" << endl
 	     << indent++ << '{' << endl;
 
-	// We create the output in three cycles to allow _pre and _post operations
 	for (const_iterator i = begin (); i != end (); i++)
 	{
 		IDLMember &member = (IDLMember &) **i;
 		string cpp_id = member.get_cpp_identifier ();
 		string c_id = "_c_struct." + member.get_c_identifier ();
 
-		member.getType ()->member_unpack_from_c_pre (ostr, indent, cpp_id, c_id);
-	}
-	ostr << endl;
-	
-	for (const_iterator i = begin (); i != end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		string cpp_id = member.get_cpp_identifier ();
-		string c_id = "_c_struct." + member.get_c_identifier ();
-
-		member.getType ()->member_unpack_from_c_pack (ostr, indent, cpp_id, c_id);
-	}
-	ostr << endl;
-	
-	for (const_iterator i = begin (); i != end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		string cpp_id = member.get_cpp_identifier ();
-		string c_id = "_c_struct." + member.get_c_identifier ();
-
-		member.getType ()->member_unpack_from_c_post (ostr, indent, cpp_id, c_id);
+		member.getType ()->member_unpack_from_c (ostr, indent, cpp_id, c_id);
 	}
 	ostr << endl;
 

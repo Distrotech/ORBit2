@@ -487,68 +487,28 @@ IDLInterface::member_impl_arg_copy (ostream      &ostr,
 }
 
 void
-IDLInterface::member_pack_to_c_pre  (ostream      &ostr,
-				     Indent       &indent,
-				     const string &cpp_id,
-				     const string &c_id,
-				     const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLInterface::member_pack_to_c_pack (ostream      &ostr,
-				     Indent       &indent,
-				     const string &cpp_id,
-				     const string &c_id,
-				     const IDLTypedef *active_typedef) const
+IDLInterface::member_pack_to_c (ostream      &ostr,
+				Indent       &indent,
+				const string &cpp_id,
+				const string &c_id,
+				const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_object ()"
 	     << ';' << endl;
 }
 
 void
-IDLInterface::member_pack_to_c_post (ostream      &ostr,
-				     Indent       &indent,
-				     const string &cpp_id,
-				     const string &c_id,
-				     const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLInterface::member_unpack_from_c_pre  (ostream      &ostr,
-					 Indent       &indent,
-					 const string &cpp_id,
-					 const string &c_id,
-					 const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLInterface::member_unpack_from_c_pack (ostream      &ostr,
-					 Indent       &indent,
-					 const string &cpp_id,
-					 const string &c_id,
-					 const IDLTypedef *active_typedef) const
+IDLInterface::member_unpack_from_c (ostream      &ostr,
+				    Indent       &indent,
+				    const string &cpp_id,
+				    const string &c_id,
+				    const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_id << " = "
 	     << get_cpp_stub_typename () << "::_orbitcpp_wrap ("
 	     << "::_orbitcpp::duplicate_guarded (" << c_id << ")"
 	     << ")"
 	     << ';' << endl;
-}
-
-void
-IDLInterface::member_unpack_from_c_post (ostream      &ostr,
-					 Indent       &indent,
-					 const string &cpp_id,
-					 const string &c_id,
-					 const IDLTypedef *active_typedef) const
-{
-	// Do nothing
 }
 
 bool

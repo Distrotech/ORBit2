@@ -154,43 +154,18 @@ public:
 				   const IDLTypedef *active_typedef = 0) const;
 	
 	// Compound conversion: C++ -> C
-	void member_pack_to_c_pre  (ostream          &ostr,
-				    Indent           &indent,
-				    const string     &cpp_id,
-				    const string     &c_id,
-				    const IDLTypedef *active_typedef = 0) const;
-
-	void member_pack_to_c_pack (ostream          &ostr,
-				    Indent           &indent,
-				    const string     &cpp_id,
-				    const string     &c_id,
-				    const IDLTypedef *active_typedef = 0) const;
-
-	void member_pack_to_c_post (ostream          &ostr,
-				    Indent           &indent,
-				    const string     &cpp_id,
-				    const string     &c_id,
-				    const IDLTypedef *active_typedef = 0) const;
-
+	void member_pack_to_c (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &c_id,
+			       const IDLTypedef *active_typedef = 0) const;
 	
 	// Compound conversion: C -> C++
-	void member_unpack_from_c_pre  (ostream          &ostr,
-					Indent           &indent,
-					const string     &cpp_id,
-					const string     &c_id,
-					const IDLTypedef *active_typedef = 0) const;
-
-	void member_unpack_from_c_pack (ostream          &ostr,
-					Indent           &indent,
-					const string     &cpp_id,
-					const string     &c_id,
-					const IDLTypedef *active_typedef = 0) const;
-
-	void member_unpack_from_c_post  (ostream          &ostr,
-					 Indent           &indent,
-					 const string     &cpp_id,
-					 const string     &c_id,
-					 const IDLTypedef *active_typedef = 0) const;
+	void member_unpack_from_c  (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef = 0) const;
 	
 public:
 	string get_cpp_stub_identifier () const;
