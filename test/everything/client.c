@@ -177,6 +177,12 @@ void testFixedLengthStruct(test_TestFactory factory,
   objref = test_TestFactory_getStructServer(factory,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
+  /* Ensure that we go over the wire at least once */
+  g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/StructServer:1.0", ev));
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
   inArg.a = constants_SHORT_IN;
   inoutArg.a = constants_SHORT_INOUT_IN;
   

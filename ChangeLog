@@ -1,5 +1,17 @@
 2001-07-13  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c (ORBit_small_handle_request):
+	re-indent to make legible.
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_is_a): 
+	fix invocation code.
+	(ORBit_impl_CORBA_Object_is_a): fix indirection.
+	Thanks to Martin Baulig for reporting repo_id matching
+	bug.
+
+	* test/everything/client.c (testFixedLengthStruct): 
+	add CORBA_Object_is_a test.
+
 	* src/orb/orb-core/allocators.c
 	(ORBit_freekids_via_TypeCode_T): kill broken assumption
 	that align == length !
