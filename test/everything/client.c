@@ -1758,6 +1758,8 @@ testPingPong (test_TestFactory   factory,
 /*		g_assert (broken); */
 		CORBA_exception_free (ev);
 		ORBit_small_connection_unref (cnx);
+
+		ORBit_connection_set_max_buffer (cnx, 0);
 	}
 
 	CORBA_Object_release (objref, ev);
