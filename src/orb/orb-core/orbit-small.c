@@ -1,8 +1,23 @@
 /*
+ * Warning - before reading this file, and while hacking
+ * it, it is advisable to examine:
+ *
+ *    docs/internals/interface-indirection.gnumeric
+ *
  * FIXME: We need some global I/F -> m_data lookup action
  * FIXME: We need to map interface inheritance.
  * FIXME: Add #ifdef ORBIT_PURIFY support.
  * FIXME: remove the redundant marshal_fn
+ *
+ * FIXME: 'Obvious' optimizations
+ *  Here:
+ *    * 2 demarshalers - 1 straight, 1 endianness switching.
+ *    * do more alloca's for basic things
+ *    * more IDL compiler help for allocation and indirection
+ *    decisions - these are closely tied
+ *  Elsewhere:
+ *    * store object profiles in GIOP format for fast marshaling
+ *    * make locking more chunky _T everything.
  */
 
 #include "config.h"
@@ -11,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+#undef DEBUG
 #undef DEBUG_LOCAL_TEST
 
 gpointer
@@ -322,8 +337,8 @@ typedef struct {
 
 #define do_marshal_value(a,b,c,d)     \
 	ORBit_marshal_value   ((a),(gconstpointer *)(b),(c),(d))
-#define do_demarshal_value(a,b,c,d,e) \
-	ORBit_demarshal_value ((c),(b),(a),(d),(e))
+#define do_demarshal_value(a,b,c,e) \
+	ORBit_demarshal_value ((c),(b),(a),TRUE,(e))
 
 static gboolean
 _ORBit_generic_marshal (CORBA_Object           obj,
@@ -424,6 +439,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 	gpointer        data;
 	CORBA_TypeCode  tc;
 	GIOPRecvBuffer *recv_buffer;
+	CORBA_ORB       orb = obj->orb;
 
 	recv_buffer = giop_recv_buffer_get (mqe, TRUE);
 	if (!recv_buffer) {
@@ -439,57 +455,42 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 	dprintf ("Demarshal ");
 
 	if ((tc = m_data->ret)) {
-		gpointer retp = ret;
 		dprintf ("ret: ");
+
 		g_assert (ret != NULL);
 
 		while (tc->kind == CORBA_tk_alias)
 			tc = tc->subtypes [0];
 
 		switch (tc->kind) {
-
 		case CORBA_BASE_TYPES:
 		case CORBA_tk_objref:
 		case CORBA_tk_TypeCode:
 		case CORBA_tk_string:
 		case CORBA_tk_wstring:
-			do_demarshal_value (recv_buffer, &retp, tc, TRUE, obj->orb);
+			do_demarshal_value (recv_buffer, &ret, tc, orb);
 			dprintf ("base type / [p]obj / [w]string");
-			break;
-
-		case CORBA_tk_array:
-			data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, obj->orb);
-			if (!data)
-				return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
-			*((gpointer *)ret) = data;
-			dprintf ("array");
 			break;
 
 		case CORBA_tk_struct:
 		case CORBA_tk_union:
-			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-				retp = &ret;
-				dprintf ("whacked out type");
-			}
-			/* drop through */
-
-/* FIXME: The flow could be much sweeter here ! */
-		case CORBA_tk_any:
-		case CORBA_tk_sequence:
 		case CORBA_tk_except:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-				do_demarshal_value (recv_buffer, retp, tc, TRUE, obj->orb);
+				do_demarshal_value (recv_buffer, &ret, tc, orb);
 				dprintf ("misc. fixed");
-			} else {
-				data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, obj->orb);
-				if (!data)
-					return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
-				*((gpointer *)retp) = data;
-				dprintf ("misc pointer + alloc");
-			}
-			break;
+				break;
+			} /* drop through */
+
+		case CORBA_tk_any:
+		case CORBA_tk_sequence:
+		case CORBA_tk_array:
 		default:
-			g_assert_not_reached ();
+			data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, orb);
+			if (!data)
+				return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
+			*((gpointer *)ret) = data;
+			dprintf ("misc pointer + alloc");
+			break;
 		}
 		dprintf ("\n");
 	}
@@ -528,7 +529,6 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 			case CORBA_tk_TypeCode:
 			case CORBA_tk_string:
 			case CORBA_tk_wstring: {
-
 				if (a->flags & ORBit_I_ARG_INOUT) {
 					if (tc->kind == CORBA_tk_TypeCode ||
 					    tc->kind == CORBA_tk_objref)
@@ -539,24 +539,24 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 				}
 
 				do_demarshal_value (
-					recv_buffer, &arg, tc, TRUE, obj->orb);
+					recv_buffer, &arg, tc, obj);
 				dprintf ("base / allocated type");
 				break;
 			}
 
 			case CORBA_tk_union:
+			case CORBA_tk_struct:
 			case CORBA_tk_except:
 			case CORBA_tk_sequence:
-			case CORBA_tk_struct:
 			case CORBA_tk_array:
 			case CORBA_tk_any: {
-				if (a->flags & ORBit_I_COMMON_FIXED_SIZE)
-					do_demarshal_value (recv_buffer, &arg, tc, TRUE, obj->orb);
-
-				else if (a->flags & ORBit_I_ARG_INOUT) {
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
+					do_demarshal_value (recv_buffer, &arg, tc, orb);
+					break;
+				} else if (a->flags & ORBit_I_ARG_INOUT) {
 					ORBit_freekids_via_TypeCode (tc, arg);
-					do_demarshal_value (recv_buffer, &arg, tc, TRUE, obj->orb);
-				} else /* Out */
+					do_demarshal_value (recv_buffer, &arg, tc, orb);
+				} else
 					*(gpointer *)args [i] = ORBit_demarshal_arg (
 						recv_buffer, tc, TRUE, obj->orb);
 				break;
@@ -781,7 +781,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			case CORBA_tk_string:
 			case CORBA_tk_wstring:
 				p = args [i] = alloca (ORBit_gather_alloc_info (tc));
-				do_demarshal_value (recv_buffer, &p, tc, TRUE, orb);
+				do_demarshal_value (recv_buffer, &p, tc, orb);
 				break;
 			case CORBA_tk_struct:
 			case CORBA_tk_union:
@@ -789,7 +789,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			case CORBA_tk_array:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					p = args [i] = alloca (ORBit_gather_alloc_info (tc));
-					do_demarshal_value (recv_buffer, &p, tc, TRUE, orb);
+					do_demarshal_value (recv_buffer, &p, tc, orb);
 					break;
 				} /* drop through */
 			default:
@@ -905,6 +905,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			
 			if (a->flags & ORBit_I_ARG_INOUT)
 				ORBit_marshal_arg (send_buffer, args [i], tc);
+
 			else if (a->flags & ORBit_I_ARG_OUT)
 				ORBit_marshal_arg (send_buffer, scratch [i], tc);
 		}
