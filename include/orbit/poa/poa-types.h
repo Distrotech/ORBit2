@@ -70,7 +70,7 @@ struct ORBit_POAObject_type {
 		((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant)
 
 #define ORBIT_STUB_GetEpv(obj, clsid) \
-		ORBIT_POAOBJECT_TO_EPVPTR(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj), (clsid))
+		((gpointer)ORBIT_POAOBJECT_TO_EPVPTR(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj), (clsid)))
 
 #define ORBIT_STUB_GetServant(obj) \
 		(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant)

@@ -155,8 +155,8 @@ int main(int argc, const char *argv[])
   if(getenv("C_OUTPUT_FORMATTER"))
     c_output_formatter = getenv("C_OUTPUT_FORMATTER");
 
-  pcon=poptGetContext("orbit-idl", argc, argv, options, 0);
-  poptSetOtherOptionHelp(pcon, "<IDL files>");
+  pcon = poptGetContext ("orbit-idl-2", argc, argv, options, 0);
+  poptSetOtherOptionHelp (pcon, "<IDL files>");
 
   if(argc < 2) {
   	poptPrintUsage(pcon, stdout, 0);
@@ -164,14 +164,14 @@ int main(int argc, const char *argv[])
   }
 
   if((rc=poptGetNextOpt(pcon)) < -1) {
-    g_print("orbit-idl: bad argument %s: %s\n", 
+    g_print ("orbit-idl-2: bad argument %s: %s\n", 
     		poptBadOption(pcon, POPT_BADOPTION_NOALIAS),
 		poptStrerror(rc));
     exit(0);
   }
 
   if (cl_output_version) {
-	  fprintf (stderr, "orbit-idl %s - serial %d\n\n",
+	  fprintf (stderr, "orbit-idl-2 %s - serial %d\n\n",
 		   VERSION, ORBIT_CONFIG_SERIAL);
 	  exit (0);
   }
@@ -214,7 +214,7 @@ int main(int argc, const char *argv[])
   rinfo.small_skels = cl_enable_small_skels;
   rinfo.idata = !cl_disable_idata;
   
-  fprintf (stderr, "orbit-idl " VERSION " compiling\n");
+  fprintf (stderr, "orbit-idl-2 " VERSION " compiling\n");
   fprintf (stderr, " %s mode, %s preprocessor errors, passes: %s%s%s%s%s%s\n\n",
 	   rinfo.is_pidl ? "pidl" : rinfo.small ? "small" : "large",
 	   rinfo.show_cpp_errors ? "show" : "hide",

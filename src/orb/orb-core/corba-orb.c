@@ -133,13 +133,14 @@ static void
 ORBit_setup_debug_flags (void)
 {
 	static GDebugKey debug_keys[] = {
-		{ "traces",   ORBIT_DEBUG_TRACES },
-		{ "timings",  ORBIT_DEBUG_TIMINGS },
-		{ "types",    ORBIT_DEBUG_TYPES },
-		{ "messages", ORBIT_DEBUG_MESSAGES },
-		{ "objects",  ORBIT_DEBUG_OBJECTS },
-		{ "giop",     ORBIT_DEBUG_GIOP },
-		{ "refs",     ORBIT_DEBUG_REFS },
+		{ "traces",        ORBIT_DEBUG_TRACES },
+		{ "inproc_traces", ORBIT_DEBUG_INPROC_TRACES },
+		{ "timings",       ORBIT_DEBUG_TIMINGS },
+		{ "types",         ORBIT_DEBUG_TYPES },
+		{ "messages",      ORBIT_DEBUG_MESSAGES },
+		{ "objects",       ORBIT_DEBUG_OBJECTS },
+		{ "giop",          ORBIT_DEBUG_GIOP },
+		{ "refs",          ORBIT_DEBUG_REFS },
 	};
 	const char *env_string;
 
@@ -156,6 +157,9 @@ ORBit_setup_debug_flags (void)
 			g_parse_debug_string (orbit_debug_options,
 					      debug_keys,
 					      G_N_ELEMENTS (debug_keys));
+
+	if (_orbit_debug_flags & ORBIT_DEBUG_INPROC_TRACES)
+		ORBit_small_flags &= ~ ORBIT_SMALL_FAST_LOCALS;
 }
 #endif /* G_ENABLE_DEBUG */
 

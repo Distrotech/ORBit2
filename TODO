@@ -2,11 +2,9 @@ TODO:
 
 * It seems the local case optimization can go wrong when
   invoking bogus methods from a different interface on an Object ref.
-
-* orbit-object.c:
-	+ add the ability to store in a hash pointers to objects
-	  and dump their type with a type->name from the
-	  ORBit_RootObject_Type enum.
+	+ this is to do with
+		a) not checking the vepv offset we get
+		b) not expanding the lookup of the vepv offset at all.
 
 * Thread safety
 	+ apparently g_object_ref / unref are not thread safe

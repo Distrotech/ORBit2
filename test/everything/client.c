@@ -29,6 +29,8 @@
 
 #define NUM_RUNS 1
 
+#undef TIMING_RUN
+
 #ifdef TIMING_RUN
 #  define d_print(a)
 #else
@@ -1725,6 +1727,36 @@ test_initial_references (CORBA_ORB          orb,
 	CORBA_free (list);
 }
 
+#define TIME_TEST_RUNS 1000
+
+static void
+test_time_noop (test_TestFactory   factory, 
+		CORBA_Environment *ev)
+{
+	int i;
+	int old_flags;
+	GTimer *timer;
+
+	timer = g_timer_new ();
+	g_timer_start (timer);
+	for (i = 0; i < TIME_TEST_RUNS; i++)
+		test_TestFactory_noOp (factory, ev);
+	g_timer_stop (timer);
+	fprintf (stderr, "In proc (fast) took %g msecs\n",
+	g_timer_elapsed (timer, NULL) * 1000);
+
+	old_flags = ORBit_small_flags;
+	ORBit_small_flags &= ~ORBIT_SMALL_FAST_LOCALS;
+	g_timer_reset (timer);
+	g_timer_start (timer);
+	for (i = 0; i < TIME_TEST_RUNS; i++)
+		test_TestFactory_noOp (factory, ev);
+	g_timer_stop (timer);
+	fprintf (stderr, "In proc (slow) took %g msecs\n",
+		 g_timer_elapsed (timer, NULL) * 1000);
+	ORBit_small_flags = old_flags;
+}
+
 static void
 run_tests (test_TestFactory   factory, 
 	   CORBA_Environment *ev)
@@ -1765,7 +1797,9 @@ run_tests (test_TestFactory   factory,
 		testContext (factory, ev);
 		testIInterface (factory, ev);
 		testMisc (factory, ev);
+#ifndef TIMING_RUN
 		testAsync (factory, ev);
+#endif
 		if (!in_proc)
 			testPingPong (factory, ev);
 #if NUM_RUNS == 1
@@ -1837,7 +1871,10 @@ main (int argc, char *argv [])
 	factory = get_server (global_orb, &ev);
 	g_assert (factory->profile_list == NULL);
 	g_assert (ORBit_object_get_connection (factory) == NULL);
+
+	test_time_noop (factory, &ev);
 	run_tests (factory, &ev);
+
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	factory = CORBA_OBJECT_NIL;
@@ -1864,8 +1901,6 @@ main (int argc, char *argv [])
 			g_error  ("Start the server before running the client");
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 	}
-
-	run_tests (factory, &ev);
 
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
