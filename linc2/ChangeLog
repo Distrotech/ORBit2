@@ -1,3 +1,10 @@
+2001-08-10  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c (linc_set_tmpdir): kill gratuitous evil
+	(make_local_tmpdir): copy from ORBit-stable.
+	(linc_set_tmpdir): actualy ensure that we have a valid
+	working directory.
+
 2001-07-30  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.1

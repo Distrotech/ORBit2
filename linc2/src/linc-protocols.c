@@ -3,11 +3,13 @@
 #include <linc/linc-connection.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <time.h>
+#include <utime.h>
 #include <errno.h>
 
 #undef DEBUG
@@ -54,60 +56,105 @@ static LINCProtocolInfo protocol_ents[] = {
 };
 
 LINCProtocolInfo * const
-linc_protocol_all(void)
+linc_protocol_all (void)
 {
-  return protocol_ents;
+	return protocol_ents;
 }
 
 LINCProtocolInfo * const
-linc_protocol_find(const char *name)
+linc_protocol_find (const char *name)
 {
-  int i;
-  for(i = 0; protocol_ents[i].name; i++)
-    {
-      if(!strcmp(name, protocol_ents[i].name))
-	return &protocol_ents[i];
-    }
+	int i;
 
-  return NULL;
+	for (i = 0; protocol_ents [i].name; i++) {
+		if (!strcmp (name, protocol_ents [i].name))
+			return &protocol_ents [i];
+	}
+
+	return NULL;
 }
 
 LINCProtocolInfo * const
-linc_protocol_find_num(const int family)
+linc_protocol_find_num (const int family)
 {
-  int i;
-  for(i = 0; protocol_ents[i].name; i++)
-    {
-      if(family == protocol_ents[i].family)
-	return &protocol_ents[i];
-    }
+	int i;
 
-  return NULL;
+	for (i = 0; protocol_ents [i].name; i++) {
+		if (family == protocol_ents [i].family)
+			return &protocol_ents [i];
+	}
+
+	return NULL;
 }
 
-static char linc_tmpdir[PATH_MAX] = "/tmp";
+static char linc_tmpdir [PATH_MAX] = "";
+
+static void
+make_local_tmpdir (const char *dirname)
+{
+	struct stat statbuf;
+		
+	if (mkdir (dirname, 0700) != 0) {
+		int e = errno;
+			
+		switch (e) {
+		case 0:
+		case EEXIST:
+			if (stat (dirname, &statbuf) != 0)
+				g_error ("Can not stat %s\n", dirname);
+
+			if (statbuf.st_uid != getuid ())
+				g_error ("Owner of %s is not the current user\n", dirname);
+
+			if((statbuf.st_mode & (S_IRWXG|S_IRWXO))
+			   || !S_ISDIR (statbuf.st_mode))
+				g_error ("Wrong permissions for %s\n", dirname);
+
+			break;
+				
+		default:
+			g_error("Unknown error on directory creation of %s (%s)\n",
+				dirname, g_strerror (e));
+		}
+	}
+
+	{ /* Hide some information ( apparently ) */
+		struct utimbuf utb;
+		memset (&utb, 0, sizeof (utb));
+		utime (dirname, &utb);
+	}
+}
 
 void
-linc_set_tmpdir(const char *dir)
+linc_set_tmpdir (const char *dir)
 {
-  const char *uname = g_get_user_name();
-  g_snprintf(linc_tmpdir, sizeof(linc_tmpdir), dir, uname, uname, uname);
+	strncpy (linc_tmpdir, dir, PATH_MAX);
+
+	linc_tmpdir [PATH_MAX - 1] = '\0';
+
+	make_local_tmpdir (linc_tmpdir);
 }
 
 int
-linc_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
-		 char *host, size_t hostlen, char *serv, size_t servlen,
-		 int flags)
+linc_getnameinfo (const struct sockaddr *sa,
+		  socklen_t              sa_len,
+		  char                  *host,
+		  size_t                 hostlen,
+		  char                  *serv,
+		  size_t                 servlen,
+		  int                    flags)
 {
-  int i, rv = -1;
+	int i, rv = -1;
 
-  for(i = 0; rv == -1 && protocol_ents[i].name; i++)
-    {
-      if(protocol_ents[i].getnameinfo && (protocol_ents[i].family == sa->sa_family))
-	rv = protocol_ents[i].getnameinfo(sa, sa_len, host, hostlen, serv, servlen, flags);
-    }
+	for (i = 0; rv == -1 && protocol_ents [i].name; i++) {
+		if (protocol_ents [i].getnameinfo &&
+		    protocol_ents [i].family == sa->sa_family)
+			rv = protocol_ents [i].getnameinfo (
+				sa, sa_len, host, hostlen,
+				serv, servlen, flags);
+	}
 
-  return rv;
+	return rv;
 }
 
 int
