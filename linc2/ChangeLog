@@ -1,3 +1,8 @@
+2002-05-17  Jacob Berkman  <jacob@ximian.com>
+
+	* src/linc-protocols.c: check for RES_USE_INET6 for
+	OS/X. define in6addr_any for broken Mac OS/X's.
+
 2002-05-09  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-protocols.c: fix 'extern' static linc_protocols

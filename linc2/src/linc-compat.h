@@ -51,5 +51,4 @@
 #  define NI_MAXSERV 64
 #endif
 
-
 #endif /* LINC_HACKS_H */

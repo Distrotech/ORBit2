@@ -10,8 +10,8 @@
  *                 Sun Microsystems, Inc.
  */
 #include <config.h>
-#include <dirent.h>
 #include "linc-compat.h"
+#include <dirent.h>
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 
@@ -48,8 +48,8 @@ make_local_tmpdir (const char *dirname)
 			if (statbuf.st_uid != getuid ())
 				g_error ("Owner of %s is not the current user\n", dirname);
 
-			if((statbuf.st_mode & (S_IRWXG|S_IRWXO))
-			   || !S_ISDIR (statbuf.st_mode))
+			if ((statbuf.st_mode & (S_IRWXG|S_IRWXO)) ||
+			    !S_ISDIR (statbuf.st_mode))
 				g_error ("Wrong permissions for %s\n", dirname);
 
 			break;
@@ -92,7 +92,7 @@ linc_set_tmpdir (const char *dir)
 #define LINC_SET_SOCKADDR_LEN(saddr, len)
 #endif
 
-#ifdef AF_INET6
+#if defined(AF_INET6) && defined(RES_USE_INET6)
 #define LINC_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
 #define LINC_RESOLV_CLEAR_IPV6   _res.options &= ~RES_USE_INET6
 #else
@@ -557,6 +557,13 @@ linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 #ifdef AF_INET6
+
+/* FIXME: is IN6ADDR_ANY_INIT exported on Mac OS X ? */
+/* on Mac OS X 10.1 inaddr6_any isn't exported by libc */
+#ifndef in6addr_any
+	static const struct in6_addr in6addr_any = { { { 0 } } };
+#endif
+
 static gboolean
 linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
 				 const struct sockaddr   *saddr,
