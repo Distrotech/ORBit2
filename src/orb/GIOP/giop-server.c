@@ -41,10 +41,10 @@ giop_server_handle_create_connection (LINCServer *server)
 	GIOPConnection *retval;
 	GIOPServer     *gserver = (GIOPServer *) server;
 
-	retval = g_object_new (giop_connection_get_type (), NULL);
-
-	giop_connection_set_orb_n_ver (
-		retval, gserver->orb_data, gserver->giop_version);
+	retval = g_object_new (giop_connection_get_type (),
+			       "orb", gserver->orb_data,
+			       "version", (guint) gserver->giop_version,
+			       NULL);
 
 #ifdef G_ENABLE_DEBUG
 	if (giop_debug_hook_new_connection)
