@@ -338,6 +338,14 @@ IDLPassXlate::doEnum (IDL_tree  node,
 		      IDLScope &scope)
 {
 	IDLEnum &idlEnum = (IDLEnum &) *scope.getItem(node);
+
+	string ns_iface_begin, ns_iface_end;
+	idlEnum.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
+
+	bool non_empty_ns = ns_iface_end.size () || ns_iface_begin.size ();
+
+	if (non_empty_ns)
+		m_header << indent << ns_iface_begin;
 	
 	m_header << indent << "enum " << idlEnum.get_cpp_identifier () << endl
 		 << indent++ << "{" << endl;
@@ -362,6 +370,9 @@ IDLPassXlate::doEnum (IDL_tree  node,
 	m_header << "const CORBA::TypeCode_ptr _tc_" << idlEnum.get_cpp_identifier () << " = " 
 		 << "(CORBA::TypeCode_ptr)TC_" << idlEnum.get_c_typename ()
 		 << ';' << endl;
+
+	if (non_empty_ns)
+		m_header << indent << ns_iface_end;
 
 #if 0 //!!!
 	ORBITCPP_MEMCHECK(new IDLWriteEnumAnyFuncs (idlEnum, m_state, *this));
