@@ -4,6 +4,9 @@
 	OS_WIN32. Check for more headers and functions. Add WinSock
 	library to LIBS.
 
+	* include/orbit/GIOP/giop-connection.h: Don't include netdb.h on
+	Win32. Is it even needed on Unix?
+
 2005-01-13  Jules Colding  <colding@omesc.com>
 
 	* src/idl-compiler/orbit-idl-c-skelimpl.c (prev_char_is_nl): New function
