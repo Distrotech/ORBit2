@@ -1,3 +1,12 @@
+2002-11-04  Thomas Vander Stichele <thomas at apestaart dot org>
+
+        * configure.in:
+          - require pkg-config 0.14.0
+          - make AC_DEFINE* three-argument 
+            (someone might want to remove acconfig.h)
+        * autogen.sh:
+          - fail if configure failed
+
 2002-10-28  Marion Schuenemann <schuenemann@fokus.gmd.de>
 
 	* src/services/name/boot.c (main): move ORB

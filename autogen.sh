@@ -76,7 +76,7 @@ done
 cd $ORIGDIR
 
 echo "Running $srcdir/configure --enable-maintainer-mode" "$@"
-$srcdir/configure --enable-maintainer-mode "$@"
+$srcdir/configure --enable-maintainer-mode "$@" \
+	|| (echo; echo "configure failed.  Please fix and rerun $0."; false) \
+	&& (echo; echo "Now type 'make' to compile ORBit2."; true)
 
-echo 
-echo "Now type 'make' to compile ORBit2."
