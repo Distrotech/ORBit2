@@ -144,7 +144,8 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		break;
 
 	case CORBA_tk_string: {
-		if (val == NULL)
+		const char * v = (*(const char **)*val);
+		if (v == NULL)
 			tprintf("(null)");
 		else {
 			const int max = 64;
