@@ -1,5 +1,9 @@
 2003-07-15  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.7.3
+
+2003-07-15  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-object.c
 	(ORBit_try_connection): bin the TESTME g_warning.
 
