@@ -1,3 +1,13 @@
+2005-02-13  Arvind Samptur  <arvind.samptur@wipro.com>
+
+	* include/linc/linc-protocol.h: Add link_use_local_hostname ()
+
+	* src/linc-protocols.c (link_use_local_hostname): Set the global
+	use_local_host.
+	(link_get_local_hostname): Return "localhost" if use_local_host
+	is set.
+	Patch reviewed by Michael Meeks
+
 2005-02-02  Hans Petter Jansson  <hpj@novell.com>
 
 	* src/linc-compat.h: Include <sys/types.h> before the optional stuff.
