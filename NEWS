@@ -1,3 +1,17 @@
+ORBit2-2.7.5
+
+	* bug fixes
+		+ cmdline option parsing (Michael)
+		+ idl-compiler stderr fixes (Dan Winship)
+		+ object key hashing fix (Frank Rehberger)
+		+ ~always enable thread-safety (Michael)
+		+ parallel build fixes (Michael)
+		+ _is_a fixes for in-proc + transient poa (Michael)
+	* featurelets
+		+ RootPOA/POACurrent set guards (Frank)
+		+ corbaloc support (Frank)
+		+ more regression tests (Michael, Frank)
+
 ORBit2-2.7.3
 
 	* bug fixes
