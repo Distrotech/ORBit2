@@ -1,5 +1,11 @@
 2001-05-18  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-connection.c (linc_connection_destroy): check
+	the io channel is valid before the unref - happens in
+	some error cases.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-server.c (linc_server_class_init): actualy
 	make the signal run.
 
