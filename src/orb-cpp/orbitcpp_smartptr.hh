@@ -449,36 +449,37 @@ namespace _orbitcpp {
 	template<class T>
 	class Sequence_var : public Data_var<T> {
 	protected:
-		typedef typename T::_orbitcpp_value_type	Item;
-		typedef Data_var<T>							Super;
+		typedef typename T::value_t value_t;
+		typedef typename T::index_t index_t;
+		typedef Data_var<T>         Super;
 
 	public:
-		Sequence_var() {
+		Sequence_var () {
 			}
-		Sequence_var(T *data)
+		Sequence_var (T *data)
 			: Super(data) {
 	  	}
-		Sequence_var(Sequence_var const &src)
+		Sequence_var (Sequence_var const &src)
 			: Super(src) {
 		}
 
-		Sequence_var &operator=(T *data) {
+		Sequence_var &operator= (T *data) {
 			if (m_data) delete m_data;
 			m_data = data;
 			return *this;
 		}
 
-		Sequence_var &operator=(Sequence_var const &src) {
+		Sequence_var &operator= (Sequence_var const &src) {
 			T *copy = new T(*src.m_data);
 			if (m_data) delete m_data;
 			m_data = copy;
 			return *this;
 		}
 		
-		Item &operator[](CORBA::ULong index) {
+		value_t& operator[] (index_t index) {
 			return m_data->operator[](index);
 	  	}
-		Item const &operator[](CORBA::ULong index) const {
+		const value_t& operator[] (index_t index) const {
 			return m_data->operator[](index);
 	  	}
 	};
@@ -486,8 +487,9 @@ namespace _orbitcpp {
 	template<class T>
 	class Sequence_out : public Data_out<T>  {
 	  protected:
-		typedef typename T::_orbitcpp_value_type	Item;
-		typedef Data_out<T>							Super;
+		typedef typename T::value_t value_t;
+		typedef typename T::index_t index_t;
+		typedef Data_out<T>         Super;
   
 	  public:
 		Sequence_out(T *&data)	: Super(data) {}
@@ -495,20 +497,20 @@ namespace _orbitcpp {
 		Sequence_out(Sequence_out const & src)	: Super(src) {}
 
 		// assignment
-		Sequence_out &operator=(Sequence_out &src) {
+		Sequence_out &operator= (Sequence_out &src) {
 			m_data = src.m_data;
 			return src;
 		}
-		Sequence_out &operator=(T *src) {
+		Sequence_out &operator= (T *src) {
 			m_data = src;
 			return *this;
 		}
 		
-		Item &operator[](CORBA::ULong index) {
-			return m_data->operator[](index);
+		value_t& operator[] (index_t index) {
+			return (*m_data)[index];
 	  	}
-		Item const &operator[](CORBA::ULong index) const {
-			return m_data->operator[](index);
+		const value_t& operator[] (index_t index) const {
+			return (*m_data)[index];
 	  	}
 	};
 }
