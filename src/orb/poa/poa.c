@@ -164,6 +164,8 @@ ORBit_classinfo_register (PortableServer_ClassInfo *ci)
 			     (gpointer) ci->class_name, ci);
 }
 
+#define VEPV_CACHE_SIZE(c) (c)[0]
+
 void
 ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
 			   PortableServer_ServantBase *servant,
@@ -187,10 +189,11 @@ ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
 	ORBit_classinfo_register (ci);
 	if (!ci->vepvmap) {
 		CORBA_unsigned_long offset;
+		CORBA_unsigned_long epvmap_size;
 
-		/* FIXME: we could propagate the size nicely here */
-		ci->vepvmap = g_new0 (ORBit_VepvIdx, 
-				      *(ci->class_id) + 1);
+		epvmap_size = *(ci->class_id) + 1;
+		ci->vepvmap = g_new0 (ORBit_VepvIdx, epvmap_size);
+		VEPV_CACHE_SIZE(ci->vepvmap) = epvmap_size;
 
 		ci->vepvmap[*(ci->class_id)] = class_offset;
 		
@@ -2459,6 +2462,7 @@ get_c_method (CORBA_Object                 obj,
 
 	if (!obj ||
 	    !(pobj = (ORBit_POAObject) obj->adaptor_obj) ||
+	    !(pobj->base.interface->adaptor_type & ORBIT_ADAPTOR_POA) ||
 	    !(*servant = (PortableServer_ServantBase *) pobj->servant))
 		return NULL;
 
@@ -2475,8 +2479,8 @@ get_c_method (CORBA_Object                 obj,
 	 * FIXME: we could propagate the size of the vepvmap_cache
 	 * to here, and check it to avoid some really bogus stuff.
 	 */
-	if (!class_id || !(pobj->base.interface->adaptor_type & ORBIT_ADAPTOR_POA) ||
-	    !pobj->vepvmap_cache)
+	if (!class_id || !pobj->vepvmap_cache ||
+	    class_id >= VEPV_CACHE_SIZE (pobj->vepvmap_cache) )
 		return NULL;
 
 	epv_start = (guchar *) (*servant)->vepv [ pobj->vepvmap_cache [class_id] ];

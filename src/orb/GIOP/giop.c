@@ -613,8 +613,7 @@ giop_main_run (void)
 void
 giop_shutdown (void)
 {
-	if (!giop_thread_io ())
-		giop_connections_shutdown ();
+	link_connections_close ();
 
 	if (link_loop) /* break into the linc loop */
 		g_main_loop_quit (link_loop);
