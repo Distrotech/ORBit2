@@ -20,7 +20,8 @@ INCLUDES =                                 \
 	-I$(top_srcdir)/src/services/imodule \
 	-DORBIT2_INTERNAL_API              \
 	$(WARN_CFLAGS)                     \
-	$(ORBIT_CFLAGS)
+	$(ORBIT_CFLAGS)			   \
+	$(ORBIT_IDL_CFLAGS)
 
 #	-DORBIT_STUB_DEBUG_LOCAL
 
