@@ -1,5 +1,10 @@
 2001-12-05  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-any.c (ORBit_marshal_value): align
+	the union properly. Thanks to Laca for the debugging.
+
+2001-12-05  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/orb/orb-core/iop-profiles.c:
 	(CodeSetComponent_demarshal): byte swap the code sets
 	if necessary and fix silly.
