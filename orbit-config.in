@@ -42,7 +42,7 @@ fi
 
 cflags=false
 libs=false
-the_libs="$the_libs -L$libdir -lORBit `glib-config --libs` @LIBS@ -lm"
+the_libs="$the_libs -L$libdir -lORBit `${GLIB_CONFIG_2_0} --libs` @LIBS@ -lm"
 the_flags="$the_flags `${GLIB_CONFIG_2_0} --cflags` -I$includedir -DORBIT2=1"
 
 while test $# -gt 0; do
