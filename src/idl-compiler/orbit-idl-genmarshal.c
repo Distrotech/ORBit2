@@ -118,7 +118,6 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
 
   tmpstr = g_string_new("");
 
-#if 1
   for(curnode = node; curnode; curnode = curnode->up) {
     new_did_append = FALSE;
 
@@ -149,17 +148,24 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
       }
     }
     if(curnode->name) {
+      int my_numptrs;
+
       if(did_append)
 	g_string_prepend_c(tmpstr, '.');
 
-      nptrs += curnode->nptrs;
-      
-      for(i = 0; i < curnode->nptrs; i++)
+      my_numptrs = curnode->nptrs;
+      if((curnode->flags & MN_ISSLICE)
+	 && (curnode == node))
+	my_numptrs++;
+
+      nptrs += my_numptrs;
+
+      for(i = 0; i < my_numptrs; i++)
 	g_string_prepend_c(tmpstr, ')');
 
       g_string_prepend(tmpstr, curnode->name);
 
-      for(i = 0; i < curnode->nptrs; i++)
+      for(i = 0; i < my_numptrs; i++)
 	g_string_prepend_c(tmpstr, '*');
 
       new_did_append = TRUE;
@@ -170,57 +176,6 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
     if(curnode->flags & MN_NSROOT)
       break;
   }
-#else
-  for(curnode = node; curnode; curnode = curnode->up) {
-    new_did_append = FALSE;
-
-    if(curnode->up
-       && !(curnode->flags & MN_NSROOT)) {
-      switch(curnode->up->type) {
-      case MARSHAL_LOOP:
-	if(curnode == curnode->up->u.loop_info.contents) {
-	  ctmp = oidl_marshal_node_fqn(curnode->up->u.loop_info.loop_var);
-	  if(did_append)
-	    g_string_prepend_c(tmpstr, '.');
-
-	  g_string_prepend_c(tmpstr, ']');
-	  g_string_prepend(tmpstr, ctmp);
-	  g_string_prepend_c(tmpstr, '[');
-	  g_free(ctmp);
-	  if(curnode->up->flags & MN_ISSEQ) {
-	    g_string_prepend(tmpstr, "_buffer");
-	    did_append = TRUE;
-	  }
-	}
-	break;
-      default:
-	break;
-      }
-    }
-
-    if(curnode->name) {
-      if(did_append)
-	g_string_prepend_c(tmpstr, '.');
-
-      nptrs += curnode->nptrs;
-      
-      for(i = 0; i < curnode->nptrs; i++)
-	g_string_prepend_c(tmpstr, ')');
-
-      g_string_prepend(tmpstr, curnode->name);
-
-      for(i = 0; i < curnode->nptrs; i++)
-	g_string_prepend_c(tmpstr, '*');
-
-      new_did_append = TRUE;
-
-      did_append = new_did_append;
-    }
-
-    if(curnode->flags & MN_NSROOT)
-      break;
-  }
-#endif
 
   for(i = 0; i < nptrs; i++)
     g_string_prepend_c(tmpstr, '(');
@@ -573,6 +528,7 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
   OIDL_Marshal_Node *retval;
   IDL_tree curitem, curparam, ts;
   OIDL_Populate_Info pi = {NULL};
+  gboolean isSlice;
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
 
@@ -603,21 +559,26 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
     else
       pi.where = MW_Null;
     sub = marshal_populate(curparam, retval, &pi);
+    if(is_skels)
+      sub->flags |= MN_NEED_TMPVAR;
 
     ts = orbit_cbe_get_typespec(curparam);
 
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
+      sub->nptrs = oidl_param_info(curparam, DATA_INOUT, &isSlice);
       sub->flags |= MN_INOUT;
       break;
     case IDL_PARAM_IN:
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_IN);
+      sub->nptrs = oidl_param_info(curparam, DATA_IN, &isSlice);
       break;
     default:
       g_error("Weird param direction for in pass.");
       break;
     }
+
+    if(isSlice)
+      sub->flags |= MN_ISSLICE;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, sub);
   }
@@ -662,12 +623,13 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     rvnode = marshal_populate(IDL_OP_DCL(tree).op_type_spec, retval, &pi);
     if(!rvnode) goto out1;
 
-    rvnode->nptrs = oidl_param_info(IDL_OP_DCL(tree).op_type_spec, DATA_RETURN,
-      &isSlice);
+    rvnode->nptrs = oidl_param_info(IDL_OP_DCL(tree).op_type_spec, DATA_RETURN, &isSlice);
     if ( isSlice )
+      {
     	rvnode->nptrs -= 1;
-    if ( !is_skels )
-        rvnode->flags |= MN_NEED_TMPVAR;
+	rvnode->flags |= MN_ISSLICE;
+      }
+    rvnode->flags |= MN_NEED_TMPVAR;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, rvnode);
 
@@ -695,17 +657,19 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
       sub->flags |= MN_INOUT;
-      sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
+      sub->nptrs = oidl_param_info(curparam, DATA_INOUT, &isSlice);
       break;
     case IDL_PARAM_OUT:
       sub->nptrs = oidl_param_info(curparam, DATA_OUT, &isSlice);
       if ( isSlice )
-      	sub->nptrs -= 1;
+	  sub->nptrs -= 1;
       break;
     default:
       g_error("Weird param direction for out pass.");
       break;
     }
+    if (isSlice)
+      sub->flags |= MN_ISSLICE;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, sub);
   }

@@ -12,6 +12,13 @@ static void c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cm
 static void c_demarshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_demarshal_validate_curptr(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_demarshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
+static void c_demarshal_generate_alloc(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
+
+void
+c_demarshalling_generate_vars(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels, gboolean subfunc)
+{
+  /* */
+}
 
 void
 c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels, gboolean subfunc)
@@ -58,6 +65,54 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
 }
 
 static void
+c_demarshal_generate_heap_alloc(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
+{
+  char *ctmp, *ctmp2;
+
+  g_assert(node->nptrs > 0);
+
+  ctmp2 = orbit_cbe_get_typespec_str(node->tree);
+  node->nptrs--;
+  ctmp = oidl_marshal_node_valuestr(node);
+  node->nptrs++;
+  fprintf(cmi->ci->fh, "%s = %s__alloc();\n", ctmp, ctmp2);
+
+}
+
+static void
+c_demarshal_generate_alloca_alloc(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
+{
+  char *ctmp, *ctmp2;
+
+  g_assert(node->nptrs > 0);
+
+  ctmp2 = orbit_cbe_get_typespec_str(node->tree);
+  node->nptrs--;
+  ctmp = oidl_marshal_node_valuestr(node);
+  node->nptrs++;
+  fprintf(cmi->ci->fh, "%s = orbit_alloca(sizeof(%s));\n", ctmp, ctmp2);
+}
+
+static void
+c_demarshal_generate_alloc(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
+{
+  if(!node->name)
+    return;
+
+  switch(node->where)
+    {
+    case MW_Heap:
+      c_demarshal_generate_heap_alloc(node, cmi);
+      break;
+    case MW_Alloca:
+      c_demarshal_generate_alloca_alloc(node, cmi);
+      break;
+    default:
+      break;
+    }
+}
+
+static void
 c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   if(!node) return;
@@ -66,6 +121,9 @@ c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   if(node->use_count) return;
 
   node->use_count++;
+
+  if(node->flags & MN_TOPLEVEL)
+    c_demarshal_generate_alloc(node, cmi);
 
   c_demarshal_validate_curptr(node, cmi);
 
@@ -199,14 +257,15 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
   c_demarshal_generate(node->u.loop_info.length_var, cmi);
 
-  if(cmi->alloc_on_stack && (node->where & MW_Alloca)) {
+  if(cmi->alloc_on_stack && (node->where == MW_Alloca)) {
     fprintf(cmi->ci->fh, "%s%s = alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
 	    ctmp_contents, ctmp_len);
     if(node->flags & MN_ISSEQ)
       fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
-  } else if(node->where & MW_Msg) {
+  } else if(node->where == MW_Msg
+	    || node->where == MW_Null) {
     /* No allocation necessary */
-  } else if(node->where & MW_Heap) {
+  } else if(node->where == MW_Heap) {
     char *tname, *tcname;
     
     tname = orbit_cbe_get_typespec_str(node->tree);
@@ -414,20 +473,27 @@ c_demarshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   if((!cmi->endian_swap_pass || !(node->flags & MN_ENDIAN_DEPENDANT))
      && node->name
-     && (node->flags & MN_COALESCABLE)) {
-    char *ctmp, *ctmp2;
+     && (node->flags & MN_COALESCABLE))
+    {
+      char *ctmp, *ctmp2;
 
-    ctmp = oidl_marshal_node_valuestr(node);
+      ctmp = oidl_marshal_node_valuestr(node);
 
-    c_demarshal_alignfor(node, cmi);
+      c_demarshal_alignfor(node, cmi);
 
-    fprintf(cmi->ci->fh, "memcpy(&(%s), _ORBIT_curptr, sizeof(%s));\n", ctmp, ctmp);
-    ctmp2 = g_strdup_printf("sizeof(%s)", ctmp);
+      fprintf(cmi->ci->fh, "memcpy(&(%s), _ORBIT_curptr, sizeof(%s));\n", ctmp, ctmp);
+      ctmp2 = g_strdup_printf("sizeof(%s)", ctmp);
 
-    c_demarshal_update_curptr(node, ctmp2, cmi);
+      c_demarshal_update_curptr(node, ctmp2, cmi);
 
-    g_free(ctmp2);
-    g_free(ctmp);
-  } else
-    g_slist_foreach(node->u.set_info.subnodes, (GFunc)c_demarshal_generate, cmi);
+      g_free(ctmp2);
+      g_free(ctmp);
+    }
+  else
+    {
+      /* No need to do this if it is coalescable - obviously will be no need to do it then */
+      g_slist_foreach(node->u.set_info.subnodes, (GFunc)c_demarshal_generate_alloc, cmi);
+
+      g_slist_foreach(node->u.set_info.subnodes, (GFunc)c_demarshal_generate, cmi);
+    }
 }
