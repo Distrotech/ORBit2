@@ -7,6 +7,11 @@ TODO:
 	=> bin that for now; setup the 'Request' type, impl. THREAD_PER_OBJECT.
 
 
+* User friendliness
+	+ 'sequence from GList' API.
+	+ tolerate NULL CORBA_Environments in stubs
+	+ always return initialized memory on exception
+	+ add an X like 'event' processing API for incoming bits (?)
 
 * linc/ORBit2 tmpdir issue for Unix sockets, test.sh must not
   rm -Rf /tmp/foo
