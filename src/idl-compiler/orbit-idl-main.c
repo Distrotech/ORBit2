@@ -45,19 +45,7 @@ static char *cl_output_lang = "c";
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
 static GString *cl_cpp_args;
 
-/* Formatting program to use */
-#ifdef HAVE_INDENT_KR
-#warning "Please e-mail orbit-list@cuc.edu if you get HAVE_INDENT_KR working"
-#  define DEFAULT_INDENT "indent -npro -kr -i8 -bad -fca -sc -sob"
-#else
-#  ifdef HAVE_INDENT
-#    define DEFAULT_INDENT "indent -npro -bad -bap -bc -sob -br -ce -cli2 -npcs -di1 -psl -i3 -lp -st"
-#  else
-#    define DEFAULT_INDENT "cat"
-#  endif
-#endif
-
-static char *c_output_formatter = DEFAULT_INDENT;
+static char *c_output_formatter = INDENT_COMMAND;
 
 /* Callbacks for popt */
 static void
