@@ -765,7 +765,7 @@ void IDLWriteArrayProps::run()
 {
 	string array_id = m_dest.get_cpp_typename ();
 	string slice_id = array_id + "_slice";
-	string props_id = array_id + "Props";
+	string props_id = m_dest.get_cpp_identifier () + "Props";
 
 	int length = 1;
 	for (IDLArray::const_iterator i = m_array.begin ();
@@ -775,12 +775,14 @@ void IDLWriteArrayProps::run()
 	}
 
 	// Alloc
+	m_header << indent << "template<>" << endl;
 	m_header << indent << "inline " << slice_id + " * " << props_id << "::alloc ()" << endl
 		 << indent++ << "{" << endl;
 	m_header << indent << "return " << array_id + "_alloc ();" << endl;
 	m_header << --indent << "}" << endl << endl;
 
 	// Free
+	m_header << indent << "template<>" << endl;
 	m_header << indent << "inline void " << props_id << "::free ("
 		 << slice_id << " * target)" << endl
 		 << indent++ << "{" << endl;
@@ -788,6 +790,7 @@ void IDLWriteArrayProps::run()
 	m_header << --indent << "}" << endl << endl;
 
 	// Copy
+	m_header << indent << "template<>" << endl;
 	m_header << indent << "inline void " << props_id << "::copy ("
 		 << slice_id << " * dest, "
 		 << "const " << slice_id << " * source)" << endl
