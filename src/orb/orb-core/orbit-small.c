@@ -1234,6 +1234,9 @@ ORBit_small_get_connection_status (CORBA_Object obj)
 {
 	ORBitConnectionStatus ret;
 
+	g_return_val_if_fail (obj != CORBA_OBJECT_NIL,
+			      ORBIT_CONNECTION_DISCONNECTED);
+
 	if (ORBit_small_get_servant (obj))
 		ret = ORBIT_CONNECTION_IN_PROC;
 	else {
