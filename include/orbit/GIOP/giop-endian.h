@@ -1,7 +1,7 @@
 #ifndef GIOP_ENDIAN_H
 #define GIOP_ENDIAN_H 1
 
-#include <orbit/IIOP/giop-types.h>
+#include <orbit/GIOP/giop-types.h>
 
 /* This is also defined in IIOP-types.c */
 void giop_byteswap(guchar *outdata,

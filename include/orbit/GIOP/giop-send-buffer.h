@@ -1,8 +1,8 @@
 #ifndef GIOP_SEND_BUFFER_H
 #define GIOP_SEND_BUFFER_H 1
 
-#include <orbit/IIOP/giop-types.h>
-#include <orbit/IIOP/giop-connection.h>
+#include <orbit/GIOP/giop-types.h>
+#include <orbit/GIOP/giop-connection.h>
 
 typedef struct {
   gulong size;

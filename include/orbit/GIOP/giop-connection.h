@@ -1,9 +1,9 @@
 #ifndef GIOP_CONNECTION_H
 #define GIOP_CONNECTION_H 1
 
-#include <orbit/IIOP/giop-types.h>
+#include <orbit/GIOP/giop-types.h>
 #include <linc/linc.h>
-#include <orbit/IIOP/giop-server.h>
+#include <orbit/GIOP/giop-server.h>
 #include <netdb.h>
 
 typedef struct {

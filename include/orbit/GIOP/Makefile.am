@@ -1,6 +1,6 @@
-IIOPincludedir=$(includedir)/orbit/IIOP
+GIOPincludedir=$(includedir)/orbit/GIOP
 
-IIOPinclude_HEADERS= \
+GIOPinclude_HEADERS= \
 	giop-endian.h \
 	giop-connection.h \
 	giop-endian.h \

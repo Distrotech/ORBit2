@@ -1,4 +1,4 @@
-SUBDIRS=IIOP util
+SUBDIRS=GIOP util
 
 orbitincludedir=$(includedir)/orbit
 orbitinclude_HEADERS=orbit.h orbit-config.h

@@ -1,5 +1,5 @@
 #include "config.h"
-#include <orbit/IIOP/giop-connection.h>
+#include <orbit/GIOP/giop-connection.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
 static void giop_connection_destroy    (GObject             *obj);

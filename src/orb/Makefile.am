@@ -1,4 +1,4 @@
-SUBDIRS=util IIOP orb-core poa dynamic
+SUBDIRS=util GIOP orb-core poa dynamic
 
 lib_LTLIBRARIES=libORBit.la
 
@@ -9,7 +9,7 @@ libORBit_la_LDFLAGS=-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -releas
 
 libORBit_la_LIBADD= \
 	util/liborb-util.la \
-	IIOP/libIIOP.la \
+	GIOP/libGIOP.la \
 	orb-core/liborb-core.la \
 	poa/liborb-poa.la \
 	dynamic/liborb-dynamic.la
