@@ -117,9 +117,24 @@ linc_connection_connected (GIOChannel  *gioc,
 	return retval;
 }
 
+/*
+ * linc_connection_class_state_changed:
+ * @cnx: a #LINCConnection
+ * @status: a #LINCConnectionStatus value.
+ *
+ * Set up linc's #GSources if the connection is in the #LINC_CONNECTED
+ * or #LINC_CONNECTING state.
+ *
+ * Remove the #GSources if the state has channged to #LINC_DISCONNECTED,
+ * close the socket and a gobject broken signal which may be caught by
+ * the application.
+ *
+ * Also perform SSL specific operations if the connection has move into
+ * the #LINC_CONNECTED state.
+ */
 static void
-linc_connection_real_state_changed (LINCConnection      *cnx,
-				    LINCConnectionStatus status)
+linc_connection_class_state_changed (LINCConnection      *cnx,
+				     LINCConnectionStatus status)
 {
 	switch (status) {
 	case LINC_CONNECTED:
@@ -145,8 +160,6 @@ linc_connection_real_state_changed (LINCConnection      *cnx,
 		break;
 
 	case LINC_DISCONNECTED:
-/*      g_warning ("Linc disconnected tag %d fd '%d'",
-	cnx->tag, cnx->fd);*/
 		linc_source_remove (cnx, TRUE);
 		linc_close_fd (cnx);
 
@@ -158,43 +171,75 @@ linc_connection_real_state_changed (LINCConnection      *cnx,
 	cnx->status = status;
 }
 
+/*
+ * linc_connection_from_fd:
+ * @cnx: a #LINCConnection.
+ * @fd: a connected/connecting file descriptor.
+ * @proto: a #LINCProtocolInfo.
+ * @host: protocol dependant host information.
+ * @service: protocol dependant service information(e.g. port number).
+ * @was_initiated: #TRUE if the connection was initiated by us.
+ * @status: a #LINCConnectionStatus value.
+ * @options: combination of #LINCConnectionOptions.
+ *
+ * Fill in @cnx, call protocol specific initialisation methonds and then
+ * call linc_connection_state_changed.
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
 gboolean
-linc_connection_from_fd (LINCConnection *cnx, int fd,
+linc_connection_from_fd (LINCConnection         *cnx,
+			 int                     fd,
 			 const LINCProtocolInfo *proto,
-			 char *remote_host_info,
-			 char *remote_serv_info,
-			 gboolean was_initiated,
-			 LINCConnectionStatus status,
-			 LINCConnectionOptions options)
+			 char                   *host,
+			 char                   *service,
+			 gboolean                was_initiated,
+			 LINCConnectionStatus    status,
+			 LINCConnectionOptions   options)
 {
-  cnx->fd = fd;
-  cnx->gioc = g_io_channel_unix_new (fd);
-  cnx->was_initiated = was_initiated;
-  cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
-  cnx->remote_host_info = remote_host_info;
-  cnx->remote_serv_info = remote_serv_info;
-  cnx->options = options;
+	cnx->fd               = fd;
+	cnx->gioc             = g_io_channel_unix_new (fd);
+	cnx->was_initiated    = was_initiated;
+	cnx->is_auth          = (proto->flags & LINC_PROTOCOL_SECURE) ? TRUE : FALSE;
+	cnx->remote_host_info = host;
+	cnx->remote_serv_info = service;
+	cnx->options          = options;
 
-  if(proto->setup)
-    proto->setup (fd, options);
+	if (proto->setup)
+		proto->setup (fd, options);
 
 #ifdef LINC_SSL_SUPPORT
-  if (options & LINC_CONNECTION_SSL) {
-      cnx->ssl = SSL_new (linc_ssl_ctx);
-      SSL_set_fd (cnx->ssl, fd);
-  }
+	if (options & LINC_CONNECTION_SSL) {
+		cnx->ssl = SSL_new (linc_ssl_ctx);
+		SSL_set_fd (cnx->ssl, fd);
+	}
 #endif
 
-  linc_connection_state_changed (cnx, status);
+	linc_connection_state_changed (cnx, status);
 
-  return TRUE;
+  	return TRUE;
 }
 
+/*
+ * linc_connection_initiate:
+ * @cnx: a #LINCConnection.
+ * @proto_name: the name of the protocol to use.
+ * @host: protocol dependant host information.
+ * @service: protocol dependant service information(e.g. port number).
+ * @options: combination of #LINCConnectionOptions.
+ *
+ * Initiate a connection to @service on @host using the @proto_name protocol.
+ *
+ * Note: this function may be successful without actually having connected
+ *       to @host - the connection handshake may not have completed.
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
 gboolean
 linc_connection_initiate (LINCConnection        *cnx,
 			  const char            *proto_name,
-			  const char            *remote_host_info,
-			  const char            *remote_serv_info,
+			  const char            *host,
+			  const char            *service,
 			  LINCConnectionOptions  options)
 {
 	const LINCProtocolInfo *proto;
@@ -210,8 +255,8 @@ linc_connection_initiate (LINCConnection        *cnx,
 		return FALSE;
 
 
-	saddr = linc_protocol_get_sockaddr (proto, remote_host_info, 
-					    remote_serv_info, &saddr_len);
+	saddr = linc_protocol_get_sockaddr (proto, host, 
+					    service, &saddr_len);
 	if (!saddr)
 		return FALSE;
 
@@ -234,22 +279,27 @@ linc_connection_initiate (LINCConnection        *cnx,
 
 	retval = linc_connection_from_fd (
 				cnx, fd, proto, 
-				g_strdup (remote_host_info),
-				g_strdup (remote_serv_info),
+				g_strdup (host),
+				g_strdup (service),
 				TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
 				options);
 
  out:
-	if (!cnx) {
-		if (fd >= 0)
-			close (fd);
-	}
+	if (!cnx && fd >= 0)
+		close (fd);
 
 	g_free (saddr);
 
 	return retval;
 }
 
+/*
+ * linc_connection_state_changed:
+ * @cnx: a #LINCConnection.
+ * @status: a #LINCConnectionStatus.
+ *
+ * A wrapper for the #LINCConnectionClass's state change method.
+ */
 void
 linc_connection_state_changed (LINCConnection      *cnx,
 			       LINCConnectionStatus status)
@@ -270,6 +320,9 @@ linc_connection_read (LINCConnection *cnx, guchar *buf,
 {
   int n;
   int written = 0;
+
+  if (!len)
+    return 0;
 
   if(cnx->options & LINC_CONNECTION_NONBLOCKING)
     {
@@ -313,7 +366,7 @@ linc_connection_read (LINCConnection *cnx, guchar *buf,
 	    }
 	}
       else if(n == 0)
-	return -1;
+	return 0;
       else
 	{
 	  buf += n;
@@ -459,7 +512,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 
 	object_class->dispose = linc_connection_dispose;
 
-	klass->state_changed  = linc_connection_real_state_changed;
+	klass->state_changed  = linc_connection_class_state_changed;
 	klass->broken         = NULL;
 
 	linc_connection_signals [BROKEN] =
