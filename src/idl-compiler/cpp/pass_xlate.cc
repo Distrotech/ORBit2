@@ -632,8 +632,8 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 		m_header
 		<< ", public " << (*first++)->getQualifiedCPPIdentifier();
 	}
-	m_header
-	<< " {" << endl
+	m_header << endl
+		 << indent <<" {" << endl
 	<< indent << "public:" << endl;
 	indent++;
 	
@@ -650,6 +650,52 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
 
+	// *********************
+	// Forwarder class
+	string fw_class_name = iface.getCPPIdentifier () + "_forwarder";
+
+	// Forwarder header
+	m_header << indent << "class " << fw_class_name << endl
+		 << indent << "{" << endl;
+	{
+	    m_header << ++indent << iface.getCTypeName () << " &c_obj;" << endl;
+	    m_header << --indent << "public:" << endl;
+	    m_header << ++indent << fw_class_name << " ("
+		     << iface.getCTypeName () << " &c_obj);" << endl;
+	    m_header << indent << "void operator=" << " ("
+		     << iface.getCPP_mgr () << " &cpp_obj);" << endl;
+	    m_header << indent << "operator " << iface.getCPP_mgr () << " () const;" << endl;
+	}
+	m_header << --indent << "};" << endl;
+
+	// Forwarder implementation
+	string fw_full_class_name =
+	    iface.getQualifiedCPPIdentifier (iface.getRootScope ()) + "_forwarder";
+	string mgr_name =
+	    iface.getQualifiedCPPIdentifier (iface.getRootScope ()) + "_mgr";
+	
+	{
+	    m_module << mod_indent << fw_full_class_name << "::"
+		     << fw_class_name << " (" << iface.getCTypeName () << " &c_obj_) :" << endl
+		     << mod_indent << "c_obj (c_obj_)" << endl
+		     << mod_indent << "{}" << endl << endl;
+
+	    m_module << mod_indent   << "void " << fw_full_class_name << "::"
+		     << "operator= (" << mgr_name << " &cpp_obj)" << endl
+		     << mod_indent << "{" << endl
+		     << ++mod_indent   << "c_obj =  cpp_obj->_orbitcpp_get_c_object ();" << endl
+		     << --mod_indent << "}" << endl << endl;
+
+	    m_module << mod_indent   << fw_full_class_name << "::"
+		     << "operator " << mgr_name << " () const" << endl
+		     << mod_indent << "{" << endl
+		     << ++mod_indent   << "return "
+		     << IDL_IMPL_STUB_NS << iface.getNSScopedCPPTypeName ()
+		     << "::_orbitcpp_wrap (c_obj);" << endl
+		     << --mod_indent << "}" << endl << endl;
+	}
+	
+	    
   // _duplicate() and _narrow implementations:
 	// write the static method definitions
 	doInterfaceStaticMethodDefinitions(iface);
