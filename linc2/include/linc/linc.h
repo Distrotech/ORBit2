@@ -11,6 +11,7 @@ G_BEGIN_DECLS
 
 extern GMainLoop *linc_loop;
 
+void       linc_set_threaded    (gboolean       threaded);
 void       linc_init            (gboolean       init_threads);
 
 LincWatch *linc_io_add_watch    (GIOChannel    *channel,
