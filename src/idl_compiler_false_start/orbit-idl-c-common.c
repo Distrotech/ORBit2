@@ -141,7 +141,7 @@ cc_output_alloc_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
 
-  fprintf(ci->fh, "CORBA_unsigned_long %s__classid = 0;", id);
+  fprintf(ci->fh, "CORBA_unsigned_long %s__classid = 0;\n", id);
   g_free(id);
 }
 
@@ -264,7 +264,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf(ci->fh, "%s* %s__alloc(void)\n", tname, tname);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh, "%s *retval;\n", tname);
-  fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));",
+  fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));\n",
 	  tname, tname);
   if(!orbit_cbe_type_is_fixed_length(tree))
     fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s));\n", tname);
@@ -353,7 +353,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       fprintf(ci->fh, "  retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)", tname);
 
       if(fixlen)
-	fprintf(ci->fh, "NULL, NULL);");
+	fprintf(ci->fh, "NULL, NULL);\n");
       else {
 	IDL_tree curitem;
 

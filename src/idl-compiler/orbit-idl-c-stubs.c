@@ -97,7 +97,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     }
     fprintf(ci->fh, "{CORBA_OBJECT_NIL, NULL}};\n");
   }
-  fprintf(ci->fh, "register GIOP_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;");
+  fprintf(ci->fh, "register GIOP_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;\n");
   fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
   fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
   fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
@@ -154,7 +154,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	  IDL_OP_DCL(tree).f_oneway?"CORBA_FALSE":"CORBA_TRUE");
   fprintf(ci->fh, "&(_obj->active_profile->object_key_vec), &_ORBIT_operation_vec, &ORBit_default_principal_iovec);\n\n");
   fprintf(ci->fh, "_ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE;\n");
-  fprintf(ci->fh, "if(!_ORBIT_send_buffer) goto _ORBIT_system_exception;");
+  fprintf(ci->fh, "if(!_ORBIT_send_buffer) goto _ORBIT_system_exception;\n");
 
   c_marshalling_generate(oi->in_stubs, ci, TRUE);
 
@@ -181,7 +181,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
 
-    fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;");
+    fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
     fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_YES;\n");
 
     fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status != GIOP_NO_EXCEPTION) goto _ORBIT_msg_exception;\n");
@@ -194,7 +194,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     if(IDL_OP_DCL(tree).op_type_spec)
       fprintf(ci->fh, "return _ORBIT_retval;\n");
     else
-      fprintf(ci->fh, "return;");
+      fprintf(ci->fh, "return;\n");
 
     fprintf(ci->fh, "}\n");
   } else
