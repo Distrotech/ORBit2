@@ -36,6 +36,8 @@ typedef struct {
   gboolean is_pidl : 1;
   gboolean do_skel_defs : 1;
   gboolean onlytop : 1;
+
+  gpointer marshal_ctx;
 } OIDL_Run_Info;
 
 int orbit_idl_run(const char *filename, OIDL_Run_Info *rinfo);
@@ -52,5 +54,6 @@ void orbit_idl_output_c(IDL_tree tree, OIDL_Run_Info *rinfo);
 void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
 gint oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice);
 gboolean oidl_tree_is_pidl(IDL_tree tree);
+void orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns);
 
 #endif

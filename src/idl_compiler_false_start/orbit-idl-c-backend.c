@@ -100,6 +100,6 @@ out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
 
   cmdline = alloca(strlen(rinfo->output_formatter) + strlen(basein) 
 		   + sizeof(" > "));
-  sprintf(cmdline, "%s > %s", rinfo->output_formatter, basein);
+  sprintf(cmdline, "%s > %s", rinfo->output_formatter, basein?"/dev/null":"/dev/null");
   return popen(cmdline, "w");
 }
