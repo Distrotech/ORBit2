@@ -433,6 +433,9 @@ giop_send_buffer_align (GIOPSendBuffer *buf, gulong boundary)
  * 
  * Return value: a pointer to the beggining of the 
  * contiguous space available for @mem
+ *
+ * Note: do not assume anything about the physical
+ *       alignment of the returned pointer.
  **/
 guchar *
 giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
