@@ -1,0 +1,5 @@
+This pair of applications tests simple structures, "simple" defined as
+containing only atomic and object members.
+
+TODO: out and inout struct arguments
+      methods returning structs

@@ -1,0 +1,7 @@
+Makefile
+Makefile.in
+
+*.cc
+*.hh
+*.c
+*.h
