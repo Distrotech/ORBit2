@@ -1,3 +1,7 @@
+2004-01-25  Alexander Winston  <alexander.winston@comcast.net>
+
+	* ORBit2.m4: quote it properly
+
 2004-01-16  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.9.6
