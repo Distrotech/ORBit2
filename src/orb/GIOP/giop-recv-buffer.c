@@ -1189,10 +1189,8 @@ giop_connection_handle_input (LinkConnection *lcnx)
 		if (n == 0) /* We'll be back */
 			return TRUE;
 
-		if (n < 0 || !buf->left_to_read) { /* HUP */
-			link_connection_state_changed (lcnx, LINK_DISCONNECTED);
-			return TRUE;
-		}
+		if (n < 0 || !buf->left_to_read) /* HUP */
+			goto msg_error;
 
 /*		fprintf (stderr, "Read %d\n", n);
 		giop_dump (stderr, buf->cur, n, 0); */
