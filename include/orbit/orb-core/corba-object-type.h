@@ -17,11 +17,11 @@ struct CORBA_Object_type {
 	/* None of these fields are used by the stubs */
 	struct ORBit_RootObject_struct parent;
 
-	GIOPConnection                *connection;
+	GIOPConnection                *connection;        /* l */
 	GQuark                         type_qid;
-	GSList                        *profile_list;
-	GSList                        *forward_locations;
-	ORBit_ObjectKey               *object_key;
+	GSList                        *profile_list;      /* l */
+	GSList                        *forward_locations; /* l */
+	ORBit_ObjectKey               *object_key;        /* l */
 
 	CORBA_ORB                      orb;         /* possibly used by stubs */
 	ORBit_OAObject                 adaptor_obj; /* used by stubs */

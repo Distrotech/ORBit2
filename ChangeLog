@@ -1,3 +1,23 @@
+2003-04-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub, ORBit_small_invoke_async) 
+	(ORBit_small_get_connection_status) 
+	(ORBit_small_unlisten_for_broken, get_status) 
+	(ORBit_small_get_connection): update to handle cnx.
+	reference correctly.
+	(ORBit_small_connection_unref): impl.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_objref_get_proxy, ORBit_marshal_object): register
+	objref after generating profiles, hold lock, refactor
+	slightly.
+	(ORBit_object_get_connection): return an incremented ref.
+	(CORBA_Object_non_existent): handle ref.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_generate_profiles): remove object registration.
+
 2003-04-24  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/test.sh: add threaded tests into the
@@ -8,8 +28,7 @@
 	(ORBit_try_connection): re-hash; add locking.
 	(CORBA_Object_release_cb): bin giop_connection_unref.
 	(ORBit_object_get_connection): hold the lock while we're
-	working on the object. Add a FIXME: we need a thread-safe
-	variant of this method (that returns a ref).
+	working on the object.
 
 	* src/orb/GIOP/giop-connection.c
 	(giop_connection_unref): bin it.

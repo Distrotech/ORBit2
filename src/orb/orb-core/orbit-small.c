@@ -592,7 +592,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 {
 	CORBA_unsigned_long     request_id;
 	CORBA_completion_status completion_status;
-	GIOPConnection         *cnx;
+	GIOPConnection         *cnx = NULL;
 	GIOPMessageQueueEntry   mqe;
 	ORBit_OAObject          adaptor_obj;
 
@@ -667,6 +667,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 
  clean_out:
 	tprintf_end_method ();
+	if (cnx)
+		linc_object_unref (cnx);
 	return;
 
  system_exception:
@@ -1175,6 +1177,8 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	aqe->m_data = /* ORBit_RootObject_duplicate */ (m_data);
 
  clean_out:
+	if (cnx)
+		linc_object_unref (cnx);
 	tprintf_end_method ();
 	return;
 
@@ -1205,13 +1209,13 @@ ORBit_small_get_servant (CORBA_Object obj)
 }
 
 static ORBitConnectionStatus
-get_status (LINCConnection *cnx)
+get_status (GIOPConnection *cnx)
 {
 	ORBitConnectionStatus ret;
 
 	g_return_val_if_fail (cnx != NULL, ORBIT_CONNECTION_DISCONNECTED);
 
-	switch (linc_connection_get_status (cnx)) {
+	switch (linc_connection_get_status (LINC_CONNECTION (cnx))) {
 	case LINC_CONNECTED:
 		ret = ORBIT_CONNECTION_CONNECTED;
 		break;
@@ -1233,13 +1237,14 @@ ORBit_small_get_connection_status (CORBA_Object obj)
 	if (ORBit_small_get_servant (obj))
 		ret = ORBIT_CONNECTION_IN_PROC;
 	else {
-		GIOPConnection *connection;
+		GIOPConnection *cnx;
 
-		connection = ORBit_object_get_connection (obj);
+		cnx = ORBit_object_get_connection (obj);
 
-		if (connection)
-			ret = get_status (LINC_CONNECTION (connection));
-		else
+		if (cnx) {
+			ret = get_status (cnx);
+			linc_object_unref (cnx);
+		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}
 
@@ -1260,14 +1265,14 @@ ORBit_small_listen_for_broken (CORBA_Object obj,
 		ret = ORBIT_CONNECTION_IN_PROC;
 
 	else {
-		GIOPConnection *connection;
+		GIOPConnection *cnx;
 
-		connection = ORBit_object_get_connection (obj);
+		cnx = ORBit_object_get_connection (obj);
 
-		if (connection) {
-			ret = get_status (LINC_CONNECTION (connection));
-			g_signal_connect (G_OBJECT (connection),
-					  "broken", fn, user_data);
+		if (cnx) {
+			ret = get_status (cnx);
+			g_signal_connect (cnx, "broken", fn, user_data);
+			linc_object_unref (cnx);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}
@@ -1288,16 +1293,16 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 		ret = ORBIT_CONNECTION_IN_PROC;
 
 	else {
-		GIOPConnection *connection;
+		GIOPConnection *cnx;
 
-		connection = ORBit_object_get_connection (obj);
+		cnx = ORBit_object_get_connection (obj);
 
-		if (connection) {
-			ret = get_status (LINC_CONNECTION (connection));
+		if (cnx) {
+			ret = get_status (cnx);
 			g_signal_handlers_disconnect_matched (
-				G_OBJECT (connection), 
-				G_SIGNAL_MATCH_FUNC,
+				cnx, G_SIGNAL_MATCH_FUNC,
 				0, 0, NULL, G_CALLBACK (fn), NULL);
+			linc_object_unref (cnx);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}
@@ -1309,6 +1314,13 @@ ORBitConnection *
 ORBit_small_get_connection (CORBA_Object obj)
 {
 	return (ORBitConnection *) ORBit_object_get_connection (obj);
+}
+
+void
+ORBit_small_connection_unref (ORBitConnection *cnx)
+{
+	if (cnx)
+		linc_object_unref (cnx);
 }
 
 void

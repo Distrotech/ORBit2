@@ -612,8 +612,6 @@ IOP_generate_profiles (CORBA_Object obj)
 		obj->object_key = ORBit_OAObject_object_to_objkey (adaptor_obj);
 
 	obj->profile_list = orb->profiles;
-
-	ORBit_register_objref (obj);
 }
 
 static void
