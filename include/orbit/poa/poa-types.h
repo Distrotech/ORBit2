@@ -49,6 +49,13 @@ struct ORBit_POAObject_type {
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
+gpointer ORBit_stub_pre_get_epv (CORBA_Object obj,
+				 glong        class_id,
+				 gpointer    *servant,
+				 glong        method_offset);
+void     ORBit_stub_post_invoke (CORBA_Object obj, gpointer epv);
+
+
 #define ORBIT_VEPV_OFFSET(vepv_type,epv_member) \
 	((CORBA_unsigned_long) ((long)((guint8 *) &((vepv_type *) 0)->epv_member)) / sizeof (GFunc))
 
