@@ -25,3 +25,26 @@
  */
 
 #include "IDLTypeCode.hh"
+
+IDLTypeCode::IDLTypeCode ():
+	IDLInterface ("TypeCode",0,0)
+{
+}
+
+string
+IDLTypeCode::get_idl_typename () const
+{
+	return "CORBA::TypeCode";
+}
+
+string
+IDLTypeCode::get_c_typename   () const
+{
+	return "CORBA_TypeCode";
+}
+
+string
+IDLTypeCode::get_cpp_typename () const
+{
+	return "::CORBA::TypeCode";
+}

@@ -51,67 +51,85 @@ public:
 
 	////////////////////////////////////////////
 	// Stubs
-    
-	virtual string stub_decl_arg_get (const string   &cpp_id,
-					  IDL_param_attr  direction,
-					  IDLTypedef     *active_typedef = 0) const;
 
-	virtual string stub_decl_ret_get (IDLTypedef *active_typedef = 0) const;
+	// Stub declaration
+	virtual string stub_decl_arg_get (const string     &cpp_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef = 0) const;
 	
-	virtual void stub_impl_arg_pre (ostream        &ostr,
-					Indent         &indent,
-					const string   &cpp_id,
-					IDL_param_attr  direction) const;
+	virtual string stub_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
-	virtual string stub_impl_arg_call (const string   &cpp_id,
-					   IDL_param_attr  direction) const;
+	// Stub implementation -- argument
+	virtual void stub_impl_arg_pre (ostream          &ostr,
+					Indent           &indent,
+					const string     &cpp_id,
+					IDL_param_attr    direction,
+					const IDLTypedef *active_typedef = 0) const;
 	
-	virtual void stub_impl_arg_post (ostream        &ostr,
-					 Indent         &indent,
-					 const string   &cpp_id,
-					 IDL_param_attr  direction) const;
+	virtual string stub_impl_arg_call (const string     &cpp_id,
+					   IDL_param_attr    direction,
+					   const IDLTypedef *active_typedef = 0) const;
+	
+	virtual void stub_impl_arg_post (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &cpp_id,
+					 IDL_param_attr    direction,
+					 const IDLTypedef *active_typedef = 0) const;
 
-	virtual void stub_impl_ret_pre (ostream &ostr,
-					Indent  &indent) const;
+	// Stub implementation -- return value
+	virtual void stub_impl_ret_pre (ostream          &ostr,
+					Indent           &indent,
+					const IDLTypedef *active_typedef = 0) const;
 
-	virtual void stub_impl_ret_call (ostream      &ostr,
-					 Indent       &indent,
-					 const string &c_call_expression) const;
+	virtual void stub_impl_ret_call (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &c_call_expression,
+					 const IDLTypedef *active_typedef = 0) const;
 
-	virtual void stub_impl_ret_post (ostream &ostr,
-					 Indent  &indent) const;
+	virtual void stub_impl_ret_post (ostream          &ostr,
+					 Indent           &indent,
+					 const IDLTypedef *active_typedef = 0) const;
 	
 	////////////////////////////////////////////
 	// Skels
 
-	virtual string skel_decl_arg_get (const string   &c_id,
-					  IDL_param_attr  direction,
-					  IDLTypedef     *active_typedef = 0) const;
+	// Skel declaration
+	virtual string skel_decl_arg_get (const string     &c_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef = 0) const;
 
-	virtual string skel_decl_ret_get (IDLTypedef *active_typedef = 0) const;
+	virtual string skel_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
-	virtual void skel_impl_arg_pre (ostream        &ostr,
-					Indent         &indent,
-					const string   &c_id,
-					IDL_param_attr  direction) const;
+	// Skel implementation -- argument
+	virtual void skel_impl_arg_pre (ostream          &ostr,
+					Indent           &indent,
+					const string     &c_id,
+					IDL_param_attr    direction,
+					const IDLTypedef *active_typedef = 0) const;
 	
-	virtual string skel_impl_arg_call (const string   &c_id,
-					   IDL_param_attr  direction) const;
+	virtual string skel_impl_arg_call (const string     &c_id,
+					   IDL_param_attr    direction,
+					   const IDLTypedef *active_typedef = 0) const;
 	
-	virtual void skel_impl_arg_post (ostream        &ostr,
-					 Indent         &indent,
-					 const string   &c_id,
-					 IDL_param_attr  direction) const;
+	virtual void skel_impl_arg_post (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &c_id,
+					 IDL_param_attr    direction,
+					 const IDLTypedef *active_typedef = 0) const;
 
-	virtual void skel_impl_ret_pre (ostream &ostr,
-					Indent  &indent) const ;
-	
-	virtual void skel_impl_ret_call (ostream      &ostr,
-					 Indent       &indent,
-					 const string &cpp_call_expression) const;
+	// Skel implementation -- return value
+	virtual void skel_impl_ret_pre (ostream          &ostr,
+					Indent           &indent,
+					const IDLTypedef *active_typedef = 0) const;
 
-	virtual void skel_impl_ret_post (ostream &ostr,
-					 Indent  &indent) const;
+	virtual void skel_impl_ret_call (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &cpp_call_expression,
+					 const IDLTypedef *active_typedef = 0) const;
+    
+	virtual void skel_impl_ret_post (ostream          &ostr,
+					 Indent           &indent,
+					 const IDLTypedef *active_typedef = 0) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLUSERDEFSIMPLETYPE

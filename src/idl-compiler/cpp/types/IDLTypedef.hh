@@ -65,112 +65,137 @@ public:
 	////////////////////////////////////////////
 	// Stubs
 
+	// Stub declaration
 	string stub_decl_arg_get (const string     &cpp_id,
 				  IDL_param_attr    direction,
 				  const IDLTypedef *active_typedef = 0) const;
-
+	
 	string stub_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
-	void stub_impl_arg_pre (ostream        &ostr,
-				Indent         &indent,
-				const string   &cpp_id,
-				IDL_param_attr  direction) const;
+	// Stub implementation -- argument
+	void stub_impl_arg_pre (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef = 0) const;
 	
-	string stub_impl_arg_call (const string   &cpp_id,
-				   IDL_param_attr  direction) const;
+	string stub_impl_arg_call (const string     &cpp_id,
+				   IDL_param_attr    direction,
+				   const IDLTypedef *active_typedef = 0) const;
 	
-	void stub_impl_arg_post (ostream        &ostr,
-				 Indent         &indent,
-				 const string   &cpp_id,
-				 IDL_param_attr  direction) const;
+	void stub_impl_arg_post (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &cpp_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef = 0) const;
 
-	void stub_impl_ret_pre (ostream &ostr,
-				Indent  &indent) const;
+	// Stub implementation -- return value
+	void stub_impl_ret_pre (ostream          &ostr,
+				Indent           &indent,
+				const IDLTypedef *active_typedef = 0) const;
+	
+	void stub_impl_ret_call (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &c_call_expression,
+				 const IDLTypedef *active_typedef = 0) const;
 
-	void stub_impl_ret_call (ostream      &ostr,
-				 Indent       &indent,
-				 const string &c_call_expression) const;
-
-	void stub_impl_ret_post (ostream &ostr,
-				 Indent  &indent) const;
+	void stub_impl_ret_post (ostream          &ostr,
+				 Indent           &indent,
+				 const IDLTypedef *active_typedef = 0) const;
 	
 	////////////////////////////////////////////
 	// Skels
 
+	// Skel declaration
 	string skel_decl_arg_get (const string     &c_id,
 				  IDL_param_attr    direction,
 				  const IDLTypedef *active_typedef = 0) const;
-
+	
 	string skel_decl_ret_get (const IDLTypedef *active_typedef = 0) const;
 	
-	void skel_impl_arg_pre (ostream        &ostr,
-				Indent         &indent,
-				const string   &c_id,
-				IDL_param_attr  direction) const;
+	// Skel implementation -- argument
+	void skel_impl_arg_pre (ostream          &ostr,
+				Indent           &indent,
+				const string     &c_id,
+				IDL_param_attr    direction,
+				const IDLTypedef *active_typedef = 0) const;
 	
-	string skel_impl_arg_call (const string   &c_id,
-				   IDL_param_attr  direction) const;
+	string skel_impl_arg_call (const string     &c_id,
+				   IDL_param_attr    direction,
+				   const IDLTypedef *active_typedef = 0) const;
 	
-	void skel_impl_arg_post (ostream        &ostr,
-				 Indent         &indent,
-				 const string   &c_id,
-				 IDL_param_attr  direction) const;
+	void skel_impl_arg_post (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &c_id,
+				 IDL_param_attr    direction,
+				 const IDLTypedef *active_typedef = 0) const;
 
-	void skel_impl_ret_pre (ostream &ostr,
-				Indent  &indent) const ;
+	// Skel implementation -- return value
+	void skel_impl_ret_pre (ostream          &ostr,
+				Indent           &indent,
+				const IDLTypedef *active_typedef = 0) const;
 
-	void skel_impl_ret_call (ostream      &ostr,
-				 Indent       &indent,
-				 const string &cpp_call_expression) const;
+	void skel_impl_ret_call (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &cpp_call_expression,
+				 const IDLTypedef *active_typedef = 0) const;
+    
+	void skel_impl_ret_post (ostream          &ostr,
+				 Indent           &indent,
+				 const IDLTypedef *active_typedef = 0) const;
 
-	void skel_impl_ret_post (ostream &ostr,
-				 Indent  &indent) const;
-
-	
 	////////////////////////////////////////////
 	// Members of compund types
 
 	// Compund declaration
-	string get_cpp_member_typename () const;
+	string get_cpp_member_typename (const IDLTypedef *active_typedef = 0) const;
+	string get_c_member_typename   (const IDLTypedef *active_typedef = 0) const;
+
+	string member_decl_arg_get (const IDLTypedef *active_typedef = 0) const;
 	
-	string member_decl_arg_get () const;
-
-	void member_impl_arg_copy (ostream      &ostr,
-				   Indent       &indent,
-				   const string &cpp_id) const;
-
+	void member_impl_arg_copy (ostream          &ostr,
+				   Indent           &indent,
+				   const string     &cpp_id,
+				   const IDLTypedef *active_typedef = 0) const;
+	
 	// Compound conversion: C++ -> C
-	void member_pack_to_c_pre  (ostream      &ostr,
-				    Indent       &indent,
-				    const string &cpp_id,
-				    const string &c_id) const;
+	void member_pack_to_c_pre  (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef = 0) const;
 
-	void member_pack_to_c_pack (ostream      &ostr,
-				    Indent       &indent,
-				    const string &cpp_id,
-				    const string &c_id) const;
+	void member_pack_to_c_pack (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef = 0) const;
 
-	void member_pack_to_c_post (ostream      &ostr,
-				    Indent       &indent,
-				    const string &cpp_id,
-				    const string &c_id) const;
+	void member_pack_to_c_post (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef = 0) const;
 
 	
 	// Compound conversion: C -> C++
-	void member_unpack_from_c_pre  (ostream      &ostr,
-					Indent       &indent,
-					const string &cpp_id,
-					const string &c_id) const;
+	void member_unpack_from_c_pre  (ostream          &ostr,
+					Indent           &indent,
+					const string     &cpp_id,
+					const string     &c_id,
+					const IDLTypedef *active_typedef = 0) const;
 
-	void member_unpack_from_c_pack (ostream      &ostr,
-					Indent       &indent,
-					const string &cpp_id,
-					const string &c_id) const;
+	void member_unpack_from_c_pack (ostream          &ostr,
+					Indent           &indent,
+					const string     &cpp_id,
+					const string     &c_id,
+					const IDLTypedef *active_typedef = 0) const;
 
-	void member_unpack_from_c_post  (ostream      &ostr,
-					 Indent       &indent,
-					 const string &cpp_id,
-					 const string &c_id) const;
+	void member_unpack_from_c_post  (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &cpp_id,
+					 const string     &c_id,
+					 const IDLTypedef *active_typedef = 0) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLTYPEDEF

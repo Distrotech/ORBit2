@@ -40,9 +40,9 @@ IDLUserDefSimpleType::get_fixed_c_typename () const
 
 
 string
-IDLUserDefSimpleType::stub_decl_arg_get (const string   &cpp_id,
-					 IDL_param_attr  direction,
-					 IDLTypedef     *active_typedef) const
+IDLUserDefSimpleType::stub_decl_arg_get (const string     &cpp_id,
+					 IDL_param_attr    direction,
+					 const IDLTypedef *active_typedef) const
 {
     	string retval;
 	
@@ -63,17 +63,19 @@ IDLUserDefSimpleType::stub_decl_arg_get (const string   &cpp_id,
 }
 
 void
-IDLUserDefSimpleType::stub_impl_arg_pre (ostream        &ostr,
-					 Indent         &indent,
-					 const string   &cpp_id,
-					 IDL_param_attr  direction) const
+IDLUserDefSimpleType::stub_impl_arg_pre (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &cpp_id,
+					 IDL_param_attr    direction,
+					 const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
 string
-IDLUserDefSimpleType::stub_impl_arg_call (const string   &cpp_id,
-					  IDL_param_attr  direction) const
+IDLUserDefSimpleType::stub_impl_arg_call (const string     &cpp_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef) const
 {
 	string retval;
 	string expr = "(" + get_c_typename () + ")" + cpp_id;
@@ -93,10 +95,11 @@ IDLUserDefSimpleType::stub_impl_arg_call (const string   &cpp_id,
 }
 	
 void
-IDLUserDefSimpleType::stub_impl_arg_post (ostream        &ostr,
-					  Indent         &indent,
-					  const string   &cpp_id,
-					  IDL_param_attr  direction) const
+IDLUserDefSimpleType::stub_impl_arg_post (ostream          &ostr,
+					  Indent           &indent,
+					  const string     &cpp_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -105,22 +108,24 @@ IDLUserDefSimpleType::stub_impl_arg_post (ostream        &ostr,
 
 
 string
-IDLUserDefSimpleType::stub_decl_ret_get (IDLTypedef *active_typedef) const
+IDLUserDefSimpleType::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 {
 	return get_cpp_typename ();
 }
 
 void
-IDLUserDefSimpleType::stub_impl_ret_pre (ostream &ostr,
-					 Indent  &indent) const
+IDLUserDefSimpleType::stub_impl_ret_pre (ostream          &ostr,
+					 Indent           &indent,
+					 const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 
 void
-IDLUserDefSimpleType::stub_impl_ret_call (ostream      &ostr,
-					  Indent       &indent,
-					  const string &c_call_expression) const
+IDLUserDefSimpleType::stub_impl_ret_call (ostream          &ostr,
+					  Indent           &indent,
+					  const string     &c_call_expression,
+					  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << get_cpp_typename () << " _retval = "
 	     << "(" << get_cpp_typename () << ")" << c_call_expression
@@ -128,8 +133,9 @@ IDLUserDefSimpleType::stub_impl_ret_call (ostream      &ostr,
 }
 
 void
-IDLUserDefSimpleType::stub_impl_ret_post (ostream &ostr,
-					  Indent  &indent) const
+IDLUserDefSimpleType::stub_impl_ret_post (ostream          &ostr,
+					  Indent           &indent,
+					  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval;" << endl;
 }
@@ -138,9 +144,9 @@ IDLUserDefSimpleType::stub_impl_ret_post (ostream &ostr,
 
 
 string
-IDLUserDefSimpleType::skel_decl_arg_get (const string   &c_id,
-					 IDL_param_attr  direction,
-					 IDLTypedef     *active_typedef) const
+IDLUserDefSimpleType::skel_decl_arg_get (const string     &c_id,
+					 IDL_param_attr    direction,
+					 const IDLTypedef *active_typedef) const
 {
 	string retval;
 	
@@ -159,17 +165,19 @@ IDLUserDefSimpleType::skel_decl_arg_get (const string   &c_id,
 }
 
 void
-IDLUserDefSimpleType::skel_impl_arg_pre (ostream        &ostr,
-					 Indent         &indent,
-					 const string   &c_id,
-					 IDL_param_attr  direction) const
+IDLUserDefSimpleType::skel_impl_arg_pre (ostream          &ostr,
+					 Indent           &indent,
+					 const string     &c_id,
+					 IDL_param_attr    direction,
+					 const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
 string
-IDLUserDefSimpleType::skel_impl_arg_call (const string   &c_id,
-					  IDL_param_attr  direction) const
+IDLUserDefSimpleType::skel_impl_arg_call (const string     &c_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef) const
 {
 	string retval;
 	
@@ -188,10 +196,11 @@ IDLUserDefSimpleType::skel_impl_arg_call (const string   &c_id,
 }
 	
 void
-IDLUserDefSimpleType::skel_impl_arg_post (ostream        &ostr,
-					  Indent         &indent,
-					  const string   &c_id,
-					  IDL_param_attr  direction) const
+IDLUserDefSimpleType::skel_impl_arg_post (ostream          &ostr,
+					  Indent           &indent,
+					  const string     &c_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -200,23 +209,25 @@ IDLUserDefSimpleType::skel_impl_arg_post (ostream        &ostr,
 
 
 string
-IDLUserDefSimpleType::skel_decl_ret_get (IDLTypedef *active_typedef) const
+IDLUserDefSimpleType::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
 	return get_c_typename ();
 }
 
 void
-IDLUserDefSimpleType::skel_impl_ret_pre (ostream &ostr,
-					 Indent  &indent) const
+IDLUserDefSimpleType::skel_impl_ret_pre (ostream          &ostr,
+					 Indent           &indent,
+					 const IDLTypedef *active_typedef) const
 {
 	ostr << indent << get_c_typename () << " _retval"
 	     << ';' << endl;
 }
 
 void
-IDLUserDefSimpleType::skel_impl_ret_call (ostream      &ostr,
-					  Indent       &indent,
-					  const string &cpp_call_expression) const
+IDLUserDefSimpleType::skel_impl_ret_call (ostream          &ostr,
+					  Indent           &indent,
+					  const string     &cpp_call_expression,
+					  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << " _retval = "
 	     << "(" << get_c_typename () << ")" << cpp_call_expression
@@ -224,8 +235,9 @@ IDLUserDefSimpleType::skel_impl_ret_call (ostream      &ostr,
 }
 
 void
-IDLUserDefSimpleType::skel_impl_ret_post (ostream &ostr,
-					  Indent  &indent) const
+IDLUserDefSimpleType::skel_impl_ret_post (ostream          &ostr,
+					  Indent           &indent,
+					  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval;" << endl;
 }

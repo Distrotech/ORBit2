@@ -224,7 +224,8 @@ void
 IDLInterface::stub_impl_arg_pre (ostream        &ostr,
 				 Indent         &indent,
 				 const string   &cpp_id,
-				 IDL_param_attr  direction) const
+				 IDL_param_attr  direction,
+				 const IDLTypedef *active_typedef) const
 {
 	switch (direction)
 	{
@@ -253,7 +254,8 @@ IDLInterface::stub_impl_arg_pre (ostream        &ostr,
 	
 string
 IDLInterface::stub_impl_arg_call (const string   &cpp_id,
-				  IDL_param_attr  direction) const
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 	string retval;
 	
@@ -275,7 +277,8 @@ void
 IDLInterface::stub_impl_arg_post (ostream        &ostr,
 				  Indent         &indent,
 				  const string   &cpp_id,
-				  IDL_param_attr  direction) const
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 	switch (direction)
 	{
@@ -301,8 +304,9 @@ IDLInterface::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 }
 	
 void
-IDLInterface::stub_impl_ret_pre (ostream &ostr,
-				 Indent  &indent) const
+IDLInterface::stub_impl_ret_pre  (ostream &ostr,
+				  Indent  &indent,
+				  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -310,7 +314,8 @@ IDLInterface::stub_impl_ret_pre (ostream &ostr,
 void
 IDLInterface::stub_impl_ret_call (ostream      &ostr,
 				  Indent       &indent,
-				  const string &c_call_expression) const
+				  const string &c_call_expression,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << get_c_typename () << " _retval = "
 	     << c_call_expression << ";" << endl;
@@ -318,7 +323,8 @@ IDLInterface::stub_impl_ret_call (ostream      &ostr,
 
 void
 IDLInterface::stub_impl_ret_post (ostream &ostr,
-				  Indent  &indent) const
+				  Indent  &indent,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return " << get_cpp_stub_typename ()
 	     << "::_orbitcpp_wrap (_retval);" << endl;
@@ -353,10 +359,11 @@ IDLInterface::skel_decl_arg_get (const string     &c_id,
 }
 
 void
-IDLInterface::skel_impl_arg_pre (ostream        &ostr,
-				 Indent         &indent,
-				 const string   &c_id,
-				 IDL_param_attr  direction) const
+IDLInterface::skel_impl_arg_pre  (ostream        &ostr,
+				  Indent         &indent,
+				  const string   &c_id,
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 	switch (direction)
 	{
@@ -375,7 +382,8 @@ IDLInterface::skel_impl_arg_pre (ostream        &ostr,
 	
 string
 IDLInterface::skel_impl_arg_call (const string   &c_id,
-				  IDL_param_attr  direction) const
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 	// WRITE ME
@@ -387,7 +395,8 @@ void
 IDLInterface::skel_impl_arg_post (ostream        &ostr,
 				  Indent         &indent,
 				  const string   &c_id,
-				  IDL_param_attr  direction) const
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 	switch (direction)
 	{
@@ -416,8 +425,9 @@ IDLInterface::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 }
 
 void
-IDLInterface::skel_impl_ret_pre (ostream &ostr,
-				 Indent  &indent) const
+IDLInterface::skel_impl_ret_pre  (ostream &ostr,
+				  Indent  &indent,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << get_cpp_typename_ptr () << " _retval"
 	     << ';' << endl;
@@ -426,7 +436,8 @@ IDLInterface::skel_impl_ret_pre (ostream &ostr,
 void
 IDLInterface::skel_impl_ret_call (ostream      &ostr,
 				  Indent       &indent,
-				  const string &cpp_call_expression) const
+				  const string &cpp_call_expression,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << " _retval = " << cpp_call_expression
 	     << ';' << endl;
@@ -434,7 +445,8 @@ IDLInterface::skel_impl_ret_call (ostream      &ostr,
 
 void
 IDLInterface::skel_impl_ret_post (ostream &ostr,
-				  Indent  &indent) const
+				  Indent  &indent,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval->_orbitcpp_get_c_object ();" << endl;
 }
@@ -445,13 +457,19 @@ IDLInterface::skel_impl_ret_post (ostream &ostr,
  ***************************************************/
 
 string
-IDLInterface::get_cpp_member_typename () const
+IDLInterface::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
 	return get_cpp_typename_mgr ();
 }
 
 string
-IDLInterface::member_decl_arg_get () const
+IDLInterface::get_c_member_typename (const IDLTypedef *active_typedef) const
+{
+	return get_c_typename ();
+}
+
+string
+IDLInterface::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	return get_cpp_typename_ptr ();
 }
@@ -459,7 +477,8 @@ IDLInterface::member_decl_arg_get () const
 void
 IDLInterface::member_impl_arg_copy (ostream      &ostr,
 				    Indent       &indent,
-				    const string &cpp_id) const
+				    const string &cpp_id,
+				    const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 	// WRITE ME
@@ -471,7 +490,8 @@ void
 IDLInterface::member_pack_to_c_pre  (ostream      &ostr,
 				     Indent       &indent,
 				     const string &cpp_id,
-				     const string &c_id) const
+				     const string &c_id,
+				     const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -480,7 +500,8 @@ void
 IDLInterface::member_pack_to_c_pack (ostream      &ostr,
 				     Indent       &indent,
 				     const string &cpp_id,
-				     const string &c_id) const
+				     const string &c_id,
+				     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_object ()"
 	     << ';' << endl;
@@ -490,7 +511,8 @@ void
 IDLInterface::member_pack_to_c_post (ostream      &ostr,
 				     Indent       &indent,
 				     const string &cpp_id,
-				     const string &c_id) const
+				     const string &c_id,
+				     const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -499,7 +521,8 @@ void
 IDLInterface::member_unpack_from_c_pre  (ostream      &ostr,
 					 Indent       &indent,
 					 const string &cpp_id,
-					 const string &c_id) const
+					 const string &c_id,
+					 const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -508,7 +531,8 @@ void
 IDLInterface::member_unpack_from_c_pack (ostream      &ostr,
 					 Indent       &indent,
 					 const string &cpp_id,
-					 const string &c_id) const
+					 const string &c_id,
+					 const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_id << " = "
 	     << get_cpp_stub_typename () << "::_orbitcpp_wrap ("
@@ -518,10 +542,11 @@ IDLInterface::member_unpack_from_c_pack (ostream      &ostr,
 }
 
 void
-IDLInterface::member_unpack_from_c_post  (ostream      &ostr,
-				     Indent       &indent,
-				     const string &cpp_id,
-				     const string &c_id) const
+IDLInterface::member_unpack_from_c_post (ostream      &ostr,
+					 Indent       &indent,
+					 const string &cpp_id,
+					 const string &c_id,
+					 const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }

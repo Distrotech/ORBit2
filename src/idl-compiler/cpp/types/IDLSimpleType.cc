@@ -82,14 +82,16 @@ void
 IDLSimpleType::stub_impl_arg_pre (ostream        &ostr,
 				  Indent         &indent,
 				  const string   &cpp_id,
-				  IDL_param_attr  direction) const
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
 string
 IDLSimpleType::stub_impl_arg_call (const string   &cpp_id,
-				   IDL_param_attr  direction) const
+				   IDL_param_attr  direction,
+				   const IDLTypedef *active_typedef) const
 {
 	string retval;
 	
@@ -111,7 +113,8 @@ void
 IDLSimpleType::stub_impl_arg_post (ostream        &ostr,
 				   Indent         &indent,
 				   const string   &cpp_id,
-				   IDL_param_attr  direction) const
+				   IDL_param_attr  direction,
+				   const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -127,7 +130,8 @@ IDLSimpleType::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 
 void
 IDLSimpleType::stub_impl_ret_pre (ostream &ostr,
-				  Indent  &indent) const
+				  Indent  &indent,
+				  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -135,7 +139,8 @@ IDLSimpleType::stub_impl_ret_pre (ostream &ostr,
 void
 IDLSimpleType::stub_impl_ret_call (ostream      &ostr,
 				   Indent       &indent,
-				   const string &c_call_expression) const
+				   const string &c_call_expression,
+				   const IDLTypedef *active_typedef) const
 {
 	ostr << indent << get_fixed_cpp_typename () << " _retval = "
 	     << c_call_expression << ";" << endl;
@@ -143,7 +148,8 @@ IDLSimpleType::stub_impl_ret_call (ostream      &ostr,
 
 void
 IDLSimpleType::stub_impl_ret_post (ostream &ostr,
-				   Indent  &indent) const
+				   Indent  &indent,
+				   const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval;" << endl;
 }
@@ -176,14 +182,16 @@ void
 IDLSimpleType::skel_impl_arg_pre (ostream        &ostr,
 				  Indent         &indent,
 				  const string   &c_id,
-				  IDL_param_attr  direction) const
+				  IDL_param_attr  direction,
+				  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
 string
 IDLSimpleType::skel_impl_arg_call (const string   &c_id,
-				   IDL_param_attr  direction) const
+				   IDL_param_attr  direction,
+				   const IDLTypedef *active_typedef) const
 {
 	string retval;
 	
@@ -207,7 +215,8 @@ void
 IDLSimpleType::skel_impl_arg_post (ostream        &ostr,
 				   Indent         &indent,
 				   const string   &c_id,
-				   IDL_param_attr  direction) const
+				   IDL_param_attr  direction,
+				   const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -223,7 +232,8 @@ IDLSimpleType::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 
 void
 IDLSimpleType::skel_impl_ret_pre (ostream &ostr,
-				  Indent  &indent) const
+				  Indent  &indent,
+				  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << get_fixed_c_typename () << " _retval"
 	     << ';' << endl;
@@ -232,26 +242,34 @@ IDLSimpleType::skel_impl_ret_pre (ostream &ostr,
 void
 IDLSimpleType::skel_impl_ret_call (ostream      &ostr,
 				   Indent       &indent,
-				   const string &cpp_call_expression) const
+				   const string &cpp_call_expression,
+				   const IDLTypedef *active_typedef) const
 {
 	ostr << indent << " _retval = " << cpp_call_expression << ";" << endl;
 }
 
 void
 IDLSimpleType::skel_impl_ret_post (ostream &ostr,
-				   Indent  &indent) const
+				   Indent  &indent,
+				   const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "return _retval;" << endl;
 }
 
 string
-IDLSimpleType::get_cpp_member_typename () const
+IDLSimpleType::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
 	return get_fixed_cpp_typename ();
 }
 
 string
-IDLSimpleType::member_decl_arg_get () const
+IDLSimpleType::get_c_member_typename (const IDLTypedef *active_typedef) const
+{
+	return get_fixed_c_typename ();
+}
+
+string
+IDLSimpleType::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	return get_fixed_cpp_typename ();
 }
@@ -259,7 +277,8 @@ IDLSimpleType::member_decl_arg_get () const
 void
 IDLSimpleType::member_impl_arg_copy (ostream      &ostr,
 				     Indent       &indent,
-				     const string &cpp_id) const
+				     const string &cpp_id,
+				     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_id << " = _par_" << cpp_id
 	     << ';' << endl;
@@ -269,7 +288,8 @@ void
 IDLSimpleType::member_pack_to_c_pre  (ostream      &ostr,
 				      Indent       &indent,
 				      const string &cpp_id,
-				      const string &c_id) const
+				      const string &c_id,
+				      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -279,7 +299,8 @@ void
 IDLSimpleType::member_pack_to_c_pack (ostream      &ostr,
 				      Indent       &indent,
 				      const string &cpp_id,
-				      const string &c_id) const
+				      const string &c_id,
+				      const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_id << " = " << cpp_id << ';' << endl;
 }
@@ -288,7 +309,8 @@ void
 IDLSimpleType::member_pack_to_c_post (ostream      &ostr,
 				      Indent       &indent,
 				      const string &cpp_id,
-				      const string &c_id) const
+				      const string &c_id,
+				      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -297,7 +319,8 @@ void
 IDLSimpleType::member_unpack_from_c_pre  (ostream      &ostr,
 					  Indent       &indent,
 					  const string &cpp_id,
-					  const string &c_id) const
+					  const string &c_id,
+					  const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -306,7 +329,8 @@ void
 IDLSimpleType::member_unpack_from_c_pack (ostream      &ostr,
 					  Indent       &indent,
 					  const string &cpp_id,
-					  const string &c_id) const
+					  const string &c_id,
+					  const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_id << " = " << c_id << ';' << endl;
 }
@@ -315,7 +339,8 @@ void
 IDLSimpleType::member_unpack_from_c_post  (ostream      &ostr,
 					   Indent       &indent,
 					   const string &cpp_id,
-					   const string &c_id) const
+					   const string &c_id,
+					   const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }

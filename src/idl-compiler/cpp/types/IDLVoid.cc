@@ -54,6 +54,37 @@ IDLVoid::stub_decl_arg_get (const string     &cpp_id,
 	throw IDLExVoid ();
 }
 
+void
+IDLVoid::stub_impl_arg_pre (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &cpp_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+	
+string
+IDLVoid::stub_impl_arg_call (const string     &cpp_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+	
+void
+IDLVoid::stub_impl_arg_post (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &cpp_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+
+
+
+
 string
 IDLVoid::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 {
@@ -61,52 +92,33 @@ IDLVoid::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 }
 	
 void
-IDLVoid::stub_impl_arg_pre (ostream        &ostr,
-			    Indent         &indent,
-			    const string   &cpp_id,
-			    IDL_param_attr  direction) const
-{
-	throw IDLExVoid ();
-}
-	
-string
-IDLVoid::stub_impl_arg_call (const string   &cpp_id,
-			     IDL_param_attr  direction) const
-{
-	throw IDLExVoid ();
-}
-	
-void
-IDLVoid::stub_impl_arg_post (ostream        &ostr,
-			     Indent         &indent,
-			     const string   &cpp_id,
-			     IDL_param_attr  direction) const
-{
-	throw IDLExVoid ();
-}
-
-void
 IDLVoid::stub_impl_ret_pre (ostream &ostr,
-			    Indent  &indent) const
+			    Indent  &indent,
+			    const IDLTypedef *active_typedef) const
 {
-	// Do nothing
+	// Dd nothing
 }
 
 void
-IDLVoid::stub_impl_ret_call (ostream      &ostr,
-			     Indent       &indent,
-			     const string &c_call_expression) const
+IDLVoid::stub_impl_ret_call (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &c_call_expression,
+			     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_call_expression << ";" << endl;
 }
 
 void
-IDLVoid::stub_impl_ret_post (ostream &ostr,
-			     Indent  &indent) const
+IDLVoid::stub_impl_ret_post (ostream          &ostr,
+			     Indent           &indent,
+			     const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 	
+
+
+
 string
 IDLVoid::skel_decl_arg_get (const string     &c_id,
 			    IDL_param_attr    direction,
@@ -115,6 +127,37 @@ IDLVoid::skel_decl_arg_get (const string     &c_id,
 	throw IDLExVoid ();
 }
 
+void
+IDLVoid::skel_impl_arg_pre (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &c_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+	
+string
+IDLVoid::skel_impl_arg_call (const string     &c_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+	
+void
+IDLVoid::skel_impl_arg_post (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &c_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+
+
+
+
 string
 IDLVoid::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
@@ -122,123 +165,114 @@ IDLVoid::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 }
 
 void
-IDLVoid::skel_impl_arg_pre (ostream        &ostr,
-			    Indent         &indent,
-			    const string   &c_id,
-			    IDL_param_attr  direction) const
-{
-	throw IDLExVoid ();
-}
-	
-string
-IDLVoid::skel_impl_arg_call (const string   &c_id,
-			     IDL_param_attr  direction) const
-{
-	throw IDLExVoid ();
-}
-	
-void
-IDLVoid::skel_impl_arg_post (ostream        &ostr,
-			     Indent         &indent,
-			     const string   &c_id,
-			     IDL_param_attr  direction) const
-{
-	throw IDLExVoid ();
-}
-
-void
-IDLVoid::skel_impl_ret_pre (ostream &ostr,
-			    Indent  &indent) const
+IDLVoid::skel_impl_ret_pre (ostream          &ostr,
+			    Indent           &indent,
+			    const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 
 void
-IDLVoid::skel_impl_ret_call (ostream      &ostr,
-			     Indent       &indent,
-			     const string &cpp_call_expression) const
+IDLVoid::skel_impl_ret_call (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &cpp_call_expression,
+			     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_call_expression << ";" << endl;
 }
 
 void
-IDLVoid::skel_impl_ret_post (ostream &ostr,
-			     Indent  &indent) const
+IDLVoid::skel_impl_ret_post (ostream          &ostr,
+			     Indent           &indent,
+			     const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
 
 
 string
-IDLVoid::get_cpp_member_typename () const
+IDLVoid::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 string
-IDLVoid::member_decl_arg_get () const
+IDLVoid::get_c_member_typename (const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+
+string
+IDLVoid::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_impl_arg_copy (ostream      &ostr,
-			       Indent       &indent,
-			       const string &cpp_id) const
+IDLVoid::member_impl_arg_copy (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_pack_to_c_pre  (ostream      &ostr,
-				Indent       &indent,
-				const string &cpp_id,
-				const string &c_id) const
+IDLVoid::member_pack_to_c_pre  (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				const string     &c_id,
+				const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_pack_to_c_pack (ostream      &ostr,
-				Indent       &indent,
-				const string &cpp_id,
-				const string &c_id) const
+IDLVoid::member_pack_to_c_pack (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				const string     &c_id,
+				const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_pack_to_c_post (ostream      &ostr,
-				Indent       &indent,
-				const string &cpp_id,
-				const string &c_id) const
+IDLVoid::member_pack_to_c_post (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				const string     &c_id,
+				const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_unpack_from_c_pre  (ostream      &ostr,
-				    Indent       &indent,
-				    const string &cpp_id,
-				    const string &c_id) const
+IDLVoid::member_unpack_from_c_pre  (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_unpack_from_c_pack (ostream      &ostr,
-				    Indent       &indent,
-				    const string &cpp_id,
-				    const string &c_id) const
+IDLVoid::member_unpack_from_c_pack (ostream          &ostr,
+				    Indent           &indent,
+				    const string     &cpp_id,
+				    const string     &c_id,
+				    const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::member_unpack_from_c_post  (ostream      &ostr,
-				     Indent       &indent,
-				     const string &cpp_id,
-				     const string &c_id) const
+IDLVoid::member_unpack_from_c_post  (ostream          &ostr,
+				     Indent           &indent,
+				     const string     &cpp_id,
+				     const string     &c_id,
+				     const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
