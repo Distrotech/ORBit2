@@ -186,7 +186,7 @@ TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 	return obj;
 }
 
-static CORBA_char *
+static void
 TestFactory_segv (PortableServer_Servant servant,
 		  const CORBA_char      *when,
 		  CORBA_Environment     *ev)
@@ -197,8 +197,6 @@ TestFactory_segv (PortableServer_Servant servant,
 #else
 	g_main_loop_quit (linc_loop);
 #endif
-
-	return CORBA_string_dup ("I'm dead");
 }
 
 static void
