@@ -48,13 +48,16 @@ public:
 	void runPass();
 
 protected:
+#if 0 //!!!
 	void doAttributeSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
-	void doOperationSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
 	void doAttributeSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node);
-	void doOperationSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node);
 	void doAttributePrototype(IDLInterface &iface,IDL_tree node);
-	void doOperationPrototype(IDLInterface &iface,IDL_tree node);
 	void doAttributeTie(IDLInterface &iface,IDL_tree node);
+#endif
+	
+	void doOperationSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
+	void doOperationSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node);
+	void doOperationPrototype(IDLInterface &iface,IDL_tree node);
 	void doOperationTie(IDLInterface &iface,IDL_tree node);
 
 	void doInterfaceAppServant(IDLInterface &iface);

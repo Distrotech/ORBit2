@@ -26,17 +26,20 @@
 
 #include "IDLBoolean.hh"
 
-string IDLBoolean::getTypeName() const
-{
-	return IDL_CORBA_NS "::Boolean";
-}
-
-string IDLBoolean::getCTypeName() const
+string
+IDLBoolean::get_c_typename () const
 {
 	return "CORBA_boolean";
 }
 
-string IDLBoolean::getDefaultValue(set<string> const &labels) const
+string
+IDLBoolean::get_cpp_typename () const
+{
+	return IDL_CORBA_NS "::Boolean";
+}
+
+string
+IDLBoolean::getDefaultValue(set<string> const &labels) const
 {
 	string val = "";
 	if(labels.find("1") == labels.end()){

@@ -42,114 +42,132 @@ class IDLType
 public:
 	virtual ~IDLType() {}
 	
-	// misc stuff
-	virtual bool isVariableLength() const = 0;
-	virtual void getCPPMemberDeclarator(string const &id, string &typespec, string &dcl, IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeTypedef(ostream &ostr, Indent &indent, IDLCompilerState &state, IDLElement &dest, IDLScope const &scope, IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPSpecCode(ostream &ostr, Indent &indent, IDLCompilerState &state) const {
-	}
-	virtual void getCPPConstantDeclarator(string const &id, string &typespec, string &dcl) {
-		throw IDLExNoConstantOfThisType(getCTypeName()); // hack
-	}
-
-	// Container accessors
-	// Get forwarder type's name
-	virtual string getQualifiedForwarder () const;
-	// Create typename_forward type
-	virtual void writeForwarder (ostream &header_ostr,
-				     Indent  &header_indent,
-				     ostream &impl_ostr,
-				     Indent  &impl_indent) const = 0;
-	
-	// struct / exception stuff
-	virtual void getCPPStructCtorDeclarator(string const &id, string &typespec, string &dcl,
-											IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPStructCtor(ostream &ostr, Indent &indent, string const &id,
-									IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPStructPacker(ostream &ostr, Indent &indent, string const &id,
-									  IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPStructUnpacker(ostream &ostr, Indent &indent, string const &id,
-										IDLTypedef const *activeTypedef = NULL) const = 0;
-
-	// union stuff
-	virtual void writeUnionAccessors(ostream &ostr, Indent &indent, string const &id,
-									string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const;
-	virtual void writeUnionModifiers(ostream &ostr, Indent &indent, string const &id,
-									string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const;
-	virtual void writeUnionReferents(ostream &ostr, Indent &indent, string const &id,
-									string const &discriminatorVal,
-									IDLTypedef const *activeTypedef = NULL) const;
-
-
-	// sequence stuff
-	virtual string getCTypeName() const = 0;         // e.g. blah_foo
-	virtual string getNSScopedCTypeName() const = 0; // e.g. _orbitcpp::c::blah_foo
-	virtual string getNSScopedCPPTypeName() const = 0; // e.g. blah::foo
-
-	// stub stuff
-	virtual void getCPPStubDeclarator(IDL_param_attr attr, string const &id, string &typespec,
-									  string &dcl,const IDLTypedef *activeTypedef = NULL) const = 0;
-	virtual void writeCPPStubMarshalCode(IDL_param_attr attr, string const &id,ostream &ostr,
-										 Indent &indent,
-										 IDLTypedef const *activeTypedef = NULL) const {
-	}
-	virtual string getCPPStubParameterTerm(IDL_param_attr attr, string const &id,
-										   IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPStubDemarshalCode(IDL_param_attr attr, string const &id,ostream &ostr,
-										   Indent &indent,
-										   IDLTypedef const *activeTypedef = NULL) const {
-	}
-
-	// stub return stuff
-
-	virtual void getCPPStubReturnDeclarator(string const &id, string &typespec, string &dcl,
-											IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPStubReturnPrepCode(ostream &ostr, Indent &indent,
-											IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual string getCPPStubReturnAssignment() const = 0;
-	virtual void writeCPPStubReturnDemarshalCode(ostream &ostr, Indent &indent,
-												 IDLTypedef const *activeTypedef = NULL) const = 0;
-
-	// skel stuff
-	virtual void getCSkelDeclarator(IDL_param_attr attr, string const &id,
-									string &typespec, string &dcl,
-									IDLTypedef const *activeTypedef = NULL) const = 0;
-
-	virtual void writeCPPSkelDemarshalCode(IDL_param_attr attr, string const &id,
-										   ostream &ostr, Indent &indent,
-										   IDLTypedef const *activeTypedef = NULL) const {
-	}
-
-	virtual string getCPPSkelParameterTerm(IDL_param_attr attr, string const &id,
-										   IDLTypedef const *activeTypedef = NULL) const = 0;
-
-	virtual void writeCPPSkelMarshalCode(IDL_param_attr attr, string const &id,
-										 ostream &ostr, Indent &indent,
-										 IDLTypedef const *activeTypedef = NULL) const {
-	}
-
-	// skel return stuff
-	// "passthru" needed for fake skeletons - see pass_skel.cc, find "passthru"
-	virtual void getCSkelReturnDeclarator(string const &id, string &typespec, string &dcl,
-										  IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPSkelReturnPrepCode(ostream &ostr, Indent &indent, bool passthru = false,
-											IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual string getCPPSkelReturnAssignment(bool passthru = false,
-											  IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual void writeCPPSkelReturnMarshalCode(ostream &ostr, Indent &indent, bool passthru = false,
-											   IDLTypedef const *activeTypedef = NULL) const = 0;
-	virtual string getInvalidReturn() const = 0;
-
-  	// CORBA C++ 2.3 write code to initialise type for use in structs, sequences
-	// and arrays. (e.g. in the above, strings must be init to "", not NULL)
-	virtual void writeInitCode(ostream &ostr, Indent &indent, string const &ident) const;
-	virtual void writeCPPDeepCopyCode(ostream &ostr, Indent &indent, string const &ident, string const &target) const;
-	virtual void writeCDeepCopyCode(ostream &ostr, Indent &indent, string const &ident, string const &target) const;
-	
 	// if this type is really an alias, this gets the aliased type
 	IDLType const &getResolvedType() const;
+
+	////////////////////////////////////////////
+	// Constants
+
+	virtual void const_decl_write (ostream          &ostr,
+				       Indent           &indent,
+				       const string     &cpp_id,
+				       const string     &value,
+				       const IDLTypedef *active_typedef = 0) const;
+	
+	////////////////////////////////////////////
+	// Stubs
+
+	// Stub declaration
+	virtual string stub_decl_arg_get (const string     &cpp_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef = 0) const = 0;
+	
+	virtual string stub_decl_ret_get (const IDLTypedef *active_typedef = 0) const = 0;
+	
+	// Stub implementation -- argument
+	virtual void stub_impl_arg_pre (ostream        &ostr,
+					Indent         &indent,
+					const string   &cpp_id,
+					IDL_param_attr  direction) const = 0;
+	
+	virtual string stub_impl_arg_call (const string   &cpp_id,
+					  IDL_param_attr  direction) const = 0;
+	
+	virtual void stub_impl_arg_post (ostream        &ostr,
+					 Indent         &indent,
+					 const string   &cpp_id,
+					 IDL_param_attr  direction) const = 0;
+
+	// Stub implementation -- return value
+	virtual void stub_impl_ret_pre (ostream &ostr,
+					Indent  &indent) const = 0;
+
+	virtual void stub_impl_ret_call (ostream      &ostr,
+					 Indent       &indent,
+					 const string &c_call_expression) const = 0;
+
+	virtual void stub_impl_ret_post (ostream &ostr,
+					 Indent  &indent) const = 0;
+	
+	////////////////////////////////////////////
+	// Skels
+
+	// Skel declaration
+	virtual string skel_decl_arg_get (const string     &c_id,
+					  IDL_param_attr    direction,
+					  const IDLTypedef *active_typedef = 0) const = 0;
+
+	virtual string skel_decl_ret_get (const IDLTypedef *active_typedef = 0) const = 0;
+	
+	// Skel implementation -- argument
+	virtual void skel_impl_arg_pre (ostream        &ostr,
+					Indent         &indent,
+					const string   &c_id,
+					IDL_param_attr  direction) const = 0;
+	
+	virtual string skel_impl_arg_call (const string   &c_id,
+					   IDL_param_attr  direction) const = 0;
+	
+	virtual void skel_impl_arg_post (ostream        &ostr,
+					 Indent         &indent,
+					 const string   &c_id,
+					 IDL_param_attr  direction) const = 0;
+
+	// Skel implementation -- return value
+	virtual void skel_impl_ret_pre (ostream &ostr,
+					Indent  &indent) const = 0;
+
+	virtual void skel_impl_ret_call (ostream      &ostr,
+					 Indent       &indent,
+					 const string &cpp_call_expression) const = 0;				    
+	virtual void skel_impl_ret_post (ostream &ostr,
+					 Indent  &indent) const = 0;
+
+
+	////////////////////////////////////////////
+	// Members of compund types
+
+	// Compund declaration
+	virtual string get_cpp_member_typename () const = 0;
+
+	virtual string member_decl_arg_get () const = 0;
+	
+	virtual void member_impl_arg_copy (ostream      &ostr,
+					   Indent       &indent,
+					   const string &cpp_id) const = 0;
+	
+	// Compound conversion: C++ -> C
+	virtual void member_pack_to_c_pre  (ostream      &ostr,
+					    Indent       &indent,
+					    const string &member_id,
+					    const string &c_struct_id) const = 0;
+
+	virtual void member_pack_to_c_pack (ostream      &ostr,
+					    Indent       &indent,
+					    const string &member_id,
+					    const string &c_struct_id) const = 0;
+
+	virtual void member_pack_to_c_post (ostream      &ostr,
+					    Indent       &indent,
+					    const string &member_id,
+					    const string &c_struct_id) const = 0;
+
+	
+	// Compound conversion: C -> C++
+	virtual void member_unpack_from_c_pre  (ostream      &ostr,
+						Indent       &indent,
+						const string &member_id,
+						const string &c_struct_id) const = 0;
+
+	virtual void member_unpack_from_c_pack (ostream      &ostr,
+						Indent       &indent,
+						const string &member_id,
+						const string &c_struct_id) const = 0;
+
+	virtual void member_unpack_from_c_post  (ostream      &ostr,
+						 Indent       &indent,
+						 const string &member_id,
+						 const string &c_struct_id) const = 0;
 };
 
 #endif //ORBITCPP_TYPES_IDLTYPE

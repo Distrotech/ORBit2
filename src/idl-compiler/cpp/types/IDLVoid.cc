@@ -28,17 +28,198 @@
 #include "IDLVoid.hh"
 
 string
-IDLVoid::getQualifiedForwarder () const
+IDLVoid::stub_decl_arg_get (const string     &cpp_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+
+string
+IDLVoid::stub_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+	return "void";
+}
+	
+void
+IDLVoid::stub_impl_arg_pre (ostream        &ostr,
+			    Indent         &indent,
+			    const string   &cpp_id,
+			    IDL_param_attr  direction) const
+{
+	throw IDLExVoid ();
+}
+	
+string
+IDLVoid::stub_impl_arg_call (const string   &cpp_id,
+			     IDL_param_attr  direction) const
+{
+	throw IDLExVoid ();
+}
+	
+void
+IDLVoid::stub_impl_arg_post (ostream        &ostr,
+			     Indent         &indent,
+			     const string   &cpp_id,
+			     IDL_param_attr  direction) const
 {
 	throw IDLExVoid ();
 }
 
 void
-IDLVoid::writeForwarder (ostream &header_ostr,
-			 Indent  &header_indent,
-			 ostream &impl_ostr,
-			 Indent  &impl_indent) const
+IDLVoid::stub_impl_ret_pre (ostream &ostr,
+			    Indent  &indent) const
+{
+	// Do nothing
+}
+
+void
+IDLVoid::stub_impl_ret_call (ostream      &ostr,
+			     Indent       &indent,
+			     const string &c_call_expression) const
+{
+	ostr << indent << c_call_expression << ";" << endl;
+}
+
+void
+IDLVoid::stub_impl_ret_post (ostream &ostr,
+			     Indent  &indent) const
+{
+	// Do nothing
+}
+	
+string
+IDLVoid::skel_decl_arg_get (const string     &c_id,
+			    IDL_param_attr    direction,
+			    const IDLTypedef *active_typedef) const
 {
 	throw IDLExVoid ();
 }
 
+string
+IDLVoid::skel_decl_ret_get (const IDLTypedef *active_typedef) const
+{
+	return "void";
+}
+
+void
+IDLVoid::skel_impl_arg_pre (ostream        &ostr,
+			    Indent         &indent,
+			    const string   &c_id,
+			    IDL_param_attr  direction) const
+{
+	throw IDLExVoid ();
+}
+	
+string
+IDLVoid::skel_impl_arg_call (const string   &c_id,
+			     IDL_param_attr  direction) const
+{
+	throw IDLExVoid ();
+}
+	
+void
+IDLVoid::skel_impl_arg_post (ostream        &ostr,
+			     Indent         &indent,
+			     const string   &c_id,
+			     IDL_param_attr  direction) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::skel_impl_ret_pre (ostream &ostr,
+			    Indent  &indent) const
+{
+	// Do nothing
+}
+
+void
+IDLVoid::skel_impl_ret_call (ostream      &ostr,
+			     Indent       &indent,
+			     const string &cpp_call_expression) const
+{
+	ostr << indent << cpp_call_expression << ";" << endl;
+}
+
+void
+IDLVoid::skel_impl_ret_post (ostream &ostr,
+			     Indent  &indent) const
+{
+	// Do nothing
+}
+
+
+string
+IDLVoid::get_cpp_member_typename () const
+{
+	throw IDLExVoid ();
+}
+
+string
+IDLVoid::member_decl_arg_get () const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_impl_arg_copy (ostream      &ostr,
+			       Indent       &indent,
+			       const string &cpp_id) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_pack_to_c_pre  (ostream      &ostr,
+				Indent       &indent,
+				const string &member_id,
+				const string &c_struct_id) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_pack_to_c_pack (ostream      &ostr,
+				Indent       &indent,
+				const string &member_id,
+				const string &c_struct_id) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_pack_to_c_post (ostream      &ostr,
+				Indent       &indent,
+				const string &member_id,
+				const string &c_struct_id) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_unpack_from_c_pre  (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_unpack_from_c_pack (ostream      &ostr,
+				    Indent       &indent,
+				    const string &member_id,
+				    const string &c_struct_id) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_unpack_from_c_post  (ostream      &ostr,
+				     Indent       &indent,
+				     const string &member_id,
+				     const string &c_struct_id) const
+{
+	throw IDLExVoid ();
+}

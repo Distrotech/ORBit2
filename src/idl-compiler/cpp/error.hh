@@ -96,7 +96,7 @@ struct IDLExUnexpectedNodeType : public IDLExNode {
 struct IDLExDuplicateIdentifier : public IDLExNode {
 	IDLExDuplicateIdentifier(IDL_tree node,IDLScope const &scope,string const &id)
 		: IDLExNode(node,"duplicate identifier in "+
-	      scope.getQualifiedIDLIdentifier()+": "+id) {
+	      scope.get_idl_typename ()+": "+id) {
 	}
 };
 

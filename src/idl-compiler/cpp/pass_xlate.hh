@@ -34,9 +34,9 @@
 
 #include "pass.hh"
 #include "pass_idl_it.hh"
-#include "types/IDLEnum.hh"
-#include "types/IDLStruct.hh"
-#include "types/IDLUnion.hh"
+//#include "types/IDLEnum.hh"
+//#include "types/IDLStruct.hh"
+//#include "types/IDLUnion.hh"
 #include "types/IDLException.hh"
 #include <libIDL/IDL.h>
 #include <iostream>
@@ -61,14 +61,17 @@ public:
 	void runPass();
 
 protected:
+#if 0 //!!!
 	void doTypedef(IDL_tree node,IDLScope &scope);
 	void doStruct(IDL_tree node,IDLScope &scope);
 	void doUnion(IDL_tree node,IDLScope &scope);
+#endif
 	void doEnum(IDL_tree node,IDLScope &scope);
 	void doNative(IDL_tree node,IDLScope &scope);
-
 	void doConstant(IDL_tree node,IDLScope &scope);
+#if 0
 	void doAttribute(IDL_tree node,IDLScope &scope);
+#endif
 	void doOperation(IDL_tree node,IDLScope &scope);
 	void doMember(IDLMember &member);
 
@@ -77,20 +80,15 @@ protected:
 	void doModule(IDL_tree node,IDLScope &scope);
 
 	void doInterfaceBase(IDLInterface &iface);
-	void doInterfacePtrClass(IDLInterface &iface);
  
 	void doInterfaceStaticMethodDeclarations(IDLInterface &iface);
 	void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
+#if 0 //!!!
 	void enumHook(IDL_tree list,IDLScope &scope);
-
-private:
-	void struct_create_accessors (IDLStruct &idlStruct);
-	void struct_create_constructor (IDLStruct &idlStruct);
-	void struct_create_accessor_constructors (IDLStruct &idlStruct);
-	void struct_create_wrapper (IDLStruct &idlStruct);
-	void struct_create_unwrapper (IDLStruct &idlStruct);
+#endif
 };
 
+#if 0 //!!!
 class IDLWriteCPPSpecCode : public IDLOutputPass::IDLOutputJob {
 	IDLType const	&m_type;
 public:
@@ -101,7 +99,9 @@ public:
 		m_type.writeCPPSpecCode(m_header, indent, m_state);
 	}
 };
+#endif
 
+#if 0 //!!!
 class IDLWriteArrayProps : public IDLOutputPass::IDLOutputJob {
 	IDLArray const	&m_array;
 	IDLElement const &m_dest;
@@ -158,7 +158,7 @@ public:
 };
 
 
-#define IDLWriteUnionAnyFuncs	IDLWriteStructAnyFuncs
+typedef IDLWriteUnionAnyFuncs IDLWriteStructAnyFuncs;
 
 class IDLWriteExceptionAnyFuncs : public IDLWriteAnyFuncs
 {
@@ -195,5 +195,6 @@ public:
 		: IDLWriteAnyFuncs(state, pass), m_array(_array), m_dest(_dest) {}
 	void run();
 };
+#endif
 
 #endif

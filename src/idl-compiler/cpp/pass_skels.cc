@@ -64,6 +64,7 @@ IDLPassSkels::runPass() {
 
 
 // operation-scope methods ----------------------------------------------------
+#if 0 //!!!
 void 
 IDLPassSkels::doAttributeSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
 	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
@@ -87,31 +88,28 @@ IDLPassSkels::doAttributeSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_
 		
 	}	
 }
-
+#endif
 
 
 
 
 void 
-IDLPassSkels::doOperationSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
+IDLPassSkels::doOperationSkelPrototype (IDLInterface &iface,
+					IDLInterface &of,
+					IDL_tree      node)
+{
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
-	string ret_typespec,ret_typedcl;
-	op.m_returntype->getCSkelReturnDeclarator("_skel_" + op.getCPPIdentifier(),ret_typespec,ret_typedcl);
-	m_header
-	<< indent << "static " << ret_typespec << ' ' << ret_typedcl << '('
-	<<  "::PortableServer_Servant _servant,"
-	<< op.getCOpParameterList();
-	if (op.m_parameterinfo.size()) m_header << ",";
-	m_header
-	<<  "::CORBA_Environment *_ev);" << endl;
-
+	m_header << indent << "static "
+		 << op.skel_decl_proto ()
+		 << ";" << endl;
+	
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
 
 
 
-
+#if 0 //!!!
 void 
 IDLPassSkels::doAttributeSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
 	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
@@ -229,7 +227,7 @@ IDLPassSkels::doAttributeSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node
 	}	
 	
 }
-
+#endif
 
 
 
@@ -272,212 +270,59 @@ IDLPassSkels::doAttributeSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node
  *  length types (isVariableLength() ).
  */
 void 
-IDLPassSkels::doOperationSkel(IDLInterface & iface,
-							  IDLInterface & of,
-							  IDL_tree node) {
+IDLPassSkels::doOperationSkel (IDLInterface &iface,
+			       IDLInterface &of,
+			       IDL_tree      node)
+{
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
 	// print header
-	string ret_typespec,ret_typedcl;
-	op.m_returntype->getCSkelReturnDeclarator(
-	    iface.getQualifiedCPP_POA() + "::_skel_" + op.getCPPIdentifier(),
-	    ret_typespec,ret_typedcl
-	);
-
-	m_module
-	<< mod_indent << ret_typespec << ' ' << ret_typedcl << '('
-	<<  "::PortableServer_Servant _servant,"
-	<< op.getCOpParameterList();
-	if (op.m_parameterinfo.size()) m_module << ',';
-	m_module
-	<<  "::CORBA_Environment *_ev) {" << endl;
-	mod_indent++;
+	m_module << mod_indent << op.skel_ret_get ()
+		 << iface.get_cpp_poa_typename () << "::"
+		 << "_skel_" << op.get_c_identifier ()
+		 << " (" << op.skel_arglist_get () << ")" << endl
+		 << mod_indent++ << "{" << endl;
 
 	// inherited => call up base "passthru"
 	if (&iface != &of) {
-		m_module
-		<< mod_indent << of.getQualifiedCPP_POA() << "::_orbitcpp_Servant _fake;" << endl
-		<< mod_indent << "_fake.m_cppimpl = ((_orbitcpp_Servant *)_servant)->m_cppimpl; // causes implicit cast" << endl;
-		
-		m_module
-		<< mod_indent << "return "
-		<< of.getQualifiedCPP_POA() << "::_skel_" << op.getCPPIdentifier()
-		<< "(&_fake,";
-		
-		IDLOperation::ParameterList::const_iterator
-		firstp = op.m_parameterinfo.begin(),lastp = op.m_parameterinfo.end();
-	
-		while (firstp != lastp) {
-			m_module << firstp->Identifier << ',';
-			firstp++;
+
+		m_module << mod_indent << of.get_cpp_poa_typename () << "::_orbitcpp_Servant _fake;" << endl;
+		m_module << mod_indent << "_fake.m_cppimpl = "
+			 << "((_orbitcpp_Servant*)_servant)->m_cppimpl; // causes implicit cast" << endl;
+		m_module << mod_indent << "return "
+			 << of.get_cpp_poa_typename () << "::"
+			 << "_skel_" << op.get_cpp_identifier ()
+			 << " (&_fake, ";
+
+		for (IDLOperation::ParameterList::const_iterator i = op.m_parameterinfo.begin ();
+		     i != op.m_parameterinfo.end (); i++)
+		{
+			m_module << i->id << ", ";
 		}
-		
-		m_module
-		<< "_ev);" << endl;
+
+		m_module << "_ev);" << endl;
 
 	}
 	else {
-		// unmarshal parameters
-		IDLOperation::ParameterList::const_iterator firstp = 
-			op.m_parameterinfo.begin(),lastp = op.m_parameterinfo.end();
-	
-		while (firstp != lastp) {
-			firstp->Type->writeCPPSkelDemarshalCode(firstp->Direction,firstp->Identifier,m_module,mod_indent);
-			firstp++;
-		}
-	
-		op.m_returntype->writeCPPSkelReturnPrepCode(m_module,mod_indent);
-		m_module
-		<< mod_indent << "bool _results_valid = true;" << endl << endl;
-	
-		// do the call
-		m_module << mod_indent << "try {" << endl; // open try block
+		// Prepare parameters and return value container
+		op.skel_do_pre (m_module, mod_indent);
 
-		mod_indent++;
-		m_module << mod_indent << iface.getQualifiedCPP_POA() << " *_self = ";
-		m_module << "((_orbitcpp_Servant *)_servant)->m_cppimpl;" << endl;
-
-		// RJA inserted code
-
-		m_module << endl;
-
-		firstp = op.m_parameterinfo.begin();
-		lastp = op.m_parameterinfo.end();
-
-		std::vector<std::string> servantArgs;
-
-		unsigned int wrapperCounter = 0;
-
-		while (firstp != lastp) 
-		{
-			string typespec;
-			string decl;
-			firstp->Type->getCPPStubDeclarator( firstp->Direction, 
-												firstp->Identifier,
-												typespec,
-												decl );
-
-			bool makeWrapper = false;
-
-			if ( firstp->Direction == IDL_PARAM_OUT )
-			{
-				makeWrapper = true;
-			}
-
-			// Remove any aliasing due to typedefs
-			IDLType const & realType = (firstp->Type)->getResolvedType();
-			
-			// At this point we can guarantee that realType is not a typedef
-			// so we can get information about the real type represented in the arg.
-
-			bool pointerAssignment = false; // true when we don't have a real _out type
-			
-			if ( 0 != dynamic_cast<const IDLArray *>(&realType) ) {
-				if ( !( realType.isVariableLength() ) )	{
-					pointerAssignment = true;
-				}
-			}
-
-
-			if ( makeWrapper && (false == pointerAssignment) ) {
-				// In this case define a local var, named <arg> of the type expected 
-				// by the servant operation and then pass <arg> as an argument later
-
-				std::ostringstream arg; // stringstream to convert integer type to string
-				arg << string("orbitcppSkelWrapper_out_");
-				arg << wrapperCounter;
-
-				m_module << mod_indent << typespec << " " << arg.str();
-				m_module << "( ";
-
-
-				m_module << firstp->Type->getCPPSkelParameterTerm( firstp->Direction,
-																   firstp->Identifier );
-
-				m_module << " )";
-				m_module << ";" << endl; // end of the call
-
-				servantArgs.push_back( arg.str() );
-			}
-			else {
-				// In this case no local var is necessary so just pass the whole 
-				// ugly string through to the servant operation.
-				// This is necessary when the arg is an array of fixed length type.
-				string arg( firstp->Type->getCPPSkelParameterTerm( firstp->Direction,
-																   firstp->Identifier ) );
-
-				servantArgs.push_back(arg);
-			}
-
-			++firstp;
-			++wrapperCounter;
-		}
-
-
-		// some_type _retval = _self->opName( arg0, arg1, .... );
-		m_module << mod_indent << op.m_returntype->getCPPSkelReturnAssignment();
-
-		m_module << "_self->" << op.getCPPIdentifier() << '(';
-	
-		typedef std::vector<std::string>::const_iterator args_iterator;
-		args_iterator argsIt = servantArgs.begin();
-		args_iterator argsEnd = servantArgs.end();
+		// Do the call
+		op.skel_do_call (m_module, mod_indent);
 		
-
-		while (argsIt != argsEnd) {
-			m_module << (*argsIt);
-
-			++argsIt;
-			if (argsIt != argsEnd) {
-				m_module << ", ";
-			}
-		}
-
-		m_module << ");" << endl; // close parameter list
-
-		m_module << --mod_indent << '}' << endl; // close try block
-	
-		// handle exceptions
-		m_module
-		<< mod_indent << "catch ("IDL_CORBA_NS "::Exception &_ex) {" << endl;
-		mod_indent++;
-		m_module
-		<< mod_indent << "_results_valid = false;" << endl
-		<< mod_indent << "_ex._orbitcpp_set(_ev);" << endl;
-		m_module
-		<< --mod_indent << '}' << endl;
-	
-		m_module
-		<< mod_indent << "catch (...) {" << endl;
-		m_module
-		<< ++mod_indent << IDL_IMPL_NS "::error(\"unknown exception in skeleton\");" << endl;
-		m_module
-		<< --mod_indent << '}' << endl << endl;
-	
-		m_module
-		<< mod_indent << "if (!_results_valid) " << op.m_returntype->getInvalidReturn() << endl;
-	
-		// marshal parameters
-		firstp = op.m_parameterinfo.begin();
-		lastp = op.m_parameterinfo.end();
-	
-		while (firstp != lastp) {
-			firstp->Type->writeCPPSkelMarshalCode(firstp->Direction,firstp->Identifier,m_module,mod_indent);
-			firstp++;
-		}
-	
-		op.m_returntype->writeCPPSkelReturnMarshalCode(m_module,mod_indent);
+		// De-init parameters and return value container,
+		// FIXME: handle return value
+		op.skel_do_post (m_module, mod_indent);
 	}
-	// end function
-	m_module
-	<< --mod_indent << '}' << endl << endl;
+
+	// End of skel implementation
+	m_module << --mod_indent << "}" << endl << endl;
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
 
 
-
-
+#if 0 //!!!
 void 
 IDLPassSkels::doAttributePrototype(IDLInterface &iface,IDL_tree node) {
 	IDLAttribute &attr = (IDLAttribute &) *iface.getItem(node);
@@ -505,33 +350,26 @@ IDLPassSkels::doAttributePrototype(IDLInterface &iface,IDL_tree node) {
 		indent--;	
 	}	
 }
-
+#endif
 
 
 
 void 
-IDLPassSkels::doOperationPrototype(IDLInterface &iface,IDL_tree node) {
+IDLPassSkels::doOperationPrototype (IDLInterface &iface,
+				    IDL_tree       node) {
 	IDLOperation &op = (IDLOperation &) *iface.getItem(node);
 
-	string ret_typespec,ret_typedcl;
-	op.m_returntype->getCPPStubReturnDeclarator(op.getCPPIdentifier(),ret_typespec,ret_typedcl);
+	m_header << indent << "virtual " << op.stub_decl_proto ();
 
-	m_header
-	<< indent << "virtual " << ret_typespec << ' ' << ret_typedcl << '('
-	<< op.getCPPOpParameterList() << ')' << endl;
+	m_header << ++indent << "throw (" IDL_CORBA_NS "::SystemException";
 
-	indent++;
-	m_header
-	<< indent << "throw ("IDL_CORBA_NS "::SystemException";
-	IDLOperation::ExceptionList::const_iterator firstx = op.m_raises.begin(),
-	        lastx = op.m_raises.end();
+	for (IDLOperation::ExceptionList::const_iterator i = op.m_raises.begin ();
+	     i != op.m_raises.end (); i++)
+	{
+		m_header << ", " << (*i)->get_cpp_typename ();
+	}
 
-	while (firstx != lastx && *firstx)
-		m_header
-		<< ',' << (*firstx++)->getQualifiedCPPIdentifier();
-
-	m_header
-	<< ") = 0;" << endl;
+	m_header << ") = 0;" << endl;
 	indent--;
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
@@ -539,11 +377,11 @@ IDLPassSkels::doOperationPrototype(IDLInterface &iface,IDL_tree node) {
 
 
 
-
+#if 0 //!!!
 void 
 IDLPassSkels::doAttributeTie(IDLInterface &iface,IDL_tree node) {
 }
-
+#endif
 
 
 
@@ -556,118 +394,109 @@ IDLPassSkels::doOperationTie(IDLInterface &iface,IDL_tree node) {
 
 // interface-scope methods ----------------------------------------------------
 void 
-IDLPassSkels::doInterfaceAppServant(IDLInterface &iface) {
-	m_header
-	<< indent << "struct _orbitcpp_Servant" << endl
-	<< indent << "{" << endl;
-	indent++;
+IDLPassSkels::doInterfaceAppServant (IDLInterface &iface)
+{
+	m_header << indent << "struct _orbitcpp_Servant" << endl
+		 << indent++ << "{" << endl;
 
-  string c_POA = iface.getQualifiedC_POA();
-	m_header
-	<< indent << "//\"Inherit\" from " << c_POA << ", which is a ServantBase-like struct." << endl
-	<< indent << IDL_IMPL_C_NS_NOTUSED << c_POA << " m_cservant;" << endl
-  << endl
-	<< indent << "//C++-specific stuff:" << endl
-	<< indent << "PortableServer::Servant m_cppservant;" << endl
-	<< indent << iface.getQualifiedCPP_POA() << " *m_cppimpl;  // fully downcasted version of m_cppservant" << endl;
-	m_header
-	<< --indent << "} m_target;" << endl;
+	string c_POA = "POA_" + iface.get_c_typename ();
+
+	m_header << indent << "//\"Inherit\" from " << c_POA << ", which is a ServantBase-like struct." << endl
+		 << indent << IDL_IMPL_C_NS_NOTUSED << c_POA << " m_cservant;" << endl
+		 << endl;
+
+	m_header << indent << "//C++-specific stuff:" << endl
+		 << indent << "PortableServer::Servant m_cppservant;" << endl
+		 << indent << iface.get_cpp_typename () << " *m_cppimpl;  // fully downcasted version of m_cppservant" << endl;
+	m_header << --indent << "} m_target;" << endl << endl;
 }
 
 
 
 
 void 
-IDLPassSkels::doInterfaceEPVs(IDLInterface &iface) {
+IDLPassSkels::doInterfaceEPVs (IDLInterface &iface)
+{
 	// base_epv decl
-	m_header
-	<< indent << "static " "::"
-	<< "PortableServer_ServantBase__epv _base_epv;" << endl;
+	m_header << indent << "static "
+		 << "::PortableServer_ServantBase__epv _base_epv;" << endl;
 
 	// base_epv def
-	m_module
-	<< mod_indent <<  "::"
-	<< "PortableServer_ServantBase__epv "
-	<< iface.getQualifiedCPP_POA() << "::_base_epv = {" << endl;
-	mod_indent++;
-	m_module
-	<< mod_indent << "NULL, // _private" << endl
-	<< mod_indent << iface.getQualifiedCPP_POA() << "::_orbitcpp_fini, // _fini" << endl
-	<< mod_indent << "NULL  // _default_POA" << endl;
-	m_module
-	<< --mod_indent << "};" << endl << endl;
+	m_module << mod_indent++ <<  "::"
+		 << "PortableServer_ServantBase__epv "
+		 << iface.get_cpp_poa_typename () << "::_base_epv = {" << endl;
+
+	m_module << mod_indent << "NULL, // _private" << endl
+		 << mod_indent << iface.get_cpp_poa_typename () << "::_orbitcpp_fini," << endl
+		 << mod_indent << "NULL  // _default_POA" << endl;
+
+	m_module << --mod_indent << "};" << endl << endl;
 
 	// epv handling
-	IDLInterface::BaseList::const_iterator
-	first = iface.m_allbases.begin(),last=iface.m_allbases.end();
-	while (first != last) {
-		declareEPV(iface,**first);
-		defineEPV(iface,**first++);
-	};
-	declareEPV(iface,iface);
-	defineEPV(iface,iface);
+	for (IDLInterface::BaseList::const_iterator i = iface.m_allbases.begin ();
+	     i != iface.m_allbases.end (); i++)
+	{
+		declareEPV (iface, **i);
+		defineEPV (iface, **i);
+	}
+	declareEPV (iface, iface);
+	defineEPV (iface, iface);
 
 	// vepv decl
-	m_header
-	<< indent << "static " IDL_IMPL_C_NS_NOTUSED
-	<< iface.getQualifiedC_vepv() << " _vepv;" << endl;
+	m_header << indent << "static " IDL_IMPL_C_NS_NOTUSED
+		 << iface.get_c_poa_vepv () << " _vepv;" << endl;
 
 	// vepv def
-	m_module
-	<< mod_indent << IDL_IMPL_C_NS_NOTUSED
-	<< iface.getQualifiedC_vepv() << ' '
-	<< iface.getQualifiedCPP_POA() << "::_vepv = {" << endl;
-	mod_indent++;
+	m_module << mod_indent++ << IDL_IMPL_C_NS_NOTUSED
+		 << iface.get_c_poa_vepv() << ' '
+		 << iface.get_cpp_poa_typename () << "::_vepv = {" << endl;
 
-	m_module
-	<< mod_indent << '&' << iface.getQualifiedCPP_POA()
-	<< "::_base_epv," << endl;
+	m_module << mod_indent << '&' << iface.get_cpp_poa_typename ()
+		 << "::_base_epv," << endl;
 
-	first = iface.m_allbases.begin();
-	last = iface.m_allbases.end();
-
-	while (first != last) {
-		m_module
-		<< mod_indent << "&_" << (*first)->getQualifiedCIdentifier() << "_epv," << endl;
-		first++;
+	for (IDLInterface::BaseList::const_iterator i = iface.m_allbases.begin ();
+	     i != iface.m_allbases.end (); i++)
+	{
+		m_module << mod_indent << "&_"
+			 << (*i)->get_c_typename () << "_epv," << endl;
 	}
 
-	m_module
-	<< mod_indent << "&_" << iface.getQualifiedCIdentifier() << "_epv" << endl;
+	m_module << mod_indent << "&_"
+		 << iface.get_c_typename () << "_epv" << endl;
 
-	m_module
-	<< --mod_indent << "};" << endl << endl;
+	m_module << --mod_indent << "};" << endl << endl;
 }
 
 
 
 
 void 
-IDLPassSkels::declareEPV(IDLInterface &iface,IDLInterface &of) {
-	m_header
-	<< indent << "static " IDL_IMPL_C_NS_NOTUSED
-	<< of.getQualifiedC_epv() << " _"
-	<< of.getQualifiedCIdentifier() << "_epv;" << endl;
+IDLPassSkels::declareEPV (IDLInterface &iface,
+			  IDLInterface &of)
+{
+	m_header << indent << "static " IDL_IMPL_C_NS_NOTUSED
+		 << of.get_c_poa_epv () << " _"
+		 << of.get_c_typename () << "_epv;" << endl;
 }
 
 
 
 
 void 
-IDLPassSkels::defineEPV(IDLInterface &iface,IDLInterface &of) {
-	m_module
-	<< mod_indent << IDL_IMPL_C_NS_NOTUSED
-	<< of.getQualifiedC_epv() << ' '
-	<< iface.getQualifiedCPP_POA() << "::"
-	<< "_" << of.getQualifiedCIdentifier() << "_epv = {" << endl;
-	mod_indent++;
-	m_module
-	<< mod_indent << "NULL, // _private" << endl;
-	
+IDLPassSkels::defineEPV (IDLInterface &iface,
+			 IDLInterface &of)
+{
+	m_module << mod_indent++ << IDL_IMPL_C_NS_NOTUSED
+		 << of.get_c_poa_epv () << ' '
+		 << iface.get_cpp_poa_typename () << "::"
+		 << "_" << of.get_c_typename () << "_epv = {" << endl;
+	m_module << mod_indent << "0, // _private" << endl;
+
 	IDL_tree body_list = IDL_INTERFACE(of.getNode()).body;
 	while (body_list) {
 		IDLElement *item;
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
+#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			item = of.getItem(IDL_LIST(body_list).data);
 			m_module
@@ -682,11 +511,11 @@ IDLPassSkels::defineEPV(IDLInterface &iface,IDLInterface &of) {
 				}
 			}
 			break;
+#endif
 		case IDLN_OP_DCL:
 			item = of.getItem(IDL_LIST(body_list).data);
-			m_module
-			<< mod_indent << iface.getQualifiedCPP_POA()
-			<< "::_skel_" << item->getCPPIdentifier() << ',' << endl;
+			m_module << mod_indent << iface.get_cpp_poa_typename ()
+				 << "::_skel_" << item->get_cpp_identifier () << ',' << endl;
 			break;
 		default:
 			break;
@@ -694,48 +523,46 @@ IDLPassSkels::defineEPV(IDLInterface &iface,IDLInterface &of) {
 		body_list = IDL_LIST(body_list).next;
 	}
 
-	m_module
-	<< --mod_indent << "};" << endl << endl;
+	m_module << --mod_indent << "};" << endl << endl;
 }
 
 
 
 
 void 
-IDLPassSkels::doInterfaceFinalizer(IDLInterface &iface) {
-	m_header
-	<< indent << "static void _orbitcpp_fini("
-	<<  "::PortableServer_Servant servant, "
-	<<  "::CORBA_Environment *ev);" << endl;
+IDLPassSkels::doInterfaceFinalizer (IDLInterface &iface)
+{
+	m_header << indent << "static void _orbitcpp_fini("
+		 <<  "::PortableServer_Servant servant, "
+		 <<  "::CORBA_Environment *ev);" << endl;
 
-	m_module
-	<< mod_indent << "void " << iface.getQualifiedCPP_POA()
-	<< "::_orbitcpp_fini("
-	<<  "::PortableServer_Servant servant, "
-	<<  "::CORBA_Environment *ev)" << endl
-	<< mod_indent << "{" << endl;
+	m_module << mod_indent << "void " << iface.get_cpp_poa_typename ()
+		 << "::_orbitcpp_fini ("
+		 <<  "::PortableServer_Servant servant, "
+		 <<  "::CORBA_Environment *ev)" << endl
+		 << mod_indent++ << "{" << endl;
 
-	m_module
-	<< ++mod_indent << "//Call C __fini():" << endl
-	<< mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.getQualifiedC_POA() << "__fini(servant, ev);" << endl << endl;
+	m_module << mod_indent << "//Call C __fini():" << endl
+		 << mod_indent << IDL_IMPL_C_NS_NOTUSED
+		 << iface.get_c_poa_typename () << "__fini (servant, ev);" << endl << endl;
+	
+	m_module << mod_indent << "//Do C++-specific stuff:" << endl
+		 << mod_indent << "_orbitcpp_Servant* pCppServant = reinterpret_cast<_orbitcpp_Servant*>(servant);" << endl
+		 << mod_indent << iface.get_cpp_poa_typename () << "* self = pCppServant->m_cppimpl;" << endl
+		 << mod_indent << "self->_remove_ref();" << endl;
 
-	m_module
-	<< mod_indent << "//Do C++-specific stuff:" << endl
-  << mod_indent << "_orbitcpp_Servant* pCppServant = reinterpret_cast<_orbitcpp_Servant*>(servant);" << endl
-	<< mod_indent << iface.getQualifiedCPP_POA() << "* self = pCppServant->m_cppimpl;" << endl
-	<< mod_indent << "self->_remove_ref();" << endl;
-	m_module
-	<< --mod_indent << '}'<< endl << endl;
+	m_module << --mod_indent << '}'<< endl << endl;
 }
 
 
 
 
 void 
-IDLPassSkels::doInterface(IDLInterface &iface) {
+IDLPassSkels::doInterface (IDLInterface &iface)
+{
 	string ns_begin,ns_end;
-	iface.getCPPpoaNamespaceDecl(ns_begin,ns_end);
-
+	iface.get_cpp_poa_namespace (ns_begin,ns_end);
+	
 	if (ns_begin.size()) {
 		m_header
 		<< indent << ns_begin << endl << endl;
@@ -754,119 +581,108 @@ IDLPassSkels::doInterface(IDLInterface &iface) {
 void 
 IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	// class header
-	m_header
-	<< indent << "class " << iface.getCPP_POA() << " : "
-	<< "public " << iface.getQualifiedCPPIdentifier();
+	m_header << indent << "class " << iface.get_cpp_poa_identifier () << ": "
+		 << "public " << iface.get_cpp_typename ();
 
-	if (iface.m_bases.size() > 0) {
-		IDLInterface::BaseList::const_iterator
-		first = iface.m_bases.begin(), last = iface.m_bases.end();
-		
-		while (first != last)
-			m_header << ", public virtual " << (*first++)->getQualifiedCPP_POA();
-
-		m_header << endl << " {" << endl;
+	if (iface.m_bases.size ())
+	{
+		for (IDLInterface::BaseList::const_iterator i = iface.m_bases.begin ();
+		     i != iface.m_bases.end (); i++)
+		{
+			m_header << ", public virtual " << (*i)->get_cpp_poa_identifier ();
+		}
+	} else {
+		m_header << ", public virtal "
+			 << IDL_POA_NS "::ServantBase" << endl;
 	}
-	else
-		m_header
-		<< ", public virtual "IDL_POA_NS "::ServantBase" << endl
-		<< "{" << endl;
+	
+	m_header << indent++ << "{" << endl;
 
 	// C interface
-	m_header
-	<< indent << "// C interface" << endl
-	<< indent << "public:" << endl;
-	indent++;
-
+	m_header << indent << "// C interface" << endl;
+	m_header << --indent++ << "public:" << endl;
 	doInterfaceAppServant(iface);
-	m_header << endl;
 	
-	m_header
-	<< --indent << "protected:" << endl;
-	indent++;
-	
-	doInterfaceEPVs(iface);
-	m_header << endl;
-	doInterfaceFinalizer(iface);
+	m_header << --indent++ << "protected:" << endl;
+	doInterfaceEPVs (iface);
+	doInterfaceFinalizer (iface);
 
 	// C methods
-	IDLInterface::BaseList::const_iterator
-	firstb = iface.m_allbases.begin(),lastb = iface.m_allbases.end();
-
-	while (firstb != lastb)
-		doInterfaceUpCall(iface,**firstb++);
+	for (IDLInterface::BaseList::const_iterator i = iface.m_allbases.begin ();
+	     i != iface.m_allbases.end (); i++)
+	{
+		doInterfaceUpCall (iface, **i);
+	}
 	doInterfaceUpCall(iface,iface);
 
 	// C++ interface
-	indent--;
-	m_header
-	<< endl
-	<< indent << "// C++ interface" << endl
-	<< indent << "public:" << endl;
-	indent++;
+	m_header << indent << "// C++ interface" << endl
+		 << --indent++ << "public:" << endl;
 
 	// constructor
-	m_header
-	<< indent << iface.getCPP_POA() << "();" << endl;
+	m_header << indent << iface.get_cpp_poa_identifier () << " ();" << endl;
 
-	m_module
-	<< mod_indent << iface.getQualifiedCPP_POA()  << "::" << iface.getCPP_POA() << "()" << endl
-	<< mod_indent << "{" << endl
-  << ++mod_indent << "//C Servant:" << endl
-	<< mod_indent << "m_target.m_cservant._private = NULL;" << endl
-	<< mod_indent << "m_target.m_cservant.vepv = &_vepv;" << endl
-	<< endl
-  << mod_indent << "//C++ Servant:"
-	<< mod_indent << "m_target.m_cppservant = this; // does an appropriate upcast thunk (Multiple Inheritance)" << endl
-	<< mod_indent << "m_target.m_cppimpl = this;" << endl
-	<< endl
-	<< mod_indent << "//Call __init(), passing our \"derived\" C Servant:" << endl
-	<< mod_indent << IDL_IMPL_NS "::CEnvironment ev;" << endl
-	<< mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.getQualifiedC_POA()
-	<< "__init( &m_target, ev._orbitcpp_get_c_object() );" << endl
-	<< mod_indent << "ev.propagate_sysex();" << endl
-	<< --mod_indent << '}' << endl << endl;
+	m_module << mod_indent << iface.get_cpp_poa_typename ()  << "::"
+		 << iface.get_cpp_poa_identifier () << " ()" << endl
+		 << mod_indent++ << "{" << endl;
+	
+	m_module << mod_indent << "//C Servant:" << endl
+		 << mod_indent << "m_target.m_cservant._private = NULL;" << endl
+		 << mod_indent << "m_target.m_cservant.vepv = &_vepv;" << endl
+		 << endl;
+
+	m_module << mod_indent << "//C++ Servant:" << endl
+		 << mod_indent << "m_target.m_cppservant = this;"
+		 << " // does an appropriate upcast thunk (Multiple Inheritance)" << endl
+		 << mod_indent << "m_target.m_cppimpl = this;" << endl
+		 << endl;
+	
+	m_module << mod_indent << "//Call __init(), passing our \"derived\" C Servant:" << endl
+		 << mod_indent << IDL_IMPL_NS "::CEnvironment ev;" << endl
+		 << mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.get_c_poa_typename ()
+		 << "__init (&m_target, ev._orbitcpp_get_c_object ());" << endl
+		 << mod_indent << "ev.propagate_sysex ();" << endl;
+
+	m_module << --mod_indent << '}' << endl << endl;
 
 	// destructor
-	m_header
-	<< indent << "virtual ~" << iface.getCPP_POA() << "()" << endl
-	<< indent << "{"
-	<< indent << "}" << endl << endl;
+	m_header << indent << "virtual ~" << iface.get_cpp_poa_identifier () << "()" << endl
+		 << indent << "{" << endl
+		 << indent << "}" << endl << endl;
 
 	// C++ methods
-	m_header
-	<< indent <<  "::PortableServer_Servant *_orbitcpp_get_c_servant()" << endl
-	<< indent << "{" << endl;
-	m_header
-	<< ++indent << "return reinterpret_cast< " 
-	<< "::PortableServer_Servant *>(&m_target);" << endl;
-	m_header
-	<< --indent << '}' << endl << endl;
+	m_header << indent <<  "::PortableServer_Servant *_orbitcpp_get_c_servant ()" << endl
+		 << indent++ << "{" << endl;
+	m_header << indent << "return reinterpret_cast<" 
+		 << "::PortableServer_Servant *>"
+		 << "(&m_target);" << endl;
+	m_header << --indent << '}' << endl << endl;
 
 	// _this() method declaration:
-	m_header
-	<< indent << iface.getQualifiedCPP_ptr() << " _this();" << endl << endl;
-
+	m_header << indent << iface.get_cpp_typename_ptr () << " _this();" << endl << endl;
+	
 	// _this() method implementation:
-  string stub_name = iface.getQualifiedCPPStub();
-	m_module
-	<< mod_indent << iface.getQualifiedCPP_ptr() << " " << iface.getQualifiedCPP_POA() << "::" << " _this()" << endl
-	<< mod_indent << "{" << endl
-	<< ++mod_indent << "PortableServer::POA_var rootPOA = _default_POA();" << endl
-  << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object(this);" << endl
-	<< mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference(oid);" << endl
-	<< mod_indent << stub_name << "* pDerived = new " << stub_name << "(object->_orbitcpp_get_c_object());" << endl
-  << mod_indent << "CORBA::release(object);" << endl
-	<< mod_indent << "object = 0;" << endl
-	<< mod_indent << "return pDerived;" << endl
-	<< --mod_indent << "}" << endl << endl;
+	string stub_name = iface.get_cpp_stub_typename ();
+
+	m_module << mod_indent << iface.get_cpp_typename_ptr () << " "
+		 << iface.get_cpp_poa_typename () << "::" << "_this()" << endl
+		 << mod_indent++ << "{" << endl;
+
+	m_module << mod_indent << "PortableServer::POA_var rootPOA = _default_POA ();" << endl
+		 << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object (this);" << endl
+		 << mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference (oid);" << endl;
+	m_module << mod_indent << iface.get_cpp_typename_ptr () << "* pDerived = "
+		 << "new " << stub_name << " (object->_orbitcpp_get_c_object ());" << endl;
+	m_module << mod_indent << "CORBA::release (object);" << endl
+		 << mod_indent << "object = 0;" << endl;
+	m_module << mod_indent << "return pDerived;" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
 
 	
 	doInterfacePrototypes(iface);
 
 	// end of class
-	m_header
-	<< --indent << "};" << endl << endl;
+	m_header << --indent << "};" << endl << endl;
 }
 
 
@@ -877,10 +693,12 @@ IDLPassSkels::doInterfaceUpCall(IDLInterface &iface,IDLInterface &of) {
 	IDL_tree body_list = IDL_INTERFACE(of.getNode()).body;
 	while (body_list) {
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
+#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			doAttributeSkelPrototype(iface,of,IDL_LIST(body_list).data);
 			doAttributeSkel(iface,of,IDL_LIST(body_list).data);
 			break;
+#endif
 		case IDLN_OP_DCL:
 			doOperationSkelPrototype(iface,of,IDL_LIST(body_list).data);
 			doOperationSkel(iface,of,IDL_LIST(body_list).data);
@@ -900,9 +718,11 @@ IDLPassSkels::doInterfacePrototypes(IDLInterface &iface) {
 	IDL_tree body_list = IDL_INTERFACE(iface.getNode()).body;
 	while (body_list) {
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
+#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			doAttributePrototype(iface,IDL_LIST(body_list).data);
 			break;
+#endif
 		case IDLN_OP_DCL:
 			doOperationPrototype(iface,IDL_LIST(body_list).data);
 			break;

@@ -40,7 +40,7 @@ void IDLIteratingPass::doException(IDL_tree node,IDLScope &scope) {
 
 
 
-
+#if 0 //!!!
 void IDLIteratingPass::doStruct(IDL_tree node, IDLScope &scope) {
 	doMemberList(IDL_TYPE_STRUCT(node).member_list,scope);
 }
@@ -49,6 +49,7 @@ void IDLIteratingPass::doStruct(IDL_tree node, IDLScope &scope) {
 void IDLIteratingPass::doUnion(IDL_tree node, IDLScope &scope) {
 	doSwitchBody(IDL_TYPE_UNION(node).switch_body,scope);
 }
+#endif
 
 
 void IDLIteratingPass::doInterface(IDL_tree node,IDLScope &scope) {
@@ -99,6 +100,13 @@ void IDLIteratingPass::doExportList(IDL_tree list,IDLScope &scope) {
 		case IDLN_TYPE_DCL:
 			doTypedef(IDL_LIST(list).data,scope);
 			break;
+		case IDLN_TYPE_ENUM:
+			doEnum(IDL_LIST(list).data,scope);
+			break;
+		case IDLN_CONST_DCL:
+			doConstant(IDL_LIST(list).data,scope);
+			break;
+#if 0 //!!!
 		case IDLN_TYPE_STRUCT:
 			doStruct(IDL_LIST(list).data,scope);
 			break;
@@ -108,21 +116,15 @@ void IDLIteratingPass::doExportList(IDL_tree list,IDLScope &scope) {
 		case IDLN_TYPE_SEQUENCE:
 			doSequence(IDL_LIST(list).data,scope);
 			break;
-		case IDLN_TYPE_ENUM:
-			doEnum(IDL_LIST(list).data,scope);
-			break;
 		case IDLN_NATIVE:
 			doNative(IDL_LIST(list).data,scope);
-			break;
-			
-		case IDLN_CONST_DCL:
-			doConstant(IDL_LIST(list).data,scope);
-			break;
-		case IDLN_EXCEPT_DCL:
-			doException(IDL_LIST(list).data,scope);
-			break;
+			break;			
 		case IDLN_ATTR_DCL:
 			doAttribute(IDL_LIST(list).data,scope);
+			break;
+#endif
+		case IDLN_EXCEPT_DCL:
+			doException(IDL_LIST(list).data,scope);
 			break;
 		case IDLN_OP_DCL:
 			doOperation(IDL_LIST(list).data,scope);
@@ -146,14 +148,15 @@ void IDLIteratingPass::doDefinitionList(IDL_tree list,IDLScope &scope) {
 		case IDLN_TYPE_DCL:
 			doTypedef(IDL_LIST(list).data,scope);
 			break;
+		case IDLN_TYPE_ENUM:
+			doEnum(IDL_LIST(list).data,scope);
+			break;
+#if 0 //!!!
 		case IDLN_TYPE_STRUCT:
 			doStruct(IDL_LIST(list).data,scope);
 			break;
 		case IDLN_TYPE_UNION:
 			doUnion(IDL_LIST(list).data,scope);
-			break;
-		case IDLN_TYPE_ENUM:
-			doEnum(IDL_LIST(list).data,scope);
 			break;
 		case IDLN_TYPE_SEQUENCE:
 			doSequence(IDL_LIST(list).data,scope);
@@ -161,10 +164,13 @@ void IDLIteratingPass::doDefinitionList(IDL_tree list,IDLScope &scope) {
 		case IDLN_NATIVE:
 			doNative(IDL_LIST(list).data,scope);
 			break;
+#endif
 
+#if 0 //!!!
 		case IDLN_CONST_DCL:
 			doConstant(IDL_LIST(list).data,scope);
 			break;
+#endif
 		case IDLN_EXCEPT_DCL:
 			doException(IDL_LIST(list).data,scope);
 			break;

@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -27,60 +28,95 @@
 #include "IDLCompound.hh"
 #include "IDLType.hh"
 
+#include <strstream>
+
 void
-IDLCompound::writeCPackingCode(ostream &header, Indent &indent,ostream &module, Indent &mod_indent) {
-	string cname = IDL_IMPL_C_NS_NOTUSED + getQualifiedCIdentifier();
-	header
-	<< indent << cname << " *_orbitcpp_pack() const {" << endl;
-	
-	if (size()) {
-		header
-		<< ++indent << cname << " *_cstruct = " << cname <<"__alloc();" << endl
-		<< indent << "if (!_cstruct) throw " IDL_CORBA_NS "::NO_MEMORY();" << endl
-		<< indent << "_orbitcpp_pack(*_cstruct);" << endl
-		<< indent << "return _cstruct;" << endl;
-	}
-	else {
-		header
-		<< ++indent << "return NULL;" << endl;
-	}
-	header
-	<< --indent << '}' << endl;
+IDLCompound::write_packing_decl (ostream &ostr,
+				 Indent  &indent) const
+{
+	string c_id = IDL_IMPL_C_NS_NOTUSED + get_c_typename ();
 
-	header
-	<< indent << "void _orbitcpp_pack(" << cname << " &_cstruct) const;" << endl
-	<< indent << "void _orbitcpp_unpack(const " << cname << " &_cstruct);" << endl;
-
-	module
-	<< mod_indent << "void " << getQualifiedCPPIdentifier(getRootScope())
-	<< "::_orbitcpp_pack(" << cname << " &_cstruct) const{" << endl;
-	mod_indent++;
-
-	const_iterator first = begin(), last = end();
-	while (first != last) {
-		IDLMember &member = (IDLMember &) **first++;
-		member.getType()->writeCPPStructPacker(module,mod_indent,member.getCPPIdentifier());
-	}
-
-	module
-	<< mod_indent << '}' << endl << endl;
-	mod_indent--;
-
-	module
-	<< mod_indent << "void " << getQualifiedCPPIdentifier(getRootScope())
-	<< "::_orbitcpp_unpack(const " << cname << " &_cstruct) {" << endl;
-	mod_indent++;
-
-	first = begin();
-	last = end();
-
-	while (first != last) {
-		IDLMember &member = (IDLMember &) **first++;
-		member.getType()->writeCPPStructUnpacker(module,mod_indent,member.getCPPIdentifier());
-	}
-
-	module
-	<< mod_indent << '}' << endl << endl;
-	mod_indent--;
+	ostr << indent << c_id << " *" << "_orbitcpp_pack () const;" << endl;
+	ostr << indent << "void _orbitcpp_pack (" << c_id << " &_c_struct) const;" << endl;
+	ostr << indent << "void _orbitcpp_unpack (const " << c_id << " &_c_struct);" << endl;
 }
 
+void
+IDLCompound::write_packing_impl (ostream &ostr,
+				 Indent  &indent) const
+{
+	string c_id = IDL_IMPL_C_NS_NOTUSED + get_c_typename ();
+
+	// Implementation of _orbitcpp_pack that returns a newly
+	// allocated C structure on heap	
+	ostr << indent << c_id << " * "
+	     << get_cpp_typename () << "::_orbitcpp_pack () const" << endl
+	     << indent++ << '{' << endl;
+	ostr << indent << c_id << " *_c_struct = " << c_id << "__alloc ()"
+	     << ';' << endl;
+	ostr << indent++ << "if (!_c_struct)" << endl
+	     << indent-- << "throw CORBA::NO_MEMORY ();" << endl;
+	ostr << indent << "_orbitcpp_pack (*_c_struct);" << endl;
+	ostr << indent << "return _c_struct;" << endl
+	     << --indent << '}' << endl << endl;
+
+
+	
+	// Implementation of _orbitcpp_pack that fills a
+	// caller-supplied C structure
+	ostr << indent << "void " << get_cpp_typename () << "::_orbitcpp_pack "
+	     << "(" << c_id << " &_c_struct) const" << endl
+	     << indent++ << '{' << endl;
+
+	// We create the output in three fragments to allow _pre and _post operations
+	strstream pack_pre, pack_pack, pack_post;
+	
+	for (const_iterator i = begin (); i != end (); i++)
+	{
+		IDLMember &member = (IDLMember &) **i;
+
+		member.getType ()->member_pack_to_c_pre (pack_pre, indent,
+							 member.get_cpp_identifier (),
+							 "_c_struct");
+		member.getType ()->member_pack_to_c_pack (pack_pack, indent,
+							  member.get_cpp_identifier (),
+							  "_c_struct");
+		member.getType ()->member_pack_to_c_post (pack_post, indent,
+							  member.get_cpp_identifier (),
+							  "_c_struct");
+	}
+	ostr << pack_pre;
+	ostr << pack_pack;
+	ostr << pack_post;
+	ostr << --indent << '}' << endl << endl;
+
+
+
+
+	// Implementation of _orbitcpp_unpack
+	ostr << indent << "void " << get_cpp_typename () << "::_orbitcpp_unpack "
+	     << "(const " << c_id << " &_c_struct)" << endl
+	     << indent++ << '{' << endl;
+
+	// We create the output in three fragments to allow _pre and _post operations
+	strstream unpack_pre, unpack_pack, unpack_post;
+	
+	for (const_iterator i = begin (); i != end (); i++)
+	{
+		IDLMember &member = (IDLMember &) **i;
+
+		member.getType ()->member_unpack_from_c_pre (unpack_pre, indent,
+							     member.get_cpp_identifier (),
+							     "_c_struct");
+		member.getType ()->member_unpack_from_c_pack (unpack_pack, indent,
+							      member.get_cpp_identifier (),
+							      "_c_struct");
+		member.getType ()->member_unpack_from_c_post (unpack_post, indent,
+							      member.get_cpp_identifier (),
+							      "_c_struct");
+	}
+	ostr << unpack_pre;
+	ostr << unpack_pack;
+	ostr << unpack_post;
+	ostr << --indent << '}' << endl << endl;
+}

@@ -33,67 +33,11 @@
 class IDLObject : public IDLInterface
 {
 public:
-	IDLObject()
-		: IDLInterface("Object",NULL,NULL) {
-	}
+	IDLObject();
 
-	string getCTypeName() const {
-		return "CORBA_Object";
-	}
-	string getNSScopedCTypeName() const {
-		return getCTypeName();
-	}
-	
-	virtual string getQualifiedIDLIdentifier(IDLScope const *up_to = NULL,
-											 IDLScope const *assumed_base = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA::Object";
-	}
-	virtual string getQualifiedCIdentifier(IDLScope const *up_to = NULL,
-										   IDLScope const *assumed_base = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA_Object";
-	}
-	virtual string getQualifiedCPPIdentifier(IDLScope const *up_to = NULL,
-											 IDLScope const *assumed_base = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA::Object";
-	}
-	
-	virtual string getQualifiedCPPStub(IDLScope const *up_to = NULL) const {
-		// fixme - doesn't do the scope thing
-		return "CORBA::Object";
-	}
-
-
-  virtual string getCPP_ptr() const {
-		return "CORBA::Object_ptr";
-	}
-	virtual string getCPP_var() const {
-		return "CORBA::Object_var";
-	}
-	virtual string getCPP_mgr() const {
-		return "CORBA::Object_mgr";
-	}
-	virtual string getCPP_out() const {
-		return "CORBA::Object_out";
-	}
-
-	virtual string getQualifiedCPP_ptr(IDLScope const *up_to = NULL) const {
-		return "CORBA::Object_ptr";
-	}
-	virtual string getQualifiedCPP_var(IDLScope const *up_to = NULL) const {
-		return "CORBA::Object_var";
-	}
-	virtual string getQualifiedCPP_mgr(IDLScope const *up_to = NULL) const {
-		return "CORBA::Object_mgr";
-	}
-	virtual string getQualifiedCPP_out(IDLScope const *up_to = NULL) const {
-		return "CORBA::Object_out";
-	}
-
-	
-
+	string get_idl_typename () const;
+	string get_c_typename   () const;
+	string get_cpp_typename () const;
 };
 
 #endif //ORBITCPP_TYPES_IDLOBJECT

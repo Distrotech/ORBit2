@@ -29,10 +29,8 @@
 #define ORBITCPP_TYPES_IDLUSERDEFTYPE
 
 
-//#include "error.hh"
+#include "IDLElement.hh"
 #include "IDLType.hh"
-#include "language.hh"
-//#include "types.hh"
 
 
 // User defined types ---------------------------------------------------------
@@ -46,13 +44,6 @@ public:
 
 	virtual bool isType() {
 		return true;
-	}
-
-	string getNSScopedCTypeName() const {
-		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
-	}
-	string getNSScopedCPPTypeName() const {
-		return getQualifiedCPPIdentifier();
 	}
 };
 
