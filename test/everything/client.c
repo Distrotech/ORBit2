@@ -1036,6 +1036,9 @@ make_large_str_seq (void)
 		seq->_buffer [i] [len] = '\0';
 	}
 
+	seq->_length = seq->_maximum = SEQ_SIZE;
+	seq->_release = CORBA_TRUE;
+
 	return seq;
 }
 
@@ -1077,7 +1080,6 @@ testMisc (test_TestFactory   factory,
 		test_BasicServer_testLargeStringSeq (objref, seq, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		CORBA_free (seq);
-
 	}
 
 	CORBA_Object_release (objref, ev);
