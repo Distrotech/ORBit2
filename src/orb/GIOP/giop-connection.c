@@ -91,17 +91,16 @@ giop_connection_real_state_changed (LINCConnection      *cnx,
 
 	switch (status) {
 	case LINC_DISCONNECTED:
-		if (gcnx->incoming_mutex) {
+		if (!gcnx->incoming_mutex ||
+		    g_mutex_trylock (gcnx->incoming_mutex)) {
 			/* FIXME: this is broken because
 			   linc_connection_read does a (bogus)
-			   state_changed call on an EOG read */
-			if (g_mutex_trylock (gcnx->incoming_mutex)) {
-				if (gcnx->incoming_msg) {
-					giop_recv_buffer_unuse (gcnx->incoming_msg);
-					gcnx->incoming_msg = NULL;
-				}
-				LINC_MUTEX_UNLOCK (gcnx->incoming_mutex);
-			} /* else state change in a read */
+			   state_changed call on an EOF read */
+			if (gcnx->incoming_msg) {
+				giop_recv_buffer_unuse (gcnx->incoming_msg);
+				gcnx->incoming_msg = NULL;
+			}
+			LINC_MUTEX_UNLOCK (gcnx->incoming_mutex);
 		}
 		giop_recv_list_zap (gcnx);
 		break;
