@@ -60,6 +60,8 @@ AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h openssl/ssl.h)
 if test $ac_cv_header_openssl_ssl_h = yes; then
 	LINC_SSL_SUPPORT=1
 	SSL_LIBS="-lssl -lcrypto"
+else
+	LINC_SSL_SUPPORT=0
 fi
 AC_SUBST(LINC_SSL_SUPPORT)
 AC_SUBST(SSL_LIBS)
