@@ -7,6 +7,10 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
   OIDL_Marshal_Method mtype=MARSHAL_ALL, dmtype=MARSHAL_ALL;
   OIDL_Type_Marshal_Info *tmi = NULL;
   gint add_size = 0;
+  gint retval = 1;
+
+  if(!node)
+    return 0;
 
   switch(IDL_NODE_TYPE(node))
     {
@@ -42,8 +46,7 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
 	  g_hash_table_insert(ctxt->type_marshal_info, node, tmi);
 	}
 
-      tmi->marshal_use_count += count_add;
-      tmi->demarshal_use_count += count_add;
+      tmi->use_count += count_add;
     }
 
   switch(IDL_NODE_TYPE(node))
@@ -53,33 +56,49 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
 	IDL_tree curnode;
 	for(curnode = node; curnode;
 	    curnode = IDL_LIST(curnode).next)
-	  oidl_marshal_type_info(ctxt, IDL_LIST(curnode).data, count_add, named_type);
+	  add_size += oidl_marshal_type_info(ctxt, IDL_LIST(curnode).data, count_add, named_type);
+	retval = add_size;
       }
       break;
     case IDLN_TYPE_UNION:
+      add_size = 1; /* Overhead for the switch() */
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_UNION(node).switch_type_spec, count_add, FALSE);
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_UNION(node).switch_body, count_add, FALSE);
       break;
     case IDLN_TYPE_STRUCT:
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_STRUCT(node).member_list, count_add, FALSE);
       break;
+    case IDLN_EXCEPT_DCL:
+      add_size += oidl_marshal_type_info(ctxt, IDL_EXCEPT_DCL(node).members, count_add, FALSE);
+      break;
     case IDLN_TYPE_SEQUENCE:
+      add_size = 1; /* Overhead for the loop */
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_SEQUENCE(node).simple_type_spec, count_add, FALSE);
       break;
     case IDLN_CASE_STMT:
       add_size += oidl_marshal_type_info(ctxt, IDL_CASE_STMT(node).element_spec, count_add, FALSE);
+      retval = add_size;
       break;
     case IDLN_TYPE_DCL:
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_DCL(node).type_spec, count_add*IDL_list_length(IDL_TYPE_DCL(node).dcls), FALSE);
+      retval = add_size;
       break;
     case IDLN_MEMBER:
-      add_size += oidl_marshal_type_info(ctxt, IDL_MEMBER(node).type_spec, count_add*IDL_list_length(IDL_MEMBER(node).dcls), FALSE);
+      add_size += oidl_marshal_type_info(ctxt, IDL_MEMBER(node).type_spec, count_add*IDL_list_length(IDL_MEMBER(node).dcls), FALSE) * IDL_list_length(IDL_MEMBER(node).dcls);
+      retval = add_size;
+      break;
+    case IDLN_TYPE_STRING:
+    case IDLN_TYPE_WIDE_STRING:
+      retval = add_size = 2;
       break;
     default:
       break;
     }
 
-  return 0;
+  if(add_it)
+    tmi->size = add_size;
+
+  return retval;
 }
 
 static void
@@ -152,12 +171,18 @@ idl_tree_equal(gconstpointer k1, gconstpointer k2)
 {
   IDL_tree t1 = (gpointer)k1, t2 = (gpointer)k2;
 
+  if(k1 == k2)
+    return TRUE;
+
   if(IDL_NODE_TYPE(t1) != IDL_NODE_TYPE(t2))
     return FALSE;
 
   switch(IDL_NODE_TYPE(t1))
     {
     case IDLN_IDENT:
+      return idl_tree_equal(IDL_NODE_UP(t1), IDL_NODE_UP(t2));
+      break;
+
     case IDLN_TYPE_STRUCT:
     case IDLN_TYPE_ARRAY:
     case IDLN_TYPE_DCL:
@@ -238,9 +263,9 @@ dump_tmi(gpointer key, gpointer value, gpointer data)
 	break;
       }
 
-  g_print("(%s) [%p] mtype %x dmtype %x muse %d dmuse %d\n",
+  g_print("(%s) [%p] mtype %x dmtype %x used %d size %d\n",
 	  IDL_tree_type_names[IDL_NODE_TYPE(tree)], tree,
-	  tmi->mtype, tmi->dmtype, tmi->marshal_use_count, tmi->demarshal_use_count);
+	  tmi->mtype, tmi->dmtype, tmi->use_count, tmi->size);
 }
 
 void
