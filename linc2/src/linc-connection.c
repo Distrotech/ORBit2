@@ -332,11 +332,7 @@ linc_connection_state_changed (LINCConnection      *cnx,
  * @len: the length of the array in bytes to read ingo
  * @block_for_full_read: whether to block for a full read
  * 
- * FIXME: it allows re-enterancy via linc_connection_iterate
- *        in certain cases.
- * FIXME: on this basis, the connection can die underneath
- *        our feet eg. between the main_iteration and the
- *        g_return_if_fail.
+ * Warning, block_for_full_read is of limited usefullness.
  *
  * Return value: number of bytes written on success; negative on error.
  **/
@@ -350,11 +346,6 @@ linc_connection_read (LINCConnection *cnx,
 
 	if (!len)
 		return 0;
-
-	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
-		while (cnx->status == LINC_CONNECTING)
-			linc_main_iteration (TRUE);
-	}
 
 	if (cnx->status != LINC_CONNECTED)
 		return -1;
@@ -373,11 +364,13 @@ linc_connection_read (LINCConnection *cnx,
 #ifdef LINC_SSL_SUPPORT
 			if (cnx->options & LINC_CONNECTION_SSL) {
 				gulong rv;
+
 				rv = SSL_get_error (cnx->ssl, n);
-				if ((rv == SSL_ERROR_WANT_READ
-				     || rv == SSL_ERROR_WANT_WRITE)
-				    && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-					linc_main_iteration (FALSE);
+
+				if ((rv == SSL_ERROR_WANT_READ ||
+				     rv == SSL_ERROR_WANT_WRITE) &&
+				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					return bytes_read;
 				else
 					return -1;
 			} else
@@ -386,17 +379,17 @@ linc_connection_read (LINCConnection *cnx,
 				if (errno == EINTR)
 					continue;
 
-				if (errno == EAGAIN
-				   && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-					linc_main_iteration (FALSE);
+				if (errno == EAGAIN &&
+				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					return bytes_read;
 				else
 					return -1;
 			}
 
-		} else if (n == 0)
-			return 0;
-
-		else {
+		} else if (n == 0) {
+			if (cnx->options & LINC_CONNECTION_NONBLOCKING)
+				return -1;
+		} else {
 			buf += n;
 			len -= n;
 			bytes_read += n;
