@@ -768,19 +768,28 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
 {
   CORBA_unsigned_long type_len, num_profiles;
   GSList *cur;
+  char *typeid;
 
   giop_send_buffer_align(buf, 4);
-  type_len = strlen(obj->type_id) + 1;
+  if(obj)
+    typeid = obj->type_id;
+  else
+    typeid = "nil";
+  type_len = strlen(typeid) + 1;
   giop_send_buffer_append_indirect(buf, &type_len, 4);
-  giop_send_buffer_append(buf, obj->type_id, type_len);
-  num_profiles = g_slist_length(obj->profile_list);
+  giop_send_buffer_append(buf, typeid, type_len);
+  if(obj)
+    num_profiles = g_slist_length(obj->profile_list);
+  else
+    num_profiles = 0;
   giop_send_buffer_align(buf, 4);
   giop_send_buffer_append_indirect(buf, &num_profiles, 4);
-  
-  for(cur = obj->profile_list; cur; cur = cur->next)
-    {
-      ORBit_marshal_profile(buf, cur->data);
-    }
+
+  if(obj)
+    for(cur = obj->profile_list; cur; cur = cur->next)
+      {
+	ORBit_marshal_profile(buf, cur->data);
+      }
 }
 
 static void
@@ -815,6 +824,7 @@ IOP_ObjectKey_demarshal(GIOPRecvBuffer *buf)
   retval->object_key._release = CORBA_FALSE;
   retval->object_key._buffer = retval->object_key_data._buffer;
   memcpy(retval->object_key_data._buffer, buf->cur, len);
+  buf->cur += len;
   retval->object_key_vec.iov_base = &retval->object_key_data;
   retval->object_key_vec.iov_len = 4 + rlen;
 

@@ -129,6 +129,14 @@ giop_send_buffer_use_request(GIOPVersion giop_version,
 			     const struct iovec *principal_vec)
 {
   GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
+  struct iovec zerovec;
+
+  if(!principal_vec)
+    {
+      zerovec.iov_base = giop_zero_buf;
+      zerovec.iov_len = sizeof(GIOP_unsigned_long);
+      principal_vec = &zerovec;
+    }
 
   buf->msg.header.message_type = GIOP_REQUEST;
   giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));

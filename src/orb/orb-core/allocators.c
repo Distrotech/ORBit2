@@ -257,7 +257,11 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     retval = ORBit_freekids_via_TypeCode(tc->subtypes[0], mem);
     break;
   default:
-    retval = ((guchar *)mem) + ORBit_gather_alloc_info(tc);
+    {
+      gulong alignval;
+      alignval = ORBit_gather_alloc_info(tc);
+      retval = ALIGN_ADDRESS(mem, alignval) + alignval;
+    }
     break;
   }
   return (gpointer)retval;
