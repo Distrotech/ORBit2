@@ -129,6 +129,7 @@ c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   char *ctmp;
   GSList *ltmp;
   guint8 last_tail_align;
+  gboolean need_default;
 
   c_marshal_generate(node->u.switch_info.discrim, cmi);
 
@@ -138,6 +139,7 @@ c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   fprintf(cmi->ci->fh, "switch(%s) {\n", ctmp);
   g_free(ctmp);
 
+  need_default = TRUE;
   for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp)) {
     GSList *ltmp2;
     OIDL_Marshal_Node *sub;
@@ -151,11 +153,16 @@ c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 	fprintf(cmi->ci->fh, "case ");
 	orbit_cbe_write_const_node(cmi->ci->fh, ltmp2->data);
 	fprintf(cmi->ci->fh, ":\n");
-      } else
+      } else {
 	fprintf(cmi->ci->fh, "default:\n");
+	need_default = FALSE;
+      }
     }
     c_marshal_generate(sub->u.case_info.contents, cmi);
     fprintf(cmi->ci->fh, "break;\n");
+  }
+  if(need_default) {
+    fprintf(cmi->ci->fh, "default:\nbreak;\n");
   }
   fprintf(cmi->ci->fh, "}\n");
 

@@ -2,6 +2,8 @@
 
 #include "orbit-idl-c-backend.h"
 
+#include <string.h>
+
 static void cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci);
 
 void
