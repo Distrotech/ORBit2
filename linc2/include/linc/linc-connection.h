@@ -108,9 +108,11 @@ LINCIOStatus linc_connection_writev   (LINCConnection       *cnx,
 				       int                   nvecs,
 				       const LINCWriteOpts  *opt_write_opts);
 
-void linc_connection_state_changed (LINCConnection      *cnx,
-				    LINCConnectionStatus status);
-
+void         linc_connection_state_changed (LINCConnection      *cnx,
+					    LINCConnectionStatus status);
+LINCConnectionStatus
+	     linc_connection_get_status    (LINCConnection *cnx);
+void         linc_connection_disconnect    (LINCConnection *cnx);
 
 /*
  * Proposed new blocking API ...

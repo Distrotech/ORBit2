@@ -24,13 +24,34 @@ extern SSL_CTX *linc_ssl_ctx;
 
 #endif /* LINC_SSL_SUPPORT */
 
+typedef struct {
+	enum {
+		LINC_COMMAND_DISCONNECT,
+		LINC_COMMAND_SET_CONDITION
+	} type;
+} LINCCommand;
+
+typedef struct {
+	LINCCommand     cmd;
+	LINCConnection *cnx;
+	GIOCondition    condition;
+} LINCCommandSetCondition;
+
+typedef struct {
+	LINCCommand     cmd;
+	LINCConnection *cnx;
+} LINCCommandDisconnect;
+
+void linc_exec_command (LINCCommand *cmd);
+void linc_connection_exec_disconnect (LINCCommandDisconnect *cmd);
+void linc_connection_exec_set_condition (LINCCommandSetCondition *cmd);
+
 /*
  * Really raw internals, exported for the tests
  */
 
 struct _LINCServerPrivate {
 	int        fd;
-	GMutex    *mutex;
 	LincWatch *tag;
 	GSList    *connections;
 };
@@ -46,7 +67,6 @@ struct _LINCConnectionPrivate {
 	LincWatch   *tag;
 	int          fd;
 
-	GMutex      *write_lock;
 	gulong       max_buffer_bytes;
 	gulong       write_queue_bytes;
 	GList       *write_queue;
@@ -107,5 +127,6 @@ void             linc_watch_set_condition   (LincWatch              *w,
 GMainContext    *linc_main_get_context      (void);
 gboolean         linc_get_threaded          (void);
 gboolean         linc_in_io_thread          (void);
+gboolean         linc_mutex_is_locked       (GMutex *lock);
 
 #endif /* _LINC_PRIVATE_H */

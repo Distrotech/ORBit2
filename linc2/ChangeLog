@@ -1,3 +1,48 @@
+2003-04-21  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_exec_command): handle EINTR.
+	(linc_exec_command): dispatch commands immediately
+	if not in threading mode.
+	(linc_mainloop_handle_input): split out
+	(linc_dispatch_command): the dispatch.
+
+2003-04-19  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_exec_disconnect) 
+	(queue_flattened, linc_connection_exec_set_condition): impl.
+
+	* src/linc.c (linc_io_thread_fn, linc_init): move
+	the I/O thread instantiation in here.
+	(linc_shutdown, linc_exec_command): impl.
+	(linc_mainloop_handle_input): mux. commands.
+
+	* src/linc-connection.c (linc_connection_read),
+	assert locked on read, re-factor exit.
+	(linc_connection_flush_write_queue): bin locking.
+	(linc_connection_class_init): bin crack-pot complex
+	locking schemes, and go for a big global lock.
+	(linc_connection_finalize): bin lock init/destroy.
+	(linc_connection_flush_write_queue_cb): bin it.
+	(linc_connection_disconnect): impl.
+
+	* src/linc-server.c (linc_server_init, linc_server_handle_io) 
+	(linc_server_dispose): bin curious mutex; all happens in I/O
+	thread anyway.
+
+	* src/linc.c (linc_mutex_is_locked): impl. for debug.
+
+2003-04-18  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_io_handler)
+	(queue_signal): use linc_object_ref/unref.
+	(linc_connection_get_status): impl.
+	(linc_connection_flush_write_queue_cb): lock/unlock cnx.
+	(linc_connection_state_changed): assert unlocked, and in
+	main thread.
+	(linc_connection_from_fd): hold the lock while operating.
+
+	* src/linc-server.c (linc_server_dispose): ditto.
+
 2003-04-16  Masahiro Sakai  <sakai@tom.sfc.keio.ac.jp>
 
 	* configure.in: call AC_PROG_CC earlier. because AM_PROG_LIBTOOL
