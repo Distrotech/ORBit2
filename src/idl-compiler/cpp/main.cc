@@ -41,14 +41,18 @@
 
 
 extern "C" {
+	void orbit_idl_output_cpp (OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
 	void idlCPPBackend(OIDL_Output_Tree *tree,OIDL_Run_Info *rinfo);
-	extern OIDL_Backend_Info const orbit_idl_backend = {
+
+	void orbit_idl_output_cpp (OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
+	{
+		idlCPPBackend (tree, rinfo);
+	}
+/*	extern OIDL_Backend_Info const orbit_idl_backend = {
 		    "c++",
 		    idlCPPBackend
-		};
+		    };*/
 }
-
-
 
 
 void idlWritePreamble(ostream &ostr) {

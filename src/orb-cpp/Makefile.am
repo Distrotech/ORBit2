@@ -1,7 +1,5 @@
 ## Process this file with automake to produce Makefile.in
 
-include $(top_srcdir)/Makefile.buildvars
-
 lib_LTLIBRARIES = liborbitcpp.la
 
 liborbitcppincludedir = $(includedir)/orb
