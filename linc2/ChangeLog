@@ -1,3 +1,14 @@
+2003-11-11  Justin Schoeman <justin@expertron.co.za>
+
+	* linc2/src/linc.c (link_set_io_thread): Fix command type for
+	LINK_COMMAND_SET_IO_THREAD to use synchronous command structure.
+
+	* linc2/src/linc-connection.c (link_connection_exec_cnx_unref)
+	(link_connection_unref_unlock), linc2/src/linc-private.h,
+	linc2/src/linc.c (cmd_is_sync) (link_dispatch_command): Move
+	tail_unref of connection to the I/O thread to remove some shutdown
+	races.
+
 2003-10-24  Michael Meeks  <michael@ximian.com>
 
 	* src/linc.c (link_set_io_thread): don't allocate
