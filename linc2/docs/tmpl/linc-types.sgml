@@ -21,6 +21,7 @@ the base linc types and utilities
 
 @LINC_CONNECTION_SSL: 
 @LINC_CONNECTION_NONBLOCKING: 
+@LINC_CONNECTION_BLOCK_SIGNAL: 
 
 <!-- ##### STRUCT LincWatch ##### -->
 <para>

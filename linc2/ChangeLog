@@ -1,3 +1,7 @@
+2002-01-09  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.1.13
+
 2002-01-04  Dave Camp  <dave@ximian.com>
 
 	* src/linc-connection.c (linc_connection_class_init): Use the

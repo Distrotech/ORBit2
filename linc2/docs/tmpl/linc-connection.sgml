@@ -19,6 +19,8 @@ the basic connection object
 
 </para>
 
+@obj: 
+<!-- # Unused Parameters # -->
 @object: 
 
 
@@ -80,6 +82,7 @@ the basic connection object
 @cnx: 
 @buf: 
 @len: 
+@opt_write_opts: 
 @Returns: 
 
 
@@ -91,8 +94,10 @@ the basic connection object
 @cnx: 
 @vecs: 
 @nvecs: 
-@total_size: 
+@opt_write_opts: 
 @Returns: 
+<!-- # Unused Parameters # -->
+@total_size: 
 
 
 <!-- ##### FUNCTION linc_connection_state_changed ##### -->
