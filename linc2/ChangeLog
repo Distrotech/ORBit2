@@ -1,3 +1,8 @@
+2002-05-09  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c: fix 'extern' static linc_protocols
+	bug #80955 - thanks Jean-Pierre Dion
+
 2002-04-18  Michael Meeks  <michael@ximian.com>
 
 	* src/Makefile.am: add G_DISABLE_DEPRECATED
