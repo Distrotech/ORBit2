@@ -1,3 +1,13 @@
+2001-06-26  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/poa/poa-types.h,
+	  src/idl-compiler/orbit-idl-c-skels.c :
+	kill POAObject members use_count, death_callback
+	and user_data. Relics from an old hack from ORBit0
+	thats not used anymore.
+
+	* src/orb/poa/poa.c: add a few TODO items.
+
 2001-06-26  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-skels.c

@@ -7,6 +7,31 @@
 #include "orbit-poa-export.h"
 #include "corba-ops.h"
 
+/*
+ * TODO:
+ *
+ *    o Make *every* CORBA_Object created by the POA have
+ *      a POAObject. This can happen in
+ *          1. create_reference{_with_id}
+ *          2. servant_to_reference
+ *          3. id_to_reference
+ *      If this POAObject is not activated, make sure it
+ *      gets released when the CORBA_Object gets released.
+ *
+ *    o Don't generate the profile_list until the CORBA_Object
+ *      is marshalled for the first time. This will reduce the
+ *      memory usage for the in-proc case.
+ *
+ *    o what is POAObject.use_count used for?
+ *    o what is POAObject.death_callback used for?
+ *    o what is POAObject.user_data used for?
+ *        -> the three of them seem to be used in the skels, but
+ *           they are never assigned too??????
+ *        -> in ORBit0 they are inside '#ifdef NOT_BACKWARDS_COMPAT_0_4'
+ *        -> 'bad hack for shared libraries' in ORBit0
+ *        -> they are no more !
+ */
+
 static PortableServer_Servant
 ORBit_POA_ServantManager_use_servant
 (PortableServer_POA poa,
