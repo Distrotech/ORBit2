@@ -62,7 +62,7 @@ ch_output_var(IDL_tree val, IDL_tree name, OIDL_C_Info *ci)
 
       fprintf(ci->fh, "%s", IDL_IDENT(IDL_TYPE_ARRAY(name).ident).str);
       for(curitem = IDL_TYPE_ARRAY(name).size_list; curitem; curitem = IDL_LIST(curitem).next) {
-	fprintf(ci->fh, "[%qd]", IDL_INTEGER(IDL_LIST(curitem).data).value);
+	fprintf(ci->fh, "[%" IDL_LL "d]", IDL_INTEGER(IDL_LIST(curitem).data).value);
       }
     }
     break;
@@ -265,13 +265,13 @@ ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       {
 	fprintf(ci->fh, " %s", ctmp);
 	for(sub = IDL_TYPE_ARRAY(ent).size_list; sub; sub = IDL_LIST(sub).next)
-	  fprintf(ci->fh, "[%qd]", IDL_INTEGER(IDL_LIST(sub).data).value);
+	  fprintf(ci->fh, "[%" IDL_LL "d]", IDL_INTEGER(IDL_LIST(sub).data).value);
 	fprintf(ci->fh, ";\n");
 	fprintf(ci->fh, "typedef ");
 	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
 	fprintf(ci->fh, " %s_slice", ctmp);
 	for(sub = IDL_LIST(IDL_TYPE_ARRAY(ent).size_list).next; sub; sub = IDL_LIST(sub).next)
-	  fprintf(ci->fh, "[%qd]", IDL_INTEGER(IDL_LIST(sub).data).value);
+	  fprintf(ci->fh, "[%" IDL_LL "d]", IDL_INTEGER(IDL_LIST(sub).data).value);
 	fprintf(ci->fh, ";\n");
       }
       break;

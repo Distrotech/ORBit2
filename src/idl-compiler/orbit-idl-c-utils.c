@@ -30,7 +30,7 @@ orbit_cbe_write_typespec(FILE *of, IDL_tree tree)
     fprintf(of, "CORBA_boolean");
     break;
   case IDLN_TYPE_FIXED:
-    fprintf(of, "CORBA_fixed_%qd_%qd",
+    fprintf(of, "CORBA_fixed_%" IDL_LL "d_%" IDL_LL "d",
 	    IDL_INTEGER(IDL_TYPE_FIXED(tree).positive_int_const).value,
 	    IDL_INTEGER(IDL_TYPE_FIXED(tree).integer_lit).value);
     break;
@@ -153,7 +153,7 @@ orbit_cbe_get_typename(IDL_tree tree)
     }
     break;
   case IDLN_TYPE_FIXED:
-    g_string_sprintf(tmpstr, "CORBA_fixed_%qd_%qd",
+    g_string_sprintf(tmpstr, "CORBA_fixed_%" IDL_LL "d_%" IDL_LL "d",
 		     IDL_INTEGER(IDL_TYPE_FIXED(tree).positive_int_const).value,
 		     IDL_INTEGER(IDL_TYPE_FIXED(tree).integer_lit).value);
     break;
