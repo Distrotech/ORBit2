@@ -6,6 +6,20 @@
 #include <orbit/GIOP/giop-server.h>
 #include <netdb.h>
 
+#define GIOP_TYPE_CONNECTION (giop_connection_get_type())
+#define GIOP_TYPE_IS_CONNECTION(type) (G_TYPE_FUNDAMENTAL (type) == GIOP_TYPE_CONNECTION)
+#define GIOP_CONNECTION(object)	(GIOP_IS_CONNECTION (object) ? ((GObject*) (object)) : \
+				    G_TYPE_CHECK_INSTANCE_CAST ((object), GIOP_TYPE_CONNECTION, GIOPConnection))
+
+#define GIOP_CONNECTION_CLASS(class)	   (GIOP_IS_CONNECTION_CLASS (class) ? ((GObjectClass*) (class)) : \
+				    G_TYPE_CHECK_CLASS_CAST ((class), GIOP_TYPE_CONNECTION, GIOPConnectionClass))
+
+#define GIOP_IS_CONNECTION(object)	   (((GObject*) (object)) != NULL && \
+				    GIOP_IS_CONNECTION_CLASS (((GTypeInstance*) (object))->g_class))
+
+#define GIOP_IS_CONNECTION_CLASS(class)   (((GTypeClass*) (class)) != NULL && \
+				    GIOP_TYPE_IS_CONNECTION (((GTypeClass*) (class))->g_type))
+
 typedef struct {
   LINCConnection parent;
 
