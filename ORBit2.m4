@@ -1,7 +1,7 @@
 dnl AM_PATH_ORBIT2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
 dnl Test for ORBit2, and define ORBIT_CFLAGS and ORBIT_LIBS
 dnl
-AC_DEFUN(AM_PATH_ORBIT2,
+AC_DEFUN([AM_PATH_ORBIT2],
 [dnl 
 dnl Get the cflags and libraries from the orbit2-config script
 dnl
