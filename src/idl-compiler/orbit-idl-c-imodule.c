@@ -81,12 +81,89 @@ cc_small_build_types (OIDL_C_Info *ci,
 
 	    break;
 	}
-	case IDLN_TYPE_UNION:
+	case IDLN_TYPE_STRUCT: {
+		gchar *id;
+		IDL_tree l;
+
+		id = orbit_cbe_get_typespec_str (tree);
+
+		fprintf (ci->fh, "\tTC_%s,\n", id);
+		(*count)++;
+
+		g_free (id);
+
+		/* check for nested structs/enums */
+		for (l = IDL_TYPE_STRUCT (tree).member_list; l; l = IDL_LIST (l).next) {
+			IDL_tree dcl;
+
+			g_assert (IDL_NODE_TYPE (IDL_LIST (l).data) == IDLN_MEMBER);
+			dcl = IDL_MEMBER (IDL_LIST (l).data).type_spec;
+
+			/* skip straight declarations */
+			if (IDL_NODE_TYPE(dcl) == IDLN_TYPE_STRUCT ||
+			    IDL_NODE_TYPE(dcl) == IDLN_TYPE_UNION ||
+			    IDL_NODE_TYPE(dcl) == IDLN_TYPE_ENUM)
+				cc_small_build_types (ci, dcl, count);
+		}
+		break;
+	};
+	case IDLN_TYPE_UNION: {
+		gchar *id;
+		IDL_tree l;
+
+		id = orbit_cbe_get_typespec_str (tree);
+
+		fprintf (ci->fh, "\tTC_%s,\n", id);
+		(*count)++;
+
+		g_free (id);
+
+		/* if discriminator is an enum, register it */
 		if (IDL_NODE_TYPE (IDL_TYPE_UNION (tree).switch_type_spec) == IDLN_TYPE_ENUM)
 			cc_small_build_types (
 				ci, IDL_TYPE_UNION (tree).switch_type_spec, count);
 
-	case IDLN_EXCEPT_DCL:       /* drop through */
+		/* check for nested structs/enums */
+		for (l = IDL_TYPE_UNION (tree).switch_body; l; l = IDL_LIST (l).next) {
+			IDL_tree dcl;
+
+			g_assert (IDL_NODE_TYPE (IDL_LIST (l).data) == IDLN_CASE_STMT);
+			dcl = IDL_MEMBER (
+                                IDL_CASE_STMT (IDL_LIST (l).data).element_spec).type_spec;
+
+			if (IDL_NODE_TYPE(dcl) == IDLN_TYPE_STRUCT ||
+			    IDL_NODE_TYPE(dcl) == IDLN_TYPE_UNION ||
+			    IDL_NODE_TYPE(dcl) == IDLN_TYPE_ENUM)
+				cc_small_build_types (ci, dcl, count);
+		}
+		break;
+	}
+	case IDLN_EXCEPT_DCL: {
+		gchar *id;
+		IDL_tree l;
+
+		id = orbit_cbe_get_typespec_str (tree);
+
+		fprintf (ci->fh, "\tTC_%s,\n", id);
+		(*count)++;
+
+		g_free (id);
+
+		/* check for nested structs/enums */
+		for (l = IDL_EXCEPT_DCL (tree).members; l; l = IDL_LIST (l).next) {
+			IDL_tree dcl;
+
+			g_assert (IDL_NODE_TYPE (IDL_LIST (l).data) == IDLN_MEMBER);
+			dcl = IDL_MEMBER (IDL_LIST (l).data).type_spec;
+
+			/* skip straight declarations */
+			if (IDL_NODE_TYPE(dcl) == IDLN_TYPE_STRUCT ||
+			    IDL_NODE_TYPE(dcl) == IDLN_TYPE_UNION ||
+			    IDL_NODE_TYPE(dcl) == IDLN_TYPE_ENUM)
+				cc_small_build_types (ci, dcl, count);
+		}
+		break;
+	}
 	case IDLN_TYPE_INTEGER:
 	case IDLN_TYPE_ANY:
 	case IDLN_TYPE_STRING:
@@ -97,7 +174,6 @@ cc_small_build_types (OIDL_C_Info *ci,
 	case IDLN_TYPE_BOOLEAN:
 	case IDLN_TYPE_OCTET:
 	case IDLN_TYPE_SEQUENCE:
-	case IDLN_TYPE_STRUCT:
 	case IDLN_TYPE_ENUM:
 	case IDLN_IDENT:
 	case IDLN_FORWARD_DCL:
