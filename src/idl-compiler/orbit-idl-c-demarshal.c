@@ -371,12 +371,14 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
     g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
-    if(cmi->alloc_on_stack & (node->where & MW_Msg)) {
-      fprintf(cmi->ci->fh, "*(((gulong*)_ORBIT_curptr)-1) = ORBIT_MEMHOW_NONE;\n");
-      fprintf(cmi->ci->fh, "%s = (", tmpstr2->str);
-      orbit_cbe_write_typespec(cmi->ci->fh, node->u.loop_info.contents->tree);
-      fprintf(cmi->ci->fh, "*)_ORBIT_curptr;\n");
-    } else
+    if(cmi->alloc_on_stack && (node->u.loop_info.contents->where & MW_Msg))
+      {
+	fprintf(cmi->ci->fh, "*(((gulong*)_ORBIT_curptr)-1) = ORBIT_MEMHOW_NONE;\n");
+	fprintf(cmi->ci->fh, "%s = (", tmpstr2->str);
+	orbit_cbe_write_typespec(cmi->ci->fh, node->u.loop_info.contents->tree);
+	fprintf(cmi->ci->fh, "*)_ORBIT_curptr;\n");
+      }
+    else
       fprintf(cmi->ci->fh, "memcpy(%s, _ORBIT_curptr, %s);\n", tmpstr2->str, tmpstr->str);
 
     c_demarshal_update_curptr(node, tmpstr->str, cmi);

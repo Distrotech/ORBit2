@@ -657,7 +657,8 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
 
     rvnode->name = ORBIT_RETVAL_VAR_NAME;
     rvnode->marshal_error_exit = g_strdup_printf("goto %s_demarshal_error", ORBIT_RETVAL_VAR_NAME);
-    rvnode->flags |= MN_NEED_TMPVAR;
+    if(!is_skels)
+      rvnode->flags |= MN_NEED_TMPVAR;
   }
 
  out1:

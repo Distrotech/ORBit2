@@ -37,7 +37,7 @@ print_components(GSList *components)
 	case IOP_TAG_SSL_SEC_TRANS:
 	  {
 	    IOP_TAG_SSL_SEC_TRANS_info *sst = ltmp->data;
-	    printf("    IOP_TAG_SSL_SEC_TRANS: %d/%d port %d\n",
+	    printf("    IOP_TAG_SSL_SEC_TRANS: %d:%d port %d\n",
 		   sst->target_supports, sst->target_requires,
 		   sst->port);
 	  }
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
 	    printf("IOP_TAG_INTERNET_IOP: ");
 	    print_iiop_version(iiop->iiop_version);
-	    printf(" %s/%d\n",
+	    printf(" %s:%d\n",
 		   iiop->host, iiop->port);
 	    printf("    object_key ");
 	    print_objkey(iiop->oki);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	    IOP_TAG_GENERIC_IOP_info *giop = ltmp->data;
 	    printf("IOP_TAG_GENERIC_IOP: ");
 	    print_iiop_version(giop->iiop_version);
-	    printf("[%s] %s/%s\n",
+	    printf("[%s] %s:%s\n",
 		   giop->proto,
 		   giop->host, giop->service);
 	    print_components(giop->components);
