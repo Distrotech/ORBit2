@@ -8,9 +8,6 @@
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orbit-interface.h>
 
-void           giop_dump_send          (GIOPSendBuffer *send_buffer);
-void           giop_dump_recv          (GIOPRecvBuffer *recv_buffer);
-
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);
 gpointer       ORBit_small_allocbuf    (CORBA_TypeCode      tc,
 					CORBA_unsigned_long length);

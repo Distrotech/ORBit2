@@ -89,4 +89,6 @@ CORBA_unsigned_long giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf);
 char *giop_recv_buffer_get_opname(GIOPRecvBuffer *buf);
 CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey(GIOPRecvBuffer *buf);
 void giop_recv_list_zap(GIOPConnection *cnx);
+void giop_dump_recv (GIOPRecvBuffer *recv_buffer);
+
 #endif

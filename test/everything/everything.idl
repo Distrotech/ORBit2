@@ -132,6 +132,7 @@ module test {
 		long opLong(in long inArg, inout long inoutArg, out long outArg);
 		AnEnum opEnum(in AnEnum inArg, inout AnEnum inoutArg, out AnEnum outArg);
 		void opException() raises(TestException);
+		oneway void opOneWay(in string inArg);
 	};
 
 	interface StructServer : BasicServer {
