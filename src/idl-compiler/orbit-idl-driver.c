@@ -123,10 +123,10 @@ orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns)
     orbit_idl_tree_populate(IDL_INTERFACE(tree).body, ns);
     break;
   case IDLN_OP_DCL:
-    orbit_idl_op_populate(tree, ns);
+    orbit_idl_op_populate(tree);
     break;
   case IDLN_EXCEPT_DCL:
-    orbit_idl_except_populate(tree, ns);
+    orbit_idl_except_populate(tree);
     break;
   case IDLN_ATTR_DCL:
     {
