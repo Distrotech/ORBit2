@@ -8,29 +8,21 @@ SSL_METHOD *linc_ssl_method;
 SSL_CTX    *linc_ssl_ctx;
 #endif
 
-#ifdef LINC_THREADSAFE
-pthread_mutexattr_t linc_mutex_attrs;
-#endif
-
 void
-linc_init(void)
+linc_init (gboolean init_threads)
 {
-#ifdef LINC_THREADSAFE
-  pthread_mutexattr_init(&linc_mutex_attrs);
-  pthread_mutexattr_settype(&linc_mutex_attrs, PTHREAD_MUTEX_RECURSIVE);
-#endif
-  if (!g_thread_supported()) g_thread_init (NULL);
+	if (init_threads && !g_thread_supported ())
+		g_thread_init (NULL);
 
-  g_type_init();
+	g_type_init ();
 
-  linc_context = g_main_context_new ();
-  linc_loop = g_main_loop_new (
-	  linc_context, TRUE);
+	linc_context = g_main_context_new ();
+	linc_loop    = g_main_loop_new (linc_context, TRUE);
 
 #ifdef LINC_SSL_SUPPORT
-  SSLeay_add_ssl_algorithms();
-  linc_ssl_method = SSLv23_method();
-  linc_ssl_ctx = SSL_CTX_new(linc_ssl_method);
+	SSLeay_add_ssl_algorithms ();
+	linc_ssl_method = SSLv23_method ();
+	linc_ssl_ctx = SSL_CTX_new (linc_ssl_method);
 #endif
 }
 
@@ -108,4 +100,15 @@ void
 linc_main_loop_run (void)
 {
 	g_main_loop_run (linc_loop);
+}
+
+GMutex *
+linc_mutex_new (void)
+{
+#ifdef G_THREADS_ENABLED
+	if (g_thread_supported ())
+		return g_mutex_new ();
+#endif
+
+	return NULL;
 }

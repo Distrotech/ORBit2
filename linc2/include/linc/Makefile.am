@@ -5,7 +5,6 @@ lincinclude_HEADERS=\
 	linc-protocol.h \
 	linc-server.h \
 	linc-types.h \
-	linc-threads.h \
 	linc.h \
 	linc-config.h
 

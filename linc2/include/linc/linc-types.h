@@ -1,5 +1,11 @@
-#ifndef LINC_TYPES_H
-#define LINC_TYPES_H 1
+#ifndef _LINC_TYPES_H_
+#define _LINC_TYPES_H_
+
+#include <glib/gmacros.h>
+#include <glib/gthread.h>
+#include <gobject/gobject.h>
+
+G_BEGIN_DECLS
 
 typedef enum {
 	LINC_CONNECTION_SSL         = 1 << 0,
@@ -8,4 +14,26 @@ typedef enum {
 
 typedef struct _LincWatch LincWatch;
 
-#endif
+#ifdef G_THREADS_ENABLED
+
+#  define LINC_MUTEX_LOCK(x) G_STMT_START {	\
+	if (x)					\
+		g_mutex_lock (x);		\
+	} G_STMT_END
+#  define LINC_MUTEX_UNLOCK(x) G_STMT_START {	\
+	if (x)					\
+		g_mutex_unlock (x);		\
+	} G_STMT_END
+
+#else /* ! G_THREADS_ENABLED */
+
+#  define LINC_MUTEX_LOCK(x)
+#  define LINC_MUTEX_UNLOCK(x)
+
+#endif /* G_THREADS_ENABLED */
+
+GMutex *linc_mutex_new (void);
+
+G_END_DECLS
+
+#endif /* _LINC_TYPES_H_ */

@@ -1,5 +1,9 @@
-#ifndef LINC_PROTOCOL_H
-#define LINC_PROTOCOL_H 1
+#ifndef _LINC_PROTOCOL_H_
+#define _LINC_PROTOCOL_H_
+
+#include <glib/gmacros.h>
+
+G_BEGIN_DECLS
 
 #include <linc/linc-types.h>
 #include <sys/socket.h>
@@ -35,4 +39,6 @@ int linc_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 		     int flags);
 void linc_set_tmpdir(const char *dir);
 
-#endif
+G_END_DECLS
+
+#endif /* _LINC_PROTOCOL_H_ */

@@ -1,14 +1,15 @@
-#undef DEBUG
-
-#include "config.h"
+#include <config.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+
 #include <linc/linc.h>
 #include <linc/linc-server.h>
 #include <linc/linc-connection.h>
+
+#undef DEBUG
 
 enum {
   NEW_CONNECTION,
@@ -55,98 +56,135 @@ my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
 static void
 linc_server_init (LINCServer *cnx)
 {
-  O_MUTEX_INIT(cnx->mutex);
-  cnx->fd = -1;
+	cnx->mutex = linc_mutex_new ();
+	cnx->fd = -1;
 }
 
 static void
 linc_server_dispose (GObject *obj)
 {
-  LINCServer *cnx = (LINCServer *)obj;
+	LINCServer *cnx = (LINCServer *)obj;
 
-  O_MUTEX_DESTROY(cnx->mutex);
-  if(cnx->tag)
-    linc_io_remove_watch(cnx->tag);
-  cnx->tag = NULL;
-  if(cnx->proto && cnx->proto->destroy)
-    cnx->proto->destroy(cnx->fd, cnx->local_host_info, cnx->local_serv_info);
-  cnx->proto = NULL;
-  if(cnx->fd >= 0)
-    close(cnx->fd);
-  cnx->fd = -1;
-  g_free(cnx->local_host_info);
-  cnx->local_host_info = NULL;
-  g_free(cnx->local_serv_info);
-  cnx->local_serv_info = NULL;
-  if(parent_class->dispose)
-    parent_class->dispose(obj);
+#ifdef G_THREADS_ENABLED
+	if (cnx->mutex)
+		g_mutex_free (cnx->mutex);
+#endif
+	if (cnx->tag)
+		linc_io_remove_watch (cnx->tag);
+	cnx->tag = NULL;
+
+	if (cnx->proto && cnx->proto->destroy)
+		cnx->proto->destroy (
+			cnx->fd, cnx->local_host_info,
+			cnx->local_serv_info);
+	cnx->proto = NULL;
+
+	if (cnx->fd >= 0)
+		close (cnx->fd);
+	cnx->fd = -1;
+
+	g_free (cnx->local_host_info);
+	cnx->local_host_info = NULL;
+
+	g_free (cnx->local_serv_info);
+	cnx->local_serv_info = NULL;
+
+	if (parent_class->dispose)
+		parent_class->dispose (obj);
 }
 
 static LINCConnection *
-linc_server_create_connection(LINCServer      *cnx)
+linc_server_create_connection (LINCServer *cnx)
 {
-  return g_object_new(linc_connection_get_type(), NULL);
+	return g_object_new (linc_connection_get_type (), NULL);
 }
 
 static gboolean
-linc_server_handle_io(GIOChannel *gioc,
-		      GIOCondition condition,
-		      gpointer data)
+linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 {
-  LINCServer *server = data;
-  LINCServerClass *klass = (LINCServerClass *)G_OBJECT_GET_CLASS(server);
-  struct sockaddr *saddr;
-  int addrlen, fd;
-  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
-  LINCConnection *connection;
-  GValue parms[2];
+	LINCServerClass *klass;
+	struct sockaddr *saddr;
+	int              addrlen, fd;
+	char             hnbuf   [NI_MAXHOST];
+	char             servbuf [NI_MAXSERV];
+	
+	g_return_val_if_fail (connection != NULL, FALSE);
 
-  O_MUTEX_LOCK(server->mutex);
+	addrlen = server->proto->addr_len;
+	saddr = g_alloca (addrlen);
 
-  if(condition != G_IO_IN)
-    g_error("condition on server fd is %#x", condition);
+	fd = accept (server->fd, saddr, &addrlen);
 
-  addrlen = server->proto->addr_len;
-  saddr = g_alloca(addrlen);
-  fd = accept(server->fd, saddr, &addrlen);
+	if (fd < 0)
+		return FALSE; /* error */
 
-  if(fd < 0)
-    return TRUE; /* error */
+	if (linc_getnameinfo (saddr, server->proto->addr_len,
+			      hnbuf, sizeof (hnbuf),
+			      servbuf, sizeof (servbuf),
+			      NI_NUMERICSERV)) {
+		close (fd);
+		return FALSE;
+	}
 
-  if(linc_getnameinfo(saddr, server->proto->addr_len, hnbuf, sizeof(hnbuf),
-		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-    {
-      close(fd);
-      return TRUE;
-    }
+	klass = (LINCServerClass *) G_OBJECT_GET_CLASS (server);
 
-  g_assert(klass->create_connection);
-  connection = klass->create_connection(server);
-  if(!linc_connection_from_fd(connection, fd, server->proto, hnbuf, servbuf,
-			      FALSE, LINC_CONNECTED, server->create_options))
-    {
-      g_object_unref(G_OBJECT(connection));
-      connection = NULL;
-    }
+	g_assert (klass->create_connection);
+	*connection = klass->create_connection (server);
 
-  O_MUTEX_UNLOCK(server->mutex);
+	g_return_val_if_fail (*connection != NULL, FALSE);
 
-  memset(parms, 0, sizeof(parms));
-  g_value_init(parms, G_OBJECT_TYPE(server));
-  g_value_set_object(parms, G_OBJECT(server));
-  g_value_init(parms + 1, G_TYPE_OBJECT);
-  g_value_set_object(parms + 1, G_OBJECT(connection));
-  g_signal_emitv(parms, server_signals[NEW_CONNECTION], 0, NULL);
-  g_value_unset(parms);
-  g_value_unset(parms+1);
+	if (!linc_connection_from_fd (
+		*connection, fd, server->proto, hnbuf, servbuf,
+		FALSE, LINC_CONNECTED, server->create_options)) {
 
-  return TRUE;
+		g_object_unref (G_OBJECT (*connection));
+		*connection = NULL;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+linc_server_handle_io (GIOChannel  *gioc,
+		       GIOCondition condition,
+		       gpointer     data)
+{
+	gboolean        accepted;
+	LINCServer     *server = data;
+	LINCConnection *connection;
+
+	if (condition != G_IO_IN)
+		g_error ("condition on server fd is %#x", condition);
+
+	LINC_MUTEX_LOCK (server->mutex);
+
+	accepted = linc_server_accept_connection (server, &connection);
+
+	LINC_MUTEX_UNLOCK (server->mutex);
+
+	if (!accepted) {
+		GValue parms[2];
+
+		memset (parms, 0, sizeof (parms));
+		g_value_init (parms, G_OBJECT_TYPE (server));
+		g_value_set_object (parms, G_OBJECT (server));
+		g_value_init (parms + 1, G_TYPE_OBJECT);
+		g_value_set_object (parms + 1, G_OBJECT (connection));
+		
+		g_signal_emitv (parms, server_signals [NEW_CONNECTION], 0, NULL);
+		
+		g_value_unset (parms);
+		g_value_unset (parms + 1);
+	}
+
+	return TRUE;
 }
 
 void
-linc_server_handle(LINCServer *cnx)
+linc_server_handle (LINCServer *cnx)
 {
-  linc_server_handle_io(NULL, G_IO_IN, cnx);
+	linc_server_handle_io (NULL, G_IO_IN, cnx);
 }
 
 gboolean
