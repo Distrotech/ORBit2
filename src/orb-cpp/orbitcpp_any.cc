@@ -30,37 +30,6 @@
 #include <string.h>
 
 
-/* ORBit_demarshal_allocate_mem cut & paste - this should ideally be
-   global */
-
-/* FIXME: This is sure to be broken for ORBit2. */
-static gpointer
-ORBit_demarshal_allocate_mem(CORBA_TypeCode tc, gint nelements)
-{
-    gpointer retval = NULL;
-
-	/* And it seems to be quite broken. */
-#if 0
-    size_t block_size;
-
-    if(!nelements) return retval;
-
-    block_size = ORBit_gather_alloc_info(tc);
-
-    if(block_size) {
-	retval = ORBit_alloc_2(block_size * nelements,
-			       (ORBit_free_childvals)ORBit_free_via_TypeCode,
-			       GINT_TO_POINTER(nelements),
-			       sizeof(CORBA_TypeCode));
-
-	*(CORBA_TypeCode *)((char *)retval-sizeof(ORBit_mem_info)-sizeof(CORBA_TypeCode)) = (CORBA_TypeCode)CORBA_Object_duplicate((CORBA_Object)tc, NULL);
-    }
-#endif
-
-    return retval;
-}
-
-
 void
 CORBA::Any::insert_simple(CORBA::TypeCode_ptr tc, void* value, Boolean v_copy)
 {
@@ -122,7 +91,7 @@ CORBA::Any::operator<<=(from_wstring in)
 		CORBA_free( m_target._value );
 	
 	if( in.nocopy ) {
-		m_target._value = ORBit_demarshal_allocate_mem(reinterpret_cast<CORBA_TypeCode>(m_target._type), 1);
+		m_target._value = ORBit_alloc_tcval(reinterpret_cast<CORBA_TypeCode>(m_target._type), 1);
 		*(CORBA_char**)m_target._value = (CORBA_char*)in.val;
 	}
 	else
