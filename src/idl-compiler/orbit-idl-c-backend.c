@@ -153,6 +153,10 @@ out_for_pass (const char    *input_filename,
 		sprintf (cmdline, "%s > %s", rinfo->output_formatter, output_filename);
 
 		g_free (output_filename);
+
+		/* Many versions of cpp do evil translating internal
+		* strings, producing bogus output, so clobber LC_ALL */
+		putenv ("LC_ALL=C");
 		fp = popen (cmdline, "w");
 
 		if (fp == NULL)
