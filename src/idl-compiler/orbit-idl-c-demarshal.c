@@ -522,7 +522,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 	  break;
 	case MARSHAL_ANY:
 	  fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s);\n", ctmp);
-	  fprintf(cmi->ci->fh, "if(ORBit_TypeCode_demarshal_value(TC_%s, &_valref, _ORBIT_recv_buffer, %s, %s))\n%s;\n",
+	  fprintf(cmi->ci->fh, "if(ORBit_demarshal_value(TC_%s, &_valref, _ORBIT_recv_buffer, %s, %s))\n%s;\n",
 		  ctmp2, do_dup, cmi->orb_name, cmi->marshal_error_exit);
 	  fprintf(cmi->ci->fh, "}\n");
 	  break;

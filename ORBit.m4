@@ -41,7 +41,7 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
   fi
 
   AC_PATH_PROG(ORBIT_CONFIG, orbit-config, no)
-  min_orbit_version=ifelse([$1], , 0.5.1, $1)
+  min_orbit_version=ifelse([$1], , 2.3.0, $1)
   AC_MSG_CHECKING(for ORBit - version >= $min_orbit_version)
   no_orbit=""
   if test "$ORBIT_CONFIG" = "no" ; then

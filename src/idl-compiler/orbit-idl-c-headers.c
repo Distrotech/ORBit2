@@ -115,7 +115,7 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       fprintf(ci->fh, "#define ex_%s \"%s\"\n", id,
 	      IDL_IDENT(IDL_EXCEPT_DCL(tree).ident).repo_id);
       fprintf(ci->fh, "gboolean _ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev);\n", id);
-      fprintf(ci->fh, "gboolean _ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev);\n", id);
+      fprintf(ci->fh, "void _ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev);\n", id);
       g_free(id);
       ch_output_type_struct(tree, rinfo, ci);
     }

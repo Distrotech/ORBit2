@@ -492,7 +492,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 	return TRUE;
       ptr = *val;
       if(giop_msg_conversion_needed(buf))
-	giop_byteswap(ptr, buf->cur, sizeof(CORBA_long_double));
+	giop_byteswap((guchar *)ptr, buf->cur, sizeof(CORBA_long_double));
       else
 	*ptr = *(CORBA_long_double *)buf->cur;
       buf->cur += sizeof(CORBA_long_double);
@@ -508,7 +508,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 	return TRUE;
       ptr = *val;
       if(giop_msg_conversion_needed(buf))
-	giop_byteswap(ptr, buf->cur, sizeof(CORBA_float));
+	giop_byteswap((guchar *)ptr, buf->cur, sizeof(CORBA_float));
       else
 	*ptr = *(CORBA_float *)buf->cur;
       buf->cur += sizeof(CORBA_float);
@@ -525,7 +525,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 	return TRUE;
       ptr = *val;
       if(giop_msg_conversion_needed(buf))
-	giop_byteswap(ptr, buf->cur, sizeof(CORBA_double));
+	giop_byteswap((guchar *)ptr, buf->cur, sizeof(CORBA_double));
       else
 	*ptr = *(CORBA_double *)buf->cur;
       buf->cur += sizeof(CORBA_double);
@@ -541,7 +541,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       if((buf->cur + sizeof(CORBA_octet)) > buf->end)
 	return TRUE;
       ptr = *val;
-      *ptr = buf->cur;
+      *ptr = *buf->cur;
       buf->cur++;
       
       *val = ((guchar *)*val) + sizeof(CORBA_octet);
