@@ -1,5 +1,9 @@
 2001-11-08  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: require linc >= 0.1.7
+
+2001-11-08  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/poa.c (ORBit_POAList_add_child),
 	(PortableServer_Current_get_POA),
 	(PortableServer_POA_find_POA),
