@@ -740,7 +740,7 @@ CORBA_TypeCode_id (CORBA_TypeCode     typecode,
 		return NULL;
 	}
 
-	return typecode->repo_id;
+	return CORBA_string_dup (typecode->repo_id);
 }
 
 CORBA_Identifier
@@ -763,7 +763,7 @@ CORBA_TypeCode_name (CORBA_TypeCode     typecode,
 		return NULL;
 	}
 
-	return typecode->name;
+	return CORBA_string_dup (typecode->name);
 }
 
 CORBA_unsigned_long
@@ -807,7 +807,7 @@ CORBA_TypeCode_member_name (CORBA_TypeCode       typecode,
 		return NULL;
 	}
 
-	return typecode->subnames [index];
+	return CORBA_string_dup (typecode->subnames [index]);
 }
 
 CORBA_TypeCode
@@ -833,7 +833,7 @@ CORBA_TypeCode_member_type (CORBA_TypeCode       typecode,
 		return NULL;
 	}
 
-	return typecode->subtypes [index];
+	return ORBit_RootObject_duplicate (typecode->subtypes [index]);
 }
 
 CORBA_any *
@@ -878,7 +878,7 @@ CORBA_TypeCode_discriminator_type (CORBA_TypeCode     typecode,
 		return NULL;
 	}
 
-	return typecode->discriminator;
+	return ORBit_RootObject_duplicate (typecode->discriminator);
 }
 
 CORBA_long
@@ -928,7 +928,7 @@ CORBA_TypeCode_content_type (CORBA_TypeCode     typecode,
 
 	g_assert (typecode->sub_parts == 1);
 
-	return typecode->subtypes [0];
+	return ORBit_RootObject_duplicate (typecode->subtypes [0]);
 }
 
 CORBA_unsigned_short
