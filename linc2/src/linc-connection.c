@@ -426,6 +426,12 @@ linc_connection_writev (LINCConnection *cnx, struct iovec *vecs,
 }
 
 static void
+linc_connection_init (LINCConnection *cnx)
+{
+	cnx->fd = -1;
+}
+
+static void
 linc_connection_class_init (LINCConnectionClass *klass)
 {
 	GObjectClass *object_class = (GObjectClass *) klass;
@@ -456,7 +462,7 @@ linc_connection_get_type (void)
 	if (!object_type) {
 		static const GTypeInfo object_info = {
 			sizeof (LINCConnectionClass),
-			(GBaseInitFunc) NULL,
+			(GBaseInitFunc) linc_connection_init,
 			(GBaseFinalizeFunc) NULL,
 			(GClassInitFunc) linc_connection_class_init,
 			NULL,           /* class_finalize */
