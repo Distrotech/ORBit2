@@ -1,3 +1,10 @@
+2002-12-26  James Henstridge  <james@daa.com.au>
+
+	* src/orb/orb-core/Makefile.am (IDL_FLAGS): add -I. to IDL_FLAGS.
+	This gets rid of the multiple symbol definition errors with newer
+	autoconf and/or automake (not sure which one is causing the
+	problem).
+
 2002-12-02  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-utils.c
@@ -11,10 +18,10 @@
 	exit with an exception set, even with odd wire data.
 
 2002-11-05  Mark McLoughlin  <mark@skynet.ie>
-                                                                                                             
+
 	* test/everything/everything.idl: add simple
 	regression test to catch the bug below.
-                                                                                                            
+
 2002-11-05  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/idl-compiler/orbit-idl-c-headers.c: (ch_prep):

@@ -55,7 +55,7 @@ IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl-2
 IDL_FLAGS = -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\
 	-I$(top_srcdir)/src/idl/misc				\
-	-I$(top_srcdir)/src/idl/interop				\
+	-I$(top_srcdir)/src/idl/interop -I.				\
 	--noskels --nodefskels --nostubs --noidata --noheaders	\
 	--define=Object=OObject --define=TypeCode=TTypeCode	\
         --showcpperrors
