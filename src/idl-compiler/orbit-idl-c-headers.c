@@ -592,7 +592,6 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 		     OIDL_C_Info *ci, gboolean do_alloc)
 {
   char *ctmp;
-  IDL_tree tts;
 
   ctmp = orbit_cbe_get_typespec_str(tree);
 
@@ -607,15 +606,19 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 
   if(do_alloc) {
       char *tc;
-	  
-      tc = orbit_cbe_get_typecode_name (orbit_cbe_get_typespec (tree));
+      IDL_tree tts;
+
+      tts = orbit_cbe_get_typespec(tree);
+
+      tc = orbit_cbe_get_typecode_name (tts);
 
       fprintf (ci->fh, "#define %s__alloc() ((%s%s *)ORBit_small_alloc (%s))\n",
 		   ctmp, ctmp, (IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"", tc);
 
       fprintf (ci->fh, "#define %s__freekids(m,d) ORBit_small_freekids (%s,(m),(d))\n", ctmp, tc);
 
-      /* FIXME - we need _allocbuf */
+      if ( IDL_NODE_TYPE(tts) == IDLN_TYPE_SEQUENCE )
+	fprintf (ci->fh, "#define %s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n", ctmp, tc);
 
       g_free (tc);
   }
