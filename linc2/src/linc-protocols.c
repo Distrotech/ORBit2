@@ -40,6 +40,7 @@
 #include <linux/irda.h>
 #endif
 
+#include <arpa/nameser.h>
 #include <resolv.h>
 
 #include <linc/linc-protocol.h>
