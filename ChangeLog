@@ -1,5 +1,12 @@
 2003-07-03  Frank Rehberger  <Frank.Rehberger@web.de>
 
+	* src/orb/orb-core/corba-any.c (ORBit_sequence_alloc): undo
+	previous change, now sequence length initially seq->_length=length
+	* test/everything/client.c (testSequenceHelpers): undo previous
+	changes to client.c
+
+2003-07-03  Frank Rehberger  <Frank.Rehberger@web.de>
+
 	* src/orb/orb-core/corba-context.c (ORBit_Context_demarshal): fix
 	for #116338
 

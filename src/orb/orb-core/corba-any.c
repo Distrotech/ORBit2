@@ -1165,7 +1165,7 @@ ORBit_sequence_alloc (CORBA_TypeCode      sequence_tc,
 	
 	seq = ORBit_alloc_by_tc (sequence_tc);
 	seq->_buffer = ORBit_small_allocbuf (tc, length);
-	seq->_length  = 0;
+	seq->_length  = length;
 	seq->_maximum = length;
 	
 	CORBA_sequence_set_release (seq, CORBA_TRUE);
