@@ -1,3 +1,9 @@
+2005-02-02  Hans Petter Jansson  <hpj@novell.com>
+
+	* configure.in: Check for res_9_init() in -lresolv. This will pull in
+	libresolv on Darwin, where the actual symbol's name is different from
+	the one used by programs.
+
 2005-01-28  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/orbit-init.c
