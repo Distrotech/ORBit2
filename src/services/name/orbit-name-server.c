@@ -275,7 +275,7 @@ static void
 rn_print (CosNaming_NameComponent * nc, RegisteredName * nom)
 {
   g_print ("id %s kind %s ptr %p [%p]\n", nc->id, nc->kind,
-	   nom->obj, nom->obj ? nom->obj->bypass_obj : NULL);
+	   nom->obj, nom->obj ? nom->obj->pobj : NULL);
 }
 #endif
 

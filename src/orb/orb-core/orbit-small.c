@@ -601,7 +601,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPMessageQueueEntry   mqe;
 
 #ifdef DEBUG_LOCAL_TEST
-	if (obj->bypass_obj) {
+	if (obj->pobj) {
 		ORBit_small_invoke_skel (
 			ORBIT_STUB_GetServant (obj),
 			m_data, ret, args, ctx, ev);
@@ -971,7 +971,7 @@ ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
 	PortableServer_ClassInfo   *class_info;
 	CORBA_unsigned_long         offset;
 	
-	pobj       = obj->bypass_obj;
+	pobj       = obj->pobj;
 	servant    = pobj->servant;
 	class_info = servant->vepv[0]->_private;
 	g_assert (class_info != NULL);
