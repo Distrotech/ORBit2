@@ -144,6 +144,9 @@ ORBit_option_command_line_parse (int                 *argc,
 	fprintf (stderr, "Parsing command line for options\n");
 #endif
 
+	if (!argc || !argv)
+		return;
+
 	erase = g_new0 (gboolean, *argc);
 
 	for (i = 1, numargs = *argc; i < *argc; i++) {

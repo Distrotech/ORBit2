@@ -5,6 +5,7 @@
 #include <orb-core-export.h>
 #include <orbit-debug.h>
 #include "../util/orbit-purify.h"
+#include "../orb-core/orbit-debug.h"
 #include "poa-macros.h"
 
 #include "orbit-poa.h"
@@ -1157,14 +1158,19 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 			(gpointer *)&m_data, &imp);
 	
 	if ((!small_skel && !skel) || !imp) {
-		if (!imp && (small_skel || skel))
+		if (!imp && (small_skel || skel)) {
+			tprintf ("'%s' not implemented on %p",
+				 opname, pobj);
 			CORBA_exception_set_system (
 				ev, ex_CORBA_NO_IMPLEMENT,
 				CORBA_COMPLETED_NO);
-		else
+		} else {
+			tprintf ("Bad operation '%s' on %p",
+				 opname, pobj);
 			CORBA_exception_set_system (
 				ev, ex_CORBA_BAD_OPERATION,
 				CORBA_COMPLETED_NO);
+		}
 	}
 
 	if (ev->_major != CORBA_NO_EXCEPTION) {

@@ -1,3 +1,20 @@
+2001-11-26  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.98
+
+	* src/orb/util/orbit-options.c
+	(ORBit_option_command_line_parse): allow NULL argc
+	on init.
+
+	* test/test-dynany.c (main): test it.
+
+2001-11-23  Michael Meeks  <michael@ximian.com>
+
+	* docs/internals/typecode-flags.txt: add.
+
+	* src/orb/poa/poa.c
+	(ORBit_POAObject_handle_request): add debug.
+
 2001-11-25  Havoc Pennington  <hp@redhat.com>
 
 	* src/orb/poa/Makefile.am (main_src): add poa-macros.h
