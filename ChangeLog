@@ -1,5 +1,12 @@
 2003-04-04  Michael Meeks  <michael@ximian.com>
 
+	* test/poa/poatest-basic11.c (poatest_run): test
+	the ObjectId <-> string methods. This test fails.
+
+	* src/orb/poa/poa.c (PortableServer_ObjectId_to_wstring)
+	(PortableServer_ObjectId_to_string): don't trample
+	on bits off the end of the string terminating it.
+
 	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_recv_thread_fn): remove shutdown warning.
 

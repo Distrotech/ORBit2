@@ -34,6 +34,5 @@ main (int argc, char **argv)
 	g_assert (!((gulong)p & 0x1));
 	CORBA_free (p);
 
-
 	return 0;
 }

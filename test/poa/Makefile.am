@@ -12,7 +12,8 @@ POA_TESTS_SRCS = poatest-basic01.c \
                  poatest-basic07.c \
                  poatest-basic08.c \
                  poatest-basic09.c \
-                 poatest-basic10.c
+                 poatest-basic10.c \
+                 poatest-basic11.c
 
 #                 poatest-basic05.c \
 
@@ -26,7 +27,10 @@ TESTS = poatest-basic01 \
         poatest-basic09 \
         poatest-basic10
 
-#        poatest-basic05 \
+# these don't work - it seems
+noinst_PROGRAMS=	\
+        poatest-basic11 \
+        poatest-basic05
 
 check_PROGRAMS = $(TESTS)
 
@@ -48,12 +52,13 @@ poatest_basic01_SOURCES = $(common_srcs) poatest-basic01.c
 poatest_basic02_SOURCES = $(common_srcs) poatest-basic02.c 
 poatest_basic03_SOURCES = $(common_srcs) poatest-basic03.c 
 poatest_basic04_SOURCES = $(common_srcs) poatest-basic04.c 
-#poatest_basic05_SOURCES = $(common_srcs) poatest-basic05.c 
+poatest_basic05_SOURCES = $(common_srcs) poatest-basic05.c 
 poatest_basic06_SOURCES = $(common_srcs) poatest-basic06.c 
 poatest_basic07_SOURCES = $(common_srcs) poatest-basic07.c 
 poatest_basic08_SOURCES = $(common_srcs) poatest-basic08.c 
 poatest_basic09_SOURCES = $(common_srcs) poatest-basic09.c 
 poatest_basic10_SOURCES = $(common_srcs) poatest-basic10.c 
+poatest_basic11_SOURCES = $(common_srcs) poatest-basic11.c 
 
 README : $(POA_TESTS_SRCS)
 	awk -F'*' 'BEGIN { intest = 0; } \

@@ -1463,7 +1463,7 @@ PortableServer_ObjectId_to_string (PortableServer_ObjectId *id,
 	poa_sys_exception_val_if_fail (memchr (id->_buffer, '\0', id->_length),
 				       ex_CORBA_BAD_PARAM, NULL);
 
-	str = CORBA_string_alloc (id->_length);
+	str = CORBA_string_alloc (id->_length + 1);
 	memcpy (str, id->_buffer, id->_length);
 	str [id->_length] = '\0';
 
@@ -1481,7 +1481,7 @@ PortableServer_ObjectId_to_wstring (PortableServer_ObjectId *id,
 	poa_sys_exception_val_if_fail (memchr (id->_buffer, '\0', id->_length),
 				       ex_CORBA_BAD_PARAM, NULL);
   
-	retval = CORBA_wstring_alloc (id->_length);
+	retval = CORBA_wstring_alloc (id->_length + 1);
 	for (i = 0; i < id->_length; i++)
 		retval [i] = id->_buffer [i];
 	retval [id->_length] = '\0';
