@@ -211,6 +211,8 @@ oidl_get_tree_alignment(IDL_tree tree)
 {
   guint8 itmp;
 
+  g_assert(tree);
+
   /* find arch alignments */
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_TYPE_INTEGER:
@@ -292,6 +294,8 @@ oidl_pass_set_alignment_datum(OIDL_Marshal_Node *node)
 static void
 oidl_pass_set_alignment(OIDL_Marshal_Node *node)
 {
+  if(!node) return;
+
   switch(node->type) {
   case MARSHAL_DATUM:
     oidl_pass_set_alignment_datum(node);
@@ -404,6 +408,8 @@ oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
   OIDL_Marshal_Node *sub;
   gint retval;
   gboolean check_marshal;
+
+  if(!node) return prev_alignment;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -525,6 +531,8 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
   GSList *ltmp;
   gboolean btmp = FALSE;
 
+  if(!node) return FALSE;
+
   switch(node->type) {
   case MARSHAL_DATUM:
     if(node->u.datum_info.datum_size > 1)
@@ -627,6 +635,8 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
 {
   OIDL_Marshal_Node *sub;
 
+  if(!node) return;
+
   if(node->flags & MN_NOMARSHAL) return;
 
   switch(node->type) {
@@ -669,6 +679,8 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
 static void
 oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
 {
+  if(!node) return;
+
   if(node->flags & MN_NOMARSHAL) return;
 
   switch(node->type) {
@@ -706,6 +718,8 @@ static void
 oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node)
 {
   OIDL_Marshal_Node *sub;
+
+  if(!node) return;
 
   if(node->up
      && (node->up->flags & MN_DEMARSHAL_CORBA_ALLOC))

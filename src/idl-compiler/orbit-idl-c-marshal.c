@@ -145,14 +145,14 @@ c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
     sub = ltmp->data;
     g_assert(sub->type == MARSHAL_CASE);
-    if(sub->u.case_info.labels) {
-      for(ltmp2 = sub->u.case_info.labels; ltmp2; ltmp2 = g_slist_next(ltmp2)) {
+    for(ltmp2 = sub->u.case_info.labels; ltmp2; ltmp2 = g_slist_next(ltmp2)) {
+      if(ltmp2->data) {
 	fprintf(cmi->ci->fh, "case ");
 	orbit_cbe_write_const_node(cmi->ci->fh, ltmp2->data);
 	fprintf(cmi->ci->fh, ":\n");
-      }
-    } else
-      fprintf(cmi->ci->fh, "default:\n");
+      } else
+	fprintf(cmi->ci->fh, "default:\n");
+    }
     c_marshal_generate(sub->u.case_info.contents, cmi);
     fprintf(cmi->ci->fh, "break;\n");
   }
