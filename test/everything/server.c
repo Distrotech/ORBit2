@@ -33,7 +33,8 @@ CORBA_Object create_object (PortableServer_POA poa,
 			    gpointer           servant,
 			    CORBA_Environment *ev);
 
-CORBA_ORB global_orb;
+CORBA_ORB          global_orb;
+PortableServer_POA global_poa;
 
 #include "basicServer.c"
 #include "structServer.c"
@@ -43,6 +44,7 @@ CORBA_ORB global_orb;
 #include "anyServer.c"
 #include "contextServer.c"
 #include "deadReference.c"
+#include "pingServer.c"
 
 /* Servant class */
 
@@ -61,8 +63,7 @@ typedef struct {
 
 /* Methods */
 
-static
-test_BasicServer
+static test_BasicServer
 TestFactory_getBasicServer (PortableServer_Servant servant,
 			    CORBA_Environment     *ev)
 {
@@ -71,8 +72,7 @@ TestFactory_getBasicServer (PortableServer_Servant servant,
 	return CORBA_Object_duplicate (this->basicServerRef, ev);
 }
 
-static
-CORBA_char *
+static CORBA_char *
 TestFactory_getStructServerIOR (PortableServer_Servant servant,
 				CORBA_Environment     *ev)
 {
@@ -83,58 +83,72 @@ TestFactory_getStructServerIOR (PortableServer_Servant servant,
 		this->structServerRef, ev);
 }
 
-static
-test_StructServer
-TestFactory_getStructServer(PortableServer_Servant servant,
-			    CORBA_Environment *ev)
+static test_StructServer
+TestFactory_getStructServer (PortableServer_Servant servant,
+			     CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->structServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate (this->structServerRef, ev);
 }
 
 static
 test_SequenceServer
 TestFactory_getSequenceServer(PortableServer_Servant servant,
-			      CORBA_Environment *ev)
+			      CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->sequenceServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate(this->sequenceServerRef,ev);
 }
 
-static
-test_UnionServer
-TestFactory_getUnionServer(PortableServer_Servant servant,
-			   CORBA_Environment *ev)
+static test_UnionServer
+TestFactory_getUnionServer (PortableServer_Servant servant,
+			    CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->unionServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate (this->unionServerRef, ev);
 }
 
-static
-test_ArrayServer
-TestFactory_getArrayServer(PortableServer_Servant servant,
-			   CORBA_Environment *ev)
+static test_ArrayServer
+TestFactory_getArrayServer (PortableServer_Servant servant,
+			    CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->arrayServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate (this->arrayServerRef, ev);
 }
 
-static
-test_AnyServer
-TestFactory_getAnyServer(PortableServer_Servant servant,
-			 CORBA_Environment *ev)
+static test_AnyServer
+TestFactory_getAnyServer (PortableServer_Servant servant,
+			  CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->anyServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate (this->anyServerRef, ev);
 }
 
-static
-test_ContextServer
-TestFactory_getContextServer(PortableServer_Servant servant,
-			     CORBA_Environment *ev)
+static test_ContextServer
+TestFactory_getContextServer (PortableServer_Servant servant,
+			      CORBA_Environment     *ev)
 {
-  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
-  return CORBA_Object_duplicate(this->contextServerRef,ev);
+	test_TestFactory_Servant *this = (test_TestFactory_Servant*) servant;
+
+	return CORBA_Object_duplicate (this->contextServerRef, ev);
+}
+
+static test_PingPongServer
+TestFactory_createPingPongServer (PortableServer_Servant servant,
+				  CORBA_Environment     *ev)
+{
+	CORBA_Object obj;
+
+	obj = create_object (
+		global_poa, POA_test_PingPongServer__init,
+		create_ping_pong_servant (), ev);
+
+	return CORBA_Object_duplicate (obj, ev);
 }
 
 static test_DeadReferenceObj
@@ -216,12 +230,29 @@ static POA_test_TestFactory__epv TestFactory_epv = {
 	NULL,                         /* getDerivedServerAsB2         */
 	NULL,                         /* createTransientObj           */
 	TestFactory_createDeadReferenceObj,
+	TestFactory_createPingPongServer
 };
 
 static POA_test_TestFactory__vepv TestFactory_vepv = {
 	&TestFactory_base_epv,
 	&TestFactory_epv
 };
+
+PortableServer_POA
+start_poa (CORBA_ORB orb, CORBA_Environment *ev)
+{
+	PortableServer_POAManager mgr;
+	PortableServer_POA the_poa;
+
+	the_poa = (PortableServer_POA) CORBA_ORB_resolve_initial_references (
+		orb, "RootPOA", ev);
+
+	mgr = PortableServer_POA__get_the_POAManager (the_poa, ev);
+	PortableServer_POAManager_activate (mgr, ev);
+	CORBA_Object_release ((CORBA_Object) mgr, ev);
+
+	return the_poa;
+}
 
 CORBA_Object
 create_object (PortableServer_POA poa,
@@ -331,21 +362,6 @@ dump_ior (CORBA_ORB orb, const char *fname, CORBA_Environment *ev)
 }
 #endif
 
-PortableServer_POA
-start_poa (CORBA_ORB orb, CORBA_Environment *ev)
-{
-	PortableServer_POAManager mgr;
-	PortableServer_POA the_poa;
-
-	the_poa = (PortableServer_POA) CORBA_ORB_resolve_initial_references (
-		orb, "RootPOA", ev);
-	mgr = PortableServer_POA__get_the_POAManager (the_poa, ev);
-	PortableServer_POAManager_activate (mgr, ev);
-	CORBA_Object_release ((CORBA_Object) mgr, ev);
-
-	return the_poa;
-}
-
 CORBA_Object
 create_TestFactory (PortableServer_POA        poa,
 		    test_TestFactory_Servant *servant,
@@ -389,7 +405,6 @@ test_TestFactory_Servant servant;
 	      CORBA_Environment *ev)
 #endif
 {
-	PortableServer_POA poa;
 	test_BasicServer objref;
 #ifndef _IN_CLIENT_
 	CORBA_Environment real_ev;
@@ -409,19 +424,18 @@ test_TestFactory_Servant servant;
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 #endif
 
-	poa = start_poa (global_orb, ev);
+	global_poa = start_poa (global_orb, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	factory = create_TestFactory (poa, &servant, ev);
-	CORBA_Object_release ((CORBA_Object)poa, ev);
+	factory = create_TestFactory (global_poa, &servant, ev);
 	g_assert (factory != CORBA_OBJECT_NIL);
 
 	/* a quick local test */
-	objref = test_TestFactory_getBasicServer(factory,ev);
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
-	g_assert(objref != CORBA_OBJECT_NIL);
-	g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
-	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	objref = test_TestFactory_getBasicServer (factory,ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (objref != CORBA_OBJECT_NIL);
+	g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	CORBA_Object_release (objref, ev);
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 	fprintf (stderr, "Local server test passed\n");
@@ -431,6 +445,9 @@ test_TestFactory_Servant servant;
 		CORBA_ORB_run (global_orb, ev);
 		return 0;
 	}
+
+	CORBA_Object_release ((CORBA_Object) global_poa, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	CORBA_ORB_destroy (global_orb, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);

@@ -1,6 +1,7 @@
 #ifndef GIOP_RECV_BUFFER_H
 #define GIOP_RECV_BUFFER_H 1
 
+#include <stdio.h>
 #include <orbit/GIOP/giop-types.h>
 
 #ifdef ORBIT2_INTERNAL_API
@@ -75,11 +76,6 @@ GIOPRecvBuffer *giop_recv_buffer_get               (GIOPMessageQueueEntry *ent,
 
 GIOPRecvBuffer *giop_recv_buffer_use               (void);
 void            giop_recv_buffer_unuse             (GIOPRecvBuffer        *buf);
-GIOPMessageInfo giop_recv_buffer_state_change      (GIOPRecvBuffer        *buf,
-						    GIOPMessageBufferState state,
-						    gboolean               is_auth,
-						    GIOPConnection        *cnx);
-
 GIOPMessageInfo giop_recv_buffer_data_read         (GIOPRecvBuffer        *buf,
 						    int n, gboolean is_auth,
 						    GIOPConnection        *cnx);
@@ -94,7 +90,11 @@ CORBA_unsigned_long         giop_recv_buffer_get_request_id (GIOPRecvBuffer *buf
 char                       *giop_recv_buffer_get_opname     (GIOPRecvBuffer *buf);
 CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey     (GIOPRecvBuffer *buf);
 void                        giop_recv_list_zap              (GIOPConnection *cnx);
+void                        giop_dump                       (FILE *out, guint8 const *ptr,
+							     guint32 len, guint32 offset);
 void                        giop_dump_recv                  (GIOPRecvBuffer *recv_buffer);
+gboolean                    giop_connection_handle_input    (LINCConnection *lcnx);
+
 
 #endif /* ORBIT2_INTERNAL_API */
 

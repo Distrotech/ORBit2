@@ -380,6 +380,7 @@ orbit_small_marshal (CORBA_Object           obj,
 	do_giop_dump_send (send_buffer);
 
 	if (giop_send_buffer_write (send_buffer, cnx)) {
+		g_warning ("Failed to send buffer");
 		giop_recv_list_destroy_queue_entry (mqe);
 		return FALSE;
 	}

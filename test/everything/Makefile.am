@@ -38,6 +38,7 @@ included_src = \
 	basicServer.c    \
 	contextServer.c  \
 	deadReference.c  \
+	pingServer.c     \
 	sequenceServer.c \
 	structServer.c   \
 	unionServer.c
