@@ -418,7 +418,7 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 	CORBA_unsigned_long old_len;
 	int i;
 
-	buf = ORBit_alloc_by_tc (tc);
+	buf = ORBit_alloc_tcval (tc, len);
 
 	if (!buf)
 		return FALSE;

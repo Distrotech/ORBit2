@@ -1,5 +1,10 @@
 2001-11-21  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/dynamic/dynany.c
+	(dynany_sequence_realloc_to): undo a stupidity.
+
+2001-11-21  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/iop-profiles.c
 	(IOP_delete_profiles): use orb->profiles not common_profiles.
 	(ORBit_demarshal_IOR): upd.
