@@ -546,7 +546,7 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		break;
 	}
 	case CORBA_tk_union: {
-		gconstpointer   val0 = *val;
+		gpointer        val0 = *val;
 		CORBA_TypeCode  subtc;
 		gpointer        discrim;
 		gpointer        body;
