@@ -1,3 +1,7 @@
+2004-12-13  Joe McCann  <joem@gentoo.org>
+
+	* configure.in: bump libIDL dep to 0.8.2.
+
 2004-11-12  Sandie Vanderme  <sandie.vanderme@bull.net>
 
 	* include/orbit/orb-core/Makefile.am
