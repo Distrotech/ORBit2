@@ -35,6 +35,7 @@ typedef struct {
   char *input_filename;
   char *backend_directory;
   char *deps_file;
+  char *header_guard_prefix;
   gboolean onlytop;
   gboolean small;
   gboolean small_stubs;
