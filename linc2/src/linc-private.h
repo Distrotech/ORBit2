@@ -45,6 +45,7 @@ struct _LINCConnectionPrivate {
 typedef struct {
 	GSource       source;
 
+        GIOChannel   *channel;
 	GPollFD       pollfd;
 	GIOCondition  condition;
 	GIOFunc       callback;

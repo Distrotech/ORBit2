@@ -1,3 +1,13 @@
+2002-10-10  Roland Juelich <rj@atecom.com>
+
+	* src/linc-source.c (linc_io_add_watch): create our own
+	LincWatch and pass the channel on to 
+	(linc_source_create_watch): here, store the channel for
+	the callback.
+
+	* src/linc-private.h: store GIOChannel in watch for use
+	in source dispatcher.
+
 2002-01-09  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.13

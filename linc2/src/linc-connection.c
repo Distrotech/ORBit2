@@ -522,11 +522,10 @@ write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
 					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
 					return LINC_IO_QUEUED_DATA;
 
-				else if (errno == EBADF) {
+				else if (errno == EBADF)
 					g_warning ("Serious fd usage error %d", cnx->priv->fd);
-					return LINC_IO_FATAL_ERROR;
-				} else
-					return LINC_IO_FATAL_ERROR; /* Unhandlable error */
+				
+				return LINC_IO_FATAL_ERROR; /* Unhandlable error */
 			}
 
 		} else if (n == 0) /* CHECK: is this really an error condition */
