@@ -1,5 +1,11 @@
 TODO:
 
+* Cross thread Object references
+	+ I think the way to fix this is by using a different
+	  interface->adaptor_type: ORBIT_ADAPTOR_POA_THREADED,
+	  such that the fast case will always drop through to
+	  small_invoke_stub_n, where we can get far more creative.
+
 * Threading 
 	+ GIOPMessageQueueEntry needs to hold a cnx ref.
 	+ orb->current_invocations needs to be per-thread ...
