@@ -299,9 +299,10 @@ giop_connection_initiate(const char *proto_name,
 	  g_object_unref(G_OBJECT(cnx)); cnx = NULL;
 	}
       else
-	giop_connection_list_add(cnx);
-
-      g_object_ref (G_OBJECT(cnx));
+        {
+	  giop_connection_list_add(cnx);
+          g_object_ref (G_OBJECT(cnx));
+        }
     }
 
   O_MUTEX_UNLOCK(cnx_list.lock);

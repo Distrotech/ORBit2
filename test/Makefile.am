@@ -1,4 +1,4 @@
-SUBDIRS = everything
+SUBDIRS = everything inhibit
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
@@ -70,7 +70,7 @@ test_any_built: test-any.idl $(IDL)
 	$(IDL) --showcpperrors $(srcdir)/test-any.idl
 	touch test_any_built
 
-BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT)
-CLEANFILES=echo_built empty_built test1_built test_any_built $(BUILT_SOURCES)
+BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT) $(DYNANY_IDLOUT)
+CLEANFILES=dynany_built echo_built empty_built test1_built test_any_built $(BUILT_SOURCES)
 
-EXTRA_DIST=echo.idl empty.idl test-any.idl test1.idl
+EXTRA_DIST=echo.idl empty.idl test-any.idl test1.idl dynany.idl

@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#undef DEBUG
+#define DEBUG
 #undef DEBUG_LOCAL_TEST
 
 gpointer

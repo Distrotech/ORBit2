@@ -1,5 +1,10 @@
 2001-05-30  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-connection.c (giop_connection_initiate):
+	only ref the connection if we didn't just destroy it.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_stub): 
 	don't do an alloca (0), just use &obj - this points to
 	the stack in a safer, quicker and cleaner way.
