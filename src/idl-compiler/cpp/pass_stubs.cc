@@ -276,7 +276,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	
 	//Constructor implemention:
 	m_module << mod_indent
-		 << iface.get_cpp_stub_typename () << "::"
+		 << iface.get_cpp_stub_method_prefix () << "::"
 		 << iface.get_cpp_stub_identifier ()
 		 << " (" << iface.get_c_typename () << " cobject, bool take_copy /*= false */):" << endl;
 	m_module << mod_indent << base_name << "(cobject, take_copy)" << endl
@@ -285,7 +285,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	// _orbitcpp wrap method:
 	m_module << mod_indent
 		 << iface.get_cpp_stub_typename () << " * "
-		 << iface.get_cpp_stub_typename () << "::"
+		 << iface.get_cpp_stub_method_prefix () << "::"
 		 << "_orbitcpp_wrap"
 		 << " (" << iface.get_c_typename () << " cobject, bool take_copy /* = false */)" << endl
 		 << mod_indent++ << "{" << endl;
