@@ -66,25 +66,12 @@ GIOPMessageInfo giop_recv_buffer_data_read(GIOPRecvBuffer *buf,
 					   int n, gboolean is_auth,
 					   GIOPConnection *cnx);
 
-guint giop_recv_buffer_reply_status(GIOPRecvBuffer *buf);
+#define giop_recv_buffer_reply_status(buf) (                                            \
+	(buf)->msg.header.version [1] ==  2 ? (buf)->msg.u.reply_1_2.reply_status :     \
+	(buf)->msg.header.version [1] ==  1 ? (buf)->msg.u.reply_1_1.reply_status :     \
+	(buf)->msg.header.version [1] ==  0 ? (buf)->msg.u.reply_1_0.reply_status : 0   \
+)
 
-extern inline guint giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
-{
-  switch(buf->msg.header.version[1])
-    {
-    case 0:
-      return buf->msg.u.reply_1_0.reply_status;
-      break;
-    case 1:
-      return buf->msg.u.reply_1_1.reply_status;
-      break;
-    case 2:
-      return buf->msg.u.reply_1_2.reply_status;
-      break;
-    }
-
-  return 0;
-}
 CORBA_unsigned_long giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf);
 char *giop_recv_buffer_get_opname(GIOPRecvBuffer *buf);
 CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey(GIOPRecvBuffer *buf);

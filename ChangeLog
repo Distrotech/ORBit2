@@ -1,5 +1,11 @@
 2001-09-21  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/GIOP/giop-recv-buffer.c,
+	  include/orbit/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_reply_status): macroise - another forte fix.
+
+2001-09-21  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-typecode.c (CDR_get): remove
 	unused align param. Tidy up macros, hard code the 
 	CDR alignments. Fixes a forte build problem.
