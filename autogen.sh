@@ -1,6 +1,11 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
+srcdir=`dirname $0`
+test -z "$srcdir" && srcdir=.
+
+pushd $srcdir
+
 DIE=0
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
@@ -59,15 +64,10 @@ echo processing libIDL
     aclocal $ACLOCAL_FLAGS; \
     autoconf)
 
-if [ -z "$OBJ_DIR" ]; then
-	echo "Running ./configure --enable-maintainer-mode" "$@"
-	./configure --enable-maintainer-mode "$@"
-else
-	mkdir -p "$OBJ_DIR"
-	cd "$OBJ_DIR"
-	echo "Running ../configure --enable-maintainer-mode" "$@"
-	../configure --enable-maintainer-mode "$@"
-fi
+popd
+
+echo "Running ./configure --enable-maintainer-mode" "$@"
+$srcdir/configure --enable-maintainer-mode "$@"
 
 echo 
 echo "Now type 'make' to compile ORBit."
