@@ -1,3 +1,15 @@
+2003-07-01  Frank Rehberger  <frehberg@localhost.localdomain>
+
+	* src/orb/orb-core/corba-any.c (ORBit_sequence_alloc): invoke
+	CORBA_sequence_set_release (seq, CORBA_TRUE) on new sequence,
+	otherwise _buffer wouldn't be CORBA_free'd! Length of new sequence
+	is 0 instead of _length==_maximum.
+	(ORBit_sequence_append): calculate resized seq-length by
+	new_len = MAX (2, (seq->_maximum * 2));
+
+	* test/everything/client.c (testSequenceHelpers): extend
+	ORBit_sequence* tests
+
 2003-06-30  Padraig O'Briain <padraig.obriain@sun.com>
 
 	* linc2/src/linc-connection.c: Move link_source_remove and 

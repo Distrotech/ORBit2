@@ -67,11 +67,12 @@ static void
 testSequenceHelpers (void)
 {
 	CORBA_long l;
-	test_BoundedLongSeq *lseq;
+	test_BoundedLongSeq        *lseq = NULL;
+	
 
 	lseq = ORBit_sequence_alloc (TC_test_BoundedLongSeq, 2);
 	g_assert (lseq != NULL);
-	g_assert (lseq->_length == 2);
+	g_assert (lseq->_length ==  0);
 	g_assert (lseq->_maximum >= 2);
 
 	l = 1;
@@ -79,14 +80,54 @@ testSequenceHelpers (void)
 	l++;
 	ORBit_sequence_append (lseq, &l);
 	
-	g_assert (lseq->_length == 4);
-	g_assert (ORBit_sequence_index (lseq, 2) == 1);
-	g_assert (ORBit_sequence_index (lseq, 3) == 2);
+	g_assert (lseq->_length == 2);
+	g_assert (ORBit_sequence_index (lseq, 0) == 1);
+	g_assert (ORBit_sequence_index (lseq, 1) == 2);
 
 	ORBit_sequence_set_size (lseq, 100);
 	ORBit_sequence_set_size (lseq, 0);
 
 	CORBA_free (lseq);
+
+	/* test incremental reallocation of memory */
+	{
+		CORBA_long i = 0;
+		CORBA_long j = 0;
+
+		/* 16 times double capacity of buffer */
+		CORBA_long MAX_APPEND = 1<<16; 
+		/* generic sequence<octet> test */ 
+		CORBA_sequence_CORBA_octet *oseq = NULL;
+		
+		g_warning ("FIXME, for sequences of capacity=0 append fails ");
+		oseq = ORBit_sequence_alloc (TC_CORBA_sequence_CORBA_octet, 1);
+		
+		g_assert (oseq != NULL);
+		g_assert (oseq->_length == 0);
+		g_assert (oseq->_maximum >= 0);
+
+		for (i = 0; i < MAX_APPEND; ++i)
+		{
+			CORBA_octet oct = (CORBA_octet) (i % 109);
+			/* _append does shallow copy */ 
+			ORBit_sequence_append (oseq, &oct); /* realloc */ 
+			g_assert (i+1==oseq->_length);
+			
+			/* infrequent check, complete seq has been
+			 * copied on realloc? */
+			if (i % 367 == 0) 
+			for (j = 0; j < oseq->_length; ++j /* prim */ )
+			{
+				CORBA_octet j_check = (CORBA_octet) (j % 109);
+				CORBA_octet j_value = ORBit_sequence_index (oseq, j);
+				g_assert (j_value==j_check);
+			}
+		}
+		
+		CORBA_free (oseq);
+	}
+
+	g_warning ("FIXME, check ORBit_sequence* family for memory leaks");
 }
 
 static void

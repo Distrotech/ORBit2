@@ -1165,8 +1165,10 @@ ORBit_sequence_alloc (CORBA_TypeCode      sequence_tc,
 	
 	seq = ORBit_alloc_by_tc (sequence_tc);
 	seq->_buffer = ORBit_small_allocbuf (tc, length);
-	seq->_length = length;
+	seq->_length  = 0;
 	seq->_maximum = length;
+	
+	CORBA_sequence_set_release (seq, CORBA_TRUE);
 
 	g_assert (ORBit_alloc_get_tcval (seq) == sequence_tc);
 
@@ -1241,11 +1243,14 @@ ORBit_sequence_append (gpointer      sequence,
 	g_return_if_fail (tc->kind == CORBA_tk_sequence);
 
 	if (seq->_length == seq->_maximum) {
+		/* take care for _maximum==0 */ 
+		guint new_len = MAX (2, (seq->_maximum * 2));
+
 		/* NB. extend maximum, not length */
 		seq->_buffer = ORBit_realloc_tcval
 			(seq->_buffer, subtc,
-			 seq->_maximum, seq->_maximum * 2);
-		seq->_maximum *= 2;
+			 seq->_maximum, new_len );
+		seq->_maximum = new_len;
 	}
 
 	element_size = ORBit_gather_alloc_info (subtc);
