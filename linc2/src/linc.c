@@ -10,6 +10,7 @@ SSL_CTX *linc_ssl_ctx;
 void
 linc_init(void)
 {
+  g_thread_init(NULL);
   g_type_init();
 
   linc_loop = g_main_new(FALSE);

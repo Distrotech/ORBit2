@@ -50,6 +50,7 @@ static void
 linc_server_init       (LINCServer      *cnx)
 {
   O_MUTEX_INIT(cnx->mutex);
+  cnx->fd = -1;
 }
 
 static void
@@ -57,10 +58,11 @@ linc_server_destroy(GObject         *obj)
 {
   LINCServer *cnx = (LINCServer *)obj;
 
-  O_MUTEX_LOCK(cnx->mutex);
   O_MUTEX_DESTROY(cnx->mutex);
-  g_source_remove(cnx->tag);
-  close(cnx->fd);
+  if(cnx->tag)
+    g_source_remove(cnx->tag);
+  if(cnx->fd >= 0)
+    close(cnx->fd);
   g_free(cnx->local_host_info);
   g_free(cnx->local_serv_info);
 }

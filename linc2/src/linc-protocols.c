@@ -24,16 +24,20 @@ static int irda_getaddrinfo(const char *nodename, const char *servname, const st
 static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
 			    int flags);
+static int sys_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
+static int sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
+			    char *host, size_t hostlen, char *serv, size_t servlen,
+			    int flags);
 
 static LINCProtocolInfo protocol_ents[] = {
 #if defined(AF_INET)
-  {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, NULL, getaddrinfo /* also covers IPv6 & UNIX */, getnameinfo},
+  {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, NULL, sys_getaddrinfo /* also covers IPv6 & UNIX */, sys_getnameinfo},
 #endif
 #if defined(AF_INET6)
-  {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0},
+  {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0, NULL, sys_getaddrinfo, sys_getnameinfo},
 #endif
 #ifdef AF_UNIX
-  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, af_unix_destroy},
+  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, af_unix_destroy, sys_getaddrinfo, sys_getnameinfo},
 #endif
 #ifdef AF_IRDA
   {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, LINC_PROTOCOL_NEEDS_BIND, NULL, irda_getaddrinfo, irda_getnameinfo},
@@ -120,18 +124,42 @@ linc_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 	    default:
 	      rv = tmprv;
 	      keep_going = FALSE;
-#if defined(AF_UNIX)
 	      if(!rv
 		 && !servname
-		 && (hints->ai_flags & AI_PASSIVE)
-		 && ((*res)->ai_family == AF_UNIX))
+		 && (hints->ai_flags & AI_PASSIVE))
 		{
-		  struct sockaddr_un *sun = (struct sockaddr_un *)(*res)->ai_addr;
-		  srand(time(NULL));
-		  g_snprintf(sun->sun_path, sizeof(sun->sun_path),
-			     "%s/linc-%x%x", linc_tmpdir, rand(), rand());
-		}
+		  switch((*res)->ai_family)
+		    {
+#if defined(AF_UNIX)
+		    case AF_UNIX:
+		      {
+			struct sockaddr_un *sun = (struct sockaddr_un *)(*res)->ai_addr;
+			srand(time(NULL));
+			g_snprintf(sun->sun_path, sizeof(sun->sun_path),
+				   "%s/linc-%x%x", linc_tmpdir, rand(), rand());
+		      }
+		      break;
 #endif
+#if defined(AF_INET)
+		    case AF_INET:
+		      {
+			struct sockaddr_in *sin = (struct sockaddr_in *)(*res)->ai_addr;
+			sin->sin_port = 0;
+		      }
+		      break;
+#endif
+#if defined(AF_INET6)
+		    case AF_INET6:
+		      {
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)(*res)->ai_addr;
+			sin6->sin6_port = 0;
+		      }
+		      break;
+#endif
+		    default:
+		      break;
+		    }
+		}
 	      break;
 	    }
 	}
@@ -218,6 +246,7 @@ irda_getaddrinfo(const char *nodename, const char *servname, const struct addrin
   struct addrinfo *retval;
   char hnbuf[IRDA_NICKNAME_MAX + strlen(IRDA_PREFIX)];
   int n;
+  char *tptr;
 
   /* For now, it *has* to start with IRDA_PREFIX to be in the IRDA
      hostname/address format we use */
@@ -258,15 +287,20 @@ irda_getaddrinfo(const char *nodename, const char *servname, const struct addrin
       else
 	return EAI_NONAME;
     }
-  /* else, AI_PASSIVE flag gets ignored */
+  else
+    /* AI_PASSIVE flag gets ignored, sort of */
+    hnbuf[0] = 0;
 
   n = sizeof(struct addrinfo) + sizeof(struct sockaddr_irda);
   if(hints->ai_flags & AI_CANONNAME)
     n += strlen(hnbuf) + 1;
-  retval = calloc(1, n);
-  retval->ai_addr = (struct sockaddr *)(((guchar *)retval) + sizeof(struct addrinfo));
+  retval = g_malloc0(n);
+  tptr = (char *)retval;
+  tptr += sizeof(struct addrinfo);
+  retval->ai_addr = (struct sockaddr *)tptr;
   memcpy(retval->ai_addr, &sai, sizeof(struct sockaddr_irda));
-  strcpy(((guchar *)retval) + sizeof(struct addrinfo) + sizeof(struct sockaddr_irda), nodename);
+  tptr += sizeof(struct sockaddr_irda);
+  strcpy(tptr, hnbuf);
   retval->ai_family = AF_IRDA;
   retval->ai_socktype = SOCK_STREAM;
   retval->ai_protocol = 0;
@@ -316,3 +350,21 @@ irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
   return 0;
 }
 #endif
+
+static int
+sys_getaddrinfo(const char *nodename, const char *servname,
+		const struct addrinfo *hints, struct addrinfo **res)
+{
+  if(!nodename && !servname && hints)
+    servname = "0";
+
+  return getaddrinfo(nodename, servname, hints, res);
+}
+
+static int
+sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
+		char *host, size_t hostlen, char *serv, size_t servlen,
+		int flags)
+{
+  return getnameinfo(sa, sa_len, host, hostlen, serv, servlen, flags);
+}
