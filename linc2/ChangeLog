@@ -1,3 +1,15 @@
+2002-03-21  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.1.20
+
+2002-03-21  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_handle_io): fix
+	warning spew.
+
+	* src/linc-protocols.c (linc_protocol_destroy_addr):
+	check family for AF_UNIX.
+
 2002-03-20  Gregory Leblanc  <gleblanc@linuxweasel.com>
 
 	* configure.in: Adding missing AC_SUBST

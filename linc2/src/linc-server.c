@@ -220,7 +220,9 @@ linc_server_handle_io (GIOChannel  *gioc,
 		g_value_init (parms, G_OBJECT_TYPE (server));
 		g_value_set_object (parms, G_OBJECT (server));
 		g_value_init (parms + 1, G_TYPE_OBJECT);
-		g_value_set_object (parms + 1, G_OBJECT (connection));
+
+		/* FIXME: this connection is always NULL */
+		g_value_set_object (parms + 1, (GObject *) connection);
 
 		d_printf ("p %d, Non-accepted input on fd %d",
 			  getpid (), server->priv->fd);
