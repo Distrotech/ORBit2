@@ -5,18 +5,11 @@
 void
 orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 {
-  IDL_tree attr_name, ident, curnode, op1, op2;
-  IDL_ns intf_ns;
+  IDL_tree attr_name, ident, curnode, op1, op2, intf;
   GString *attrname;
   OIDL_Attr_Info *setme;
 
   g_assert(attr && IDL_NODE_TYPE(attr) == IDLN_ATTR_DCL);
-
-#if 0
-  intf_ns = IDL_IDENT_TO_NS(IDL_INTERFACE(IDL_get_parent_node(attr, IDLN_INTERFACE, NULL)).ident);
-#else
-  intf_ns = ns;
-#endif
 
   attrname = g_string_new(NULL);
 
@@ -31,7 +24,9 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
     IDL_IDENT_TO_NS(ident) = IDL_IDENT_TO_NS(attr_name);
     op1 = IDL_op_dcl_new(0, IDL_ATTR_DCL(attr).param_type_spec, ident, NULL, NULL, NULL);
     IDL_NODE_UP(op1) = IDL_NODE_UP(attr);
-    IDL_ns_place_new(intf_ns, ident);
+    intf = IDL_NODE_UP (IDL_NODE_UP (op1));
+    IDL_NS(ns).current = IDL_IDENT_TO_NS (IDL_INTERFACE (intf).ident);
+    IDL_ns_place_new(ns, ident);
 
     if(!IDL_ATTR_DCL(attr).f_readonly) {
       g_string_sprintf(attrname, "_set_%s",
@@ -40,7 +35,9 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
       IDL_IDENT_TO_NS(ident) = IDL_IDENT_TO_NS(attr_name);
       op2 = IDL_op_dcl_new(0, NULL, ident, NULL, NULL, NULL);
       IDL_NODE_UP(op2) = IDL_NODE_UP(attr);
-      IDL_ns_place_new(intf_ns, ident);
+      intf = IDL_NODE_UP (IDL_NODE_UP (op2));
+      IDL_NS(ns).current = IDL_IDENT_TO_NS (IDL_INTERFACE (intf).ident);
+      IDL_ns_place_new(ns, ident);
       IDL_OP_DCL(op2).parameter_dcls = IDL_list_new(
 						    IDL_param_dcl_new(IDL_PARAM_IN,
 								      IDL_ATTR_DCL(attr).param_type_spec,
