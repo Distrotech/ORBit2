@@ -81,7 +81,12 @@ cc_small_build_types (OIDL_C_Info *ci,
 
 	    break;
 	}
-	case IDLN_EXCEPT_DCL:
+	case IDLN_TYPE_UNION:
+		if (IDL_NODE_TYPE (IDL_TYPE_UNION (tree).switch_type_spec) == IDLN_TYPE_ENUM)
+			cc_small_build_types (
+				ci, IDL_TYPE_UNION (tree).switch_type_spec, count);
+
+	case IDLN_EXCEPT_DCL:       /* drop through */
 	case IDLN_TYPE_INTEGER:
 	case IDLN_TYPE_ANY:
 	case IDLN_TYPE_STRING:
@@ -93,7 +98,6 @@ cc_small_build_types (OIDL_C_Info *ci,
 	case IDLN_TYPE_OCTET:
 	case IDLN_TYPE_SEQUENCE:
 	case IDLN_TYPE_STRUCT:
-	case IDLN_TYPE_UNION:
 	case IDLN_TYPE_ENUM:
 	case IDLN_IDENT:
 	case IDLN_FORWARD_DCL:
