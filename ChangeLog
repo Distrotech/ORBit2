@@ -1,3 +1,9 @@
+2001-12-06  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/GIOP/giop.c (giop_dump_recv): start dumping
+	the message body at message_body + 12. Why do we allocate
+	this space?
+
 2001-12-05  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-any.c (ORBit_marshal_value): align
