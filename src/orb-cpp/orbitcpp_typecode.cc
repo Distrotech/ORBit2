@@ -22,53 +22,59 @@
  *  Author: Sam Couter <sam@topic.com.au>
  */
 
-#include <orb/orbitcpp_typecode.hh>
-#include <orb/orbitcpp_exception.hh>
+#include "orbitcpp_typecode.hh"
+#include "orbitcpp_exception.hh"
+#include <orbit/orb-core/corba-typecode.h>
+
 
 using namespace _orbitcpp;
+
 
 CORBA::TypeCode_ptr CORBA::_tc_null =
 	reinterpret_cast <CORBA::TypeCode_ptr> (TC_null);
 CORBA::TypeCode_ptr CORBA::_tc_void =
 	reinterpret_cast <CORBA::TypeCode_ptr> (TC_void);
 CORBA::TypeCode_ptr CORBA::_tc_short =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_short);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_short);
 CORBA::TypeCode_ptr CORBA::_tc_long =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_long);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_long);
 CORBA::TypeCode_ptr CORBA::_tc_longlong =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_longlong);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_long_long);
 CORBA::TypeCode_ptr CORBA::_tc_ushort =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_ushort);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_unsigned_short);
 CORBA::TypeCode_ptr CORBA::_tc_ulong =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_ulong);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_unsigned_long);
 CORBA::TypeCode_ptr CORBA::_tc_ulonglong =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_ulonglong);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_unsigned_long_long);
 CORBA::TypeCode_ptr CORBA::_tc_float =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_float);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_float);
 CORBA::TypeCode_ptr CORBA::_tc_double =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_double);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_double);
 CORBA::TypeCode_ptr CORBA::_tc_longdouble =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_longdouble);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_long_double);
 CORBA::TypeCode_ptr CORBA::_tc_boolean =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_boolean);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_boolean);
 CORBA::TypeCode_ptr CORBA::_tc_char =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_char);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_char);
 CORBA::TypeCode_ptr CORBA::_tc_wchar =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_wchar);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_wchar);
 CORBA::TypeCode_ptr CORBA::_tc_octet =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_octet);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_octet);
 CORBA::TypeCode_ptr CORBA::_tc_any =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_any);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_any);
 CORBA::TypeCode_ptr CORBA::_tc_TypeCode =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_TypeCode);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_TypeCode);
+/* There doesn't seem to be a TypeCode defined for CORBA_Principal yet... */
+#if 0
 CORBA::TypeCode_ptr CORBA::_tc_Principal =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_Principal);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_Principal);
+#endif
 CORBA::TypeCode_ptr CORBA::_tc_Object =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_Object);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_Object);
 CORBA::TypeCode_ptr CORBA::_tc_string =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_string);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_string);
 CORBA::TypeCode_ptr CORBA::_tc_wstring =
-	reinterpret_cast <CORBA::TypeCode_ptr> (TC_wstring);
+	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_wstring);
 
 CORBA::Boolean
 CORBA::TypeCode::equal(TypeCode_ptr tc) const
@@ -290,7 +296,7 @@ CORBA::TypeCode::member_visibility(ULong index) const
 CORBA::ValueModifier
 CORBA::TypeCode::type_modifier() const
 {
-	CORBA::ValueModifier retval;
+	CORBA::ValueModifier retval = 0;
 	CEnvironment ev;
 
 	/* not implemented by ORBit */

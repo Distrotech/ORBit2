@@ -33,8 +33,8 @@
 
 
 
-#include <orb/orbitcpp_types.hh>
-#include <orb/orbitcpp_tools.hh>
+#include "orbitcpp_types.hh"
+#include "orbitcpp_tools.hh"
 
 
 
@@ -160,7 +160,7 @@ namespace CORBA {
 	};
 	
 	#define P(name,quotedname) ORBITCPP_SYSEXCEPTION_FACTORY(name,quotedname)
-	#include <orb/orbitcpp_exceptionlist.hh>
+	#include "orbitcpp_exceptionlist.hh"
 	#undef P
 
 	class UserException : public Exception {

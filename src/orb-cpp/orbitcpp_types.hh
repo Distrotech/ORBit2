@@ -27,7 +27,7 @@
 #ifndef __ORBITCPP_BASICTYPES_HH
 #define __ORBITCPP_BASICTYPES_HH
 
-#include <orb/orbit.h>
+#include <orbit/orbit.h>
 
 
 

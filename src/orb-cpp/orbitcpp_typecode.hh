@@ -25,10 +25,10 @@
 #ifndef __ORBITCPP_TYPECODE_HH
 #define __ORBITCPP_TYPECODE_HH
 
-#include <orb/corba_typecode.h>
-#include <orb/orbitcpp_object.hh>
-#include <orb/orbitcpp_exception.hh>
-#include <orb/orbitcpp_sequence.hh>
+#include <orbit/orb-core/corba-typecode.h>
+#include "orbitcpp_object.hh"
+#include "orbitcpp_exception.hh"
+#include "orbitcpp_sequence.hh"
 
 namespace CORBA {
 

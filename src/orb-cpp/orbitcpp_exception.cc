@@ -27,7 +27,8 @@
 
 
 
-#include <orb/orbitcpp_exception.hh>
+#include "orbitcpp_exception.hh"
+#include <string.h>
 
 
 
@@ -69,7 +70,7 @@ _orbitcpp::CEnvironment::propagate_sysex_guts() {
 	const char *repo_id = CORBA_exception_id(&m_env);	
 
     #define P(name,quotedrepoid) ORBITCPP_SYSEX_THROW_O_MATIC(name,quotedrepoid)
-	#include <orb/orbitcpp_exceptionlist.hh>
+	#include "orbitcpp_exceptionlist.hh"
     #undef P
 	
 	CORBA_exception_free(&m_env);

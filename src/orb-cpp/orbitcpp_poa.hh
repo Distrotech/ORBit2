@@ -34,19 +34,18 @@
 
 
 
-#include <orb/orbitcpp_smartptr.hh>
-#include <orb/orbitcpp_orb.hh>
-#include <orb/orbitcpp_object.hh>
-#include <orb/orbitcpp_exception.hh>
-#include <orb/orbitcpp_sequence.hh>
-
+#include "orbitcpp_smartptr.hh"
+#include "orbitcpp_orb.hh"
+#include "orbitcpp_object.hh"
+#include "orbitcpp_exception.hh"
+#include "orbitcpp_sequence.hh"
 
 
 
 namespace PortableServer {
 	ORBITCPP_DECLARE_SIMPLE_SEQUENCE(CORBA::Octet,
-		CORBA_sequence_octet__alloc,
-		CORBA_octet_allocbuf,
+		CORBA_sequence_CORBA_octet__alloc,
+		CORBA_sequence_CORBA_octet_allocbuf,
 		PortableServer_ObjectId,
 		ObjectId)
 

@@ -30,6 +30,8 @@ INCLUDES =                                    \
 	$(WARN_CFLAGS)                        \
 	$(ORBIT_IDL_CFLAGS)
 
+if ENABLE_CPP
+
 noinst_LTLIBRARIES = libidl-cpp.la
 
 headers = \
@@ -61,3 +63,5 @@ libidl_cpp_la_SOURCES = \
 	$(headers) $(modules)
 
 libidl_cpp_la_LIBADD = -lstdc++
+
+endif

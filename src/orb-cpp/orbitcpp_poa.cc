@@ -27,7 +27,7 @@
 
 
 
-#include <orb/orbitcpp_poa.hh>
+#include "orbitcpp_poa.hh"
 
 
 

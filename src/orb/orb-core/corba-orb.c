@@ -378,7 +378,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	return ORBit_RootObject_duplicate (objref);
 }
 
-static CORBA_TypeCode
+CORBA_TypeCode
 CORBA_TypeCode_allocate (void)
 {
 	CORBA_TypeCode tc = g_new0 (struct CORBA_TypeCode_struct, 1);

@@ -91,14 +91,16 @@ idlGetNodeLocation(IDL_tree node) {
 
 
 string idlGetNodeTypeString(IDL_tree node) {
-	return idlGetTypeString(IDL_NODE_TYPE(node));
+	char const *original = IDL_NODE_TYPE_NAME(node);
+
+	return idlLower(original);
 }
 
 
 
 
 string idlGetTypeString(IDL_tree_type type) {
-	char const *original = IDL_tree_type_names[type]+5;
+	char const *original = IDL_tree_type_names[type];
   
 	return idlLower(original);
 }

@@ -1,6 +1,11 @@
-## Process this file with automake to produce Makefile.in
-
 lib_LTLIBRARIES = liborbitcpp.la
+
+INCLUDES = \
+	-I. \
+	-I$(top_srcdir)/include \
+	-DORBIT2_INTERNAL_API \
+	$(WARN_CFLAGS) \
+	$(ORBIT_CFLAGS)
 
 liborbitcppincludedir = $(includedir)/orb
 
@@ -33,5 +38,5 @@ liborbitcpp_la_SOURCES = \
 			orbitcpp_typecode.cc
 			$(liborbitcppinclude_HEADERS)
 
-liborbitcpp_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+liborbitcpp_la_LDFLAGS = -version-info $(LT_VERSION)
 liborbitcpp_la_LIBADD = $(ORBIT_LIBS) -lstdc++

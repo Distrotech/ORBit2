@@ -30,10 +30,10 @@
 #define __ORBITCPP_TOOLS_HH
 
 
-#include <orb/orbit.h>
+#include <orbit/orbit.h>
 
-#include <orb/orbitcpp_config.hh>
-#include <orb/orbitcpp_types.hh>
+#include "orbitcpp_config.hh"
+#include "orbitcpp_types.hh"
 
 
 

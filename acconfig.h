@@ -11,4 +11,6 @@
 /* Define to 'int' if it isn't defined in the header files. */
 #undef socklen_t
 
-#undef  ORBIT_PURIFY
+#undef ORBIT_PURIFY
+
+#undef ORBIT_ENABLE_CPP

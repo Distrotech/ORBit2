@@ -43,7 +43,7 @@
 
 // Useful macros --------------------------------------------------------------
 #define ORBITCPP_EXPECT_TYPE(node,type) \
-	if (node->_type != type) \
+	if (IDL_NODE_TYPE(node) != type) \
 	throw IDLExNodeType(node,type);
 #define ORBITCPP_MEMCHECK(item) \
 	if (!item) throw IDLExMemory();

@@ -21,6 +21,8 @@ guint     ORBit_ORB_idle_init     (CORBA_ORB orb);
 
 void      ORBit_ORB_start_servers (CORBA_ORB orb);
 
+CORBA_TypeCode CORBA_TypeCode_allocate(void);
+
 #endif /* ORBIT2_INTERNAL_API */
 
 #endif

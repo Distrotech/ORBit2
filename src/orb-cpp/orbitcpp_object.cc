@@ -27,8 +27,8 @@
 
 
 
-#include <orb/orbitcpp_object.hh>
-#include <orb/orbitcpp_exception.hh>
+#include "orbitcpp_object.hh"
+#include "orbitcpp_exception.hh"
 
 
 

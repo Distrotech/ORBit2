@@ -31,7 +31,8 @@
 
 #include <cstddef>
 #include <cassert>
-#include <orb/orbitcpp_smartptr.hh>
+#include "orbitcpp_smartptr.hh"
+#include <orbit/orb-core/orb-core.h>
 
 
 
