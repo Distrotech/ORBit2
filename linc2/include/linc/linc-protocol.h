@@ -67,6 +67,7 @@ struct _LINCProtocolInfo {
 LINCProtocolInfo * const linc_protocol_find     (const char *name);
 LINCProtocolInfo * const linc_protocol_find_num (const int   family);
 LINCProtocolInfo * const linc_protocol_all      (void);
+char                    *linc_get_tmpdir        (void);
 void                     linc_set_tmpdir        (const char *dir);
 
 G_END_DECLS
