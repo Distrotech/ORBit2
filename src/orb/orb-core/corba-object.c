@@ -430,5 +430,5 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
 gpointer
 CORBA_Object__freekids(gpointer mem, gpointer dat)
 {
-  return CORBA_Object__freekids_T(mem, dat);
+  return mem + sizeof(CORBA_Object);
 }
