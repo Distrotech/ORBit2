@@ -30,8 +30,6 @@
 #include "orbitcpp_poa.hh"
 
 
-
-
 using namespace _orbitcpp;
 
 
@@ -138,16 +136,21 @@ PortableServer::POA::_nil() {
 
 
 PortableServer::ObjectId *
-PortableServer::POA::activate_object (PortableServer::Servant srv) {
+PortableServer::POA::activate_object (PortableServer::Servant srv)
+{
 	CEnvironment ev;
 	srv->_add_ref();
 	// Get the C servant structure out of the object
 	PortableServer_Servant c_servant = srv->_orbitcpp_get_c_servant();
 	PortableServer_ObjectId* coid =
-	    PortableServer_POA_activate_object(_orbitcpp_cobj(),
-														 c_servant, ev._orbitcpp_cobj());
+	    PortableServer_POA_activate_object(_orbitcpp_cobj(), c_servant, ev._orbitcpp_cobj());
 	ev.propagate_sysex();
-	return reinterpret_cast<PortableServer::ObjectId *>(coid);
+	
+	PortableServer::ObjectId *retval = new PortableServer::ObjectId;
+	retval->_orbitcpp_unpack (*coid);
+	CORBA_free (coid);
+
+	return retval;
 }
 
 
@@ -165,8 +168,7 @@ PortableServer::Servant srv ) {
 void
 PortableServer::POA::deactivate_object(PortableServer::ObjectId const &oid) {
 	CEnvironment ev;
-	PortableServer_ObjectId *coid =
-		reinterpret_cast<PortableServer_ObjectId *>(const_cast<PortableServer::ObjectId*>(&oid));
+	PortableServer_ObjectId *coid = oid._orbitcpp_pack ();
 
 #ifdef ORBIT_05X
 	PortableServer_ServantBase	*servant = (PortableServer_ServantBase*) PortableServer_POA_id_to_servant(_orbitcpp_cobj(), coid, ev._orbitcpp_cobj());
@@ -188,6 +190,7 @@ PortableServer::POA::deactivate_object(PortableServer::ObjectId const &oid) {
 	}
 #endif
 
+	CORBA_free (coid);
 }
 
 
@@ -200,7 +203,12 @@ PortableServer::POA::servant_to_id(PortableServer::Servant srv) {
 	PortableServer_ObjectId* coid =
 	    PortableServer_POA_servant_to_id(_orbitcpp_cobj(), c_servant, ev._orbitcpp_cobj());
 	ev.propagate_sysex();
-	return reinterpret_cast<PortableServer::ObjectId *>(coid);
+
+	PortableServer::ObjectId *retval = new PortableServer::ObjectId;
+	retval->_orbitcpp_unpack (*coid);
+	CORBA_free (coid);
+
+	return retval;
 }
 
 
@@ -251,7 +259,12 @@ PortableServer::POA::reference_to_id(CORBA::Object_ptr obj) {
 	PortableServer_ObjectId* coid =
 	    PortableServer_POA_reference_to_id(_orbitcpp_cobj(), obj->_orbitcpp_cobj(), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
-	return reinterpret_cast<PortableServer::ObjectId *>(coid);
+
+	ObjectId *retval = new ObjectId;
+	retval->_orbitcpp_unpack (*coid);
+	CORBA_free (coid);
+
+	return retval;
 }
 
 
@@ -271,7 +284,8 @@ PortableServer::POA::id_to_servant(PortableServer::ObjectId const &oid) {
 
 
 CORBA::Object_ptr
-PortableServer::POA::id_to_reference(ObjectId const &oid) {
+PortableServer::POA::id_to_reference(ObjectId const &oid)
+{
 	CEnvironment ev;
 	PortableServer_ObjectId* c_oid = oid._orbitcpp_pack();
 	CORBA_Object o =

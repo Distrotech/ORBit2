@@ -1,5 +1,14 @@
 2002-05-02  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/orb-cpp/orbitcpp_poa.cc: Use new Sequence packer/unpacker
+	methods
+
+	* src/orb-cpp/orbitcpp_smartptr.hh: Use new Sequence internal
+	typenames
+
+	* src/orb-cpp/orbitcpp_sequence.hh: Lots of memory allocation
+	fixes -- generally, things Work now
+
 	* src/idl-compiler/cpp/pass_xlate.cc: re-enabled a bunch of the Any
 	container class generation
 
