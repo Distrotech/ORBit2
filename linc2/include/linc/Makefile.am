@@ -1,6 +1,7 @@
-lincincludedir=$(includedir)/linc-1.0/linc
+#lincincludedir=$(includedir)/linc-1.0/linc
+#lincinclude_HEADERS=$(headers)
 
-lincinclude_HEADERS=\
+headers = \
 	linc-connection.h \
 	linc-protocol.h \
 	linc-server.h \
@@ -8,5 +9,7 @@ lincinclude_HEADERS=\
 	linc-types.h \
 	linc.h \
 	linc-config.h
+
+EXTRA_DIST=$(headers)
 
 BUILT_SOURCES=linc-config.h
