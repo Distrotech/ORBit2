@@ -11,6 +11,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -24,6 +27,7 @@ static int irda_getaddrinfo(const char *nodename, const char *servname, const st
 static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
 			    int flags);
+static void tcp_setup(int fd);
 static int sys_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
 static int sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
@@ -31,16 +35,16 @@ static int sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 
 static LINCProtocolInfo protocol_ents[] = {
 #if defined(AF_INET)
-  {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, NULL, sys_getaddrinfo /* also covers IPv6 & UNIX */, sys_getnameinfo},
+  {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, tcp_setup, NULL, sys_getaddrinfo /* also covers IPv6 & UNIX */, sys_getnameinfo},
 #endif
 #if defined(AF_INET6)
-  {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0, NULL, sys_getaddrinfo, sys_getnameinfo},
+  {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0, tcp_setup, NULL, sys_getaddrinfo, sys_getnameinfo},
 #endif
 #ifdef AF_UNIX
-  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, af_unix_destroy, sys_getaddrinfo, sys_getnameinfo},
+  {"UNIX", AF_UNIX, sizeof(struct sockaddr_un), 0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, NULL, af_unix_destroy, sys_getaddrinfo, sys_getnameinfo},
 #endif
 #ifdef AF_IRDA
-  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, LINC_PROTOCOL_NEEDS_BIND, NULL, irda_getaddrinfo, irda_getnameinfo},
+  {"IrDA", AF_IRDA, sizeof(struct sockaddr_irda), 0, LINC_PROTOCOL_NEEDS_BIND, NULL, NULL, irda_getaddrinfo, irda_getnameinfo},
 #endif
   {NULL}
 };
@@ -360,4 +364,18 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 		int flags)
 {
   return getnameinfo(sa, sa_len, host, hostlen, serv, servlen, flags);
+}
+
+static void
+tcp_setup(int fd)
+{
+#ifdef TCP_NODELAY
+  struct protoent *proto;
+  int on;
+  proto = getprotobyname("tcp");
+  if(!proto)
+    return;
+  on = 1;
+  setsockopt(fd, proto->p_proto, TCP_NODELAY, &on, sizeof(on));
+#endif
 }
