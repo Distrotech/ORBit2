@@ -279,12 +279,12 @@ CORBA_ORB_init (int *argc, char **argv,
 
 #ifdef G_ENABLE_DEBUG
 	ORBit_setup_debug_flags ();
-#endif /* G_ENABLE_DEBUG */
 
 	if (_orbit_debug_flags & ORBIT_DEBUG_FORCE_THREADED) {
 		g_warning ("-- Forced orb into threaded mode --");
 		threaded |= TRUE;
 	}
+#endif /* G_ENABLE_DEBUG */
 
 	genuid_init ();
 
