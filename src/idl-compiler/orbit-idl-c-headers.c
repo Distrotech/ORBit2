@@ -647,7 +647,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
       orbit_cbe_id_define_hack(ci->fh, "TC_IMPL_TC", ctmp, ci->c_base_name);
   }
 
-  fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+  fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE_%s\n", ci->c_base_name);
   fprintf (ci->fh, "static\n");
   fprintf (ci->fh, "#else\n");
   fprintf (ci->fh, "extern\n");
@@ -1222,7 +1222,8 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 
 		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
       
-		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE_%s\n",
+			 ci->c_base_name);
 		fprintf (ci->fh, "static \n");
 		fprintf (ci->fh, "#else\n");
 		fprintf (ci->fh, "extern \n");
@@ -1234,7 +1235,8 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 		if (num_methods == 0)
 			fprintf (ci->fh, "#define %s__imethods (ORBit_IMethod*) NULL\n", id);
 		else {
-			fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+			fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE_%s\n",
+				 ci->c_base_name);
 			fprintf (ci->fh, "static \n");
 			fprintf (ci->fh, "#else\n");
 			fprintf (ci->fh, "extern \n");
