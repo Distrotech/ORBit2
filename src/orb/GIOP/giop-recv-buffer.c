@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #include "giop-private.h"
 #include <orbit/GIOP/giop-types.h>

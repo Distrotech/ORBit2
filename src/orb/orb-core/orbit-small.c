@@ -675,6 +675,11 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	has_context = (m_data->contexts._length > 0);
 
+#ifdef TRACE_DEBUG
+	tprintf ("p%4x : (%p)->%s (",
+		 getpid (), adaptor_obj, m_data->name);
+#endif
+
 	if ((tc = m_data->ret)) {
 		
 		while (tc->kind == CORBA_tk_alias)
@@ -722,17 +727,24 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			case OBJ_STRING_TYPES:
 				p = args [i] = alloca (ORBit_gather_alloc_info (tc));
 				do_demarshal_value (recv_buffer, &p, tc, orb);
+
+				p = args [i];
+				tprintf_trace_value (&p, tc);
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					p = args [i] = alloca (ORBit_gather_alloc_info (tc));
 					do_demarshal_value (recv_buffer, &p, tc, orb);
+					p = args [i];
+					tprintf_trace_value (&p, tc);
 					break;
 				} /* drop through */
 			default:
 				args [i] = ORBit_demarshal_arg (
 					recv_buffer, a->tc, TRUE, orb);
+				p = args [i];
+				tprintf_trace_value (&p, tc);
 				break;
 			}
 
@@ -759,10 +771,17 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				scratch [i] = NULL;
 				break;
 			}
+
 		}
+
+		if (m_data->arguments._buffer [i+1].flags)
+			tprintf (", ");
 	}
 
+	tprintf (")");
+
 	if (has_context) {
+		tprintf ("[FIXME:context]");
 		if (ORBit_Context_demarshal (NULL, &ctx, recv_buffer))
 			g_warning ("FIXME: handle context demarshaling failure");
 	}
@@ -776,8 +795,9 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 		goto clean_out;
 
  sys_exception:
+	/* FIXME: should we be using the connection's GIOP version ? */
 	send_buffer = giop_send_buffer_use_reply (
-		recv_buffer->connection->giop_version,
+		recv_buffer->giop_version,
 		giop_recv_buffer_get_request_id (recv_buffer),
 		ev->_major);
 
@@ -794,13 +814,20 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				 ev->_major, ev->_id);
 			goto sys_exception;
 		}
+		tprintf ("User exception '%s'", ev->_id);
 
-	} else if (ev->_major != CORBA_NO_EXCEPTION)
+	} else if (ev->_major != CORBA_NO_EXCEPTION) {
 		ORBit_send_system_exception (send_buffer, ev);
-	
-	else { /* Marshal return values */
+
+		tprintf ("System exception");
+
+	} else { /* Marshal return values */
+		int trace_have_out = 0;
+
 		if ((tc = m_data->ret)) {
-			dprintf ("ret: ");
+			gpointer p = retval;
+
+			tprintf (" => ");
 
 			while (tc->kind == CORBA_tk_alias)
 				tc = tc->subtypes [0];
@@ -810,11 +837,13 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			case BASE_TYPES:
 			case OBJ_STRING_TYPES:
 				ORBit_marshal_arg (send_buffer, retval, m_data->ret);
+				tprintf_trace_value (&p, tc);
 				break;
 
 			case STRUCT_UNION_TYPES:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					ORBit_marshal_arg (send_buffer, retval, m_data->ret);
+					tprintf_trace_value (&p, tc);
 					break;
 				} /* drop through */
 
@@ -822,24 +851,47 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			case CORBA_tk_sequence:
 			case CORBA_tk_array:
 			default:
+				p = *(gpointer *) retval;
 				ORBit_marshal_arg (send_buffer, *(gpointer *)retval, m_data->ret);
+				tprintf_trace_value (&p, tc);
 				break;
 			}
 		}
 
 		for (i = 0; i < m_data->arguments._length; i++) {
 			ORBit_IArg *a = &m_data->arguments._buffer [i];
+			gpointer    p;
 			
 			tc = a->tc;
 			while (tc->kind == CORBA_tk_alias)
 				tc = tc->subtypes [0];
 			
-			if (a->flags & ORBit_I_ARG_INOUT)
-				ORBit_marshal_arg (send_buffer, args [i], tc);
+			if (a->flags & ORBit_I_ARG_INOUT) {
+				if (!trace_have_out++)
+					tprintf (" out: (");
 
-			else if (a->flags & ORBit_I_ARG_OUT)
+				ORBit_marshal_arg (send_buffer, args [i], tc);
+				p = args [i];
+				tprintf_trace_value (&p, tc);
+			}
+
+			else if (a->flags & ORBit_I_ARG_OUT) {
+				if (!trace_have_out++)
+					tprintf (" out: (");
+
 				ORBit_marshal_arg (send_buffer, scratch [i], tc);
+
+				p = scratch [i];
+				tprintf_trace_value (&p, tc);
+			}
+
+			if (trace_have_out &&
+			    m_data->arguments._buffer [i + 1].flags &
+			    (ORBit_I_ARG_OUT | ORBit_I_ARG_INOUT))
+				tprintf (", ");
 		}
+		if (trace_have_out)
+			tprintf (" )");
 	}
 
 	do_giop_dump_send (send_buffer);
@@ -871,6 +923,8 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	}
 
  clean_out:
+	tprintf ("\n");
+
 	for (i = 0; i < m_data->arguments._length; i++) {
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
 		

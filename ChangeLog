@@ -1,3 +1,25 @@
+2001-10-03  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): use the incomming buffer's
+	giop_version on the reply, not the connection's version.
+	FIXME: either the connections ver. negotiation is broken
+	or using it was broken - investigate.
+
+	* test/everything/client.c (main): add a 'success' printf.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): trace all incoming data.
+
+	* src/orb/orb-core/orbit-debug.h: include stdio if
+	debug is turned on for fprintf.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_TAG_ORBIT_SPECIFIC_marshal): output the IIOP version
+	fields - because ORBit 1 expects this.
+	(IOP_TAG_ORBIT_SPECIFIC_demarshal): ignore the IOP version
+	fields.
+
 2001-09-25  Mark McLoughlin <mark@skynet.ie>
 
 	* Version 2.3.95.
