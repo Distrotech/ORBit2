@@ -16,6 +16,7 @@ void ORBit_start_servers( CORBA_ORB orb );
  * profile methods.
  */
 void     IOP_generate_profiles( CORBA_Object obj );
+void     IOP_register_profiles( CORBA_Object obj, GSList *profiles );
 void     IOP_delete_profiles( GSList **profiles );
 
 gboolean IOP_profile_get_info( CORBA_Object obj, gpointer *pinfo,
