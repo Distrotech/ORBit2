@@ -1,3 +1,13 @@
+2001-08-18  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/server.c: init threads, before ORB init.
+
+	* test/everything/client.c: ditto.
+
+	* src/orb/GIOP/giop.c (giop_init): actualy do pass
+	FALSE to linc_init now we know it works in threaded
+	mode.
+
 2001-08-20  Mark McLoughlin <mark@skynet.ie>
 	
 	* src/orb/poa/poa-policy.c: create policy

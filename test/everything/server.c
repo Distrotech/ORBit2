@@ -340,6 +340,11 @@ test_TestFactory_Servant servant;
 	free (malloc (8)); /* -lefence */
 
 	CORBA_exception_init(&real_ev);
+
+	/* Initialize threads first - so we get a threaded ORB */
+	if (!g_thread_supported ())
+		g_thread_init (NULL);
+
 	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", ev);
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 #endif
