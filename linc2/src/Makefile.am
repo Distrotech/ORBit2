@@ -2,7 +2,8 @@ lib_LTLIBRARIES=liblinc.la
 
 INCLUDES=-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
-	$(GLIB_CFLAGS)
+	$(GLIB_CFLAGS) \
+	$(SSL_CFLAGS)
 
 liblinc_la_SOURCES=\
 	linc.c \
