@@ -16,6 +16,16 @@ typedef enum {
   GIOP_MSG_INVALID
 } GIOPMessageInfo;
 
+/* Internals used to setup waiting for a reply */
+typedef struct {
+  GIOPRecvBuffer *buffer;
+  CORBA_unsigned_long msg_type, request_id;
+#ifdef ORBIT_THREADED
+  O_MUTEX_DEFINE(*condvar_lock);
+  O_CONDVAR_DEFINE(*condvar);
+#endif
+} GIOPMessageQueueEntry;
+
 struct _GIOPRecvBuffer {
   GIOPMsg msg;
 

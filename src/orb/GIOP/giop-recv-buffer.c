@@ -6,8 +6,17 @@
 #include <orbit/GIOP/giop-types.h>
 #include <orbit/GIOP/giop-recv-buffer.h>
 
-static GSList *recv_buffer_list;
-O_MUTEX_DEFINE_STATIC(recv_buffer_list_lock);
+/* A list of GIOPMessageQueueEntrys */
+O_MUTEX_DEFINE_STATIC(giop_queued_messages_lock);
+static GList *giop_queued_messages;
+
+/* A list of incoming requests */
+static GList *incoming_recv_buffer_list;
+O_MUTEX_DEFINE_STATIC(incoming_recv_buffer_list_lock);
+#ifdef ORBIT_THREADED
+O_MUTEX_DEFINE_STATIC(incoming_recv_buffer_list_condvar_lock);
+O_CONDVAR_DEFINE_STATIC(incoming_recv_buffer_list_condvar);
+#endif
 
 static void giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf,
 					       GIOPConnection *cnx);
@@ -16,7 +25,12 @@ static void giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx);
 void
 giop_recv_buffer_init(void)
 {
-  O_MUTEX_INIT(recv_buffer_list_lock);
+  O_MUTEX_INIT(incoming_recv_buffer_list_lock);
+#ifdef ORBIT_THREADED
+  O_MUTEX_INIT(incoming_recv_buffer_list_condvar_lock);
+  pthread_cond_init(&incoming_recv_buffer_list_condvar, NULL);
+#endif
+  O_MUTEX_INIT(giop_queued_messages_lock);
 }
 
 static gboolean
@@ -447,7 +461,9 @@ giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state,
       /* Check the header */
       if(memcmp(buf->msg.header.magic, "GIOP", 4))
 	goto msg_error;
-
+      if(buf->msg.header.message_type
+	 >= GIOP_NUM_MSG_TYPES)
+	goto msg_error;
       switch(buf->msg.header.version[0])
 	{
 	case 1:
@@ -510,20 +526,9 @@ giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state,
 GIOPRecvBuffer *
 giop_recv_buffer_use_buf(gboolean is_auth)
 {
-  GIOPRecvBuffer *retval;
+  GIOPRecvBuffer *retval = NULL;
 
-  O_MUTEX_LOCK(recv_buffer_list_lock);
-  if(recv_buffer_list)
-    {
-      retval = recv_buffer_list->data;
-      recv_buffer_list = g_slist_remove(recv_buffer_list, retval);
-      O_MUTEX_UNLOCK(recv_buffer_list_lock);
-    }
-  else
-    {
-      O_MUTEX_UNLOCK(recv_buffer_list_lock);
-      retval = g_new0(GIOPRecvBuffer, 1);
-    }
+  retval = g_new0(GIOPRecvBuffer, 1);
 
   giop_recv_buffer_state_change(retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
 
@@ -573,184 +578,214 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
   if(!buf)
     return;
 
-  O_MUTEX_LOCK(recv_buffer_list_lock);
   if(buf->free_body)
     {
       g_free(buf->message_body); buf->message_body = NULL;
     }
-  recv_buffer_list = g_slist_prepend(recv_buffer_list, buf);
-  O_MUTEX_UNLOCK(recv_buffer_list_lock);
+  g_free(buf);
 }
 
 static void
 giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
-  O_MUTEX_LOCK(giop_queued_messages_lock);
+  GList *ltmp;
+  GIOPMessageQueueEntry *ent;
+
   buf->connection = cnx;
-  giop_queued_messages = g_list_append(giop_queued_messages, buf);
-  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+  switch(buf->msg.header.message_type)
+    {
+    case GIOP_REPLY:
+    case GIOP_LOCATEREPLY:
+      O_MUTEX_LOCK(giop_queued_messages_lock);
+      for(ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next)
+	{
+	  GIOPMessageQueueEntry *tmpent = ltmp->data;
+	  if(tmpent->msg_type == buf->msg.header.message_type
+	     && tmpent->request_id == giop_recv_buffer_get_request_id(buf))
+	    {
+	      ent = tmpent;
+	      break;
+	    }
+	}
+      if(ent)
+	{
+	  ent->buffer = buf;
+#ifdef ORBIT_THREADED
+	  pthread_cond_signal(ent->condvar);
+#endif
+	}
+      else
+	{
+	  /*
+	    the stub may have already sent the request but not gotten to
+	    the giop_recv_buffer_use_reply() part of things yet.
+	    Race condition probably best fixed by having the stub set up
+	    waiting for a reply BEFORE sending the request.
+	  */
+	  giop_recv_buffer_unuse(buf);
+	  g_error("This is a known bug that hasn't yet been fixed because the"
+		  " most obvious solution involves creating other bugs. "
+		  "Please make noise so this gets fixed.");
+	}
+      O_MUTEX_UNLOCK(giop_queued_messages_lock);
+      break;
+    default:
+      O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
+      incoming_recv_buffer_list = g_list_prepend(incoming_recv_buffer_list,
+						 buf);
+      O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
+#ifdef ORBIT_THREADED
+      pthread_cond_signal(&incoming_recv_buffer_list_condvar);
+#endif
+      break;
+    }
 }
 
 CORBA_unsigned_long
 giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 {
-  g_assert(buf->state == GIOP_MSG_READY);
+  static const glong reqid_offsets[GIOP_NUM_MSG_TYPES][GIOP_NUM_VERSIONS] = {
+    /* GIOP_REQUEST */
+    { G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.request_1_0.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.request_1_1.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.request_1_2.request_id)},
+    /* GIOP_REPLY */
+    { G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.reply_1_0.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.reply_1_1.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.reply_1_2.request_id)},
+    /* GIOP_CANCELREQUEST */
+    { G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.cancel_request_1_0.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.cancel_request_1_1.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.cancel_request_1_2.request_id)},
+    /* GIOP_LOCATEREQUEST */
+    { G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.locate_request_1_0.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.locate_request_1_1.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.locate_request_1_2.request_id)},
+    /* GIOP_LOCATEREPLY */
+    { G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.locate_reply_1_0.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.locate_reply_1_1.request_id),
+      G_STRUCT_OFFSET(GIOPRecvBuffer,
+		      msg.u.locate_reply_1_2.request_id)},
+    {0,0,0}, /* GIOP_MESSAGEERROR */
+    {0,0,0} /* GIOP_FRAGMENT */
+  };
+  gulong offset;
 
-  switch(buf->msg.header.message_type)
-    {
-    case GIOP_LOCATEREQUEST:
-      switch(buf->giop_version)
-	{
-	case GIOP_1_0:
-	  return buf->msg.u.locate_request_1_0.request_id;
-	  break;
-	case GIOP_1_1:
-	  return buf->msg.u.locate_request_1_1.request_id;
-	  break;
-	case GIOP_1_2:
-	  return buf->msg.u.locate_request_1_2.request_id;
-	  break;
-	default:
-	  break;
-	}
-      break;
-    case GIOP_LOCATEREPLY:
-      switch(buf->giop_version)
-	{
-	case GIOP_1_0:
-	  return buf->msg.u.locate_reply_1_0.request_id;
-	  break;
-	case GIOP_1_1:
-	  return buf->msg.u.locate_reply_1_1.request_id;
-	  break;
-	case GIOP_1_2:
-	  return buf->msg.u.locate_reply_1_2.request_id;
-	  break;
-	default:
-	  break;
-	}
-      break;
-    case GIOP_REQUEST:
-      switch(buf->giop_version)
-	{
-	case GIOP_1_0:
-	  return buf->msg.u.request_1_0.request_id;
-	  break;
-	case GIOP_1_1:
-	  return buf->msg.u.request_1_1.request_id;
-	  break;
-	case GIOP_1_2:
-	  return buf->msg.u.request_1_2.request_id;
-	  break;
-	default:
-	  break;
-	}
-      break;
-    case GIOP_REPLY:
-      switch(buf->giop_version)
-	{
-	case GIOP_1_0:
-	  return buf->msg.u.reply_1_0.request_id;
-	  break;
-	case GIOP_1_1:
-	  return buf->msg.u.reply_1_1.request_id;
-	  break;
-	case GIOP_1_2:
-	  return buf->msg.u.reply_1_2.request_id;
-	  break;
-	default:
-	  break;
-	}
-      break;
-    default:
-      break;
-    }
+  offset = reqid_offsets[buf->msg.header.message_type][buf->giop_version];
+  if(!offset)
+    return 0;
 
-  return 0;
+  return G_STRUCT_MEMBER(CORBA_unsigned_long, buf, offset);
+}
+
+void
+giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent)
+{
+  
+#ifdef ORBIT_THREADED
+  pthread_cond_t condvar;
+  pthread_mutex_t condvar_lock;
+  O_MUTEX_INIT(condvar_lock);
+  condvar = PTHREAD_COND_INITIALIZER;
+  ent.condvar_lock = &condvar_lock;
+  ent.condvar = &condvar;
+  O_MUTEX_LOCK(condvar_lock);
+#endif
+
+  ent.msg_type = msg_type;
+  ent.request_id = request_id;
+
+  O_MUTEX_LOCK(giop_queued_messages_lock);
+  giop_queued_messages = g_list_prepend(giop_queued_messages, &ent);
+  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+
+  ent->buffer = NULL;
 }
 
 static GIOPRecvBuffer *
-giop_recv_list_pop(gboolean choose_msg_type, CORBA_unsigned_long msg_type,
-		   gboolean choose_request_id, CORBA_unsigned_long request_id,
-		   gboolean incoming_only)
+giop_recv_list_get(CORBA_unsigned_long msg_type,
+		   CORBA_unsigned_long request_id,
+		   gboolean block_for_reply)
 {
-  GIOPRecvBuffer *buf = NULL;
+#ifdef ORBIT_THREADED
+  pthread_cond_wait(&condvar, &condvar_lock);
+  O_MUTEX_UNLOCK(condvar_lock);
+#else
+  while(!ent.buffer)
+    g_main_iteration(TRUE);
+#endif
 
   O_MUTEX_LOCK(giop_queued_messages_lock);
-  if(giop_queued_messages)
-    {
-      GList *ltmp;
-
-      for(ltmp = giop_queued_messages; ltmp; ltmp = ltmp->next)
-	{
-	  GIOPRecvBuffer *check = ltmp->data;
-
-	  if(incoming_only)
-	    {
-	      switch(check->msg.header.message_type)
-		{
-		case GIOP_REPLY:
-		case GIOP_LOCATEREPLY:
-		  continue;
-		default:
-		  break;
-		}
-	    }
-
-	  if(!choose_msg_type
-	     || (check->msg.header.message_type = msg_type
-		 && (!choose_request_id || giop_recv_buffer_get_request_id(check) == request_id)))
-	    break;
-	}
-
-      if(ltmp)
-	{
-	  buf = ltmp->data;
-	  giop_queued_messages = g_list_remove_link(giop_queued_messages, ltmp);
-	  g_list_free_1(ltmp);
-	}
-    }
+  giop_queued_messages = g_list_remove(giop_queued_messages, &ent);
   O_MUTEX_UNLOCK(giop_queued_messages_lock);
 
-  return buf;
+#ifdef ORBIT_THREADED
+  pthread_cond_destroy(&condvar);
+  O_MUTEX_DESTROY(condvar_lock);
+#endif
+
+  return ent.buffer;
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply)
+giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id,
+			   gboolean block_for_reply)
 {
-  GIOPRecvBuffer *retval;
-
-  do {
-    g_main_iteration(block_for_reply);
-  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_REPLY, TRUE, request_id,
-					FALSE))
-	  && block_for_reply
-	  && (!cnx || cnx->parent.status != LINC_DISCONNECTED));
-
-  return retval;
+  return giop_recv_list_get(GIOP_REPLY, request_id, block_for_reply);
 }
 
 GIOPRecvBuffer *
 giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply)
 {
-  GIOPRecvBuffer *retval;
-  
-  do {
-    g_main_iteration(block_for_reply);
-  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_LOCATEREPLY, TRUE, request_id, FALSE))
-	  && block_for_reply
-	  && (!cnx || cnx->parent.status != LINC_DISCONNECTED));
+  return giop_recv_list_get(GIOP_LOCATEREPLY, request_id, block_for_reply);
+}
 
-  return retval;  
+static GIOPRecvBuffer *
+giop_recv_list_pop(void)
+{
+  GIOPRecvBuffer *retval = NULL;
+
+  O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
+  if(incoming_recv_buffer_list)
+    {
+      retval = incoming_recv_buffer_list->data;
+      incoming_recv_buffer_list = g_list_remove(incoming_recv_buffer_list,
+						retval);
+    }
+  O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
+
+  return retval;
 }
 
 GIOPRecvBuffer *
 giop_recv_buffer_use(void)
 {
-  GIOPRecvBuffer *retval;
+  GIOPRecvBuffer *retval = NULL;
 
-  while(!(retval = giop_recv_list_pop(FALSE, 0, FALSE, 0, TRUE)))
+#ifdef ORBIT_THREADSAFE
+  O_MUTEX_LOCK(incoming_recv_buffer_list_condvar_lock);
+  pthread_cond_wait(&incoming_recv_buffer_list_condvar,
+		    &incoming_recv_buffer_list_condvar_lock);
+  retval = giop_recv_list_pop();
+  O_MUTEX_UNLOCK(incoming_recv_buffer_list_condvar_lock);
+#else
+  while(!(retval = giop_recv_list_pop()))
     g_main_iteration(TRUE);
+#endif  
 
   return retval;
 }
