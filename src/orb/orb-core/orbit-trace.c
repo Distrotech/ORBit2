@@ -243,4 +243,24 @@ ORBit_trace_end_method (void)
 	tprintf ("\n");
 }
 
+void
+ORBit_trace_profiles (CORBA_Object obj)
+{
+	tprintf ("p %d: Obj %p (%s) profiles: ",
+		 getpid (), obj,
+		 g_quark_to_string (obj ? obj->type_qid : 0));
+	if (obj) {
+		GSList *l;
+
+		for (l = obj->profile_list; l; l = l->next) {
+			char *s;
+			s = IOP_profile_dump (obj, l->data);
+			tprintf ("'%s' ", s);
+			g_free (s);
+		}
+	}
+	tprintf ("\n");
+}
+
 #endif /* TRACE_DEBUG */
+

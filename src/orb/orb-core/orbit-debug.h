@@ -25,6 +25,11 @@
  */
 #undef TYPE_DEBUG
 
+/*
+ * Define this one to get object profile hashing
+ * and other object related debug.
+ */
+#undef OBJECT_DEBUG
 
 
 #ifndef DEBUG
@@ -71,6 +76,7 @@ void     ORBit_trace_value      (gconstpointer       *val,
 void     ORBit_trace_header     (CORBA_Object         object,
 				 ORBit_IMethod       *m_data);
 void     ORBit_trace_end_method (void);
+void     ORBit_trace_profiles   (CORBA_Object obj);
 
 #define tprintf(...) fprintf(stderr, __VA_ARGS__)
 #define tprintf_header(obj,md) ORBit_trace_header(obj,md)
