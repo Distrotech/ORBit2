@@ -1,3 +1,20 @@
+2001-11-02  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_async, ORBit_small_invoke_stub),
+	(ORBit_small_invoke_adaptor),
+	(ORBit_small_demarshal_async): use tprintf_end_method.
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_timestamp): split out.
+	(ORBit_trace_header): invoke.
+	(ORBit_trace_end_method): impl.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_unlisten_for_broken),
+	(ORBit_small_listen_for_broken): tolerate a
+	NULL object sensibly.
+
 2001-11-01  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-send-buffer.c

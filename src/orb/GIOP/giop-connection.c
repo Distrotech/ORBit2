@@ -31,27 +31,30 @@ giop_connection_list_remove (GIOPConnection *cnx)
 }
 
 static GIOPConnection *
-giop_connection_list_lookup(const char *proto_name, const char *remote_host_info,
-			    const char *remote_serv_info, gboolean is_ssl)
+giop_connection_list_lookup (const char *proto_name,
+			     const char *remote_host_info,
+			     const char *remote_serv_info,
+			     gboolean    is_ssl)
 {
-  GList *ltmp;
-  GIOPConnection *retval = NULL;
+	GList *l;
+	GIOPConnection *retval = NULL;
 
-  for(ltmp = cnx_list.list; ltmp && !retval; ltmp = ltmp->next)
-    {
-      GIOPConnection *cnx = ltmp->data;
+	for (l = cnx_list.list; l && !retval; l = l->next) {
+		GIOPConnection *cnx = l->data;
 
-      if(!strcmp(remote_host_info, cnx->parent.remote_host_info)
-	 && !strcmp(remote_serv_info, cnx->parent.remote_serv_info)
-	 && !strcmp(proto_name, cnx->parent.proto->name)
-	 && cnx->parent.status != LINC_DISCONNECTED
-	 && ((cnx->parent.options & LINC_CONNECTION_SSL)==(is_ssl?LINC_CONNECTION_SSL:0)))
-	retval = cnx;
-    }
-  if(retval)
-    g_object_ref(G_OBJECT(retval));
+		if (!strcmp (remote_host_info, cnx->parent.remote_host_info) &&
+		    !strcmp (remote_serv_info, cnx->parent.remote_serv_info) &&
+		    !strcmp (proto_name, cnx->parent.proto->name) &&
+		    cnx->parent.status != LINC_DISCONNECTED &&
+		    ((cnx->parent.options & LINC_CONNECTION_SSL) == 
+		     (is_ssl ? LINC_CONNECTION_SSL : 0)))
+			retval = cnx; /* FIXME: break here for speed ? */
+	}
 
-  return retval;
+	if (retval)
+		g_object_ref (G_OBJECT (retval));
+
+	return retval;
 }
 
 static void
@@ -80,20 +83,23 @@ giop_connection_real_state_changed (LINCConnection      *cnx,
 void
 giop_connection_close (GIOPConnection *cnx)
 {
-	if(cnx->parent.status == LINC_DISCONNECTED)
+	if (cnx->parent.status == LINC_DISCONNECTED)
 		return;
 
-	if(cnx->parent.status == LINC_CONNECTED
-	   && (!cnx->parent.was_initiated
-	       || cnx->giop_version == GIOP_1_2)) {
+	if (cnx->parent.status == LINC_CONNECTED &&
+	    (!cnx->parent.was_initiated ||
+	     cnx->giop_version == GIOP_1_2)) {
 		GIOPSendBuffer *buf;
 
-		buf = giop_send_buffer_use_close_connection (cnx->giop_version);
+		buf = giop_send_buffer_use_close_connection (
+			cnx->giop_version);
 		giop_send_buffer_write (buf, cnx);
 		fsync (cnx->parent.fd);
 		giop_send_buffer_unuse (buf);
 	}
-	linc_connection_state_changed (LINC_CONNECTION (cnx), LINC_DISCONNECTED);
+
+	linc_connection_state_changed (
+		LINC_CONNECTION (cnx), LINC_DISCONNECTED);
 }
 
 static void

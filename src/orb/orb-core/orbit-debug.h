@@ -60,23 +60,37 @@ dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
 static inline void tprintf (const char *format, ...) { };
 #define tprintf_trace_value(a,b)
 #define tprintf_header(obj,md)
+#define tprintf_timestamp()
+#define tprintf_end_method()
 
 #else /* TRACE_DEBUG */
 
 #include <stdio.h>
 
-void     ORBit_trace_objref   (const CORBA_Object   obj);
-void     ORBit_trace_any      (const CORBA_any     *any);
-void     ORBit_trace_typecode (const CORBA_TypeCode tc);
-void     ORBit_trace_value    (gconstpointer       *val,
-                               CORBA_TypeCode       tc);
-void     ORBit_trace_header   (CORBA_Object         object,
-			       ORBit_IMethod       *m_data);
+void     ORBit_trace_objref     (const CORBA_Object   obj);
+void     ORBit_trace_any        (const CORBA_any     *any);
+void     ORBit_trace_typecode   (const CORBA_TypeCode tc);
+void     ORBit_trace_value      (gconstpointer       *val,
+				 CORBA_TypeCode       tc);
+void     ORBit_trace_header     (CORBA_Object         object,
+				 ORBit_IMethod       *m_data);
+void     ORBit_trace_end_method (void);
 
 #define tprintf(format...) fprintf(stderr, format)
 #define tprintf_header(obj,md) ORBit_trace_header(obj,md)
 #define tprintf_trace_value(a,b) \
 		ORBit_trace_value ((gconstpointer *)(a), (b))
+#define tprintf_end_method() \
+		ORBit_trace_end_method ()
+
+
+#ifdef TRACE_TIMING
+#  define tprintf_timestamp() \
+		ORBit_trace_timestamp ()
+void     ORBit_trace_timestamp (void);
+#else
+#  define tprintf_timestamp()
+#endif
 
 #endif /* TRACE_DEBUG */
 

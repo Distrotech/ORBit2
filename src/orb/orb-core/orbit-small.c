@@ -636,7 +636,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	};
 
  clean_out:
-	tprintf ("\n");
+	tprintf_end_method ();
 	return;
 
  system_exception:
@@ -915,7 +915,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	}
 
  clean_out:
-	tprintf ("\n");
+	tprintf_end_method ();
 
 	for (i = 0; i < m_data->arguments._length; i++) {
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
@@ -1041,7 +1041,7 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 				    aqe->completion_status);
 
  clean_out:
-	tprintf ("\n");
+	tprintf_end_method ();
 }
 
 static void
@@ -1132,7 +1132,7 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	aqe->m_data = /* ORBit_RootObject_duplicate */ (m_data);
 
  clean_out:
-	tprintf ("\n");
+	tprintf_end_method ();
 	return;
 
  system_exception:
@@ -1210,8 +1210,12 @@ ORBit_small_listen_for_broken (CORBA_Object obj,
 {
 	ORBitConnectionStatus ret;
 
-	if (ORBit_small_get_servant (obj))
+	if (!obj)
+		ret = ORBIT_CONNECTION_DISCONNECTED;
+
+	else if (ORBit_small_get_servant (obj))
 		ret = ORBIT_CONNECTION_IN_PROC;
+
 	else {
 		GIOPConnection *connection;
 
@@ -1234,8 +1238,12 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 {
 	ORBitConnectionStatus ret;
 
-	if (ORBit_small_get_servant (obj))
+	if (!obj)
+		ret = ORBIT_CONNECTION_DISCONNECTED;
+
+	else if (ORBit_small_get_servant (obj))
 		ret = ORBIT_CONNECTION_IN_PROC;
+
 	else {
 		GIOPConnection *connection;
 
