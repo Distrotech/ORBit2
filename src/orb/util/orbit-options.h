@@ -9,7 +9,12 @@ typedef enum {
 	ORBIT_OPTION_NONE,
 	ORBIT_OPTION_STRING,
 	ORBIT_OPTION_INT,
-	ORBIT_OPTION_BOOLEAN
+	ORBIT_OPTION_BOOLEAN,
+	ORBIT_OPTION_KEY_VALUE  /* option for various key/value pairs,
+				 * init with NULL the result is GSList
+				 * of NULL terminated string vector,
+				 * each data element must be
+				 * g_strvec_free'd */
 } ORBit_option_type;
 
 typedef struct {
