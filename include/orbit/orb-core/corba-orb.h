@@ -1,10 +1,11 @@
-#ifndef ORB_H
-#define ORB_H 1
+#ifndef CORBA_ORB_H
+#define CORBA_ORB_H 1
 
 #include <orbit/orb-core/orb-types.h>
 #include <orbit/orb-core/corba-nvlist-type.h>
 #include <orbit/orb-core/corba-object-type.h>
 #include <orbit/orb-core/corba-orb-type.h>
+#include <orbit/orb-core/corba-typecode-type.h>
 #include <orbit/orb-core/corba-ir.h>
 
 CORBA_ORB CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier, CORBA_Environment *ev);
@@ -13,8 +14,8 @@ CORBA_char *CORBA_ORB_object_to_string(CORBA_ORB orb,
 				       const CORBA_Object obj,
 				       CORBA_Environment * ev);
 CORBA_Object CORBA_ORB_string_to_object(CORBA_ORB orb,
-					 const CORBA_char * str,
-					 CORBA_Environment * ev);
+					const CORBA_char * str,
+					CORBA_Environment * ev);
 void CORBA_ORB_create_list(CORBA_ORB orb, const CORBA_long count,
 			   CORBA_NVList * new_list,
 			   CORBA_Environment * ev);
@@ -36,8 +37,7 @@ void CORBA_ORB_get_next_response(CORBA_ORB orb, CORBA_Request * req,
 				 CORBA_Environment * ev);
 CORBA_boolean CORBA_ORB_get_service_information(CORBA_ORB orb,
 						const CORBA_ServiceType service_type,
-						CORBA_ServiceInformation **
-						service_information,
+						CORBA_ServiceInformation **service_information,
 						CORBA_Environment * ev);
 CORBA_ORB_ObjectIdList *CORBA_ORB_list_initial_services(CORBA_ORB orb,
 							CORBA_Environment *ev);
@@ -47,8 +47,7 @@ CORBA_Object CORBA_ORB_resolve_initial_references(CORBA_ORB orb,
 CORBA_TypeCode CORBA_ORB_create_struct_tc(CORBA_ORB orb,
 					  const CORBA_RepositoryId id,
 					  const CORBA_Identifier name,
-					  const CORBA_StructMemberSeq *
-					  members, CORBA_Environment * ev);
+					  const CORBA_StructMemberSeq *members, CORBA_Environment * ev);
 CORBA_TypeCode CORBA_ORB_create_union_tc(CORBA_ORB orb,
 					 const CORBA_RepositoryId id,
 					 const CORBA_Identifier name,

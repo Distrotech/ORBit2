@@ -1,1 +1,1 @@
-SUBDIRS=idl-compiler orb
+SUBDIRS=idl-compiler idl orb

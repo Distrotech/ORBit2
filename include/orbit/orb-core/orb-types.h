@@ -4,10 +4,7 @@
 #include <orbit/GIOP/giop-types.h>
 
 typedef CORBA_char *CORBA_ORBid;
-typedef struct _CORBA_Environment CORBA_Environment;
 typedef struct _CORBA_any CORBA_any;
-
-typedef gpointer CORBA_OpaqueValue;
 
 #define CORBA_OBJECT_NIL NULL
 

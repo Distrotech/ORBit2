@@ -21,7 +21,7 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
 	  " */\n\n");
   fprintf(ci->fh, "#include <glib.h>\n");
   fprintf(ci->fh, "#define ORBIT_IDL_SERIAL %d\n", ORBIT_CONFIG_SERIAL);
-  fprintf(ci->fh, "#include <orb/orbit.h>\n\n");
+  fprintf(ci->fh, "#include <orbit/orbit.h>\n\n");
 
   fprintf(ci->fh, "#ifndef %s_H\n", ci->c_base_name);
   fprintf(ci->fh, "#define %s_H 1\n", ci->c_base_name);

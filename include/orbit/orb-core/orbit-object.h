@@ -23,7 +23,7 @@ typedef enum {
 
 typedef struct _ORBit_RootObject *ORBit_RootObject;
 
-typedef void (* ORBit_RootObject_DestroyFunc)(ORBit_RootObject *obj);
+typedef void (* ORBit_RootObject_DestroyFunc)(ORBit_RootObject obj);
 
 typedef struct _ORBit_RootObject_Interface ORBit_RootObject_Interface;
 
@@ -33,7 +33,7 @@ struct _ORBit_RootObject_Interface {
 };
 
 struct _ORBit_RootObject {
-  ORBit_RootObject_Interface * const interface;
+  const ORBit_RootObject_Interface * interface;
   int refs;
 };
 
@@ -45,10 +45,10 @@ struct _ORBit_RootObject {
 #define ORBIT_ROOT_OBJECT(obj) ((ORBit_RootObject)(obj))
 #define ORBIT_ROOT_OBJECT_TYPE(obj) ((ORBit_RootObject)(obj)->interface->type)
 
-void ORBit_RootObject_init(ORBit_RootObject obj, ORBit_RootObject_Interface * const interface);
+void ORBit_RootObject_init(ORBit_RootObject obj, const ORBit_RootObject_Interface * interface);
 gpointer ORBit_RootObject_duplicate(gpointer obj);
 void ORBit_RootObject_release(gpointer obj);
 
-O_MUTEX_EXTERN(ORBit_RootObject_lifecycle_lock);
+O_MUTEX_DEFINE_EXTERN(ORBit_RootObject_lifecycle_lock);
 
 #endif

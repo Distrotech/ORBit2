@@ -55,8 +55,11 @@ giop_server_new(const char *proto_name, const char *local_host_info, const char 
 {
   GIOPServer *server = (GIOPServer *)g_object_new(giop_server_get_type(), NULL);
 
-  linc_server_setup((LINCServer *)server, proto_name, local_host_info, local_serv_info,
-		    create_options);
+  if(!linc_server_setup((LINCServer *)server, proto_name, local_host_info, local_serv_info,
+			create_options))
+    {
+      g_object_unref((GObject *)server); server = NULL;
+    }
 
   return server;
 }

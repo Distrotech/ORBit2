@@ -11,5 +11,6 @@
 #define ORBIT_H 1
 
 #include <orbit/GIOP/giop.h>
+#include <orbit/orb-core/orb-core.h>
 
 #endif

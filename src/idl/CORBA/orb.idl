@@ -27,16 +27,14 @@ module CORBA {
 //   It contains some data definitions needed by Chapter 4 interfaces.
 //   The other reason not to try to rearrange the order is that it's hard.
 
+    native Environment;
+
 // Forward references, alphabetically
 	interface ConstructionPolicy;        // Chapter  4, CORBA_DomainManager.idl
     interface Current;                   // Chapter  4, CORBA_Current.idl
     interface DomainManager;             // Chapter  4, CORBA_DomainManager.idl
     interface Policy;                    // Chapter  4, CORBA_Policy.idl
 	
-	abstract valuetype CustomMarshal;    // Chapter  5, CORBA_valuetype.idl
-    abstract valuetype DataInputStream;  // Chapter  5, CORBA_Stream.idl
-    abstract valuetype DataOutputStream; // Chapter  5, CORBA_Stream.idl
-
 // Forward references to Chapter 10, CORBA_InterfaceRepository.idl
     interface AliasDef;
     interface ArrayDef;
@@ -58,7 +56,7 @@ module CORBA {
     interface SequenceDef;
     interface StringDef;
     interface StructDef;
-    interface TypeCode;
+    interface TTypeCode;
     interface TypedefDef;
     interface UnionDef;
     interface ValueDef;

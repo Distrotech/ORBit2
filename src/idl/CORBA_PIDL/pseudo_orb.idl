@@ -43,8 +43,9 @@
 //    definition that results in valid IDL, even if it doesn't yield
 //    useful stubs and skeletons. Of course, PIDL never results in
 //    the standard stubs so that's not a problem.
+#ifndef __ORBIT_IDL__
 #define native typedef long
-
+#endif
 
 module CORBA {
 
@@ -86,7 +87,6 @@ module CORBA {
     interface Request;                   // Chapter  7, CORBA_Request.idl
 	interface RequestInterceptor;        // Chapter 21, CORBA_Interceptor.idl
     interface ServerRequest;             // Chapter  8, CORBA_ServerRequest.idl
-    valuetype ValueBase;                 // Chapter  4, CORBA_ValueBase.idl
 
     typedef unsigned long Flags;
 
