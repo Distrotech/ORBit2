@@ -3,6 +3,8 @@
 #include <orbit/orbit.h>
 #include <ctype.h>
 
+#include "../src/orb/orb-core/iop-profiles.h"
+
 static void
 print_objkey (IOP_ObjectKey_info *oki)
 {
