@@ -1,12 +1,15 @@
 #include "config.h"
-#include <orbit/IIOP/giop-server.h>
+#include <linc/linc-server.h>
+#include <linc/linc-connection.h>
 #include <netdb.h>
+#include <unistd.h>
 
-static void giop_server_init       (GIOPServer      *cnx);
-static void giop_server_class_init (GIOPServerClass *klass);
+static void linc_server_init       (LINCServer      *cnx);
+static void linc_server_destroy    (GObject         *obj);
+static void linc_server_class_init (LINCServerClass *klass);
 
 GType
-giop_server_get_type(void)
+linc_server_get_type(void)
 {
   static GType object_type = 0;
 
@@ -14,19 +17,19 @@ giop_server_get_type(void)
     {
       static const GTypeInfo object_info =
       {
-        sizeof (GIOPServerClass),
+        sizeof (LINCServerClass),
         (GBaseInitFunc) NULL,
         (GBaseFinalizeFunc) NULL,
-        (GClassInitFunc) giop_server_class_init,
+        (GClassInitFunc) linc_server_class_init,
         NULL,           /* class_finalize */
         NULL,           /* class_data */
-        sizeof (GIOPServer),
+        sizeof (LINCServer),
         0,              /* n_preallocs */
-        (GInstanceInitFunc) giop_server_init,
+        (GInstanceInitFunc) linc_server_init,
       };
       
       object_type = g_type_register_static (G_TYPE_OBJECT,
-                                            "GIOPServer",
+                                            "LINCServer",
                                             &object_info);
     }  
 
@@ -34,28 +37,38 @@ giop_server_get_type(void)
 }
 
 static void
-giop_server_init       (GIOPServer      *cnx)
+linc_server_class_init (LINCServerClass *klass)
+{
+  GObjectClass *object_class = (GObjectClass *)klass;
+
+  object_class->shutdown = linc_server_destroy;
+}
+
+static void
+linc_server_init       (LINCServer      *cnx)
 {
   O_MUTEX_INIT(cnx->mutex);
 }
 
-enum {
-  PARAM_SA_FAMILY,
-  LAST_PARAM
-};
-
 static void
-giop_server_class_init (GIOPServerClass *klass)
+linc_server_destroy(GObject         *obj)
 {
-  GObjectClass *object_class = (GObjectClass *)klass;
+  LINCServer *cnx = (LINCServer *)obj;
+
+  O_MUTEX_LOCK(cnx->mutex);
+  O_MUTEX_DESTROY(cnx->mutex);
+  g_source_remove(cnx->tag);
+  close(cnx->fd);
+  g_free(cnx->local_host_info);
+  g_free(cnx->local_serv_info);
 }
 
 static gboolean
-giop_server_handle_io(GIOChannel *gioc,
+linc_server_handle_io(GIOChannel *gioc,
 		      GIOCondition condition,
 		      gpointer data)
 {
-  GIOPServer *cnx = data;
+  LINCServer *cnx = data;
   struct sockaddr *saddr;
   int addrlen, fd;
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
@@ -70,29 +83,30 @@ giop_server_handle_io(GIOChannel *gioc,
   if(fd < 0)
     return TRUE; /* error */
 
-  if(giop_getnameinfo(saddr, cnx->proto->addr_len, hnbuf, sizeof(hnbuf),
+  if(linc_getnameinfo(saddr, cnx->proto->addr_len, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
     {
       close(fd);
       return TRUE;
     }
 
-  giop_connection_from_fd(fd, cnx->proto, hnbuf, servbuf, FALSE);
+  linc_connection_from_fd(fd, cnx->proto, hnbuf, servbuf, FALSE,
+			  cnx->create_options);
 
   return TRUE;
 }
 
-GIOPServer *
-giop_server_new(const char *proto_name, GIOPConnectionOptions create_options)
+LINCServer *
+linc_server_new(const char *proto_name, LINCConnectionOptions create_options)
 {
-  GIOPServer *cnx;
+  LINCServer *cnx;
   GIOChannel *gioc;
   int fd, n;
-  const GIOPProtocolInfo * proto;
+  const LINCProtocolInfo * proto;
   struct addrinfo *ai, hints = {0};
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
 
-  proto = giop_protocol_find(proto_name);
+  proto = linc_protocol_find(proto_name);
   if(!proto)
     return NULL;
 
@@ -100,9 +114,9 @@ giop_server_new(const char *proto_name, GIOPConnectionOptions create_options)
   hints.ai_family = proto->family;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = proto->stream_proto_num;
-  if(giop_getaddrinfo(NULL, NULL, &hints, &ai))
+  if(linc_getaddrinfo(NULL, NULL, &hints, &ai))
     return NULL;
-  if(giop_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
+  if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
     {
       freeaddrinfo(ai);
@@ -117,7 +131,7 @@ giop_server_new(const char *proto_name, GIOPConnectionOptions create_options)
     }
 
   n = 0;
-  if(proto->flags & GIOP_PROTOCOL_NEEDS_BIND)
+  if(proto->flags & LINC_PROTOCOL_NEEDS_BIND)
     n = bind(fd, ai->ai_addr, ai->ai_addrlen);
   freeaddrinfo(ai);
 
@@ -129,12 +143,12 @@ giop_server_new(const char *proto_name, GIOPConnectionOptions create_options)
       return NULL;
     }
 
-  cnx = g_object_new(giop_server_get_type(), NULL);
+  cnx = g_object_new(linc_server_get_type(), NULL);
   cnx->proto = proto;
   cnx->fd = fd;
   gioc = g_io_channel_unix_new(fd);
   cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-			    giop_server_handle_io, cnx);
+			    linc_server_handle_io, cnx);
   g_io_channel_unref(gioc);
   cnx->create_options = create_options;
   cnx->local_host_info = g_strdup(hnbuf);

@@ -4,4 +4,7 @@ configure
 config.h.in
 aclocal.m4
 obj
-
+config.guess
+config.sub
+ltconfig
+ltmain.sh

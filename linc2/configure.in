@@ -33,7 +33,7 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
-AC_PROG_LIBTOOL
+AM_PROG_LIBTOOL
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.
@@ -120,6 +120,7 @@ AC_SUBST(HAVE_LIMITED_WRITEV)
 AC_OUTPUT([
 Makefile
 src/Makefile
+include/Makefile
 include/linc/Makefile
 include/linc/linc-config.h
 ])

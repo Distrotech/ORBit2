@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <time.h>
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -119,7 +120,7 @@ linc_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 		 && (hints->ai_flags & AI_PASSIVE)
 		 && ((*res)->ai_family == AF_UNIX))
 		{
-		  struct sockaddr_un *sun = (struct sockaddr_un *)res->ai_addr;
+		  struct sockaddr_un *sun = (struct sockaddr_un *)(*res)->ai_addr;
 		  srand(time(NULL));
 		  g_snprintf(sun->sun_path, sizeof(sun->sun_path),
 			     "%s/linc-%x%x", linc_tmpdir, rand(), rand());
@@ -202,7 +203,7 @@ irda_find_device(guint32 *addr, char *name, gboolean name_to_addr)
   return retval;
 }
 
-#define IRDA_PREFIX
+#define IRDA_PREFIX "IrDA-"
 
 static int
 irda_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res)

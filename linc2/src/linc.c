@@ -1,10 +1,11 @@
 #include "linc-private.h"
 
-#if LINC_SSL_SUPPORT
-#include <openssl/ssl.h>
-#endif
-
 GMainLoop *linc_loop = NULL;
+
+#if LINC_SSL_SUPPORT
+SSL_METHOD *linc_ssl_method;
+SSL_CTX *linc_ssl_ctx;
+#endif
 
 void
 linc_init(void)

@@ -7,11 +7,11 @@ typedef struct {
   GObject parent;
 
   int fd;
-  GMutex *mutex;
+  O_MUTEX_DEFINE(mutex);
 
   char *local_host_info, *local_serv_info;
 
-  LINCProtocolInfo *proto;
+  const LINCProtocolInfo * proto;
   guint tag;
   /* Options that incoming connections are created with */
   LINCConnectionOptions create_options;
