@@ -667,6 +667,9 @@ linc_connection_writev (LINCConnection       *cnx,
 	status = write_data (cnx, &qw);
 
 	if (status == LINC_IO_QUEUED_DATA) {
+		if (linc_get_threaded ())
+			g_error ("Big foo here");
+
 		/* Queue data & listen for buffer space */
 		linc_watch_set_condition (cnx->priv->tag,
 					  LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);

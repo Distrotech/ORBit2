@@ -69,20 +69,43 @@ GSourceFuncs linc_source_watch_funcs = {
 	linc_source_finalize
 };
 
-static void
-linc_source_set_condition (LincUnixWatch *watch,
+/**
+ * linc_source_set_condition:
+ * @source: a source created with #linc_source_create_watch
+ * @condition: a new condition.
+ * 
+ *     This sets a new IO condition on an existing
+ * source very rapidly.
+ **/
+void
+linc_source_set_condition (GSource      *source,
 			   GIOCondition  condition)
 {
+	LincUnixWatch *watch = (LincUnixWatch *) source;
+
 	if (watch) {
 		watch->pollfd.events = condition;
 		watch->condition     = condition;
 	}
 }
 
-static GSource *
+/**
+ * linc_source_create_watch:
+ * @context: context to add to (or NULL for default)
+ * @fd: file descriptor to poll on
+ * @opt_channel: channel, handed to the callback (can be NULL)
+ * @condition: IO condition eg. G_IO_IN|G_IO_PRI
+ * @func: callback when condition is met
+ * @user_data: callback closure.
+ * 
+ * This adds a new source to the specified context.
+ * 
+ * Return value: the source handle so you can remove it later.
+ **/
+GSource *
 linc_source_create_watch (GMainContext *context,
 			  int           fd,
-			  GIOChannel   *channel,
+			  GIOChannel   *opt_channel,
 			  GIOCondition  condition,
 			  GIOFunc       func,
 			  gpointer      user_data)
@@ -95,9 +118,9 @@ linc_source_create_watch (GMainContext *context,
 	watch = (LincUnixWatch *) source;
 
 	watch->pollfd.fd = fd;
-	watch->channel   = channel;
+	watch->channel   = opt_channel;
 
-	linc_source_set_condition (watch, condition);
+	linc_source_set_condition (source, condition);
 
 	g_source_set_can_recurse (source, TRUE);
 	g_source_add_poll (source, &watch->pollfd);
@@ -128,9 +151,11 @@ linc_io_add_watch_fd (int          fd,
 		linc_main_get_context (), fd, NULL,
 		condition, func, user_data);
 
-	/* Main loop */
-	w->main_source = linc_source_create_watch (
-		NULL, fd, NULL, condition, func, user_data);
+	if (!linc_get_threaded ()) /* Main loop too */
+		w->main_source = linc_source_create_watch (
+			NULL, fd, NULL, condition, func, user_data);
+	else
+		w->main_source = NULL;
 
 	return w;
 }
@@ -167,8 +192,11 @@ linc_io_add_watch (GIOChannel    *channel,
 		condition, func, user_data);
 
 	/* Main loop */
-	w->main_source = linc_source_create_watch (
-		NULL, fd, channel, condition, func, user_data);
+	if (!linc_get_threaded ()) /* Main loop too */
+		w->main_source = linc_source_create_watch (
+			NULL, fd, channel, condition, func, user_data);
+	else
+		w->main_source = NULL;
 
 	return w;
 }
@@ -183,12 +211,14 @@ void
 linc_io_remove_watch (LincWatch *w)
 {
 	if (w) {
-		linc_source_set_condition ((LincUnixWatch *) w->main_source, 0);
-		linc_source_set_condition ((LincUnixWatch *) w->linc_source, 0);
+		linc_source_set_condition (w->main_source, 0);
+		linc_source_set_condition (w->linc_source, 0);
 
-		g_source_destroy (w->main_source);
-		g_source_unref   (w->main_source);
-
+		if (w->main_source) {
+			g_source_destroy (w->main_source);
+			g_source_unref   (w->main_source);
+		} /* else - threaded */
+		
 		g_source_destroy (w->linc_source);
 		g_source_unref   (w->linc_source);
 
@@ -202,11 +232,9 @@ linc_watch_set_condition (LincWatch   *w,
 {
 	if (w) {
 		linc_source_set_condition (
-			(LincUnixWatch *) w->linc_source,
-			condition);
+			w->linc_source, condition);
 
 		linc_source_set_condition (
-			(LincUnixWatch *) w->main_source,
-			condition);
+			w->main_source, condition);
 	}
 }

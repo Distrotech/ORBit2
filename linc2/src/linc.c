@@ -25,6 +25,18 @@ SSL_CTX    *linc_ssl_ctx;
 #endif
 
 /**
+ * linc_get_threaded:
+ * 
+ *   This routine returns TRUE if threading is enabled for
+ * the ORB.
+ **/
+gboolean
+linc_get_threaded (void)
+{
+	return linc_threaded;
+}
+
+/**
  * linc_set_threaded:
  * @threaded: whether to do locking
  * 
@@ -35,8 +47,11 @@ SSL_CTX    *linc_ssl_ctx;
 void
 linc_set_threaded (gboolean threaded)
 {
+	g_warning ("linc_set_threaded is deprecated");
+
 	if (linc_mutex_new_called)
 		g_error ("You need to set this before using the ORB");
+
 	linc_threaded = threaded;
 }
 
@@ -177,8 +192,35 @@ linc_object_get_mutex (void)
 	return linc_lifecycle_mutex;
 }
 
+/**
+ * linc_main_idle_add:
+ * @function: method to call at idle
+ * @data: user data.
+ * 
+ * Add an idle handler to the linc mainloop.
+ * 
+ * Return value: id of handler
+ **/
+guint 
+linc_main_idle_add (GSourceFunc    function,
+		    gpointer       data)
+{
+	guint id;
+	GSource *source;
+  
+	g_return_val_if_fail (function != NULL, 0);
+
+	source = g_idle_source_new ();
+
+	g_source_set_callback (source, function, data, NULL);
+	id = g_source_attach (source, linc_context);
+	g_source_unref (source);
+
+	return id;
+}
+
 gpointer
-linc_object_ref (GObject *object)
+linc_object_ref (gpointer object)
 {
 	gpointer ret;
 
@@ -191,8 +233,8 @@ linc_object_ref (GObject *object)
 	return ret;
 }
 
-void
-linc_object_unref (GObject *object)
+static inline gboolean
+linc_fast_unref (GObject *object)
 {
 	gboolean last_ref;
 
@@ -203,8 +245,39 @@ linc_object_unref (GObject *object)
 
 	LINC_MUTEX_UNLOCK (linc_lifecycle_mutex);
 
-	if (last_ref) /* take it outside the guard */
+	return last_ref;
+}
+
+
+static int
+linc_idle_unref (gpointer object)
+{
+	if (linc_fast_unref (object))
 		g_object_unref (object);
+	return FALSE;
+}
+
+void
+linc_object_unref (gpointer object)
+{
+	if (linc_fast_unref (object)) {
+		/* final unref outside the guard */
+		if (linc_lifecycle_mutex) {
+			if (g_main_context_acquire (linc_context)) {
+				/* linc thread */
+				g_object_unref (object);
+				g_main_context_release (linc_context);
+			} else {
+				/* push to main linc thread */
+				linc_main_idle_add (
+					linc_idle_unref,
+					object);
+			}
+		} else {
+			/* only 1 thread anyway */
+			g_object_unref (object);
+		}
+	}
 }
 
 GMainLoop *

@@ -17,15 +17,17 @@
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 #include <linc/linc-server.h>
+#include <linc/linc-source.h>
 
 G_BEGIN_DECLS
 
 extern GMainLoop *linc_loop;
 
 GMutex    *linc_object_get_mutex (void);
-gpointer   linc_object_ref       (GObject *object);
-void       linc_object_unref     (GObject *object);
+gpointer   linc_object_ref       (gpointer object);
+void       linc_object_unref     (gpointer object);
 
+/* Deprecated */
 void       linc_set_threaded     (gboolean       threaded);
 void       linc_init             (gboolean       init_threads);
 
@@ -38,6 +40,8 @@ void       linc_main_iteration   (gboolean       block_for_reply);
 gboolean   linc_main_pending     (void);
 void       linc_main_loop_run    (void);
 GMainLoop *linc_main_get_loop    (void);
+guint      linc_main_idle_add    (GSourceFunc    function,
+				  gpointer       data);
 
 G_END_DECLS
 
