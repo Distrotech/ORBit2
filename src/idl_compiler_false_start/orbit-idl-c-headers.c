@@ -670,12 +670,12 @@ ch_output_inherited_protos(IDL_tree curif, InheritedOutputInfo *ioi)
 
 	  ident = IDL_LIST(curitem).data;
 	  
-	  fprintf(ioi->of, "#define %s_%s %s_%s\n",
+	  fprintf(ioi->of, "#define %s__get_%s %s__get_%s\n",
 		  realid, IDL_IDENT(ident).str,
 		  id, IDL_IDENT(ident).str);
 
 	  if(!IDL_ATTR_DCL(curop).f_readonly)
-	    fprintf(ioi->of, "#define %s_%s %s_%s\n",
+	    fprintf(ioi->of, "#define %s__set_%s %s__set_%s\n",
 		    realid, IDL_IDENT(ident).str,
 		    id, IDL_IDENT(ident).str);
 	}
