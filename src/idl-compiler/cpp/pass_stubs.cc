@@ -217,7 +217,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << op.m_returntype->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS_NOTUSED <<  op.getQualifiedCIdentifier() << "(_orbitcpp_get_c_object(),";
+	<< IDL_IMPL_C_NS_NOTUSED <<  op.getQualifiedCIdentifier() << "(_orbitcpp_get_c_object (),";
 
 	first = op.m_parameterinfo.begin();
 	last = op.m_parameterinfo.end();
@@ -226,7 +226,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		m_module << first->Type->getCPPStubParameterTerm(first->Direction,first->Identifier) << ',';
 		first++;
 	}
-	m_module << "_ev._orbitcpp_get_c_object());" << endl;
+	m_module << "_ev._orbitcpp_get_c_object ());" << endl;
 
 	// handle exceptions
 	m_module

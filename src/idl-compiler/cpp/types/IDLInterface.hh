@@ -95,9 +95,8 @@ public:
 	string getQualifiedCPP_out(IDLScope const *up_to = NULL) const {
 		return getQualifiedCPPIdentifier(up_to) + "_out";
 	}
-	string getQualifiedCPPCast(string const &expr) const {
-		return "reinterpret_cast< "+getQualifiedCPP_ptr()+">("+expr+")";
-	}
+
+	string getQualifiedCPPCast(string const &expr) const;
 
 	// cast with ref for smart pointer to normal ptr
 	string getQualifiedCPPSmartptrCast(string const &expr) const {
