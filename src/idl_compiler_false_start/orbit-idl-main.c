@@ -168,7 +168,7 @@ int main(int argc, const char *argv[])
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {
     rinfo.input_filename = g_basename(arg);
-    if (!orbit_idl_run(arg, &rinfo)) {
+    if (orbit_idl_run(arg, &rinfo)) {
       g_warning("%s compilation failed", arg);
     }
   }
