@@ -1,3 +1,10 @@
+2001-08-20  Martin Baulig  <baulig@suse.de>
+
+	* src/orb/dynamic/dynany.c (dynany_kind_mismatch):
+	Make it work with aliases.
+	(DynamicAny_DynStruct_get_elements_as_dyn_any): Implemented.
+	(DynamicAny_DynSequence_set_elements_as_dyn_any): Implemented.
+
 2001-08-18  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/server.c: init threads, before ORB init.
