@@ -1,4 +1,4 @@
-lincincludedir=$(includedir)/linc
+lincincludedir=$(includedir)/linc-1.0/linc
 
 lincinclude_HEADERS=\
 	linc-connection.h \

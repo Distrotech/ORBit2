@@ -1,3 +1,10 @@
+2001-10-09  Havoc Pennington  <hp@redhat.com>
+
+	* linc.pc.in (Cflags): headers in a subdir
+
+	* include/linc/Makefile.am (lincincludedir): put headers in a
+	subdir
+
 2001-09-26  Mark McLoughlin <mark@skynet.ie>
 
 	* configure.in: add --enable-compile-warnings option.
