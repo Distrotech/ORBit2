@@ -1,3 +1,14 @@
+2001-10-29  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require glib >= 1.3.10
+
+2001-10-26  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_mutex_new): flag that we have been
+	called.
+	(linc_set_threaded): add protection for people setting
+	the threaded-ness late.
+
 2001-10-24  Ross Golder  <rossg@durban.golder.org>
 
 	* Makefile.am (EXTRA_DIST): Added spec file, and removed
