@@ -27,6 +27,8 @@
 
 #include "IDLString.hh"
 
+#include "IDLTypedef.hh"
+
 void
 IDLString::const_decl_write (ostream          &ostr,
 			     Indent           &indent,
@@ -35,6 +37,16 @@ IDLString::const_decl_write (ostream          &ostr,
 			     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << "const char *" << cpp_id << " = " << value
+	     << ';' << endl;
+}
+
+void
+IDLString::typedef_decl_write (ostream          &ostr,
+			       Indent           &indent,
+			       const IDLTypedef &target,
+			       const IDLTypedef *active_typedef = 0) const
+{
+	ostr << indent << "typedef char * " << target.get_cpp_identifier ()
 	     << ';' << endl;
 }
 

@@ -35,6 +35,23 @@ class IDLVoid: public IDLType
 {
 public:
 	////////////////////////////////////////////
+	// Constants
+
+	void const_decl_write (ostream          &ostr,
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       const string     &value,
+			       const IDLTypedef *active_typedef = 0) const;
+
+	////////////////////////////////////////////
+	// Creating typedefs
+
+	void typedef_decl_write (ostream          &ostr,
+				 Indent           &indent,
+				 const IDLTypedef &target,
+				 const IDLTypedef *active_typedef = 0) const;
+
+	////////////////////////////////////////////
 	// Stubs
 
 	string stub_decl_arg_get (const string     &cpp_id,

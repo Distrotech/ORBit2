@@ -34,51 +34,48 @@
 #include <cstdlib>
 #include <strstream>
 
+#include "types/IDLTypedef.hh"
+
 
 // IDLPassXlate --------------------------------------------------------------
 void 
 IDLPassXlate::runPass() {
-	m_header
-	<< indent << "#ifndef __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
-	<< indent << "#define __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
-	<< endl << endl
-  << indent << "#ifdef _ORBITCPP_TESTCODE" << endl
-	<< indent << "//The headers are in a different place than when they are installed:" << endl
-	<< indent << "#include <orb-cpp/orbitcpp.hh>" << endl
-  << indent << "#else" << endl
-	<< indent << "#include <orbit/orb-cpp/orbitcpp.hh>" << endl
-	<< indent << "#endif" << endl
-	<< endl
-	<< indent << "#include <string.h>" << endl
-	//<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
-	//indent++;
-	//m_header
-	<< indent << "#include \"" << m_state.m_basename << ".h\"" << endl;
-	//indent--;
-	//m_header
-	//<< indent << "} }" << endl;
+	m_header << indent << "#ifndef __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
+		 << indent << "#define __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
+		 << endl << endl
+		 << indent << "#ifdef _ORBITCPP_TESTCODE" << endl
+		 << indent << "//The headers are in a different place than when they are installed:" << endl
+		 << indent << "#include <orb-cpp/orbitcpp.hh>" << endl
+		 << indent << "#else" << endl
+		 << indent << "#include <orbit/orb-cpp/orbitcpp.hh>" << endl
+		 << indent << "#endif" << endl
+		 << endl
+		 << indent << "#include <string.h>" << endl
+		//<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
+		//indent++;
+		//m_header
+		 << indent << "#include \"" << m_state.m_basename << ".h\"" << endl;
 
+	//m_header << -- indent << "} }" << endl;
+	
 	m_module << mod_indent
-	<< "#include \"" << m_state.m_basename << IDL_CPP_STUB_HEADER_EXT << "\"" << endl
-	<< endl << endl;
-
-	m_header
-	<< endl << endl
-	<< indent << "// Type mapping ----------------------------------------" << endl
-	<< endl;
+		 << "#include \"" << m_state.m_basename << IDL_CPP_STUB_HEADER_EXT << "\"" << endl
+		 << endl << endl;
+	
+	m_header << endl << endl
+		 << indent << "// Type mapping ----------------------------------------" << endl
+		 << endl;
 
 	doDefinitionList(m_state.m_rootscope.getNode(),m_state.m_rootscope);
 	runJobs();
-
+	
 	m_header << indent << endl << "#endif" << endl;
 }
 
 
-#if 0
-
 void 
-IDLPassXlate::doTypedef(IDL_tree  node,
-			IDLScope &scope)
+IDLPassXlate::doTypedef (IDL_tree  node,
+			 IDLScope &scope)
 {
 	string id;
 
@@ -87,24 +84,30 @@ IDLPassXlate::doTypedef(IDL_tree  node,
 
 	while (dcl_list) {
 		IDLTypedef &td = (IDLTypedef &) *scope.getItem(IDL_LIST(dcl_list).data);
-		if( first_dcl ) {
+
+#if 0 //!!!
+		if (first_dcl)
+		{
 			ORBITCPP_MEMCHECK( new IDLWriteCPPSpecCode(td.getAlias(), m_state, *this) );
 			first_dcl = false;
 		}
+#endif
 		const IDLType &targetType = td.getAlias();
-		targetType.writeTypedef(m_header,indent,m_state,td,scope);
+		targetType.typedef_decl_write (m_header, indent, td);
 
 		m_header << indent;
-		if( scope.getTopLevelInterface() )
+		if (scope.getTopLevelInterface ())
 			m_header << "static ";
-		m_header
-		<< "const CORBA::TypeCode_ptr _tc_" << td.getCPPIdentifier() << " = " 
-		<< "(CORBA::TypeCode_ptr)TC_" + td.getQualifiedCIdentifier() + ";" << endl;
+		
+		m_header << "const CORBA::TypeCode_ptr "
+			 << "_tc_" << td.get_cpp_identifier () << " = " 
+			 << "(CORBA::TypeCode_ptr)TC_" << td.get_c_typename ()
+			 << ';' << endl << endl;
+		
 		dcl_list = IDL_LIST(dcl_list).next;
-		m_header << endl;
 	}
+
 }
-#endif
 
 
 #if 0
@@ -339,14 +342,6 @@ IDLPassXlate::doEnum (IDL_tree  node,
 {
 	IDLEnum &idlEnum = (IDLEnum &) *scope.getItem(node);
 
-	string ns_iface_begin, ns_iface_end;
-	idlEnum.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
-
-	bool non_empty_ns = ns_iface_end.size () || ns_iface_begin.size ();
-
-	if (non_empty_ns)
-		m_header << indent << ns_iface_begin;
-	
 	m_header << indent << "enum " << idlEnum.get_cpp_identifier () << endl
 		 << indent++ << "{" << endl;
 
@@ -370,10 +365,7 @@ IDLPassXlate::doEnum (IDL_tree  node,
 	m_header << "const CORBA::TypeCode_ptr _tc_" << idlEnum.get_cpp_identifier () << " = " 
 		 << "(CORBA::TypeCode_ptr)TC_" << idlEnum.get_c_typename ()
 		 << ';' << endl;
-
-	if (non_empty_ns)
-		m_header << indent << ns_iface_end;
-
+	
 #if 0 //!!!
 	ORBITCPP_MEMCHECK(new IDLWriteEnumAnyFuncs (idlEnum, m_state, *this));
 #endif
@@ -424,19 +416,11 @@ IDLPassXlate::doOperation(IDL_tree node,IDLScope &scope) {
 
 
 void 
-IDLPassXlate::doException(IDL_tree  node,
-			  IDLScope &scope)
+IDLPassXlate::doException (IDL_tree  node,
+			   IDLScope &scope)
 {
 	IDLException &except = (IDLException &) *scope.getItem(node);
 
-	string ns_iface_begin, ns_iface_end;
-	except.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
-
-	bool non_empty_ns = ns_iface_end.size () || ns_iface_begin.size ();
-
-	if (non_empty_ns)
-		m_header << indent << ns_iface_begin;
-	
 #if 0 //!!!
 	// spec code must be generated before the exception because the exception "uses" its
 	// members
@@ -551,9 +535,6 @@ IDLPassXlate::doException(IDL_tree  node,
 		 << "(CORBA::TypeCode_ptr)TC_" + except.get_c_typename ()
 		 << ';' << endl;
 
-	if (non_empty_ns)
-		m_header << ns_iface_end;
-
 #if 0 //!!!
 	ORBITCPP_MEMCHECK( new IDLWriteExceptionAnyFuncs(except, m_state, *this) );
 #endif
@@ -568,6 +549,7 @@ IDLPassXlate::doInterface (IDL_tree  node,
 {
 	IDLInterface &iface = (IDLInterface &) *scope.getItem(node);
 
+	// Get namespace information
 	string ns_iface_begin, ns_iface_end;
 	iface.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
 
@@ -575,15 +557,15 @@ IDLPassXlate::doInterface (IDL_tree  node,
 
 	string ifname = iface.get_cpp_identifier();
 	string _ptrname = iface.get_cpp_identifier_ptr();
-
-	if (non_empty_ns)
-		m_header << indent++ << ns_iface_begin;
 	
+	// Create forward declaration
 	m_header << indent << "class " << ifname << ';' << endl;
-	
-	if (non_empty_ns)
-		m_header << --indent << ns_iface_end;
 
+	// Leave module namespace
+	if (non_empty_ns)
+		m_header << indent << ns_iface_end;
+
+	// Enter stub namespace
 	m_header << indent << "namespace " IDL_IMPL_NS_ID << endl
 		 << indent << "{" << endl
 		 << indent << "namespace " IDL_IMPL_STUB_NS_ID << endl
@@ -592,22 +574,12 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	
 	m_header << indent << "class " << ifname << ";" << endl << endl;
 
+	// Leave stub namespace
 	m_header << indent << ns_iface_end << endl
 		 << indent << "}} //namespaces" << endl << endl;
+	
 
-
-	
-	if (non_empty_ns)
-		m_header << ns_iface_begin;
-	
-	iface.common_write_typedefs (m_header, indent);
-	m_header << endl;
-	
-	if (non_empty_ns)
-		m_header << ns_iface_end << endl;
-
-	
-	// get poa namespace info
+	// Enter POA namespace
 	string ns_poa_begin, ns_poa_end;
 	iface.get_cpp_poa_namespace (ns_poa_begin, ns_poa_end);
 
@@ -620,10 +592,15 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	if (non_empty_ns)
 		m_header << ns_poa_end;
 	
-	// generate type container
+	// Re-enter module namespace
 	if (non_empty_ns)
-		m_header << ns_iface_begin << endl;
+		m_header << ns_iface_begin;
 
+	// Write typedefs
+	iface.common_write_typedefs (m_header, indent);
+	m_header << endl;
+	
+	// generate type container
 	m_header << indent << "class " << iface.get_cpp_identifier ();
 
 	if (iface.m_bases.size ())
@@ -655,9 +632,6 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
 #endif
 
-	if (non_empty_ns)
-		m_header << ns_iface_end << endl;
-	
 	// _duplicate() and _narrow implementations:
 	// write the static method definitions
 	doInterfaceStaticMethodDefinitions(iface);
@@ -722,18 +696,13 @@ IDLPassXlate::doModule (IDL_tree  node,
 {
 	IDLScope *module = (IDLScope *) scope.getItem(node);
 
-#if 0
 	string id = module->get_cpp_identifier ();
 	m_header << indent << "namespace " << id << endl
-		 << indent++ << '{' << endl;
-#endif
+		 << indent << '{' << endl;
 
 	Super::doModule(node, *module);
 
-#if 0
-	m_header << --indent << '}'
-		 << "//namespace " << id << endl << endl;
-#endif
+	m_header << indent << "} //namespace " << id << endl << endl;
 }
 
 #if 0 //!!!

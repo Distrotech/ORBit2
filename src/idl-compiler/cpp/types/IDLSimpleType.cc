@@ -27,6 +27,8 @@
 
 #include "IDLSimpleType.hh"
 
+#include "IDLTypedef.hh"
+
 void
 IDLSimpleType::const_decl_write (ostream          &ostr,
 				 Indent           &indent,
@@ -36,6 +38,20 @@ IDLSimpleType::const_decl_write (ostream          &ostr,
 {
 	ostr << indent << "const " << get_fixed_cpp_typename ()
 	     << cpp_id << " = " << value
+	     << ';' << endl;
+}
+
+void
+IDLSimpleType::typedef_decl_write (ostream          &ostr,
+				   Indent           &indent,
+				   const IDLTypedef &target,
+				   const IDLTypedef *active_typedef = 0) const
+{
+	ostr << indent << "typedef " << get_fixed_cpp_typename ()
+	     << " " << target.get_cpp_identifier ()
+	     << ';' << endl;
+	ostr << indent << "typedef " << get_fixed_cpp_typename () << "_out "
+	     << " " << target.get_cpp_identifier () << "_out"
 	     << ';' << endl;
 }
 

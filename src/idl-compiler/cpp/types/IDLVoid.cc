@@ -27,6 +27,25 @@
 
 #include "IDLVoid.hh"
 
+void
+IDLVoid::const_decl_write (ostream          &ostr,
+			   Indent           &indent,
+			   const string     &cpp_id,
+			   const string     &value,
+			   const IDLTypedef *active_typedef = 0) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::typedef_decl_write (ostream          &ostr,
+			     Indent           &indent,
+			     const IDLTypedef &target,
+			     const IDLTypedef *active_typedef = 0) const
+{
+	throw IDLExVoid ();
+}
+
 string
 IDLVoid::stub_decl_arg_get (const string     &cpp_id,
 			    IDL_param_attr    direction,
