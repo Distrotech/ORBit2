@@ -1,3 +1,14 @@
+/*
+ * linc-server.c: This file is part of the linc library.
+ *
+ * Authors:
+ *    Elliot Lee     (sopwith@redhat.com)
+ *    Michael Meeks  (michael@ximian.com)
+ *    Mark McLouglin (mark@skynet.ie) & others
+ *
+ * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
+ *                 Sun Microsystems, Inc.
+ */
 #include <config.h>
 #include <stdio.h>
 #include <netdb.h>
