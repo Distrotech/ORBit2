@@ -741,7 +741,7 @@ cc_small_output_iargs (FILE *of, const char *method, IDL_tree tree)
 	}
 
 	if (arg_count) {
-		fprintf (of, "\t{ NULL, 0, NULL }\n");
+		fprintf (of, "\t{ TC_null, 0, NULL }\n");
 		fprintf (of, "};\n");
 	}
 }
@@ -835,7 +835,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 	/* IArgs arguments */
 	if (arg_count)
 		fprintf (of, "\t\t{ %d, %d, %s__arginfo, FALSE },\n",
-			 arg_count, arg_count, fullname);
+			 arg_count + 1, arg_count + 1, fullname);
 	else
 		fprintf (of, "\t\t{ 0, 0, NULL, FALSE },\n");
 
