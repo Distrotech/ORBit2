@@ -1,3 +1,8 @@
+2003-07-10  George Lebl <jirka@5z.com>
+
+	* src/linc-connection.c
+	(link_connection_remove_broken_cb): fix leak.
+
 2003-07-09  Michael Meeks  <michael@ximian.com>
 
 	* test/test-linc.c (test_connected): impl.
