@@ -519,7 +519,7 @@ build_cpp_args (const char *path,
 	char *base_cpy;
 	int   i;
 
-	base = g_basename (path);
+	base = g_path_get_basename (path);
 	if (strlen (base) <= 4) {
 		ret = g_strconcat ("-D__ORBIT_IDL__ ", cpp_args, NULL);
 	} else {
@@ -533,6 +533,7 @@ build_cpp_args (const char *path,
 				   "_COMPILATION ", cpp_args, NULL);
 		g_free (base_cpy);
 	}
+	g_free (base);
 	return ret;
 }
 
