@@ -9,12 +9,7 @@ If you want to work on one of these items, please let orbit-list or me
 
 . Finish POA.
 
-. Complete TypeCode/any support (the basics are there, but a LOT
-remains to be written).
-
 . Finish DII. Write DSI.
-
-. Finish CORBA_USER_EXCEPTION support (waiting for typecode/any support).
 
 . Improve error handling.
 

@@ -1,31 +1,44 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
+srcdir=`dirname $0`
+test -z "$srcdir" && srcdir=.
+
+ORIGDIR=`pwd`
+cd $srcdir
+
 DIE=0
 
+# Check for autoconf, the required version is set in configure.in
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
 	echo
-	echo "You must have autoconf installed to compile ORBit."
-	echo "Download the appropriate package for your distribution,"
-	echo "or get the source tarball at ftp://ftp.gnu.org/pub/gnu/"
+	echo "You must have at minimum autoconf version 2.12 installed"
+	echo "to compile ORBit. Download the appropriate package for"
+	echo "your distribution, or get the source tarball at"
+	echo "ftp://ftp.gnu.org/pub/gnu/"
 	DIE=1
 }
 
-(libtool --version) < /dev/null > /dev/null 2>&1 || {
+# Check for libtool
+(libtool --version | egrep -q "1.2") || {
 	echo
-	echo "You must have libtool installed to compile ORBit."
-	echo "Get ftp://alpha.gnu.org/gnu/libtool-1.0h.tar.gz"
-	echo "(or a newer version if it is available)"
+	echo "You must have at minimum libtool version 1.2 installed"
+	echo "to compile ORBit. Download the appropriate package for"
+	echo "your distribution, or get the source tarball at"
+	echo "ftp://alpha.gnu.org/gnu/libtool-1.2d.tar.gz"
 	DIE=1
 }
 
-(automake --version) < /dev/null > /dev/null 2>&1 || {
+# Check for automake, the required version is set in Makefile.am
+(automake --version) < /dev/null > /dev/null 2>&1 ||{
 	echo
-	echo "You must have automake installed to compile ORBit."
-	echo "Get ftp://ftp.cygnus.com/pub/home/tromey/automake-1.2d.tar.gz"
-	echo "(or a newer version if it is available)"
+	echo "You must have at minimum automake version 1.3 installed"
+	echo "to compile ORBit. Download the appropriate package for"
+	echo "your distribution, or get the source tarball at"
+	echo "ftp://ftp.cygnus.com/pub/home/tromey/automake-1.3b.tar.gz"
 	DIE=1
 }
+
 
 if test "$DIE" -eq 1; then
 	exit 1
@@ -59,15 +72,10 @@ echo processing libIDL
     aclocal $ACLOCAL_FLAGS; \
     autoconf)
 
-if [ -z "$OBJ_DIR" ]; then
-	echo "Running ./configure --enable-maintainer-mode" "$@"
-	./configure --enable-maintainer-mode "$@"
-else
-	mkdir -p "$OBJ_DIR"
-	cd "$OBJ_DIR"
-	echo "Running ../configure --enable-maintainer-mode" "$@"
-	../configure --enable-maintainer-mode "$@"
-fi
+cd $ORIGDIR
+
+echo "Running $srcdir/configure --enable-maintainer-mode" "$@"
+$srcdir/configure --enable-maintainer-mode "$@"
 
 echo 
 echo "Now type 'make' to compile ORBit."

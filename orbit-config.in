@@ -16,6 +16,7 @@ Known values for OPTION are:
   --exec-prefix=DIR	change ORBit executable prefix [default $exec_prefix]
   --libs		print library linking information
   --cflags		print pre-processor and compiler flags
+  --multithread         print flags for building a multithreaded application. 
   --help		display this help and exit
   --version		output version information
 
@@ -40,6 +41,7 @@ fi
 
 cflags=false
 libs=false
+multithread=
 
 while test $# -gt 0; do
     case "$1" in
@@ -77,6 +79,10 @@ while test $# -gt 0; do
 	usage 0
 	;;
 
+    --multithread)
+	multithread=gthread
+	;;
+
     --cflags)
        	cflags=true
        	;;
@@ -86,8 +92,8 @@ while test $# -gt 0; do
        	;;
 
     client|server)
-	the_libs="$the_libs -L@libdir@ -lORBit -lIIOP -lORBitutil `glib-config --libs` @LIBS@ -lm"
-	the_flags="$the_flags `glib-config --cflags` -I@includedir@"
+	the_libs="$the_libs -L@libdir@ -lORBit -lIIOP -lORBitutil `glib-config $multithread --libs` @LIBS@ -lm"
+	the_flags="$the_flags `glib-config $multithread --cflags` -I@includedir@"
 	;;
 
    --use-service=*)
