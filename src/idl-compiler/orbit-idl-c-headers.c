@@ -476,19 +476,24 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 
   fullname = orbit_cbe_get_typespec_str(tree);
 
-  fprintf(ci->fh, "#if !defined(ORBIT_DECL_%s) && !defined(_%s_defined)\n#define ORBIT_DECL_%s 1\n#define _%s_defined 1\n",
-	  fullname, fullname, fullname, fullname);
+  /* NOTE: ORBIT_DECL_%s protects redef of everything (struct,TC,externs)
+   * while _%s_defined protects only the struct */
+
+  fprintf(ci->fh, "#if !defined(ORBIT_DECL_%s)\n#define ORBIT_DECL_%s 1\n",
+	  fullname, fullname);
   if ( ci->do_impl_hack )
       orbit_cbe_id_define_hack(ci->fh, "ORBIT_IMPL", fullname, ci->c_base_name);
 
   if(IDL_NODE_TYPE(IDL_TYPE_SEQUENCE(tree).simple_type_spec) == IDLN_TYPE_SEQUENCE)
     ch_prep_sequence(IDL_TYPE_SEQUENCE(tree).simple_type_spec, ci);
 
+  fprintf(ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n",
+	  fullname, fullname);
   fprintf(ci->fh, "typedef struct { CORBA_unsigned_long _maximum, _length; ");
   orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   fprintf(ci->fh, "* _buffer; CORBA_boolean _release; } ");
   orbit_cbe_write_typespec(ci->fh, tree);
-  fprintf(ci->fh, ";\n");
+  fprintf(ci->fh, ";\n#endif\n");
 
   ch_type_alloc_and_tc(tree, ci, TRUE);
 
