@@ -1,0 +1,9 @@
+Version 0.1.7
+
+	* Featurelets
+		+ Init glib with object debugging
+	* Bug fixes
+		+ Make our GSource recursive (Michael)
+		+ Handle EINTR (Michael)
+
+
