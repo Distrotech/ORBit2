@@ -1,3 +1,9 @@
+2002-04-02  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c (cleanup_sweep): impl to
+	solve the leftover unix domain socket problem.
+	(linc_protocol_get_sockaddr_unix): do the sweep.
+
 2002-03-21  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.20
