@@ -7,7 +7,7 @@ PortableServer_ServantBase__default_POA(PortableServer_Servant servant,
 {
   g_return_val_if_fail(servant, NULL);
 
-  return ORBIT_SERVANT_TO_POAOBJECT(servant)->poa;
+  return ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant)->poa;
 }
 
 void
@@ -16,7 +16,7 @@ PortableServer_ServantBase__init(PortableServer_Servant p_servant,
 {
   PortableServer_ServantBase *servant = p_servant;
   /* NOTE: servant must be init'd before POAObj activated */
-  g_assert( servant->_private == NULL );
+  g_assert( ORBIT_SERVANT_TO_POAOBJECT_LIST(p_servant) == NULL );
 }
 
 void
@@ -25,5 +25,5 @@ PortableServer_ServantBase__fini(PortableServer_Servant p_servant,
 {
   /* NOTE: servant must be fini'd after POAObj de-activated */
   PortableServer_ServantBase *servant = p_servant;
-  g_assert( servant->_private == NULL );
+  g_assert( ORBIT_SERVANT_TO_POAOBJECT_LIST(p_servant) == NULL );
 }
