@@ -1,5 +1,9 @@
 2001-12-19  Mark McLoughlin  <mark@skynet.ie>
 
+	* test/everything/test.sh: niceify.
+
+2001-12-19  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/orb/orb-core/iop-profiles.c: (IOP_profiles_sync_objkey):
 	reduce the scream and shout error to a warning.
 
