@@ -1,3 +1,8 @@
+Version 0.1.19
+
+	* Only emit the 'broken' signal once (Michael)
+	* Fix potential fd leak (Michael)
+
 Version 0.1.18
 
 	* default to not use OpenSSL (Michael)
