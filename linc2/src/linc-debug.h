@@ -6,12 +6,6 @@
  */
 #undef CONNECTION_DEBUG
 
-/*
- * Enables various poll debugging methods
- */
-#undef WATCH_DEBUG
-
-
 #ifndef CONNECTION_DEBUG
    static inline void d_printf (const char *format, ...) { };
 #  define STATE_NAME(s) ""

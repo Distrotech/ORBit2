@@ -1,3 +1,43 @@
+2001-12-31  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump version to 0.1.12
+
+2001-12-28  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (calc_size): split out of
+	(queue_flattened): here.
+
+	* include/linc/linc-server.h,
+	* include/linc/linc-connection.h
+	(LINC_IS_CONNECTION): re-write macros, slower,
+	but functional.
+
+	* src/linc-connection.c (linc_connection_class_init):
+	add the 'blocking' signal.
+	(queue_signal): impl.
+	(linc_connection_class_state_changed): free the queue
+	on disconnect.
+	(linc_connection_io_handler): do an unchecked class
+	cast for speed.
+
+2001-12-27  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_write):
+	re-express in terms of writev - this should always have
+	been so.
+	(linc_connection_writev): fix iov_base arithemetic.
+	merge in the SSL code from writev.
+	(queue_flattened, queue_free): impl.
+	(linc_connection_dispose): release the queue.
+	(write_data): split this out of
+	(linc_connection_writev): here & upd to handle queue.
+	(linc_connection_connected): rename to
+	(linc_connection_io_handler): this.
+	(linc_source_add): upd.
+	(queued_write_free): impl.
+	(linc_connection_writev): don't belt round a
+	non-blocking loop on EAGAIN even if we block.
+
 2001-12-19  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-server.c (linc_server_setup): upd.
