@@ -19,6 +19,7 @@ INCLUDES =                                 \
 	-I$(top_srcdir)/src                \
 	-I$(top_srcdir)/src/services/imodule \
 	-DORBIT2_INTERNAL_API              \
+        -DTEST_SRCDIR=\""$(top_srcdir)"/test/everything\" \
 	$(WARN_CFLAGS)                     \
 	$(ORBIT_CFLAGS)			   \
 	$(ORBIT_IDL_CFLAGS)

@@ -85,6 +85,46 @@ ORBit_imodule_get_struct_members (GHashTable        *typecodes,
 }
 
 static void
+ORBit_imodule_jam_int (IDL_tree src, CORBA_TypeCode tc, gpointer dest)
+{
+	CORBA_long val = 0;
+
+	switch (IDL_NODE_TYPE (src)) {
+	case IDLN_BOOLEAN:
+		val = IDL_BOOLEAN (src).value ? 1 : 0;
+		break;
+	case IDLN_CHAR:
+		val = IDL_CHAR (src).value [0];
+		break;
+	case IDLN_INTEGER:
+		val = IDL_INTEGER (src).value;
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+
+	switch (tc->kind) {
+	case CORBA_tk_boolean:
+	case CORBA_tk_char:
+	case CORBA_tk_octet:
+		*(CORBA_boolean *) dest = val;
+		break;
+	case CORBA_tk_short:
+	case CORBA_tk_ushort:
+		*(CORBA_short *) dest = val;
+		break;
+	case CORBA_tk_long:
+	case CORBA_tk_ulong:
+		*(CORBA_long *) dest = val;
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+}
+
+static void
 ORBit_imodule_setup_label_any (CORBA_TypeCode  tc,
 			       IDL_tree        node,
 			       CORBA_any      *label)
@@ -103,16 +143,14 @@ ORBit_imodule_setup_label_any (CORBA_TypeCode  tc,
 
 	switch (IDL_NODE_TYPE (node)) {
 	case IDLN_BOOLEAN:
-		*(CORBA_boolean *) label->_value = IDL_BOOLEAN (node).value;
-		break;
 	case IDLN_CHAR:
-		*(CORBA_char *) label->_value = IDL_CHAR (node).value [0];
-		break;
-	case IDLN_FLOAT:
-		*(CORBA_float *) label->_value = IDL_FLOAT (node).value;
-		break;
 	case IDLN_INTEGER:
-		*(CORBA_long *) label->_value = IDL_INTEGER (node).value;
+		ORBit_imodule_jam_int (node, tc, label->_value);
+		break;
+
+	case IDLN_FLOAT:
+		g_assert (tc->kind == CORBA_tk_float);
+		*(CORBA_float *) label->_value = IDL_FLOAT (node).value;
 		break;
 	case IDLN_BINOP:  /* drop through */
 	case IDLN_UNARYOP: {
@@ -126,21 +164,10 @@ ORBit_imodule_setup_label_any (CORBA_TypeCode  tc,
 			val = _IDL_unaryop_eval (IDL_BINOP (node).op,
 					       IDL_UNARYOP (node).operand);
 
-		switch (IDL_NODE_TYPE (val)) {
-		case IDLN_INTEGER:
-			*(CORBA_long *) label->_value = IDL_INTEGER (node).value;
-			break;
-		case IDLN_FLOAT:
-			*(CORBA_float *) label->_value = IDL_FLOAT (node).value;
-			break;
-		default:
-			g_assert_not_reached ();
-			break;
-		}
-
+		ORBit_imodule_jam_int (val, tc, label->_value);
 		IDL_tree_free (val);
-		}
 		break;
+	}
 	case IDLN_IDENT: {
 		CORBA_long val;
 
@@ -673,11 +700,11 @@ ORBit_imodule_get_typecode (GHashTable *typecodes,
 
 			members = ORBit_imodule_get_union_members (
 						typecodes, tree, switchtc, &env);
-
 			retval = CORBA_ORB_create_union_tc (NULL,
 					IDL_IDENT (IDL_TYPE_UNION (tree).ident).repo_id,
 					IDL_IDENT (IDL_TYPE_UNION (tree).ident).str,
 					switchtc, members, &env);
+
 			CORBA_Object_release ((CORBA_Object) switchtc, NULL);
 
 			ORBit_imodule_register_typecode (
