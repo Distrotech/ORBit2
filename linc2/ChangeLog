@@ -1,3 +1,8 @@
+2002-03-20  Gregory Leblanc  <gleblanc@linuxweasel.com>
+
+	* configure.in: Adding missing AC_SUBST
+	* linc.spec.in: rewrite
+
 2002-03-20  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-protocols.c (linc_protocol_destroy_cnx): impl.
