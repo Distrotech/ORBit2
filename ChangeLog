@@ -1,5 +1,16 @@
 2002-01-03  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/idl-compiler/orbit-idl-c-stubs.c: (cs_small_output_stub):
+	output local case code to check to see if the operation is
+	implemented and return NO_IMPLEMENT if not.
+	
+	* src/idl-compiler/orbit-idl2.h: add ORBIT_EPV_VAR_NAME.
+
+	* test/everything/client.c: (testMisc): test this in the local
+	case as well.
+
+2002-01-03  Mark McLoughlin  <mark@skynet.ie>
+
 	* include/orbit/poa/poa-types.h:
 	(ORBIT_STUB_IsBypass): check for nil reference, and pawn off
 	on ORBit_small_invoke_stub if it is nil.
