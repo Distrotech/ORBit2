@@ -23,6 +23,7 @@
 #include <utime.h>
 #include <errno.h>
 #include <string.h>
+#include <netinet/in.h>
 #include <resolv.h>
 #include <netdb.h>
 

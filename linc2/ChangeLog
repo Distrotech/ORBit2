@@ -1,3 +1,8 @@
+2001-12-01  Theo van Klaveren  <t.vanklaveren@student.utwente.nl>
+
+	* src/linc-protocols.c: Add <netinet/in.h> to includes.
+	Fixes build on FreeBSD.
+
 2001-11-26  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.10
