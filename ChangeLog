@@ -1,3 +1,9 @@
+2002-06-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(get_next_indirect): check the send buffer
+	for 8 byte alignment, thanks to Alex Larsson
+
 2002-06-17  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c
