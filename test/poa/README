@@ -56,3 +56,8 @@
        on this object.
 
 
+ Test 1 : poatest-basic01.c
+     o Root POA.
+     o activated object with system assigned id.
+
+
