@@ -11,7 +11,7 @@
 
 static void linc_connection_init       (LINCConnection      *cnx);
 static void linc_connection_real_state_changed (LINCConnection  *cnx, LINCConnectionStatus status);
-static void linc_connection_destroy    (GObject             *obj);
+static void linc_connection_shutdown    (GObject             *obj);
 static void linc_connection_class_init (LINCConnectionClass *klass);
 
 GType
@@ -50,7 +50,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *)klass;
 
-  object_class->shutdown = linc_connection_destroy;
+  object_class->shutdown = linc_connection_shutdown;
   klass->state_changed = linc_connection_real_state_changed;
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(klass)));
 }
@@ -61,18 +61,23 @@ linc_connection_init       (LINCConnection      *cnx)
 }
 
 static void
-linc_connection_destroy    (GObject             *obj)
+linc_connection_shutdown    (GObject             *obj)
 {
   LINCConnection *cnx = (LINCConnection *)obj;
 
   if(cnx->tag)
-    g_source_remove(cnx->tag);
+    g_assert (g_source_remove(cnx->tag));
+  cnx->tag = 0;
   g_free(cnx->remote_host_info);
+  cnx->remote_host_info = NULL;
   g_free(cnx->remote_serv_info);
+  cnx->remote_serv_info = NULL;
   if (cnx->gioc)
     g_io_channel_unref (cnx->gioc);
+  cnx->gioc = NULL;
   if(cnx->fd >= 0)
     close(cnx->fd);
+  cnx->fd = -1;
   if(parent_class->shutdown)
     parent_class->shutdown(obj);
 }
@@ -93,6 +98,7 @@ linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer dat
       if(!rv && !n && condition == G_IO_OUT)
 	{
 	  linc_connection_state_changed(cnx, LINC_CONNECTED);
+	  g_assert (cnx->tag == 0);
 	  cnx->tag = g_io_add_watch(cnx->gioc,
 				    G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
 				    linc_connection_connected, cnx);
@@ -132,11 +138,13 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
 				  linc_connection_connected, cnx);
       break;
     case LINC_CONNECTING:
-      if(cnx->tag) g_source_remove(cnx->tag);
+      if(cnx->tag)
+	g_assert (g_source_remove(cnx->tag));
       cnx->tag = g_io_add_watch(cnx->gioc, G_IO_OUT|G_IO_ERR|G_IO_HUP|G_IO_NVAL, linc_connection_connected, cnx);
       break;
     case LINC_DISCONNECTED:
-      if(cnx->tag) g_source_remove(cnx->tag);
+      if(cnx->tag)
+	g_assert (g_source_remove(cnx->tag));
       cnx->tag = 0;
       close(cnx->fd);
       cnx->fd = -1;

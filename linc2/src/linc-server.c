@@ -7,7 +7,7 @@
 
 static void linc_server_init       (LINCServer      *cnx);
 static LINCConnection *linc_server_create_connection (LINCServer      *cnx);
-static void linc_server_destroy    (GObject         *obj);
+static void linc_server_shutdown    (GObject         *obj);
 static void linc_server_class_init (LINCServerClass *klass);
 
 enum {
@@ -88,7 +88,7 @@ linc_server_class_init (LINCServerClass *klass)
   GClosure *closure;
   GType ptype;
 
-  object_class->shutdown = linc_server_destroy;
+  object_class->shutdown = linc_server_shutdown;
   klass->create_connection = linc_server_create_connection;
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
   closure = g_signal_type_cclosure_new(G_OBJECT_CLASS_TYPE(klass),
@@ -112,19 +112,24 @@ linc_server_init       (LINCServer      *cnx)
 }
 
 static void
-linc_server_destroy(GObject         *obj)
+linc_server_shutdown(GObject         *obj)
 {
   LINCServer *cnx = (LINCServer *)obj;
 
   O_MUTEX_DESTROY(cnx->mutex);
   if(cnx->tag)
     g_source_remove(cnx->tag);
+  cnx->tag = 0;
   if(cnx->proto && cnx->proto->destroy)
     cnx->proto->destroy(cnx->fd, cnx->local_host_info, cnx->local_serv_info);
+  cnx->proto = NULL;
   if(cnx->fd >= 0)
     close(cnx->fd);
+  cnx->fd = -1;
   g_free(cnx->local_host_info);
+  cnx->local_host_info = NULL;
   g_free(cnx->local_serv_info);
+  cnx->local_serv_info = NULL;
   if(parent_class->shutdown)
     parent_class->shutdown(obj);
 }
@@ -266,6 +271,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   if((create_options & LINC_CONNECTION_NONBLOCKING))
     {
       gioc = g_io_channel_unix_new(fd);
+      g_assert (cnx->tag == 0);
       cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
 				linc_server_handle_io, cnx);
       g_io_channel_unref(gioc);
