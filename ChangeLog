@@ -1,3 +1,10 @@
+2001-08-22  Maciej Stachowiak  <mjs@noisehavoc.org>
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_write_param_typespec_str): If a type Foo is a typedef
+	for CORBA_string, write const CORBA_char * instead of const
+	Foo. This is needed to avoid warnings in the generated skeletons.
+
 2001-08-20  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/poa.c

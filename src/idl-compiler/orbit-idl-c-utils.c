@@ -245,15 +245,25 @@ orbit_cbe_write_param_typespec_str(IDL_tree ts, IDL_ParamRole role)
 	gboolean isSlice;
 	char    *name;
 	GString *str = g_string_sized_new (23);
+	IDL_tree typedef_spec;
+	char *typedef_name;
 
 	n = oidl_param_info (ts, role, &isSlice);
 	name = orbit_cbe_get_typespec_str (ts);
 
-	if ( role == DATA_IN )
-		g_string_sprintf (
-			str, "const %s", 
-			!strcmp (name, "CORBA_string") ? "CORBA_char*" : name);
-	else
+	if ( role == DATA_IN ) {
+	        /* We want to check if this is a typedef for CORBA_string so we can do special handling 
+		 * in that case. 
+		 */
+	        typedef_spec = orbit_cbe_get_typespec (ts);
+		typedef_name = orbit_cbe_get_typespec_str (typedef_spec);
+
+		g_string_printf (str, "const %s", 
+				 !strcmp (typedef_name, "CORBA_string") ?
+				 "CORBA_char *" : name);
+
+		g_free (typedef_name);
+	} else
 		g_string_sprintf (str, "%s", name);
 
 	g_free (name);
