@@ -289,6 +289,11 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   cc_alloc_prep(tree, ci);
   ts = IDL_TYPE_DCL(tree).type_spec;
   tts = orbit_cbe_get_typespec(ts);
+
+  if (IDL_NODE_TYPE(tts) == IDLN_INTERFACE
+      || IDL_NODE_TYPE(tts) == IDLN_TYPE_OBJECT)
+    return;
+
   ctmp = orbit_cbe_get_typename(ts);
 
   fixlen = orbit_cbe_type_is_fixed_length(ts);

@@ -22,6 +22,7 @@ c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean on_sta
   cmi.ci = ci;
   cmi.last_tail_align = 1;
   cmi.alloc_on_stack = on_stack;
+  cmi.in_skels = on_stack?1:0;
 
   c_marshal_generate(node, &cmi);
 }
@@ -226,6 +227,10 @@ c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     break;
   case CX_CORBA_TYPECODE:
     fprintf(cmi->ci->fh, "ORBit_encode_CORBA_TypeCode(%s, _ORBIT_send_buffer);\n", ctmp);
+    break;
+  case CX_CORBA_CONTEXT:
+    fprintf(cmi->ci->fh, "ORBit_Context_marshal(_ctx, _context_items, %d, _ORBIT_send_buffer);\n",
+	    node->u.complex_info.context_item_count);
     break;
   }
 

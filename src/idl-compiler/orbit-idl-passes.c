@@ -380,6 +380,11 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
       node->iiop_head_align = sizeof(CORBA_unsigned_long); /* TCKind enum */
       node->iiop_tail_align = 1;
       break;
+    case CX_CORBA_CONTEXT:
+      node->arch_head_align = node->arch_tail_align = sizeof(CORBA_unsigned_long);
+      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* sequence<string> length */
+      node->iiop_tail_align = 1;
+      break;
     }
     break;
   case MARSHAL_LOOP:

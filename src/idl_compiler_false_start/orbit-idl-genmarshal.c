@@ -459,7 +459,8 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
 
-  if(!IDL_OP_DCL(tree).parameter_dcls) return NULL;
+  if(!(IDL_OP_DCL(tree).parameter_dcls
+       || IDL_OP_DCL(tree).context_expr)) return NULL;
 
   retval = oidl_marshal_node_new(NULL, MARSHAL_SET, NULL);
 
@@ -501,6 +502,20 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
     }
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, sub);
+  }
+
+  if(IDL_OP_DCL(tree).context_expr) {
+    OIDL_Marshal_Node *mnode;
+    int i;
+    IDL_tree curitem;
+
+    for(i = 0, curitem = IDL_OP_DCL(tree).context_expr; curitem; curitem = IDL_LIST(curitem).next, i++) /* */ ;
+
+    mnode = oidl_marshal_node_new(retval, MARSHAL_COMPLEX, NULL);
+    mnode->u.complex_info.type = CX_CORBA_CONTEXT;
+    mnode->u.complex_info.context_item_count = i;
+
+    retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, mnode);
   }
 
   return retval;
