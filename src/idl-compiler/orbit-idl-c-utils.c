@@ -709,6 +709,7 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case BASE_TYPES:
 		case STRING_TYPES:
 		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
 		case IDLN_NATIVE:
 			return "(gpointer)&";
 
@@ -717,7 +718,6 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ARRAY:
-		case IDLN_TYPE_TYPECODE:
 			return "(gpointer)";
 			
 		default:
@@ -731,13 +731,13 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case BASE_TYPES:
 		case STRING_TYPES:
 		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
 		case IDLN_TYPE_STRUCT:
 		case IDLN_TYPE_UNION:
 		case IDLN_TYPE_ARRAY:
 		case IDLN_NATIVE:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-		case IDLN_TYPE_TYPECODE:
 			return "";
 
 		default:
@@ -751,6 +751,7 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case BASE_TYPES:
 		case STRING_TYPES:
 		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
 		case IDLN_NATIVE:
 			return "&";
 
@@ -763,7 +764,6 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ANY:
-		case IDLN_TYPE_TYPECODE:
 			return "";
 
 		default:
@@ -825,6 +825,7 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case BASE_TYPES:
 		case STRING_TYPES:
 		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
 		case IDLN_NATIVE:
 			retval = g_strdup_printf ("*(%s *)", typestr);
 			break;
@@ -839,7 +840,6 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case IDLN_TYPE_UNION:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-		case IDLN_TYPE_TYPECODE:
 			retval = g_strdup_printf ("(%s)", typestr);
 			break;
 			
@@ -861,12 +861,12 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case BASE_TYPES:
 		case STRING_TYPES:
 		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
 		case IDLN_TYPE_STRUCT:
 		case IDLN_TYPE_UNION:
 		case IDLN_NATIVE:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-		case IDLN_TYPE_TYPECODE:
 			retval = g_strdup_printf ("(%s)", typestr);
 			break;
 
@@ -883,6 +883,7 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case BASE_TYPES:
 		case STRING_TYPES:
 		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
 		case IDLN_NATIVE:
 			retval = g_strdup_printf ("*(%s *)", typestr);
 			break;
@@ -904,7 +905,6 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ANY:
-		case IDLN_TYPE_TYPECODE:
 			retval = g_strdup_printf ("(%s)", typestr);
 			break;
 

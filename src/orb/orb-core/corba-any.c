@@ -204,11 +204,6 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
 	ORBit_marshal_any(buf, *val);
 	*val = ((guchar *)*val) + sizeof(CORBA_any);
 	break;
-    case CORBA_tk_TypeCode:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-	ORBit_encode_CORBA_TypeCode((CORBA_TypeCode)*val, buf);
-	*val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
-	break;
     case CORBA_tk_Principal:
 	*val = ALIGN_ADDRESS(*val,
 			     MAX(MAX(ALIGNOF_CORBA_LONG, ALIGNOF_CORBA_STRUCT),
@@ -226,6 +221,11 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
 	ORBit_marshal_object(buf, *(CORBA_Object*)*val);
 	*val = ((guchar *)*val) + sizeof(CORBA_Object);
+	break;
+    case CORBA_tk_TypeCode:
+	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
+	ORBit_encode_CORBA_TypeCode(*(CORBA_TypeCode *)*val, buf);
+	*val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
 	break;
     case CORBA_tk_except:
     case CORBA_tk_struct:
@@ -560,13 +560,6 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       *val = ((guchar *)*val) + sizeof(CORBA_any);
     }
     break;
-  case CORBA_tk_TypeCode:
-    *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-    if(ORBit_decode_CORBA_TypeCode(*val, buf))
-      return TRUE;
-    ORBit_RootObject_duplicate(*(CORBA_TypeCode *)*val);
-    *val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
-    break;
   case CORBA_tk_Principal:
     {
       CORBA_Principal *p;
@@ -598,6 +591,13 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
     if(ORBit_demarshal_object((CORBA_Object *)*val, buf, orb))
       return TRUE;
     *val = ((guchar *)*val) + sizeof(CORBA_Object);
+    break;
+  case CORBA_tk_TypeCode:
+    *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
+    if(ORBit_decode_CORBA_TypeCode(*val, buf))
+      return TRUE;
+    ORBit_RootObject_duplicate((CORBA_TypeCode *)*val);
+    *val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
     break;
   case CORBA_tk_except:
   case CORBA_tk_struct:

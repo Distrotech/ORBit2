@@ -489,14 +489,17 @@ static gboolean
 tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 {
   CORBA_TCKind kind;
+  CORBA_unsigned_long lkind;
   CORBA_TypeCode tc;
   const TkInfo* info;
   TCRecursionNode* node;
   GIOPRecvBuffer *encaps;
   guint tmp_index;
 
-  if(CDR_get_ulong(c, &kind))
+  if(CDR_get_ulong(c, &lkind))
     return TRUE;
+
+  kind = lkind;
 
   g_assert(CLAMP(0, kind, CORBA_tk_last) == kind);
 
@@ -531,6 +534,7 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   tc = g_new0(struct CORBA_TypeCode_struct, 1);
 
   ORBit_RootObject_init(&tc->parent, &ORBit_TypeCode_epv);
+  tc->parent.refs = 1;
 
   tc->kind=kind;
   switch(info->type)
@@ -573,6 +577,7 @@ tc_dec_tk_sequence(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   if(tc_dec(&t->subtypes[0], c, ctx))
     return TRUE;
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  t->sub_parts = 1;
   if(CDR_get_ulong(c, &t->length))
     return TRUE;
   return FALSE;
@@ -697,6 +702,7 @@ tc_dec_tk_alias(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   if(tc_dec(t->subtypes, c, ctx))
     return TRUE;
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  t->sub_parts = 1;
   return FALSE;
 }
 
@@ -732,6 +738,7 @@ tc_dec_tk_array(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     return TRUE;
 
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  t->sub_parts = 1;
   if(CDR_get_ulong(c, &t->length))
     return TRUE;
   return FALSE;

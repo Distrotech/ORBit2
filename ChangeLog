@@ -1,5 +1,16 @@
 2001-05-17  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-typecode.c (tc_dec_tk_sequence),
+	(tc_dec_tk_alias, tc_dec_tk_array): set sub_parts to 1.
+	(tc_dec): set ref count to 1.
+
+	* src/orb/orb-core/corba-any.c (ORBit_marshal_value),
+	(ORBit_demarshal_value): Make TypeCode indirection consistant
+	with CORBA_Object indirection [ and in fact all other types ] -
+	they are both Pseudo-objects.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec): hack.
+
 	* src/orb/orb-core/corba-env.c (ORBit_send_user_exception): fixup.
 
 2001-05-16  Michael Meeks  <michael@ximian.com>

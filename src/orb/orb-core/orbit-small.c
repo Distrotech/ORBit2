@@ -446,6 +446,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 	dprintf ("Demarshal ");
 
 	if ((tc = m_data->ret)) {
+		gpointer retp = ret;
 		dprintf ("ret: ");
 		g_assert (ret != NULL);
 
@@ -455,19 +456,12 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 		switch (tc->kind) {
 
 		case CORBA_BASE_TYPES:
-			do_demarshal_value (recv_buffer, &ret, tc, TRUE, obj->orb);
-			dprintf ("base type");
-			break;
-
 		case CORBA_tk_objref:
 		case CORBA_tk_TypeCode:
 		case CORBA_tk_string:
 		case CORBA_tk_wstring:
-			data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, obj->orb);
-			if (!data)
-				return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
-			*((gpointer *)ret) = *((gpointer *) data);
-			dprintf ("obj/string");
+			do_demarshal_value (recv_buffer, &retp, tc, TRUE, obj->orb);
+			dprintf ("base type / [p]obj / [w]string");
 			break;
 
 		case CORBA_tk_array:
@@ -478,20 +472,26 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 			dprintf ("array");
 			break;
 
-		case CORBA_tk_any:
 		case CORBA_tk_struct:
 		case CORBA_tk_union:
+			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
+				retp = &ret;
+				dprintf ("whacked out type");
+			}
+			/* drop through */
+
+		case CORBA_tk_any:
 		case CORBA_tk_sequence:
 		case CORBA_tk_except:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-				do_demarshal_value (recv_buffer, &ret, tc, TRUE, obj->orb);
-				dprintf ("fixed");
+				do_demarshal_value (recv_buffer, retp, tc, TRUE, obj->orb);
+				dprintf ("misc. fixed");
 			} else {
 				data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, obj->orb);
 				if (!data)
 					return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
-				*((gpointer *)ret) = data;
-				dprintf ("pointer");
+				*((gpointer *)retp) = data;
+				dprintf ("misc pointer + alloc");
 			}
 			break;
 		default:
@@ -538,7 +538,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 				if (a->flags & ORBit_I_ARG_INOUT) {
 					if (tc->kind == CORBA_tk_TypeCode ||
 					    tc->kind == CORBA_tk_objref)
-						CORBA_Object_release (arg, ev);
+						CORBA_Object_release (*(gpointer *)arg, ev);
 					else if (tc->kind == CORBA_tk_string ||
 						 tc->kind == CORBA_tk_wstring)
 						CORBA_free (*(gpointer *) arg);
@@ -752,7 +752,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			args [i] = ORBit_demarshal_arg (
 				recv_buffer, a->tc, TRUE, orb);
 
-		else { /* OUT */
+		else { /* Out */
 			args [i] = &scratch [i];
 			scratch [i] = ORBit_alloc_tcval (a->tc, 1);
 		}
@@ -780,7 +780,6 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	} else if (ev->_major == CORBA_USER_EXCEPTION) {
 		ORBit_small_send_user_exception (
 			send_buffer, ev, &m_data->exceptions);
-		CORBA_exception_free (ev);
 
 	} else if (ev->_major != CORBA_NO_EXCEPTION)
 		ORBit_send_system_exception (send_buffer, ev);
@@ -794,18 +793,13 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 			switch (tc->kind) {
 				
-			case CORBA_BASE_TYPES: {
-				ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
-				dprintf ("base type");
-				break;
-			}
-				
+			case CORBA_BASE_TYPES:
 			case CORBA_tk_objref:
 			case CORBA_tk_TypeCode:
 			case CORBA_tk_string:
 			case CORBA_tk_wstring:
-				ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T2 - ok */
-				dprintf ("obj/string");
+				ORBit_marshal_arg (send_buffer, retval, m_data->ret);
+				dprintf ("base/[p]obj/string");
 				break;
 				
 			case CORBA_tk_array:
@@ -819,10 +813,10 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			case CORBA_tk_sequence:
 			case CORBA_tk_except:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
-					ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
+					ORBit_marshal_arg (send_buffer, retval, m_data->ret);
 					dprintf ("fixed");
 				} else {
-					ORBit_marshal_arg (send_buffer, *(gpointer *)retval, m_data->ret); /* T1 */
+					ORBit_marshal_arg (send_buffer, *(gpointer *)retval, m_data->ret);
 					dprintf ("pointer baa");
 				}
 				break;
@@ -835,22 +829,15 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 		for (i = 0; i < m_data->arguments._length; i++) {
 			ORBit_IArg *a = &m_data->arguments._buffer [i];
-
+			
 			tc = a->tc;
 			while (tc->kind == CORBA_tk_alias)
 				tc = tc->subtypes [0];
 			
-			if (a->flags & ORBit_I_ARG_IN)
-				CORBA_free (args [i]);
-			
-			else if (a->flags & ORBit_I_ARG_INOUT) {
+			if (a->flags & ORBit_I_ARG_INOUT)
 				ORBit_marshal_arg (send_buffer, args [i], tc);
-				CORBA_free (args [i]);
-
-			} else { /* OUT */
+			else if (a->flags & ORBit_I_ARG_OUT)
 				ORBit_marshal_arg (send_buffer, scratch [i], tc);
-				CORBA_free (scratch [i]);
-			}
 		}
 	}
 
@@ -858,6 +845,20 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 	giop_send_buffer_write (send_buffer, recv_buffer->connection);
 	giop_send_buffer_unuse (send_buffer);
+
+	if (ev->_major == CORBA_NO_EXCEPTION) { /* Free data */
+		for (i = 0; i < m_data->arguments._length; i++) {
+			ORBit_IArg *a = &m_data->arguments._buffer [i];
+			
+			if (a->flags & ORBit_I_ARG_IN ||
+			    a->flags & ORBit_I_ARG_INOUT)
+				CORBA_free (args [i]);
+			else /* Out */
+				CORBA_free (scratch [i]);
+		}
+	}
+
+	CORBA_exception_free (ev);
 }
 
 #ifdef DEBUG

@@ -308,6 +308,8 @@ test_TestFactory_Servant servant;
 	CORBA_Environment *ev = &real_ev;
 	CORBA_ORB orb;
 
+	free (malloc (8)); /* -lefence */
+
 	CORBA_exception_init(&real_ev);
 	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", ev);
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
