@@ -1,13 +1,18 @@
+#undef DEBUG
+
 #include "config.h"
-#include <linc/linc-server.h>
-#include <linc/linc-connection.h>
+#include <stdio.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#include <linc/linc-server.h>
+#include <linc/linc-connection.h>
+
 
 static void linc_server_init       (LINCServer      *cnx);
 static LINCConnection *linc_server_create_connection (LINCServer      *cnx);
-static void linc_server_shutdown    (GObject         *obj);
+static void linc_server_dispose    (GObject         *obj);
 static void linc_server_class_init (LINCServerClass *klass);
 
 enum {
@@ -88,7 +93,7 @@ linc_server_class_init (LINCServerClass *klass)
   GClosure *closure;
   GType ptype;
 
-  object_class->shutdown = linc_server_shutdown;
+  object_class->dispose = linc_server_dispose;
   klass->create_connection = linc_server_create_connection;
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
   closure = g_signal_type_cclosure_new(G_OBJECT_CLASS_TYPE(klass),
@@ -112,7 +117,7 @@ linc_server_init       (LINCServer      *cnx)
 }
 
 static void
-linc_server_shutdown(GObject         *obj)
+linc_server_dispose(GObject         *obj)
 {
   LINCServer *cnx = (LINCServer *)obj;
 
@@ -130,8 +135,8 @@ linc_server_shutdown(GObject         *obj)
   cnx->local_host_info = NULL;
   g_free(cnx->local_serv_info);
   cnx->local_serv_info = NULL;
-  if(parent_class->shutdown)
-    parent_class->shutdown(obj);
+  if(parent_class->dispose)
+    parent_class->dispose(obj);
 }
 
 static LINCConnection *
@@ -218,8 +223,12 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
 #endif
 
   proto = linc_protocol_find(proto_name);
-  if(!proto)
+  if(!proto) {
+#ifdef DEBUG
+    fprintf (stderr, "Can't find proto '%s'\n", proto_name);
+#endif
     return FALSE;
+  }
 
   hints.ai_flags = AI_PASSIVE;
   hints.ai_family = proto->family;
@@ -228,15 +237,39 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   if(!local_host_info)
     {
       local_host_info = hnbuf;
-      gethostname(hnbuf, sizeof(hnbuf));
+      if (gethostname(hnbuf, sizeof(hnbuf)))
+        perror ("gethostname failed!");
     }
-  if(linc_getaddrinfo(local_host_info, local_serv_info, &hints, &ai))
+#ifdef DEBUG
+  errno = 0;
+#endif
+
+ address_in_use:
+
+  if(linc_getaddrinfo(local_host_info, local_serv_info, &hints, &ai)) {
+#ifdef DEBUG
+    fprintf (stderr, "Can't get_addrinfo proto '%s' '%s'\n",
+	     local_host_info, local_serv_info);
+      perror ("inside linc_getaddrinfo");
+#endif
     return FALSE;
+  }
+#ifdef DEBUG
+    if (errno)
+      perror ("error inside linc_getaddrinfo");
+    else
+      fprintf (stderr, "Got get_addrinfo proto '%s' '%s'\n",
+	       local_host_info, local_serv_info);
+#endif
 
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
   if(fd < 0)
   {
       freeaddrinfo(ai);
+#ifdef DEBUG
+      fprintf (stderr, "socket (%d, %d, %d) failed\n",
+	       proto->family, SOCK_STREAM, proto->stream_proto_num);
+#endif
       return FALSE;
     }
   {
@@ -244,18 +277,43 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof(oneval));
   }
     
-    n = 0;
+  n = 0;
+  errno = 0;
   if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
      || local_serv_info)
     n = bind(fd, ai->ai_addr, ai->ai_addrlen);
+
+  if (n && errno == EADDRINUSE) {
+#ifdef DEBUG
+    perror ("bind failed, retrying.");
+#endif
+    goto address_in_use; /* mostly for collisions on random Unix socket names */
+  }
+
   if(!n)
     n = listen(fd, 10);
+#ifdef DEBUG
+  else {
+      fprintf (stderr, "Errno: %d (0x%x)\n", errno, errno);
+      perror ("bind really failed");
+  }
+#endif
+
+  /* If we get EINUSE we should loop to getaddrinfo ? */
+
   if(!n)
     n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
+#ifdef DEBUG
+  else
+      perror ("getsockname failed");
+#endif
   if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
     {
       freeaddrinfo(ai);
+#ifdef DEBUG
+      fprintf (stderr, "linc_getnameinfo '%s' failed.\n", servbuf);
+#endif
       return FALSE;
     }
   freeaddrinfo(ai);
@@ -263,6 +321,9 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   if(n)
     {
       close(fd);
+#ifdef DEBUG
+      perror ("get_sockname failed");
+#endif
       return FALSE;
     }
 

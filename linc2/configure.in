@@ -64,7 +64,6 @@ if test x$ssl_dir != x ; then
    LDFLAGS="$_save_ldflags -L$ssl_dir/lib"
 fi
 
-LINC_SSL_SUPPORT=0
 AC_CHECK_LIB(ssl,SSL_new,
              [ LINC_SSL_SUPPORT=1 
                SSL_LIBS="-lssl -lcrypto"
@@ -76,6 +75,7 @@ AC_CHECK_LIB(ssl,SSL_new,
 
 LDFLAGS="$_save_ldflags"
 
+LINC_SSL_SUPPORT=0
 AC_SUBST(LINC_SSL_SUPPORT)
 AC_SUBST(SSL_LIBS)
 AC_SUBST(SSL_CFLAGS)
