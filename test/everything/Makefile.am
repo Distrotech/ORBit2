@@ -6,6 +6,10 @@ EVERYTHING_BUILT = \
 	everything-stubs.c  \
 	everything-common.c
 
+EVERYTHING_IDLOUT =          \
+	$(EVERYTHING_BUILT)  \
+	everything-imodule.c
+
 INCLUDES =                                 \
 	-I$(top_srcdir)/include            \
 	-I$(top_builddir)/include          \
@@ -57,4 +61,9 @@ CLEANFILES = ${BUILT_SOURCES} iorfile
 
 TESTS = $(srcdir)/test.sh
 
-EXTRA_DIST = test.sh $(included_src)
+BUILT_SOURCES = $(EVERYTHING_IDLOUT)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES) test.sh $(included_src)
+
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)

@@ -19,7 +19,9 @@ include $(top_srcdir)/Makefile.shared
 
 TESTS=test-inhibit
 
-BUILT_SOURCES=$(BAA_IDLOUT) $(FOO_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES)
+BUILT_SOURCES = $(BAA_IDLOUT) $(FOO_IDLOUT)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES)
 
-EXTRA_DIST=$(IDL_FILES)
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)
