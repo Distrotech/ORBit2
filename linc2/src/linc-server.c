@@ -132,8 +132,6 @@ linc_server_accept_connection (LINCServer      *server,
 	LINCServerClass *klass;
 	struct sockaddr *saddr;
 	int              addrlen, fd;
-	char            *hostname;
-	char            *service;
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
 
@@ -155,12 +153,6 @@ linc_server_accept_connection (LINCServer      *server,
 		return FALSE;
 	}
 
-	if (!linc_protocol_get_sockinfo (server->proto, saddr,
-					 &hostname, &service)) {
-		close (fd);
-		return FALSE;
-	}
-
 	klass = (LINCServerClass *) G_OBJECT_GET_CLASS (server);
 
 	g_assert (klass->create_connection);
@@ -169,14 +161,11 @@ linc_server_accept_connection (LINCServer      *server,
 	g_return_val_if_fail (*connection != NULL, FALSE);
 
 	if (!linc_connection_from_fd (
-		*connection, fd, server->proto, hostname, service,
+		*connection, fd, server->proto, NULL, NULL,
 		FALSE, LINC_CONNECTED, server->create_options)) {
 		
 		g_object_unref (G_OBJECT (*connection));
 		*connection = NULL;
-
-		g_free (hostname);
-		g_free (service);
 
 		return FALSE;
 	}

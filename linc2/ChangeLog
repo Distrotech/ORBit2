@@ -1,3 +1,18 @@
+2001-11-19  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_accept_connection): 
+	kill bogus get_sockinfo - we don't need this
+	information whatsoever.
+
+	* src/linc-connection.c (linc_connection_from_fd):
+	this method has at least 2 totaly bogus arguments,
+	host, service - the joys of frozen APIs.
+
+	* src/linc-connection.c
+	(linc_connection_dispose): split
+	(linc_connection_finalize): impl.
+	(linc_connection_class_init): upd.
+
 2001-11-18  Miles Lane  <miles@megapathdsl.net>
 
 	* include/linc/linc-types.h: replace include of 
