@@ -1,5 +1,22 @@
 2001-11-19  Michael Meeks  <michael@ximian.com>
 
+	* src/linc.c (linc_object_get_mutex): 
+	(linc_init): setup the lifecycle mutex.
+	(linc_object_ref, linc_main_get_loop),
+	(linc_object_unref): impl - sucky locking
+	for now.
+
+	* src/linc-server.c (linc_server_finalize),
+	(linc_server_init): manage private structure.
+	Privatize fd, mutex, tag, connections
+
+	* src/linc-connection.c (linc_connection_finalize),
+	(linc_connection_init): manage private structure.
+	Privatize fd, tag, gioc, ssl.
+	(linc_connection_initiate): upd.
+
+2001-11-19  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-server.c (linc_server_accept_connection): 
 	kill bogus get_sockinfo - we don't need this
 	information whatsoever.

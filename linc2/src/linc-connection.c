@@ -15,9 +15,22 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#ifdef LINC_SSL_SUPPORT
+#include <openssl/ssl.h>
+#endif
+
 #include "linc-private.h"
 #include <linc/linc-config.h>
 #include <linc/linc-connection.h>
+
+struct _LINCConnectionPrivate {
+#ifdef LINC_SSL_SUPPORT
+	SSL        *ssl;
+#endif
+	GIOChannel *gioc;
+	LincWatch  *tag;
+	int         fd;
+};
 
 static GObjectClass *parent_class = NULL;
 
@@ -30,9 +43,9 @@ static guint linc_connection_signals [LAST_SIGNAL];
 static void
 linc_source_remove (LINCConnection *cnx)
 {
-	if (cnx->tag) {
-		LincWatch *thewatch = cnx->tag;
-		cnx->tag = NULL;
+	if (cnx->priv->tag) {
+		LincWatch *thewatch = cnx->priv->tag;
+		cnx->priv->tag = NULL;
 		linc_io_remove_watch (thewatch);
 	}
 }
@@ -40,9 +53,9 @@ linc_source_remove (LINCConnection *cnx)
 static void
 linc_close_fd (LINCConnection *cnx)
 {
-	if (cnx->fd >= 0)
-		close (cnx->fd);
-	cnx->fd = -1;
+	if (cnx->priv->fd >= 0)
+		close (cnx->priv->fd);
+	cnx->priv->fd = -1;
 }
 
 static void
@@ -52,9 +65,9 @@ linc_connection_dispose (GObject *obj)
 
 	linc_source_remove (cnx);
 
-	if (cnx->gioc) {
-		g_io_channel_unref (cnx->gioc);
-		cnx->gioc = NULL;
+	if (cnx->priv->gioc) {
+		g_io_channel_unref (cnx->priv->gioc);
+		cnx->priv->gioc = NULL;
 	}
 
 	parent_class->dispose (obj);
@@ -65,10 +78,12 @@ linc_connection_finalize (GObject *obj)
 {
 	LINCConnection *cnx = (LINCConnection *)obj;
 
+	linc_close_fd (cnx);
+
 	g_free (cnx->remote_host_info);
 	g_free (cnx->remote_serv_info);
 
-	linc_close_fd (cnx);
+	g_free (cnx->priv);
 
 	parent_class->finalize (obj);
 }
@@ -102,12 +117,12 @@ linc_connection_connected (GIOChannel  *gioc,
 		switch (cnx->status) {
 		case LINC_CONNECTING:
 			n = 0;
-			rv = getsockopt (cnx->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
+			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
 			if (!rv && !n && condition == G_IO_OUT) {
 				linc_connection_state_changed (cnx, LINC_CONNECTED);
-				g_assert (cnx->tag == NULL);
-				cnx->tag = linc_io_add_watch (
-					cnx->gioc, ERR_CONDS,
+				g_assert (cnx->priv->tag == NULL);
+				cnx->priv->tag = linc_io_add_watch (
+					cnx->priv->gioc, ERR_CONDS,
 					linc_connection_connected, cnx);
 
 			} else {
@@ -155,23 +170,23 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 #ifdef LINC_SSL_SUPPORT
 		if (cnx->options & LINC_CONNECTION_SSL) {
 			if (cnx->was_initiated)
-				SSL_connect (cnx->ssl);
+				SSL_connect (cnx->priv->ssl);
 			else
-				SSL_accept (cnx->ssl);
+				SSL_accept (cnx->priv->ssl);
 		}
 #endif
-		if (!cnx->tag)
-			cnx->tag = linc_io_add_watch (
-				cnx->gioc, ERR_CONDS | IN_CONDS,
+		if (!cnx->priv->tag)
+			cnx->priv->tag = linc_io_add_watch (
+				cnx->priv->gioc, ERR_CONDS | IN_CONDS,
 				linc_connection_connected, cnx);
 		break;
 
 	case LINC_CONNECTING:
 		linc_source_remove (cnx);
 		/* FIXME: this looks bogus (?) */
-		g_assert (cnx->tag == NULL);
-		cnx->tag = linc_io_add_watch (
-			cnx->gioc, G_IO_OUT|ERR_CONDS,
+		g_assert (cnx->priv->tag == NULL);
+		cnx->priv->tag = linc_io_add_watch (
+			cnx->priv->gioc, G_IO_OUT|ERR_CONDS,
 			linc_connection_connected, cnx);
 		break;
 
@@ -192,8 +207,8 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
  * @cnx: a #LINCConnection.
  * @fd: a connected/connecting file descriptor.
  * @proto: a #LINCProtocolInfo.
- * @host: protocol dependant host information.
- * @service: protocol dependant service information(e.g. port number).
+ * @remote_host_info: protocol dependant host information; gallocation swallowed
+ * @remote_serv_info: protocol dependant service information(e.g. port number). gallocation swallowed
  * @was_initiated: #TRUE if the connection was initiated by us.
  * @status: a #LINCConnectionStatus value.
  * @options: combination of #LINCConnectionOptions.
@@ -207,28 +222,29 @@ gboolean
 linc_connection_from_fd (LINCConnection         *cnx,
 			 int                     fd,
 			 const LINCProtocolInfo *proto,
-			 char                   *host,
-			 char                   *service,
+			 gchar                  *remote_host_info,
+			 gchar                  *remote_serv_info,
 			 gboolean                was_initiated,
 			 LINCConnectionStatus    status,
 			 LINCConnectionOptions   options)
 {
-	cnx->fd               = fd;
-	cnx->gioc             = g_io_channel_unix_new (fd);
-	cnx->was_initiated    = was_initiated;
-	cnx->is_auth          = (proto->flags & LINC_PROTOCOL_SECURE);
-	cnx->proto            = proto;
-	cnx->remote_host_info = host;
-	cnx->remote_serv_info = service;
-	cnx->options          = options;
+	cnx->was_initiated = was_initiated;
+	cnx->is_auth       = (proto->flags & LINC_PROTOCOL_SECURE);
+	cnx->proto         = proto;
+	cnx->options       = options;
+	cnx->priv->fd      = fd;
+	cnx->priv->gioc    = g_io_channel_unix_new (fd);
+
+	cnx->remote_host_info  = remote_host_info;
+	cnx->remote_serv_info = remote_serv_info;
 
 	if (proto->setup)
 		proto->setup (fd, options);
 
 #ifdef LINC_SSL_SUPPORT
 	if (options & LINC_CONNECTION_SSL) {
-		cnx->ssl = SSL_new (linc_ssl_ctx);
-		SSL_set_fd (cnx->ssl, fd);
+		cnx->priv->ssl = SSL_new (linc_ssl_ctx);
+		SSL_set_fd (cnx->priv->ssl, fd);
 	}
 #endif
 
@@ -272,8 +288,9 @@ linc_connection_initiate (LINCConnection        *cnx,
 		return FALSE;
 
 
-	saddr = linc_protocol_get_sockaddr (proto, host, 
-					    service, &saddr_len);
+	saddr = linc_protocol_get_sockaddr (
+		proto, host, service, &saddr_len);
+
 	if (!saddr)
 		return FALSE;
 
@@ -295,11 +312,10 @@ linc_connection_initiate (LINCConnection        *cnx,
 		goto out;
 
 	retval = linc_connection_from_fd (
-				cnx, fd, proto, 
-				g_strdup (host),
-				g_strdup (service),
-				TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
-				options);
+		cnx, fd, proto, 
+		g_strdup (host), g_strdup (service),
+		TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
+		options);
 
  out:
 	if (!cnx && fd >= 0)
@@ -326,7 +342,7 @@ linc_connection_state_changed (LINCConnection      *cnx,
 	klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS (cnx);
 
 	if (klass->state_changed)
-		klass->state_changed(cnx, status);
+		klass->state_changed (cnx, status);
 }
 
 /**
@@ -359,17 +375,17 @@ linc_connection_read (LINCConnection *cnx,
 
 #ifdef LINC_SSL_SUPPORT
 		if (cnx->options & LINC_CONNECTION_SSL)
-			n = SSL_read (cnx->ssl, buf, len);
+			n = SSL_read (cnx->priv->ssl, buf, len);
 		else
 #endif
-			n = read (cnx->fd, buf, len);
+			n = read (cnx->priv->fd, buf, len);
 
 		if (n < 0) {
 #ifdef LINC_SSL_SUPPORT
 			if (cnx->options & LINC_CONNECTION_SSL) {
 				gulong rv;
 
-				rv = SSL_get_error (cnx->ssl, n);
+				rv = SSL_get_error (cnx->priv->ssl, n);
 
 				if ((rv == SSL_ERROR_WANT_READ ||
 				     rv == SSL_ERROR_WANT_WRITE) &&
@@ -388,7 +404,7 @@ linc_connection_read (LINCConnection *cnx,
 					return bytes_read;
 
 				else if (errno == EBADF) {
-					g_warning ("Serious fd usage error %d", cnx->fd);
+					g_warning ("Serious fd usage error %d", cnx->priv->fd);
 					return -1;
 
 				} else
@@ -441,17 +457,17 @@ linc_connection_write (LINCConnection *cnx,
 	while (len > 0) {
 #ifdef LINC_SSL_SUPPORT
 		if (cnx->options & LINC_CONNECTION_SSL)
-			n = SSL_write (cnx->ssl, buf, len);
+			n = SSL_write (cnx->priv->ssl, buf, len);
 		else
 #endif
-			n = write (cnx->fd, buf, len);
+			n = write (cnx->priv->fd, buf, len);
 
 		if (n < 0) {
 #ifdef LINC_SSL_SUPPORT
 			if (cnx->options & LINC_CONNECTION_SSL) {
 				gulong rv;
 
-				rv = SSL_get_error (cnx->ssl, n);
+				rv = SSL_get_error (cnx->priv->ssl, n);
 
 				if ((rv == SSL_ERROR_WANT_READ || 
 				     rv == SSL_ERROR_WANT_WRITE) &&
@@ -470,7 +486,7 @@ linc_connection_write (LINCConnection *cnx,
 					linc_main_iteration (FALSE);
 
 				else if (errno == EBADF) {
-					g_warning ("Serious fd usage error %d", cnx->fd);
+					g_warning ("Serious fd usage error %d", cnx->priv->fd);
 					return -1;
 
 				} else
@@ -537,7 +553,7 @@ linc_connection_writev (LINCConnection *cnx,
 		vecs_left = nvecs;
 		size_left = total_size;
 
-		fd = cnx->fd;
+		fd = cnx->priv->fd;
 
 		while (size_left > 0) {
 			int n;
@@ -553,7 +569,7 @@ linc_connection_writev (LINCConnection *cnx,
 					linc_main_iteration (FALSE);
 
 				else if (errno == EBADF) {
-					g_warning ("Serious fd usage error %d", cnx->fd);
+					g_warning ("Serious fd usage error %d", cnx->priv->fd);
 					return -1;
 				} else
 					return -1; /* Unhandlable error */
@@ -581,7 +597,8 @@ linc_connection_writev (LINCConnection *cnx,
 static void
 linc_connection_init (LINCConnection *cnx)
 {
-	cnx->fd = -1;
+	cnx->priv = g_new0 (LINCConnectionPrivate, 1);
+	cnx->priv->fd = -1;
 }
 
 static void
