@@ -1,3 +1,7 @@
+2001-08-19  Maciej Stachowiak  <mjs@noisehavoc.org>
+
+	* src/orb/orbit-init.c: Include <sys/time.h> to fix build.
+
 2001-08-19  Mark McLoughlin <mark@skynet.ie>
 	
 	* src/orb/poa/poa.c: code movement, cleaning etc.
