@@ -63,7 +63,7 @@ poatest_run (PortableServer_POA        rootpoa,
 {
 	CORBA_Environment       ev;
 	poatest                 poatest_obj;
-	CORBA_PolicyList        poa_policies;
+	CORBA_PolicyList       *poa_policies;
 	PortableServer_POA      child_poa;
 
 	CORBA_exception_init (&ev);
@@ -72,22 +72,26 @@ poatest_run (PortableServer_POA        rootpoa,
 	 * Create child POA with NON_RETAIN servant retention policy, USE_DEFAULT_SERVANT
 	 * request processing policy and MULTIPLE_ID id uniqueness policy.
 	 */
-	poa_policies._maximum = 3;
-	poa_policies._length = 3;
-	poa_policies._buffer = CORBA_PolicyList_allocbuf (3);
-	CORBA_sequence_set_release (&poa_policies, CORBA_FALSE);
+	poa_policies           = CORBA_PolicyList__alloc ();
+	poa_policies->_maximum = 3;
+	poa_policies->_length  = 3;
+	poa_policies->_buffer  = CORBA_PolicyList_allocbuf (3);
+	CORBA_sequence_set_release (poa_policies, CORBA_TRUE);
 
-	poa_policies._buffer[0] = (CORBA_Policy)PortableServer_POA_create_id_uniqueness_policy (
+	poa_policies->_buffer[0] = (CORBA_Policy)
+					PortableServer_POA_create_id_uniqueness_policy (
 							rootpoa,
 							PortableServer_MULTIPLE_ID,
 							&ev);
 
-	poa_policies._buffer[1] = (CORBA_Policy)PortableServer_POA_create_request_processing_policy(
+	poa_policies->_buffer[1] = (CORBA_Policy)
+					PortableServer_POA_create_request_processing_policy(
 							rootpoa,
 							PortableServer_USE_DEFAULT_SERVANT,
 							&ev);
 
-	poa_policies._buffer[2] = (CORBA_Policy)PortableServer_POA_create_servant_retention_policy(
+	poa_policies->_buffer[2] = (CORBA_Policy)
+					PortableServer_POA_create_servant_retention_policy(
 							rootpoa,
 							PortableServer_NON_RETAIN,
 							&ev);
@@ -95,17 +99,17 @@ poatest_run (PortableServer_POA        rootpoa,
 	child_poa = PortableServer_POA_create_POA (rootpoa,
 						   "Default Servant POA",
 						   rootpoa_mgr,
-						   &poa_policies,
+						   poa_policies,
 						   &ev);
 	if (POATEST_EX (&ev)) {
 		POATEST_PRINT_EX ("create_POA : ", &ev);
 		return CORBA_OBJECT_NIL;
 	}
 
-	CORBA_Policy_destroy (poa_policies._buffer[0], &ev);
-	CORBA_Policy_destroy (poa_policies._buffer[1], &ev);
-	CORBA_Policy_destroy (poa_policies._buffer[2], &ev);
-	CORBA_free (poa_policies._buffer);
+	CORBA_Policy_destroy (poa_policies->_buffer[0], &ev);
+	CORBA_Policy_destroy (poa_policies->_buffer[1], &ev);
+	CORBA_Policy_destroy (poa_policies->_buffer[2], &ev);
+	CORBA_free (poa_policies);
 
 	/*
 	 * Initialise the servant.

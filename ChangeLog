@@ -1,4 +1,9 @@
 2001-08-23  Mark McLoughlin <mark@skynet.ie>
+	
+	* test/poa/poatest-basic??.c:
+	do the policy thang correctly.
+
+2001-08-23  Mark McLoughlin <mark@skynet.ie>
 
 	Bunch of warnings fixes.
 
