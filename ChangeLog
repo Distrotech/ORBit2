@@ -1,3 +1,8 @@
+2001-12-21  Roland Juelich <rj@atecom.com>
+
+	* src/orb/orb-core/iop-profiles.c: (IOP_ObjectKey_demarshal):
+	don't modify key length.
+
 2001-12-19  Mark McLoughlin  <mark@skynet.ie>
 
 	* test/everything/test.sh: niceify.

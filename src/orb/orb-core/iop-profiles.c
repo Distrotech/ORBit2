@@ -1000,8 +1000,6 @@ IOP_ObjectKey_demarshal (GIOPRecvBuffer *buf)
 	    (buf->cur + len) < buf->cur)
 		return NULL;
 
-	len = ALIGN_VALUE(len, 4);
-
 	objkey           = CORBA_sequence_CORBA_octet__alloc ();
 	objkey->_length  = objkey->_maximum = len;
 	objkey->_buffer  = CORBA_sequence_CORBA_octet_allocbuf (objkey->_length);
