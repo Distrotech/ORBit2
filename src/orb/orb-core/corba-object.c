@@ -1368,7 +1368,7 @@ ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
   if(giop_msg_conversion_needed(buf))
     num_profiles = GUINT32_SWAP_LE_BE(num_profiles);
   buf->cur += 4;
-  if(!strcmp(type_id, "Null") && num_profiles == 0)
+  if(!strcmp(type_id, "") && num_profiles == 0)
     type_id = NULL;
 
   for(i = 0; i < num_profiles; i++)
