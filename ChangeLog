@@ -1,6 +1,16 @@
 2001-11-01  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_servant): fixup.
+	(get_status): use correct LINC_CONNECTION enum.
+
+	* test/everything/client.c (testMisc): use in_proc,
+	not evil hacks, expand to test new methods.
+	(testSegv): upd, & listen for 'broken'
+
+2001-11-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_get_servant, get_status),
 	(ORBit_small_get_connection_status),
 	(ORBit_small_listen_for_broken): impl.

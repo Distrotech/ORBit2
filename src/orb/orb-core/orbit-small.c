@@ -1149,10 +1149,15 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 gpointer
 ORBit_small_get_servant (CORBA_Object obj)
 {
-	ORBit_POAObject             pobj;
+	ORBit_POAObject pobj;
 
-	if (obj->adaptor_obj->interface->adaptor_type != ORBIT_ADAPTOR_POA)
+	if (!obj->adaptor_obj || !obj->adaptor_obj->interface)
 		return NULL;
+
+	if (obj->adaptor_obj->interface->adaptor_type != ORBIT_ADAPTOR_POA) {
+		g_warning ("Not a poa object !");
+		return NULL;
+	}
 
 	pobj = (ORBit_POAObject)obj->adaptor_obj;
 
@@ -1164,13 +1169,13 @@ get_status (LINCConnection *cnx)
 {
 	ORBitConnectionStatus ret;
 
-	g_return_if_fail (cnx != NULL, ORBIT_CONNECTION_DISCONNECTED);
+	g_return_val_if_fail (cnx != NULL, ORBIT_CONNECTION_DISCONNECTED);
 
 	switch (cnx->status) {
-	case LINC_CONNECTION_CONNECTED:
+	case LINC_CONNECTED:
 		ret = ORBIT_CONNECTION_CONNECTED;
 		break;
-	case LINC_CONNECTION_CONNECTING:
+	case LINC_CONNECTING:
 		ret = ORBIT_CONNECTION_CONNECTED;
 		break;
 	default:
@@ -1193,7 +1198,7 @@ ORBit_small_get_connection_status (CORBA_Object obj)
 		connection = ORBit_object_get_connection (obj);
 
 		if (connection)
-			ret = get_status (connection);
+			ret = get_status (LINC_CONNECTION (connection));
 		else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}
@@ -1216,7 +1221,7 @@ ORBit_small_listen_for_broken (CORBA_Object obj,
 		connection = ORBit_object_get_connection (obj);
 
 		if (connection) {
-			ret = get_status (connection);
+			ret = get_status (LINC_CONNECTION (connection));
 			g_signal_connect (G_OBJECT (connection),
 					  "broken", fn, user_data);
 		} else
