@@ -1,3 +1,10 @@
+2001-08-08  Mark McLoughlin <mark@skynet.ie>
+
+	* test/everything/client.c
+	(testUnboundedSequence): set _release.
+	(testBoundedSequence): ditto.
+	(testSequenceOfAny): ditto.
+
 2001-08-07  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c: call testMisc.
