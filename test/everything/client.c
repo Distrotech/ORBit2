@@ -707,6 +707,7 @@ testMiscUnions (test_TestFactory   factory,
 	test_UnionServer   obj;
 	test_EnumUnion     retn;
 	test_unionSeq      inSeq;
+	test_VariableLengthUnion inSeq_buffer[3];
 	test_BooleanUnion  inArg;
 	test_ArrayUnion   *outArg;
 	int                i;
@@ -716,17 +717,17 @@ testMiscUnions (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	inSeq._length  = inSeq._maximum = 3;
-	inSeq._buffer  = test_unionSeq_allocbuf (3);
-	inSeq._release = CORBA_TRUE;
+	inSeq._buffer  = inSeq_buffer;
+	inSeq._release = CORBA_FALSE;
 	inSeq._buffer [0]._d   = 4;
 	inSeq._buffer [0]._u.z = CORBA_TRUE;
 	inSeq._buffer [1]._d   = 2;
-	inSeq._buffer [1]._u.y = CORBA_string_dup ("blah");
+	inSeq._buffer [1]._u.y = "blah";
 	inSeq._buffer [2]._d   = 55;
 	inSeq._buffer [2]._u.w = constants_LONG_IN;
 
 	inArg._d   = 1;
-	inArg._u.y = CORBA_string_dup ("blah de blah");
+	inArg._u.y = "blah de blah";
 
 	retn = test_UnionServer_opMisc (obj, &inSeq, &inArg, &outArg, ev);
 
@@ -1270,6 +1271,8 @@ testMisc (test_TestFactory   factory,
 		o2 = CORBA_ORB_string_to_object (global_orb, ior, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		
+		CORBA_free (ior);
+
 		g_assert (o2 == factory);
 		CORBA_Object_release (o2, ev);
 	}

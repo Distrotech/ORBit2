@@ -1,2 +1,2 @@
-SUBDIRS=idl-compiler idl orb services
+SUBDIRS=idl-compiler idl cleanup orb services
 

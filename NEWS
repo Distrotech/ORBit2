@@ -4,6 +4,7 @@ Version 2.3.109
 		+ accept NULL async callbacks (Michael)
 		+ CosNaming mess fixups (Michael)
 		+ Java interop fix (Mark)
+		+ IDL compiler more type friendly (Gergo)
 
 Version 2.3.108
 
