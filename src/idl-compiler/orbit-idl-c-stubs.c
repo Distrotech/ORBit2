@@ -133,7 +133,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 	}
 
 	fprintf (of, " } else\n");
-	fprintf (of, "#endif ORBIT_STUB_DEBUG_LOCAL\n");
+	fprintf (of, "#endif /* ORBIT_STUB_DEBUG_LOCAL */\n");
 	fprintf (of, " { /* remote marshal */\n");
 	{
 		if (has_args)
