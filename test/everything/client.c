@@ -1261,9 +1261,8 @@ main (int argc, char *argv [])
 
 	CORBA_exception_init (&ev);
 
-	/* Initialize threads first - so we get a threaded ORB */
-	if (!g_thread_supported ())
-		g_thread_init (NULL);
+	/* Tell linc we want a threaded ORB */
+	linc_set_threaded (TRUE);
 
 	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);

@@ -45,9 +45,4 @@ IDL_DIR=$(top_srcdir)/src/orb/orb-core/
 
 include $(top_srcdir)/Makefile.shared
 
-orbit-interface.h: $(top_srcdir)/src/orb/orb-core/orbit-interface.idl $(IDL_COMPILER)
-	-(rm -f orbit-interface.h || true ) > /dev/null
-	$(IDL_COMPILER) $(IDL_FLAGS_NO_DEFS) --deps .deps/orbit-interface.idl.P $<
-
-
 CLEANFILES=$(BUILT_SOURCES)
