@@ -69,7 +69,8 @@ typedef enum {
   MN_COALESCABLE = 1<<7, /* You can coalesce multiple sequential instances of this type into one encode/decode operation */
   MN_ENDIAN_DEPENDANT = 1<<8,
   MN_DEMARSHAL_UPDATE_AFTER = 1<<9,
-  MN_DEMARSHAL_CORBA_ALLOC = 1<<10 /* Set if we can never allocate this thingie on the stack (i.e. an inout param) */
+  MN_DEMARSHAL_CORBA_ALLOC = 1<<10, /* Set if we can never allocate this thingie on the stack (i.e. an inout param) */
+  MN_DEMARSHAL_USER_MOD = 1<<11 /* OK, so this is just a hack to fix usage of the above flag */
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {

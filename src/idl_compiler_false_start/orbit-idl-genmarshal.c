@@ -486,7 +486,7 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
       } else {
 	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
       }
-      sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
+      sub->flags |= MN_DEMARSHAL_CORBA_ALLOC|MN_DEMARSHAL_USER_MOD;
       break;
     case IDL_PARAM_IN:
       if(is_skels) {

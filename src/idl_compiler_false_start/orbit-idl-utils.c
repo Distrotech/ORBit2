@@ -380,7 +380,7 @@ oidl_marshal_tree_dump(IDL_tree tree, int indent_level)
   case IDLN_OP_DCL:
     do_indent(indent_level);
     g_print("Operation %s:\n", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
-#if 1
+#if 0
     oidl_marshal_node_dump(((OIDL_Op_Info *)tree->data)->in_stubs, indent_level + INDENT_INCREMENT_2);
     oidl_marshal_node_dump(((OIDL_Op_Info *)tree->data)->out_stubs, indent_level + INDENT_INCREMENT_2);
 #else
@@ -445,6 +445,8 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("DEMARSHAL_UPDATE_AFTER ");
   if(tree->flags & MN_DEMARSHAL_CORBA_ALLOC)
     g_print("DEMARSHAL_CORBA_ALLOC ");
+  if(tree->flags & MN_DEMARSHAL_USER_MOD)
+    g_print("DEMARSHAL_USER_MOD ");
   g_print("] ");
 
   g_print("*%d arch (%d,%d) iiop (%d,%d)\n", tree->nptrs,
