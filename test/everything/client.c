@@ -185,8 +185,18 @@ void testIInterface(test_TestFactory factory,
   CORBA_char *type_id;
   ORBit_IInterface *iinterface;
 
-  d_print("Testing IInterface code ...\n");
+  d_print("Testing IInterface code...\n");
   objref = test_TestFactory_getStructServer(factory,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  /* Check nil check is working ! */
+  g_assert (CORBA_Object_is_nil  (CORBA_OBJECT_NIL, ev));
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert (!CORBA_Object_is_nil (objref, ev));
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  /* Check non_existant is working ! */
+  g_assert (!CORBA_Object_non_existent (objref, ev));
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   /* Ensure that we go over the wire at least once */

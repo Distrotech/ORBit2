@@ -213,25 +213,24 @@ ORBit_try_connection(CORBA_Object obj)
 }
 
 GIOPConnection *
-_ORBit_object_get_connection(CORBA_Object obj)
+ORBit_object_get_connection (CORBA_Object obj)
 {
   GSList *plist, *cur;
   char tbuf[20];
-
   /* Information we have to come up with */
   IOP_ObjectKey_info *oki;
   char *proto = NULL, *host, *service;
   gboolean is_ssl = FALSE;
   GIOPVersion iiop_version = GIOP_1_2;
 
-  plist = obj->forward_locations;
-  if(!plist)
-    plist = obj->profile_list;
-
   if(ORBit_try_connection(obj))
     return obj->connection;
   
   g_assert (obj->connection == NULL);
+
+  plist = obj->forward_locations;
+  if(!plist)
+    plist = obj->profile_list;
 
   for(cur = plist; cur; cur = cur->next)
     {
@@ -269,7 +268,7 @@ ORBit_handle_location_forward(GIOPRecvBuffer *buf,
 
   obj->forward_locations = profiles;
 
-  retval = _ORBit_object_get_connection(obj);
+  retval = ORBit_object_get_connection(obj);
 
  out:
   giop_recv_buffer_unuse(buf);
@@ -306,12 +305,16 @@ CORBA_Object_release(CORBA_Object _obj, CORBA_Environment * ev)
 }
 
 CORBA_boolean
-CORBA_Object_non_existent(CORBA_Object _obj,
-			  CORBA_Environment * ev)
+CORBA_Object_non_existent(CORBA_Object       obj,
+			  CORBA_Environment *ev)
 {
-  if(_obj == CORBA_OBJECT_NIL)
+  if(obj == CORBA_OBJECT_NIL)
     return TRUE;
-  return ORBit_object_get_connection(_obj)?CORBA_FALSE:CORBA_TRUE;
+
+  if (obj->pobj && obj->pobj->servant)
+    return FALSE;
+
+  return ORBit_object_get_connection(obj)?CORBA_FALSE:CORBA_TRUE;
 }
 
 CORBA_boolean
