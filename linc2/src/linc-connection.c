@@ -483,7 +483,7 @@ write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
 	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
 			      LINC_IO_FATAL_ERROR);
 
-	while (qw->vecs && qw->vecs->iov_len > 0) {
+	while ((qw->nvecs > 0) && (qw->vecs->iov_len > 0)) {
 		int n;
 
 		d_printf ("write_data %ld bytes to fd %d : %s\n",
@@ -534,7 +534,7 @@ write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
 		else {
 			glong size = n;
 
-			while (n > qw->vecs->iov_len) {
+			while (n >= qw->vecs->iov_len) {
 				n -= qw->vecs->iov_len;
 				qw->nvecs--;
 				qw->vecs++;
