@@ -1,3 +1,8 @@
+2002-10-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/everything/client.c: (testIInterface): fix
+	broken build.
+
 2002-10-17  Albert Chin  <china@thewrittenword.com>
 
 	* src/orb/orb-core/orbit-debug.h
