@@ -1,5 +1,11 @@
 2001-07-19  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c (ORBit_POAObject_release_cb): try
+	freeing the object_id before we free the pobj we need
+	to reference it, also NULL it for safety.
+
+2001-07-19  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c: remove redundant
 	DEBUG_LOCAL_TEST macro ...
 

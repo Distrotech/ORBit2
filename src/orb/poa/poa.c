@@ -1423,28 +1423,32 @@ ORBit_POA_setup_root(CORBA_ORB orb, CORBA_Environment *ev)
 static void
 ORBit_POAObject_release_cb(ORBit_RootObject robj)
 {
-  ORBit_POAObject    pobj = (ORBit_POAObject)robj;
+  ORBit_POAObject    pobj = (ORBit_POAObject) robj;
   PortableServer_POA poa = pobj->poa;
+  PortableServer_ObjectId *object_id;
  
   /* object *must* be deactivated */
-  g_assert( pobj->servant == NULL );
+  g_assert (pobj->servant == NULL);
+
+  object_id = pobj->object_id;
+  pobj->object_id = NULL;
 
   /*
    * Don't want to remove from oid_to_obj_map if we 
    * are currently traversing across it !
    * Just mark it as destroyed
    */
-  if ( (poa->life_flags & ORBit_LifeF_Deactivating) == 0 ) {
-    g_hash_table_remove( poa->oid_to_obj_map, pobj->object_id );
-    g_free(pobj);
+  if ((poa->life_flags & ORBit_LifeF_Deactivating) == 0) {
+    g_hash_table_remove (poa->oid_to_obj_map, object_id);
+    g_free (pobj);
   }
   else
     pobj->life_flags = ORBit_LifeF_Destroyed;
 
-  pobj->object_id->_release = CORBA_TRUE;
-  ORBit_free_T(pobj->object_id);
+  object_id->_release = CORBA_TRUE;
+  ORBit_free_T (object_id);
 
-  ORBit_RootObject_release_T(poa);
+  ORBit_RootObject_release_T (poa);
 }
 
 static ORBit_RootObject_Interface ORBit_POAObject_if = {
