@@ -127,7 +127,7 @@ AC_TRY_RUN([
 #include <sys/uio.h>
 #include <stdio.h>
 #include <unistd.h>
-#define NIOVECS 2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2
+#define NIOVECS 2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2
 int main(int argc, char *argv[])
 {
 	char dumbuf[20] = "\n";
@@ -145,8 +145,8 @@ int main(int argc, char *argv[])
 	if(fd==-1)
 		return(1);
 
-	for(i = 1; i < NIOVECS; i *= 2)
-		if(writev(fd, iovecs, i) < 0)
+	for(i = 1; 2*i < NIOVECS; i *= 2)
+		if(writev(fd, iovecs, 2*i) < 0)
 			break;
 	fprintf(f, "%d\n", i);
 
