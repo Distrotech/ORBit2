@@ -53,9 +53,14 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
   for(info = linc_protocol_all(); info->name; info++)
     {
       GIOPServer *server;
+      LINCConnectionOptions options = 0;
 
+#ifndef ORBIT_THREADED
+      options |= LINC_CONNECTION_NONBLOCKING;
+#endif
       server = giop_server_new(retval->default_giop_version,
-			       info->name, NULL, NULL, 0, retval);
+			       info->name, NULL, NULL,
+			       options, retval);
       if(server)
 	{
 	  retval->servers = g_slist_prepend(retval->servers, server);

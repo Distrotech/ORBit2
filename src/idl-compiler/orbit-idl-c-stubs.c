@@ -204,7 +204,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   if(!IDL_OP_DCL(tree).f_oneway)
     {
-      fprintf(ci->fh, "giop_recv_list_setup_queue_entry(&_ORBIT_mqe, GIOP_REPLY, _ORBIT_request_id);\n");
+      fprintf(ci->fh, "giop_recv_list_setup_queue_entry(&_ORBIT_mqe, _cnx, GIOP_REPLY, _ORBIT_request_id);\n");
       fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer, _cnx)) { giop_recv_list_destroy_queue_entry(&_ORBIT_mqe); goto _ORBIT_system_exception; }\n");
     }
   else
@@ -222,7 +222,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     if(oi->out_stubs)
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
 
-    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_buffer_get(&_ORBIT_mqe, _cnx, TRUE);\n");
+    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_buffer_get(&_ORBIT_mqe, TRUE);\n");
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
     fprintf(ci->fh, "_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");

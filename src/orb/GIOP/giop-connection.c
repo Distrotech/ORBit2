@@ -150,8 +150,8 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
     if(!cnx->incoming_msg)
       cnx->incoming_msg = giop_recv_buffer_use_buf(cnx->parent.is_auth);
 
-    n = linc_connection_read(LINC_CONNECTION(cnx), cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, TRUE);
-    if(n < 0)
+    n = linc_connection_read(LINC_CONNECTION(cnx), cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
+    if(n <= 0)
       {
 	retval = FALSE;
 	goto out;
@@ -176,41 +176,6 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
   return retval;
 }
 
-static gpointer
-giop_connection_thr_handle(gpointer data)
-{
-  GIOPConnection *cnx = data;
-  int n;
-  GIOPMessageInfo info;
-
-  O_MUTEX_LOCK(cnx->incoming_mutex);
-  while(cnx->parent.status == LINC_CONNECTED)
-    {
-      if(!cnx->incoming_msg)
-	cnx->incoming_msg = giop_recv_buffer_use_buf(cnx->parent.is_auth);
-
-      n = linc_connection_read(LINC_CONNECTION(cnx), cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, TRUE);
-      if(n < 0)
-	goto out;
-
-      info = giop_recv_buffer_data_read(cnx->incoming_msg, n, cnx->parent.is_auth,
-					cnx);
-      if(info != GIOP_MSG_UNDERWAY)
-	{
-	  cnx->incoming_msg = NULL;
-	  if(info == GIOP_MSG_INVALID)
-	    /* Zap it for badness.
-	       XXX We should probably handle oversized
-	       messages more graciously XXX */
-	    linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED);
-	}      
-    }
- out:
-  O_MUTEX_UNLOCK(cnx->incoming_mutex);
-
-  return NULL;
-}
-
 static void
 giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status)
 {
@@ -222,11 +187,7 @@ giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus sta
   switch(status)
     {
     case LINC_CONNECTED:
-#ifdef ORBIT_THREADED
-      pthread_create(&gcnx->handler, NULL, giop_connection_thr_handle, gcnx);
-#else
       gcnx->incoming_tag = g_io_add_watch(cnx->gioc, G_IO_IN, giop_connection_handle_input, cnx);
-#endif
       break;
     case LINC_DISCONNECTED:
       O_MUTEX_LOCK(gcnx->incoming_mutex);
@@ -237,7 +198,7 @@ giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus sta
 	g_source_remove(gcnx->incoming_tag);
       gcnx->incoming_tag = 0;
       O_MUTEX_UNLOCK(gcnx->incoming_mutex);
-      pthread_join(gcnx->handler, NULL);
+      giop_recv_list_zap(gcnx);
       break;
     default:
       break;
@@ -304,9 +265,6 @@ giop_connection_initiate(const char *proto_name,
 
   if(!cnx)
     {
-#ifndef ORBIT_THREADED
-      options |= LINC_CONNECTION_NONBLOCKING;
-#endif
       cnx = (GIOPConnection *)g_object_new(giop_connection_get_type(), NULL);
 
       cnx->giop_version = giop_version;
@@ -317,6 +275,7 @@ giop_connection_initiate(const char *proto_name,
       else
 	giop_connection_list_add(cnx);
     }
+
   O_MUTEX_UNLOCK(cnx_list.lock);
 
   return cnx;

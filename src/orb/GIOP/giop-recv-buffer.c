@@ -14,7 +14,6 @@ static GList *giop_queued_messages;
 static GList *incoming_recv_buffer_list;
 O_MUTEX_DEFINE_STATIC(incoming_recv_buffer_list_lock);
 #ifdef ORBIT_THREADED
-O_MUTEX_DEFINE_STATIC(incoming_recv_buffer_list_condvar_lock);
 O_CONDVAR_DEFINE_STATIC(incoming_recv_buffer_list_condvar);
 #endif
 
@@ -27,7 +26,9 @@ giop_recv_buffer_init(void)
 {
   O_MUTEX_INIT(incoming_recv_buffer_list_lock);
 #ifdef ORBIT_THREADED
+#if 0
   O_MUTEX_INIT(incoming_recv_buffer_list_condvar_lock);
+#endif
   pthread_cond_init(&incoming_recv_buffer_list_condvar, NULL);
 #endif
   O_MUTEX_INIT(giop_queued_messages_lock);
@@ -585,6 +586,33 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
   g_free(buf);
 }
 
+void
+giop_recv_list_zap(GIOPConnection *cnx)
+{
+  GList *ltmp;
+  GIOPMessageQueueEntry *ent;
+
+  O_MUTEX_LOCK(giop_queued_messages_lock);
+  for(ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next)
+    {
+      GIOPMessageQueueEntry *tmpent = ltmp->data;
+      if(tmpent->cnx == cnx)
+	{
+	  ent = tmpent;
+	  break;
+	}
+    }
+  if(ent)
+    {
+      ent->buffer = NULL;
+#ifdef ORBIT_THREADED
+      pthread_cond_signal(&ent->condvar);
+#endif
+    }
+
+  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+}
+
 static void
 giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
@@ -707,6 +735,7 @@ giop_recv_list_destroy_queue_entry(GIOPMessageQueueEntry *ent)
 
 void
 giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
+				 GIOPConnection *cnx,
 				 CORBA_unsigned_long msg_type,
 				 CORBA_unsigned_long request_id)
 {
@@ -717,11 +746,12 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
   O_MUTEX_LOCK(ent->condvar_lock);
 #endif
 
+  ent->cnx = cnx;
   ent->msg_type = msg_type;
   ent->request_id = request_id;
 
   O_MUTEX_LOCK(giop_queued_messages_lock);
-  giop_queued_messages = g_list_prepend(giop_queued_messages, &ent);
+  giop_queued_messages = g_list_prepend(giop_queued_messages, ent);
   O_MUTEX_UNLOCK(giop_queued_messages_lock);
 
   ent->buffer = NULL;
@@ -729,18 +759,16 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
 
 GIOPRecvBuffer *
 giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
-		     GIOPConnection *cnx,
 		     gboolean block_for_reply)
 {
 #ifdef ORBIT_THREADED
-  g_warning("FIXME: we need a way to bomb out if cnx becomes invalid");
   pthread_cond_wait(&ent->condvar, &ent->condvar_lock);
   O_MUTEX_UNLOCK(ent->condvar_lock);
 #else
   g_main_iteration(block_for_reply);
   if(block_for_reply)
     {
-      while(!ent->buffer && (cnx->parent.status != LINC_DISCONNECTED))
+      while(!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
 	g_main_iteration(block_for_reply);
     }
 #endif
@@ -751,19 +779,27 @@ giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
 }
 
 static GIOPRecvBuffer *
-giop_recv_list_pop(void)
+giop_recv_list_pop_T(void)
 {
   GIOPRecvBuffer *retval = NULL;
 
-  O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
   if(incoming_recv_buffer_list)
     {
       retval = incoming_recv_buffer_list->data;
       incoming_recv_buffer_list = g_list_remove(incoming_recv_buffer_list,
 						retval);
     }
-  O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
 
+  return retval;
+}
+
+static GIOPRecvBuffer *
+giop_recv_list_pop(void)
+{
+  GIOPRecvBuffer *retval;
+  O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
+  retval = giop_recv_list_pop_T();
+  O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
   return retval;
 }
 
@@ -772,16 +808,20 @@ giop_recv_buffer_use(void)
 {
   GIOPRecvBuffer *retval = NULL;
 
-#ifdef ORBIT_THREADSAFE
-  O_MUTEX_LOCK(incoming_recv_buffer_list_condvar_lock);
-  pthread_cond_wait(&incoming_recv_buffer_list_condvar,
-		    &incoming_recv_buffer_list_condvar_lock);
-  retval = giop_recv_list_pop();
-  O_MUTEX_UNLOCK(incoming_recv_buffer_list_condvar_lock);
+#ifdef ORBIT_THREADED
+  O_MUTEX_LOCK(incoming_recv_buffer_list_lock);
+  retval = giop_recv_list_pop_T();
+  if(!retval)
+    {
+      pthread_cond_wait(&incoming_recv_buffer_list_condvar,
+			&incoming_recv_buffer_list_lock);
+      retval = giop_recv_list_pop_T();
+    }
+  O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
 #else
   while(!(retval = giop_recv_list_pop()))
     g_main_iteration(TRUE);
-#endif  
+#endif
 
   return retval;
 }
