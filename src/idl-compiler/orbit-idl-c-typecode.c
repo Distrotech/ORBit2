@@ -322,51 +322,35 @@ orbit_output_tcstruct_anon_sublabels_array (FILE     *fh,
 					    IDL_tree  node,
 					    int       sublabels_id)
 {
-	IDL_tree l;
+	IDL_tree l, label;
+	int      index = 0;
 	int      default_index = -1;
 
-	switch (IDL_NODE_TYPE (node)) {
-	case IDLN_TYPE_UNION: {
-		char *tmpstr;
-		int   index = 0;
+	if (IDL_NODE_TYPE (node) != IDLN_TYPE_UNION ||
+	    !IDL_TYPE_UNION (node).switch_body)
+		return default_index;
 
-		if (!IDL_TYPE_UNION (node).switch_body)
-			break;
+	fprintf (fh, "static const CORBA_long anon_sublabels_array%d[] = {", sublabels_id);
 
-		fprintf (fh, "static const CORBA_long anon_sublabels_array%d[] = {", sublabels_id);
+	for (l = IDL_TYPE_UNION (node).switch_body; l; l = IDL_LIST (l).next)
+		for (label = IDL_CASE_STMT (IDL_LIST (l).data).labels; label;
+		     label = IDL_LIST (label).next, index++) {
 
-		tmpstr = orbit_cbe_get_typespec_str (IDL_TYPE_UNION (node).switch_type_spec);
-		for (l = IDL_TYPE_UNION (node).switch_body; l; l = IDL_LIST (l).next) {
-			IDL_tree label;
+			if (IDL_LIST (label).data) {
+				fprintf (fh, "(CORBA_long) ");
 
-			g_assert (IDL_NODE_TYPE (IDL_LIST (l).data) == IDLN_CASE_STMT);
+				orbit_cbe_write_const (fh, IDL_LIST (label).data);
 
-			for (label = IDL_CASE_STMT (IDL_LIST (l).data).labels; label;
-			     label = IDL_LIST (label).next, index++) {
-
-				if (IDL_LIST (label).data) {
-					fprintf (fh, "(CORBA_long) ");
-
-					orbit_cbe_write_const (fh, IDL_LIST (label).data);
-				}
-				else { /* default case */
-					fprintf (fh, "-1");
-					default_index = index;
-				}
-
-				if (IDL_LIST (label).next || IDL_LIST (l).next)
-					fprintf (fh, ", ");
+			} else { /* default case */
+				fprintf (fh, "-1");
+				default_index = index;
 			}
+
+			if (IDL_LIST (label).next || IDL_LIST (l).next)
+				fprintf (fh, ", ");
 		}
 
-		g_free (tmpstr);
-		fprintf (fh, "};\n");
-
-		}
-		break;
-	default:
-		break;
-	}
+	fprintf (fh, "};\n");
 
 	return default_index;
 }
