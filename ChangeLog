@@ -1,3 +1,7 @@
+2001-08-29 Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-any.c: minor cleanups.
+
 2001-08-28 Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-any.c

@@ -65,8 +65,6 @@ ORBit_find_alignment(CORBA_TypeCode tc)
 size_t
 ORBit_gather_alloc_info(CORBA_TypeCode tc)
 {
-  int i, n, align=1, prevalign, sum, prev;
-  size_t block_size;
 
   while (tc->kind == CORBA_tk_alias)
     tc = tc->subtypes[0];
@@ -76,45 +74,39 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
   case CORBA_tk_ulong:
   case CORBA_tk_enum:
     return sizeof(CORBA_long);
-    break;
   case CORBA_tk_short:
   case CORBA_tk_ushort:
     return sizeof(CORBA_short);
-    break;
   case CORBA_tk_float:
     return sizeof(CORBA_float);
-    break;
   case CORBA_tk_double:
     return sizeof(CORBA_double);
-    break;
   case CORBA_tk_boolean:
   case CORBA_tk_char:
   case CORBA_tk_octet:
     return sizeof(CORBA_octet);
-    break;
   case CORBA_tk_any:
     return sizeof(CORBA_any);
-    break;
   case CORBA_tk_TypeCode:
     return sizeof(CORBA_TypeCode);
-    break;
   case CORBA_tk_Principal:
     return sizeof(CORBA_Principal);
-    break;
   case CORBA_tk_objref:
     return sizeof(CORBA_Object);
-    break;
   case CORBA_tk_except:
-  case CORBA_tk_struct:
-    sum = 0;
-    for(i = 0; i < tc->sub_parts; i++) {
+  case CORBA_tk_struct: {
+    int i, sum;
+
+    for(sum = i = 0; i < tc->sub_parts; i++) {
       sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc->subtypes[i])));
       sum += ORBit_gather_alloc_info(tc->subtypes[i]);
     }
     sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc)));
+
     return sum;
-    break;
-  case CORBA_tk_union:
+    }
+  case CORBA_tk_union: {
+    int i, n, align, prevalign, prev, sum;
     sum = ORBit_gather_alloc_info(tc->discriminator);
     n = -1;
     align = 1;
@@ -131,18 +123,14 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
     sum += prev;
     sum = GPOINTER_TO_INT(ALIGN_ADDRESS(sum, ORBit_find_alignment(tc)));
     return sum;
-    break;
+    }
   case CORBA_tk_wstring:
   case CORBA_tk_string:
     return sizeof(char *);
-    break;
   case CORBA_tk_sequence:
     return sizeof(CORBA_sequence_CORBA_octet);
-    break;
   case CORBA_tk_array:
-    block_size = ORBit_gather_alloc_info(tc->subtypes[0]);
-    return block_size * tc->length;
-    break;
+    return ORBit_gather_alloc_info(tc->subtypes[0]) * tc->length;
   case CORBA_tk_longlong:
   case CORBA_tk_ulonglong:
     return sizeof(CORBA_long_long);
@@ -260,8 +248,8 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		 * WATCHOUT: end of subtc may not be end of union
 		 */
 		*val = ((guchar *)*val) + sz;
-		break;
 		}
+		break;
 	case CORBA_tk_wstring:
 		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_POINTER);
 		ulval = CORBA_wstring_len (*(CORBA_wchar **)*val) + 1;
