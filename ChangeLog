@@ -1,3 +1,9 @@
+2005-03-29  Brian Cameron  <Brian.Cameron@Sun.Com>
+
+	* docs/internals/orbitrc.txt:  Docs file explaining how to
+	  make use of the ORBit2 Resource File and how the options
+	  work.
+
 2005-03-11  Tor Lillqvist  <tml@novell.com>
 
 	* include/orbit/orb-core/orbit-object.h: Add macro
