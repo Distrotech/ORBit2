@@ -1,9 +1,5 @@
 #include "orbit-idl-marshal.h"
 
-struct _OIDL_Marshal_Context {
-  GHashTable *type_marshal_info;
-};
-
 static const char *marshal_methods[] = {
   "inline", "func", "any"
 };
@@ -107,6 +103,7 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
 	  tmi = g_new0(OIDL_Type_Marshal_Info, 1);
 	  tmi->mtype = mtype;
 	  tmi->dmtype = dmtype;
+	  tmi->tree = node;
 	  g_hash_table_insert(ctxt->type_marshal_info, node, tmi);
 	}
 

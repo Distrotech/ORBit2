@@ -374,7 +374,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       switch(tmi->mtype)
 	{
 	case MARSHAL_FUNC:
-	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, &(%s), %s, ev);\n", ctmp2, ctmp, do_dup);
+	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, %s, %s, ev);\n", ctmp2, ctmp, do_dup);
 	  break;
 	case MARSHAL_ANY:
 	  fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s);\n", ctmp);

@@ -330,7 +330,7 @@ cbe_stub_op_param_alloc(FILE *of, IDL_tree node, GString *tmpstr)
   g_free(id);
 }
 
-static void
+void
 cbe_stub_op_retval_alloc(FILE *of, IDL_tree node, GString *tmpstr)
 {
   int n;

@@ -260,7 +260,7 @@ c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       switch(tmi->mtype)
 	{
 	case MARSHAL_FUNC:
-	  fprintf(cmi->ci->fh, "%s_marshal(_ORBIT_recv_buffer, &(%s), ev);\n", ctmp2, ctmp);
+	  fprintf(cmi->ci->fh, "%s_marshal(_ORBIT_send_buffer, &(%s), ev);\n", ctmp2, ctmp);
 	  break;
 	case MARSHAL_ANY:
 	  fprintf(cmi->ci->fh, "ORBit_marshal_arg(_ORBIT_send_buffer, &(%s), TC_%s, ev);\n",

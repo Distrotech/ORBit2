@@ -1,12 +1,6 @@
 #include "config.h"
 #include "orbit-idl2.h"
 
-typedef struct {
-  GHashTable *visited;
-  OIDL_Marshal_Context *ctxt;
-  enum { PI_BUILD_FUNC = 1<<0 } flags;
-} OIDL_Populate_Info;
-
 static OIDL_Marshal_Node *
 oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, const char *name)
 {
@@ -196,7 +190,7 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
   return retval;
 }
 
-static OIDL_Marshal_Node *
+OIDL_Marshal_Node *
 marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *pi)
 {
   OIDL_Marshal_Node *retval = NULL;
@@ -309,7 +303,8 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
     retval->u.loop_info.contents = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
     retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_octet);
     retval->tree = tree;
-    retval->flags &= ~(parent->flags & MN_LOOPED);
+    if(parent)
+      retval->flags &= ~(parent->flags & MN_LOOPED);
     break;
   case IDLN_TYPE_ARRAY:
     {
@@ -354,7 +349,8 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
     retval->u.loop_info.contents = marshal_populate(IDL_TYPE_SEQUENCE(tree).simple_type_spec, retval, pi);
     retval->u.loop_info.contents->flags |= MN_LOOPED;
     retval->tree = tree;
-    retval->flags &= ~(parent->flags & MN_LOOPED);
+    if(parent)
+      retval->flags &= ~(parent->flags & MN_LOOPED);
     break;
   case IDLN_TYPE_STRUCT:
   case IDLN_EXCEPT_DCL:
@@ -550,9 +546,7 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
     if(IDL_PARAM_DCL(curparam).attr == IDL_PARAM_OUT)
       continue;
 
-    pi.visited = g_hash_table_new(g_direct_hash, g_direct_equal);
     sub = marshal_populate(curparam, retval, &pi);
-    g_hash_table_destroy(pi.visited);
 
     ts = orbit_cbe_get_typespec(curparam);
 
@@ -620,9 +614,7 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
 
   pi.ctxt = ctxt;
   if(IDL_OP_DCL(tree).op_type_spec) {
-    pi.visited = g_hash_table_new(g_direct_hash, g_direct_equal);
     rvnode = marshal_populate(IDL_OP_DCL(tree).op_type_spec, retval, &pi);
-    g_hash_table_destroy(pi.visited);
     if(!rvnode) goto out1;
 
     rvnode->nptrs = oidl_param_info(IDL_OP_DCL(tree).op_type_spec, DATA_RETURN,
@@ -650,9 +642,7 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     if(IDL_PARAM_DCL(curparam).attr == IDL_PARAM_IN)
       continue;
 
-    pi.visited = g_hash_table_new(g_direct_hash, g_direct_equal);
     sub = marshal_populate(curparam, retval, &pi);
-    g_hash_table_destroy(pi.visited);
 
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
@@ -692,9 +682,7 @@ orbit_idl_marshal_populate_except_marshal(IDL_tree tree, OIDL_Marshal_Context *c
   OIDL_Populate_Info pi;
 
   pi.ctxt = ctxt;
-  pi.visited = g_hash_table_new(g_direct_hash, g_direct_equal);
   retval = marshal_populate(tree, NULL, &pi);
-  g_hash_table_destroy(pi.visited);
   retval->name = "_ORBIT_exdata";
   retval->nptrs = 1;
 
@@ -708,9 +696,7 @@ orbit_idl_marshal_populate_except_demarshal(IDL_tree tree, OIDL_Marshal_Context 
   OIDL_Populate_Info pi;
 
   pi.ctxt = ctxt;
-  pi.visited = g_hash_table_new(g_direct_hash, g_direct_equal);
   retval = marshal_populate(tree, NULL, &pi);
-  g_hash_table_destroy(pi.visited);
   retval->name = "_ORBIT_exdata";
   retval->nptrs = 1;
 

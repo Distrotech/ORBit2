@@ -13,16 +13,25 @@ typedef struct {
   int use_count;
   int size;
   IDL_tree tree;
-  OIDL_Marshal_Node *marshal, *demarshal; /* For a MARSHAL_FUNC */
 } OIDL_Type_Marshal_Info;
 
 typedef struct {
   IDL_tree tree;
 } OIDL_Marshal_Tree_Entry;
 
+struct _OIDL_Marshal_Context {
+  GHashTable *type_marshal_info;
+};
+
 OIDL_Marshal_Context *oidl_marshal_context_new(IDL_tree tree);
 void oidl_marshal_context_dump(OIDL_Marshal_Context *ctxt);
 void oidl_marshal_context_free(OIDL_Marshal_Context *ctxt);
 OIDL_Type_Marshal_Info *oidl_marshal_context_find(OIDL_Marshal_Context *ctxt, IDL_tree tree);
 
+typedef struct {
+  OIDL_Marshal_Context *ctxt;
+  enum { PI_BUILD_FUNC = 1<<0 } flags;
+} OIDL_Populate_Info;
+
+OIDL_Marshal_Node *marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *pi);
 #endif

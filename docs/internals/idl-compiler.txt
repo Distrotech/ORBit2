@@ -53,3 +53,32 @@ the inline code (and generating the separate-function, which will use
 the 'inlined code' engine), is a difficult thing, because of the
 optimizations involved and the different situations that the code
 might be used in.
+
+----------------
+OK the above blah is either implemented or total crap.
+
+Biggest issue that seems to be looming is memory management during
+demarshalling. It's not at all clear whether caller or called
+allocates, how we get rid of things if there is an error or we don't
+need them, etc.
+
+Problems to solve:
+	 Currently the marshal/demarshal code is stupid about
+	 allocating, esp. for toplevels.
+
+	 We need to handle all cases of OIDL_Marshal_Where properly.
+
+	 OIDL_Marshal_Where is a function of context rather than data
+	 type. It will always be MW_Heap, MW_Auto or MW_Null for
+	 stubs.  We need the concept of 'allocation contexts' -
+	 i.e. where a variable is 'auto' in or alloca'd in. No we
+	 don't, we just need to have a mask of allowed marshalling
+	 methods passed down.
+
+Possible solutions:
+	 We need to know how to allocate a variable for each potential
+	 OIDL_Marshal_Where and generate the valuestr for it.
+
+	 'Caller allocates' allows some optimizations in
+	 skeletons. So, if we are going to ask someone to demarshal
+	 something, we need to make sure it is allocated first.

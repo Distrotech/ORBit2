@@ -11,6 +11,7 @@ static void ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
 static void ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void ch_output_marshallers(OIDL_C_Info *ci);
 
 void
 orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -47,7 +48,10 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   ch_output_stub_protos(tree->tree, rinfo, ci);
 
   if ( ci->ext_dcls && ci->ext_dcls->str )
-      fputs( ci->ext_dcls->str, ci->fh);	/* this may be huge! */
+    fputs( ci->ext_dcls->str, ci->fh);	/* this may be huge! */
+
+  fprintf(ci->fh, "\n/** more internals **/\n");
+  ch_output_marshallers(ci);
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");
@@ -903,4 +907,36 @@ ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   default:
     break;
   }
+}
+
+static void
+print_marshal_funcs(gpointer key, gpointer value, gpointer data)
+{
+  OIDL_C_Info *ci = data;
+  IDL_tree tree = key;
+  OIDL_Type_Marshal_Info *tmi = value;
+  char *ctmp;
+
+  ctmp = orbit_cbe_get_typespec_str(tree);
+
+  if(tmi->mtype & MARSHAL_FUNC)
+    {
+      fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
+      fprintf(ci->fh, " _ORBIT_val);\n");
+    }
+
+  if(tmi->dmtype & MARSHAL_FUNC)
+    {
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_RETURN);
+      fprintf(ci->fh, " %s_demarshal(GIOPSendBuffer *_ORBIT_recv_buffer);\n", ctmp);
+    }
+
+  g_free(ctmp);
+}
+
+static void
+ch_output_marshallers(OIDL_C_Info *ci)
+{
+  g_hash_table_foreach(ci->ctxt->type_marshal_info, print_marshal_funcs, ci);
 }
