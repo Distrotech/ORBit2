@@ -72,6 +72,13 @@ echo processing libIDL
     aclocal $ACLOCAL_FLAGS; \
     autoconf)
 
+echo processing popt
+(cd popt; \
+    #libtoolize --copy --force; \
+    automake --add-missing; \
+    aclocal $ACLOCAL_FLAGS; \
+    autoconf)
+
 cd $ORIGDIR
 
 echo "Running $srcdir/configure --enable-maintainer-mode" "$@"
