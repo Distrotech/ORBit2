@@ -1,3 +1,29 @@
+2001-10-29  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/poa/poa-basics.h
+	(PortableServer_ServantBase__epv): added extra members 
+	to the epv to handle servant refcounting and CORBA::Object
+	method overiding.
+
+	* include/orbit/poa/poa.h: upd.
+
+	* src/orb/poa/poa-servants.c:
+	(PortableServer_ServantBase__get_interface),
+	(PortableServer_ServantBase__is_a),
+	(PortableServer_ServantBase__add_ref),
+	(PortableServer_ServantBase__remove_ref),
+	(PortableServer_RefCountServantBase__add_ref),
+	(PortableServer_RefCountServantBase__remove_ref),
+	(PortableServer_RefCountServantBase__init),
+	(PortableServer_RefCountServantBase__fini): impl.
+	(PortableServer_ServantBase__init): initialise function
+	pointers if not already set.
+	(PortableServer_ServantBase__fini): upd.
+
+	* include/orbit/orb-core/corba-orb-type.h: add
+	CORBA_InterfaceDef definition to keep poa headers 
+	happy.
+
 2001-10-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POA_handle_request): make it
