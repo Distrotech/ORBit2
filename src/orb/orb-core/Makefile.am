@@ -27,6 +27,7 @@ main_src = \
 	orbit-typelib.c \
 	orbit-trace.c \
 	corba-object.c \
+	corba-loc.c \
 	corba-policy.c \
 	orbit-policy.c \
 	orbit-policy.h \
