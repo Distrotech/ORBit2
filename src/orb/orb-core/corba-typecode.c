@@ -284,11 +284,27 @@ CDR_get (GIOPRecvBuffer *buf,
 {
 	buf->cur = ALIGN_ADDRESS (buf->cur, len);
 
-	if ((buf->cur + len) > buf->end ||
-	    (buf->cur + len) < buf->cur)
+	if ((buf->cur + len) > buf->end || len < 0)
 		return TRUE;
 
 	memcpy (ptr, buf->cur, len);
+
+	if (giop_msg_conversion_needed (buf))
+		switch (len) {
+		case 2:
+			*ptr = GUINT16_SWAP_LE_BE (*ptr);
+			break;
+		case 4:
+			*ptr = GUINT32_SWAP_LE_BE (*ptr);
+			break;
+		case 8:
+			*ptr = GUINT64_SWAP_LE_BE (*ptr);
+			break;
+		default:
+			g_assert_not_reached ();
+			break;
+		}
+
 	buf->cur += len;
 
 	return FALSE;
