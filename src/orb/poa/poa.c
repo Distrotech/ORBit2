@@ -197,7 +197,7 @@ ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 {
 	ORBit_ObjectAdaptor  adaptor;
 	ORBit_ObjectKey     *objkey;
-	gpointer             mem;
+	guchar              *mem;
 
 	g_return_val_if_fail (pobj != NULL, NULL);
 
@@ -209,11 +209,11 @@ ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 	objkey->_buffer  = CORBA_sequence_CORBA_octet_allocbuf (objkey->_length);
 	objkey->_release = CORBA_TRUE;
 
-	mem = objkey->_buffer;
-	memcpy (mem, adaptor->adaptor_key._buffer, adaptor->adaptor_key._length);
-
+ 	mem = (guchar *) objkey->_buffer;
+ 	memcpy (mem, adaptor->adaptor_key._buffer, adaptor->adaptor_key._length);
+ 
 	mem += adaptor->adaptor_key._length;
-	memcpy (mem, pobj->object_id->_buffer, pobj->object_id->_length);
+ 	memcpy (mem, pobj->object_id->_buffer, pobj->object_id->_length);
 
 	return objkey;
 }

@@ -141,7 +141,7 @@ giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
      || (buf->cur + oplen) < buf->cur)
     return TRUE;
 
-  buf->msg.u.request_1_1.operation = buf->cur;
+  buf->msg.u.request_1_1.operation = (CORBA_char *) buf->cur;
   buf->cur += oplen;
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
   if((buf->cur + 4) > buf->end)
@@ -178,7 +178,7 @@ giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
   if(do_bswap)
     buf->msg.u.request_1_2.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
   else
-    buf->msg.u.request_1_2.request_id = *((guint32 *)buf->cur);
+    buf->msg.u.request_1_2.request_id = *((guint32 *) buf->cur);
   buf->cur += 4;
   buf->msg.u.request_1_2.response_flags = *buf->cur;
   buf->cur += 4;
@@ -200,7 +200,7 @@ giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
      || (buf->cur + oplen) < buf->cur)
     return TRUE;
 
-  buf->msg.u.request_1_2.operation = buf->cur;
+  buf->msg.u.request_1_2.operation = (CORBA_char *) buf->cur;
   buf->cur += oplen;
 
   buf->msg.u.request_1_2.service_context._buffer = NULL;

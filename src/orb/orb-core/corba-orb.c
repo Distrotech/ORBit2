@@ -1,3 +1,4 @@
+
 #include <config.h>
 #include <ctype.h>
 #include <string.h>
@@ -14,7 +15,7 @@
 #include "orbhttp.h"
 #include "orbit-debug.h"
 
-extern ORBit_option orbit_supported_options[];
+extern const ORBit_option orbit_supported_options[];
 
 #ifdef G_ENABLE_DEBUG
 OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
@@ -112,10 +113,7 @@ ORBit_genuid_type (void)
 static void
 genuid_init (void)
 {
-	char *error;
-
 	/* We treat the 'local_only' mode as a very special case */
-
 	if (orbit_local_only &&
 	    orbit_use_genuid_simple)
 		g_error  ("It is impossible to isolate one user from another "
@@ -1259,7 +1257,7 @@ ORBit_proto_use (const char *name)
 	return FALSE;
 }
 
-static ORBit_option orbit_supported_options[] = {
+const ORBit_option orbit_supported_options[] = {
 	{ "ORBid",           ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
 	{ "ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
 	{ "ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */

@@ -21,11 +21,11 @@ typedef struct {
   OIDL_C_Info *ci;
   gchar *orb_name, *marshal_error_exit;
   gboolean curptr_in_local;
-  guint8 last_tail_align;
-  guint8 alloc_on_stack : 1; /* TRUE for demarshalling in skeletons, etc. */
-  guint8 endian_swap_pass : 1; /* Demarshalling, again */
-  guint8 in_skels : 1;
-  guint8 subfunc : 1;
+  guint last_tail_align;
+  guint alloc_on_stack : 1; /* TRUE for demarshalling in skeletons, etc. */
+  guint endian_swap_pass : 1; /* Demarshalling, again */
+  guint in_skels : 1;
+  guint subfunc : 1;
 } OIDL_C_Marshal_Info;
 
 void orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);

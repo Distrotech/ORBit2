@@ -1,5 +1,58 @@
 2002-08-05  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-object.c
+	(object_hash_dump): fix output.
+
+2002-08-05  Laurent Vivier  <Laurent.Vivier@bull.net>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_handle_exception_array): char cast.
+	(ORBit_small_unlisten_for_broken): add
+	G_CALLBACK cast on fn.
+
+	* src/orb/orb-core/orbit-debug.h: stubs
+	for unsupported vararg types.
+
+	* src/orb/orb-core/corba-orb.c: no static
+	after extern.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_freekids_via_TypeCode_T): char * cast.
+
+	* src/orb/dynamic/dynany.c
+	(MAKE_DYNANY_INSERT): prune redundant ';'s
+	(DynamicAny_DynSequence_get_elements_as_dyn_any): 
+	kill redundant cast.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_demarshal_request_1_1), 
+	(giop_recv_buffer_demarshal_request_1_2):
+	signedness string casts.
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_output_types): undefine before define.
+	(ch_type_alloc_and_tc): improve imodule output.
+	(ch_output_itypes): deal with empty imethods.
+
+	* *.[ch]: remove trailing ','s at end of enums
+	for AIX compiler.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_method): same - in compiler.
+	(cc_small_output_itypes): only output an itype if
+	it's non-empty (/used)
+
+2002-08-05  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-backend.h: 
+	use guint instead of guint8 for bitfields.
+
+	* src/orb/poa/poa.c
+	(ORBit_POAObject_object_to_objkey): switch
+	to guchar * pointer for arithmetic.
+
+2002-08-05  Michael Meeks  <michael@ximian.com>
+
 	* Version 2.4.1
 
 	* src/services/name/Makefile.am: objects fix.

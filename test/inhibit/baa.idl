@@ -1,4 +1,5 @@
 
+
 #if !defined(__BAA_COMPILATION) && defined(__ORBIT_IDL__)
 %{
 #pragma include_defs foo.h
@@ -6,7 +7,7 @@
 #pragma inhibit push
 #endif
 
-#include "foo.idl"
+#include <foo.idl>
 
 #if !defined(__BAA_COMPILATION) && defined(__ORBIT_IDL__)
 #pragma inhibit pop

@@ -1,4 +1,5 @@
 #include "config.h"
+#include <string.h>
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
@@ -107,13 +108,12 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		retval = ORBit_freekids_via_TypeCode_T (
 			mem, tc->subtypes[0]);
 		break;
-	default:
-	{
+	default: {
 		gulong length;
 		length = ORBit_gather_alloc_info (tc);
-		retval = ALIGN_ADDRESS(mem, tc->c_align) + length;
-	}
+		retval = (guchar *) ALIGN_ADDRESS (mem, tc->c_align) + length;
 		break;
+	}
 	}
 	return retval;
 }

@@ -885,7 +885,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 	if (IDL_OP_DCL(tree).context_expr)
 		fprintf (of, "| ORBit_I_METHOD_HAS_CONTEXT");
 
-	fprintf (of, "\n},\n");
+	fprintf (of, "\n}\n");
 
 	g_free (fullname);
 }
@@ -920,19 +920,24 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 		for (m = i->methods; m; m = m->next)
 			cc_small_output_method_bits (m->data, id, ci);
 
-		fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE\n");
-		fprintf (of, "static\n");
-		fprintf (of, "#endif\n");
+		if (i->methods) {
+			fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE\n");
+			fprintf (of, "static\n");
+			fprintf (of, "#endif\n");
 
-		fprintf (of, "ORBit_IMethod %s__imethods [] = {\n", id);
+			fprintf (of, "ORBit_IMethod %s__imethods [] = {\n", id);
 
-		if (!(m = i->methods))
-			fprintf (of, "{{0}}");
+			if (!(m = i->methods))
+				fprintf (of, "{{0}}");
 
-		else for (; m; m = m->next)
-			cc_small_output_method (of, m->data, id);
+			else for (; m; m = m->next) {
+				cc_small_output_method (of, m->data, id);
+				if (m->next)
+					fprintf(of, ", ");
+			}
 
-		fprintf (of, "};\n");
+			fprintf (of, "};");
+		}
 
 		fprintf (of, "static CORBA_string %s__base_itypes[] = {\n", id);
 
