@@ -1,3 +1,27 @@
+2003-04-21  Herbert Valerio Riedel  <hvr@gnu.org>
+
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_handle_locate_request): impl. a stub (checks for POA,
+	but not object itself so far).
+
+	* src/orb/orb-core/orbit-small.c (orbit_small_marshal):
+	set the response_expected flag correctly for oneways.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_use_request): fix request id bits.
+	(giop_send_buffer_write): don't tail align send buffers,
+	we only want to do that (elsewhere) for fragments (it seems)
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_GIOP_TargetAddress_demarshal): clean it up.
+	(giop_recv_buffer_demarshal_locate_request_1_2):
+	fix id demarshal
+	(giop_recv_buffer_get_request_id, giop_recv_buffer_demarshal):
+	add "close connection" stub.
+	(giop_recv_buffer_get_objkey): make it work fully for more
+	msg types & versions.
+	(giop_connection_handle_input): handle locate request.
+
 2003-04-21  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_set_limit): impl.

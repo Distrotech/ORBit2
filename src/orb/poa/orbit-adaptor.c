@@ -7,6 +7,7 @@
 
 #include "orbit-poa.h"
 #include "../orb-core/orbit-debug.h"
+#include "../GIOP/giop-debug.h"
 
 void
 ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
@@ -90,6 +91,44 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	return adaptor;
+}
+
+void
+ORBit_handle_locate_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
+{
+	ORBit_ObjectKey *objkey;
+	ORBit_ObjectAdaptor adaptor;
+
+	objkey = giop_recv_buffer_get_objkey (recv_buffer);
+
+	/*
+	 * FIXME: this only checks that the adaptor is available,
+	 * needs more work in the POA.
+	 */
+	if (objkey && (adaptor = ORBit_adaptor_find (orb, objkey))) {
+		GIOPSendBuffer *send_buffer = 
+			giop_send_buffer_use_locate_reply
+				(recv_buffer->giop_version,
+				 giop_recv_buffer_get_request_id (recv_buffer),
+				 GIOP_OBJECT_HERE);
+ 
+		giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
+		giop_send_buffer_unuse (send_buffer);
+
+		ORBit_RootObject_release (adaptor);
+	} else { /* can't find adaptor */
+		GIOPSendBuffer *send_buffer;
+
+		send_buffer = giop_send_buffer_use_locate_reply
+			(recv_buffer->giop_version,
+			 giop_recv_buffer_get_request_id (recv_buffer),
+			 GIOP_UNKNOWN_OBJECT);
+
+		giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
+		giop_send_buffer_unuse (send_buffer);
+	}
+  
+	giop_recv_buffer_unuse (recv_buffer);
 }
 
 void

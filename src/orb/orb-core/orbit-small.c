@@ -322,7 +322,8 @@ orbit_small_marshal (CORBA_Object           obj,
 	}
 
 	send_buffer = giop_send_buffer_use_request (
-		cnx->giop_version, request_id, CORBA_TRUE,
+		cnx->giop_version, request_id, 
+		(m_data->flags & ORBit_I_METHOD_1_WAY) == 0,
 		obj->object_key, &op_vec, NULL);
 
 	if (!send_buffer)

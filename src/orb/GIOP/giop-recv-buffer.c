@@ -32,7 +32,8 @@ static GMutex *giop_queued_messages_lock = NULL;
 
 /* Don't do this genericaly, union's suck genericaly */
 static gboolean
-giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value)
+giop_GIOP_TargetAddress_demarshal (GIOPRecvBuffer     *buf,
+				   GIOP_TargetAddress *value)
 {
 	gboolean do_bswap = giop_msg_conversion_needed (buf);
 
@@ -40,28 +41,30 @@ giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value
 	if ((buf->cur + 2) > buf->end)
 		return TRUE;
 	if (do_bswap)
-		buf->msg.u.request_1_2.target._d = GUINT16_SWAP_LE_BE (
+		value->_d = GUINT16_SWAP_LE_BE (
 			*(guint16 *) buf->cur);
 	else
-		buf->msg.u.request_1_2.target._d = *(guint16 *) buf->cur;
+		value->_d = *(guint16 *) buf->cur;
 	buf->cur += 2;
 
-	switch (buf->msg.u.request_1_2.target._d) {
+	switch (value->_d) {
 	case GIOP_KeyAddr:
 		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+
 		if ((buf->cur + 4) > buf->end)
 			return TRUE;
-		buf->msg.u.request_1_2.target._u.object_key._release = CORBA_FALSE;
+		value->_u.object_key._release = CORBA_FALSE;
 		if (do_bswap)
-			buf->msg.u.request_1_2.target._u.object_key._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+			value->_u.object_key._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
 		else
-			buf->msg.u.request_1_2.target._u.object_key._length = *((guint32 *)buf->cur);
+			value->_u.object_key._length = *((guint32 *)buf->cur);
 		buf->cur += 4;
-		if ((buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) > buf->end ||
-		    (buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) < buf->cur)
+		if ((buf->cur + value->_u.object_key._length) > buf->end ||
+		    (buf->cur + value->_u.object_key._length) < buf->cur)
 			return TRUE;
-		buf->msg.u.request_1_2.target._u.object_key._buffer = buf->cur;
-		buf->cur += buf->msg.u.request_1_2.target._u.object_key._length;
+		value->_u.object_key._buffer = buf->cur;
+		buf->cur += value->_u.object_key._length;
+
 		break;
 	case GIOP_ProfileAddr:
 		g_warning ("XXX FIXME GIOP_ProfileAddr not handled");
@@ -272,96 +275,93 @@ giop_recv_buffer_demarshal_reply_1_2(GIOPRecvBuffer *buf)
 static gboolean
 giop_recv_buffer_demarshal_cancel(GIOPRecvBuffer *buf)
 {
-  gboolean do_bswap = giop_msg_conversion_needed(buf);
+	gboolean do_bswap = giop_msg_conversion_needed (buf);
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    return TRUE;
-  if(do_bswap)
-    buf->msg.u.cancel_request.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-  else
-    buf->msg.u.cancel_request.request_id = *((guint32 *)buf->cur);
-  buf->cur += 4;
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+	if ((buf->cur + 4) > buf->end)
+		return TRUE;
+	if (do_bswap)
+		buf->msg.u.cancel_request.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+	else
+		buf->msg.u.cancel_request.request_id = *((guint32 *)buf->cur);
+	buf->cur += 4;
 
-  return FALSE;
+	return FALSE;
 }
 
 static gboolean
 giop_recv_buffer_demarshal_locate_request_1_1(GIOPRecvBuffer *buf)
 {
-  gboolean do_bswap = giop_msg_conversion_needed(buf);
+	gboolean do_bswap = giop_msg_conversion_needed (buf);
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 
-  if((buf->cur + 8) > buf->end)
-    return TRUE;
+	if ((buf->cur + 8) > buf->end)
+		return TRUE;
 
-  if(do_bswap)
-    buf->msg.u.locate_request_1_1.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-  else
-    buf->msg.u.locate_request_1_1.request_id = *((guint32 *)buf->cur);
-  buf->cur += 4;
-  if(do_bswap)
-    buf->msg.u.locate_request_1_1.object_key._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-  else
-    buf->msg.u.locate_request_1_1.object_key._length = *((guint32 *)buf->cur);
-  buf->cur += 4;
+	if (do_bswap)
+		buf->msg.u.locate_request_1_1.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+	else
+		buf->msg.u.locate_request_1_1.request_id = *((guint32 *)buf->cur);
+	buf->cur += 4;
+	if (do_bswap)
+		buf->msg.u.locate_request_1_1.object_key._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+	else
+		buf->msg.u.locate_request_1_1.object_key._length = *((guint32 *)buf->cur);
+	buf->cur += 4;
 
-  if((buf->cur + buf->msg.u.locate_request_1_1.object_key._length) > buf->end
-     || (buf->cur + buf->msg.u.locate_request_1_1.object_key._length) < buf->cur)
-    return TRUE;
+	if ((buf->cur + buf->msg.u.locate_request_1_1.object_key._length) > buf->end ||
+	    (buf->cur + buf->msg.u.locate_request_1_1.object_key._length) < buf->cur)
+		return TRUE;
 
-  buf->msg.u.locate_request_1_1.object_key._buffer = buf->cur;
-  buf->msg.u.locate_request_1_1.object_key._release = CORBA_FALSE;
-  buf->cur += buf->msg.u.locate_request_1_1.object_key._length;
+	buf->msg.u.locate_request_1_1.object_key._buffer = buf->cur;
+	buf->msg.u.locate_request_1_1.object_key._release = CORBA_FALSE;
+	buf->cur += buf->msg.u.locate_request_1_1.object_key._length;
 
-  return FALSE;
+	return FALSE;
 }
 
 static gboolean
 giop_recv_buffer_demarshal_locate_request_1_2(GIOPRecvBuffer *buf)
 {
-  gboolean do_bswap = giop_msg_conversion_needed(buf);
+	gboolean do_bswap = giop_msg_conversion_needed(buf);
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+	buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 4) > buf->end)
-    return TRUE;
+	if((buf->cur + 4) > buf->end)
+		return TRUE;
 
-  if(do_bswap)
-    buf->msg.u.locate_request_1_1.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-  else
-    buf->msg.u.locate_request_1_1.request_id = *((guint32 *)buf->cur);
-  buf->cur += 4;
-  
-  return giop_GIOP_TargetAddress_demarshal(buf, &buf->msg.u.request_1_2.target);
+	if(do_bswap)
+		buf->msg.u.locate_request_1_2.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+	else
+		buf->msg.u.locate_request_1_2.request_id = *((guint32 *)buf->cur);
+	buf->cur += 4;
+
+	return giop_GIOP_TargetAddress_demarshal (buf, &buf->msg.u.locate_request_1_2.target);
 }
 
 static gboolean
 giop_recv_buffer_demarshal_locate_reply_1_1(GIOPRecvBuffer *buf)
 {
-  gboolean do_bswap = giop_msg_conversion_needed(buf);
+	gboolean do_bswap = giop_msg_conversion_needed(buf);
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 
-  if((buf->cur + 8) > buf->end)
-    return TRUE;
+	if ((buf->cur + 8) > buf->end)
+		return TRUE;
 
-  if(do_bswap)
-    {
-      buf->msg.u.locate_reply_1_1.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-      buf->cur += 4;
-      buf->msg.u.locate_reply_1_1.locate_status = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-    }
-  else
-    {
-      buf->msg.u.locate_reply_1_1.request_id = *((guint32 *)buf->cur);
-      buf->cur += 4;
-      buf->msg.u.locate_reply_1_1.locate_status = *((guint32 *)buf->cur);
-    }
-  buf->cur += 4;
+	if (do_bswap) {
+		buf->msg.u.locate_reply_1_1.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+		buf->cur += 4;
+		buf->msg.u.locate_reply_1_1.locate_status = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+	} else {
+		buf->msg.u.locate_reply_1_1.request_id = *((guint32 *)buf->cur);
+		buf->cur += 4;
+		buf->msg.u.locate_reply_1_1.locate_status = *((guint32 *)buf->cur);
+	}
+	buf->cur += 4;
   
-  return FALSE;
+	return FALSE;
 }
 
 static gboolean
@@ -397,6 +397,8 @@ giop_recv_buffer_demarshal (GIOPRecvBuffer *buf)
 		{ giop_recv_buffer_demarshal_locate_reply_1_1,
 		  giop_recv_buffer_demarshal_locate_reply_1_1,
 		  giop_recv_buffer_demarshal_locate_reply_1_2},
+		/* close connection */
+		{NULL, NULL, NULL},
 		/* message error */
 		{NULL, NULL, NULL},
 		/* fragment */
@@ -608,6 +610,7 @@ giop_recv_buffer_get_request_id (GIOPRecvBuffer *buf)
 				  msg.u.locate_reply_1_1.request_id),
 		  G_STRUCT_OFFSET(GIOPRecvBuffer,
 				  msg.u.locate_reply_1_2.request_id)},
+		{0,0,0}, /* GIOP_CLOSECONNECTION */
 		{0,0,0}, /* GIOP_MESSAGEERROR */
 		{0,0,0} /* GIOP_FRAGMENT */
 	};
@@ -704,17 +707,39 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 ORBit_ObjectKey*
 giop_recv_buffer_get_objkey (GIOPRecvBuffer *buf)
 {
-	switch (buf->msg.header.version [1]) {
-	case 0:
-		return &buf->msg.u.request_1_0.object_key;
+	switch (buf->msg.header.message_type) {
+	case GIOP_REQUEST:
+		switch (buf->msg.header.version [1]) {
+		case 0:
+			return &buf->msg.u.request_1_0.object_key;
+			break;
+		case 1:
+			return &buf->msg.u.request_1_1.object_key;
+			break;
+		case 2:
+			g_assert (buf->msg.u.request_1_2.target._d == GIOP_KeyAddr);
+			return &buf->msg.u.request_1_2.target._u.object_key;
+			break;
+		}
 		break;
-	case 1:
-		return &buf->msg.u.request_1_1.object_key;
+
+	case GIOP_LOCATEREQUEST:
+		switch (buf->msg.header.version [1]) {
+		case 0:
+			return &buf->msg.u.locate_request_1_0.object_key;
+			break;
+		case 1:
+			return &buf->msg.u.locate_request_1_1.object_key;
+			break;
+		case 2:
+			g_assert (buf->msg.u.locate_request_1_2.target._d == GIOP_KeyAddr);
+			return &buf->msg.u.locate_request_1_2.target._u.object_key;
+			break;
+		}
 		break;
-	case 2:
-		g_assert (buf->msg.u.request_1_2.target._d == GIOP_KeyAddr);
-		return &buf->msg.u.request_1_2.target._u.object_key;
-		break;
+
+	default:
+		g_assert_not_reached ();
 	}
 
 	return NULL;
@@ -1229,8 +1254,12 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		ORBit_handle_request (cnx->orb_data, buf);
 		break;
 
-	case GIOP_CANCELREQUEST:
 	case GIOP_LOCATEREQUEST:
+		dprintf (MESSAGES, "handling locate request\n");
+		ORBit_handle_locate_request (cnx->orb_data, buf);
+		break;
+
+	case GIOP_CANCELREQUEST:
 	case GIOP_MESSAGEERROR:
 		dprintf (ERRORS, "dropping an unusual & unhandled input buffer 0x%x",
 			 buf->msg.header.message_type);
