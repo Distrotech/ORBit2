@@ -1,3 +1,8 @@
+2002-05-16  Jacob Berkman  <jacob@ximian.com>
+
+	* src/cleanup/Makefile.am (orbit_cleanup_sockets_LDADD): fix LDADD
+	var name
+
 2002-05-16  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c

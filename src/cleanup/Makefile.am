@@ -10,4 +10,4 @@ INCLUDES =						\
 	$(ORBIT_CFLAGS)
 
 orbit_cleanup_sockets_SOURCES = cleanup.c
-orbit_cleanup_LDADD = $(ORBIT_LIBS)
+orbit_cleanup_sockets_LDADD = $(ORBIT_LIBS)
