@@ -61,8 +61,10 @@ IDLOperation::stub_decl_proto () const
 string
 IDLOperation::stub_decl_impl () const
 {
-	return stub_ret_get () + " " + get_cpp_typename () +
-		" (" + stub_arglist_get () + ")";
+	string stub_name = ((IDLInterface*)getParentScope ())->get_cpp_stub_method_prefix ();
+	
+	return stub_ret_get () + " " + stub_name + "::" + get_cpp_identifier () +
+	    " (" + stub_arglist_get () + ")";
 }
 
 void
@@ -110,7 +112,7 @@ IDLOperation::stub_do_call (ostream &ostr,
 	ostr << indent << "_ev.propagate_sysex ();" << endl;
 
 	// Handle user exceptions
-	ostr << indent << "if (_ev->major == ::CORBA_USER_EXCEPTION)"
+	ostr << indent << "if (_ev->_major == ::CORBA_USER_EXCEPTION)" << endl
 	     << indent++ << "{" << endl;
 
 	if (m_raises.size ()) // Are there any known user exceptions?
@@ -238,11 +240,11 @@ IDLOperation::skel_do_call (ostream &ostr,
 	ostr << indent++ << "catch (CORBA::Exception &_ex) {" << endl;
 	ostr << indent << "_results_valid = false;" << endl
 	     << indent << "_ex._orbitcpp_set (_ev);" << endl;
-	ostr << --indent << "}";
+	ostr << --indent << "}" << endl;
 
 	// Catch and report unknown exceptions
 	ostr << indent++ << "catch (...) {" << endl;
-	ostr << indent << "::orbitcpp::error (\"unknown exception in skeleton\");" << endl;
+	ostr << indent << "::_orbitcpp::error (\"unknown exception in skeleton\");" << endl;
 	ostr << --indent << "}" << endl;
 }
 

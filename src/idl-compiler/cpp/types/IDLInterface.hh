@@ -162,9 +162,11 @@ public:
 public:
 	string get_cpp_stub_identifier () const;
 	string get_cpp_stub_typename () const;
+	string get_cpp_stub_method_prefix () const;
 
 	string get_cpp_poa_identifier () const;
 	string get_cpp_poa_typename () const;
+	string get_cpp_poa_method_prefix () const;
 
 	void get_cpp_poa_namespace (string &ns_begin, string &ns_end) const;
 

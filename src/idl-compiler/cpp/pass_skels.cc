@@ -277,8 +277,8 @@ IDLPassSkels::doOperationSkel (IDLInterface &iface,
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
 	// print header
-	m_module << mod_indent << op.skel_ret_get ()
-		 << iface.get_cpp_poa_typename () << "::"
+	m_module << mod_indent << op.skel_ret_get () << " " 
+		 << iface.get_cpp_poa_method_prefix () << "::"
 		 << "_skel_" << op.get_c_identifier ()
 		 << " (" << op.skel_arglist_get () << ")" << endl
 		 << mod_indent++ << "{" << endl;
@@ -407,7 +407,8 @@ IDLPassSkels::doInterfaceAppServant (IDLInterface &iface)
 
 	m_header << indent << "//C++-specific stuff:" << endl
 		 << indent << "PortableServer::Servant m_cppservant;" << endl
-		 << indent << iface.get_cpp_typename () << " *m_cppimpl;  // fully downcasted version of m_cppservant" << endl;
+		 << indent << iface.get_cpp_poa_typename () << " *m_cppimpl; "
+		 << "// fully downcasted version of m_cppservant" << endl;
 	m_header << --indent << "} m_target;" << endl << endl;
 }
 
@@ -424,7 +425,7 @@ IDLPassSkels::doInterfaceEPVs (IDLInterface &iface)
 	// base_epv def
 	m_module << mod_indent++ <<  "::"
 		 << "PortableServer_ServantBase__epv "
-		 << iface.get_cpp_poa_typename () << "::_base_epv = {" << endl;
+		 << iface.get_cpp_poa_method_prefix () << "::_base_epv = {" << endl;
 
 	m_module << mod_indent << "NULL, // _private" << endl
 		 << mod_indent << iface.get_cpp_poa_typename () << "::_orbitcpp_fini," << endl
@@ -449,7 +450,7 @@ IDLPassSkels::doInterfaceEPVs (IDLInterface &iface)
 	// vepv def
 	m_module << mod_indent++ << IDL_IMPL_C_NS_NOTUSED
 		 << iface.get_c_poa_vepv() << ' '
-		 << iface.get_cpp_poa_typename () << "::_vepv = {" << endl;
+		 << iface.get_cpp_poa_method_prefix () << "::_vepv = {" << endl;
 
 	m_module << mod_indent << '&' << iface.get_cpp_poa_typename ()
 		 << "::_base_epv," << endl;
@@ -592,7 +593,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 			m_header << ", public virtual " << (*i)->get_cpp_poa_identifier ();
 		}
 	} else {
-		m_header << ", public virtal "
+		m_header << ", public virtual "
 			 << IDL_POA_NS "::ServantBase" << endl;
 	}
 	
@@ -600,10 +601,12 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 
 	// C interface
 	m_header << indent << "// C interface" << endl;
-	m_header << --indent++ << "public:" << endl;
+	m_header << --indent << "public:" << endl;
+	indent++;
 	doInterfaceAppServant(iface);
 	
-	m_header << --indent++ << "protected:" << endl;
+	m_header << --indent << "protected:" << endl;
+	indent++;
 	doInterfaceEPVs (iface);
 	doInterfaceFinalizer (iface);
 
@@ -617,7 +620,8 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 
 	// C++ interface
 	m_header << indent << "// C++ interface" << endl
-		 << --indent++ << "public:" << endl;
+		 << --indent << "public:" << endl;
+	indent++;
 
 	// constructor
 	m_header << indent << iface.get_cpp_poa_identifier () << " ();" << endl;
@@ -653,8 +657,8 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	// C++ methods
 	m_header << indent <<  "::PortableServer_Servant *_orbitcpp_get_c_servant ()" << endl
 		 << indent++ << "{" << endl;
-	m_header << indent << "return reinterpret_cast<" 
-		 << "::PortableServer_Servant *>"
+	m_header << indent << "return reinterpret_cast< " 
+		 << "::PortableServer_Servant * >"
 		 << "(&m_target);" << endl;
 	m_header << --indent << '}' << endl << endl;
 
@@ -665,14 +669,14 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	string stub_name = iface.get_cpp_stub_typename ();
 
 	m_module << mod_indent << iface.get_cpp_typename_ptr () << " "
-		 << iface.get_cpp_poa_typename () << "::" << "_this()" << endl
+		 << iface.get_cpp_poa_method_prefix () << "::" << "_this()" << endl
 		 << mod_indent++ << "{" << endl;
 
 	m_module << mod_indent << "PortableServer::POA_var rootPOA = _default_POA ();" << endl
 		 << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object (this);" << endl
 		 << mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference (oid);" << endl;
-	m_module << mod_indent << iface.get_cpp_typename_ptr () << "* pDerived = "
-		 << "new " << stub_name << " (object->_orbitcpp_get_c_object ());" << endl;
+	m_module << mod_indent << iface.get_cpp_typename_ptr () << " pDerived = "
+		 << stub_name << "::_orbitcpp_wrap (object->_orbitcpp_get_c_object (), true);" << endl;
 	m_module << mod_indent << "CORBA::release (object);" << endl
 		 << mod_indent << "object = 0;" << endl;
 	m_module << mod_indent << "return pDerived;" << endl;

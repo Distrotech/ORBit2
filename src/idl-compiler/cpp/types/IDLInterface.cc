@@ -47,6 +47,19 @@ string get_cpp_id (const string &c_id)
 
 } // Anonymous namespace
 
+bool
+IDLInterface::isBaseClass (IDLInterface *iface)
+{
+	for (BaseList::const_iterator i = m_allbases.begin ();
+	     i != m_allbases.end (); i++)
+	{
+		if (*i == iface)
+			return true;
+	}
+	
+        return false;
+}
+
 string
 IDLInterface::get_cpp_typename_ptr () const
 {
@@ -108,6 +121,20 @@ IDLInterface::get_cpp_stub_typename () const
 }
 
 string
+IDLInterface::get_cpp_stub_method_prefix () const
+{
+	string retval = get_cpp_stub_typename ();
+
+	// Remove :: from head
+	string::iterator i = retval.begin ();
+	while (i != retval.end () && *i == ':')
+		i = retval.erase (i);
+	
+	return retval;
+}
+
+
+string
 IDLInterface::get_cpp_poa_identifier () const
 {
 	return get_cpp_identifier ();
@@ -116,7 +143,20 @@ IDLInterface::get_cpp_poa_identifier () const
 string
 IDLInterface::get_cpp_poa_typename () const
 {
-	return "POA_" + get_cpp_typename ();
+	return "::" + get_cpp_poa_method_prefix ();
+}
+
+string
+IDLInterface::get_cpp_poa_method_prefix () const
+{
+	string cpp_typename = get_cpp_typename ();
+
+	// Remove :: from head
+	string::iterator i = cpp_typename.begin ();
+	while (i != cpp_typename.end () && *i == ':')
+		i = cpp_typename.erase (i);
+	
+	return "POA_" + cpp_typename;	
 }
 
 string
@@ -544,9 +584,10 @@ IDLInterface::common_write_typedefs (ostream &ostr,
 	     << " " << get_cpp_identifier_mgr ()
 	     << ';' << endl;
 
-	ostr << indent << "typedef " IDL_IMPL_NS "::Object_ptr_out"
+	ostr << indent << "typedef " IDL_IMPL_NS "::ObjectPtr_out"
 	     << "<" << get_cpp_identifier () << ", " << get_cpp_identifier_ptr () << "> "
-	     << get_cpp_identifier_out ();
+	     << get_cpp_identifier_out ()
+	     << ';' << endl;
 
 	ostr << indent << "typedef " << get_cpp_identifier_ptr ()
 	     << " " << get_cpp_identifier () << "Ref"

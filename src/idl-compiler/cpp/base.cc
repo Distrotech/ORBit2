@@ -41,7 +41,7 @@ operator<<(ostream &ostr,Indent const &indent)
 	if (indent.Position > 1000 || indent.Position < 0)
 	{
 		cerr << "Indentation screwup. This is a bug." << endl;
-    g_error("Indentation screwup\n");
+		g_error("Indentation screwup\n");
 		abort();
 	}
 

@@ -434,7 +434,8 @@ IDLPassXlate::doException(IDL_tree  node,
 		 << " : public " IDL_CORBA_NS "::UserException" << endl
 		 << indent++ << "{" << endl;
 
-	m_header << --indent++ << "public:" << endl;
+	m_header << --indent << "public:" << endl;
+	indent++;
 
 	m_header << indent << "// members" << endl;
 
@@ -542,16 +543,18 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	string ns_iface_begin, ns_iface_end;
 	iface.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
 
-	bool non_empty_ns = ns_iface_end.size() || ns_iface_begin.size();
+	bool non_empty_ns = ns_iface_end.size () || ns_iface_begin.size ();
 
 	string ifname = iface.get_cpp_identifier();
 	string _ptrname = iface.get_cpp_identifier_ptr();
 
+	if (non_empty_ns)
+		m_header << indent++ << ns_iface_begin;
+	
 	m_header << indent << "class " << ifname << ';' << endl;
 	
-	if(non_empty_ns){
+	if (non_empty_ns)
 		m_header << --indent << ns_iface_end;
-	}
 
 	m_header << indent << "namespace " IDL_IMPL_NS_ID << endl
 		 << indent << "{" << endl
@@ -561,98 +564,71 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	
 	m_header << indent << "class " << ifname << ";" << endl << endl;
 
-	m_header
-	<< indent << ns_iface_end << endl
-  << indent << "}} //namespaces" << endl << endl;
+	m_header << indent << ns_iface_end << endl
+		 << indent << "}} //namespaces" << endl << endl;
 
-	if(non_empty_ns){
-		m_header
-		<< ns_iface_begin;
-	}
+
 	
+	if (non_empty_ns)
+		m_header << ns_iface_begin;
+	
+	iface.common_write_typedefs (m_header, indent);
 	m_header << endl;
-
-	// check the MI situation and write a smartptr if required.
-	if (iface.requiresSmartPtr())
-	{
-		doInterfacePtrClass(iface);
-		m_header
-		<< indent << "typedef "IDL_IMPL_NS "::ObjectSmartPtr_var<" << ifname << ',' << _ptrname << "> "
-		<< ifname << "_var;" << endl;
-	}
-	else
-	{
-		m_header
-		<< indent << "typedef " << iface.getQualifiedCPPStub() << " *" << _ptrname << ';' << endl;
-		m_header
-		<< indent << "typedef "IDL_IMPL_NS "::ObjectPtr_var<" << ifname << ',' << _ptrname << "> "
-		<< ifname << "_var;" << endl;
-	}
 	
-	if(non_empty_ns){
-		m_header
-		<< indent << ns_iface_end << endl;
-	}
+	if (non_empty_ns)
+		m_header << ns_iface_end << endl;
+
 	
 	// get poa namespace info
 	string ns_poa_begin, ns_poa_end;
-	iface.getCPPpoaNamespaceDecl(ns_poa_begin, ns_poa_end);
+	iface.get_cpp_poa_namespace (ns_poa_begin, ns_poa_end);
 
 	// predeclare POA type (necessary for typedef'ing)	
-	if (non_empty_ns) {
-		m_header
-		<< indent <<  ns_poa_begin << endl << endl;
-	}
-	m_header
-	<< indent << "class " << iface.getCPPpoaIdentifier() << ';' << endl;
-	if (non_empty_ns) {
-		m_header
-		<< indent << ns_poa_end;
-	}
-	else m_header << indent;
+	if (non_empty_ns)
+		m_header << ns_poa_begin << endl << endl;
+	
+	m_header << indent << "class " << iface.get_cpp_poa_identifier () << ';' << endl;
+	
+	if (non_empty_ns)
+		m_header << ns_poa_end;
 	
 	// generate type container
-	if(non_empty_ns){
-		m_header
-		<< indent++ << ns_iface_begin << endl;
+	if (non_empty_ns)
+		m_header << ns_iface_begin << endl;
+
+	m_header << indent << "class " << iface.get_cpp_identifier ();
+
+	if (iface.m_bases.size ())
+	{
+		m_header << " : ";
+		for (IDLInterface::BaseList::const_iterator i = iface.m_bases.begin ();
+		     i != iface.m_bases.end (); i++)
+		{
+			m_header << "public " << (*i)->get_cpp_typename ();
+			if (i != --iface.m_bases.end ())
+				m_header << ", ";
+		}
 	}
-	m_header
-	<< indent << "class " << ifname;
 	
-	IDLInterface::BaseList::const_iterator
-	first = iface.m_bases.begin(), last = iface.m_bases.end();
+	m_header << endl << indent++ <<" {" << endl;
 	
-	if (first != last) {
-		m_header 
-		<< " : public " << (*first)->getQualifiedCPPIdentifier();
-		first++;
-	}
-	while (first != last) {
-		m_header
-		<< ", public " << (*first++)->getQualifiedCPPIdentifier();
-	}
-	m_header << endl
-		 << indent <<" {" << endl
-	<< indent << "public:" << endl;
+	m_header << --indent << "public:" << endl;
 	indent++;
-	
-	Super::doInterface(node,iface);
+	Super::doInterface(node, iface);
+	doInterfaceStaticMethodDeclarations (iface);
 
-	doInterfaceStaticMethodDeclarations(iface);
+	m_header << --indent << "};" << endl;
 
-	m_header
-	<< --indent << "};" << endl;
+	m_header << indent << "const CORBA::TypeCode_ptr _tc_"
+		 << iface.get_cpp_identifier () << " = " 
+		 << "(CORBA::TypeCode_ptr)TC_" + iface.get_c_typename () + ";" << endl;
 
-	m_header
-	<< indent << "const CORBA::TypeCode_ptr _tc_" << iface.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)TC_" + iface.getQualifiedCIdentifier() + ";" << endl;
-
+#if 0 //!!!
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
+#endif
 
-	// *********************
-	// Forwarder class
-	iface.writeForwarder (m_header, indent, m_module, mod_indent);
-	    
+	m_header << ns_iface_end << endl;
+	
 	// _duplicate() and _narrow implementations:
 	// write the static method definitions
 	doInterfaceStaticMethodDefinitions(iface);
@@ -660,94 +636,83 @@ IDLPassXlate::doInterface (IDL_tree  node,
 
 
 void
-IDLPassXlate::doInterfaceStaticMethodDeclarations(IDLInterface &iface)
+IDLPassXlate::doInterfaceStaticMethodDeclarations (IDLInterface &iface)
 {
-  string ifname = iface.getCPPIdentifier();
+	string ptr_name = iface.get_cpp_typename_ptr ();
 
-	m_header 
-	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _duplicate(" << iface.getQualifiedCPP_ptr() << " obj);" << endl
+	m_header << indent << "static " << ptr_name
+		 << " _duplicate (" << ptr_name << " obj);" << endl;
 
-	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _narrow(CORBA::Object_ptr obj);" << endl
+	m_header << indent << "static " << ptr_name
+		 << " _narrow (CORBA::Object_ptr obj);" << endl;
 
-	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _nil()" << endl
-	<< indent << "{" << endl
-	<< ++indent << "return CORBA_OBJECT_NIL;" << endl
-	<< --indent << '}' << endl;
+	m_header << indent << "static " << ptr_name << " _nil()" << endl
+		 << indent++ << '{' << endl
+		 << indent << "return CORBA_OBJECT_NIL;" << endl
+		 << --indent << '}' << endl;
 }
 
-void IDLPassXlate::doInterfaceStaticMethodDefinitions(IDLInterface &iface)
+void IDLPassXlate::doInterfaceStaticMethodDefinitions (IDLInterface &iface)
 {
 	// *** FIXME try _is_a query before narrowing
 	
-	string ifname = iface.getCPPIdentifier();
+	string if_name = iface.get_cpp_typename ();
+	string ptr_name = iface.get_cpp_typename_ptr ();
 
-	m_module
-	<< indent << iface.getQualifiedCPP_ptr() << " "
-	<< iface.getQualifiedCPPIdentifier(iface.getRootScope()) << "::_duplicate("
-	<< iface.getQualifiedCPP_ptr() << " obj)" << endl
-	<< indent << "{" << endl;
-
- 	m_module
- 	<< ++indent << "CORBA::Object_ptr ptr = obj;" << endl;
-
- 	m_module
- 	<< indent << iface.getNSScopedCTypeName()
- 	<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
- 	<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
- 	<< indent << "return new " << iface.getQualifiedCPPStub() << "(cobj);" << endl;
-
-	m_module
-	<< --indent << '}' << endl << endl
+	// _duplicate()
+	m_module << mod_indent << ptr_name << " "
+		 << iface.get_cpp_method_prefix () << "::_duplicate(" << ptr_name << " obj)" << endl
+		 << mod_indent++ << "{" << endl;
 	
-	<< indent << iface.getQualifiedCPP_ptr() << " "
-	<< iface.getQualifiedCPPIdentifier(iface.getRootScope())
-	<< "::_narrow(CORBA::Object_ptr obj)" << endl
-	<< indent << "{" << endl;
+ 	m_module << mod_indent << "CORBA::Object_ptr ptr = obj;" << endl;
 
-	// Are we using smart pointers for _ptrs?
-	if(iface.requiresSmartPtr())
-	{
-		m_module
-		<< ++indent << "return _duplicate(reinterpret_cast< "
-		<< iface.getQualifiedCPPStub() << " *>(obj));" << endl;
-	}
-	else
-	{
-		m_module
-		<< ++indent << "return _duplicate(static_cast< "
-		<< iface.getQualifiedCPP_ptr() << ">(obj));" << endl;
-	}
+ 	m_module << mod_indent << iface.get_c_typename ()
+		 << " cobj = ptr->_orbitcpp_get_c_object ();" << endl;
+	m_module << mod_indent << "cobj = ::_orbitcpp::duplicate_guarded (cobj);" << endl;
+	m_module << mod_indent << "return "
+		 << iface.get_cpp_stub_typename () << "::_orbitcpp_wrap (cobj);" << endl;
+	
+	m_module << --mod_indent << '}' << endl << endl;
 
-	m_module
-	<< --indent << '}' << endl << endl;
+	// _narrow()
+	m_module << mod_indent << ptr_name << " "
+		 << iface.get_cpp_method_prefix () << "::_narrow (CORBA::Object_ptr obj)" << endl
+		 << mod_indent++ << '{' << endl;
+
+	m_module << mod_indent << "return _duplicate ("
+		 << "reinterpret_cast < " << iface.get_cpp_stub_typename ()
+		 << "* > (obj));" << endl;
+
+	m_module << --mod_indent << '}' << endl << endl;
 }
 
 
 void 
-IDLPassXlate::doModule(IDL_tree node,IDLScope &scope)
+IDLPassXlate::doModule (IDL_tree  node,
+			IDLScope &scope)
 {
 	IDLScope *module = (IDLScope *) scope.getItem(node);
 
-  string id = module->getCPPIdentifier();
+#if 0
+	string id = module->get_cpp_identifier ();
 	m_header << indent << "namespace " << id << endl
-	<< indent << " {" << endl;
+		 << indent++ << '{' << endl;
+#endif
 
-	indent++;
-	Super::doModule(node,*module);
-	indent--;
+	Super::doModule(node, *module);
 
-	m_header << indent << "} //namespace " << id << endl << endl;
+#if 0
+	m_header << --indent << '}'
+		 << "//namespace " << id << endl << endl;
+#endif
 }
 
-
-
-
+#if 0 //!!!
 void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 	if (!scope.getTopLevelInterface())
 		runJobs(IDL_EV_TOPLEVEL);
 }
 
-#if 0 //!!!
 
 // IDLWriteArrayProps -------------------------------------------------------
 void IDLWriteArrayProps::run()

@@ -48,8 +48,7 @@ IDLPassStubs::runPass() {
 	m_module
 	<< indent << "#include \"" << m_state.m_basename << IDL_CPP_STUB_HEADER_EXT"\"" << endl
 	<< indent << endl << endl
-	<< indent << "// Stub code -------------------------------------------" << endl
-	<< indent << endl;
+	<< indent << "// Stub code -------------------------------------------" << endl << endl;
 
 	vector<IDLInterface *>::iterator
 	first = m_state.m_interfaces.begin(), last = m_state.m_interfaces.end();
@@ -190,6 +189,7 @@ IDLPassStubs::doOperationStub (IDLInterface &iface,
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
 	// print prototype
+
 	m_module << mod_indent << op.stub_decl_impl () << endl
 		 << mod_indent++ << "{" << endl;
 
@@ -204,7 +204,7 @@ IDLPassStubs::doOperationStub (IDLInterface &iface,
 	op.stub_do_post (m_module, mod_indent);
 	
 	// End of stub implementation
-	m_module << --mod_indent << "}" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
@@ -270,7 +270,8 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	// begin orbitcpp internal section
 	m_header << indent << "// These should really be private, but we make them protected" << endl;
 	m_header << indent << "//  to stop the compiler from generating warnings" << endl;
-	m_header << --indent++ << "protected:" << endl;
+	m_header << --indent << "protected:" << endl;
+	indent++;
 
 	// constructors
 	m_header << indent << iface.get_cpp_stub_identifier () << " ();" << endl;
@@ -280,7 +281,8 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 		 << " (" << iface.get_c_typename () << " cobject, bool take_copy = false); //orbitcpp-specific" << endl << endl;
 		
 	// begin public section
-	m_header << --indent++ << "public:" << endl;
+	m_header << --indent << "public:" << endl;
+	indent++;
 
 	// _orbitcpp wrap method:
 	m_header << indent << "static " << iface.get_cpp_stub_identifier ()
@@ -288,6 +290,14 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 
 	// end orbitcpp internal section
 
+
+	// Methods
+	for (IDLInterface::BaseList::const_iterator i = iface.m_all_mi_bases.begin ();
+	     i != iface.m_all_mi_bases.end (); i++)
+	{
+		doInterfaceDownCall (iface, *(*i));
+	}
+	doInterfaceDownCall (iface, iface);
 
 #if 0
 	// make cast operators for all mi base classes
@@ -337,13 +347,5 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	m_module << mod_indent << "return new " << iface.get_cpp_stub_typename ()
 		 << " (cobject, take_copy);" << endl;
 	m_module << --mod_indent << "}" << endl << endl;
-
-	// Methods
-	for (IDLInterface::BaseList::const_iterator i = iface.m_all_mi_bases.begin ();
-	     i != iface.m_all_mi_bases.end (); i++)
-	{
-		doInterfaceDownCall (iface, *(*i));
-	}
-	doInterfaceDownCall (iface, iface);
 }
 
