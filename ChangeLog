@@ -1,3 +1,22 @@
+2001-07-30  Martin Baulig  <baulig@suse.de>
+
+	* configure.in: Bump ORBIT_SERIAL to 16.
+
+	* include/orbit/orb-core/corba-object.h (CORBA_Object__itype):
+	Renamed to CORBA_Object__iinterface.
+
+	* include/orbit/orb-core/orbit-small.h (ORBit_IModule):
+	Added `CORBA_TypeCode *exceptions' and `CORBA_TypeCode *types'.
+
+	* include/orbit/orb-core/corba-typecode.h
+	(CORBA_TypeCode_struct): Added `CORBA_unsigned_long flags'.
+
+	* src/idl-compiler/orbit-idl-c-*.c: Use `__iinterface' instead of
+	`__itype' as prefix for the ORBit_IInterface structs.
+
+	* src/idl-compiler/orbit-idl-c-imodule.c: Create the new type and
+	exception arrays.
+
 2001-07-28  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testStructAny): impl.

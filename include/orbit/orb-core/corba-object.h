@@ -17,7 +17,7 @@ void ORBit_start_servers (CORBA_ORB orb);
 #define CORBA_OBJECT_SMALL_GET_TYPE_ID    12
 #define CORBA_OBJECT_SMALL_GET_IINTERFACE 13
 
-extern ORBit_IInterface CORBA_Object__itype;
+extern ORBit_IInterface CORBA_Object__iinterface;
 extern ORBit_IMethod    CORBA_Object__imethods[];
 
 #define CORBA_Object_IMETHODS_LEN 12

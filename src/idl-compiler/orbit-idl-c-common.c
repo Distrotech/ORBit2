@@ -945,7 +945,7 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 		fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE\n");
 		fprintf (of, "static\n");
 		fprintf (of, "#endif\n");
-		fprintf (of, "ORBit_IInterface %s__itype = {\n", id);
+		fprintf (of, "ORBit_IInterface %s__iinterface = {\n", id);
 		fprintf (of, "TC_%s,", id);
 		fprintf (of, "{%d, %d, %s__imethods, FALSE},\n",
 			 g_slist_length (i->methods),

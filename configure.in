@@ -39,7 +39,7 @@ LT_AGE=`expr $ORBIT_INTERFACE_AGE - $ORBIT_BINARY_AGE`
 
 # Increment this every time a feature is added in the .idl compiler
 # that needs help from the main libraries.
-ORBIT_SERIAL=15
+ORBIT_SERIAL=16
 
 AC_SUBST(ORBIT_MAJOR_VERSION)
 AC_SUBST(ORBIT_MINOR_VERSION)
