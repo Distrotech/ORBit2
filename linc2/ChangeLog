@@ -1,3 +1,8 @@
+2005-02-02  Hans Petter Jansson  <hpj@novell.com>
+
+	* src/linc-compat.h: Include <sys/types.h> before the optional stuff.
+	Some platforms don't pull it in automatically when needed.
+
 2005-01-28  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-compat.c: Rename link_socketpair() to link_pipe(), and
