@@ -450,9 +450,7 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 	else
 		typeid = "";
 
-	type_len = strlen (typeid) + 1;
-	giop_send_buffer_append_aligned (buf, &type_len, 4);
-	giop_send_buffer_append (buf, typeid, type_len);
+	giop_send_buffer_append_string (buf, typeid);
 
 	if (obj) {
 		if (!obj->profile_list)

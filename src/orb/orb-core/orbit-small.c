@@ -215,10 +215,7 @@ ORBit_small_send_user_exception (GIOPSendBuffer     *send_buffer,
 
 		return FALSE;
 	} else {
-		CORBA_unsigned_long len = strlen (ev->_id) + 1;
-
-		giop_send_buffer_append_aligned (send_buffer, &len, sizeof (len));
-		giop_send_buffer_append (send_buffer, ev->_id, len);
+		giop_send_buffer_append_string (send_buffer, ev->_id);
 
 		dprintf ("Returning exception of type '%s'\n", ev->_id);
 

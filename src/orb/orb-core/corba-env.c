@@ -250,14 +250,11 @@ void
 ORBit_send_system_exception (GIOPSendBuffer    *buf,
 			     CORBA_Environment *ev)
 {
-	CORBA_unsigned_long    len;
 	CORBA_SystemException *se = ev->_any._value;
 
 	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 
-	len = strlen (ev->_id) + 1;
-	giop_send_buffer_append_aligned (buf, &len, 4);
-	giop_send_buffer_append (buf, ev->_id, len);
+	giop_send_buffer_append_string (buf, ev->_id);
   
 	giop_send_buffer_append_aligned (buf, &se->minor, 4);
 	giop_send_buffer_append_aligned (buf, &se->completed, 4);
@@ -268,30 +265,27 @@ ORBit_send_user_exception (GIOPSendBuffer    *send_buffer,
 			   CORBA_Environment *ev,
 			   const ORBit_exception_marshal_info *user_exceptions)
 {
-  int i;
+	int i;
 
-  for (i = 0; user_exceptions[i].tc != CORBA_OBJECT_NIL; i++) {
-	  if(!strcmp (user_exceptions[i].tc->repo_id, ev->_id))
-		  break;
-  }
+	for (i = 0; user_exceptions [i].tc != CORBA_OBJECT_NIL; i++) {
+		if (!strcmp (user_exceptions [i].tc->repo_id, ev->_id))
+			break;
+	}
 
-  if(user_exceptions[i].tc == CORBA_OBJECT_NIL)
-    {
-      CORBA_Environment fakeev;
-      CORBA_exception_init(&fakeev);
-      CORBA_exception_set_system(&fakeev, ex_CORBA_UNKNOWN,
-				 CORBA_COMPLETED_MAYBE);
-      ORBit_send_system_exception(send_buffer, &fakeev);
-      CORBA_exception_free(&fakeev);
-    }
-  else
-    {
-      CORBA_unsigned_long len;
-      len = strlen(ev->_id) + 1;
-      giop_send_buffer_append_aligned(send_buffer, &len, 4);
-      giop_send_buffer_append(send_buffer, ev->_id, len);
+	if (user_exceptions[i].tc == CORBA_OBJECT_NIL) {
+		CORBA_Environment fakeev;
 
-      if(user_exceptions[i].marshal && ev->_any._value)
-	user_exceptions[i].marshal(send_buffer, ev);
-    }
+		CORBA_exception_init (&fakeev);
+
+		CORBA_exception_set_system (&fakeev, ex_CORBA_UNKNOWN,
+					    CORBA_COMPLETED_MAYBE);
+		ORBit_send_system_exception (send_buffer, &fakeev);
+
+		CORBA_exception_free (&fakeev);
+	} else {
+		giop_send_buffer_append_string (send_buffer, ev->_id);
+
+		if (user_exceptions[i].marshal && ev->_any._value)
+			user_exceptions[i].marshal (send_buffer, ev);
+	}
 }

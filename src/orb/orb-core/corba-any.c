@@ -201,11 +201,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		break;
 	case CORBA_tk_string:
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
-		ulval = strlen (*(char **)*val) + 1;
-		giop_send_buffer_append_aligned (buf, &ulval,
-						 sizeof (CORBA_unsigned_long));
-		giop_send_buffer_append (buf, *(char **)*val, ulval);
-	
+		giop_send_buffer_append_string (buf, *(char **)*val);
 		*val = ((guchar *)*val) + sizeof (char *);
 		break;
 	case CORBA_tk_sequence: {
