@@ -25,24 +25,12 @@ extern GMainLoop *link_loop;
 
 void       link_init             (gboolean       init_threads);
 void       link_shutdown         (void);
-
-LincWatch *link_io_add_watch     (GIOChannel    *channel,
-				  GIOCondition   condition,
-				  GIOFunc        func,
-				  gpointer       user_data);
-void       link_io_remove_watch  (LincWatch     *watch);
 void       link_main_iteration   (gboolean       block_for_reply);
 gboolean   link_main_pending     (void);
 void       link_main_loop_run    (void);
 GMainLoop *link_main_get_loop    (void);
 guint      link_main_idle_add    (GSourceFunc    function,
 				  gpointer       data);
-
-/* Deprecated bits ... */
-void       link_set_threaded     (gboolean       threaded);
-gpointer   link_object_ref       (gpointer object);
-void       link_object_unref     (gpointer object);
-GMutex    *link_object_get_mutex (void);
 
 G_END_DECLS
 

@@ -1,3 +1,15 @@
+2003-06-02  Michael Meeks  <michael@ximian.com>
+
+	* test/test-linc.c (verify_addr_is_loopback):
+	don't fail with loopback reverselookup.
+
+	* src/linc-source.c (link_io_add_watch):
+	bin / privatize, all done by fd now.
+	(link_io_remove_watch): privatize.
+
+	* src/linc.c: bin deprecated bits.
+	(link_set_threaded): bin.
+
 2003-05-31  Michael Meeks  <michael@ximian.com>
 
 	* src/Makefile.am (noinst_LTLIBRARIES): don't

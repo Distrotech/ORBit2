@@ -48,25 +48,6 @@ link_get_threaded (void)
 	return link_threaded;
 }
 
-/**
- * link_set_threaded:
- * @threaded: whether to do locking
- * 
- *   This routine turns threading on or off for the whole
- * ORB, it should be called (TRUE) if threading is desired
- * before any of the ORB initialization occurs.
- **/
-void
-link_set_threaded (gboolean threaded)
-{
-	g_warning ("link_set_threaded is deprecated");
-
-	if (link_mutex_new_called)
-		g_error ("You need to set this before using the ORB");
-
-	link_threaded = threaded;
-}
-
 static void
 link_dispatch_command (gpointer data)
 {
@@ -394,26 +375,4 @@ link_shutdown (void)
 		g_thread_join (link_io_thread);
 		link_io_thread = NULL;
 	}
-}
-
-/* deprecated symbols */
-
-GMutex *
-link_object_get_mutex (void)
-{
-	g_warning ("link_object_get_mutex: deprecated");
-	return NULL;
-}
-gpointer
-link_object_ref (gpointer object)
-{
-	g_warning ("link_object_ref: deprecated");
-	
-	return g_object_ref (object);
-}
-void
-link_object_unref (gpointer object)
-{
-	g_warning ("link_object_unref: deprecated");
-	g_object_unref (object);
 }
