@@ -153,7 +153,6 @@ queue_free (LINCConnection *cnx)
 		queued_write_free (l->data);
 
 	g_list_free (cnx->priv->write_queue);
-
 	cnx->priv->write_queue = NULL;
 }
 
