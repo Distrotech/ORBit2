@@ -480,18 +480,12 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of, "retval = PortableServer_POA_servant_to_reference(poa, newservant, ev);\n");
     fprintf(ski->of, "\nreturn retval;\n}\n\n");
     fprintf(ski->of, "static void\nimpl_%s__destroy(impl_POA_%s *servant, CORBA_Environment *ev)\n{\n", id, id);
-    fprintf(ski->of, "PortableServer_ObjectId *objid;\n\n");
-    fprintf(ski->of, "objid = PortableServer_POA_servant_to_id(servant->poa, servant, ev);\n");
-    fprintf(ski->of, "PortableServer_POA_deactivate_object(servant->poa, objid, ev);\n");
-    fprintf(ski->of, "CORBA_free(objid);\n");
-    fprintf(ski->of, "\n");
-    fprintf(ski->of, "   /* Now that object has been deactivated and no\n"); 
-    fprintf(ski->of, "    * further remote method call is delegated to \n");
-    fprintf(ski->of, "    * servant you may free your private attributes */\n");
+    fprintf(ski->of, "    /* No further remote method calls are delegated to \n");
+    fprintf(ski->of, "    * servant and you may free your private attributes. */\n");
     fprintf(ski->of, "   /* ------ free private attributes here ------ */\n");
     fprintf(ski->of, "   /* ------ ---------- end ------------- ------ */\n");
     fprintf(ski->of, "\nPOA_%s__fini((PortableServer_Servant)servant, ev);\n", id);
-    fprintf(ski->of, "g_free(servant);\n}\n\n");
+    fprintf(ski->of, "}\n\n");
     subski.tree = IDL_INTERFACE(ski->tree).body;
     cbe_ski_do_list(&subski);
     IDL_tree_traverse_parents(ski->tree, (GFunc)&cbe_ski_do_inherited_methods,
