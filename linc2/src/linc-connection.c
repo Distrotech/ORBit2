@@ -60,6 +60,15 @@ link_connection_ref (gpointer cnx)
 	return cnx;
 }
 
+void
+link_connection_exec_cnx_unref (LinkCommandCnxUnref *cmd, gboolean immediate)
+{
+	d_printf ("Exec defered unref on %p", cmd->cnx);
+
+	g_object_unref (cmd->cnx);
+}
+
+
 /* Only call if we are _certain_ that we don't hold the last ref */
 static void
 link_connection_unref_T_ (gpointer cnx)
@@ -83,8 +92,14 @@ link_connection_unref_unlock (gpointer cnx)
 
 	CNX_AND_LIST_UNLOCK (cnx);
 
-	if (tail_unref)
-		g_object_unref (cnx);
+	if (tail_unref) {
+		LinkCommandCnxUnref cmd[1];
+
+		cmd->cmd.cmd.type = LINK_COMMAND_CNX_UNREF;
+		cmd->cmd.complete = FALSE;
+		cmd->cnx = cnx;
+		link_exec_command ((LinkCommand *) cmd);
+	}
 }
 
 void

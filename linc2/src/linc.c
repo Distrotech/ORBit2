@@ -67,7 +67,8 @@ link_thread_safe (void)
 static gboolean
 cmd_is_sync (LinkCommand *cmd)
 {
-	return cmd->type == LINK_COMMAND_SET_IO_THREAD;
+	return (cmd->type == LINK_COMMAND_SET_IO_THREAD) ||
+		(cmd->type == LINK_COMMAND_CNX_UNREF);
 }
 
 static gboolean
@@ -413,7 +414,7 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 void
 link_set_io_thread (gboolean io_in_thread)
 {
-	LinkCommand cmd = { 0 };
+	LinkSyncCommand cmd = { { 0 }, 0 };
 
 #ifdef G_ENABLE_DEBUG
 	g_warning ("FIXME: guard from double entry");
@@ -422,7 +423,7 @@ link_set_io_thread (gboolean io_in_thread)
 	if (link_is_io_in_thread)
 		return;
 
-	cmd.type = LINK_COMMAND_SET_IO_THREAD;
+	cmd.cmd.type = LINK_COMMAND_SET_IO_THREAD;
 
 	link_exec_command (&cmd);
 }
@@ -440,6 +441,9 @@ link_dispatch_command (gpointer data, gboolean immediate)
 		break;
 	case LINK_COMMAND_SET_IO_THREAD:
 		link_exec_set_io_thread (data, immediate);
+		break;
+	case LINK_COMMAND_CNX_UNREF:
+		link_connection_exec_cnx_unref (data, immediate);
 		break;
 	default:
 		g_error ("Unimplemented (%d)", cmd->type);

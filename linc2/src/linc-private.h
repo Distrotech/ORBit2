@@ -28,7 +28,8 @@ typedef struct {
 	enum {
 		LINK_COMMAND_DISCONNECT,
 		LINK_COMMAND_SET_CONDITION,
-		LINK_COMMAND_SET_IO_THREAD
+		LINK_COMMAND_SET_IO_THREAD,
+		LINK_COMMAND_CNX_UNREF
 	} type;
 } LinkCommand;
 
@@ -48,9 +49,15 @@ typedef struct {
 	LinkConnection *cnx;
 } LinkCommandDisconnect;
 
+typedef struct {
+	LinkSyncCommand     cmd;
+	LinkConnection *cnx;
+} LinkCommandCnxUnref;
+
 void link_exec_command (LinkCommand *cmd);
 void link_connection_exec_disconnect (LinkCommandDisconnect *cmd, gboolean immediate);
 void link_connection_exec_set_condition (LinkCommandSetCondition *cmd, gboolean immediate);
+void link_connection_exec_cnx_unref (LinkCommandCnxUnref *cmd, gboolean immediate);
 
 /*
  * Really raw internals, exported for the tests
