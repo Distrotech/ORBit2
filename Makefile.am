@@ -7,8 +7,6 @@ bin_SCRIPTS=orbit-config
 EXTRA_DIST=ORBit.spec.in ORBit.m4
 
 dist-hook: ORBit.spec
-	mkdir $(distdir)/docs
-	cp -pr $(srcdir)/docs/* $(distdir)/docs
 	cp ORBit.spec $(distdir)
 
 rpms: distcheck

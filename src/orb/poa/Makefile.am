@@ -19,6 +19,7 @@ liborb_poa_la_SOURCES=\
 	poa-policy.c \
 	poa-servants.c
 
+EXTRA_DIST=poa-defs.idl
 BUILT_SOURCES=$(POA_IDLOUT)
 CLEANFILES=runidl_poa $(BUILT_SOURCES)
 

@@ -7,7 +7,7 @@ INCLUDES=-I. -I$(srcdir) -I$(top_srcdir)/include \
 	@GLIB_CFLAGS@ \
 	@LINC_CFLAGS@
 
-libORBit_la_SOURCES=orbit-init.c
+libORBit_la_SOURCES=orbit-init.c orbit-init.h
 
 libORBit_la_LDFLAGS=-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
 	-release $(LT_RELEASE) \

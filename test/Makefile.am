@@ -19,7 +19,7 @@ $(srcdir)/test-any-client.c $(srcdir)/test-any-server.c: test-any.h
 ECHO_IDLOUT=echo.h echo-common.c echo-stubs.c echo-skels.c
 echo_client_SOURCES=echo-client.c $(ECHO_IDLOUT)
 echo_client_LDADD=$(top_builddir)/src/orb/libORBit.la
-echo_server_SOURCES=echo-server.c echo-srv.c $(ECHO_IDLOUT)
+echo_server_SOURCES=echo-server.c echo-srv.c $(ECHO_IDLOUT) echo-share.h
 echo_server_LDADD=$(top_builddir)/src/orb/libORBit.la
 $(srcdir)/echo-client.c $(srcdir)/echo-server.c $(srcdir)/echo-srv.c: echo.h
 
@@ -63,3 +63,5 @@ test_any_built: test-any.idl $(IDL)
 
 BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT)
 CLEANFILES=echo_built empty_built test1_built test_any_built $(BUILT_SOURCES)
+
+EXTRA_DIST=echo.idl empty.idl test-any.idl test1.idl

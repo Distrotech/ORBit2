@@ -34,6 +34,8 @@ IDLOUT=corba-defs-common.c
 IOP_IDLOUT=iop-defs-common.c
 OPS_IDLOUT=corba-ops-stubs.c corba-ops-common.c corba-ops.h corba-ops-skels.c
 
+$(top_builddir)/include/orbit/orb-core/corba-defs.h: runidl
+
 $(IDLOUT): runidl
 
 runidl: corba-defs.idl $(IDL)
@@ -45,7 +47,7 @@ runidl: corba-defs.idl $(IDL)
 	for I in $(IDLOUT) corba-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done; \
-	mv -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h; \
+	cp -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h; \
 	touch runidl
 
 $(IOP_IDLOUT): runidl_iop
@@ -80,3 +82,4 @@ runidl_ops: corba-ops.idl $(IDL)
 
 BUILT_SOURCES=$(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)
 CLEANFILES=$(BUILT_SOURCES) runidl_ops runidl_iop runidl
+EXTRA_DIST=corba-defs.idl iop-defs.idl corba-ops.idl
