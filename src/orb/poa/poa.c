@@ -1466,23 +1466,41 @@ poa_invoke_at_idle (gpointer data)
 	ORBit_POAObject_invoke_incoming_request
 		(pcl->pobj, pcl->recv_buffer, NULL);
 
-	g_free (data);
+	pcl->pobj = NULL;
+	pcl->recv_buffer = NULL;
 
 	return FALSE;
 }
 
 static void
+poa_destroy_idle_closure (gpointer data)
+{
+	PoaIdleClosure *pcl = data;
+
+	if (pcl->pobj)
+		ORBit_RootObject_release (pcl->pobj);
+	if (pcl->recv_buffer)
+		giop_recv_buffer_unuse (pcl->recv_buffer);
+
+	g_free (pcl);
+}
+
+static void
 push_request_idle (ORBit_POAObject  *pobj,
-		   GIOPRecvBuffer  **recv_buffer)
+		   GIOPRecvBuffer  **recv_buffer,
+		   GMainContext     *on_context)
 {
 	PoaIdleClosure *pcl = g_new (PoaIdleClosure, 1);
+	GSource *source;
 
 	pcl->pobj = *pobj;
 	pcl->recv_buffer = *recv_buffer;
 
-	/* FIXME: track pending idle impls
-	 * for cleanup at shutdown ... */
-	g_idle_add (poa_invoke_at_idle, pcl);
+	source = g_idle_source_new ();
+	g_source_set_callback (source, poa_invoke_at_idle, pcl, poa_destroy_idle_closure);
+
+	g_source_attach (source, on_context);
+	g_source_unref (source);
 	
 	*pobj = NULL;
 	*recv_buffer = NULL;
@@ -1589,7 +1607,11 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 								&pobj, &recv_buffer);
 					/* drop through */
 				case ORBIT_THREAD_HINT_ALL_AT_IDLE:
-					push_request_idle (&pobj, &recv_buffer);
+					push_request_idle (&pobj, &recv_buffer, NULL);
+					break;
+
+				case ORBIT_THREAD_HINT_ON_CONTEXT:
+					push_request_idle (&pobj, &recv_buffer, adaptor->context);
 					break;
 
 				case ORBIT_THREAD_HINT_NONE:
@@ -2506,6 +2528,9 @@ ORBit_poa_allow_cross_thread_call (ORBit_POAObject   pobj,
 			
 		case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
 		case ORBIT_THREAD_HINT_ALL_AT_IDLE:
+		case ORBIT_THREAD_HINT_ON_CONTEXT:
+			/* FIXME: need GThread *g_main_context_get_owner()
+			   to do this right ... */
 		case ORBIT_THREAD_HINT_NONE:
 			break;
 		}
