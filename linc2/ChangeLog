@@ -1,3 +1,14 @@
+2001-09-20  Mark McLoughlin <mark@skynet.ie>
+
+	* src/linc-connection.c
+	(linc_connection_real_state_changed): rename to...
+	(linc_connection_class_state_changed): document and tidy.
+	(linc_connection_from_fd): ditto.
+	(linc_connection_initiate): ditto.
+	(linc_connection_state_changed): ditto.
+	(linc_connection_read): return 0 if passed 0 or if the
+	connection has been closed.
+
 2001-09-18  Jens Finke <jens@gnome.org>
 
 	* linc.spec.in: New file.
