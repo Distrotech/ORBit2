@@ -27,6 +27,7 @@
 #include "backends/c/orbit-idl-c-backend.h"
 #include <dirent.h>
 #include <gmodule.h>
+#include <string.h>
 
 static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
   {"c", &orbit_idl_output_c},
