@@ -134,6 +134,7 @@ module test {
 						    inout BoundedStructSeq inoutArg,
 						    out BoundedStructSeq outArg);
 		LongSeq opMassiveSeq();
+                AnySeq opAnySeq();
 	};
   
 	typedef enum AnEnum { 

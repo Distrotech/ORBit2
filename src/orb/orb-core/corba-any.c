@@ -82,6 +82,8 @@ ORBit_gather_alloc_info (CORBA_TypeCode tc)
 		return sizeof (CORBA_wchar);
 	case CORBA_tk_fixed:
 		return sizeof (CORBA_fixed_d_s);
+	case CORBA_tk_void:
+	case CORBA_tk_null:
 	default:
 		return 0;
 	}
@@ -713,6 +715,9 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 			if (ORBit_demarshal_value (tc->subtypes[0], val, buf, orb))
 				return TRUE;
 		break;
+	case CORBA_tk_void:
+	case CORBA_tk_null:
+		break;
 	case CORBA_tk_fixed:
 	default:
 		return TRUE;
@@ -950,7 +955,6 @@ ORBit_copy_value_core (gconstpointer *val,
 		break;
 	case CORBA_tk_void:
 	case CORBA_tk_null:
-		*val = NULL;
 		break;
 	default:
 		g_error ("Can't handle copy of value kind %d", tc->kind);
