@@ -420,6 +420,15 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 
 	LINC_MUTEX_LOCK (cnx->outgoing_mutex);
 
+	{
+		LINCConnection *lcnx = (LINCConnection *) cnx;
+		/* FIXME: need an option to turn this off ? */
+		if (lcnx->options & LINC_CONNECTION_NONBLOCKING) {
+			while (lcnx->status == LINC_CONNECTING)
+				linc_main_iteration (TRUE);
+		}
+	}
+
 	retval = linc_connection_writev (
 		(LINCConnection *) cnx, buf->iovecs,
 		buf->num_used, 

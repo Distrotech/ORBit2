@@ -79,4 +79,10 @@ const CORBA_long constants_SEQ_LONG_INOUT_IN[] = { constants_LONG_INOUT_OUT, con
 const CORBA_long constants_SEQ_LONG_INOUT_OUT[] = { constants_LONG_OUT, constants_LONG_RETN,8,9 };
 const CORBA_long constants_SEQ_LONG_RETN[] = { constants_LONG_RETN, constants_LONG_IN,2,3 };
 
+const CORBA_long constants_SEQ_OCTET_IN[] = { 1, 3, 5, 7 };
+const CORBA_long constants_SEQ_OCTET_OUT[] = { 2, 7, 9, 255 };
+const CORBA_long constants_SEQ_OCTET_INOUT_IN[] = { 1, 15, 8, 0 };
+const CORBA_long constants_SEQ_OCTET_INOUT_OUT[] = { 73, 128, 173, 15 };
+const CORBA_long constants_SEQ_OCTET_RETN[] = { 1, 3, 5, 7 };
+
 #endif
