@@ -1,3 +1,10 @@
+2003-06-18  Frank Rehberger  <Frank.Rehberger@web.de>
+
+	* src/orb/util/orbit-options.c: enable parsing of command line options 
+	* src/orb/util/orbit-options.h: declare ORBIT_OPTION_KEY_VALUE
+	* src/orb/util/orbit-options.c: code for option ORBIT_OPTION_KEY_VALUE
+	* src/orb/orb-core/corba-orb.c: support for -ORBNamingIOR, -ORBInitRef 
+
 2003-06-11  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (test_time_noop): fix.

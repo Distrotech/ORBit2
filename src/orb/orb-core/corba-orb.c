@@ -38,6 +38,8 @@ static gboolean     orbit_use_http_iors      = FALSE;
 static char        *orbit_ipsock             = NULL;
 static char        *orbit_ipname             = NULL;
 static char        *orbit_debug_options      = NULL;
+static char        *orbit_naming_ref         = NULL;
+static GSList      *orbit_initref_list       = NULL; 
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -276,7 +278,7 @@ CORBA_ORB_init (int *argc, char **argv,
 		    strstr (orb_identifier, "orbit-local-mt-orb") != NULL);
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
-
+	
 #ifdef G_ENABLE_DEBUG
 	ORBit_setup_debug_flags ();
 
@@ -285,6 +287,7 @@ CORBA_ORB_init (int *argc, char **argv,
 		threaded |= TRUE;
 	}
 #endif /* G_ENABLE_DEBUG */
+
 
 	giop_recv_set_limit (orbit_initial_recv_limit);
 	giop_init (threaded,
@@ -308,6 +311,28 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	retval->adaptors = g_ptr_array_new ();
 	ORBit_init_internals (retval, ev);
+
+	/* set user defined references */ 
+	if (orbit_naming_ref != NULL) {
+		ORBit_set_initial_reference (retval, 
+					     "NameService", 
+					     orbit_naming_ref);
+	}
+
+	{ 
+		gint i=0;
+		for (i=0; i<g_slist_length (orbit_initref_list); ++i) {
+			gchar** tuple 
+				= (gchar**) g_slist_nth_data (
+					orbit_initref_list, i);
+			
+			
+			ORBit_set_initial_reference (retval, 
+						     tuple[0], 
+						     tuple[1]);
+			
+		}
+	}
 
 	return ORBit_RootObject_duplicate (retval);
 }
@@ -1186,7 +1211,8 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBid",              ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
 	{ "ORBImplRepoIOR",     ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
 	{ "ORBIfaceRepoIOR",    ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
-	{ "ORBNamingIOR",       ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBNamingIOR",       ORBIT_OPTION_STRING,  &orbit_naming_ref},
+
 	{ "ORBRootPOAIOR",      ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
  	{ "ORBIIOPIPName",      ORBIT_OPTION_STRING,  &orbit_ipname },
  	{ "ORBIIOPIPSock",      ORBIT_OPTION_STRING,  &orbit_ipsock },
@@ -1204,5 +1230,6 @@ const ORBit_option orbit_supported_options[] = {
 	/* warning: this option is a security risk */
 	{ "ORBSimpleUIDs",      ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
 	{ "ORBDebugFlags",      ORBIT_OPTION_STRING,  &orbit_debug_options },
+	{ "ORBInitRef",         ORBIT_OPTION_KEY_VALUE,  &orbit_initref_list},
 	{ NULL,                 0,                    NULL },
 };
