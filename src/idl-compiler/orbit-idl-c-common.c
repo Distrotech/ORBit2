@@ -38,10 +38,15 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
   fprintf(ci->fh, "static const CORBA_unsigned_long ORBit_zero_int = 0;\n");
 
   cc_output_typecodes(tree->tree, ci);
-  cc_output_allocs(tree->tree, rinfo, ci);
-  cc_output_marshallers(ci);
 
-  if (rinfo->small) {
+  cc_output_allocs(tree->tree, rinfo, ci);
+
+  if (!rinfo->small)
+    cc_output_marshallers(ci);
+
+  if (rinfo->small/* &&
+      ((rinfo->enabled_passes & OUTPUT_STUBS) ||
+      (rinfo->enabled_passes & OUTPUT_SKELS))*/) {
     GSList *list;
 
     fprintf(ci->fh, "\n/* Interface type data */\n\n");
@@ -51,12 +56,17 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
 }
 
 static gboolean
-cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data) {
+cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data)
+{
     OIDL_C_Info *ci = user_data;
     IDL_tree tree = tfd->tree;
 
-  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
+#if 0
+  if ( tree->declspec & IDLF_DECLSPEC_PIDL ) {
+        g_warning ("Pruned pidl");
 	return FALSE;	/* prune */
+  }
+#endif
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_CONST_DCL:
@@ -586,51 +596,54 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
   else
     ctmp = orbit_cbe_get_typespec_str(tree);
 
-  fprintf(ci->fh, "#if ");
-  orbit_cbe_id_cond_hack(ci->fh, "MARSHAL_IMPL", ctmp, ci->c_base_name);
-  fprintf(ci->fh, " && !defined(ORBIT_MARSHAL_%s)\n", ctmp);
-  fprintf(ci->fh, "#define ORBIT_MARSHAL_%s 1\n\n", ctmp);
+  if((tmi->avail_mtype & MARSHAL_FUNC) ||
+     (tmi->avail_dmtype & MARSHAL_FUNC)) {
+    fprintf(ci->fh, "#if ");
+    orbit_cbe_id_cond_hack(ci->fh, "MARSHAL_IMPL", ctmp, ci->c_base_name);
+    fprintf(ci->fh, " && !defined(ORBIT_MARSHAL_%s)\n", ctmp);
+    fprintf(ci->fh, "#define ORBIT_MARSHAL_%s 1\n\n", ctmp);
+    
+    if(tmi->avail_mtype & MARSHAL_FUNC)
+      {
+        pi.flags = PI_BUILD_FUNC;
+	pi.where = MW_Null|MW_Heap;
+	node = marshal_populate(tree, NULL, &pi);
+	orbit_idl_do_node_passes(node, FALSE);
+	
+	node->name = "_ORBIT_val";
+	node->nptrs = oidl_param_numptrs(tree, DATA_IN);
+	
+	fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
+	orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
+	fprintf(ci->fh, " _ORBIT_val, CORBA_Environment *ev)\n{\n");
+	orbit_cbe_alloc_tmpvars(node, ci);
+	c_marshalling_generate(node, ci, FALSE);
+	fprintf(ci->fh, "}\n");
+      }
 
-  if(tmi->avail_mtype & MARSHAL_FUNC)
-    {
-      pi.flags = PI_BUILD_FUNC;
-      pi.where = MW_Null|MW_Heap;
-      node = marshal_populate(tree, NULL, &pi);
-      orbit_idl_do_node_passes(node, FALSE);
-
-      node->name = "_ORBIT_val";
-      node->nptrs = oidl_param_numptrs(tree, DATA_IN);
-
-      fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
-      fprintf(ci->fh, " _ORBIT_val, CORBA_Environment *ev)\n{\n");
-      orbit_cbe_alloc_tmpvars(node, ci);
-      c_marshalling_generate(node, ci, FALSE);
-      fprintf(ci->fh, "}\n");
-    }
-
-  if(tmi->avail_dmtype & MARSHAL_FUNC)
-    {
-      pi.flags = PI_BUILD_FUNC;
-      pi.where = MW_Null;
-      node = marshal_populate(tree, NULL, &pi);
-      node->name = "_ORBIT_val";
-      node->nptrs = oidl_param_numptrs(tree, DATA_IN);
-
-      orbit_idl_do_node_passes(node, TRUE);
-
-      fprintf(ci->fh, "gboolean\n%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
-      fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev)\n{\n");
-      fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-      fprintf(ci->fh, "register guchar *_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
-      orbit_cbe_alloc_tmpvars(node, ci);
-      c_demarshalling_generate(node, ci, FALSE, TRUE);
-      fprintf(ci->fh, "return FALSE;");
-      fprintf(ci->fh, "_ORBIT_demarshal_error:\nreturn TRUE;\n");
-      fprintf(ci->fh, "}\n");
-    }
-  fprintf(ci->fh, "#endif\n\n");
+    if(tmi->avail_dmtype & MARSHAL_FUNC)
+      {
+        pi.flags = PI_BUILD_FUNC;
+	pi.where = MW_Null;
+	node = marshal_populate(tree, NULL, &pi);
+	node->name = "_ORBIT_val";
+	node->nptrs = oidl_param_numptrs(tree, DATA_IN);
+	
+	orbit_idl_do_node_passes(node, TRUE);
+	
+	fprintf(ci->fh, "gboolean\n%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
+	orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
+	fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev)\n{\n");
+	fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+	fprintf(ci->fh, "register guchar *_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
+	orbit_cbe_alloc_tmpvars(node, ci);
+	c_demarshalling_generate(node, ci, FALSE, TRUE);
+	fprintf(ci->fh, "return FALSE;");
+	fprintf(ci->fh, "_ORBIT_demarshal_error:\nreturn TRUE;\n");
+	fprintf(ci->fh, "}\n");
+      }
+    fprintf(ci->fh, "#endif\n\n");
+  }
   g_free(ctmp);
 }
 

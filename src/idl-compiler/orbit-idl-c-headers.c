@@ -51,7 +51,9 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "\n/** more internals **/\n");
   ch_output_marshallers(ci);
 
-  if (rinfo->small) {
+  if (rinfo->small/* &&
+      ((rinfo->enabled_passes & OUTPUT_STUBS) ||
+      (rinfo->enabled_passes & OUTPUT_SKELS))*/) {
     /* FIXME: hackish ? */
     fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
 
@@ -208,11 +210,14 @@ ch_output_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     if ( tree->declspec & IDLF_DECLSPEC_PIDL ) {
         /* PIDL interfaces are not normal CORBA Objects */
     	fprintf(ci->fh, "typedef struct %s_type *%s;\n", fullname, fullname);
+	fprintf(ci->fh, "#ifndef TC_%s\n", fullname);
+	fprintf(ci->fh, "#  define TC_%s TC_CORBA_Object\n", fullname);
+	fprintf(ci->fh, "#endif\n");
     } else {
     	fprintf(ci->fh, "#define %s__freekids CORBA_Object__freekids\n", fullname);
     	fprintf(ci->fh, "typedef CORBA_Object %s;\n", fullname);
     	fprintf(ci->fh, "extern CORBA_unsigned_long %s__classid;\n", fullname);
-        ch_type_alloc_and_tc(tree, rinfo, ci, FALSE);
+	ch_type_alloc_and_tc(tree, rinfo, ci, FALSE);
     }
 
     fprintf(ci->fh, "#endif\n");

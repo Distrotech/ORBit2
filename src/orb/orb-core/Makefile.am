@@ -49,7 +49,7 @@ $(IDLOUT): runidl
 
 runidl: corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
+	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
 	--noskels --nodefskels --nostubs \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl
@@ -63,7 +63,7 @@ $(IOP_IDLOUT): runidl_iop
 
 runidl_iop: iop-defs.idl $(IDL)
 	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
@@ -80,7 +80,7 @@ $(OPS_IDLOUT): runidl_ops
 
 runidl_ops: corba-ops.idl $(IDL)
 	-(rm -f $(OPS_IDLOUT) || true) > /dev/null
-	$(IDL) \
+	$(IDL) --oldstyle \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
 	for I in $(OPS_IDLOUT); do \
 		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I; \
@@ -93,7 +93,7 @@ $(IFACE_IDLOUT) : runidl_iface
 
 runidl_iface: orbit-interface.idl $(IDL)
 	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
-	$(IDL) \
+	$(IDL) --oldstyle \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/orbit-interface.idl
 	cp -f orbit-interface.h $(top_builddir)/include/orbit/orb-core/orbit-interface.h; \
 	rm -f orbit-interface-stubs.c orbit-interface-skels.c

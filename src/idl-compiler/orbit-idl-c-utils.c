@@ -195,12 +195,12 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
         return retval;
     }
     break;
-  case IDLN_INTERFACE:
-  case IDLN_FORWARD_DCL:
-    return orbit_cbe_get_typespec_str(IDL_INTERFACE(tree).ident);
   case IDLN_NATIVE:
     retval = "gpointer";
     break;
+  case IDLN_FORWARD_DCL:
+  case IDLN_INTERFACE:
+    return orbit_cbe_get_typespec_str(IDL_INTERFACE(tree).ident);
   case IDLN_TYPE_OBJECT:
     retval = "CORBA_Object";
     break;
@@ -210,15 +210,13 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
   default:
     g_error("We were asked to get a typename for a %s",
 	    IDL_tree_type_names[IDL_NODE_TYPE(tree)]);
+    break;
   }
 
-  if(retval)
-    return g_strdup(retval);
-  else {
-    retval = tmpstr->str;
-    g_string_free(tmpstr, FALSE);
-    return retval;
-  }
+  if (retval)
+    return g_strdup (retval);
+  else
+    return g_string_free (tmpstr, FALSE);
 }
 
 void
@@ -855,7 +853,7 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		switch (IDL_NODE_TYPE (typespec)) {
 		case IDLN_TYPE_ARRAY:
                         /* Kill any unwanted array size specifiers in cast */
-			retval = g_strdup_printf ("");
+			retval = g_strdup ("");
 			break;
 
 		case BASE_TYPES:

@@ -123,7 +123,8 @@ cbe_tc_generate(CBETCGenInfo *tci)
 	curitem; curitem = IDL_LIST(curitem).next) {
       subtci.ts = IDL_LIST(curitem).data;
       if(IDL_NODE_TYPE(subtci.ts) == IDLN_TYPE_ARRAY)
-	subtci.structname = cbe_tc_generate_tcstruct_name(IDL_TYPE_ARRAY(subtci.ts).ident);
+	subtci.structname = cbe_tc_generate_tcstruct_name(
+		IDL_TYPE_ARRAY(subtci.ts).ident);
       else
 	subtci.structname = cbe_tc_generate_tcstruct_name(subtci.ts);
       cbe_tc_generate(&subtci);

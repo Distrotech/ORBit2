@@ -1,5 +1,21 @@
 2001-05-25  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/Makefile.am (runidl_poa): install poa-defs into
+	the correct directory, fixup the include brokenness.
+	(POA_IDLOUT): add poa-defs.h - doh.
+
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_output_interface):
+	output TC_ #defines even for PIDL types.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(build_marshal_funcs): only output marshalers if we
+	need to.
+	(cc_output_tc_walker): Output typecode information for
+	PIDL types - why not, might help automated language bindings
+	to the PIDL.
+
+2001-05-25  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c (dump): print in-buffer
 	offsets as well as the data.
 

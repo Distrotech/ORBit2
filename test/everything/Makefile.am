@@ -42,7 +42,7 @@ server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 
 ${EVERYTHING_BUILT}: everything.idl $(ORBIT_IDL)
-	$(ORBIT_IDL) --small $(srcdir)/everything.idl
+	$(ORBIT_IDL) $(srcdir)/everything.idl
 
 CLEANFILES = ${EVERYTHING_BUILT} iorfile
 BUILT_SOURCES = ${EVERYTHING_BUILT}
