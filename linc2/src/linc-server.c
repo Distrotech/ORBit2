@@ -77,7 +77,7 @@ static void
 linc_server_dispose (GObject *obj)
 {
 	GSList     *l;
-	LINCServer *cnx = (LINCServer *)obj;
+	LINCServer *cnx = (LINCServer *) obj;
 
 	d_printf ("Dispose / close server fd %d\n", cnx->priv->fd);
 
@@ -88,8 +88,9 @@ linc_server_dispose (GObject *obj)
 	}
 #endif
 	if (cnx->priv->tag) {
-		linc_io_remove_watch (cnx->priv->tag);
+		LincWatch *thewatch = cnx->priv->tag;
 		cnx->priv->tag = NULL;
+		linc_io_remove_watch (thewatch);
 	}
 
 	if (cnx->priv->fd >= 0) {
@@ -101,8 +102,9 @@ linc_server_dispose (GObject *obj)
 		cnx->priv->fd = -1;
 	}
 
-	for (; (l = cnx->priv->connections); ) {
+	while ((l = cnx->priv->connections)) {
 		GObject *o = l->data;
+
 		cnx->priv->connections = l->next;
 		g_slist_free_1 (l);
 		g_object_unref (o);
