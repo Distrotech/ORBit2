@@ -15,14 +15,16 @@ G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API
 
-void        giop_init             (gboolean threaded,
-				   gboolean blank_wire_data);
-void        giop_main_run         (void);
-void        giop_shutdown         (void);
-gboolean    giop_threaded         (void);
-GIOPThread *giop_thread_self      (void);
-void        giop_thread_push_recv (GIOPMessageQueueEntry *ent);
-void        giop_recv_set_limit   (glong limit);
+void        giop_init              (gboolean threaded,
+				    gboolean blank_wire_data);
+void        giop_main_run          (void);
+void        giop_shutdown          (void);
+gboolean    giop_threaded          (void);
+GIOPThread *giop_thread_self       (void);
+void        giop_thread_push_recv  (GIOPMessageQueueEntry *ent);
+void        giop_invoke_async      (GIOPMessageQueueEntry *ent);
+void        giop_recv_set_limit    (glong limit);
+void        giop_incoming_signal_T (GIOPThread *tdata);
 
 typedef struct _GIOPQueue GIOPQueue;
 GIOPThread *giop_thread_get_main  (void);

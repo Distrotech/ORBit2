@@ -1,5 +1,30 @@
 2003-05-14  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c (orbit_small_demarshal): 
+	split out giop_recv_buffer_get, and pass the recv buffer in,
+	remove the recv release argument.
+	(ORBit_small_demarshal_async): pass the buffer straight in.
+	(ORBit_small_invoke_stub): unref the recv buffer here.
+
+	* src/orb/GIOP/giop.c (giop_thread_request_process) 
+	(giop_thread_request_push): use a GQueue for request_queue.
+	(giop_incoming_signal_T, giop_incoming_signal): impl.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_handle_queued_input): bin the return value,
+	and re-hash.
+	(giop_recv_buffer_get): use a GQueue for request_queue.
+
+	* src/orb/GIOP/giop.c (giop_thread_free): impl.
+	(giop_invoke_async): re-factor bits into here.
+	(giop_request_handler_fn): free the giop thread
+	after use.
+
+	* src/orb/GIOP/giop-recv-buffer.c (handle_reply):
+	bin process_now distinction.
+	(giop_recv_list_zap): use giop_invoke_async so we
+	work across threads.
+
 	* include/orbit/GIOP/giop-recv-buffer.h: make
 	free_body a guchar not a (signed) gboolean;
 	thanks to Morten.

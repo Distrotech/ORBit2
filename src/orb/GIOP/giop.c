@@ -13,6 +13,14 @@
 #include "giop-debug.h"
 #include <orbit/util/orbit-genrand.h>
 
+/* FIXME: need to clean this up at shutdown */
+static int      corba_wakeup_fds[2];
+#define WAKEUP_POLL  corba_wakeup_fds [0]
+#define WAKEUP_WRITE corba_wakeup_fds [1]
+static GSource *giop_main_source = NULL;
+static GIOPThread *giop_main_thread = NULL;
+
+/* Incoming dispatch thread pool */
 static GThreadPool *giop_thread_pool    = NULL;
 static GMutex      *giop_pool_hash_lock = NULL;
 static GHashTable  *giop_pool_hash      = NULL;
@@ -263,12 +271,27 @@ giop_thread_new (GMainContext *context, gpointer key)
 	tdata->incoming = g_cond_new ();
 	tdata->wake_context = context;
 	tdata->key = key;
+	tdata->async_ents = g_queue_new();
+	tdata->request_queue = g_queue_new();
+
+	if (giop_main_thread)
+		tdata->request_handler = giop_main_thread->request_handler;
 
 	G_LOCK (giop_thread_list);
 	giop_thread_list = g_list_prepend (giop_thread_list, tdata);
 	G_UNLOCK (giop_thread_list);
 
 	return tdata;
+}
+
+static void
+giop_thread_free (GIOPThread *tdata)
+{
+	G_LOCK (giop_thread_list);
+	giop_thread_list = g_list_remove (giop_thread_list, tdata);
+	G_UNLOCK (giop_thread_list);
+
+	g_free (tdata);
 }
 
 static GPrivate *giop_tdata_private = NULL;
@@ -331,13 +354,6 @@ giop_thread_request_push_key (gpointer  key,
 	g_mutex_unlock (giop_pool_hash_lock);
 }
 
-/* FIXME: need to clean this up at shutdown */
-static int      corba_wakeup_fds[2];
-#define WAKEUP_POLL  corba_wakeup_fds [0]
-#define WAKEUP_WRITE corba_wakeup_fds [1]
-static GSource *giop_main_source = NULL;
-static GIOPThread *giop_main_thread = NULL;
-
 static gboolean
 giop_mainloop_handle_input (GIOChannel     *source,
 			    GIOCondition    condition,
@@ -367,7 +383,8 @@ giop_request_handler_fn (gpointer data, gpointer user_data)
 		g_mutex_lock (giop_pool_hash_lock);
 		LINC_MUTEX_LOCK (tdata->lock);
 
-		if ((done = tdata->request_queue == NULL) && tdata->key)
+		if ((done = g_queue_is_empty (tdata->request_queue)) &&
+		    tdata->key)
 			giop_thread_key_release_T (tdata->key);
 
 		LINC_MUTEX_UNLOCK (tdata->lock);
@@ -376,6 +393,9 @@ giop_request_handler_fn (gpointer data, gpointer user_data)
 	} while (!done);
 
 	dprintf (GIOP, "Thread %p returning to pool", tdata);
+
+	giop_thread_free (tdata);
+	g_private_set (giop_tdata_private, NULL);
 }
 
 void
@@ -433,32 +453,71 @@ wakeup_mainloop (void)
 }
 
 void
+giop_incoming_signal_T (GIOPThread *tdata)
+{
+	g_cond_signal (tdata->incoming);
+
+	if (tdata->wake_context)
+		wakeup_mainloop ();
+}
+
+static void
+giop_incoming_signal (GIOPThread *tdata)
+{
+	g_mutex_lock (tdata->lock); /* ent_lock */
+	giop_incoming_signal_T (tdata);
+	g_mutex_unlock (tdata->lock); /* ent_unlock */
+}
+
+void
 giop_thread_push_recv (GIOPMessageQueueEntry *ent)
 {
-	GIOPThread *tdata;
-
 	g_return_if_fail (ent != NULL);
 	g_return_if_fail (ent->buffer != NULL);
 	g_return_if_fail (ent->src_thread != NULL);
 
-	tdata = ent->src_thread;
+	/* someone already waiting on the stack */
+	giop_incoming_signal_T (ent->src_thread);
+}
 
-	g_mutex_lock (tdata->lock);
+void
+giop_invoke_async (GIOPMessageQueueEntry *ent)
+{
+	GIOPRecvBuffer *buf = ent->buffer;
 
-	if (ent->async_cb) /* we need the recv buffer later */
-		tdata->reply_list = g_slist_append (
-			tdata->reply_list, ent->buffer);
-	/* else - someone already waiting on the stack */
+	dprintf (GIOP, "About to invoke %p:%p (%d) (%p:%p)",
+		 ent, ent->async_cb, giop_is_threaded,
+		 ent->src_thread, giop_main_thread);
 
-	/* wakeup thread ... */
-	g_cond_signal (tdata->incoming);
+	if (!giop_is_threaded)
+		ent->async_cb (ent);
 
-	if (ent->async_cb) {
-		if (!tdata->wake_context)
-			g_error ("Can't do async code outside of main thread");
-		wakeup_mainloop ();
+	else if (ent->src_thread == giop_main_thread) {
+
+		if (giop_thread_self () == giop_main_thread)
+			ent->async_cb (ent);
+
+		else {
+			GIOPThread *tdata = ent->src_thread;
+
+			g_mutex_lock (tdata->lock); /* ent_lock */
+
+			buf = NULL;
+			g_queue_push_tail (tdata->async_ents, ent);
+			
+			g_assert (tdata->wake_context);
+			giop_incoming_signal_T (tdata);
+
+			g_mutex_unlock (tdata->lock); /* ent_unlock */
+		}
+	} else { /* Push callback to a new thread */
+		g_warning ("FIXME: emit async callback in it's own thread ?");
+
+		ent->async_cb (ent);
 	}
-	g_mutex_unlock (tdata->lock);
+
+	/* NB. At the tail end of async_cb 'Ent' is invalid / freed */
+	giop_recv_buffer_unuse (buf);
 }
 
 static GMainLoop *giop_main_loop = NULL;
@@ -518,13 +577,7 @@ giop_thread_request_process (GIOPThread *tdata)
 	GIOPQueueEntry *qe = NULL;
 
 	LINC_MUTEX_LOCK (tdata->lock);
-
-	if (tdata->request_queue) {
-		qe = tdata->request_queue->data;
-		tdata->request_queue = g_slist_delete_link
-			(tdata->request_queue, tdata->request_queue);
-	}
-	
+	qe = g_queue_pop_head (tdata->request_queue);	
 	LINC_MUTEX_UNLOCK (tdata->lock);
 
 	if (qe)
@@ -551,11 +604,8 @@ giop_thread_request_push (GIOPThread *tdata,
 
 	LINC_MUTEX_LOCK (tdata->lock);
 
-	tdata->request_queue = g_slist_append (tdata->request_queue, qe);
-
-	g_cond_signal (tdata->incoming);
-	if (tdata->wake_context)
-		wakeup_mainloop ();
+	g_queue_push_tail (tdata->request_queue, qe);
+	giop_incoming_signal_T (tdata);
 
 	LINC_MUTEX_UNLOCK (tdata->lock);
 }
