@@ -10,24 +10,27 @@ INCLUDES=-I$(top_srcdir)/include \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
 
-POA_IDLOUT=poa-defs-common.c poa-defs.h
+POA_IDLOUT=poa-defs-common.c
 
-liborb_poa_la_SOURCES=\
+$(main_src) : $(BUILT_SOURCE)
+
+main_src = \
 	poa.c \
-	$(POA_IDLOUT) \
 	orbit-poa-export.h \
 	orbit-poa.h \
 	poa-manager.c \
 	poa-policy.c \
 	poa-servants.c
 
+liborb_poa_la_SOURCES=\
+	$(POA_IDLOUT) \
+	$(main_src)
+
 EXTRA_DIST=poa-defs.idl
 BUILT_SOURCES=$(POA_IDLOUT)
-CLEANFILES=runidl_poa $(BUILT_SOURCES)
+CLEANFILES=$(BUILT_SOURCES)
 
-$(POA_IDLOUT): runidl_poa
-
-runidl_poa: poa-defs.idl $(IDL)
+$(POA_IDLOUT): poa-defs.idl $(IDL)
 	-(rm -f $(POA_IDLOUT) || true) > /dev/null
 	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	-I$(top_srcdir)/src/idl/CORBA \
@@ -36,9 +39,7 @@ runidl_poa: poa-defs.idl $(IDL)
 	--noskels --nodefskels --nostubs \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
                 --showcpperrors $(top_srcdir)/src/orb/poa/poa-defs.idl
-	for I in $(POA_IDLOUT); do \
+	for I in $(POA_IDLOUT) poa-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done
 	mv -f poa-defs.h $(top_builddir)/include/orbit/poa/poa-defs.h
-	touch runidl_poa
-
