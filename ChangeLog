@@ -1,5 +1,10 @@
 2004-12-22  Jules Colding  <colding@omesc.com>
 
+	* test/everything/everything.idl: Added test for bug#161879.
+
+	* src/idl-compiler/orbit-idl-c-utils.c (orbit_cbe_get_const): Fix IDL compilation 
+	of "const char N = '\x0A';" definitions (bug#161879).
+
 	* src/idl-compiler/orbit-idl3-types.h: Added output_directory to OIDL_Run_Info.
 
 	* src/idl-compiler/orbit-idl-c-backend.c: Prefixed output file with output directory.
