@@ -271,22 +271,20 @@ orbHTTPScanProxy(const char *URL)
  *
  * Returns an HTTP context or NULL in case of error.
  */
-
 static orbHTTPCtxtPtr
-orbHTTPNewCtxt(const char *URL)
+orbHTTPNewCtxt (const char *URL)
 {
-    orbHTTPCtxtPtr ret;
+	orbHTTPCtxtPtr ret;
 
-    ret = g_new(orbHTTPCtxt, 1);
-    if (ret == NULL) return(NULL);
+	ret = g_new (orbHTTPCtxt, 1);
 
-    memset(ret, 0, sizeof(orbHTTPCtxt));
-    ret->port = 80;
-    ret->returnValue = 0;
+	memset (ret, 0, sizeof(orbHTTPCtxt));
+	ret->port = 80;
+	ret->returnValue = 0;
 
-    orbHTTPScanURL(ret, URL);
+	orbHTTPScanURL (ret, URL);
 
-    return(ret);
+	return ret;
 }
 
 /**
@@ -297,7 +295,8 @@ orbHTTPNewCtxt(const char *URL)
  */
 
 static void
-orbHTTPFreeCtxt(orbHTTPCtxtPtr ctxt) {
+orbHTTPFreeCtxt(orbHTTPCtxtPtr ctxt)
+{
     if (ctxt == NULL) return;
     if (ctxt->hostname != NULL) g_free(ctxt->hostname);
     if (ctxt->protocol != NULL) g_free(ctxt->protocol);
@@ -318,11 +317,12 @@ orbHTTPFreeCtxt(orbHTTPCtxtPtr ctxt) {
  *
  * Send the input needed to initiate the processing on the server side
  */
-
 static void
-orbHTTPSend(orbHTTPCtxtPtr ctxt) {
-    if (ctxt->state & ORB_HTTP_WRITE)
-	ctxt->last = write(ctxt->fd, ctxt->outptr, strlen(ctxt->outptr));
+orbHTTPSend (orbHTTPCtxtPtr ctxt)
+{
+	if (ctxt->state & ORB_HTTP_WRITE)
+		ctxt->last = write (
+			ctxt->fd, ctxt->outptr, strlen (ctxt->outptr));
 }
 
 /**
@@ -334,9 +334,9 @@ orbHTTPSend(orbHTTPCtxtPtr ctxt) {
  *
  * Returns the number of byte read or -1 in case of error.
  */
-
 static int
-orbHTTPRecv(orbHTTPCtxtPtr ctxt) {
+orbHTTPRecv (orbHTTPCtxtPtr ctxt)
+{
     fd_set rfd;
     struct timeval tv;
 

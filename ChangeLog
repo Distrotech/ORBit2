@@ -1,5 +1,39 @@
 2001-11-01  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_append_string): Optimize more to
+	the hilt for the common case.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_marshal_object): upd.
+
+	* src/orb/orb-core/corba-env.c
+	(ORBit_send_system_exception): upd.
+	(ORBit_send_user_exception): upd.
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_marshal_value): upd.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_send_user_exception): upd.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal),
+	(IOP_TAG_INTERNET_IOP_marshal),
+	(IOP_TAG_GENERIC_IOP_marshal),
+	(IOP_TAG_ORBIT_SPECIFIC_marshal): upd.
+
+	* src/orb/orb-core/corba-typecode.c
+	(CDR_put_string): make a #define.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_append_string): impl.
+
+	* src/orb/orb-core/corba-typecode.c (tc_enc): make
+	typecode marshaling smaller and faster.
+
+2001-11-01  Michael Meeks  <michael@ximian.com>
+
 	* Version 2.3.97
 
 2001-11-01  Michael Meeks  <michael@ximian.com>

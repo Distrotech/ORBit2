@@ -55,6 +55,8 @@ void giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
 guchar *giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 					 gconstpointer   mem,
 					 gulong          align_len);
+void giop_send_buffer_append_string (GIOPSendBuffer *buf,
+				     const char     *str);
 void giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary);
 
 int giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx);

@@ -28,16 +28,7 @@ static void     tc_enc (CORBA_TypeCode   tc,
 #define get_wptr(buf) (buf->msg.header.message_size - ctx->start_idx)
 #define get_rptr(buf) (buf->cur-buf->message_body)
 
-static void
-CDR_put_string (GIOPSendBuffer *c, const char *str)
-{
-	CORBA_unsigned_long len;
-
-	len = strlen (str) + 1;
-	giop_send_buffer_append_aligned (c, &len, sizeof(len));
-	giop_send_buffer_append (c, str, len);
-}
-
+#define CDR_put_string(buf,str) (giop_send_buffer_append_string ((buf), (str)))
 #define CDR_put_ulong(buf, n) (giop_send_buffer_align(buf, sizeof(n)), \
 			       giop_send_buffer_append(buf, &(n), sizeof(n)))
 #define CDR_put_long(buf, n) CDR_put_ulong(buf, n)
@@ -938,28 +929,31 @@ tc_enc (CORBA_TypeCode tc, GIOPSendBuffer *buf, TCEncodeContext *ctx)
 
 	giop_send_buffer_align (buf, 4);
 
-	for (l = ctx->prior_tcs ; l ; l = l->next) {
-		node = l->data;
+	info = &tk_info [tc->kind];
 
-		if (node->tc == tc) {
-			tmp = CORBA_tk_recursive;
-			giop_send_buffer_append_aligned (buf, &tmp, 4);
-			len = node->index - buf->msg.header.message_size - 4;
-			giop_send_buffer_append_aligned (buf, &len, 4);
+	/* For base types it is better to marshal just the tc->kind */
+	if (info->type != TK_EMPTY) {
 
-			return;
+		for (l = ctx->prior_tcs; l; l = l->next) {
+			node = l->data;
+
+			if (node->tc == tc) {
+				tmp = CORBA_tk_recursive;
+				giop_send_buffer_append_aligned (buf, &tmp, 4);
+				len = node->index - buf->msg.header.message_size - 4;
+				giop_send_buffer_append_aligned (buf, &len, 4);
+				return;
+			}
 		}
+
+		/* only keep track of larger, more complex typecodes */
+		node = g_new (TCRecursionNode, 1);
+		node->tc = tc;
+		node->index = buf->msg.header.message_size;
+		ctx->prior_tcs = g_slist_prepend (ctx->prior_tcs, node);
 	}
 
-	node = g_new (TCRecursionNode, 1);
-	node->tc = tc;
-	node->index = buf->msg.header.message_size;
-
-	ctx->prior_tcs = g_slist_prepend (ctx->prior_tcs, node);
-
-	giop_send_buffer_append (buf, &tc->kind, sizeof(tc->kind));
-
-	info=&tk_info[tc->kind];
+	giop_send_buffer_append (buf, &tc->kind, sizeof (tc->kind));
 
 	switch (info->type) {
 	case TK_EMPTY:
@@ -972,17 +966,14 @@ tc_enc (CORBA_TypeCode tc, GIOPSendBuffer *buf, TCEncodeContext *ctx)
 
 		giop_send_buffer_append (buf, &endianness, 1);
 
-		(info->encoder)(tc, buf, ctx);
+		info->encoder (tc, buf, ctx);
 
 		len = buf->msg.header.message_size - tmp;
 
 		memcpy (marker, &len, 4);
 		break;
 	case TK_SIMPLE:
-		(info->encoder)(tc, buf, ctx);
-		break;
-	default:
-		g_assert_not_reached ();
+		info->encoder (tc, buf, ctx);
 		break;
 	}
 }

@@ -746,32 +746,34 @@ IOP_ObjectKey_marshal (CORBA_Object                obj,
 }
 
 static void
-IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
-				      IOP_Component_info *ci)
+IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal (CORBA_Object        obj,
+				       GIOPSendBuffer     *buf,
+				       IOP_Component_info *ci)
 {
-  CORBA_unsigned_long len;
-  IOP_TAG_GENERIC_SSL_SEC_TRANS_info *ssli = (IOP_TAG_GENERIC_SSL_SEC_TRANS_info *)ci;
+	IOP_TAG_GENERIC_SSL_SEC_TRANS_info *ssli;
+	
+	ssli = (IOP_TAG_GENERIC_SSL_SEC_TRANS_info *)ci;
 
-  len = strlen(ssli->service) + 1;
-  giop_send_buffer_append_aligned(buf, &len, 4);
-  giop_send_buffer_append(buf, ssli->service, 4);
+	giop_send_buffer_append_string (buf, ssli->service);
 }
 
 static void
-IOP_TAG_SSL_SEC_TRANS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
+IOP_TAG_SSL_SEC_TRANS_marshal(CORBA_Object        obj,
+			      GIOPSendBuffer     *buf,
 			      IOP_Component_info *ci)
 {
-  IOP_TAG_SSL_SEC_TRANS_info *ssli = (IOP_TAG_SSL_SEC_TRANS_info *) ci;
+	IOP_TAG_SSL_SEC_TRANS_info *ssli = (IOP_TAG_SSL_SEC_TRANS_info *) ci;
 
-  giop_send_buffer_align (buf, 4);
-  giop_send_buffer_append (buf, &ssli->target_supports, 10);
+	giop_send_buffer_align (buf, 4);
+	giop_send_buffer_append (buf, &ssli->target_supports, 10);
 }
 
 static void
-IOP_TAG_COMPLETE_OBJECT_KEY_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
+IOP_TAG_COMPLETE_OBJECT_KEY_marshal (CORBA_Object       obj,
+				     GIOPSendBuffer    *buf,
 				    IOP_Component_info *ci)
 {
-  IOP_ObjectKey_marshal (obj, buf, obj->object_key);
+	IOP_ObjectKey_marshal (obj, buf, obj->object_key);
 }
 
 static void
@@ -882,9 +884,7 @@ IOP_TAG_INTERNET_IOP_marshal (CORBA_Object      obj,
 	giop_send_buffer_append (
 		buf, giop_version_ids [iiop->iiop_version], 2);
 
-	len = strlen (iiop->host) + 1;
-	giop_send_buffer_append_aligned (buf, &len, 4);
-	giop_send_buffer_append (buf, iiop->host, len);
+	giop_send_buffer_append_string (buf, iiop->host);
 
 	giop_send_buffer_align (buf, 2);
 	giop_send_buffer_append (buf, &iiop->port, 2);
@@ -903,17 +903,10 @@ IOP_TAG_GENERIC_IOP_marshal (CORBA_Object     obj,
 	CORBA_unsigned_long       len;
 
 	giop_send_buffer_append (buf, giop_version_ids [giop->iiop_version], 2);
-	len = strlen (giop->proto) + 1;
-	giop_send_buffer_append_aligned (buf, &len, 4);
-	giop_send_buffer_append (buf, giop->proto, len);
 
-	len = strlen (giop->host) + 1;
-	giop_send_buffer_append_aligned (buf, &len, 4);
-	giop_send_buffer_append (buf, giop->host, len);
-
-	len = strlen (giop->service) + 1;
-	giop_send_buffer_append_aligned (buf, &len, 4);
-	giop_send_buffer_append (buf, giop->service, len);
+	giop_send_buffer_append_string (buf, giop->proto);
+	giop_send_buffer_append_string (buf, giop->host);
+	giop_send_buffer_append_string (buf, giop->service);
 
 	IOP_components_marshal (obj, buf, giop->components);
 }
@@ -943,9 +936,7 @@ IOP_TAG_ORBIT_SPECIFIC_marshal (CORBA_Object      obj,
 
 	giop_send_buffer_append (buf, compat_version, 2);
 
-	len = strlen (osi->unix_sock_path) + 1;
-	giop_send_buffer_append_aligned (buf, &len, 4);
-	giop_send_buffer_append (buf, osi->unix_sock_path, len);
+	giop_send_buffer_append_string (buf, osi->unix_sock_path);
 
 	giop_send_buffer_align (buf, 2);
 	giop_send_buffer_append (buf, &osi->ipv6_port, 2);

@@ -17,7 +17,7 @@ CORBA_string_dup (const CORBA_char *str)
 	if (!str)
 		return NULL;
 
-	len = strlen(str) + 1;
+	len = strlen (str) + 1;
 
 	retval = ORBit_alloc_simple (len);
 	memcpy (retval, str, len);

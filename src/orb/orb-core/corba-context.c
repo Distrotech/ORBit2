@@ -156,17 +156,20 @@ list_has_key(CORBA_NVList list, const char *key)
 }
 
 static void
-search_props(gpointer key, gpointer value, CTXSearchInfo *csi)
+search_props (gpointer       key,
+	      gpointer       value,
+	      CTXSearchInfo *csi)
 {
-  if(strncmp(key, csi->prop_name, csi->len))
-    return;
+	if (strncmp (key, csi->prop_name, csi->len))
+		return;
 
-  if(list_has_key(csi->values, key))
-    return;
+	if (list_has_key (csi->values, key))
+		return;
 
-  CORBA_NVList_add_item(csi->values, key, TC_CORBA_string,
-			(CORBA_OpaqueValue)&value,
-			strlen(value) + 1, CORBA_IN_COPY_VALUE, NULL);
+	CORBA_NVList_add_item (
+		csi->values, key, TC_CORBA_string,
+		(CORBA_OpaqueValue) &value,
+		strlen (value) + 1, CORBA_IN_COPY_VALUE, NULL);
 }
 
 static void

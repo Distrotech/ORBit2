@@ -448,3 +448,32 @@ giop_send_buffer_use (GIOPVersion giop_version)
 
 	return retval;
 }
+
+void
+giop_send_buffer_append_string (GIOPSendBuffer *buf,
+				const char     *str)
+{
+	CORBA_unsigned_long len;
+
+	len = strlen (str) + 1;
+
+	/* FIXME: inline me ? */
+	giop_send_buffer_align (buf, 4);
+
+	/* be cleverer for short strings */
+	if (buf->indirect_left < 4 + len) {
+		guchar *indirect = buf->indirect;
+
+		memcpy (indirect, &len, 4);
+		memcpy (indirect + 4, str, len);
+
+		giop_send_buffer_append_real (buf, indirect, 4 + len);
+	
+		buf->indirect      += 4 + len;
+		buf->indirect_left -= 4 + len;
+	} else {
+		giop_send_buffer_append_aligned (buf, &len, 4);
+		giop_send_buffer_append (buf, str, len);
+	}
+}
+
