@@ -11,26 +11,24 @@ TODO:
 		b) not expanding the lookup of the vepv offset at all.
 
 * Thread safety
-	+ need an 'ORBit_small_add_mainloop_for_thread' method
-	  so that the mainloop will get woken up incoming CORBA
-	  calls happen. ( and they'll get processed ).
-
-	+ Can we just hook this into the default main context,
-	  and apply whatever we like when we wake it up ( that
-	  applies to the current thread ).
-
-	+ For independent clients, we need some way to
-	  arbitrate the giop_recv_buffer_get method - so
-	  that either: a single thread does the poll and the
-	  rest block, or we all poll.
+	+ We need to ensure that the ref counting on
+	  linc-connections is guarded by a lock, and that
+	  the destruction-proper is done in the worker thread;
+	  we're already polling for Input here; so we should
+	  fire off the 'shutdown' message, from the thread and
+	  close the fd (will that wake the poll or do we need
+	  another sort of wakeup ?).
 
 	+ apparently g_object_ref / unref are not thread safe
 	  we need linc_object_ref / unref instead that does
 	  a LINC_MUTEX_LOCK on the global object lifecycle lock
 	  that needs to move into linc ... sigh !
 
-	+ we need to ensure that linc does no signal emissions,
-	  since these are horribly slow and again not safe.
+	+ document; all connection stuff - thread safe, and done
+	  in the linc mainloop - no need for extra locking [!]
+
+	  giop-server - used by ORBit_ORB_start_servers
+	  (and stop) - but only otherwise in worker thread.
 
 * Optimization
 	+ we need 2 de-marshalling routines, 1 with (slow)

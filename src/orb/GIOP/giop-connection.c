@@ -10,9 +10,20 @@
 static LINCConnectionClass *parent_class = NULL;
 
 static struct {
-	GMutex *lock;
-	GList  *list;
-} cnx_list = { NULL, NULL };
+	GStaticRecMutex  lock;
+	GList           *list;
+} cnx_list = { G_STATIC_REC_MUTEX_INIT, NULL };
+
+#define CNX_LIST_LOCK \
+	G_STMT_START { \
+		if (giop_threaded ()) \
+			 g_static_rec_mutex_lock (&cnx_list.lock); \
+	} G_STMT_END
+#define CNX_LIST_UNLOCK \
+	G_STMT_START { \
+		if (giop_threaded ()) \
+			 g_static_rec_mutex_unlock (&cnx_list.lock); \
+	} G_STMT_END
 
 #ifdef CNX_LIST_DEBUG
 static char *
@@ -29,7 +40,6 @@ giop_cnx_descr (GIOPConnection *cnx)
 void
 giop_connection_list_init (void)
 {
-	cnx_list.lock = linc_mutex_new ();
 	cnx_list.list = NULL;
 }
 
@@ -219,7 +229,7 @@ giop_connection_initiate (gpointer orb_data,
 
 	g_return_val_if_fail (remote_host_info != NULL, NULL);
 
-	LINC_MUTEX_LOCK (cnx_list.lock);
+	CNX_LIST_LOCK;
 
 #ifndef ORBIT_THREADED
 	options |= LINC_CONNECTION_NONBLOCKING;
@@ -241,7 +251,7 @@ giop_connection_initiate (gpointer orb_data,
 			proto_name, remote_host_info,
 			remote_serv_info, options)) {
 
-			LINC_MUTEX_UNLOCK (cnx_list.lock);
+			CNX_LIST_UNLOCK;
 			g_object_unref (G_OBJECT (cnx));
 
 			return NULL;
@@ -249,49 +259,40 @@ giop_connection_initiate (gpointer orb_data,
 			giop_connection_list_add (cnx);
 	}
 
-	LINC_MUTEX_UNLOCK (cnx_list.lock);
+	CNX_LIST_UNLOCK;
 
 	return cnx;
 }
 
 void
-giop_connection_remove_by_orb (gpointer match_orb_data)
+giop_connections_shutdown (void)
 {
-	GList *l, *next;
-	GSList *sl, *to_close = NULL;
+	GList *l, *to_close;
 
-	LINC_MUTEX_LOCK (cnx_list.lock);
+	CNX_LIST_LOCK;
 
-	for (l = cnx_list.list; l; l = next) {
+	to_close = cnx_list.list;
+	cnx_list.list = NULL;
+
+	CNX_LIST_UNLOCK;
+
+	for (l = to_close; l; l = l->next) {
 		GIOPConnection *cnx = l->data;
-
-		next = l->next;
-
-		if (cnx->orb_data == match_orb_data) {
-			to_close = g_slist_prepend (to_close, cnx);
-			cnx_list.list = g_list_delete_link (cnx_list.list, l);
-		}
-	}
-
-	LINC_MUTEX_UNLOCK (cnx_list.lock);
-
-	for (sl= to_close; sl; sl = sl->next) {
-		GIOPConnection *cnx = sl->data;
 
 		giop_connection_close (cnx);
 		g_object_unref (G_OBJECT (cnx));
 	}
-	g_slist_free (to_close);
+
+	g_list_free (to_close);
+
+	if (cnx_list.list != NULL)
+		g_warning ("Wierd; new connections opened while shutting down");
 }
 
 void
 giop_connection_unref (GIOPConnection *cnx)
 {
-	if (cnx) {
-		LINC_MUTEX_LOCK (cnx_list.lock);
-		
-		g_object_unref (G_OBJECT (cnx));
-		
-		LINC_MUTEX_UNLOCK (cnx_list.lock);
-	}
+	g_warning ("FIXME: whole cnx. lifecycle here needs looking at");
+	if (cnx)
+		linc_object_unref (G_OBJECT (cnx));
 }

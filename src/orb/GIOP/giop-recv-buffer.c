@@ -530,6 +530,9 @@ giop_recv_list_zap (GIOPConnection *cnx)
 
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 
+	if (giop_threaded ())
+		g_warning ("FIXME: callbacks emitted in wrong thread");
+
 	for (l = giop_queued_messages; l; l = next) {
 		GIOPMessageQueueEntry *ent = l->data;
 
@@ -1299,12 +1302,19 @@ giop_recv_buffer_use_buf (void)
 gpointer
 giop_recv_thread_fn (gpointer data)
 {
-	/* FIXME: we need to be able to tell this
-	   thread to cleanup it's act and quit */
-	gboolean exit_signal = FALSE;
+	linc_main_loop_run ();
 
-	while (!exit_signal)
-		linc_main_iteration (TRUE);
+	/* FIXME: need to be able to quit without waiting ... */
+
+	/* Asked to quit - so ...
+	 * a) stop accepting inputs [ kill servers ]
+	 * b) flush outgoing queued data etc. (oneways)
+	 * c) unref all leakable resources.
+	 */
+
+	/* a) - needs re-structuring of cnx creation */
+	giop_connections_shutdown ();
+	
 
 	return NULL;
 }

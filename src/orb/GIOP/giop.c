@@ -284,9 +284,9 @@ giop_thread_self (void)
 
 /* FIXME: need to clean this up at shutdown */
 static int      corba_wakeup_fds[2];
-#define WAKEUP_WRITE (corba_wakeup_fds [0])
-#define WAKEUP_POLL  (corba_wakeup_fds [1])
-static GSource *corba_main_source = NULL;
+#define WAKEUP_WRITE corba_wakeup_fds [0]
+#define WAKEUP_POLL  corba_wakeup_fds [1]
+static GSource *giop_main_source = NULL;
 static GThread *giop_incoming_thread = NULL;
 
 static gboolean
@@ -323,7 +323,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 		if (pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
 
-		corba_main_source = linc_source_create_watch (
+		giop_main_source = linc_source_create_watch (
 			g_main_context_default (), WAKEUP_POLL,
 			NULL, (G_IO_IN | G_IO_PRI),
 			giop_mainloop_handle_input, NULL);
@@ -385,3 +385,27 @@ giop_thread_push_recv (GIOPMessageQueueEntry *ent)
 	g_mutex_unlock (tdata->lock);
 }
 
+void
+giop_shutdown (void)
+{
+	if (!giop_is_threaded)
+		giop_connections_shutdown ();
+	g_main_loop_quit (linc_loop); /* break into the linc loop */
+
+	if (giop_is_threaded) {
+		if (!giop_thread_self ()->wake_context)
+			g_error ("Must shutdown ORB from main thread");
+
+		g_thread_join (giop_incoming_thread);
+		giop_incoming_thread = NULL;
+
+		g_source_destroy (giop_main_source);
+		g_source_unref (giop_main_source);
+		giop_main_source = NULL;
+
+		close (WAKEUP_WRITE);
+		close (WAKEUP_POLL);
+		WAKEUP_WRITE = -1;
+		WAKEUP_POLL = -1;
+	}
+}

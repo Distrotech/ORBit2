@@ -17,6 +17,7 @@ G_BEGIN_DECLS
 
 void        giop_init             (gboolean threaded,
 				   gboolean blank_wire_data);
+void        giop_shutdown         (void);
 gboolean    giop_threaded         (void);
 GIOPThread *giop_thread_self      (void);
 void        giop_thread_push_recv (GIOPMessageQueueEntry *ent);

@@ -1,5 +1,18 @@
 2002-10-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_start_servers): lock the ORB
+	while setting up the profiles.
+	(ORBit_ORB_shutdown_servers): guard with
+	locks.
+
+	* src/orb/GIOP/giop.c (giop_shutdown): impl.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_remove_by_orb): rename to
+	(giop_connections_shutdown): this & upd.
+	(giop_connection_unref): use linc_object_unref.
+	
 	* src/orb/GIOP/giop.c (giop_init): 
 	actually start the IO thread ;-)
 
