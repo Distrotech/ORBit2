@@ -91,21 +91,21 @@ scan_socket_dir (const char *dir, const char *prefix)
 	return cur_dir;
 }
 
-#define PATH_ROOT "/tmp"
-
 static void
 giop_tmpdir_init (void)
 {
+	const char *tmp_root;
 	char *dirname;
 	char *safe_dir = NULL;
 	long iteration = 0;
 
+	tmp_root = g_get_tmp_dir ();
 	dirname = g_strdup_printf ("orbit-%s",
 				   g_get_user_name ());
 	while (!safe_dir) {
 		char *newname;
 
-		safe_dir = scan_socket_dir (PATH_ROOT, dirname);
+		safe_dir = scan_socket_dir (tmp_root, dirname);
 		if (safe_dir) {
 			dprintf (GIOP, "Have safe dir '%s'", safe_dir);
 			linc_set_tmpdir (safe_dir);
@@ -113,7 +113,7 @@ giop_tmpdir_init (void)
 		}
 
 		if (iteration == 0)
-			newname = g_strconcat (PATH_ROOT, "/", dirname, NULL);
+			newname = g_strconcat (tmp_root, "/", dirname, NULL);
 		else {
 			struct {
 				guint32 a;
@@ -124,7 +124,7 @@ giop_tmpdir_init (void)
 					     ORBIT_GENUID_OBJECT_ID);
 
 			newname = g_strdup_printf (
-				"%s/%s-%4x", PATH_ROOT, dirname, id.b);
+				"%s/%s-%4x", tmp_root, dirname, id.b);
 		}
 
 		if (mkdir (newname, 0700) < 0) {
@@ -164,7 +164,7 @@ giop_tmpdir_init (void)
 		g_free (newname);
 
 		if (iteration == 1000)
-			g_error ("Cannot find a safe socket path in '%s'", PATH_ROOT);
+			g_error ("Cannot find a safe socket path in '%s'", tmp_root);
 	}
 
 	g_free (safe_dir);
