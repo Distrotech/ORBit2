@@ -50,9 +50,9 @@ protected:
 #if 0 //!!!
 	virtual void doNative(IDL_tree node,IDLScope &scope) {
 	}
+#endif
 	virtual void doAttribute(IDL_tree node,IDLScope &scope) {
 	}
-#endif
 	virtual void doOperation(IDL_tree node,IDLScope &scope) {
 	}
 	virtual void doMember(IDL_tree node,IDLScope &scope) {

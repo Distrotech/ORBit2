@@ -34,7 +34,7 @@
 
 #include "pass.hh"
 #include "pass_idl_it.hh"
-//#include "types/IDLEnum.hh"
+#include "types/IDLEnum.hh"
 //#include "types/IDLStruct.hh"
 //#include "types/IDLUnion.hh"
 #include "types/IDLException.hh"
@@ -69,14 +69,13 @@ protected:
 	void doEnum(IDL_tree node,IDLScope &scope);
 	void doNative(IDL_tree node,IDLScope &scope);
 	void doConstant(IDL_tree node,IDLScope &scope);
-#if 0
-	void doAttribute(IDL_tree node,IDLScope &scope);
-#endif
-	void doOperation(IDL_tree node,IDLScope &scope);
-	void doMember(IDLMember &member);
 
-	void doException(IDL_tree node,IDLScope &scope);
 	void doInterface(IDL_tree node,IDLScope &scope);
+	void doMember(IDLMember &member);
+	void doAttribute(IDL_tree node,IDLScope &scope);
+	void doOperation(IDL_tree node,IDLScope &scope);
+	void doException(IDL_tree node,IDLScope &scope);
+
 	void doModule(IDL_tree node,IDLScope &scope);
 
 	void doInterfaceBase(IDLInterface &iface);

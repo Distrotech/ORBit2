@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -26,47 +27,16 @@
 #ifndef ORBITCPP_TYPES_IDLOPERATION
 #define ORBITCPP_TYPES_IDLOPERATION
 
-#include "IDLElement.hh"
-#include "IDLType.hh"
+#include "IDLMethod.hh"
 
-class IDLException;
-
-class IDLOperation : public IDLElement {
+class IDLOperation: public IDLElement,
+		    public IDLMethod
+{
 public:
-	struct ParameterInfo {
-		IDL_param_attr  direction;
-		IDLType        *type;
-		string          id;
-	};
+	IDLOperation(string const &id, IDL_tree node, IDLScope *parentscope = 0);
 
-	typedef vector<ParameterInfo>  ParameterList;
-	typedef vector<IDLException *> ExceptionList;
-
-	ParameterList m_parameterinfo;
-	ExceptionList m_raises;
-
-	IDLType *m_returntype;
-
-	IDLOperation(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
-		: IDLElement(id,node,parentscope) {
-	}
-	
-	string stub_ret_get     () const;
-	string stub_arglist_get () const;
-	string stub_decl_proto  () const;
-	string stub_decl_impl   () const;
-
-	void stub_do_pre  (ostream &ostr, Indent &indent) const;
-	void stub_do_call (ostream &ostr, Indent &indent) const;
-	void stub_do_post (ostream &ostr, Indent &indent) const;
-
-	string skel_ret_get     () const;
-	string skel_arglist_get () const;
-	string skel_decl_proto  () const;
-
-	void skel_do_pre  (ostream &ostr, Indent &indent) const;
-	void skel_do_call (ostream &ostr, Indent &indent) const;
-	void skel_do_post (ostream &ostr, Indent &indent) const;
+	string get_cpp_methodname () const;
+	string get_c_methodname () const;
 };
 
 #endif //ORBITCPP_TYPES_IDLOPERATION

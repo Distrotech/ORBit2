@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -28,6 +29,9 @@
 
 #include "error.hh"
 #include "pass_skels.hh"
+
+#include "types/IDLOperation.hh"
+#include "types/IDLAttribAccessor.hh"
 
 #include <iostream>
 #include <sstream>
@@ -64,34 +68,141 @@ IDLPassSkels::runPass() {
 
 
 // operation-scope methods ----------------------------------------------------
-#if 0 //!!!
+
+void
+IDLPassSkels::create_method_skel_proto (const IDLMethod &method)
+{
+	m_header << indent << "static " << method.skel_decl_proto ()
+		 << ';' << endl;
+}
+
+/* See doOperationSkel for notes */
+void
+IDLPassSkels::create_method_skel (const IDLInterface &iface,
+				  const IDLInterface &of,
+				  const IDLMethod    &method)
+{
+	// print header
+	m_module << mod_indent << method.skel_decl_impl () << endl
+		 << mod_indent++ << "{" << endl;
+
+	// inherited => call up base "passthru"
+	if (&iface != &of)
+	{
+		m_module << mod_indent << of.get_cpp_poa_typename () << "::_orbitcpp_Servant _fake;" << endl;
+		m_module << mod_indent << "_fake.m_cppimpl = "
+			 << "((_orbitcpp_Servant*)_servant)->m_cppimpl; // causes implicit cast" << endl;
+		m_module << mod_indent << "return "
+			 << of.get_cpp_poa_typename () << "::"
+			 << "_skel_" << method.get_cpp_methodname ()
+			 << " (&_fake, ";
+
+		for (IDLMethod::ParameterList::const_iterator i = method.m_parameterinfo.begin ();
+		     i != method.m_parameterinfo.end (); i++)
+		{
+			m_module << i->id << ", ";
+		}
+
+		m_module << "_ev);" << endl;
+
+	}
+	else {
+		// Prepare parameters and return value container
+		method.skel_do_pre (m_module, mod_indent);
+
+		// Do the call
+		method.skel_do_call (m_module, mod_indent);
+		
+		// De-init parameters and return value container,
+		// FIXME: handle return value
+		method.skel_do_post (m_module, mod_indent);
+	}
+
+	// End of skel implementation
+	m_module << --mod_indent << "}" << endl << endl;
+}
+
+void
+IDLPassSkels::create_method_proto (const IDLMethod &method)
+{
+	m_header << indent << "virtual " << method.stub_decl_proto ();
+
+	m_header << ++indent << "throw (" IDL_CORBA_NS "::SystemException";
+
+	for (IDLOperation::ExceptionList::const_iterator i = method.m_raises.begin ();
+	     i != method.m_raises.end (); i++)
+	{
+		m_header << ", " << (*i)->get_cpp_typename ();
+	}
+
+	m_header << ") = 0;" << endl;
+	indent--;
+}
+
+void
+IDLPassSkels::create_method_tie (const IDLMethod    &method)
+{
+}
+
+
 void 
-IDLPassSkels::doAttributeSkelPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
+IDLPassSkels::doAttributeSkelPrototype (IDLInterface &iface,
+					IDLInterface &of,
+					IDL_tree      node)
+{
 	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
 
-	// get	
-	string ret_typespec,ret_typedcl;
-	attr.getType()->getCSkelReturnDeclarator("_skel__get_" + attr.getCPPIdentifier(),ret_typespec,ret_typedcl);
-	
-	m_header
-	<< indent << "static " << ret_typespec << ' ' << ret_typedcl << '('
-	<<  "::PortableServer_Servant _servant,::CORBA_Environment *_ev);" << endl;
+	// Getter
+	create_method_skel_proto (IDLAttribGetter (attr));
 
-	// set
-	if(!attr.isReadOnly()){
-		string type,dcl;
-		attr.getType()->getCSkelDeclarator(IDL_PARAM_IN,"val",type,dcl);
-
-		m_header
-		 <<	indent << "static void _skel__set_" << attr.getCPPIdentifier()
-		 << "(::PortableServer_Servant _servant, " << type << ' ' << dcl << ", ::CORBA_Environment *_ev);" << endl;
-		
-	}	
+	// Setter
+	if (!attr.isReadOnly ())
+		create_method_skel_proto (IDLAttribSetter (attr));
 }
-#endif
+
+void 
+IDLPassSkels::doAttributeSkel(IDLInterface &iface,
+			      IDLInterface &of,
+			      IDL_tree      node)
+{
+	IDLAttribute &attr = (IDLAttribute &) *of.getItem (node);
+
+	// Getter
+	create_method_skel (iface, of, IDLAttribGetter (attr));
+
+	// Setter
+	if (!attr.isReadOnly ())
+		create_method_skel (iface, of, IDLAttribSetter (attr));
+}
 
 
+void 
+IDLPassSkels::doAttributePrototype (IDLInterface &iface,
+				    IDL_tree       node)
+{
+	IDLAttribute &attr = (IDLAttribute &) *iface.getItem(node);
 
+	// Getter
+	create_method_proto (IDLAttribGetter (attr));
+
+	// Setter
+	if (!attr.isReadOnly ())
+		create_method_proto (IDLAttribSetter (attr));
+}
+
+void 
+IDLPassSkels::doAttributeTie (IDLInterface &iface,
+			      IDL_tree      node)
+{
+	IDLAttribute &attr = (IDLAttribute &) *iface.getItem(node);
+
+	// Getter
+	create_method_tie (IDLAttribGetter (attr));
+
+	// Setter
+	if (!attr.isReadOnly ())
+		create_method_tie (IDLAttribSetter (attr));
+}
 
 void 
 IDLPassSkels::doOperationSkelPrototype (IDLInterface &iface,
@@ -100,134 +211,10 @@ IDLPassSkels::doOperationSkelPrototype (IDLInterface &iface,
 {
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
-	m_header << indent << "static "
-		 << op.skel_decl_proto ()
-		 << ";" << endl;
+	create_method_skel_proto (op);
 	
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
-
-
-
-#if 0 //!!!
-void 
-IDLPassSkels::doAttributeSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
-	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
-
-	// ----------------- get method ---------------------
-	string ret_typespec,ret_typedcl;
-	attr.getType()->getCSkelReturnDeclarator(
-	    iface.getQualifiedCPP_POA() + "::_skel__get_" + attr.getCPPIdentifier(),
-	    ret_typespec,ret_typedcl
-	);
-	m_module
-	<< mod_indent << ret_typespec << ' ' << ret_typedcl << '('
-	<<  "::PortableServer_Servant _servant, ::CORBA_Environment *_ev) {" << endl;
-	mod_indent++;
-
-	// inherited => call up base "passthru"
-	if (&iface != &of) {
-		m_module
-		<< mod_indent << of.getQualifiedCPP_POA() << "::_orbitcpp_Servant _fake;" << endl
-		<< mod_indent << "_fake.m_cppimpl = ((_orbitcpp_Servant *)_servant)->m_cppimpl; // causes implicit cast" << endl;
-		
-		m_module
-		<< mod_indent << "return "
-		<< of.getQualifiedCPP_POA() << "::_skel__get_" << attr.getCPPIdentifier()
-		<< "(&_fake,_ev);" << endl;
-	  
-	} else {
-
-		attr.getType()->writeCPPSkelReturnPrepCode(m_module,mod_indent);
-		m_module
-			<< mod_indent << "bool _results_valid = true;" << endl << endl;
-
-	  // do the call
-		m_module
-			<< mod_indent << "try {" << endl;
-		mod_indent++;
-		m_module
-		<< mod_indent << iface.getQualifiedCPP_POA() << " *_self = "
-		<< "((_orbitcpp_Servant *)_servant)->m_cppimpl;" << endl
-		<< mod_indent << attr.getType()->getCPPSkelReturnAssignment()
-		<< "_self->" << attr.getCPPIdentifier() << "();" << endl;
-		m_module << --mod_indent << "}" << endl;
-		// handle exceptions
-		m_module
-		<< mod_indent << "catch ("IDL_CORBA_NS "::Exception &_ex) {" << endl;
-		mod_indent++;
-		m_module
-		<< mod_indent << "_results_valid = false;" << endl
-		<< mod_indent << "_ex._orbitcpp_set(_ev);" << endl;
-		m_module
-		<< --mod_indent << '}' << endl;
-
-		attr.getType()->writeCPPSkelReturnMarshalCode(m_module,mod_indent);
-	}
-	// end function
-	m_module
-	  << --mod_indent << '}' << endl << endl;
-	
-	// ----------------- set method ---------------------
-	if(!attr.isReadOnly()){
-		string type,dcl;
-		attr.getType()->getCSkelDeclarator(IDL_PARAM_IN,"val",type,dcl);
-
-		m_module
-		<< "void "
-		<< iface.getQualifiedCPP_POA() << "::_skel__set_" + attr.getCPPIdentifier()
-		<< "(::PortableServer_Servant _servant, " << type << ' '
-		<< dcl << ", ::CORBA_Environment *_ev) { " << endl;
-		mod_indent++;
-
-		// inherited => call up base "passthru"
-		if (&iface != &of) {
-			m_module
-			<< mod_indent << of.getQualifiedCPP_POA() << "::_orbitcpp_Servant _fake;" << endl
-			<< mod_indent << "_fake.m_cppimpl = ((_orbitcpp_Servant *)_servant)->m_cppimpl; // causes implicit cast" << endl;
-		
-			m_module
-			<< mod_indent << of.getQualifiedCPP_POA()
-			<< "::_skel__set_" << attr.getCPPIdentifier()
-			<< "(&_fake,val,_ev);" << endl;			
-			
-		} else {	  		
-			m_module << mod_indent << "bool _results_valid = true;" << endl << endl;
-
-		
-			attr.getType()->writeCPPSkelDemarshalCode(IDL_PARAM_IN,"val",m_module,mod_indent);
-
-		// do the call
-			m_module
-			<< mod_indent << "try {" << endl;
-			mod_indent++;
-			m_module
-			<< mod_indent << iface.getQualifiedCPP_POA() << " *_self = "
-			<< "((_orbitcpp_Servant *)_servant)->m_cppimpl;" << endl;
-
-			m_module
-			<< mod_indent << "_self->" << attr.getCPPIdentifier() << '('
-			<< attr.getType()->getCPPSkelParameterTerm(IDL_PARAM_IN,"val")
-			<< ");" << endl
-			<< --mod_indent << '}' << endl;
-			// handle exceptions
-			m_module
-			<< mod_indent << "catch ("IDL_CORBA_NS "::Exception &_ex) {" << endl;
-			mod_indent++;
-			m_module
-			<< mod_indent << "_results_valid = false;" << endl
-			<< mod_indent << "_ex._orbitcpp_set(_ev);" << endl;
-			m_module
-			<< --mod_indent << '}' << endl;
-
-			attr.getType()->writeCPPSkelMarshalCode(IDL_PARAM_IN,attr.getCPPIdentifier(),
-													m_module,mod_indent);
-		}
-		m_module << --mod_indent << "}" << endl;
-	}	
-	
-}
-#endif
 
 
 
@@ -276,117 +263,31 @@ IDLPassSkels::doOperationSkel (IDLInterface &iface,
 {
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
-	// print header
-	m_module << mod_indent << op.skel_ret_get () << " " 
-		 << iface.get_cpp_poa_method_prefix () << "::"
-		 << "_skel_" << op.get_c_identifier ()
-		 << " (" << op.skel_arglist_get () << ")" << endl
-		 << mod_indent++ << "{" << endl;
-
-	// inherited => call up base "passthru"
-	if (&iface != &of) {
-
-		m_module << mod_indent << of.get_cpp_poa_typename () << "::_orbitcpp_Servant _fake;" << endl;
-		m_module << mod_indent << "_fake.m_cppimpl = "
-			 << "((_orbitcpp_Servant*)_servant)->m_cppimpl; // causes implicit cast" << endl;
-		m_module << mod_indent << "return "
-			 << of.get_cpp_poa_typename () << "::"
-			 << "_skel_" << op.get_cpp_identifier ()
-			 << " (&_fake, ";
-
-		for (IDLOperation::ParameterList::const_iterator i = op.m_parameterinfo.begin ();
-		     i != op.m_parameterinfo.end (); i++)
-		{
-			m_module << i->id << ", ";
-		}
-
-		m_module << "_ev);" << endl;
-
-	}
-	else {
-		// Prepare parameters and return value container
-		op.skel_do_pre (m_module, mod_indent);
-
-		// Do the call
-		op.skel_do_call (m_module, mod_indent);
-		
-		// De-init parameters and return value container,
-		// FIXME: handle return value
-		op.skel_do_post (m_module, mod_indent);
-	}
-
-	// End of skel implementation
-	m_module << --mod_indent << "}" << endl << endl;
+	create_method_skel (iface, of, op);
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
-
-
-#if 0 //!!!
-void 
-IDLPassSkels::doAttributePrototype(IDLInterface &iface,IDL_tree node) {
-	IDLAttribute &attr = (IDLAttribute &) *iface.getItem(node);
-	// get
-	string ret_typespec,ret_typedcl;
-	attr.getType()->getCPPStubReturnDeclarator(attr.getCPPIdentifier(),ret_typespec,ret_typedcl);
-
-	m_header
-	<< indent << "virtual " << ret_typespec << ' ' << ret_typedcl << "()" << endl;
-	indent++;
-	m_header
-	<< indent << "throw ("IDL_CORBA_NS "::SystemException) = 0;" << endl;
-	indent--;
-	
-	// set
-	if(!attr.isReadOnly()){
-		string type,dcl;
-		attr.getType()->getCPPStubDeclarator(IDL_PARAM_IN,"val",type,dcl);
-		m_header <<
-		indent << "virtual void " << attr.getCPPIdentifier() << '(' << type << ' ' << dcl 
-			   << ")" << endl;
-		indent++;
-		m_header
-			<< indent << "throw ("IDL_CORBA_NS "::SystemException) = 0;" << endl;
-		indent--;	
-	}	
-}
-#endif
-
-
 
 void 
 IDLPassSkels::doOperationPrototype (IDLInterface &iface,
-				    IDL_tree       node) {
+				    IDL_tree      node)
+{
 	IDLOperation &op = (IDLOperation &) *iface.getItem(node);
 
-	m_header << indent << "virtual " << op.stub_decl_proto ();
-
-	m_header << ++indent << "throw (" IDL_CORBA_NS "::SystemException";
-
-	for (IDLOperation::ExceptionList::const_iterator i = op.m_raises.begin ();
-	     i != op.m_raises.end (); i++)
-	{
-		m_header << ", " << (*i)->get_cpp_typename ();
-	}
-
-	m_header << ") = 0;" << endl;
-	indent--;
+	create_method_proto (op);
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
 
 
 
-#if 0 //!!!
 void 
-IDLPassSkels::doAttributeTie(IDLInterface &iface,IDL_tree node) {
-}
-#endif
+IDLPassSkels::doOperationTie (IDLInterface &iface,
+			      IDL_tree      node)
+{
+	IDLOperation &op = (IDLOperation &) *iface.getItem(node);
 
-
-
-void 
-IDLPassSkels::doOperationTie(IDLInterface &iface,IDL_tree node) {
+	create_method_tie (op);	
 }
 
 
@@ -497,22 +398,21 @@ IDLPassSkels::defineEPV (IDLInterface &iface,
 	while (body_list) {
 		IDLElement *item;
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
-#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			item = of.getItem(IDL_LIST(body_list).data);
-			m_module
-			<< mod_indent << iface.getQualifiedCPP_POA()
-			<< "::_skel__get_" << item->getCPPIdentifier() << ',' << endl;
+			m_module << mod_indent << iface.get_cpp_poa_typename ()
+				 << "::_skel__get_" << item->get_cpp_identifier ()
+				 << ',' << endl;
 			{
 				IDLAttribute *attr = dynamic_cast<IDLAttribute*>(item);
-				if(!attr->isReadOnly()){
-					m_module
-					<< mod_indent << iface.getQualifiedCPP_POA()
-					<< "::_skel__set_" << item->getCPPIdentifier() << ',' << endl;
+				if (!attr->isReadOnly ())
+				{
+					m_module << mod_indent << iface.get_cpp_poa_typename ()
+						 << "::_skel__set_" << item->get_cpp_identifier ()
+						 << ',' << endl;
 				}
 			}
 			break;
-#endif
 		case IDLN_OP_DCL:
 			item = of.getItem(IDL_LIST(body_list).data);
 			m_module << mod_indent << iface.get_cpp_poa_typename ()
@@ -697,12 +597,10 @@ IDLPassSkels::doInterfaceUpCall(IDLInterface &iface,IDLInterface &of) {
 	IDL_tree body_list = IDL_INTERFACE(of.getNode()).body;
 	while (body_list) {
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
-#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			doAttributeSkelPrototype(iface,of,IDL_LIST(body_list).data);
 			doAttributeSkel(iface,of,IDL_LIST(body_list).data);
 			break;
-#endif
 		case IDLN_OP_DCL:
 			doOperationSkelPrototype(iface,of,IDL_LIST(body_list).data);
 			doOperationSkel(iface,of,IDL_LIST(body_list).data);
@@ -722,11 +620,9 @@ IDLPassSkels::doInterfacePrototypes(IDLInterface &iface) {
 	IDL_tree body_list = IDL_INTERFACE(iface.getNode()).body;
 	while (body_list) {
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
-#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			doAttributePrototype(iface,IDL_LIST(body_list).data);
 			break;
-#endif
 		case IDLN_OP_DCL:
 			doOperationPrototype(iface,IDL_LIST(body_list).data);
 			break;

@@ -37,6 +37,13 @@ IDLAttribGetter::IDLAttribGetter (IDLAttribute &attr_):
 }
 
 string
+IDLAttribGetter::skel_decl_proto () const
+{
+	return skel_ret_get () + " _skel__get_" + attr.get_cpp_identifier () +
+		" (" + skel_arglist_get () + ")";
+}
+
+string
 IDLAttribGetter::skel_decl_impl () const
 {
 	string skel_name = parent_interface.get_cpp_poa_method_prefix ();
@@ -76,6 +83,13 @@ IDLAttribSetter::IDLAttribSetter (IDLAttribute &attr_):
 	param_info.direction = IDL_PARAM_IN;
 
 	m_parameterinfo.push_back (param_info);
+}
+
+string
+IDLAttribSetter::skel_decl_proto () const
+{
+	return skel_ret_get () + " _skel__set_" + attr.get_cpp_identifier () +
+		" (" + skel_arglist_get () + ")";
 }
 
 string

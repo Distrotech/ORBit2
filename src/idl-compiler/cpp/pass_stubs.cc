@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -29,7 +30,8 @@
 #include "error.hh"
 #include "pass_stubs.hh"
 
-
+#include "types/IDLOperation.hh"
+#include "types/IDLAttribAccessor.hh"
 
 
 // IDLPassStubs --------------------------------------------------------------
@@ -66,29 +68,64 @@ IDLPassStubs::runPass() {
 	m_header << endl << indent << "#endif" << endl;
 }
 
+void
+IDLPassStubs::create_method_proto (const IDLMethod &method)
+{
+	m_header << indent << method.stub_decl_proto () << ";" << endl;
+}
 
+void
+IDLPassStubs::create_method_stub (const IDLMethod &method)
+{
+	// print prototype
+	m_module << mod_indent << method.stub_decl_impl () << endl
+		 << mod_indent++ << "{" << endl;
 
-#if 0 //!!!
+	// Prepare parameters and return value container
+	method.stub_do_pre (m_module, mod_indent);
+
+	// Do the call
+	method.stub_do_call (m_module, mod_indent);
+	
+	// De-init parameters and return value container,
+	// FIXME: handle return value
+	method.stub_do_post (m_module, mod_indent);
+	
+	// End of stub implementation
+	m_module << --mod_indent << "}" << endl << endl;
+}
+
 void 
-IDLPassStubs::doAttributePrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
-
+IDLPassStubs::doAttributePrototype (IDLInterface &iface,
+				    IDLInterface &of,
+				    IDL_tree      node)
+{
 	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
 
-	string ret_typespec,ret_typedcl;
-	attr.getType()->getCPPStubReturnDeclarator(attr.getCPPIdentifier(),ret_typespec,ret_typedcl);
-	m_header <<
-	indent << ret_typespec << ' ' << ret_typedcl << '('
-			 << ");" << endl;
+	// Getter
+	create_method_proto (IDLAttribGetter (attr));
 
-	if(!attr.isReadOnly()){
-		string type,dcl;
-		attr.getType()->getCPPStubDeclarator(IDL_PARAM_IN,"val",type,dcl);
-		m_header <<
-		indent << "void " << attr.getCPPIdentifier() << '(' << type << ' ' << dcl 
-			   << ");" << endl;
-	}
+	// Setter
+	if (!attr.isReadOnly ())
+		create_method_proto (IDLAttribSetter (attr));
+	
+	m_header << endl;
 }
-#endif
+
+void 
+IDLPassStubs::doAttributeStub (IDLInterface &iface,
+			       IDLInterface &of,
+			       IDL_tree      node)
+{
+	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
+
+	// Getter
+	create_method_stub (IDLAttribGetter (attr));
+
+	// Setter
+	if (!attr.isReadOnly ())
+		create_method_stub (IDLAttribSetter (attr));
+}
 
 
 
@@ -100,86 +137,10 @@ IDLPassStubs::doOperationPrototype (IDLInterface &iface,
 {
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
-	m_header << indent << op.stub_decl_proto () << ";" << endl;
+	create_method_proto (op);
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
-
-
-
-#if 0 //!!!
-void 
-IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
-	IDLAttribute &attr = (IDLAttribute &) *of.getItem(node);
-
-	// ----------------- get method ---------------------
-	string ret_typespec,ret_typedcl;
-	attr.getType()->getCPPStubReturnDeclarator(
-		   iface.getQualifiedCPPStub(iface.getRootScope()) + "::" + attr.getCPPIdentifier(),
-		   ret_typespec,ret_typedcl);
-	m_module
-	<< mod_indent << ret_typespec << ' ' << ret_typedcl << "()" << endl
-	<< mod_indent << "{" << endl;
-	mod_indent++;
-	attr.getType()->writeCPPStubReturnPrepCode(m_module,mod_indent);
-
-	// do the call
-	m_module
-	<< mod_indent << IDL_IMPL_NS "::CEnvironment _ev;" << endl;
-
-	m_module
-	<< mod_indent << attr.getType()->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),_ev._orbitcpp_get_c_object());" << endl;
-
-	m_module
-	<< mod_indent << "_ev.propagate_sysex();" << endl;
-
-	attr.getType()->writeCPPStubReturnDemarshalCode(m_module,mod_indent);
-
-	mod_indent--;
-	m_module << mod_indent << "}" << endl;
-	
-	// ----------------- set method ---------------------
-
-	
-	if(!attr.isReadOnly()){
-		string type,dcl;
-
-		attr.getType()->getCPPStubDeclarator(IDL_PARAM_IN,"val",type,dcl);
-		
-		m_module
-		 <<	mod_indent << "void "
-		 << iface.getQualifiedCPPStub(iface.getRootScope()) << "::" << attr.getCPPIdentifier() << '(' << type << ' ' << dcl << ")" << endl
-		 << mod_indent << "{" << endl;
-
-		mod_indent++;
-		// marshal the parameter
-		attr.getType()->writeCPPStubMarshalCode(IDL_PARAM_IN,"val",m_module,mod_indent);
-
-		// do the call
-		m_module
-		  << mod_indent << IDL_IMPL_NS "::CEnvironment _ev;" << endl;
-
-		m_module
-			<< mod_indent << IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()
-			<< "__set_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(), "
-			<<attr.getType()->getCPPStubParameterTerm(IDL_PARAM_IN,"val");
-		m_module
-			<<", _ev._orbitcpp_get_c_object());" << endl;
-
-		m_module
-		  << mod_indent << "_ev.propagate_sysex();" << endl;
-
-		mod_indent--;
-		m_module << mod_indent << "}" << endl;
-	}
-	
-
-}
-#endif
-
-
-
 
 void 
 IDLPassStubs::doOperationStub (IDLInterface &iface,
@@ -188,23 +149,7 @@ IDLPassStubs::doOperationStub (IDLInterface &iface,
 {
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
-	// print prototype
-
-	m_module << mod_indent << op.stub_decl_impl () << endl
-		 << mod_indent++ << "{" << endl;
-
-	// Prepare parameters and return value container
-	op.stub_do_pre (m_module, mod_indent);
-
-	// Do the call
-	op.stub_do_call (m_module, mod_indent);
-	
-	// De-init parameters and return value container,
-	// FIXME: handle return value
-	op.stub_do_post (m_module, mod_indent);
-	
-	// End of stub implementation
-	m_module << --mod_indent << "}" << endl << endl;
+	create_method_stub (op);
 
 	if (IDL_OP_DCL(node).context_expr != NULL) ORBITCPP_NYI("contexts");
 }
@@ -217,12 +162,10 @@ IDLPassStubs::doInterfaceDownCall(IDLInterface &iface,IDLInterface &of) {
 	IDL_tree body_list = IDL_INTERFACE(of.getNode()).body;
 	while (body_list) {
 		switch (IDL_NODE_TYPE(IDL_LIST(body_list).data)) {
-#if 0 //!!!
 		case IDLN_ATTR_DCL:
 			doAttributePrototype(iface,of,IDL_LIST(body_list).data);
 			doAttributeStub(iface,of,IDL_LIST(body_list).data);
 			break;
-#endif
 		case IDLN_OP_DCL:
 			doOperationPrototype(iface,of,IDL_LIST(body_list).data);
 			doOperationStub(iface,of,IDL_LIST(body_list).data);

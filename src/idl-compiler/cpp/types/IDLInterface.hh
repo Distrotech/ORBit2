@@ -33,11 +33,11 @@
 
 class IDLInterface : public IDLUserDefScopeType {
 public:
-	typedef vector<IDLInterface *> 		BaseList;
-	BaseList 							m_bases;
+	typedef vector<IDLInterface *> 	BaseList;
+	BaseList 			m_bases;
 	// all bases except the ones stemming from the first direct base
-	BaseList 							m_all_mi_bases;
-	BaseList 							m_allbases;
+	BaseList 			m_all_mi_bases;
+	BaseList 			m_allbases;
 
 	IDLInterface(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
 		: IDLUserDefScopeType(id,node,parentscope) {

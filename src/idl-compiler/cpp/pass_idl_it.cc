@@ -119,10 +119,10 @@ void IDLIteratingPass::doExportList(IDL_tree list,IDLScope &scope) {
 		case IDLN_NATIVE:
 			doNative(IDL_LIST(list).data,scope);
 			break;			
+#endif
 		case IDLN_ATTR_DCL:
 			doAttribute(IDL_LIST(list).data,scope);
 			break;
-#endif
 		case IDLN_EXCEPT_DCL:
 			doException(IDL_LIST(list).data,scope);
 			break;
