@@ -235,7 +235,7 @@ giop_send_buffer_append_real (GIOPSendBuffer *buf,
 
 /*
  * get_next_indirect:
- * @buf: the recv buffer with an exhausted indirect.
+ * @buf: the send buffer with an exhausted indirect.
  * @for_size_hint: for very large buffers specify this
  * so we don't allocate too much. If this is non 0 then
  * buf->indirect will contain at least this much space.
@@ -265,6 +265,12 @@ get_next_indirect (GIOPSendBuffer *buf, gulong for_size_hint)
 
 		buf->indirects [max].size = new_size;
 		buf->indirects [max].ptr = g_malloc (new_size);
+		/*
+		 *   We assume that this is 8 byte aligned, for efficiency -
+		 * so we can align to the memory address rather than the offset
+		 * into the buffer.
+		 */
+		g_assert (((gulong)buf->indirects [max].ptr & 0x3) == 0);
 	}
 
 	buf->indirect = buf->indirects [max].ptr;
