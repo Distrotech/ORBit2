@@ -54,7 +54,7 @@ IDL_FLAGS = -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\
 	-I$(top_srcdir)/src/idl/misc				\
 	-I$(top_srcdir)/src/idl/interop				\
-	--noskels --nodefskels --nostubs --noidata		\
+	--noskels --nodefskels --nostubs --noidata --noheaders	\
 	--define=Object=OObject --define=TypeCode=TTypeCode	\
         --showcpperrors
 IDL_FILES=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl
