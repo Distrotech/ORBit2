@@ -136,11 +136,10 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "_ORBIT_send_buffer = NULL;\n_ORBIT_recv_buffer = NULL;\n");
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_NO;\n");
 
-#if sizeof(gpointer) > sizeof(GIOP_unsigned_long)
-  fprintf(ci->fh, "_ORBIT_request_id = giop_get_request_id();\n");
-#else
-  fprintf(ci->fh, "_ORBIT_request_id = GPOINTER_TO_UINT(alloca(0));\n");
-#endif
+  if(sizeof(gpointer) > sizeof(GIOP_unsigned_long))
+    fprintf(ci->fh, "_ORBIT_request_id = giop_get_request_id();\n");
+  else
+    fprintf(ci->fh, "_ORBIT_request_id = GPOINTER_TO_UINT(alloca(0));\n");
 
   fprintf(ci->fh, "{ /* marshalling */\n");
   fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%d]; } _ORBIT_operation_name_data = { %d, \"%s\" };\n",
