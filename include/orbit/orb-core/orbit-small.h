@@ -33,6 +33,8 @@ ORBitConnectionStatus ORBit_small_get_connection_status (CORBA_Object obj);
 ORBitConnectionStatus ORBit_small_listen_for_broken     (CORBA_Object obj,
 							 GCallback    fn,
 							 gpointer     user_data);
+ORBitConnectionStatus ORBit_small_unlisten_for_broken   (CORBA_Object obj,
+							 GCallback    fn);
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 

@@ -30,6 +30,31 @@ static CORBA_long opAnyLong_out = constants_LONG_OUT;
 static CORBA_long opAnyLong_retn = constants_LONG_RETN;
 
 static CORBA_any *
+AnyServer_opAnyStrSeq (PortableServer_Servant _servant,
+		       CORBA_Environment * ev)
+{
+	CORBA_any   *retn;
+	test_StrSeq *seq;
+	int          i;
+	
+	seq = test_StrSeq__alloc();
+	seq->_length = 16;
+	seq->_buffer = CORBA_sequence_CORBA_string_allocbuf (seq->_length);
+	seq->_release = TRUE;
+
+	for (i = 0; i < seq->_length; i++)
+		seq->_buffer [i] = CORBA_string_dup ("Foo");
+
+	retn = CORBA_any_alloc ();
+	retn->_type = (CORBA_TypeCode) CORBA_Object_duplicate (
+		(CORBA_Object) TC_test_StrSeq, ev);
+	retn->_value = seq;
+	retn->_release = TRUE;
+
+	return retn;
+}
+
+static CORBA_any *
 AnyServer_opAnyLong (PortableServer_Servant _servant,
 		     const CORBA_any * inArg,
 		     CORBA_any * inoutArg,
@@ -176,6 +201,7 @@ PortableServer_ServantBase__epv AnyServer_base_epv = {NULL,NULL,NULL};
 
 POA_test_AnyServer__epv AnyServer_epv = {
 	NULL,
+	AnyServer_opAnyStrSeq,
 	AnyServer_opAnyLong,
 	AnyServer_opAnyString,
 	AnyServer_opAnyStruct,
