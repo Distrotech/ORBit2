@@ -184,6 +184,15 @@ IDLInterface::get_cpp_poa_namespace (string &ns_begin,
 	getParentScope()->getCPPNamespaceDecl (ns_begin, ns_end, "POA_");
 }
 
+void
+IDLInterface::typedef_decl_write (ostream          &ostr,
+				  Indent           &indent,
+				  const IDLTypedef &target,
+				  const IDLTypedef *active_typedef = 0) const
+{
+#warning "WRITE ME"
+}
+
 /***************************************************
  * Stub
  ***************************************************/

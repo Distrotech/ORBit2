@@ -49,6 +49,13 @@ public:
 	bool isBaseClass(IDLInterface *iface);
 
 
+	////////////////////////////////////////////
+	// Creating typedefs
+
+	void typedef_decl_write (ostream          &ostr,
+				 Indent           &indent,
+				 const IDLTypedef &target,
+				 const IDLTypedef *active_typedef = 0) const;
 	
 	////////////////////////////////////////////
 	// Stubs
