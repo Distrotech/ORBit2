@@ -1,2 +1,6 @@
 Makefile
 Makefile.in
+corba-defs.h
+iop-defs.h
+poa-defs.h
+dynamic-defs.h
