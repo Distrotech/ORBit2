@@ -566,6 +566,11 @@ orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
 {
   if(!node) return;
 
+  if(node->use_count)
+    return;
+
+  node->use_count++;
+
   func(node, user_data);
 
   switch(node->type) {
@@ -605,6 +610,7 @@ orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
   default:
     break;
   }
+  node->use_count--;
 }
 
 static void

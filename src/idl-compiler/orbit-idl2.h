@@ -84,7 +84,8 @@ typedef enum {
   MN_ENDIAN_DEPENDANT = 1<<8,
   MN_DEMARSHAL_UPDATE_AFTER = 1<<9,
   MN_DEMARSHAL_CORBA_ALLOC = 1<<10, /* Set if we can never allocate this thingie on the stack (i.e. an inout param) */
-  MN_DEMARSHAL_USER_MOD = 1<<11 /* OK, so this is just a hack to fix usage of the above flag */
+  MN_DEMARSHAL_USER_MOD = 1<<11, /* OK, so this is just a hack to fix usage of the above flag */
+  MN_RECURSIVE_TOP = 1<<12
 } OIDL_Marshal_Node_Flags;
 
 
@@ -157,7 +158,6 @@ struct _OIDL_Marshal_Node {
 		CX_CORBA_OBJECT, 
         	CX_CORBA_TYPECODE, 
 		CX_CORBA_CONTEXT,
-		CX_RECURSIVE,
 		CX_NATIVE
 	} type;
       int context_item_count;
@@ -169,7 +169,7 @@ struct _OIDL_Marshal_Node {
   OIDL_Marshal_Node_Flags flags;
   guint8 arch_head_align, arch_tail_align;
   guint8 iiop_head_align, iiop_tail_align;
-  guint8 nptrs;
+  guint8 nptrs, use_count;
 };
 
 /* Handling an IDLN_ATTR_DCL:

@@ -37,19 +37,29 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
 #endif
   }
 
-  fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
-  c_demarshal_generate(node, &cmi);
-  fprintf(ci->fh, "} else {\n");
-  cmi.last_tail_align = 1;
-  cmi.endian_swap_pass = FALSE;
-  c_demarshal_generate(node, &cmi);
-  fprintf(ci->fh, "}\n");
+  if(node->flags & MN_ENDIAN_DEPENDANT)
+    {
+      fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
+      c_demarshal_generate(node, &cmi);
+      fprintf(ci->fh, "} else {\n");
+      cmi.last_tail_align = 1;
+      cmi.endian_swap_pass = FALSE;
+      c_demarshal_generate(node, &cmi);
+      fprintf(ci->fh, "}\n");
+    }
+  else
+    {
+      cmi.last_tail_align = 1;
+      cmi.endian_swap_pass = FALSE;
+      c_demarshal_generate(node, &cmi);
+    }
 }
 
 static void
 c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   if(node->flags & MN_NOMARSHAL) return;
+  if(node->flags & MN_RECURSIVE_TOP) return;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -339,17 +349,6 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   case CX_CORBA_CONTEXT:
     if(cmi->in_skels)
       fprintf(cmi->ci->fh, "ORBit_Context_demarshal(NULL, &_ctx, _ORBIT_recv_buffer);\n");
-    break;
-  case CX_RECURSIVE:
-    {
-    	char *tname = orbit_cbe_get_typespec_str(node->tree);
-    	fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s); ", ctmp);
-    	fprintf(cmi->ci->fh, "%s(TC_%s, &_valref, %s, %s, %s); ",
-	  "ORBit_TypeCode_demarshal_value",
-	  tname, "_ORBIT_recv_buffer", do_dup, cmi->orb_name);
-    	fprintf(cmi->ci->fh, "}\n");
-    	g_free(tname);
-    }
     break;
   case CX_NATIVE:
     g_error("Don't know how to demarshal a NATIVE yet.");

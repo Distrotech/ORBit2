@@ -1,5 +1,5 @@
 #include "config.h"
-
+#include <string.h>
 #include "orbit-idl-c-backend.h"
 
 typedef struct {

@@ -2,10 +2,9 @@
 #define ORBIT_IDL_C_BACKEND_H
 
 #include "orbit-idl2.h"
+#include "orbit-idl-marshal.h"
 
 #include <unistd.h>
-
-#define BACKWARDS_COMPAT_0_4
 
 typedef struct {
   char *base_name, *c_base_name;
@@ -13,6 +12,7 @@ typedef struct {
   GString *ext_dcls;
   gboolean do_impl_hack;
   gboolean do_skel_defs;
+  OIDL_Marshal_Context *ctxt;
 } OIDL_C_Info;
 
 typedef struct {

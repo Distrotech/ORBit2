@@ -24,9 +24,11 @@
 
 #include "config.h"
 #include "orbit-idl2.h"
-#include "backends/c/orbit-idl-c-backend.h"
+#include "orbit-idl-c-backend.h"
 #include <dirent.h>
+#if 0
 #include <gmodule.h>
+#endif
 #include <string.h>
 
 static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
@@ -37,16 +39,20 @@ static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
 OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang,const char* backend_dir)
 {
   int i;
+#if 0
   int ret;
   char *fname, *ctmp;
   GModule *gmod;
   OIDL_Backend_Info *retval = NULL;
+#endif
 
   for(i = 0; orbit_idl_builtin_backends[i].name; i++) {
     if(!strcmp(lang, orbit_idl_builtin_backends[i].name))
       return &orbit_idl_builtin_backends[i];
   }
 
+  return NULL;
+#if 0
   g_return_val_if_fail(g_module_supported(), NULL);
 
   ctmp = alloca(sizeof("orbit-idl--backend") + strlen(lang));
@@ -71,4 +77,5 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang,const char* backe
   }
 
   return retval;
+#endif
 }

@@ -218,21 +218,12 @@ oidl_get_tree_alignment(IDL_tree tree)
   case IDLN_TYPE_INTEGER:
     switch(IDL_TYPE_INTEGER(tree).f_type) {
     case IDL_INTEGER_TYPE_SHORT:
-#if ALIGNOF_CORBA_SHORT != ALIGNOF_CORBA_UNSIGNED_SHORT
-#error "unsigned alignment is different from signed"
-#endif
       itmp = ALIGNOF_CORBA_SHORT;
       break;
     case IDL_INTEGER_TYPE_LONG:
-#if ALIGNOF_CORBA_LONG != ALIGNOF_CORBA_UNSIGNED_LONG
-#error "unsigned alignment is different from signed"
-#endif
       itmp = ALIGNOF_CORBA_LONG;
       break;
     case IDL_INTEGER_TYPE_LONGLONG:
-#if ALIGNOF_CORBA_LONG_LONG != ALIGNOF_CORBA_UNSIGNED_LONG_LONG
-#error "unsigned alignment is different from signed"
-#endif
       itmp = ALIGNOF_CORBA_LONG_LONG;
       break;
     default:
@@ -296,6 +287,11 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
 {
   if(!node) return;
 
+  if(node->use_count)
+    return;
+
+  node->use_count++;
+
   switch(node->type) {
   case MARSHAL_DATUM:
     oidl_pass_set_alignment_datum(node);
@@ -324,7 +320,7 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
 	sub = ltmp->data;
 	node->iiop_tail_align = sub->iiop_tail_align;
       } else
-	node->iiop_head_align = node->iiop_tail_align = 1; /* Blah */
+	node->iiop_head_align = node->iiop_tail_align = 1;
     }
     break;
   case MARSHAL_SWITCH:
@@ -385,11 +381,7 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
       node->iiop_head_align = sizeof(CORBA_unsigned_long); /* sequence<string> length */
       node->iiop_tail_align = 1;
       break;
-    case CX_RECURSIVE:
-      /* XXX: Im not sure what we should do! */
-      break;
     case CX_NATIVE:
-      /* XXX: Im not sure what we should do! */
       break;
     }
     break;
@@ -397,11 +389,15 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
     oidl_pass_set_alignment(node->u.loop_info.loop_var);
     oidl_pass_set_alignment(node->u.loop_info.length_var);
     oidl_pass_set_alignment(node->u.loop_info.contents);
+    node->iiop_head_align = node->u.loop_info.loop_var->iiop_head_align;
+    node->iiop_tail_align = node->u.loop_info.contents->iiop_tail_align;
     break;
   default:
     g_error("Alignment of type %d not known", node->type);
     break;
   }
+
+  node->use_count--;
 }
 
 /*
@@ -421,6 +417,9 @@ oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
   gboolean check_marshal;
 
   if(!node) return prev_alignment;
+  if(node->use_count)
+    return prev_alignment;
+  node->use_count++;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -527,6 +526,7 @@ oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
     break;
   }
 
+  node->use_count--;
   return retval;
 }
 
@@ -543,6 +543,11 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
   gboolean btmp = FALSE;
 
   if(!node) return FALSE;
+
+  if(node->use_count)
+    return FALSE;
+
+  node->use_count++;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -581,6 +586,8 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
   default:
     break;
   }
+
+  node->use_count--;
 
   return (node->flags & MN_ENDIAN_DEPENDANT)?TRUE:FALSE;
 }
@@ -647,8 +654,12 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
   OIDL_Marshal_Node *sub;
 
   if(!node) return;
+  if(node->use_count)
+    return;
 
   if(node->flags & MN_NOMARSHAL) return;
+
+  node->use_count++;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -685,6 +696,7 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
   default:
     break;
   }
+  node->use_count--;
 }
 
 static void
@@ -692,7 +704,12 @@ oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
 {
   if(!node) return;
 
+  if(node->use_count)
+    return;
+
   if(node->flags & MN_NOMARSHAL) return;
+
+  node->use_count++;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -723,6 +740,8 @@ oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
   default:
     break;
   }
+
+  node->use_count--;
 }
 
 static void
@@ -731,6 +750,11 @@ oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node)
   OIDL_Marshal_Node *sub;
 
   if(!node) return;
+
+  if(node->use_count)
+    return;
+
+  node->use_count++;
 
   if(node->up)
     node->flags |= node->up->flags & (MN_DEMARSHAL_CORBA_ALLOC|MN_DEMARSHAL_USER_MOD);
@@ -765,4 +789,6 @@ oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node)
   default:
     break;
   }
+
+  node->use_count--;
 }
