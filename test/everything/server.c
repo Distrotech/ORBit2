@@ -139,6 +139,7 @@ void test_TestFactory__fini(PortableServer_Servant servant, CORBA_Environment *e
 	CORBA_Object_release(this->unionServerRef,ev);
 	CORBA_Object_release(this->arrayServerRef,ev);
 	CORBA_Object_release(this->anyServerRef,ev);
+	CORBA_Object_release(this->contextServerRef,ev);
 }
 
 
@@ -353,6 +354,7 @@ test_TestFactory_Servant servant;
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
 	factory = create_TestFactory (poa, &servant, ev);
+	CORBA_Object_release (poa, ev);
 	g_assert (factory != CORBA_OBJECT_NIL);
 
 	/* a quick local test */
