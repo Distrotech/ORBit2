@@ -328,7 +328,7 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	dprintf (MESSAGES, "Marshal: id 0x%x\n", request_id);
 
-	for (i = 0; (m_data->arguments._buffer &&
+	for (i = 0; (i < m_data->arguments._length &&
 		     m_data->arguments._buffer [i].flags); i++) {
 
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
@@ -452,7 +452,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		int i;
 		int trace_have_out = 0;
 
-		for (i = 0; (m_data->arguments._buffer &&
+		for (i = 0; (i < m_data->arguments._length &&
 			     m_data->arguments._buffer [i].flags); i++) {
 			const ORBit_IArg *a;
 			gpointer          arg;

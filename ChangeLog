@@ -1,3 +1,15 @@
+2002-05-31  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-orb.c: (copy_case_value): handle
+	alias typecodes.
+
+	* src/orb/orb-core/orbit-object.c: (object_hash_dump): print
+	out helpful info on leaked TypeCodes.
+
+	* src/orb/orb-core/orbit-small.c: (orbit_small_marshal),
+	(orbit_small_demarshal): don't rely on the sequences _buffer
+	to be null terminated. We have _length after all ...
+
 2002-05-27  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.4.0
