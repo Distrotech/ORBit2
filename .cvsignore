@@ -30,3 +30,5 @@ ORBit2-*.tar.gz
 ORBit-*.tar.gz
 autom4te.cache
 ORBit-imodule-2.0.pc
+stamp-h1
+autom4te*
