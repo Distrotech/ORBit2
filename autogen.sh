@@ -4,7 +4,8 @@
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
-pushd $srcdir
+ORIGDIR=`pwd`
+cd $srcdir
 
 DIE=0
 
@@ -64,7 +65,7 @@ echo processing libIDL
     aclocal $ACLOCAL_FLAGS; \
     autoconf)
 
-popd
+cd $ORIGDIR
 
 echo "Running ./configure --enable-maintainer-mode" "$@"
 $srcdir/configure --enable-maintainer-mode "$@"
