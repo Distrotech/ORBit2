@@ -622,7 +622,7 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 			memcpy (p->_buffer, buf->cur, p->_length);
 			buf->cur = ((guchar *)buf->cur) + p->_length;
 		} else {
-			CORBA_unsigned_long alloc = 1;
+			CORBA_unsigned_long alloc = 4096;
 
 			p->_buffer = ORBit_alloc_tcval (tc->subtypes[0],
 							MIN (p->_length, alloc));
