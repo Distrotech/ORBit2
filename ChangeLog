@@ -1,3 +1,15 @@
+2002-01-05  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/pass_idl_it.cc:
+	The switch now catches IDLN_SRCFILE node type, which resulted
+	in an unexpected node exception before. I guess that it's new.
+	It seems to represent a root document node.
+
+	Doing 'orbit-idl-2 -lc++ empty.idl' in the test directory now
+	produces C++ files which actually have contents. I haven't tried 
+	to use those files yet.
+
+
 2001-12-11  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/cpp/main.cc: hook the backend in
