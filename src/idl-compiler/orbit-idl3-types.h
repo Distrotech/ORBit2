@@ -29,8 +29,6 @@ typedef struct {
 	 OUTPUT_DEPS=1<<6 /* Make sure this is always the last pass or dep output will break. */
   } enabled_passes;
 
-  char *output_formatter;
-
   char *output_language;
   char *input_filename;
   char *backend_directory;
