@@ -483,10 +483,33 @@ ORBit_impl_CORBA_Object_is_a(PortableServer_ServantBase *servant,
                              gpointer ctx, CORBA_Environment *ev,
                              gpointer imp)
 {
-  PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
-  const char               *type_id = *(const char **)args[0];
+	PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO (servant);
+	const char               *type_id = *(const char **)args[0];
 
-  *(CORBA_boolean *)ret = ORBit_IInterface_is_a(ci->idata, type_id);
+	*(CORBA_boolean *)ret = ORBit_IInterface_is_a (ci->idata, type_id);
+}
+
+static void
+ORBit_impl_ORBit_get_type_id (PortableServer_ServantBase *servant,
+			      gpointer ret, gpointer *args,
+			      gpointer ctx, CORBA_Environment *ev,
+			      gpointer imp)
+{
+	PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO (servant);
+
+	*(CORBA_char **)ret = CORBA_string_dup (ci->idata->tc->repo_id);
+}
+
+static void
+ORBit_impl_ORBit_get_iinterface (PortableServer_ServantBase *servant,
+				 gpointer ret, gpointer *args,
+				 gpointer ctx, CORBA_Environment *ev,
+				 gpointer imp)
+{
+	const char *repo_id = *(const char **)args[0];
+
+	*(ORBit_IInterface **)ret = ORBit_small_get_iinterface (
+		NULL, repo_id, ev);
 }
 
 ORBitSmallSkeleton
@@ -494,12 +517,22 @@ get_small_skel_CORBA_Object(PortableServer_Servant servant, const char *opname,
 			    gpointer * m_data, gpointer * impl)
 {
 
- if ( strcmp(opname, "is_a") == 0 ) {
-   *m_data = (gpointer)&CORBA_Object__imethods[4];
-   return (ORBitSmallSkeleton)ORBit_impl_CORBA_Object_is_a;
-   }
+	if (!strcmp (opname, "is_a")) {
+		*m_data = (gpointer)&CORBA_Object__imethods [4];
+		return (ORBitSmallSkeleton) ORBit_impl_CORBA_Object_is_a;
 
- return NULL;
+	} else if (!strcmp (opname, "ORBit_get_type_id")) {
+		*m_data = (gpointer)&CORBA_Object__imethods [
+			CORBA_OBJECT_SMALL_GET_TYPE_ID];
+		return (ORBitSmallSkeleton) ORBit_impl_ORBit_get_type_id;
+
+	} else if (!strcmp (opname, "ORBit_get_iinterface")) {
+		*m_data = (gpointer)&CORBA_Object__imethods [
+			CORBA_OBJECT_SMALL_GET_IINTERFACE];
+		return (ORBitSmallSkeleton) ORBit_impl_ORBit_get_iinterface;
+	}		
+
+	return NULL;
 }
 
 /* 
@@ -558,6 +591,15 @@ static ORBit_IArg CORBA_Object_get_policy__arginfo[] = {
     TC_CORBA_PolicyType,
     ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE,
     "policy_type"
+   },
+   {NULL, 0, NULL}
+};
+
+static ORBit_IArg CORBA_Object_ORBit_get_iinterface__arginfo[] = {
+   {
+    TC_CORBA_string,
+    ORBit_I_ARG_IN,
+    "type_id"
    },
    {NULL, 0, NULL}
 };
@@ -655,6 +697,19 @@ ORBit_IMethod CORBA_Object__imethods[] = {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     TC_CORBA_Object, "set_policy_overrides", 21, 0
+   },
+   /* ORBit-small bits */
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_string, "ORBit_get_type_id", 18, 0
+   },
+   {
+    {1, 1, CORBA_Object_ORBit_get_iinterface__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_ORBit_IInterface, "ORBit_get_iinterface", 21, 0
    }
 };
 

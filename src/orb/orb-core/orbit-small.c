@@ -996,3 +996,71 @@ ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
 	return epv;
 }
 #endif
+
+ORBit_IInterface *
+ORBit_iinterface_from_idl (IDL_tree idl)
+{
+	g_warning ("Implement me");
+
+	return NULL;
+}
+
+CORBA_char *
+ORBit_small_get_type_id (CORBA_Object       object,
+			 CORBA_Environment *ev)
+{
+	/* We stay always maximaly qualified localy */
+	if (object->pobj && object->pobj->servant)
+		return CORBA_string_dup (object->type_id);
+
+	else {
+		CORBA_char *retval = NULL;
+
+		ORBit_small_invoke_stub (
+			object,
+			&CORBA_Object__imethods [
+				CORBA_OBJECT_SMALL_GET_TYPE_ID],
+			&retval, NULL, NULL, ev);
+
+		return retval;
+	}
+}
+
+ORBit_IInterface *
+ORBit_small_get_iinterface (CORBA_Object       opt_object,
+			    const CORBA_char  *type_id,
+			    CORBA_Environment *ev)
+{
+	ORBit_IInterface *retval = NULL;
+	PortableServer_ClassInfo *ci;
+
+	if ((ci = ORBit_classinfo_lookup (type_id))) {
+		retval = ci->idata;
+
+	} else if (opt_object) {
+		/* FIXME: first walk the object's data,
+		   if local, we might have unregistered
+		   interfaces for some reason */
+		gpointer args [1];
+
+		args [0] = &type_id;
+
+		ORBit_small_invoke_stub (
+			opt_object,
+			&CORBA_Object__imethods [
+				CORBA_OBJECT_SMALL_GET_IINTERFACE],
+			&retval, args, NULL, ev);
+	}
+
+	if (!retval &&
+	    ev->_major == CORBA_NO_EXCEPTION)
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			ex_ORBit_NoIInterface, NULL);
+
+/*	g_warning ("get_iinterface returns '%s' %p",
+		   retval ? retval->tc->repo_id : ev->_id,
+		   retval); */
+
+	return retval;
+}

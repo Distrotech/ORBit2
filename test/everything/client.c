@@ -178,12 +178,14 @@ void testException(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testFixedLengthStruct(test_TestFactory factory, 
-			   CORBA_Environment *ev)
+void testIInterface(test_TestFactory factory, 
+		    CORBA_Environment *ev)
 {
   test_StructServer objref;
-  test_FixedLengthStruct inArg,inoutArg,outArg,retn;
-  d_print("Testing fixed length structs...\n");
+  CORBA_char *type_id;
+  ORBit_IInterface *iinterface;
+
+  d_print("Testing IInterface code ...\n");
   objref = test_TestFactory_getStructServer(factory,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
@@ -191,6 +193,39 @@ void testFixedLengthStruct(test_TestFactory factory,
   g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/StructServer:1.0", ev));
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
   g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  /* Scripting stuff */
+
+  /* Get real type id */
+  g_assert((type_id = ORBit_small_get_type_id (objref, ev)));
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert(!strcmp (type_id, "IDL:orbit/test/StructServer:1.0"));
+  CORBA_free (type_id);
+
+  /* Get interface data */
+  iinterface = ORBit_small_get_iinterface (
+	  CORBA_OBJECT_NIL, "foo_bar_jelly", ev);
+  g_assert(ev->_major != CORBA_NO_EXCEPTION);
+  g_assert(iinterface == NULL);
+  g_assert(!strcmp(ev->_id, ex_ORBit_NoIInterface));
+  CORBA_exception_free (ev);
+
+  iinterface = ORBit_small_get_iinterface (
+	  CORBA_OBJECT_NIL, "IDL:orbit/test/StructServer:1.0", ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert(iinterface != NULL);
+  g_assert(!strcmp(iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
+}
+
+void testFixedLengthStruct(test_TestFactory factory, 
+			   CORBA_Environment *ev)
+{
+  test_StructServer objref;
+  test_FixedLengthStruct inArg,inoutArg,outArg,retn;
+
+  d_print("Testing struct code ...\n");
+  objref = test_TestFactory_getStructServer(factory,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   inArg.a = constants_SHORT_IN;
@@ -832,6 +867,7 @@ run_tests (test_TestFactory   factory,
     testSequenceOfAny(factory,ev);
     testTypeCode(factory,ev);
     testContext(factory,ev);
+    testIInterface(factory,ev);
 #endif
   }
 
