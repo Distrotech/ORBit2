@@ -1,0 +1,6 @@
+Please do not put your ChangeLog in here. CVS already does the work for
+us. If you would like to see a ChangeLog, just type 'rcs2log' in the top
+ORBit directory.
+
+This file is here merely to satisfy the whims of automake. :)
+-- Elliot
