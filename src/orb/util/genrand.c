@@ -23,11 +23,17 @@ ORBit_genuid_init (ORBitGenUidType type)
 	genuid_type = type;
 
 	switch (genuid_type) {
-	case ORBIT_GENUID_STRONG:
+	case ORBIT_GENUID_STRONG: {
+		GTimeVal time;
+
 		dev_urandom_fd = open ("/dev/urandom", O_RDONLY);
 
 		glib_prng = g_rand_new ();
+		g_get_current_time (&time);
+		g_rand_set_seed (glib_prng, time.tv_sec ^ time.tv_usec);
+
 		break;
+	}
 	case ORBIT_GENUID_SIMPLE:
 		genuid_pid = getpid ();
 		break;
@@ -87,27 +93,15 @@ genrand_openssl (guchar *buffer, int length)
 }
 #endif
 
-static void
-genuid_glib_pseudo (guchar *buffer, int length)
-{
-	GTimeVal time;
-	int      i;
-
-	g_get_current_time (&time);
-
-	g_rand_set_seed (glib_prng, time.tv_sec ^ time.tv_usec);
-
-	for (i = 0; i < length; i++)
-		buffer [i] = g_rand_int_range (glib_prng, 0, 255);
-}
+#define HEADER_SIZE (sizeof (gulong) + sizeof (genuid_pid))
 
 static void
 genuid_simple (guchar *buffer, int length)
 {
-	static glong   s = 0x6b842128;
-	static guint16 inc = 0;
-	glong          i, t;
-	GTimeVal       time;
+	static glong  s = 0x6b842128;
+	static gulong inc = 0;
+	glong         i, t;
+	GTimeVal      time;
 
 	g_get_current_time (&time);
 
@@ -117,10 +111,21 @@ genuid_simple (guchar *buffer, int length)
 	memcpy (buffer, &inc, sizeof (inc));
 	memcpy (buffer + sizeof (inc), &genuid_pid, sizeof (genuid_pid));
 
-	for (i = sizeof (inc) + sizeof (genuid_pid); i < length; i++)
+	for (i = HEADER_SIZE; i < length; i++)
 		buffer [i] = (guchar) (s ^ (t << i));
 
 	s ^= t;
+}
+
+static void
+genuid_glib_pseudo (guchar *buffer, int length)
+{
+	int i;
+
+	genuid_simple (buffer, length);
+
+	for (i = HEADER_SIZE; i < length; i++)
+		buffer [i] = g_rand_int_range (glib_prng, 0, 255);
 }
 
 void
