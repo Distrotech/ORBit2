@@ -1,3 +1,10 @@
+2003-03-18  Shailesh Mittal  <shailesh.mittal@wipro.com>
+
+	* src/orb/orb-core/iop-profiles.c (IOP_start_profiles):
+	Fixed the bug, now it works for IPv6 options without having
+	unix option set, by eliminating the requirement of osi profile for IPv6.
+	Fixed sense of string comparision which check for duplicate profiles.
+
 2003-03-17  Michael Meeks  <michael@server.home>
 
 	* src/orb/orb-core/orbit-small.c
