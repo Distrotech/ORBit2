@@ -192,7 +192,8 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
 }
 
 OIDL_Marshal_Node *
-marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *pi)
+marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent,
+		 OIDL_Populate_Info *pi)
 {
   OIDL_Marshal_Node *retval = NULL;
   OIDL_Populate_Info subpi = *pi;
@@ -487,7 +488,11 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
   case IDLN_TYPE_OBJECT:
   case IDLN_INTERFACE:
     retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL, pi);
-    retval->u.complex_info.type = CX_CORBA_OBJECT;
+    if(IDL_NODE_TYPE(tree) == IDLN_INTERFACE
+       && !strcmp(IDL_IDENT(IDL_INTERFACE(tree).ident).str, "TTypeCode"))
+      retval->u.complex_info.type = CX_CORBA_TYPECODE;
+    else
+      retval->u.complex_info.type = CX_CORBA_OBJECT;
     retval->tree = tree;
     break;
   case IDLN_CHAR:

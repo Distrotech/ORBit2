@@ -1,4 +1,4 @@
-#include <orbit/orb-core/orbit-object.h>
+#include <orbit/orbit.h>
 
 O_MUTEX_DEFINE(ORBit_RootObject_lifecycle_lock);
 

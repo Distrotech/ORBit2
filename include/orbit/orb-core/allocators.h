@@ -78,11 +78,9 @@ extern gpointer ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
 
 #define ORBit_alloc(sz, len, fnc) ORBit_alloc_kidfnc( (sz), (len), (fnc))
 
-extern gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
-extern gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
-extern gpointer CORBA_any__freekids(gpointer mem, gpointer data);
-extern gpointer CORBA_string__freekids(gpointer mem, gpointer data);
-extern gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
+gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
+gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
+gpointer CORBA_any__freekids(gpointer mem, gpointer data);
+gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
 
-CORBA_string CORBA_string_alloc(CORBA_unsigned_long len);
 #endif

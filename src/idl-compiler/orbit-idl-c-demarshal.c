@@ -464,6 +464,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   char *ctmp;
   const char *do_dup;
+  gboolean do_object = FALSE;
 
   ctmp = oidl_marshal_node_valuestr(node);
 

@@ -2,6 +2,17 @@
 #define CORBA_ENVIRONMENT_H 1
 
 #include <orbit/orb-core/orb-types.h>
-#include <orbit/orb-core/corba-defs.h>
+#include <orbit/orb-core/corba-any-type.h>
+
+#if !defined(_CORBA_Environment_defined)
+#define _CORBA_Environment_defined 1
+   typedef struct CORBA_Environment_type *CORBA_Environment;
+#endif
+
+struct CORBA_Environment_type {
+  CORBA_char *_id;
+  CORBA_unsigned_long _major;
+  CORBA_any _any;
+};
 
 #endif

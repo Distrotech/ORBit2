@@ -4,7 +4,7 @@
 #include <orbit/orb-core/corba-pobj.h>
 
 struct _CORBA_any {
-  gpointer _type;
+  CORBA_TypeCode _type;
   gpointer _value;
   CORBA_boolean _release;
 };
