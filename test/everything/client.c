@@ -127,6 +127,38 @@ testSequenceHelpers (void)
 		
 		CORBA_free (oseq);
 	}
+
+	/* test concat operation: concat two sequences of different
+	 * size. The concatinated sequence must contain values of both
+	 * in correct order. */
+	{
+		CORBA_octet oct = 0;
+		CORBA_long i = 0;
+		CORBA_long j = 0;
+		CORBA_long a = 0;
+		CORBA_long b = 0;
+		CORBA_sequence_CORBA_octet *aseq = NULL;
+		CORBA_sequence_CORBA_octet *bseq = NULL;
+
+		aseq = ORBit_sequence_alloc (TC_CORBA_sequence_CORBA_octet, 0);
+		bseq = ORBit_sequence_alloc (TC_CORBA_sequence_CORBA_octet, 0);
+		
+		for (b = 0; b < 200; ++b) {
+			ORBit_sequence_concat (aseq, bseq);
+			
+			a = 0;
+			for (i = 0; i < b; ++i)
+				for (j = 0; j < i; ++j, ++a)
+					g_assert (ORBit_sequence_index (aseq, a) == j % 128);
+			
+			oct = b % 128;
+			ORBit_sequence_append (bseq, &oct);
+		}
+		
+		CORBA_free (aseq);
+		CORBA_free (bseq);
+	}
+	
 }
 
 static void

@@ -1260,6 +1260,25 @@ void
 ORBit_sequence_concat (gpointer      sequence,
 		       gconstpointer append)
 {
-	/* FIXME: implement me */
-	g_warning ("Implement me");
+	gint  i;	
+	guint element_size;
+	guchar *src;
+	CORBA_TypeCode tc, subtc;
+  	CORBA_sequence_CORBA_octet *seq = append;
+
+	g_return_if_fail (seq != NULL);
+	g_return_if_fail (seq->_length <= seq->_maximum);
+
+	tc = ORBit_alloc_get_tcval (sequence);
+	SKIP_ALIAS (tc);
+	subtc = tc->subtypes [0];
+	g_return_if_fail (tc->kind == CORBA_tk_sequence);
+
+	element_size = ORBit_gather_alloc_info (subtc);
+
+	src = seq->_buffer;
+
+	for (i = 0; i < seq->_length; ++i, src += element_size) {
+		ORBit_sequence_append (sequence, (gpointer)src);
+	}
 }
