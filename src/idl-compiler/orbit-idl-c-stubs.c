@@ -11,8 +11,8 @@ cs_output_stub (IDL_tree     tree,
 {
 	FILE     *of = ci->fh;
 	char     *iface_id;
+	char     *opname;
 	gboolean  has_retval, has_args;
-	IDL_tree  node;
 
 	g_return_if_fail (idx != NULL);
 
@@ -20,6 +20,7 @@ cs_output_stub (IDL_tree     tree,
 			IDL_IDENT_TO_NS (IDL_INTERFACE (
 				IDL_get_parent_node (tree, IDLN_INTERFACE, NULL)
 					).ident), "_", 0);
+	opname = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_OP_DCL (tree).ident), "_", 0);
 
 	has_retval = IDL_OP_DCL (tree).op_type_spec != NULL;
 	has_args   = IDL_OP_DCL (tree).parameter_dcls != NULL;
@@ -32,10 +33,16 @@ cs_output_stub (IDL_tree     tree,
 		orbit_cbe_write_param_typespec (of, tree);
 		fprintf (of, " " ORBIT_RETVAL_VAR_NAME ";\n");
 	}
-
+#if 0
 	fprintf (ci->fh, "POA_%s__epv *%s;\n", iface_id, ORBIT_EPV_VAR_NAME);
+	fprintf (ci->fh, "gpointer _ORBIT_servant;\n");
 
 	/* in-proc part */
+	fprintf (ci->fh, "if ((%s = ORBit_c_stub_invoke\n", ORBIT_EPV_VAR_NAME);
+	fprintf (ci->fh, "		(_obj, %s__classid, &_ORBIT_servant,\n", iface_id);
+	fprintf (ci->fh, "               G_STRUCT_OFFSET (POA_%s__epv, %s)))) {\n",
+		 iface_id, IDL_IDENT (IDL_OP_DCL (tree).ident).str);
+
 	fprintf (ci->fh, "if (ORBit_small_flags & ORBIT_SMALL_FAST_LOCALS && \n");
 	fprintf (ci->fh, "    ORBIT_STUB_IsBypass (_obj, %s__classid) && \n", iface_id);
 	fprintf (ci->fh, "    (%s = (POA_%s__epv*) ORBIT_STUB_GetEpv (_obj, %s__classid))->%s) {\n",
@@ -43,7 +50,7 @@ cs_output_stub (IDL_tree     tree,
 
 	fprintf (ci->fh, "ORBIT_STUB_PreCall (_obj);\n");
 
-	fprintf (ci->fh, "%s%s->%s (ORBIT_STUB_GetServant (_obj), ",
+	fprintf (ci->fh, "%s%s->%s (_ORBIT_servant, ",
 		 IDL_OP_DCL (tree).op_type_spec? ORBIT_RETVAL_VAR_NAME " = ":"",
 		 ORBIT_EPV_VAR_NAME,
 		 IDL_IDENT (IDL_OP_DCL (tree).ident).str);
@@ -57,15 +64,16 @@ cs_output_stub (IDL_tree     tree,
 
 	fprintf (ci->fh, "ev);\n");
 
-	fprintf (ci->fh, "ORBIT_STUB_PostCall (_obj);\n");
+	fprintf (ci->fh, "ORBit_stub_post_invoke (_obj, %s);\n", ORBIT_EPV_VAR_NAME);
 
 	fprintf (of, " } else { /* remote marshal */\n");
+#endif
 
 	/* remote invocation part */
 	if (has_args)
 		orbit_cbe_flatten_args (tree, of, "_args");
 
-	fprintf (of, "ORBit_small_invoke_stub_n (_obj, "
+	fprintf (of, "ORBit_c_stub_invoke (_obj, "
 		 "&%s__iinterface.methods, %d, ", iface_id, *idx);
 
 	if (has_retval)
@@ -83,9 +91,11 @@ cs_output_stub (IDL_tree     tree,
 	else
 		fprintf (ci->fh, "NULL, ");
 		
-	fprintf (of, "ev);\n\n");
+	fprintf (of, "ev, ");
 
-	fprintf (of, "}\n");
+	fprintf (of, "%s__classid, G_STRUCT_OFFSET (POA_%s__epv, %s),\n",
+		 iface_id, iface_id, IDL_IDENT (IDL_OP_DCL (tree).ident).str);
+	fprintf (of, "(ORBitSmallSkeleton) _ORBIT_skel_small_%s);\n\n", opname);
 
 	if (has_retval)
 		fprintf (of, "return " ORBIT_RETVAL_VAR_NAME ";\n");

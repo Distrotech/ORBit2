@@ -2320,3 +2320,64 @@ ORBit_poa_init (void)
 	_ORBit_poa_manager_lock = linc_mutex_new ();
 	giop_thread_set_main_handler (ORBit_POAObject_invoke_incoming_request);
 }
+
+static gpointer
+get_c_method (CORBA_Object obj,
+	      glong        class_id,
+	      gpointer    *servant,
+	      glong        method_offset)
+{
+	guchar *epv_start;
+	ORBit_POAObject pobj;
+
+	if (!obj ||
+	    !(pobj = (ORBit_POAObject) obj->adaptor_obj) ||
+	    !(*servant = pobj->servant))
+		return NULL;
+
+	if (method_offset <= 0 || class_id <= 0)
+		return NULL;
+
+	if (!(ORBit_small_flags & ORBIT_SMALL_FAST_LOCALS))
+		return NULL;
+
+	if (!ORBIT_STUB_IsBypass (obj, class_id))
+		return NULL;
+
+	epv_start = (guchar *)ORBIT_POAOBJECT_TO_EPVPTR (pobj, class_id);
+	if (!epv_start)
+		return NULL;
+
+	return *(gpointer *)(epv_start + method_offset);
+}
+
+void
+ORBit_c_stub_invoke (CORBA_Object        obj,
+		     ORBit_IMethods     *methods,
+		     glong               method_index,
+		     gpointer            ret,
+		     gpointer            args,
+		     CORBA_Context       ctx,
+		     CORBA_Environment  *ev,
+
+		     glong               class_id,
+		     glong               method_offset,
+		     ORBitSmallSkeleton  skel_impl)
+{
+	gpointer method_impl, servant;
+
+	if (skel_impl &&
+	    (method_impl = get_c_method (obj, class_id,
+					 &servant, method_offset))) {
+		
+		ORBIT_STUB_PreCall (obj);
+
+		skel_impl (servant, ret, args, ctx, ev, method_impl);
+		
+		ORBIT_STUB_PostCall (obj);
+		
+	} else
+		ORBit_small_invoke_stub_n
+			(obj, methods, method_index,
+			 ret, args, ctx, ev);
+}
