@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "giop-private.h"
+
 static LINCConnectionClass *parent_class = NULL;
 
 static struct {

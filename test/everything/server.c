@@ -258,7 +258,7 @@ static POA_test_TestFactory__vepv TestFactory_vepv = {
 	&TestFactory_epv
 };
 
-PortableServer_POA
+static PortableServer_POA
 start_poa (CORBA_ORB orb, CORBA_Environment *ev)
 {
 	PortableServer_POAManager mgr;
@@ -308,7 +308,7 @@ create_object (PortableServer_POA poa,
 }
 
 /* constructor */
-void
+static void
 test_TestFactory__init (PortableServer_Servant servant, 
 			PortableServer_POA poa, 
 			CORBA_Environment *ev)
@@ -384,7 +384,7 @@ dump_ior (CORBA_ORB orb, const char *fname, CORBA_Environment *ev)
 }
 #endif
 
-CORBA_Object
+static CORBA_Object
 create_TestFactory (PortableServer_POA        poa,
 		    test_TestFactory_Servant *servant,
 		    CORBA_Environment        *ev)
@@ -422,7 +422,7 @@ test_TestFactory_Servant servant;
   int
   main (int argc, char *argv [])
 #else
-  CORBA_Object
+  static CORBA_Object
   get_server (CORBA_ORB orb,
 	      CORBA_Environment *ev)
 #endif

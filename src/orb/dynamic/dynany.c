@@ -1810,8 +1810,8 @@ DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence   obj,
 }
 
 DynamicAny_DynAnySeq *
-DynamicAny_DynStruct_get_elements_as_dyn_any (DynamicAny_DynSequence obj,
-					      CORBA_Environment     *ev)
+DynamicAny_DynSequence_get_elements_as_dyn_any (DynamicAny_DynSequence  obj,
+						CORBA_Environment      *ev)
 {
 	DynAny *dynany;
 	int i;

@@ -99,7 +99,7 @@ POA_test_PingPongServer__vepv PingPongServer_vepv = {
 	&PingPongServer_epv
 };
 
-POA_test_PingPongServer *
+static POA_test_PingPongServer *
 create_ping_pong_servant (void)
 {
 	test_PingPongServer_Servant *servant;
