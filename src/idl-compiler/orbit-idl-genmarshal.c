@@ -540,40 +540,29 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
   for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
     OIDL_Marshal_Node *sub;
 
-
     curparam = IDL_LIST(curitem).data;
 
     if(IDL_PARAM_DCL(curparam).attr == IDL_PARAM_OUT)
       continue;
 
+    if(is_skels)
+      {
+	pi.where = MW_Null|MW_Heap;
+	if(IDL_PARAM_DCL(curparam).attr == IDL_PARAM_IN)
+	  pi.where |= MW_Alloca|MW_Auto|MW_Msg;
+      }
+    else
+      pi.where = MW_Null;
     sub = marshal_populate(curparam, retval, &pi);
 
     ts = orbit_cbe_get_typespec(curparam);
 
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
-#if 0
-      if(is_skels) {
-	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
-      } else
-#endif
-	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
-      sub->flags |= MN_DEMARSHAL_CORBA_ALLOC|MN_DEMARSHAL_USER_MOD;
+      sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
       break;
     case IDL_PARAM_IN:
-#if 0
-      if(is_skels) {
-	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_IN) - 1, 0);
-#if 0
-	/* The complexity of the underlying type should not affect
-	 * how we alloc memory for it!
-	 */
-	if(orbit_cbe_type_contains_complex(IDL_PARAM_DCL(curparam).param_type_spec))
-	  sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
-#endif
-      } else
-#endif
-	sub->nptrs = oidl_param_numptrs(curparam, DATA_IN);
+      sub->nptrs = oidl_param_numptrs(curparam, DATA_IN);
       break;
     default:
       g_error("Weird param direction for in pass.");
@@ -614,6 +603,10 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
 
   pi.ctxt = ctxt;
   if(IDL_OP_DCL(tree).op_type_spec) {
+    if(is_skels)
+      pi.where = MW_Null;
+    else
+      pi.where = MW_Heap|MW_Null;
     rvnode = marshal_populate(IDL_OP_DCL(tree).op_type_spec, retval, &pi);
     if(!rvnode) goto out1;
 
@@ -623,7 +616,6 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     	rvnode->nptrs -= 1;
     if ( !is_skels )
         rvnode->flags |= MN_NEED_TMPVAR;
-    rvnode->flags |= MN_DEMARSHAL_CORBA_ALLOC;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, rvnode);
 
@@ -642,25 +634,18 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     if(IDL_PARAM_DCL(curparam).attr == IDL_PARAM_IN)
       continue;
 
+    if(is_skels)
+      pi.where = MW_Null;
+    else
+      pi.where = MW_Heap|MW_Null;
     sub = marshal_populate(curparam, retval, &pi);
 
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
-      sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
-#if 0
-      if(is_skels)
-	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
-      else
-#endif
-	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
+      sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
       break;
     case IDL_PARAM_OUT:
-#if 0
-      if(is_skels)
-	sub->nptrs = MAX(oidl_param_info(curparam, DATA_OUT, &isSlice) - 1, 0);
-      else
-#endif
-	sub->nptrs = oidl_param_info(curparam, DATA_OUT, &isSlice);
+      sub->nptrs = oidl_param_info(curparam, DATA_OUT, &isSlice);
       if ( isSlice )
       	sub->nptrs -= 1;
       break;
@@ -682,6 +667,7 @@ orbit_idl_marshal_populate_except_marshal(IDL_tree tree, OIDL_Marshal_Context *c
   OIDL_Populate_Info pi;
 
   pi.ctxt = ctxt;
+  pi.where = MW_Null;
   retval = marshal_populate(tree, NULL, &pi);
   retval->name = "_ORBIT_exdata";
   retval->nptrs = 1;
@@ -696,6 +682,7 @@ orbit_idl_marshal_populate_except_demarshal(IDL_tree tree, OIDL_Marshal_Context 
   OIDL_Populate_Info pi;
 
   pi.ctxt = ctxt;
+  pi.where = MW_Heap|MW_Null;
   retval = marshal_populate(tree, NULL, &pi);
   retval->name = "_ORBIT_exdata";
   retval->nptrs = 1;

@@ -12,7 +12,6 @@ static void oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out);
 static void oidl_pass_set_coalescibility(OIDL_Marshal_Node *node);
 static void oidl_pass_set_alignment(OIDL_Marshal_Node *node);
 static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
-static void oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node);
 static void oidl_pass_del_tail_update(OIDL_Marshal_Node *node); /* Must run after coalescibility */
 
 static void oidl_node_pass_tmpvars(OIDL_Marshal_Node *top);
@@ -21,7 +20,7 @@ static struct {
   const char *name;
   OIDL_Pass_Func func;
   OIDL_Node_Pass_Func data;
-  enum { FOR_IN=1, FOR_OUT=2 } dirs;
+  enum { FOR_IN=1<<0, FOR_OUT=1<<1 } dirs;
 } idl_passes[] = {
   {"Position updates", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_make_updates, FOR_OUT},
 #if 0
@@ -34,7 +33,6 @@ static struct {
   {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility, FOR_IN|FOR_OUT},
   {"Extra update removal", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_del_tail_update, FOR_OUT},
   {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, oidl_node_pass_tmpvars, FOR_IN|FOR_OUT},
-  {"Variable allocation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_corba_alloc, FOR_OUT},
   {NULL, NULL}
 };
 
@@ -773,51 +771,3 @@ oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
   node->use_count--;
 }
 
-static void
-oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node)
-{
-  OIDL_Marshal_Node *sub;
-
-  if(!node) return;
-
-  if(node->use_count)
-    return;
-
-  node->use_count++;
-
-  if(node->up)
-    node->flags |= node->up->flags & (MN_DEMARSHAL_CORBA_ALLOC|MN_DEMARSHAL_USER_MOD);
-
-  switch(node->type) {
-  case MARSHAL_LOOP:
-    if((node->flags & MN_ISSTRING) && !(node->flags & MN_DEMARSHAL_USER_MOD))
-      node->flags &= ~MN_DEMARSHAL_CORBA_ALLOC;
-    oidl_pass_set_corba_alloc(node->u.loop_info.loop_var);
-    oidl_pass_set_corba_alloc(node->u.loop_info.length_var);
-    oidl_pass_set_corba_alloc(node->u.loop_info.contents);
-    break;
-  case MARSHAL_SET:
-    {
-      GSList *ltmp;
-
-      for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
-	sub = ltmp->data;
-	oidl_pass_set_corba_alloc(sub);
-      }
-    }
-    break;
-  case MARSHAL_SWITCH:
-    oidl_pass_set_corba_alloc(node->u.switch_info.discrim);
-    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_corba_alloc, NULL);
-    break;
-  case MARSHAL_CASE:
-    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_set_corba_alloc, NULL);
-    oidl_pass_set_corba_alloc(node->u.case_info.contents);
-    break;
-
-  default:
-    break;
-  }
-
-  node->use_count--;
-}

@@ -443,10 +443,6 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("ENDIAN_DEPENDANT ");
   if(tree->flags & MN_DEMARSHAL_UPDATE_AFTER)
     g_print("DEMARSHAL_UPDATE_AFTER ");
-  if(tree->flags & MN_DEMARSHAL_CORBA_ALLOC)
-    g_print("DEMARSHAL_CORBA_ALLOC ");
-  if(tree->flags & MN_DEMARSHAL_USER_MOD)
-    g_print("DEMARSHAL_USER_MOD ");
   g_print("] ");
 
   g_print("*%d arch (%d,%d) iiop (%d,%d)\n", tree->nptrs,

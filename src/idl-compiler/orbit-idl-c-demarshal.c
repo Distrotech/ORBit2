@@ -180,21 +180,14 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
   c_demarshal_generate(node->u.loop_info.length_var, cmi);
 
-  if(cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)) {
-    if(!(node->u.loop_info.contents->flags & MN_COALESCABLE)
-       || (cmi->endian_swap_pass && (node->u.loop_info.contents->flags & MN_ENDIAN_DEPENDANT))) {
-      if(node->flags & (MN_ISSEQ|MN_ISSTRING)) {
-	fprintf(cmi->ci->fh, "%s%s = alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
-		ctmp_contents, ctmp_len);
-	if(node->flags & MN_ISSEQ)
-	  fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
-      } else {
-	/* Array: entire array is already allocated on stack! */
-      }
-    } else {
-       /* Presumably it is completely allocated on stack already, ... */
-    }
-  } else {
+  if(cmi->alloc_on_stack && (node->where & MW_Alloca)) {
+    fprintf(cmi->ci->fh, "%s%s = alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
+	    ctmp_contents, ctmp_len);
+    if(node->flags & MN_ISSEQ)
+      fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
+  } else if(node->where & MW_Msg) {
+    /* No allocation necessary */
+  } else if(node->where & MW_Heap) {
     char *tname, *tcname;
     
     tname = orbit_cbe_get_typespec_str(node->tree);
@@ -228,7 +221,8 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 #endif
     g_free(tcname);
     g_free(tname);
-  }
+  } else
+    g_error("Don't know how to allocate node %p", node);
 
   if((!cmi->endian_swap_pass || !(node->u.loop_info.contents->flags & MN_ENDIAN_DEPENDANT))
      && (node->u.loop_info.contents->flags & MN_COALESCABLE)) {
@@ -242,17 +236,13 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
     g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
-    if(cmi->alloc_on_stack
-       && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)
-       && ((node->flags & MN_ISSEQ) /* Doesn't work for arrays. */
-	   || (node->flags & MN_ISSTRING))) {
+    if(cmi->alloc_on_stack & (node->where & MW_Msg)) {
       fprintf(cmi->ci->fh, "*(((gulong*)_ORBIT_curptr)-1) = ORBIT_MEMHOW_NONE;\n");
       fprintf(cmi->ci->fh, "%s = (", tmpstr2->str);
       orbit_cbe_write_typespec(cmi->ci->fh, node->u.loop_info.contents->tree);
       fprintf(cmi->ci->fh, "*)_ORBIT_curptr;\n");
-    } else {      
+    } else
       fprintf(cmi->ci->fh, "memcpy(%s, _ORBIT_curptr, %s);\n", tmpstr2->str, tmpstr->str);
-    }
 
     c_demarshal_update_curptr(node, tmpstr->str, cmi);
 
@@ -334,8 +324,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   c_demarshal_store_curptr(cmi);
   ctmp = oidl_marshal_node_valuestr(node);
 
-  do_dup = (cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC))
-    ?"CORBA_FALSE":"CORBA_TRUE";
+  do_dup = (cmi->alloc_on_stack && (node->where & (MW_Alloca|MW_Msg)))?"CORBA_FALSE":"CORBA_TRUE";
 
   switch(node->u.complex_info.type) {
   case CX_CORBA_FIXED:
@@ -369,7 +358,6 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
       ctmp = oidl_marshal_node_valuestr(node);
       ctmp2 = orbit_cbe_get_typespec_str(node->tree);
-      do_dup = (cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC))?"CORBA_FALSE":"CORBA_TRUE";
 
       switch(tmi->mtype)
 	{
