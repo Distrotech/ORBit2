@@ -156,6 +156,10 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "return %s;\n}\n", IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval":"");
   }
 
+  /* Ensure that the compiler thinks _ORBIT_retval is initialized */
+  if (IDL_OP_DCL(tree).op_type_spec)
+	  fprintf (ci->fh, "if (0) return *(&_ORBIT_retval);\n");
+
   fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
