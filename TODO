@@ -1,5 +1,10 @@
 TODO:
 
+* orbit-object.c:
+	+ add the ability to store in a hash pointers to objects
+	  and dump their type with a type->name from the
+	  ORBit_RootObject_Type enum.
+
 * Thread safety
 	+ apparently g_object_ref / unref are not thread safe
 	  we need linc_object_ref / unref instead that does

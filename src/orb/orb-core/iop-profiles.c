@@ -450,176 +450,159 @@ IOP_profile_hash(gpointer item, gpointer data)
 void
 IOP_delete_profiles (GSList **profiles)
 {
-  if (profiles && *profiles && (*profiles != common_profiles)) {
-    g_slist_foreach (*profiles, (GFunc)IOP_profile_free, NULL);
-    g_slist_free (*profiles);
-    *profiles = NULL;
-  }
+	if (profiles && *profiles && (*profiles != common_profiles)) {
+		g_slist_foreach (*profiles, (GFunc)IOP_profile_free, NULL);
+		g_slist_free (*profiles);
+		*profiles = NULL;
+	}
 }
 
 void
 IOP_generate_profiles (CORBA_Object obj)
 {
-  IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
-  IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
-  IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
-  gboolean                          need_objkey_component;
-  ORBit_OAObject                    adaptor_obj = obj->adaptor_obj;
-  GSList                           *ltmp;
+	IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
+	IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
+	IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
+	gboolean                          need_objkey_component;
+	ORBit_OAObject                    adaptor_obj = obj->adaptor_obj;
+	GSList                           *l;
 
-  g_assert( obj && (obj->profile_list == NULL) );
+	g_assert (obj && (obj->profile_list == NULL));
 
-  /*
-   * no need to have any listening sockets until now.
-   * if the ORB has been shutdown and restarted,
-   * the profiles must be regenerated.
-   */
-  if (!obj->orb->servers) {
-    ORBit_start_servers (obj->orb);
-    if (common_profiles) {
-      g_slist_foreach (common_profiles, (GFunc)IOP_profile_free, NULL);
-      g_slist_free (common_profiles);
-      common_profiles = NULL;
-    }
-  }
+	/*
+	 * no need to have any listening sockets until now.
+	 * if the ORB has been shutdown and restarted,
+	 * the profiles must be regenerated.
+	 */
+	if (!obj->orb->servers) {
+		ORBit_start_servers (obj->orb);
+		if (common_profiles) {
+			g_slist_foreach (common_profiles, (GFunc)IOP_profile_free, NULL);
+			g_slist_free (common_profiles);
+			common_profiles = NULL;
+		}
+	}
 
-  if (!obj->object_key && adaptor_obj)
-    obj->object_key = ORBit_OAObject_object_to_objkey (adaptor_obj);
+	if (!obj->object_key && adaptor_obj)
+		obj->object_key = ORBit_OAObject_object_to_objkey (adaptor_obj);
 
-  /* share the profiles between everyone. */
-  if (common_profiles) {
-    obj->profile_list = common_profiles;
-    return;
-  }
+	/* share the profiles between everyone. */
+	if (common_profiles) {
+		obj->profile_list = common_profiles;
+		return;
+	}
 
-  need_objkey_component = FALSE;
-  for(ltmp = obj->orb->servers ; ltmp != NULL ; ltmp = ltmp->next)
-    {
-      LINCServer *serv = ltmp->data;
-      gboolean   ipv4, ipv6, uds, ssl;
+	need_objkey_component = FALSE;
+	for (l = obj->orb->servers ; l != NULL ; l = l->next) {
+		LINCServer *serv = l->data;
+		gboolean   ipv4, ipv6, uds, ssl;
 
-      ipv4 = (strcmp(serv->proto->name, "IPv4") == 0)     ? TRUE : FALSE;
-      ipv6 = (strcmp(serv->proto->name, "IPv6") == 0)     ? TRUE : FALSE;
-      uds  = (strcmp(serv->proto->name, "UNIX") == 0)     ? TRUE : FALSE;
-      ssl  = (serv->create_options & LINC_CONNECTION_SSL) ? TRUE : FALSE;
+		ipv4 = !strcmp (serv->proto->name, "IPv4");
+		ipv6 = !strcmp (serv->proto->name, "IPv6");
+		uds  = !strcmp (serv->proto->name, "UNIX");
 
-      if( osi == NULL && (uds || (ipv6 && !ssl)) )
-        {
-          osi = g_new0(IOP_TAG_ORBIT_SPECIFIC_info, 1);
-          osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
-        }
+		ssl  = (serv->create_options & LINC_CONNECTION_SSL);
 
-      if(uds && osi->unix_sock_path == NULL )
-        osi->unix_sock_path = g_strdup(serv->local_serv_info);
+		if (!osi && (uds || (ipv6 && !ssl))) {
+			osi = g_new0 (IOP_TAG_ORBIT_SPECIFIC_info, 1);
+			osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
+		}
 
-      if(ipv6 && !ssl)
-        osi->ipv6_port = atoi(serv->local_serv_info);
+		if (uds && !osi->unix_sock_path)
+			osi->unix_sock_path = g_strdup (serv->local_serv_info);
 
-      if(ipv4)
-        {
-          if(iiop == NULL)
-            {
-              iiop = g_new0(IOP_TAG_INTERNET_IOP_info, 1);
-              iiop->host = g_strdup(serv->local_host_info);
-              common_profiles = g_slist_append(common_profiles, iiop);
-            }
+		if (ipv6 && !ssl)
+			osi->ipv6_port = atoi (serv->local_serv_info);
 
-          if(ssl)
-            {
-              IOP_TAG_SSL_SEC_TRANS_info *sslsec;
+		if (ipv4) {
+			if (!iiop) {
+				iiop = g_new0 (IOP_TAG_INTERNET_IOP_info, 1);
+				iiop->host = g_strdup (serv->local_host_info);
+				common_profiles = g_slist_append (common_profiles, iiop);
+			}
 
-              sslsec = g_new0(IOP_TAG_SSL_SEC_TRANS_info, 1);
-              sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
-              /* integrity & confidentiality */
-              sslsec->target_supports = sslsec->target_requires = 2|4;
-              sslsec->port = atoi(serv->local_serv_info);
-              iiop->components = g_slist_append(iiop->components, sslsec);
-            }
-          else
-            {
-              g_assert(!iiop->port);
-              iiop->port = atoi(serv->local_serv_info);
-              iiop->iiop_version = obj->orb->default_giop_version;
-            }
-        }
-      else
-        {
-          GSList *ltmp2;
-          IOP_TAG_GENERIC_IOP_info *giop;
+			if (ssl) {
+				IOP_TAG_SSL_SEC_TRANS_info *sslsec;
 
-          for(giop = NULL, ltmp2 = common_profiles; ltmp2; ltmp2 = ltmp2->next)
-            {
-              IOP_TAG_GENERIC_IOP_info *giopt;
+				sslsec = g_new0 (IOP_TAG_SSL_SEC_TRANS_info, 1);
+				sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
+				/* integrity & confidentiality */
+				sslsec->target_supports = sslsec->target_requires = 2|4;
+				sslsec->port = atoi (serv->local_serv_info);
+				iiop->components = g_slist_append (
+					iiop->components, sslsec);
+			} else {
+				g_assert (!iiop->port);
+				iiop->port = atoi (serv->local_serv_info);
+				iiop->iiop_version = obj->orb->default_giop_version;
+			}
+		} else {
+			GSList *l2;
+			IOP_TAG_GENERIC_IOP_info *giop;
 
-              giopt = ltmp2->data;
-              if(giopt->parent.profile_type == IOP_TAG_GENERIC_IOP
-                 && strcmp(giopt->proto, serv->proto->name))
-                {
-                  giop = giopt;
-                  break;
-                }
-            }
+			for (giop = NULL, l2 = common_profiles; l2; l2 = l2->next) {
+				IOP_TAG_GENERIC_IOP_info *giopt;
 
-          if(giop == NULL)
-            {
-              giop = g_new0(IOP_TAG_GENERIC_IOP_info, 1);
-              giop->parent.profile_type = IOP_TAG_GENERIC_IOP;
-              giop->iiop_version = obj->orb->default_giop_version;
-              giop->proto = g_strdup(serv->proto->name);
-              giop->host = g_strdup(serv->local_host_info);
-              common_profiles = g_slist_append(common_profiles, giop);
-            }
+				giopt = l2->data;
+				if (giopt->parent.profile_type == IOP_TAG_GENERIC_IOP &&
+				    strcmp (giopt->proto, serv->proto->name)) {
+					giop = giopt;
+					break;
+				}
+			}
 
-          if(ssl)
-            {
-              IOP_TAG_GENERIC_SSL_SEC_TRANS_info *sslsec;
+			if (!giop) {
+				giop = g_new0 (IOP_TAG_GENERIC_IOP_info, 1);
+				giop->parent.profile_type = IOP_TAG_GENERIC_IOP;
+				giop->iiop_version = obj->orb->default_giop_version;
+				giop->proto = g_strdup (serv->proto->name);
+				giop->host = g_strdup (serv->local_host_info);
+				common_profiles = g_slist_append (common_profiles, giop);
+			}
 
-              sslsec = g_new0(IOP_TAG_GENERIC_SSL_SEC_TRANS_info, 1);
-              sslsec->parent.component_type = IOP_TAG_GENERIC_SSL_SEC_TRANS;
-              sslsec->service = g_strdup(serv->local_serv_info);
-              giop->components = g_slist_append(giop->components, sslsec);
-            }
-          else
-            {
-              g_assert(!giop->service);
-              giop->service = g_strdup(serv->local_serv_info);
-            }
-        }
-      need_objkey_component = TRUE;
-    }
+			if (ssl) {
+				IOP_TAG_GENERIC_SSL_SEC_TRANS_info *sslsec;
 
-  if (osi)
-    common_profiles = g_slist_append (common_profiles, osi);
+				sslsec = g_new0 (IOP_TAG_GENERIC_SSL_SEC_TRANS_info, 1);
+				sslsec->parent.component_type = IOP_TAG_GENERIC_SSL_SEC_TRANS;
+				sslsec->service = g_strdup (serv->local_serv_info);
+				giop->components = g_slist_append (giop->components, sslsec);
+			} else {
+				g_assert (!giop->service);
+				giop->service = g_strdup (serv->local_serv_info);
+			}
+		}
+		need_objkey_component = TRUE;
+	}
 
-  /* We always create this to marshal the TAG_CODE_SET component */
-  mci = g_new0 (IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
-  mci->parent.profile_type = IOP_TAG_MULTIPLE_COMPONENTS;
+	if (osi)
+		common_profiles = g_slist_append (common_profiles, osi);
 
-  if (need_objkey_component) {
-    IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
+	/* We always create this to marshal the TAG_CODE_SET component */
+	mci = g_new0 (IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
+	mci->parent.profile_type = IOP_TAG_MULTIPLE_COMPONENTS;
 
-    coki = g_new0 (IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
-    coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
-    mci->components = g_slist_append (mci->components, coki);
-  }
+	if (need_objkey_component) {
+		IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
 
-  {
-    IOP_TAG_CODE_SETS_info *csets;
+		coki = g_new0 (IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
+		coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
+		mci->components = g_slist_append (mci->components, coki);
+	}
 
-    csets = g_new0 (IOP_TAG_CODE_SETS_info, 1);
-    csets->parent.component_type = IOP_TAG_CODE_SETS;
-    mci->components = g_slist_append (mci->components, csets);
-  }
+	{
+		IOP_TAG_CODE_SETS_info *csets;
 
-  common_profiles = g_slist_append (common_profiles, mci);
+		csets = g_new0 (IOP_TAG_CODE_SETS_info, 1);
+		csets->parent.component_type = IOP_TAG_CODE_SETS;
+		mci->components = g_slist_append (mci->components, csets);
+	}
 
-  obj->profile_list = common_profiles;
-  ORBit_register_objref (obj);
+	common_profiles = g_slist_append (common_profiles, mci);
+
+	obj->profile_list = common_profiles;
+	ORBit_register_objref (obj);
 }
-
-/*
- * 'freedom' routines.
- */
 
 static void
 IOP_component_free (IOP_Component_info *c)
@@ -732,10 +715,6 @@ IOP_profile_free (IOP_Profile_info *p)
 	g_free (p);
 }
 
-/*
- * marshalling routines.
- */
-
 static void
 IOP_ObjectKey_marshal (CORBA_Object                obj,
 		       GIOPSendBuffer             *buf,
@@ -809,18 +788,19 @@ IOP_TAG_CODE_SETS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 }
 
 static void
-IOP_UnknownComponent_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
-			     IOP_Component_info *ci)
+IOP_UnknownComponent_marshal (CORBA_Object        obj,
+			      GIOPSendBuffer     *buf, 
+			      IOP_Component_info *ci)
 {
-  IOP_UnknownComponent_info *uci = (IOP_UnknownComponent_info *)ci;
+	IOP_UnknownComponent_info *uci = (IOP_UnknownComponent_info *) ci;
 
-  giop_send_buffer_append(buf, uci->data._buffer, uci->data._length);
+	giop_send_buffer_append (buf, uci->data._buffer, uci->data._length);
 }
 
 static void
-IOP_components_marshal (CORBA_Object obj, 
+IOP_components_marshal (CORBA_Object    obj, 
 			GIOPSendBuffer *buf,
-			GSList *components)
+			GSList         *components)
 {
 	CORBA_unsigned_long  len;
 	GSList              *cur;

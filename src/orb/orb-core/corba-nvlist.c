@@ -12,14 +12,16 @@ CORBA_NVList_add_item (CORBA_NVList             list,
 {
 	CORBA_NamedValue newval;
 
-	g_assert (list!=NULL);
+	g_assert (list != NULL);
 
 	newval.name = CORBA_string_dup (item_name);
 
-	newval.argument._type = ORBit_RootObject_duplicate (item_type);
+	newval.argument._type = ORBit_RootObject_duplicate (
+		item_type);
 
 	if (item_flags & CORBA_IN_COPY_VALUE) {
-		newval.argument._value = ORBit_copy_value (value, item_type);
+		newval.argument._value = ORBit_copy_value (
+			value, item_type);
 		newval.argument._release = CORBA_TRUE;
 	} else {
 		newval.argument._value = value;
@@ -51,7 +53,8 @@ CORBA_NVList_free (CORBA_NVList       list,
 		for (i = 0; i < list->list->len; i++) {
 			CORBA_NamedValue *nv;
 
-			nv = &g_array_index (list->list, CORBA_NamedValue, i);
+			nv = &g_array_index (
+				list->list, CORBA_NamedValue, i);
 			ORBit_NamedValue_free (nv);
 		}
 
@@ -72,14 +75,14 @@ CORBA_NVList_free_memory (CORBA_NVList       list,
 		for (i = 0; i < list->list->len; i++) {
 			CORBA_NamedValue *nv;
 
-			nv = &g_array_index (list->list, CORBA_NamedValue, i);
+			nv = &g_array_index (
+				list->list, CORBA_NamedValue, i);
 
-			if (nv->argument._release) {
+			if (nv->argument._release)
 				ORBit_free (nv->argument._value);
-				nv->argument._value = 0;
-			}
+			nv->argument._value = NULL;
 			ORBit_RootObject_release (nv->argument._type);
-			nv->argument._type = 0;
+			nv->argument._type = NULL;
 		}
 	}
 }

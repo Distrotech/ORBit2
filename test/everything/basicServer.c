@@ -24,46 +24,45 @@
 
 static
 CORBA_char *
-BasicServer__get_foo(PortableServer_Servant servant,
-		     CORBA_Environment *ev)
+BasicServer__get_foo (PortableServer_Servant servant,
+		      CORBA_Environment     *ev)
 {
-  return CORBA_string_dup(constants_STRING_RETN);  
+	return CORBA_string_dup (constants_STRING_RETN);  
 }
-
 
 static
 void
-BasicServer__set_foo(PortableServer_Servant servant,
-		     const CORBA_char *val,
-		     CORBA_Environment *ev)
+BasicServer__set_foo (PortableServer_Servant servant,
+		      const CORBA_char      *val,
+		      CORBA_Environment     *ev)
 {
-  g_assert(strcmp(val,constants_STRING_IN)==0);
+	g_assert (!strcmp (val, constants_STRING_IN));
 }
 
 static
 CORBA_long
-BasicServer__get_bah(PortableServer_Servant servant,
-		     CORBA_Environment *ev)
+BasicServer__get_bah (PortableServer_Servant servant,
+		      CORBA_Environment     *ev)
 {
-  return constants_LONG_RETN;
+	return constants_LONG_RETN;
 }
-
 
 static  
 CORBA_char *
-BasicServer_opString(PortableServer_Servant servant,
-		     const CORBA_char* inArg, 
-		     CORBA_char **inoutArg,
-		     CORBA_char **outArg,
-		     CORBA_Environment *ev)
+BasicServer_opString (PortableServer_Servant servant,
+		      const CORBA_char* inArg, 
+		      CORBA_char **inoutArg,
+		      CORBA_char **outArg,
+		      CORBA_Environment *ev)
 {
-  g_assert(strcmp(inArg,constants_STRING_IN)==0);
-  g_assert(strcmp(*inoutArg,constants_STRING_INOUT_IN)==0);
+	g_assert (!strcmp (inArg, constants_STRING_IN));
+	g_assert (!strcmp (*inoutArg, constants_STRING_INOUT_IN));
   
-  CORBA_free(*inoutArg);
-  *inoutArg = CORBA_string_dup(constants_STRING_INOUT_OUT);
-  *outArg = CORBA_string_dup(constants_STRING_OUT);
-  return CORBA_string_dup(constants_STRING_RETN);
+	CORBA_free (*inoutArg);
+	*inoutArg = CORBA_string_dup (constants_STRING_INOUT_OUT);
+	*outArg = CORBA_string_dup (constants_STRING_OUT);
+
+	return CORBA_string_dup (constants_STRING_RETN);
 }
 
 static  

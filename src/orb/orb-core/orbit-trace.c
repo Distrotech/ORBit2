@@ -148,16 +148,15 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		break;
 
 	case CORBA_tk_string: {
-		char *p;
+		char *p, *str = g_strdup (*(char **)*val);
 
-		tprintf ("'");
-		for (p = *(char **)*val; p && *p; p++) {
-			if (isalnum ((int)*p))
-				tprintf ("%c", *p);
-			else
-				tprintf ("#");
+		for (p = str; p && *p; p++) {
+			if (!isascii ((int)*p))
+				*p = '#';
 		}
-		tprintf ("'");
+		tprintf ("'%s'", str);
+
+		g_free (str);
 		break;
 	}
 

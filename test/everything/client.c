@@ -26,8 +26,7 @@
 #include "everything.h"
 #include "constants.h"
 
-#undef TIMING_RUN
-#define NUM_RUNS 1000
+#define NUM_RUNS 1
 
 #ifdef TIMING_RUN
 #  define d_print(a)
@@ -195,7 +194,7 @@ testException (test_TestFactory   factory,
 {
 	test_BasicServer    objref;
 	test_TestException *ex;
-	CORBA_Environment  *cpyev;
+	CORBA_Environment  *cpyev, *rev;
 
 	d_print ("Testing exceptions...\n");
 
@@ -214,6 +213,7 @@ testException (test_TestFactory   factory,
 
 	cpyev = CORBA_exception__copy (ev);
 	CORBA_exception_free (ev);
+	rev = ev;
 	ev = cpyev;
 
 	g_assert (ev->_major == CORBA_USER_EXCEPTION);
@@ -229,8 +229,8 @@ testException (test_TestFactory   factory,
 
 	CORBA_free (cpyev);
 
-	CORBA_Object_release (objref, ev);  
-	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, rev);
+	g_assert (rev->_major == CORBA_NO_EXCEPTION);
 }
 
 gboolean
@@ -1006,7 +1006,7 @@ testMisc (test_TestFactory   factory,
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/BAD_OPERATION:1.0"));
 		CORBA_exception_free (ev);
 	}
-
+	
 	if (!in_proc) {
 		test_BasicServer objref;
 
@@ -1060,7 +1060,6 @@ testMisc (test_TestFactory   factory,
 		test_DeadReferenceObj obj;
 
 		obj = test_TestFactory_createDeadReferenceObj (factory, ev);
-
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		g_assert (obj != CORBA_OBJECT_NIL);
 
@@ -1260,8 +1259,10 @@ testPingPong (test_TestFactory   factory,
 	d_print ("Testing ping pong invocations ...\n");
 	r_objref = test_TestFactory_createPingPongServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
 	l_objref = TestFactory_createPingPongServer (NULL, ev);
-	CORBA_Object_release (l_objref, ev); /* only need base ref */
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (l_objref, ev); /* only want 1 ref */
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
@@ -1275,10 +1276,10 @@ testPingPong (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	CORBA_Object_release (objref, ev);
 
-	CORBA_Object_release (r_objref, ev);
+	CORBA_Object_release (l_objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	CORBA_Object_release (l_objref, ev);
+	CORBA_Object_release (r_objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
@@ -1303,6 +1304,7 @@ testSegv (test_TestFactory   factory,
 	if (!in_proc) {
 		gboolean broken = FALSE;
 		gboolean invoked = FALSE;
+		CORBA_char *id;
 
 		g_assert (ORBit_small_listen_for_broken (
 			factory, G_CALLBACK (broken_cb), &broken) ==
@@ -1316,7 +1318,8 @@ testSegv (test_TestFactory   factory,
 			factory, G_CALLBACK (dummy_cb)) ==
 			  ORBIT_CONNECTION_CONNECTED);
 
-		test_TestFactory_segv (factory, "do it!", ev); 
+		id = test_TestFactory_segv (factory, "do it!", ev); 
+#ifdef DO_HARDER_SEGV
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/COMM_FAILURE:1.0"));
 		CORBA_exception_free (ev);
@@ -1325,6 +1328,13 @@ testSegv (test_TestFactory   factory,
 			  ORBIT_CONNECTION_DISCONNECTED);
 		g_assert (broken);
 		g_assert (!invoked);
+#else
+		g_assert (ORBit_small_unlisten_for_broken (
+			factory, G_CALLBACK (broken_cb)) ==
+			  ORBIT_CONNECTION_CONNECTED);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		CORBA_free (id);
+#endif
 	}
 }
 
@@ -1371,11 +1381,7 @@ run_tests (test_TestFactory   factory,
 {
 	int i;
 
-#ifdef TIMING_RUN
 	for (i = 0; i < NUM_RUNS; i++) {
-#else
-	for (i = 0; i < 1; i++) {
-#endif
 		testConst ();
 		testAttribute (factory, ev);
 		testString (factory, ev);
@@ -1406,12 +1412,12 @@ run_tests (test_TestFactory   factory,
 		testAsync (factory, ev);
 		if (!in_proc)
 			testPingPong (factory, ev);
-#ifndef TIMING_RUN
+#if NUM_RUNS == 1
 		testSegv (factory, ev);
 #endif
 	}
 	
-#ifdef TIMING_RUN
+#if NUM_RUNS > 1
 	g_warning ("Did '%d' iterations", i);
 #endif
 }
@@ -1437,20 +1443,16 @@ main (int argc, char *argv [])
 	/* In Proc ... */
 	in_proc = TRUE;
 
-#ifndef TIMING_RUN
 	fprintf (stderr, "\n --- In proc ---\n\n\n");
-	{
-		factory = get_server (global_orb, &ev);
-		g_assert (factory->profile_list == NULL);
-		g_assert (ORBit_object_get_connection (factory) == NULL);
-		run_tests (factory, &ev);
-		CORBA_Object_release (factory, &ev);
-		g_assert (ev._major == CORBA_NO_EXCEPTION);
-		factory = CORBA_OBJECT_NIL;
-	}
-	fprintf (stderr, "\n\n --- Out of proc ---\n\n\n");
-#endif
+	factory = get_server (global_orb, &ev);
+	g_assert (factory->profile_list == NULL);
+	g_assert (ORBit_object_get_connection (factory) == NULL);
+	run_tests (factory, &ev);
+	CORBA_Object_release (factory, &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	factory = CORBA_OBJECT_NIL;
 
+	fprintf (stderr, "\n\n --- Out of proc ---\n\n\n");
 	in_proc = FALSE;
 
 	{ /* read the ior from iorfile, and swizzle to an objref*/

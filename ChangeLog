@@ -1,3 +1,70 @@
+2001-11-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (PortableServer_POA_servant_to_reference): 
+	dup the reference we return if we return the same twice ...
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): get the ORB via. the poa
+	and not the objref.
+
+	* src/orb/poa/poa.c (ORBit_POA_object_shutdown): impl.
+	(ORBit_POA_deactivate_object): free the environment after
+	setting it up.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): move the connection close
+	right to the end; it can re-enter, invoke
+	ORBit_POA_object_shutdown instead of an unref - the poa
+	holds a ref too ...
+
+	* test/everything/deadReference.c (DeadReferenceObj_test): 
+	release references, kill spurious global.
+
+	* test/everything/server.c (TestFactory_createDeadReferenceObj):
+	release the poa and the poa_current.
+
+	* test/everything/pingServer.c (PingPongServer_get),
+	(PingPongServer_set): don't leak.
+	(create_ping_pong_servant): upd.
+
+	* test/everything/server.c
+	(TestFactory_createPingPongServer): upd.
+
+	* src/orb/orb-core/corba-context.c
+	(ORBit_Context_demarshal): don't init me as a RootObject,
+	I'm static.
+
+	* src/orb/orb-core/corba-nvlist.c
+	(CORBA_NVList_free_memory): always blank the type &
+	value on free.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_create_list):
+	remove bogus 'no memory' op.
+
+	* test/everything/server.c (main): exit cleanly,
+	release the factory.
+
+2001-11-15  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testException): fix mem
+	corruption.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): don't ref here,
+	(giop_connection_list_add): ref here instead.
+	(giop_connection_list_remove): privatize.
+	(giop_connection_dispose): move locking into
+	(giop_connection_list_remove): here.
+	(giop_connection_dispose): protect vs. double disposes.
+	(giop_connection_list_lookup): accelerate & robustify.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_generate_profiles): re-flow & simplify confusion.
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_value): update so an strace doesn't give
+	us a thousand writes.
+
 2001-11-15  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/poa.c (ORBit_POAObject_handle_request): warn

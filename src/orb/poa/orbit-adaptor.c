@@ -10,10 +10,10 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 	ORBit_ObjectAdaptor   adaptor;
 	gint32                adaptorId;
 
-	if (objkey->_length < sizeof(gint32))
+	if (objkey->_length < sizeof (gint32))
 		return NULL;
 
-	memcpy (&adaptorId, objkey->_buffer, sizeof(gint32));
+	memcpy (&adaptorId, objkey->_buffer, sizeof (gint32));
 
 	if (adaptorId < 0 || adaptorId >= orb->adaptors->len)
 		return NULL;

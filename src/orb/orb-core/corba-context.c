@@ -141,21 +141,20 @@ typedef struct {
 } CTXSearchInfo;
 
 static gboolean
-list_has_key(CORBA_NVList list, const char *key)
+list_has_key (CORBA_NVList list, const char *key)
 {
-  int i;
+	int i;
 
-  for(i = 0; i < list->list->len; i++)
-    {
-      CORBA_NamedValue *nvp;
+	for (i = 0; i < list->list->len; i++) {
+		CORBA_NamedValue *nvp;
 
-      nvp = ((CORBA_NamedValue *)list->list->data) + i;
+		nvp = ((CORBA_NamedValue *)list->list->data) + i;
 
-      if(!strcmp(nvp->name, key))
-	return TRUE;
-    }
+		if (!strcmp(nvp->name, key))
+			return TRUE;
+	}
 
-  return FALSE;
+	return FALSE;
 }
 
 static void
@@ -229,48 +228,49 @@ CORBA_Context_get_values (CORBA_Context      ctx,
 			  CORBA_NVList      *values,
 			  CORBA_Environment *ev)
 {
-  char *ctmp;
-  int wc_pos;
+	char *ctmp;
+	int wc_pos;
 
-  if(start_scope && *start_scope)
-    {
-      while(ctx && (!ctx->the_name || strcmp(ctx->the_name, start_scope)))
-	ctx = ctx->parent_ctx;
+	if (start_scope && *start_scope) {
+		while (ctx && (!ctx->the_name ||
+			       strcmp (ctx->the_name, start_scope)))
+			ctx = ctx->parent_ctx;
 
-      if(!ctx)
-	{
-	  CORBA_exception_set_system(ev, ex_CORBA_INV_IDENT, CORBA_COMPLETED_NO);
-	  return;
+		if (!ctx) {
+			CORBA_exception_set_system (
+				ev, ex_CORBA_INV_IDENT, CORBA_COMPLETED_NO);
+			return;
+		}
 	}
-    }
 
-  ctmp = strchr(prop_name, '*');
-  if(ctmp)
-    wc_pos = ctmp - prop_name;
-  else
-    wc_pos = -1;
+	ctmp = strchr (prop_name, '*');
+	if (ctmp)
+		wc_pos = ctmp - prop_name;
+	else
+		wc_pos = -1;
 
-  CORBA_ORB_create_list(CORBA_OBJECT_NIL, 0, values, ev);
+	CORBA_ORB_create_list (CORBA_OBJECT_NIL, 0, values, ev);
 
-  ctx_get_values(ctx, op_flags, prop_name, values, (prop_name[strlen(prop_name) - 1] == '*'), ev);
+	ctx_get_values (ctx, op_flags, prop_name, values,
+			(prop_name [strlen (prop_name) - 1] == '*'), ev);
 
-  if((*values)->list->len == 0)
-    {
-      CORBA_NVList_free(*values, ev);
-      *values = NULL;
-      CORBA_exception_set_system(ev, ex_CORBA_UNKNOWN, CORBA_COMPLETED_NO);
-    }
+	if ((*values)->list->len == 0) {
+		CORBA_NVList_free (*values, ev);
+		*values = NULL;
+		CORBA_exception_set_system (
+			ev, ex_CORBA_UNKNOWN, CORBA_COMPLETED_NO);
+	}
 }
 
 static void
-delete_props(gpointer key, gpointer value, CTXSearchInfo *csi)
+delete_props (gpointer key, gpointer value, CTXSearchInfo *csi)
 {
-  if(strncmp(key, csi->prop_name, csi->len))
-    return;
+	if (strncmp (key, csi->prop_name, csi->len))
+		return;
 
-  g_hash_table_remove(csi->ctx->mappings, key);
-  g_free(key);
-  g_free(value);
+	g_hash_table_remove (csi->ctx->mappings, key);
+	g_free (key);
+	g_free (value);
 }
 
 void
@@ -320,16 +320,17 @@ CORBA_Context_create_child (CORBA_Context      ctx,
 			    CORBA_Context     *child_ctx,
 			    CORBA_Environment *ev)
 {
-  *child_ctx = CORBA_Context_new(ctx, ctx_name, ev);
+	*child_ctx = CORBA_Context_new (ctx, ctx_name, ev);
 }
 
 void
-CORBA_Context_delete(CORBA_Context ctx, const CORBA_Flags del_flags,
-		     CORBA_Environment * ev)
+CORBA_Context_delete (CORBA_Context      ctx,
+		      const CORBA_Flags  del_flags,
+		      CORBA_Environment *ev)
 {
-  if((del_flags & CORBA_CTX_DELETE_DESCENDENTS)
-     || !ctx->children)
-    free_child(ctx, NULL);
+	if ((del_flags & CORBA_CTX_DELETE_DESCENDENTS) ||
+	    !ctx->children)
+		free_child (ctx, NULL);
 }
 
 void
@@ -376,81 +377,80 @@ ORBit_Context_marshal (CORBA_Context                   ctx,
 #define ALIGNFOR(x) recv_buffer->cur = ALIGN_ADDRESS(recv_buffer->cur, sizeof(x))
 
 gboolean
-ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
-			GIOPRecvBuffer *buf)
+ORBit_Context_demarshal (CORBA_Context   parent,
+			 CORBA_Context   initme,
+			 GIOPRecvBuffer *buf)
 {
-  CORBA_unsigned_long nstrings, keylen, vallen, i;
-  char *key, *value;
+	CORBA_unsigned_long nstrings, keylen, vallen, i;
+	char               *key, *value;
 
-  ORBit_RootObject_init(ORBIT_ROOT_OBJECT(initme), &CORBA_Context_epv);
-  initme->parent.refs = ORBIT_REFCOUNT_STATIC;
+	initme->parent.refs = ORBIT_REFCOUNT_STATIC;
 
-  initme->parent_ctx = parent;
+	initme->parent_ctx = parent;
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    goto errout;
-  nstrings = *(CORBA_unsigned_long *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    nstrings = GUINT32_SWAP_LE_BE(nstrings);
-  buf->cur += 4;
-  if((buf->cur + nstrings*8) > buf->end)
-    goto errout;
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+	if ((buf->cur + 4) > buf->end)
+		goto errout;
+	nstrings = *(CORBA_unsigned_long *) buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		nstrings = GUINT32_SWAP_LE_BE (nstrings);
+	buf->cur += 4;
+	if ((buf->cur + nstrings * 8) > buf->end)
+		goto errout;
 
-  if(nstrings)
-    initme->mappings = g_hash_table_new(g_str_hash, g_str_equal);
-  else
-    {
-      initme->mappings = NULL;
-      goto errout;
-    }
+	if (nstrings)
+		initme->mappings = g_hash_table_new (g_str_hash, g_str_equal);
+	else {
+		initme->mappings = NULL;
+		goto errout;
+	}
 
-  for(i = 0; i < nstrings; )
-    {
-      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 4) > buf->end)
-	goto errout;
-      keylen = *(CORBA_unsigned_long *)buf->cur;
-      if(giop_msg_conversion_needed(buf))
-	keylen = GUINT32_SWAP_LE_BE(keylen);
-      buf->cur += 4;
-      if((buf->cur + keylen) > buf->end
-	 || (buf->cur + keylen) < buf->cur)
-	goto errout;
-      key = buf->cur;
-      buf->cur += keylen;
-      i++;
+	for (i = 0; i < nstrings; ) {
+		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+		if ((buf->cur + 4) > buf->end)
+			goto errout;
+		keylen = *(CORBA_unsigned_long *) buf->cur;
+		if (giop_msg_conversion_needed (buf))
+			keylen = GUINT32_SWAP_LE_BE(keylen);
+		buf->cur += 4;
+		if ((buf->cur + keylen) > buf->end ||
+		    (buf->cur + keylen) < buf->cur)
+			goto errout;
+		key = buf->cur;
+		buf->cur += keylen;
+		i++;
 
-      if(i >= nstrings)
-	break;
+		if (i >= nstrings)
+			break;
 
-      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 4) > buf->end)
-	goto errout;
-      vallen = *(CORBA_unsigned_long *)buf->cur;
-      if(giop_msg_conversion_needed(buf))
-	vallen = GUINT32_SWAP_LE_BE(vallen);
-      buf->cur += 4;
-      if((buf->cur + vallen) > buf->end
-	 || (buf->cur + vallen) < buf->cur)
-	goto errout;
-      value = buf->cur;
-      buf->cur += vallen;
-      i++;
+		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+		if ((buf->cur + 4) > buf->end)
+			goto errout;
+		vallen = *(CORBA_unsigned_long *) buf->cur;
+		if (giop_msg_conversion_needed (buf))
+			vallen = GUINT32_SWAP_LE_BE(vallen);
+		buf->cur += 4;
+		if ((buf->cur + vallen) > buf->end ||
+		    (buf->cur + vallen) < buf->cur)
+			goto errout;
+		value = buf->cur;
+		buf->cur += vallen;
+		i++;
 
-      g_hash_table_insert(initme->mappings, key, value);
-    }
+		g_hash_table_insert (initme->mappings, key, value);
+	}
 
-  return FALSE;
+	return FALSE;
 
  errout:
-  if(initme->mappings)
-    g_hash_table_destroy(initme->mappings);
-  return TRUE;
+	if (initme->mappings)
+		g_hash_table_destroy (initme->mappings);
+
+	return TRUE;
 }
 
 void
-ORBit_Context_server_free(CORBA_Context ctx)
+ORBit_Context_server_free (CORBA_Context ctx)
 {
-  g_hash_table_destroy(ctx->mappings);
+	g_hash_table_destroy (ctx->mappings);
 }

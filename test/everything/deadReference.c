@@ -20,8 +20,6 @@
 
 #include "everything.h"
 
-CORBA_Object dead_reference;
-
 static void
 DeadReferenceObj_test (PortableServer_Servant  servant,
 		       CORBA_Environment      *ev)
@@ -45,6 +43,10 @@ DeadReferenceObj_test (PortableServer_Servant  servant,
 
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (obj != CORBA_OBJECT_NIL);
+
+	CORBA_Object_release ((CORBA_Object) obj, ev);
+	CORBA_Object_release ((CORBA_Object) poa, ev);
+	CORBA_Object_release ((CORBA_Object) poa_current, ev);
 }
 
 static PortableServer_ServantBase__epv DeadReferenceObj_base_epv = {

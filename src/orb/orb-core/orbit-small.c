@@ -667,7 +667,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	do_giop_dump_recv (recv_buffer);
 
-	orb = adaptor_obj->objref->orb;
+	orb = ((ORBit_POAObject)adaptor_obj)->poa->orb;
 
 	has_context = (m_data->contexts._length > 0);
 

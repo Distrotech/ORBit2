@@ -4,7 +4,11 @@
 
 extern PortableServer_POA global_poa;
 
-static CORBA_Object registered = CORBA_OBJECT_NIL;
+typedef struct {
+	POA_test_PingPongServer baseServant;
+
+	CORBA_Object            registered;
+} test_PingPongServer_Servant;
 
 static void
 PingPongServer_set (PortableServer_Servant    servant,
@@ -12,7 +16,11 @@ PingPongServer_set (PortableServer_Servant    servant,
 		    const CORBA_char          *name,
 		    CORBA_Environment        *ev)
 {
-	registered = CORBA_Object_duplicate (object, ev);
+	test_PingPongServer_Servant *this;
+
+	this = (test_PingPongServer_Servant *) servant;
+
+	this->registered = CORBA_Object_duplicate (object, ev);
 }
 
 static CORBA_Object
@@ -20,7 +28,11 @@ PingPongServer_get (PortableServer_Servant    servant,
 		    const CORBA_char          *name,
 		    CORBA_Environment        *ev)
 {
-	return CORBA_Object_duplicate (registered, ev);
+	test_PingPongServer_Servant *this;
+
+	this = (test_PingPongServer_Servant *) servant;
+
+	return CORBA_Object_duplicate (this->registered, ev);
 }
 
 static void
@@ -38,7 +50,7 @@ PingPongServer_pingPong (PortableServer_Servant    servant,
 			 const CORBA_long          idx,
 			 CORBA_Environment        *ev)
 {
-
+	CORBA_long   ret;
 	CORBA_Object me;
 
 	me = PortableServer_POA_servant_to_reference (
@@ -48,15 +60,25 @@ PingPongServer_pingPong (PortableServer_Servant    servant,
 	test_PingPongServer_opOneWay (replyTo, 3, ev);
 
 	if (idx > 0)
-		return test_PingPongServer_pingPong (replyTo, me, idx - 1, ev);
+		ret = test_PingPongServer_pingPong (replyTo, me, idx - 1, ev);
 	else
-		return 0;
+		ret = 0;
+
+	CORBA_Object_release (me, ev);
+
+	return ret;
 }
 
 static void
 ping_pong_finalize (PortableServer_Servant servant,
 		    CORBA_Environment     *ev)
 {
+	test_PingPongServer_Servant *this;
+
+	this = (test_PingPongServer_Servant *) servant;
+
+	CORBA_Object_release (this->registered, ev);
+
 	g_free (servant);
 }
 
@@ -80,11 +102,12 @@ POA_test_PingPongServer__vepv PingPongServer_vepv = {
 POA_test_PingPongServer *
 create_ping_pong_servant (void)
 {
-	POA_test_PingPongServer *servant;
+	test_PingPongServer_Servant *servant;
 	
-	servant = g_new0 (POA_test_PingPongServer, 1);
-	servant->vepv = &PingPongServer_vepv;
+	servant = g_new0 (test_PingPongServer_Servant, 1);
+	servant->baseServant.vepv = &PingPongServer_vepv;
 
-	return servant;
+	servant->registered = CORBA_OBJECT_NIL;
+
+	return (POA_test_PingPongServer *) servant;
 };
-
