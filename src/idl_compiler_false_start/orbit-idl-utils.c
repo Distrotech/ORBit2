@@ -1,7 +1,8 @@
 #include "config.h"
 
-#include "orbit-idl2.h"
+#include "orbit-idl3.h"
 
+#if 0
 void
 orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 {
@@ -52,6 +53,7 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 
   g_string_free(attrname, TRUE);
 }
+#endif
 
 #define INDENT_INCREMENT_1 2
 #define INDENT_INCREMENT_2 4
@@ -354,6 +356,7 @@ orbit_idl_print_node(IDL_tree node, int indent_level)
   }
 }
 
+#if 0
 void
 oidl_marshal_tree_dump(IDL_tree tree, int indent_level)
 {
@@ -519,6 +522,7 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     break;
   }
 } 
+#endif
 
 IDL_tree
 orbit_idl_get_array_type(IDL_tree tree)
@@ -561,6 +565,7 @@ orbit_idl_member_get_name(IDL_tree tree)
   return NULL;
 }
 
+#if 0
 void
 orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
 {
@@ -606,6 +611,7 @@ orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
     break;
   }
 }
+#endif
 
 static void
 IDL_tree_traverse_helper(IDL_tree p, GFunc f,

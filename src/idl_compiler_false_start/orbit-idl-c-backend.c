@@ -9,7 +9,7 @@ static FILE *out_for_pass(const char *input_filename, int pass,
 			  OIDL_Run_Info *rinfo);
 
 void
-orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
+orbit_idl_output_c(IDL_tree tree, OIDL_Run_Info *rinfo)
 {
   int i;
   char *ctmp;
@@ -36,19 +36,19 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
       
       switch(1 << i) {
-      case OUTPUT_STUBS:
+      case OIDL_OUTPUT_STUBS:
 	orbit_idl_output_c_stubs(tree, rinfo, &ci);
 	break;
-      case OUTPUT_SKELS:
+      case OIDL_OUTPUT_SKELS:
 	orbit_idl_output_c_skeletons(tree, rinfo, &ci);
 	break;
-      case OUTPUT_COMMON:
+      case OIDL_OUTPUT_COMMON:
 	orbit_idl_output_c_common(tree, rinfo, &ci);
 	break;
-      case OUTPUT_HEADERS:
+      case OIDL_OUTPUT_HEADERS:
 	orbit_idl_output_c_headers(tree, rinfo, &ci);
 	break;
-      case OUTPUT_SKELIMPL:
+      case OIDL_OUTPUT_SKELIMPL:
 	orbit_idl_output_c_skelimpl(tree, rinfo, &ci);
 	break;
       }
@@ -76,19 +76,19 @@ out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
   *ctmp = '\0';
 
   switch(pass) {
-  case OUTPUT_STUBS:
+  case OIDL_OUTPUT_STUBS:
     tack_on = "-stubs.c";
     break;
-  case OUTPUT_SKELS:
+  case OIDL_OUTPUT_SKELS:
     tack_on = "-skels.c";
     break;
-  case OUTPUT_COMMON:
+  case OIDL_OUTPUT_COMMON:
     tack_on = "-common.c";
     break;
-  case OUTPUT_HEADERS:
+  case OIDL_OUTPUT_HEADERS:
     tack_on = ".h";
     break;
-  case OUTPUT_SKELIMPL:
+  case OIDL_OUTPUT_SKELIMPL:
     tack_on = "-skelimpl.c";
     break;
   default:

@@ -4,8 +4,9 @@
 /* Define to the command to indent the output code with, must read stdin.  */
 #undef INDENT_COMMAND
 
+#undef HAVE_LIMITED_WRITEV
+
 #undef HAVE_INET_ATON
-#undef ORBIT_SERIAL
 
 /* Define to 'int' if it isn't defined in the header files. */
 #undef socklen_t

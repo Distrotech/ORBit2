@@ -426,6 +426,7 @@ orbit_cbe_write_const(FILE *of, IDL_tree tree)
   g_free(ctmp);
 }
 
+#if 0
 static char *
 orbit_cbe_get_const_node(OIDL_Marshal_Node *node)
 {
@@ -475,7 +476,7 @@ orbit_cbe_write_node_typespec(FILE *of, OIDL_Marshal_Node *node)
   } else
     g_error("Don't know how to write a typespec for node type %d.", node->type);
 }
-
+#endif
 
 /* This is the WORST HACK in the WORLD, really truly, but the C preprocessor doesn't allow us to use
    strings, so we have to work around it by using individual characters. */
@@ -503,6 +504,7 @@ orbit_cbe_id_cond_hack(FILE *fh, const char *def_prefix, const char *def_name, c
   fprintf(fh, ")");
 }
 
+#if 0
 static void
 orbit_cbe_alloc_tmpvar(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
@@ -542,3 +544,4 @@ orbit_cbe_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
   orbit_idl_node_foreach(node, (GFunc)orbit_cbe_alloc_tmpvar, ci);
 }
+#endif
