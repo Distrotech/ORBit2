@@ -252,7 +252,7 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 }
 
 /* CORBA_tk_, CORBA_ type, C-stack type, wire size in bits, wire size in bytes, print format */
-#define _ORBIT_BASE_TYPES							\
+#define _ORBIT_BASE_TYPE_MACRO							\
 	_ORBIT_HANDLE_TYPE (short, short, int, 16, 2, "%d");			\
 	_ORBIT_HANDLE_TYPE (long, long, int, 32, 4, "0x%x");			\
 	_ORBIT_HANDLE_TYPE (enum, long, int, 32, 4, "%d");			\
@@ -265,6 +265,20 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 	_ORBIT_HANDLE_TYPE (float, float, double, 32, 4, "%f");			\
 	_ORBIT_HANDLE_TYPE (double, double, double, 64, 8, "%g");
 
+#define CORBA_BASE_TYPES \
+	     CORBA_tk_short: \
+	case CORBA_tk_long: \
+	case CORBA_tk_ushort: \
+	case CORBA_tk_ulong: \
+	case CORBA_tk_float: \
+	case CORBA_tk_double: \
+	case CORBA_tk_boolean: \
+	case CORBA_tk_char: \
+	case CORBA_tk_octet: \
+	case CORBA_tk_longlong: \
+	case CORBA_tk_ulonglong: \
+	case CORBA_tk_longdouble: \
+	case CORBA_tk_wchar
 
 typedef struct {
 	CORBA_unsigned_long len;
@@ -328,19 +342,13 @@ _ORBit_generic_marshal (CORBA_Object           obj,
 				  ORBit_I_ARG_INOUT)))
 			continue;
 		tc = a->tc;
- alias_on_arg:
+
+		while (tc->kind == CORBA_tk_alias)
+			tc = tc->subtypes [0];
+
 		dump_arg (a, tc);
 
-		if (tc->kind == CORBA_tk_alias) {
-			tc = tc->subtypes [0];
-			goto alias_on_arg;
-		}
-
-		/* FIXME: This looks too simple ! complicate it. */
-		if (a->flags & ORBit_I_ARG_INOUT)
-			p = *(gpointer *)args [i];
-		else if (a->flags & ORBit_I_ARG_IN)
-			p = args [i];
+		p = args [i];
 		
 		do_marshal_value (send_buffer, &p, tc, &mi);
 
@@ -398,20 +406,15 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 		dprintf ("ret: ");
 		g_assert (ret != NULL);
 
- alias_on_return:
+		while (tc->kind == CORBA_tk_alias)
+			tc = tc->subtypes [0];
+
 		switch (tc->kind) {
 
-		case CORBA_tk_alias:
-			tc = tc->subtypes[0];
-			goto alias_on_return;
-
-#define _ORBIT_HANDLE_TYPE(tk,ct,st,bt,by,fmt) \
-			case CORBA_tk_##tk:
-			_ORBIT_BASE_TYPES
-				do_demarshal_value (recv_buffer, &ret, tc, TRUE, obj->orb);
-				dprintf ("base type");
-				break;
-#undef _ORBIT_HANDLE_TYPE				       
+		case CORBA_BASE_TYPES:
+			do_demarshal_value (recv_buffer, &ret, tc, TRUE, obj->orb);
+			dprintf ("base type");
+			break;
 
 		case CORBA_tk_objref:
 		case CORBA_tk_TypeCode:
@@ -462,6 +465,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 		for (i = 0; (m_data->arguments._buffer &&
 			     m_data->arguments._buffer [i].flags); i++) {
 			const ORBit_IArg *a;
+			gpointer          arg;
 
 			a = &m_data->arguments._buffer [i];
 
@@ -471,55 +475,35 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 
 			tc = a->tc;
 
- alias_on_arg:
+			while (tc->kind == CORBA_tk_alias)
+				tc = tc->subtypes [0];
+
 			dump_arg (a, tc);
 
+			if (a->flags & ORBit_I_ARG_OUT)
+				arg = *(gpointer *)args [i];
+			else
+				arg = args [i];
+
 			switch (tc->kind) {
-			case CORBA_tk_alias:
-				tc = tc->subtypes[0];
-				goto alias_on_arg;
-				
-				/* FIXME: we need to release the original
-				   reference */
-#define _ORBIT_HANDLE_TYPE(tk,ct,st,bt,by,fmt) \
-			case CORBA_tk_##tk:
-			_ORBIT_BASE_TYPES {
-				gpointer arg = *(gpointer *)args [i];
-				do_demarshal_value (
-					recv_buffer, &arg, tc, TRUE, obj->orb);
-				dprintf ("base type");
-				break;
-			}
-#undef _ORBIT_HANDLE_TYPE				       
-
+			case CORBA_BASE_TYPES:
 			case CORBA_tk_objref:
-			case CORBA_tk_TypeCode: {
-				CORBA_TypeCode *arg = args [i];
-
-				if (a->flags & ORBit_I_ARG_INOUT)
-					CORBA_Object_release ((CORBA_Object) *arg, ev);
-
-				do_demarshal_value (
-					recv_buffer, (gpointer) &arg, tc, TRUE, obj->orb);
-
-				dprintf ("typecode");
-				break;
-			}
-
+			case CORBA_tk_TypeCode:
 			case CORBA_tk_string:
 			case CORBA_tk_wstring: {
-				gpointer *arg = *(gpointer *)args [i];
-				data = ORBit_demarshal_arg (recv_buffer,
-							    tc, TRUE, obj->orb);
-				if (!data || !arg)
-					return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
-				
-				if (a->flags & ORBit_I_ARG_INOUT &&
-				    !(a->flags & ORBit_I_COMMON_FIXED_SIZE))
-					CORBA_free (*arg);
-				
-				*arg = *((gpointer *) data);
-				dprintf (" '%s' into %p", (char *) *arg, arg);
+
+				if (a->flags & ORBit_I_ARG_INOUT) {
+					if (tc->kind == CORBA_tk_TypeCode ||
+					    tc->kind == CORBA_tk_objref)
+						CORBA_Object_release (arg, ev);
+					else if (tc->kind == CORBA_tk_string ||
+						 tc->kind == CORBA_tk_wstring)
+						CORBA_free (*(gpointer *) arg);
+				}
+
+				do_demarshal_value (
+					recv_buffer, &arg, tc, TRUE, obj->orb);
+				dprintf ("base / allocated type");
 				break;
 			}
 
@@ -529,32 +513,18 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 			case CORBA_tk_struct:
 			case CORBA_tk_array:
 			case CORBA_tk_any: {
-				gpointer p;
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE)
+					do_demarshal_value (recv_buffer, &arg, tc, TRUE, obj->orb);
 
-				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
-					p = *(gpointer *)args [i];
-					do_demarshal_value (recv_buffer, &p, tc, TRUE, obj->orb);
-				} else if (a->flags & ORBit_I_ARG_INOUT) {
-					/* FIXME: ghastly - we need to free any child
-					 * elements of this non dynamicaly allocated
-					 * structure: use __freekids ?*/
-/*					CORBA_free (*(gpointer *)args [i]);*/
-					p = *(gpointer *)args [i];
-					do_demarshal_value (recv_buffer, &p, tc, TRUE, obj->orb);
+				else if (a->flags & ORBit_I_ARG_INOUT) {
+					ORBit_freekids_via_TypeCode (tc, arg);
+					do_demarshal_value (recv_buffer, &arg, tc, TRUE, obj->orb);
 				} else /* Out */
 					*(gpointer *)args [i] = ORBit_demarshal_arg (
 						recv_buffer, tc, TRUE, obj->orb);
 				break;
 			}
  
-			case CORBA_tk_longlong:
-			case CORBA_tk_ulonglong:
-			case CORBA_tk_longdouble:
-			case CORBA_tk_null:
-			case CORBA_tk_void:
-				g_warning ("Non-sensible type %d",
-					   tc->kind);
-				break;
 			default:
 				g_warning ("Unknown type %d",
 					   tc->kind);
@@ -730,30 +700,12 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	for (i = 0; i < m_data->arguments._length; i++) {
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
 		
-		if (a->flags & ORBit_I_ARG_IN)
+		if (a->flags & ORBit_I_ARG_IN ||
+		    a->flags & ORBit_I_ARG_INOUT)
 			args [i] = ORBit_demarshal_arg (
 				recv_buffer, a->tc, TRUE, orb);
-		
-		else if (a->flags & ORBit_I_ARG_INOUT) {
-			tc = a->tc;
- alias_on_inout:
-			switch (tc->kind) {
-				
-			case CORBA_tk_alias:
-				tc = tc->subtypes[0];
-				goto alias_on_inout;
-				
-			case CORBA_tk_array:
-				args [i] = ORBit_demarshal_arg (
-					recv_buffer, a->tc, TRUE, orb);
-				break;
-			default:
-				args [i] = &scratch [i];
-				scratch [i] = ORBit_demarshal_arg (
-					recv_buffer, a->tc, TRUE, orb);
-				break;
-			}
-		} else { /* OUT */
+
+		else { /* OUT */
 			args [i] = &scratch [i];
 			scratch [i] = ORBit_alloc_tcval (a->tc, 1);
 		}
@@ -784,20 +736,16 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		if ((tc = m_data->ret)) {
 			dprintf ("ret: ");
 
-		alias_on_return:
+			while (tc->kind == CORBA_tk_alias)
+				tc = tc->subtypes [0];
+
 			switch (tc->kind) {
 				
-			case CORBA_tk_alias:
-				tc = tc->subtypes[0];
-				goto alias_on_return;
-				
-#define _ORBIT_HANDLE_TYPE(tk,ct,st,bt,by,fmt) \
-			case CORBA_tk_##tk:
-				_ORBIT_BASE_TYPES
-					ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
+			case CORBA_BASE_TYPES: {
+				ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
 				dprintf ("base type");
 				break;
-#undef _ORBIT_HANDLE_TYPE				       
+			}
 				
 			case CORBA_tk_objref:
 			case CORBA_tk_TypeCode:
@@ -827,6 +775,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 				break;
 			default:
 				g_assert_not_reached ();
+				break;
 			}
 			dprintf ("\n");
 		}
@@ -839,21 +788,15 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 				tc = tc->subtypes [0];
 			
 			if (a->flags & ORBit_I_ARG_IN)
-;//				CORBA_free (args [i]);
+				CORBA_free (args [i]);
 			
-			else  if (a->flags & ORBit_I_ARG_INOUT) {
-				/* FIXME: deal with allocation fun */
-				if (tc->kind == CORBA_tk_array)
-					ORBit_marshal_arg (send_buffer, args [i], tc);
-				else
-					ORBit_marshal_arg (send_buffer, scratch [i], tc);
-//				CORBA_free (scratch [i]);
+			else if (a->flags & ORBit_I_ARG_INOUT) {
+				ORBit_marshal_arg (send_buffer, args [i], tc);
+				CORBA_free (args [i]);
+
 			} else { /* OUT */
-				if (tc->kind == CORBA_tk_array)
-					ORBit_marshal_arg (send_buffer, args [i], a->tc);
-				else
-					ORBit_marshal_arg (send_buffer, scratch [i], a->tc);
-//				CORBA_free (scratch [i]);
+				ORBit_marshal_arg (send_buffer, scratch [i], tc);
+				CORBA_free (scratch [i]);
 			}
 		}
 	}
