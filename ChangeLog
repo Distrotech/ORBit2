@@ -1,3 +1,9 @@
+2003-11-17  Frank Rehberger  <frehberg@xtradyne.de>
+
+	* src/orb/GIOP/giop.c (giop_mainloop_handle_input): invoke
+	giop_thread_queue_process with specific GIOPThread object instead
+	NULL.
+
 2003-11-15  Frank Rehberger  <frehberg@xtradyne.de>
 
 	* src/idl-compiler/orbit-idl-c-skelimpl.c (cbe_ski_do_interface):

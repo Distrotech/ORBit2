@@ -447,7 +447,7 @@ giop_mainloop_handle_input (GIOChannel     *source,
 	LINK_MUTEX_LOCK (tdata->lock);
 	while (!giop_thread_queue_empty_T (tdata)) {
 		LINK_MUTEX_UNLOCK (tdata->lock);
-		giop_thread_queue_process (NULL);
+		giop_thread_queue_process (tdata);
 		LINK_MUTEX_LOCK (tdata->lock);
 	}
 	LINK_MUTEX_UNLOCK (tdata->lock);
