@@ -940,7 +940,7 @@ static gboolean
 giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 			    gboolean        is_auth)
 {
-	dprintf (GIOP, "Incoming IIOP data:\n");
+	dprintf (GIOP, "Incoming IIOP header:\n");
 
 	do_giop_dump (stderr, (guint8 *)buf, 12, 0);
 
@@ -1043,32 +1043,33 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				buf->state = GIOP_MSG_READING_BODY;
 				break;
 
-			case GIOP_MSG_READING_BODY:
+			case GIOP_MSG_READING_BODY: {
+				
+				dprintf (GIOP, "Incoming IIOP body:\n");
+
+				buf->cur = buf->message_body + 12;
+				if ((buf->cur + buf->msg.header.message_size) > buf->end)
+					goto msg_error;
+				do_giop_dump (stderr, buf->cur, buf->msg.header.message_size, 0);
+
 				buf->state = GIOP_MSG_READY;
+
+				if (giop_recv_buffer_demarshal (buf))
+					goto msg_error;
 
 				if (MORE_FRAGMENTS_FOLLOW (buf)) {
 					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
 					else
 						goto frag_out;
-				} else {
-					buf->cur = buf->message_body + 12;
 
-					if ((buf->cur + buf->msg.header.message_size) > buf->end)
+				} else if (buf->msg.header.message_type == GIOP_FRAGMENT) {
+					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
-
-					do_giop_dump (stderr, buf->message_body + 12,
-						      buf->msg.header.message_size, 12);
-
-					if (giop_recv_buffer_demarshal (buf))
-						goto msg_error;
-
-					if (buf->msg.header.message_type == GIOP_FRAGMENT) {
-						if (giop_recv_buffer_handle_fragmented (&buf, cnx))
-							goto msg_error;
-					}
+					/* else last fragment */
 				}
 				break;
+			}
 
 			case GIOP_MSG_AWAITING_FRAGMENTS:
 			case GIOP_MSG_READY:

@@ -1,6 +1,12 @@
 2002-06-05  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): more re-arrangement,
+	and death of sillies.
+
+2002-06-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_connection_handle_input): upd. frag_out to move
 	onto the next incoming buffer properly.
 
