@@ -27,7 +27,8 @@ giop_server_get_type(void)
       
       object_type = g_type_register_static (linc_server_get_type(),
                                             "GIOPServer",
-                                            &object_info);
+                                            &object_info,
+					    G_TYPE_FLAG_INSTANTIATABLE);
     }  
 
   return object_type;
