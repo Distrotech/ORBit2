@@ -1,5 +1,13 @@
 2001-09-04 Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/poa/Makefile.am,
+	  src/orb/dynamic/Makefile.am,
+	  src/orb/orb-core/Makefile.am: add --noheaders
+	options to fix build dependancy problem and remove
+	headers from BUILTS_SOURCES.
+
+2001-09-04 Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-orb.c(CORBA_ORB_shutdown):
 	quit linc's main loop.
 
