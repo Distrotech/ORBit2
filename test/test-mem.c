@@ -173,6 +173,7 @@ get_procmem (void) {
 		g_warning ("parse error, executing \"%s\" failed", cmd);
 		break;
 	default:
+		break;
 	}
 	pclose (handle);	
 	return ret;
@@ -240,6 +241,9 @@ main_func(int argc, char *argv[]) {
 	LEAK_DETECT_WITH_TOLERANCE (1000, test_activate_deactivate (poa, ev), 50);
 
         /* tear down the ORB */
+	CORBA_Object_release ((CORBA_Object) poa_manager, ev);
+	g_assert (!ORBIT_EX (ev));
+
 	CORBA_Object_release ((CORBA_Object) poa, ev);
 	g_assert (!ORBIT_EX (ev));
 

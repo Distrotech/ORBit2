@@ -1,3 +1,31 @@
+2003-09-29  Michael Meeks  <michael@ximian.com>
+
+	* test/test-mem.c (main_func): release refs we own.
+
+	* test/test-performance.c (test_activation): destroy
+	the child poa nicely.
+
+	* src/orb/poa/poa.c (PortableServer_POA_destroy):
+	hold the POA lock, re-flow.
+	(ORBit_POA_destroy_T): upd. lock/unlock children.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection_T): clean warnings.
+
+	* src/orb/poa/poa.c (ORBit_POA_deactivate_object_T):
+	rename to this.
+	(ORBit_POAObject_handle_request): upd, hold a poa
+	ref. for longer.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_destroy, shutdown_orb): stop the g_atexit
+	case from moaning about leaked references, if we have to
+	do work here, then someone didn't do a debug_shutdown
+	properly anyway, so it will always moan annoyingly.
+
+	* src/orb/orb-core/orbit-object.c
+	(ORBit_RootObject_shutdown): add non-moaning option
+
 2003-09-29  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* src/orb/orb-core/orbit-typelib.c (add_if_unique) 

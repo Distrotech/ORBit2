@@ -160,6 +160,8 @@ test_activation (void)
 
 	POA_Test__fini (&test_servant, &env);
 
+	PortableServer_POA_destroy (poa, CORBA_FALSE, CORBA_FALSE, &env);
+	g_assert (env._major == CORBA_NO_EXCEPTION);
 	CORBA_Object_release ((CORBA_Object) poa, &env);
 	g_assert (env._major == CORBA_NO_EXCEPTION);
 

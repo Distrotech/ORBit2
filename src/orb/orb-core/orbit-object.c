@@ -65,8 +65,10 @@ object_hash_dump (gpointer key,
 #endif
 
 int
-ORBit_RootObject_shutdown (void)
+ORBit_RootObject_shutdown (gboolean moan)
 {
+	if (!moan)
+		return 0;
 #ifdef G_ENABLE_DEBUG
 	int valid_running = 1; /* The ORB */
 
@@ -81,16 +83,15 @@ ORBit_RootObject_shutdown (void)
 			   "objects were leaked",
 			   total_refs - valid_running);
 	else
-#endif
 		return 0;
 
-#ifdef G_ENABLE_DEBUG
 	if (_orbit_debug_flags & ORBIT_DEBUG_REFS)
 		g_hash_table_foreach (
 			object_hash, object_hash_dump, NULL);
 
 	return 1;
 #endif
+	return 0;
 }
 
 void

@@ -15,8 +15,22 @@
 #include "poa-private.h"
 #include "orbit-poa.h"
 
-#define POA_LOCK(poa)   LINK_MUTEX_LOCK(poa->base.lock)
-#define POA_UNLOCK(poa) LINK_MUTEX_UNLOCK(poa->base.lock)
+#ifdef DEBUG_LOCKS
+#  define LOCK_DEBUG(a) g_printerr("%p: %6s file %s: line %d (%s)\n", \
+				   poa, a, __FILE__, __LINE__, __PRETTY_FUNCTION__);
+#else
+#  define LOCK_DEBUG(a)
+#endif
+
+#define POA_LOCK(poa)   G_STMT_START { \
+				LOCK_DEBUG("lock") \
+				LINK_MUTEX_LOCK(poa->base.lock); \
+			} G_STMT_END
+
+#define POA_UNLOCK(poa) G_STMT_START { \
+				LINK_MUTEX_UNLOCK(poa->base.lock); \
+				LOCK_DEBUG("unlock") \
+			} G_STMT_END
 
 static GMutex     *ORBit_class_assignment_lock    = NULL;
 static GHashTable *ORBit_class_assignments        = NULL;
@@ -59,10 +73,10 @@ static void               ORBit_POAObject_handle_request    (ORBit_POAObject    
 							     GIOPRecvBuffer    *recv_buffer,
 							     CORBA_Environment *ev);
 
-static void               ORBit_POA_deactivate_object       (PortableServer_POA  poa,
-							     ORBit_POAObject     pobj,
-							     CORBA_boolean       do_etherealize,
-							     CORBA_boolean       is_cleanup);
+static void               ORBit_POA_deactivate_object_T   (PortableServer_POA  poa,
+							   ORBit_POAObject     pobj,
+							   CORBA_boolean       do_etherealize,
+							   CORBA_boolean       is_cleanup);
      
 /* PortableServer_Current interface */
 static void
@@ -353,9 +367,9 @@ ORBit_POA_remove_child (PortableServer_POA poa,
 }
 
 static gboolean
-ORBit_POA_destroy (PortableServer_POA  poa,
-		   CORBA_boolean       etherealize_objects,
-		   CORBA_Environment  *ev)
+ORBit_POA_destroy_T (PortableServer_POA  poa,
+		     CORBA_boolean       etherealize_objects,
+		     CORBA_Environment  *ev)
 {
 	GPtrArray *adaptors;
 	int        numobjs;
@@ -369,11 +383,12 @@ ORBit_POA_destroy (PortableServer_POA  poa,
 	if (poa->life_flags & (ORBit_LifeF_Deactivating|ORBit_LifeF_Destroying))
 		return FALSE;	/* recursion */
 
-	/* FIXME: this needs some hard-core thread safety work ... */
-
 	poa->life_flags |= ORBit_LifeF_Destroying;
 
 	adaptors = poa->orb->adaptors;
+
+	/* FIXME: this lock thrash is really ugly */
+	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 
 	/* Destroying the children is tricky, b/c they may die
 	 * while we are traversing. We traverse over the
@@ -382,9 +397,24 @@ ORBit_POA_destroy (PortableServer_POA  poa,
 	for (i = 0; i < adaptors->len; i++) {
 		PortableServer_POA cpoa = g_ptr_array_index (adaptors, i);
 
-		if (cpoa && cpoa->parent_poa == poa)
-			ORBit_POA_destroy (cpoa, etherealize_objects, ev);
+
+		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+
+		if (cpoa && cpoa != poa) {
+			ORBit_RootObject_duplicate (cpoa);
+			POA_LOCK (cpoa);
+
+			if (cpoa->parent_poa == poa) 
+				ORBit_POA_destroy_T (cpoa, etherealize_objects, ev);
+
+			POA_UNLOCK (cpoa);
+			ORBit_RootObject_release (cpoa);
+		}
+
+		LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 	}
+
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	poa->default_servant = NULL;
 
@@ -429,7 +459,7 @@ traverse_cb (PortableServer_ObjectId *oid,
 	if (pobj->use_cnt > 0)
 		info->in_use = TRUE;
 
-	ORBit_POA_deactivate_object (info->poa, pobj, info->do_etherealize, TRUE);
+	ORBit_POA_deactivate_object_T (info->poa, pobj, info->do_etherealize, TRUE);
 }
 
 static gboolean
@@ -933,10 +963,10 @@ ORBit_POA_activate_object_T (PortableServer_POA          poa,
  * etherialization and memory release will occur later.
  */
 static void
-ORBit_POA_deactivate_object (PortableServer_POA poa,
-			     ORBit_POAObject    pobj,
-			     CORBA_boolean      do_etherealize,
-			     CORBA_boolean      is_cleanup)
+ORBit_POA_deactivate_object_T (PortableServer_POA poa,
+			       ORBit_POAObject    pobj,
+			       CORBA_boolean      do_etherealize,
+			       CORBA_boolean      is_cleanup)
 {
 	PortableServer_ServantBase *servant = pobj->servant;
 
@@ -993,8 +1023,11 @@ ORBit_POA_deactivate_object (PortableServer_POA poa,
 			/* In theory, the finalize fnc should always be non-NULL;
 			 * however, for backward compat. and general extended
 			 * applications we dont insist on it. */
-			if (epv && epv->finalize)
+			if (epv && epv->finalize) {
+				POA_UNLOCK (poa);
 				epv->finalize (servant, ev);
+				POA_LOCK (poa);
+			}
 		}
 		pobj->use_cnt--; /* allow re-activation */
 		g_assert (ev->_major == 0);
@@ -1103,8 +1136,10 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	ORBitSmallSkeleton                   small_skel = NULL;
 	gpointer                             imp = NULL;
 
-	if (poa)
+	if (poa) {
+		ORBit_RootObject_duplicate (poa);
 		POA_LOCK (poa);
+	}
 
 	if (!poa || !poa->poa_manager)
 		CORBA_exception_set_system (
@@ -1122,6 +1157,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 					poa->held_requests, recv_buffer);
 				
 				POA_UNLOCK (poa);
+				ORBit_RootObject_release (poa);
 				return;
 			} else
 				CORBA_exception_set_system (
@@ -1229,7 +1265,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		goto clean_out;
 	}
 
-	ORBit_RootObject_duplicate (poa);
 	POA_UNLOCK (poa);
 
 	if (recv_buffer) {
@@ -1245,7 +1280,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		small_skel (pobj->servant, ret, args, ctx, ev, imp);
 
 	POA_LOCK (poa);
-	ORBit_RootObject_release (poa);
 
  clean_out:
 	if (recv_buffer)
@@ -1259,7 +1293,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 				oid, pobj->servant, ev);
 			break;
 		case PortableServer_USE_DEFAULT_SERVANT:
-			ORBit_POA_deactivate_object (poa, pobj, FALSE, FALSE);
+			ORBit_POA_deactivate_object_T (poa, pobj, FALSE, FALSE);
 			break;
 		default:
 			g_assert_not_reached ();
@@ -1267,7 +1301,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		}
 
 	LINK_MUTEX_LOCK (poa->orb->lock);
-/*	g_assert ((ORBit_POAObject)poa->orb->current_invocations->data == pobj); */
 	poa->orb->current_invocations =
 		g_slist_remove (poa->orb->current_invocations, pobj);
 	LINK_MUTEX_UNLOCK (poa->orb->lock);
@@ -1277,6 +1310,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		ORBit_POAObject_post_invoke (pobj);             
 
 	POA_UNLOCK (poa);
+	ORBit_RootObject_release (poa);
 }
 
 static ORBit_POAObject
@@ -1616,8 +1650,7 @@ ORBit_POA_ServantManager_unuse_servant (PortableServer_POA                    po
 }
 
 /*
- * This function is invoked from the generated stub code, after
- * invoking the servant method.
+ * Was this ever exposed / can we axe it ?
  */
 void
 ORBit_POAObject_post_invoke (ORBit_POAObject pobj)
@@ -1630,7 +1663,7 @@ ORBit_POAObject_post_invoke (ORBit_POAObject pobj)
 		 * are stored in pobj->life_flags and they dont need
 		 * to be passed in again!
 		 */
-		ORBit_POA_deactivate_object (
+		ORBit_POA_deactivate_object_T (
 			pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
 
 		/* WATCHOUT: pobj may not exist anymore! */
@@ -1813,18 +1846,23 @@ PortableServer_POA_destroy (PortableServer_POA   poa,
 
 	poa_sys_exception_if_fail (poa != NULL, ex_CORBA_INV_OBJREF);
 
-	if (poa->life_flags & ORBit_LifeF_Destroyed)
-		return;
+	ORBit_RootObject_duplicate (poa);
+	POA_LOCK (poa);
 
-	if (wait_for_completion && ORBit_POA_is_inuse (poa, CORBA_TRUE, ev)) {
+	if (poa->life_flags & ORBit_LifeF_Destroyed)
+		;
+
+	else if (wait_for_completion && ORBit_POA_is_inuse_T (poa, CORBA_TRUE, ev))
 		CORBA_exception_set_system (ev, ex_CORBA_BAD_INV_ORDER,
 					    CORBA_COMPLETED_NO);
-		return;
+	else {
+		done = ORBit_POA_destroy_T (poa, etherealize_objects, ev);
+
+		g_assert (done || !wait_for_completion);
 	}
 
-	done = ORBit_POA_destroy (poa, etherealize_objects, ev);
-
-	g_assert (done || !wait_for_completion);
+	POA_UNLOCK (poa);
+	ORBit_RootObject_release (poa);
 }
 
 CORBA_string
@@ -2043,7 +2081,7 @@ PortableServer_POA_deactivate_object (PortableServer_POA             poa,
 	pobj = ORBit_POA_object_id_lookup_T (poa, oid);
 
 	if (pobj && pobj->servant)
-		ORBit_POA_deactivate_object (poa, pobj, CORBA_TRUE, CORBA_FALSE);
+		ORBit_POA_deactivate_object_T (poa, pobj, CORBA_TRUE, CORBA_FALSE);
 
 	POA_UNLOCK (poa);
 
