@@ -21,6 +21,7 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
   cmi.ci = ci;
   cmi.last_tail_align = 1;
   cmi.endian_swap_pass = TRUE;
+  cmi.in_skels = in_skels?1:0;
 
   c_demarshal_load_curptr(&cmi);
 
@@ -291,6 +292,10 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     break;
   case CX_CORBA_TYPECODE:
     fprintf(cmi->ci->fh, "ORBit_decode_CORBA_TypeCode(&%s, _ORBIT_recv_buffer);\n", ctmp);
+    break;
+  case CX_CORBA_CONTEXT:
+    if(cmi->in_skels)
+      fprintf(cmi->ci->fh, "ORBit_Context_demarshal(NULL, &_ctx, _ORBIT_recv_buffer);\n");
     break;
   }
 

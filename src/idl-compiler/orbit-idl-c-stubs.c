@@ -98,6 +98,17 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     }
     fprintf(ci->fh, "{CORBA_OBJECT_NIL, NULL}};\n");
   }
+
+  if(IDL_OP_DCL(tree).context_expr) {
+    IDL_tree curitem;
+    fprintf(ci->fh, "static const char *_context_items[] = {\n");
+
+    for(curitem = IDL_OP_DCL(tree).context_expr; curitem; curitem = IDL_LIST(curitem).next) {
+      fprintf(ci->fh, "\"%s\",\n", IDL_STRING(IDL_LIST(curitem).data).value);
+    }
+    fprintf(ci->fh, "};\n");
+  }
+
   fprintf(ci->fh, "register GIOP_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;\n");
   fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
   fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
@@ -124,6 +135,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
       fprintf(ci->fh, "%s, ",
 	      IDL_IDENT(IDL_PARAM_DCL(IDL_LIST(curitem).data).simple_declarator).str);
     }
+    if(IDL_OP_DCL(tree).context_expr)
+      fprintf(ci->fh, "_ctx, ");
+
     fprintf(ci->fh, "ev);\n");
 
     fprintf(ci->fh, "%s\n}\n", IDL_OP_DCL(tree).op_type_spec?"":"return;");

@@ -162,6 +162,8 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     cbe_print_var_dcl(ci->fh, IDL_LIST(curitem).data, TRUE);
     fprintf(ci->fh, ";\n");
   }
+  if(IDL_OP_DCL(tree).context_expr)
+    fprintf(ci->fh, "struct CORBA_Context_type _ctx;\n");
 
   oi = tree->data;
 
@@ -182,6 +184,8 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     cbe_skel_op_dcl_print_call_param(IDL_LIST(curitem).data, ci);
     fprintf(ci->fh, ", ");
   }
+  if(IDL_OP_DCL(tree).context_expr)
+    fprintf(ci->fh, "&_ctx, ");
   fprintf(ci->fh, "ev);\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) {
@@ -450,6 +454,9 @@ cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci)
   for(curitem = IDL_OP_DCL(tree).parameter_dcls;
       curitem; curitem = IDL_LIST(curitem).next)
     cbe_skel_op_param_free(IDL_LIST(curitem).data, ci, TRUE);
+
+  if(IDL_OP_DCL(tree).context_expr)
+    fprintf(ci->fh, "ORBit_Context_server_free(&_ctx);\n");
 }
 
 static void

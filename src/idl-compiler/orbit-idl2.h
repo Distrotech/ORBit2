@@ -101,7 +101,8 @@ struct _OIDL_Marshal_Node {
       guint32 amount;
     } const_info;
     struct {
-      enum { CX_CORBA_FIXED, CX_CORBA_ANY, CX_CORBA_OBJECT, CX_CORBA_TYPECODE } type;
+      enum { CX_CORBA_FIXED, CX_CORBA_ANY, CX_CORBA_OBJECT, CX_CORBA_TYPECODE, CX_CORBA_CONTEXT } type;
+      int context_item_count;
     } complex_info;
     struct {
       GSList *subnodes;

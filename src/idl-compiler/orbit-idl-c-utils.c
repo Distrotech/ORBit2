@@ -353,6 +353,10 @@ orbit_cbe_op_write_proto(FILE *of,
 
     fprintf(of, " %s, ", IDL_IDENT(IDL_PARAM_DCL(parm).simple_declarator).str);
   }
+
+  if(IDL_OP_DCL(op).context_expr)
+    fprintf(of, "CORBA_Context _ctx, ");
+
   fprintf(of, "CORBA_Environment *ev)");
 }
 
@@ -505,6 +509,14 @@ orbit_cbe_write_node_typespec(FILE *of, OIDL_Marshal_Node *node)
     const char *ctmp;
     ctmp = size_names[node->u.datum_info.datum_size];
     fprintf(of, "%s", ctmp);
+  } else if(node->type == MARSHAL_COMPLEX) {
+    switch(node->u.complex_info.type) {
+    case CX_CORBA_CONTEXT:
+      fprintf(of, "CORBA_Context");
+      break;
+    default:
+      break;
+    }
   } else
     g_error("Don't know how to write a typespec for node type %d.", node->type);
 }
