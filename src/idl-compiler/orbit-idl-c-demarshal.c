@@ -58,8 +58,12 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
 static void
 c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
+  if(!node) return;
+
   if(node->flags & MN_NOMARSHAL) return;
-  if(node->flags & MN_RECURSIVE_TOP) return;
+  if(node->use_count) return;
+
+  node->use_count++;
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -80,6 +84,8 @@ c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   default:
     break;
   }
+
+  node->use_count--;
 }
 
 static void
@@ -352,6 +358,35 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     break;
   case CX_NATIVE:
     g_error("Don't know how to demarshal a NATIVE yet.");
+    break;
+  case CX_MARSHAL_METHOD:
+    {
+      OIDL_Type_Marshal_Info *tmi;
+      char *ctmp, *ctmp2;
+      const char *do_dup;
+
+      tmi = oidl_marshal_context_find(cmi->ci->ctxt, node->tree);
+
+      ctmp = oidl_marshal_node_valuestr(node);
+      ctmp2 = orbit_cbe_get_typespec_str(node->tree);
+      do_dup = (cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC))?"CORBA_FALSE":"CORBA_TRUE";
+
+      switch(tmi->mtype)
+	{
+	case MARSHAL_FUNC:
+	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, &(%s), %s, ev);\n", ctmp2, ctmp, do_dup);
+	  break;
+	case MARSHAL_ANY:
+	  fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s);\n", ctmp);
+	  fprintf(cmi->ci->fh, "ORBit_TypeCode_demarshal_value(TC_%s, &_valref, _ORBIT_recv_buffer, %s, %s, ev);\n",
+		  ctmp2, do_dup, cmi->orb_name);
+	  fprintf(cmi->ci->fh, "}\n");
+	  break;
+	default:
+	  g_assert_not_reached();
+	  break;
+	}
+    }    
     break;
   }
 

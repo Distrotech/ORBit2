@@ -1,13 +1,62 @@
 #include "orbit-idl-marshal.h"
 
+struct _OIDL_Marshal_Context {
+  GHashTable *type_marshal_info;
+};
+
 static const char *marshal_methods[] = {
   "inline", "func", "any"
 };
 
 static OIDL_Marshal_Method
+pick_preferred_method(OIDL_Marshal_Method method)
+{
+  if(method & MARSHAL_INLINE)
+    return MARSHAL_INLINE;
+  else if(method & MARSHAL_FUNC)
+    return MARSHAL_FUNC;
+  else
+    return MARSHAL_ANY;
+}
+
+static void
+decide_tmi(gpointer key, gpointer value, gpointer data)
+{
+  OIDL_Type_Marshal_Info *tmi = value;
+  int i, n;
+
+  if(tmi->use_count > 1)
+    {
+      tmi->mtype &= ~MARSHAL_INLINE;
+      tmi->dmtype &= ~MARSHAL_INLINE;
+    }
+  if(tmi->size > INLINE_SIZE_THRESHOLD)
+    {
+      tmi->mtype &= ~(MARSHAL_INLINE|MARSHAL_FUNC);
+      tmi->dmtype &= ~(MARSHAL_INLINE|MARSHAL_FUNC);
+    }
+  for(i = n = 0; i < MARSHAL_NUM; i++)
+    if((tmi->mtype & (1<<i))
+       || (tmi->dmtype & (1<<i)))
+      n++;
+
+  if(n > 1)
+    {
+      tmi->mtype = pick_preferred_method(tmi->mtype);
+      tmi->dmtype = pick_preferred_method(tmi->dmtype);
+    }
+}
+
+static void
+oidl_marshal_context_decide(OIDL_Marshal_Context *ctxt)
+{
+  g_hash_table_foreach(ctxt->type_marshal_info, decide_tmi, NULL);
+}
+
+static OIDL_Marshal_Method
 oidl_marshal_methods_avail(void)
 {
-  return MARSHAL_ANY;
+  return MARSHAL_FUNC|MARSHAL_INLINE|MARSHAL_ANY;
 }
 
 static gint
@@ -25,8 +74,6 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
   if(node->data)
     return 1;
 
-  mtype = dmtype = oidl_marshal_methods_avail();
-
   switch(IDL_NODE_TYPE(node))
     {
     case IDLN_IDENT:
@@ -43,6 +90,8 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
     default:
       break;
     }
+
+  mtype = dmtype = oidl_marshal_methods_avail();
 
   if(add_it)
     {
@@ -233,6 +282,7 @@ oidl_marshal_context_new(IDL_tree tree)
   retval->type_marshal_info = g_hash_table_new(idl_tree_hash, idl_tree_equal);
 
   oidl_marshal_context_populate(retval, tree);
+  oidl_marshal_context_decide(retval);
 
   return retval;
 }
@@ -313,4 +363,20 @@ void
 oidl_marshal_context_dump(OIDL_Marshal_Context *ctxt)
 {
   g_hash_table_foreach(ctxt->type_marshal_info, dump_tmi, NULL);
+}
+
+OIDL_Type_Marshal_Info *
+oidl_marshal_context_find(OIDL_Marshal_Context *ctxt, IDL_tree tree)
+{
+  if(!tree)
+    return NULL;
+
+  if(IDL_NODE_TYPE(tree) == IDLN_IDENT)
+    {
+      tree = IDL_NODE_UP(tree);
+      if(IDL_NODE_TYPE(tree) == IDLN_LIST)
+	tree = IDL_NODE_UP(tree);
+    }
+
+  return g_hash_table_lookup(ctxt->type_marshal_info, tree);
 }
