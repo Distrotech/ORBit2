@@ -20,3 +20,5 @@ libORBit_2_la_LIBADD= \
 	orb-core/liborb-core.la \
 	poa/liborb-poa.la \
 	dynamic/liborb-dynamic.la
+
+inst-lib: all-recursive install-libLTLIBRARIES

@@ -153,6 +153,7 @@ create_object (PortableServer_POA poa,
 	fn (servant, ev);
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("object__init failed: %d\n", ev->_major);
+	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
 
 	objid = PortableServer_POA_activate_object (
 		poa, servant, ev);
@@ -165,8 +166,10 @@ create_object (PortableServer_POA poa,
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("servant_to_reference failed: %d\n", ev->_major);
 
-	return object;
+	g_assert (ORBIT_STUB_GetServant (object) == servant);
+	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
 
+	return object;
 }
 
 /* constructor */
@@ -269,6 +272,7 @@ create_TestFactory (PortableServer_POA        poa,
 	test_TestFactory__init (servant, poa, ev);
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("object__init failed: %d\n", ev->_major);
+	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
 
 	objid = PortableServer_POA_activate_object (
 		poa, servant, ev);
@@ -280,30 +284,58 @@ create_TestFactory (PortableServer_POA        poa,
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("servant_to_reference failed: %d\n", ev->_major);
 
+	g_assert (ORBIT_STUB_GetServant (object) == servant);
+	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
+
 	return object;
 }
 
-int
-main (int argc, char *argv [])
+test_TestFactory_Servant servant;
+
+#ifndef _IN_CLIENT_
+  int
+  main (int argc, char *argv [])
+#else
+  CORBA_Object
+  get_server (CORBA_ORB orb,
+	      CORBA_Environment *ev)
+#endif
 {
 	PortableServer_POA poa;
-	CORBA_Environment ev;
+	test_BasicServer objref;
+#ifndef _IN_CLIENT_
+	CORBA_Environment real_ev;
+	CORBA_Environment *ev = &real_ev;
 	CORBA_ORB orb;
-	test_TestFactory_Servant servant;
 
-	CORBA_exception_init(&ev);
-	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
-	g_assert(ev._major == CORBA_NO_EXCEPTION);
+	CORBA_exception_init(&real_ev);
+	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+#endif
 
-	poa = start_poa (orb, &ev);
-	g_assert(ev._major == CORBA_NO_EXCEPTION);
+	poa = start_poa (orb, ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
-	factory = create_TestFactory (poa, &servant, &ev);
+	factory = create_TestFactory (poa, &servant, ev);
 	g_assert (factory != CORBA_OBJECT_NIL);
 
-	if (!dump_ior (orb, "iorfile", &ev)) {
-		CORBA_ORB_run (orb, &ev);
+	/* a quick local test */
+	objref = test_TestFactory_getBasicServer(factory,ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	g_assert(objref != CORBA_OBJECT_NIL);
+	g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	fprintf (stderr, "Local server test passed\n");
+
+#ifndef _IN_CLIENT_
+	if (!dump_ior (orb, "iorfile", ev)) {
+		CORBA_ORB_run (orb, ev);
 		return 0;
 	} else
 		return 1;
+#else
+	return factory;
+#endif
 }

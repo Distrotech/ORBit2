@@ -105,7 +105,8 @@ typedef struct {
 #define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->bypass_obj)
 #define ORBIT_STUB_PreCall(x,y)
 #define ORBIT_STUB_PostCall(x,y)
-#define ORBIT_STUB_GetServant(x) NULL
+#define ORBIT_STUB_GetServant(obj) \
+	((obj)->bypass_obj->servant)
 #define ORBIT_STUB_GetEpv(x,y) \
 	ORBIT_POAOBJECT_TO_EPVPTR( (x)->bypass_obj, (y))
 #endif

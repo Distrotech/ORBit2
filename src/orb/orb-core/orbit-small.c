@@ -598,12 +598,11 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPMessageQueueEntry   mqe;
 
 	g_return_if_fail (marshal_fn == NULL);
-	g_return_if_fail (ctx == NULL);
 
 	cnx = ORBit_object_get_connection (obj);
 
 	if (!cnx) {
-		dprintf ("Null connection on object '%p'", obj);
+		dprintf ("Null connection on object '%p'\n", obj);
 		completion_status = CORBA_COMPLETED_NO;
 		goto system_exception;
 	}
@@ -837,3 +836,25 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	giop_send_buffer_unuse (send_buffer);
 }
 
+#ifdef DEBUG
+gpointer
+ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
+{
+	gpointer epv;
+	ORBit_POAObject *pobj;
+	PortableServer_ServantBase *servant;
+	PortableServer_ClassInfo   *class_info;
+	CORBA_unsigned_long         offset;
+	
+	pobj       = obj->bypass_obj;
+	servant    = pobj->servant;
+	class_info = servant->vepv[0]->_private;
+	g_assert (class_info != NULL);
+	g_assert (class_id < class_info->vepvlen);
+	offset     = class_info->vepvmap [class_id];
+
+	epv = servant->vepv [offset];
+		
+	return epv;
+}
+#endif

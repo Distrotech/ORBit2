@@ -737,8 +737,6 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case IDLN_NATIVE:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-			return "&";
-
 		case IDLN_TYPE_TYPECODE:
 			return "";
 
@@ -761,6 +759,7 @@ cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case IDLN_TYPE_ARRAY:
 			if (is_fixed)
 				return "&";
+			else /* drop through */
 
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ANY:
@@ -863,11 +862,8 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 		case IDLN_NATIVE:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-			retval = g_strdup_printf ("*(%s *)", typestr);
-			break;
-
 		case IDLN_TYPE_TYPECODE:
-			retval = g_strdup_printf ("(%s)", typestr);
+			retval = g_strdup_printf ("(%s *)", typestr);
 			break;
 
 		default:
