@@ -150,6 +150,8 @@ linc_connection_from_fd(LINCConnection *cnx, int fd, const LINCProtocolInfo *pro
   cnx->remote_host_info = g_strdup(remote_host_info);
   cnx->remote_serv_info = g_strdup(remote_serv_info);
   cnx->options = options;
+  if(proto->setup)
+    proto->setup(fd);
 
 #if LINC_SSL_SUPPORT
   if(options & LINC_CONNECTION_SSL)
@@ -233,7 +235,8 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
   while(cnx->status == LINC_CONNECTING)
     g_main_iteration(TRUE);
 
-  g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
+  if(cnx->status != LINC_CONNECTED)
+    return -1;
 
   do {
 #if LINC_SSL_SUPPORT

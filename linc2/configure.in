@@ -33,7 +33,7 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
-AC_PROG_LIBTOOL
+AM_PROG_LIBTOOL
 AM_MAINTAINER_MODE
 
 dnl Checks for programs.
@@ -55,7 +55,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
-AC_CHECK_HEADERS(netinet/in.h sys/un.h linux/irda.h openssl/ssl.h)
+AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h openssl/ssl.h)
 
 if test $ac_cv_header_openssl_ssl_h = yes; then
 	LINC_SSL_SUPPORT=1
