@@ -258,7 +258,6 @@ static ORBit_ObjectKey*
 ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 {
 	ORBit_ObjectAdaptor         adaptor;
-	PortableServer_ObjectId    *objid;
 	ORBit_ObjectKey            *objkey;
 	gpointer                    mem;
 
@@ -1014,35 +1013,6 @@ ORBit_POA_okey_to_poa (CORBA_ORB        orb,
 		return NULL;
 
 	return (PortableServer_POA)adaptor;
-}
-
-static PortableServer_POA
-ORBit_ORB_find_POA_for_okey(CORBA_ORB orb, ORBit_ObjectKey *objkey)
-{
-  PortableServer_POA	 poa;
-#if 0
-  ORBit_SrvForwBind	*bd;
-#endif
-
-  /* try it as a directly encoded okey (POAnum is first 4 bytes) */
-  if ( (poa = ORBit_POA_okey_to_poa(orb, objkey)) )
-    return poa;
-
-#if 0
-    /* try it as a server-side forwarded okey */
-  if ( orb->srv_forw_bindings != 0
-       && (bd=g_hash_table_lookup(orb->srv_forw_bindings, objkey)) != 0 ) {
-    if ( bd->to_okey._length > 0 ) {
-      /* This is a bit of a hack! */
-      g_assert( objkey->_release == 0 );
-      objkey->_length = bd->to_okey._length;
-      objkey->_buffer = bd->to_okey._buffer;
-      return ORBit_ORB_find_POA_for_okey(orb, objkey);
-    }
-  }
-#endif
-
-  return NULL;
 }
 
 struct ORBit_POA_invoke_data {

@@ -1,3 +1,10 @@
+2001-08-20  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/poa.c
+	(ORBit_POAObject_object_to_objkey) removed
+	objid.
+	(ORBit_ORB_find_POA_for_okey) killed.
+
 2001-08-20  Martin Baulig  <baulig@suse.de>
 
 	* src/orb/GIOP/giop-connection.c (giop_connection_initiate): If
