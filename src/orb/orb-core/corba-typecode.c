@@ -8,14 +8,13 @@ typedef struct {
 } TCRecursionNode;
 
 typedef struct {
-  GSList* prior_tcs; /* Could be a hash table by typecode */
-  guint current_idx; /* The "top-level" index of the start of the current codec */
-  guint start_idx;
+  GSList *prior_tcs;   /* Could be a hash table by typecode */
+  guint   start_idx;
 } TCEncodeContext;
 
 typedef struct {
-  GSList* prior_tcs; /* Could be a hash table by offset */
-  guint current_idx;
+  GSList *prior_tcs;   /* Could be a hash table by offset */
+  guint   current_idx; /* The offset from the start of the toplevel buffer of this buffer */
 } TCDecodeContext;
 
 #define get_wptr(buf) (buf->msg.header.message_size - ctx->start_idx)
@@ -138,6 +137,7 @@ struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = { \
 #define CORBA_tk_long_long CORBA_tk_longlong
 #define CORBA_tk_unsigned_long_long CORBA_tk_ulonglong
 #define CORBA_tk_unsigned_short CORBA_tk_ushort
+#define CORBA_tk_long_double CORBA_tk_longdouble
 
 struct CORBA_TypeCode_struct TC_null_struct = {
   {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
@@ -170,6 +170,7 @@ DEF_TC_BASIC(TypeCode);
 DEF_TC_BASIC(Principal);
 DEF_TC_BASIC(Object);
 DEF_TC_BASIC(wstring);
+DEF_TC_BASIC(long_double);
 DEF_TC_BASIC(long_long);
 DEF_TC_BASIC(unsigned_long_long);
 
@@ -192,7 +193,6 @@ ORBit_encode_CORBA_TypeCode(CORBA_TypeCode tc, GIOPSendBuffer* buf)
   TCEncodeContext ctx;
   GSList* l;
 
-  ctx.current_idx=0;
   ctx.start_idx = buf->msg.header.message_size;
   ctx.prior_tcs=NULL;
   tc_enc(tc, buf, &ctx);
@@ -219,15 +219,15 @@ ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf)
 
 /* Encode a typecode to a codec, possibly recursively */
 
-static void tc_enc(CORBA_TypeCode tc,
-		   GIOPSendBuffer *c,
-		   TCEncodeContext* ctx)
+static void
+tc_enc (CORBA_TypeCode   tc,
+	GIOPSendBuffer  *c,
+	TCEncodeContext *ctx)
 {
   TCRecursionNode* node;
   const TkInfo* info;
   GSList* l;
   gint32 num, *tmpi;
-  guint32 tmp_index;
   gint8 end;
 
   g_assert(CLAMP(0, tc->kind, CORBA_tk_last) == tc->kind);
@@ -241,18 +241,21 @@ static void tc_enc(CORBA_TypeCode tc,
 	{
 	  num = CORBA_tk_recursive;
 	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
-	  num = node->index - ctx->current_idx - get_wptr(c);
+	  num = node->index - c->msg.header.message_size - 4;
+/*	  g_warning ("Offset = '%d' - '%d' = %d",
+	  node->index, c->msg.header.message_size, num); */
 	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
 	  return;
 	}
     }
 
+  node = g_new (TCRecursionNode, 1);
+  node->tc = tc;
+  node->index = c->msg.header.message_size;
+  ctx->prior_tcs = g_slist_prepend (ctx->prior_tcs, node);
+
   giop_send_buffer_append(c, &tc->kind, sizeof(tc->kind));
 
-  node=g_new(TCRecursionNode, 1);
-  node->tc=tc;
-  node->index = ctx->current_idx + get_wptr(c) - 4; /* -4 for kind */
-  ctx->prior_tcs = g_slist_prepend(ctx->prior_tcs, node);
 	
   info=&tk_info[tc->kind];
   switch(info->type)
@@ -261,9 +264,6 @@ static void tc_enc(CORBA_TypeCode tc,
       break;
 
     case TK_COMPLEX:
-      tmp_index = ctx->current_idx;
-      ctx->current_idx += get_wptr(c) + 4; /* +4 for the length */
-
       giop_send_buffer_align(c, sizeof(num));
       num = 0;
       tmpi = (guint32*)giop_send_buffer_append_indirect(c, &num, sizeof(num));
@@ -272,7 +272,6 @@ static void tc_enc(CORBA_TypeCode tc,
       giop_send_buffer_append_indirect(c, &end, 1);
       (info->encoder)(tc, c, ctx);
       *tmpi = c->msg.header.message_size - *tmpi;
-      ctx->current_idx = tmp_index;
       break;
     case TK_SIMPLE:
       (info->encoder)(tc, c, ctx);
@@ -389,7 +388,7 @@ tc_enc_tk_except(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
   CDR_put_string(c, t->repo_id);
   CDR_put_string(c, t->name);
   CDR_put_ulong(c, t->sub_parts);
-  for(i=0;i<t->length;i++){
+  for(i=0;i<t->sub_parts;i++){
     CDR_put_string(c, t->subnames[i]);
     tc_enc(t->subtypes[i], c, ctx);
   }
@@ -489,14 +488,17 @@ static gboolean
 tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 {
   CORBA_TCKind kind;
+  CORBA_unsigned_long lkind;
   CORBA_TypeCode tc;
   const TkInfo* info;
   TCRecursionNode* node;
   GIOPRecvBuffer *encaps;
   guint tmp_index;
 
-  if(CDR_get_ulong(c, &kind))
+  if(CDR_get_ulong(c, &lkind))
     return TRUE;
+
+  kind = lkind;
 
   g_assert(CLAMP(0, kind, CORBA_tk_last) == kind);
 
@@ -509,12 +511,16 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
       for(l=ctx->prior_tcs;l;l=l->next)
 	{
 	  node=l->data;
-	  /* NOTE: below, -4 is b/c we already read offset */
-	  if(node->index==ctx->current_idx+get_rptr(c)+offset-4)
+	  if(offset == node->index - ctx->current_idx - get_rptr (c))
 	    {
-	      *t=node->tc;
+	      *t=ORBit_RootObject_duplicate (node->tc);
 	      return FALSE;
 	    }
+/*	  else
+            g_warning ("back tc mismactch '%d' == '%d - %d - %d' = '%d' Tk %d",
+		       offset, node->index, ctx->current_idx, get_rptr (c),
+		       node->index - ctx->current_idx - get_rptr (c),
+		       node->tc->kind);*/
 	}
 
       g_error("tc_dec: Invalid CORBA_TypeCode recursion offset "
@@ -525,7 +531,7 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   g_assert(kind<CORBA_tk_last);
 
   node = g_new(TCRecursionNode, 1);
-  node->index = ctx->current_idx+get_rptr(c)-4; /* -4 for the TCKind */
+  node->index = ctx->current_idx + get_rptr(c) - 4; /* -4 for the TCKind */
   info=&tk_info[kind];
 	
   tc = g_new0(struct CORBA_TypeCode_struct, 1);
@@ -541,9 +547,12 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 
     case TK_COMPLEX:
       tmp_index=ctx->current_idx;
+      ctx->current_idx += get_rptr (c) + 4;
+      /* NB. the encaps buffer is for data validation */
       encaps = giop_recv_buffer_use_encaps_buf(c);
       (info->decoder)(tc, encaps, ctx);
       ctx->current_idx = tmp_index;
+      giop_recv_buffer_unuse (encaps);
       break;
     case TK_SIMPLE:
       (info->decoder)(tc, c, ctx);
@@ -573,6 +582,7 @@ tc_dec_tk_sequence(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   if(tc_dec(&t->subtypes[0], c, ctx))
     return TRUE;
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  t->sub_parts = 1;
   if(CDR_get_ulong(c, &t->length))
     return TRUE;
   return FALSE;
@@ -697,6 +707,7 @@ tc_dec_tk_alias(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   if(tc_dec(t->subtypes, c, ctx))
     return TRUE;
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  t->sub_parts = 1;
   return FALSE;
 }
 
@@ -713,7 +724,7 @@ tc_dec_tk_except(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     return TRUE;
   t->subtypes = g_new0(CORBA_TypeCode, t->sub_parts);
   t->subnames = g_new0(char *, t->sub_parts);
-  for(i=0;i<t->length;i++)
+  for(i=0;i<t->sub_parts;i++)
     {
       if(CDR_get_const_string(c, &t->subnames[i]))
 	return TRUE;
@@ -732,6 +743,7 @@ tc_dec_tk_array(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     return TRUE;
 
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  t->sub_parts = 1;
   if(CDR_get_ulong(c, &t->length))
     return TRUE;
   return FALSE;

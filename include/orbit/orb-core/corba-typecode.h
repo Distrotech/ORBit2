@@ -52,6 +52,7 @@ extern const struct CORBA_TypeCode_struct TC_void_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_char_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_wchar_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_string_struct;
+extern const struct CORBA_TypeCode_struct TC_CORBA_wstring_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_long_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_short_struct;
@@ -64,6 +65,7 @@ extern const struct CORBA_TypeCode_struct TC_CORBA_TypeCode_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_boolean_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_float_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_double_struct;
+extern const struct CORBA_TypeCode_struct TC_CORBA_long_double_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_long_long_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_long_struct;
 

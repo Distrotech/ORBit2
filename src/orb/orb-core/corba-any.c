@@ -154,7 +154,7 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
   }
 }
 
-static void
+void
 ORBit_marshal_value(GIOPSendBuffer *buf,
 		    gconstpointer *val,
 		    CORBA_TypeCode tc,
@@ -204,11 +204,6 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
 	ORBit_marshal_any(buf, *val);
 	*val = ((guchar *)*val) + sizeof(CORBA_any);
 	break;
-    case CORBA_tk_TypeCode:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-	ORBit_encode_CORBA_TypeCode((CORBA_TypeCode)*val, buf);
-	*val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
-	break;
     case CORBA_tk_Principal:
 	*val = ALIGN_ADDRESS(*val,
 			     MAX(MAX(ALIGNOF_CORBA_LONG, ALIGNOF_CORBA_STRUCT),
@@ -226,6 +221,11 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
 	ORBit_marshal_object(buf, *(CORBA_Object*)*val);
 	*val = ((guchar *)*val) + sizeof(CORBA_Object);
+	break;
+    case CORBA_tk_TypeCode:
+	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
+	ORBit_encode_CORBA_TypeCode(*(CORBA_TypeCode *)*val, buf);
+	*val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
 	break;
     case CORBA_tk_except:
     case CORBA_tk_struct:
@@ -290,13 +290,16 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
 	    *val = ((guchar *)*val) + sizeof(CORBA_sequence_CORBA_octet);
 	}
 	break;
-    case CORBA_tk_array:
+    case CORBA_tk_array: {
+        int align = ORBit_find_alignment(tc->subtypes[0]);
 	submi.alias_element_type = tc->subtypes[0];
+	/* FIXME: we possibly need to special case octets etc. here */
 	for(i = 0; i < tc->length; i++) {
 	  ORBit_marshal_value(buf, val, submi.alias_element_type, &submi);
-	  *val = ALIGN_ADDRESS(*val, ORBit_find_alignment(tc->subtypes[0]));
+	  *val = ALIGN_ADDRESS(*val, align);
 	}
 	break;
+    }
     case CORBA_tk_alias:
 	submi.alias_element_type = tc->subtypes[0];
 	ORBit_marshal_value(buf, val, submi.alias_element_type, &submi);
@@ -560,13 +563,6 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       *val = ((guchar *)*val) + sizeof(CORBA_any);
     }
     break;
-  case CORBA_tk_TypeCode:
-    *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-    if(ORBit_decode_CORBA_TypeCode(*val, buf))
-      return TRUE;
-    ORBit_RootObject_duplicate(*(CORBA_TypeCode *)*val);
-    *val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
-    break;
   case CORBA_tk_Principal:
     {
       CORBA_Principal *p;
@@ -576,7 +572,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 
       p = *val;
       buf->cur = ALIGN_ADDRESS(buf->cur, sizeof(CORBA_long));
-      p->_release = 1;
+      p->_release = TRUE;
       if((buf->cur + sizeof(CORBA_unsigned_long)) > buf->end)
 	return TRUE;
       if(giop_msg_conversion_needed(buf))
@@ -598,6 +594,13 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
     if(ORBit_demarshal_object((CORBA_Object *)*val, buf, orb))
       return TRUE;
     *val = ((guchar *)*val) + sizeof(CORBA_Object);
+    break;
+  case CORBA_tk_TypeCode:
+    *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
+    if(ORBit_decode_CORBA_TypeCode(*val, buf))
+      return TRUE;
+    ORBit_RootObject_duplicate(*(CORBA_TypeCode *)*val);
+    *val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
     break;
   case CORBA_tk_except:
   case CORBA_tk_struct:
@@ -655,10 +658,10 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 
       *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_SEQ);
       p = *val;
+      p->_release = TRUE;
       buf->cur = ALIGN_ADDRESS(buf->cur, sizeof(CORBA_long));
-      if((buf->cur + sizeof(CORBA_long)*2) > buf->end)
+      if((buf->cur + sizeof(CORBA_long)) > buf->end)
 	return TRUE;
-      buf->cur += sizeof(CORBA_long); /* skip maximum */
       if(giop_msg_conversion_needed(buf))
 	p->_length = GUINT32_SWAP_LE_BE(*(CORBA_unsigned_long *)buf->cur);
       else
@@ -747,8 +750,10 @@ CORBA_any__freekids(gpointer mem, gpointer dat)
 {
   CORBA_any *t;
   t = mem;
+  if(t->_type)
+    ORBit_RootObject_release ((ORBit_RootObject)t->_type);
   if(t->_release)
-    CORBA_free(t->_value);
+    ORBit_free(t->_value);
   return t + 1;
 }
 
@@ -964,7 +969,7 @@ ORBit_copy_value(gconstpointer value, CORBA_TypeCode tc)
 }
 
 void
-CORBA_any__copy(CORBA_any *out, CORBA_any *in)
+CORBA_any__copy(CORBA_any *out, const CORBA_any *in)
 {
   out->_type = ORBit_RootObject_duplicate(in->_type);
   out->_value = ORBit_copy_value(in->_value, in->_type);

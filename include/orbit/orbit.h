@@ -16,5 +16,6 @@ extern unsigned int orbit_major_version, orbit_minor_version, orbit_micro_versio
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orb-core.h>
 #include <orbit/poa/poa.h>
+#include <orbit/dynamic/dynamic.h>
 
 #endif

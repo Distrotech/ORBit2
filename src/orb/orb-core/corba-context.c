@@ -71,7 +71,7 @@ CORBA_Context_new(CORBA_Context parent, const char *name, CORBA_Environment *ev)
   if(parent)
     parent->children = g_slist_prepend(parent->children, retval);
 
-  return retval;
+  return (CORBA_Context) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
 }
 
 void
@@ -98,6 +98,7 @@ CORBA_Context_set_one_value(CORBA_Context ctx,
     ctx->mappings = g_hash_table_new(g_str_hash, g_str_equal);
 
   if(g_hash_table_lookup_extended(ctx->mappings, prop_name, &old_nom, &old_value)) {
+    g_hash_table_remove (ctx->mappings, prop_name);
     g_free(old_nom);
     g_free(old_value);
   }
@@ -218,8 +219,6 @@ CORBA_Context_get_values(CORBA_Context ctx,
 {
   char *ctmp;
   int wc_pos;
-
-  CORBA_ORB_create_list(CORBA_OBJECT_NIL, 0, values, ev);
 
   if(start_scope && *start_scope)
     {
@@ -418,6 +417,7 @@ ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
       vallen = *(CORBA_unsigned_long *)buf->cur;
       if(giop_msg_conversion_needed(buf))
 	vallen = GUINT32_SWAP_LE_BE(vallen);
+      buf->cur += 4;
       if((buf->cur + vallen) > buf->end
 	 || (buf->cur + vallen) < buf->cur)
 	goto errout;

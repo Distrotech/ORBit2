@@ -1,9 +1,9 @@
-noinst_PROGRAMS=client server
+noinst_PROGRAMS = client server
 
 EVERYTHING_BUILT = \
-	everything.h       \
-	everything-stubs.c \
-	everything-skels.c \
+	everything.h        \
+	everything-skels.c  \
+	everything-stubs.c  \
 	everything-common.c
 
 INCLUDES = \
@@ -15,18 +15,18 @@ INCLUDES = \
 	-I$(top_srcdir)/src		\
 	$(LINC_CFLAGS)			\
 	${GLIB_CFLAGS}
+#	-DORBIT_STUB_DEBUG_LOCAL
 
-LDADD = $(top_builddir)/src/orb/libORBit.la		\
+LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 	$(LINC_LIBS)					\
 	${GLIB_LIBS}
-
-#	$(top_builddir)/src/IIOP/libIIOP.la		\
-#	$(top_builddir)/src/ORBitutil/libORBitutil.la	\
+#  -lefence
 
 LDFLAGS = -static
 
-client_SOURCES=client.c ${EVERYTHING_BUILT} everything.idl constants.h
+client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
 client_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
+client_LDADD = $(LDADD)
 
 included_src = \
 	basicServer.c    \

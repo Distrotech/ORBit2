@@ -30,6 +30,9 @@ typedef struct {
   char *input_filename;
   char *backend_directory;
   gboolean onlytop;
+  gboolean small;
+  gboolean small_stubs;
+  gboolean small_skels;
 } OIDL_Run_Info;
 
 /* yadda yadda:

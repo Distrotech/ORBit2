@@ -13,6 +13,7 @@ orbcoreinclude_HEADERS= \
 	orb-defs.h			\
 	orb-types.h			\
 	orbit-object.h			\
+	orbit-small.h			\
 	corba-defs.h			\
 	corba-context.h			\
 	corba-context-type.h		\
@@ -25,7 +26,8 @@ orbcoreinclude_HEADERS= \
 	orb-core-types.h		\
 	corba-typecode.h		\
 	allocators.h			\
-	corba-any-type.h
+	corba-any-type.h		\
+	orbit-interface.h
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT = corba-defs.h iop-defs.h
