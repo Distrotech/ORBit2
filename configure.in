@@ -231,6 +231,7 @@ src/orb/dynamic/Makefile
 src/orb/poa/Makefile
 src/services/Makefile
 src/services/name/Makefile
+src/services/imodule/Makefile
 include/Makefile
 include/orbit/Makefile
 include/orbit/orbit-config.h

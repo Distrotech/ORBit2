@@ -1,3 +1,43 @@
+2002-10-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/services/imodule/orbit-imodule-utils.[ch]:
+	(typecodes_hash_foreach), (ORBit_imodule_get_typecodes_seq):
+	impl converting a typecode hash into a sequence.
+
+	* src/services/imodule/orbit-imodule.[ch]:
+	(ORBit_iinterface_from_tree): kill. Its useless.
+	(ORBit_iinterfaces_from_tree): return a sequence of
+	typecodes. Add docs.
+	(ORBit_iinterfaces_from_file): ditto.
+
+	* test/everything/client.c: (main): upd and test the
+	typecodes sequence.
+
+	* test/everything/server.c: (get_server): upd.
+
+2002-10-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/services/imodule/orbit-imodule-utils.[ch]:
+	* src/services/imodule/orbit-imodule.[ch]:
+	Don't use a global has of TypeCodes.
+
+2002-10-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/services/imodule/*: added runtime IDL->IInterfaces
+	service.
+
+	* configure.in, src/services/Makefile.am: added build
+	for above.
+
+	* test/everything/Makefile.am: build against libORBit-imodule.
+
+	* test/everything/client.c: (main):
+	* test/everything/server.c: (init_iinterfaces), (get_server):
+	add --gen-imodule arg to run tests using runtime generated
+	IInterfaces.
+
+	* test/everything/test.sh: use it.
+
 2002-10-17  Albert Chin  <china@thewrittenword.com>
 
 	* src/orb/orb-core/orbit-debug.h

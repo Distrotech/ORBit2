@@ -1,1 +1,3 @@
-SUBDIRS=name
+SUBDIRS =	\
+	name	\
+	imodule
