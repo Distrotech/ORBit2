@@ -15,6 +15,8 @@ typedef guchar CORBA_octet;
 typedef gdouble CORBA_long_double;
 typedef guint16 CORBA_wchar; /* I'm not sure what size a wchar is supposed to be */
 
+typedef struct CORBA_Object_type *CORBA_Object;
+
 #ifdef G_HAVE_GINT64
 #define HAVE_CORBA_LONG_LONG
 /* According to the spec, these two are optional. We support them if we can. */
