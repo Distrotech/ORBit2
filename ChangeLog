@@ -1,5 +1,21 @@
 2002-05-27  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (main): re-instate
+	run_tests [doh] (testIsA): impl. (run_tests): use it.
+
+	* src/idl/CORBA/orb.idl: add #pragma prefix.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_itypes): upd.
+
+	* src/orb/orb-core/corba-typecode.c
+	(DEF_TC_BASIC): upd. (void): upd.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_is_a): handle omg.org/CORBA/Object
+
+2002-05-27  Michael Meeks  <michael@ximian.com>
+
 	* test/everything/server.c (TestFactory_noOp): impl.
 
 2002-05-24  Michael Meeks  <michael@ximian.com>
