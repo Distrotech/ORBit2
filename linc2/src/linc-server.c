@@ -150,6 +150,10 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
       freeaddrinfo(ai);
       return FALSE;
     }
+  {
+    static const int oneval = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof(oneval));
+  }
 
   n = 0;
   if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
