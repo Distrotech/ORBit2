@@ -2,6 +2,7 @@
 #include <orbit/IIOP/giop-connection.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
+static void giop_connection_destroy    (GObject             *obj);
 static void giop_connection_class_init (GIOPConnectionClass *klass);
 
 static struct {
@@ -30,7 +31,8 @@ giop_connection_list_remove(GIOPConnection *cnx)
 }
 
 static GIOPConnection *
-giop_connection_list_lookup(const char *remote_host_info, const char *remote_serv_info, const char *proto_name)
+giop_connection_list_lookup(const char *proto_name, const char *remote_host_info,
+			    const char *remote_serv_info)
 {
   GList *ltmp;
   GIOPConnection *retval = NULL;
@@ -86,6 +88,16 @@ giop_connection_get_type(void)
 }
 
 static void
+giop_connection_class_init (GIOPConnectionClass *klass)
+{
+  GObjectClass *object_class = (GObjectClass *)klass;
+
+  O_MUTEX_INIT(cnx_list.lock);
+
+  object_class->destroy = giop_connection_destroy;
+}
+
+static void
 giop_connection_init       (GIOPConnection      *cnx)
 {
   O_MUTEX_INIT(cnx->incoming_mutex);
@@ -93,13 +105,32 @@ giop_connection_init       (GIOPConnection      *cnx)
 }
 
 static void
-giop_connection_class_init (GIOPConnectionClass *klass)
+giop_connection_destroy    (GObject             *obj)
 {
-  O_MUTEX_INIT(cnx_list.lock);
+  GIOPConnection *cnx = (GIOPConnection *)obj;
+
+  O_MUTEX_LOCK(cnx->incoming_mutex);
+  O_MUTEX_LOCK(cnx->outgoing_mutex);
+  O_MUTEX_DESTROY(cnx->incoming_mutex);
+  O_MUTEX_DESTROY(cnx->outgoing_mutex);
+
+#ifdef XXX_FIXME_XXX
+  if(cnx->incoming_msg)
+    giop_recv_buffer_unuse(cnx->incoming_msg);
+
+  g_list_foreach(cnx->outgoing_mutex, (GFunc)giop_send_buffer_unuse, NULL);
+#endif
+
+  g_source_remove(cnx->tag);
+  g_free(cnx->remote_host_info);
+  g_free(cnx->remote_serv_info);
+  close(cnx->fd);
 }
 
 GIOPConnection *
-giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto, const char *remote_host_info, const char *remote_serv_info,
+giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto,
+			const char *remote_host_info,
+			const char *remote_serv_info,
 			gboolean was_initiated)
 {
   GIOPConnection *cnx;
@@ -108,25 +139,36 @@ giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto, const char *remot
 
   cnx->gioc = g_io_channel_unix_new(fd);
   cnx->was_initiated = was_initiated;
+  cnx->is_auth = (proto->flags & GIOP_PROTOCOL_SECURE)?TRUE:FALSE;
   cnx->remote_host_info = g_strdup(remote_host_info);
   cnx->remote_serv_info = g_strdup(remote_serv_info);
 
   giop_connection_list_add(cnx);
 
+  if(was_initiated)
+    {
+      /* Send greeting message */
+    }
+
   return cnx;
 }
 
-/* This will just create the fd, do the connect and all, and then call giop_connection_from_fd */
+/* This will just create the fd, do the connect and all, and then call
+   giop_connection_from_fd */
 GIOPConnection *
-giop_connection_initiate(const char *proto_name, const char *remote_host_info, const char *remote_serv_info)
+giop_connection_initiate(const char *proto_name,
+			 const char *remote_host_info,
+			 const char *remote_serv_info)
 {
-  GIOPConnection *retval;
-  struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0, NULL, NULL, NULL};
+  GIOPConnection *retval = NULL;
+  struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0,
+				NULL, NULL, NULL};
   int rv;
   int fd;
   const GIOPProtocolInfo *proto;
 
-  retval = giop_connection_list_lookup(remote_host_info, remote_serv_info, proto_name);
+  retval = giop_connection_list_lookup(proto_name, remote_host_info,
+				       remote_serv_info);
   if(retval)
     return retval;
 
@@ -137,12 +179,22 @@ giop_connection_initiate(const char *proto_name, const char *remote_host_info, c
 
   hints.ai_family = proto->family;
   rv = giop_getaddrinfo(remote_host_info, remote_serv_info, &hints, &ai);
-
   if(rv)
     return NULL;
 
-  retval = giop_connection_from_fd(fd, proto, remote_host_info, remote_serv_info, TRUE);
+  fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
+  if(fd < 0)
+    goto out;
 
+  if(connect(fd, ai->ai_addr, ai->ai_addrlen))
+    goto out;
+
+  retval = giop_connection_from_fd(fd, proto, remote_host_info,
+				   remote_serv_info, TRUE);
+
+ out:
+  if(fd >= 0)
+    close(fd);
   freeaddrinfo(ai);
 
   return retval;

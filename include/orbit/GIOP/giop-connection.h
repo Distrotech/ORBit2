@@ -17,7 +17,7 @@ typedef struct {
   GIOPProtocolInfo *proto;
 
   char *remote_host_info, *remote_serv_info;
-  GIOChannel *gioc;
+  int fd;
 
   GIOPConnectionOptions options;
   guint tag;

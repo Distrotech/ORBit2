@@ -6,12 +6,15 @@
 typedef struct {
   GObject parent;
 
-  GIOChannel *gioc;
+  int fd;
   GMutex *mutex;
+
+  char *local_host_info, *local_serv_info;
 
   GIOPProtocolInfo *proto;
   guint tag;
-  GIOPConnectionOptions create_options; /* Options that incoming connections are created with */
+  /* Options that incoming connections are created with */
+  GIOPConnectionOptions create_options;
 } GIOPServer;
 
 typedef struct {
