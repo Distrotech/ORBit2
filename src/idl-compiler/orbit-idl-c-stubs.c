@@ -101,10 +101,11 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   if(IDL_OP_DCL(tree).context_expr) {
     IDL_tree curitem;
-    fprintf(ci->fh, "static const char *_context_items[] = {\n");
+    fprintf(ci->fh, "static const ORBit_ContextMarshalItem _context_items[] = {\n");
 
     for(curitem = IDL_OP_DCL(tree).context_expr; curitem; curitem = IDL_LIST(curitem).next) {
-      fprintf(ci->fh, "\"%s\",\n", IDL_STRING(IDL_LIST(curitem).data).value);
+      fprintf(ci->fh, "{%d, \"%s\"},\n", strlen(IDL_STRING(IDL_LIST(curitem).data).value) + 1,
+	      IDL_STRING(IDL_LIST(curitem).data).value);
     }
     fprintf(ci->fh, "};\n");
   }
