@@ -806,18 +806,17 @@ giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
 		     gboolean block_for_reply)
 {
 #ifdef ORBIT_THREADED
-  pthread_cond_wait(&ent->condvar, &ent->condvar_lock);
-  O_MUTEX_UNLOCK(ent->condvar_lock);
+  pthread_cond_wait (&ent->condvar, &ent->condvar_lock);
+  O_MUTEX_UNLOCK (ent->condvar_lock);
 #else
-  g_main_iteration(block_for_reply);
-  if(block_for_reply)
-    {
-      while(!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
-	g_main_iteration(block_for_reply);
-    }
+  linc_main_iteration (block_for_reply);
+  if (block_for_reply) {
+      while (!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
+	linc_main_iteration (block_for_reply);
+  }
 #endif
 
-  giop_recv_list_destroy_queue_entry(ent);
+  giop_recv_list_destroy_queue_entry (ent);
 
   return ent->buffer;
 }
@@ -864,7 +863,7 @@ giop_recv_buffer_use(void)
   O_MUTEX_UNLOCK(incoming_recv_buffer_list_lock);
 #else
   while(!(retval = giop_recv_list_pop()))
-    g_main_iteration(TRUE);
+    linc_main_iteration(TRUE);
 #endif
 
   return retval;

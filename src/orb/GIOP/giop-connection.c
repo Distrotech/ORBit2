@@ -207,7 +207,7 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
     }
 
   if (retval == FALSE)
-    cnx->incoming_tag = 0;
+    cnx->incoming_tag = NULL;
 
   return retval;
 }
@@ -223,8 +223,9 @@ giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus sta
   switch(status)
     {
     case LINC_CONNECTED:
-      g_assert (gcnx->incoming_tag == 0);
-      gcnx->incoming_tag = g_io_add_watch(cnx->gioc, G_IO_IN, giop_connection_handle_input, cnx);
+      g_assert (gcnx->incoming_tag == NULL);
+      gcnx->incoming_tag = linc_io_add_watch (
+	      cnx->gioc, G_IO_IN, giop_connection_handle_input, cnx);
       break;
     case LINC_DISCONNECTED:
       O_MUTEX_LOCK(gcnx->incoming_mutex);
@@ -232,8 +233,8 @@ giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus sta
 	giop_recv_buffer_unuse(gcnx->incoming_msg);
       gcnx->incoming_msg = NULL;
       if(gcnx->incoming_tag)
-	g_assert (g_source_remove(gcnx->incoming_tag));
-      gcnx->incoming_tag = 0;
+        linc_io_remove_watch (gcnx->incoming_tag);
+      gcnx->incoming_tag = NULL;
       O_MUTEX_UNLOCK(gcnx->incoming_mutex);
       giop_recv_list_zap(gcnx);
       break;

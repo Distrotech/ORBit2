@@ -30,7 +30,7 @@ main (int argc, char *argv[])
     fprintf(stdout, "%s\n", retval); fflush(stdout);
     CORBA_free(retval);
 
-    g_main_loop_run (g_main_loop_new (NULL, TRUE));
+    CORBA_ORB_run (orb, &ev);
 
     echo_srv_finish_object(&ev);
     echo_srv_finish_poa(&ev);

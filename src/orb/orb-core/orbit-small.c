@@ -29,7 +29,6 @@
 #include "../poa/orbit-poa-export.h"
 
 #undef DEBUG
-#define DEBUG_LOCAL_TEST
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -604,14 +603,12 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 
 	ORBIT_STUB_PreCall (obj, invoke_rec);
 
-#ifdef DEBUG_LOCAL_TEST
 	if (obj->pobj) {
 		ORBit_small_handle_request(
 			obj->pobj, m_data->name, ret,
 			args, ctx, NULL, ev);
 		goto clean_out;
 	}
-#endif
 
 	cnx = ORBit_object_get_connection (obj);
 
