@@ -134,7 +134,7 @@ IDLOperation::stub_do_call (ostream &ostr,
 	// *** FIXME transfer an any into the exception when any support is here
 	ostr << indent << "throw " IDL_CORBA_NS "::UnknownUserException();" << endl;
 
-	ostr << --indent << "}" << endl;
+	ostr << --indent << "}" << endl << endl;
 }
 
 void
