@@ -1,5 +1,9 @@
 2001-05-18  Martin Baulig  <baulig@suse.de>
 
+	* ORBit-2.0.pc.in (Cflags): Added `-DORBIT2=1'.
+
+2001-05-18  Martin Baulig  <baulig@suse.de>
+
 	* ORBit-2.0.pc.in: Use `ORBit-2.0' as package name.
 	* ORBit-CosNaming-2.0.pc.in: Use `ORBit-CosNaming-2.0' as name.
 
