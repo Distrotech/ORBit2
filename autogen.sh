@@ -55,8 +55,10 @@ if test -z "$*"; then
 fi
 
 case $CC in
-xlc )
-  am_opt=--include-deps;;
+    *gcc | *gcc\ *) 
+	;;
+    *) 
+	am_opt=--include-deps;;
 esac
 
 for i in .
@@ -66,7 +68,7 @@ do
     libtoolize --copy --force; \
     aclocal $ACLOCAL_FLAGS;
     if test "$i" != "libIDL"; then autoheader; fi; \
-    automake --add-missing $am_opt; \
+    automake --add-missing --copy $am_opt; \
     if test "$i" != "libIDL"; then autoheader; fi; \
     autoconf)
 done

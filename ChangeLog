@@ -1,3 +1,8 @@
+2002-03-01  jacob berkman  <jacob@ximian.com>
+
+	* autogen.sh: pass --copy to automake, and pass --include-deps
+	unless using gcc
+
 2002-03-01  Mark McLoughlin  <mark@skynet.ie>
 
 	* test/poa/poatest-basic*.c: don't use lovely C99 compliant
