@@ -10,7 +10,6 @@
 #include <errno.h>
 
 static void linc_connection_init       (LINCConnection      *cnx);
-static void linc_connection_state_changed (LINCConnection      *cnx, LINCConnectionStatus status);
 static void linc_connection_real_state_changed (LINCConnection  *cnx, LINCConnectionStatus status);
 static void linc_connection_destroy    (GObject             *obj);
 static void linc_connection_class_init (LINCConnectionClass *klass);
@@ -48,8 +47,6 @@ linc_connection_class_init (LINCConnectionClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *)klass;
 
-  O_MUTEX_INIT(cnx_list.lock);
-
   object_class->shutdown = linc_connection_destroy;
   klass->state_changed = linc_connection_real_state_changed;
 }
@@ -57,8 +54,6 @@ linc_connection_class_init (LINCConnectionClass *klass)
 static void
 linc_connection_init       (LINCConnection      *cnx)
 {
-  O_MUTEX_INIT(cnx->incoming_mutex);
-  O_MUTEX_INIT(cnx->outgoing_mutex);
 }
 
 static void

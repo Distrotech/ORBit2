@@ -83,6 +83,8 @@ linc_server_handle_io(GIOChannel *gioc,
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
   LINCConnection *connection;
 
+  O_MUTEX_LOCK(server->mutex);
+
   if(condition != G_IO_IN)
     g_error("condition on server fd is %#x", condition);
 
@@ -108,6 +110,8 @@ linc_server_handle_io(GIOChannel *gioc,
       g_object_unref(G_OBJECT(connection));
       connection = NULL;
     }
+
+  O_MUTEX_UNLOCK(server->mutex);
 
   return TRUE;
 }
