@@ -1,3 +1,8 @@
+2001-09-04 Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-orb.c(CORBA_ORB_shutdown):
+	quit linc's main loop.
+
 2001-09-03  Maciej Stachowiak  <mjs@noisehavoc.org>
 
 	* Makefile.shared: Re-enable generating deps, fixing a potential

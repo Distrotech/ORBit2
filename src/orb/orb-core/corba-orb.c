@@ -776,76 +776,60 @@ CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
 }
 
 void
-CORBA_ORB_run (CORBA_ORB _obj, CORBA_Environment * ev)
+CORBA_ORB_run (CORBA_ORB          orb,
+	       CORBA_Environment *ev)
 {
-  linc_main_loop_run ();
+	linc_main_loop_run ();
 }
 
 void
-CORBA_ORB_shutdown(CORBA_ORB orb,
-		   const CORBA_boolean wait_for_completion,
-		   CORBA_Environment * ev)
+CORBA_ORB_shutdown (CORBA_ORB            orb,
+		    const CORBA_boolean  wait_for_completion,
+		    CORBA_Environment   *ev)
 {
-  PortableServer_POA root_poa = g_ptr_array_index(orb->adaptors, 0);
+	PortableServer_POA root_poa = g_ptr_array_index (orb->adaptors, 0);
 
-  if ( root_poa != NULL )
-    {
-      PortableServer_POA_destroy( root_poa, TRUE, wait_for_completion, ev);
-      if (ev->_major)
-	/* This is prob. an INV_ORDER exception */
-	return;
-    }
-
-  g_slist_foreach(orb->servers, (GFunc)g_object_unref, NULL);
-  g_slist_free(orb->servers); orb->servers = NULL;
-  giop_connection_remove_by_orb(orb);
-}
-
-void
-CORBA_ORB_destroy(CORBA_ORB orb, CORBA_Environment * ev)
-{
-  PortableServer_POA root_poa;
-
-  if ( orb->life_flags & ORBit_LifeF_Destroyed )
-    return;
-
-  CORBA_ORB_shutdown(orb, TRUE, ev);
-  if ( ev->_major )
-    return;
-  root_poa = g_ptr_array_index(orb->adaptors, 0);
-  if ( root_poa )
-    {
-      if ( ((ORBit_RootObject)root_poa)->refs != 1 )
-	{
-	  g_warning("CORBA_ORB_destroy: Application still has %d refs to RootPOA.",
-		    ((ORBit_RootObject)root_poa)->refs-1);
+	if (root_poa) {
+		PortableServer_POA_destroy (root_poa, TRUE, wait_for_completion, ev);
+		if (ev->_major)
+			return;
 	}
 
-      ORBit_RootObject_release(root_poa);
-      g_ptr_array_index(orb->adaptors, 0) = NULL;
-    }
+	g_slist_foreach (orb->servers, (GFunc)g_object_unref, NULL);
+	g_slist_free (orb->servers); 
+	orb->servers = NULL;
 
-#if 0
-#ifndef G_DISABLE_ASSERT
-  {
-    int pi;
-    for (pi = 0; pi < orb->adaptors->len; pi++)
-      {
-	ORBit_ObjectAdaptor adaptor = g_ptr_array_index (orb->adaptors, pi);
-	/*
-	 * FIXME:
-	 * This is just not true !
-	 * The application may still have refs to its Object 
-	 * Adaptors or to its objects, in which case the poa has
-	 * not gone away.
-	g_assert(adaptor == NULL);
-	 */
-      }
-  }
-#endif
-#endif
-  orb->life_flags |= ORBit_LifeF_Destroyed;
-  ORBit_RootObject_release(orb);
+	giop_connection_remove_by_orb (orb);
+
+	g_main_loop_quit (linc_loop);
+}
+
+void
+CORBA_ORB_destroy (CORBA_ORB          orb,
+		   CORBA_Environment *ev)
+{
+	PortableServer_POA root_poa;
+
+	if (orb->life_flags & ORBit_LifeF_Destroyed)
+		return;
+
+	CORBA_ORB_shutdown (orb, TRUE, ev);
+	if (ev->_major)
+		return;
+
+	root_poa = g_ptr_array_index (orb->adaptors, 0);
+	if (root_poa) {
+		if (((ORBit_RootObject)root_poa)->refs != 1)
+			g_warning ("CORBA_ORB_destroy: Application still has %d refs to RootPOA.",
+				   ((ORBit_RootObject)root_poa)->refs - 1);
+
+		ORBit_RootObject_release (root_poa);
+		g_ptr_array_index (orb->adaptors, 0) = NULL;
+	}
+
+	orb->life_flags |= ORBit_LifeF_Destroyed;
+
+	ORBit_RootObject_release (orb);
 }
 
 CORBA_Policy
