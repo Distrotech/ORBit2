@@ -1,3 +1,9 @@
+2002-03-14  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/types/IDLInterface.cc
+	(writeCPPSkelReturnMarshalCode): Skeletons should return C
+	objects, not C++ ones
+
 2002-03-14  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_xlate.cc:
