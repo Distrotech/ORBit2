@@ -1,3 +1,20 @@
+2002-02-04  Shivram U <shivaram.upadhyayula@wipro.com>
+
+	reviewed by: Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-demarshal.c:
+	* src/idl-compiler/orbit-idl-c-marshal.c:
+	* src/idl-compiler/orbit-idl-c-skelimpl.c:
+	* src/idl-compiler/orbit-idl-c-stubs.c:
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	* src/idl-compiler/orbit-idl-c-utils.c:
+	* src/idl-compiler/orbit-idl-utils.c:
+	* src/orb/orb-core/corba-object.c:
+	Remove deprecated glib functions.
+	s/g_string_sprintf/g_string_printf/
+	s/g_string_sprintfa/g_string_append_printf/
+	s/g_main_iteration/g_main_context_iteration/.
+
 2002-01-31  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/GIOP/giop-debug.h: make giop dumping a runtime

@@ -73,13 +73,13 @@ orbit_generate_tcstruct_name (IDL_tree node)
 	case IDLN_TYPE_OBJECT: {
 		char *typespec = orbit_cbe_get_typespec_str (node);
 
-		g_string_sprintf (tmpstr, "TC_%s", typespec);
+		g_string_printf (tmpstr, "TC_%s", typespec);
 
 		g_free (typespec);
 		}
 		break;
 	default:
-		g_string_sprintf (tmpstr, "anonTC_%d", random_id++);
+		g_string_printf (tmpstr, "anonTC_%d", random_id++);
 		break;
 	}
 

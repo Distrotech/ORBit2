@@ -121,7 +121,7 @@ c_marshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   tmpstr = g_string_new(NULL);
 
   ctmp = oidl_marshal_node_valuestr(node);
-  g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
+  g_string_printf(tmpstr, "sizeof(%s)", ctmp);
 
   c_marshal_append(cmi, node, ctmp, tmpstr->str);
 
@@ -201,10 +201,10 @@ c_marshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
     tmpstr = g_string_new(NULL);
     tmpstr2 = g_string_new(NULL);
-    g_string_sprintf(tmpstr, "sizeof(%s) * %s", ctmp_contents, ctmp_len);
+    g_string_printf(tmpstr, "sizeof(%s) * %s", ctmp_contents, ctmp_len);
 
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
-    g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
+    g_string_printf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
     c_marshal_append(cmi, node->u.loop_info.contents, tmpstr2->str, tmpstr->str);
 
@@ -292,7 +292,7 @@ c_marshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     c_marshal_alignfor(node, cmi);
 
     ctmp = oidl_marshal_node_fqn(node);
-    g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
+    g_string_printf(tmpstr, "sizeof(%s)", ctmp);
 
     c_marshal_append(cmi, node, ctmp, tmpstr->str);
 

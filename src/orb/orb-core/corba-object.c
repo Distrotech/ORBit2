@@ -214,7 +214,7 @@ ORBit_try_connection (CORBA_Object obj)
 	while (obj->connection) {
 		switch (LINC_CONNECTION (obj->connection)->status) {
 		case LINC_CONNECTING:
-			g_main_iteration(TRUE);
+			g_main_context_iteration(NULL, TRUE);
 			break;
 
 		case LINC_CONNECTED:

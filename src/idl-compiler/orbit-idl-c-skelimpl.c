@@ -151,7 +151,7 @@ static void cbe_ski_do_attr_dcl_internal(CBESkelImplInfo *ski, IDL_tree current_
 	    if (i && IDL_ATTR_DCL(ski->tree).f_readonly)
 		    break;
 	    /* Output the operation on this attribute */
-	    g_string_sprintf(attrname, i ? "_set_%s" : "_get_%s",
+	    g_string_printf(attrname, i ? "_set_%s" : "_get_%s",
 			     IDL_IDENT(IDL_LIST(curitem).data).str);
 	    ident = IDL_ident_new(g_strdup(attrname->str));
 	    
