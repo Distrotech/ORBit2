@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 static void linc_server_init       (LINCServer      *cnx);
+static LINCConnection *linc_server_create_connection (LINCServer      *cnx);
 static void linc_server_destroy    (GObject         *obj);
 static void linc_server_class_init (LINCServerClass *klass);
 
@@ -42,6 +43,7 @@ linc_server_class_init (LINCServerClass *klass)
   GObjectClass *object_class = (GObjectClass *)klass;
 
   object_class->shutdown = linc_server_destroy;
+  klass->create_connection = linc_server_create_connection;
 }
 
 static void
@@ -63,43 +65,53 @@ linc_server_destroy(GObject         *obj)
   g_free(cnx->local_serv_info);
 }
 
+static LINCConnection *
+linc_server_create_connection(LINCServer      *cnx)
+{
+  return g_object_new(linc_connection_get_type(), NULL);
+}
+
 static gboolean
 linc_server_handle_io(GIOChannel *gioc,
 		      GIOCondition condition,
 		      gpointer data)
 {
-  LINCServer *cnx = data;
+  LINCServer *server = data;
+  LINCServerClass *klass = (LINCServerClass *)G_OBJECT_CLASS(server);
   struct sockaddr *saddr;
   int addrlen, fd;
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
+  LINCConnection *connection;
 
   if(condition != G_IO_IN)
     g_error("condition on server fd is %#x", condition);
 
-  addrlen = cnx->proto->addr_len;
+  addrlen = server->proto->addr_len;
   saddr = g_alloca(addrlen);
-  fd = accept(cnx->fd, saddr, &addrlen);
+  fd = accept(server->fd, saddr, &addrlen);
 
   if(fd < 0)
     return TRUE; /* error */
 
-  if(linc_getnameinfo(saddr, cnx->proto->addr_len, hnbuf, sizeof(hnbuf),
+  if(linc_getnameinfo(saddr, server->proto->addr_len, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
     {
       close(fd);
       return TRUE;
     }
 
-  linc_connection_from_fd(fd, cnx->proto, hnbuf, servbuf, FALSE,
-			  cnx->create_options);
+  connection = klass->create_connection(server);
+  linc_connection_from_fd(connection, fd, server->proto, hnbuf, servbuf, FALSE,
+			  LINC_CONNECTED, server->create_options);
 
   return TRUE;
 }
 
-LINCServer *
-linc_server_new(const char *proto_name, LINCConnectionOptions create_options)
+gboolean
+linc_server_setup(LINCServer *cnx, const char *proto_name, 
+		  const char *local_host_info, const char *local_serv_info,
+		  LINCConnectionOptions create_options)
 {
-  LINCServer *cnx;
   GIOChannel *gioc;
   int fd, n;
   const LINCProtocolInfo * proto;
@@ -108,26 +120,26 @@ linc_server_new(const char *proto_name, LINCConnectionOptions create_options)
 
   proto = linc_protocol_find(proto_name);
   if(!proto)
-    return NULL;
+    return FALSE;
 
   hints.ai_flags = AI_PASSIVE|AI_CANONNAME;
   hints.ai_family = proto->family;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = proto->stream_proto_num;
-  if(linc_getaddrinfo(NULL, NULL, &hints, &ai))
-    return NULL;
+  if(linc_getaddrinfo(local_host_info, local_serv_info, &hints, &ai))
+    return FALSE;
   if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
     {
       freeaddrinfo(ai);
-      return NULL;
+      return FALSE;
     }
 
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
   if(fd < 0)
     {
       freeaddrinfo(ai);
-      return NULL;
+      return FALSE;
     }
 
   n = 0;
@@ -140,10 +152,9 @@ linc_server_new(const char *proto_name, LINCConnectionOptions create_options)
   if(n)
     {
       close(fd);
-      return NULL;
+      return FALSE;
     }
 
-  cnx = g_object_new(linc_server_get_type(), NULL);
   cnx->proto = proto;
   cnx->fd = fd;
   gioc = g_io_channel_unix_new(fd);
@@ -154,5 +165,5 @@ linc_server_new(const char *proto_name, LINCConnectionOptions create_options)
   cnx->local_host_info = g_strdup(hnbuf);
   cnx->local_serv_info = g_strdup(servbuf);
 
-  return cnx;
+  return TRUE;
 }

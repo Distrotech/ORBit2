@@ -2,6 +2,7 @@
 #define LINC_SERVER_H 1
 
 #include <linc/linc-protocol.h>
+#include <linc/linc-connection.h>
 
 typedef struct {
   GObject parent;
@@ -19,10 +20,13 @@ typedef struct {
 
 typedef struct {
   GObjectClass parent_class;
+
+  LINCConnection *(* create_connection) (LINCServer *server);
 } LINCServerClass;
 
 GType linc_server_get_type(void) G_GNUC_CONST;
-LINCServer *linc_server_new(const char *proto_name,
-			    LINCConnectionOptions create_options);
+gboolean linc_server_setup(LINCServer *cnx, const char *proto_name,
+			 const char *local_host_info, const char *local_serv_info,
+			 LINCConnectionOptions create_options);
 
 #endif

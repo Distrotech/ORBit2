@@ -1,64 +1,14 @@
 #include "config.h"
 #include <linc/linc-connection.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 static void linc_connection_init       (LINCConnection      *cnx);
+static void linc_connection_state_changed (LINCConnection      *cnx, LINCConnectionStatus status);
+static void linc_connection_real_state_changed (LINCConnection  *cnx, LINCConnectionStatus status);
 static void linc_connection_destroy    (GObject             *obj);
 static void linc_connection_class_init (LINCConnectionClass *klass);
-
-static struct {
-  O_MUTEX_DEFINE(lock);
-  GList *list;
-} cnx_list = {NULL};
-
-static void
-linc_connection_list_add(LINCConnection *cnx)
-{
-  O_MUTEX_LOCK(cnx_list.lock);
-
-  cnx_list.list = g_list_prepend(cnx_list.list, cnx);
-
-  O_MUTEX_UNLOCK(cnx_list.lock);  
-}
-
-static void
-linc_connection_list_remove(LINCConnection *cnx)
-{
-  O_MUTEX_LOCK(cnx_list.lock);
-
-  cnx_list.list = g_list_remove(cnx_list.list, cnx);
-
-  O_MUTEX_UNLOCK(cnx_list.lock);
-}
-
-static LINCConnection *
-linc_connection_list_lookup(const char *proto_name, const char *remote_host_info,
-			    const char *remote_serv_info)
-{
-  GList *ltmp;
-  LINCConnection *retval = NULL;
-
-#ifdef LINC_THREADSAFE
-  if(!cnx_list.lock) /* If things haven't been initialized yet, outta here */
-    return NULL;
-#endif
-
-  O_MUTEX_LOCK(cnx_list.lock);
-  for(ltmp = cnx_list.list; ltmp && !retval; ltmp = ltmp->next)
-    {
-      LINCConnection *cnx = ltmp->data;
-
-      if(!strcmp(remote_host_info, cnx->remote_host_info)
-	 && !strcmp(remote_serv_info, cnx->remote_serv_info)
-	 && !strcmp(proto_name, cnx->proto->name))
-	retval = cnx;
-    }
-  if(retval)
-    linc_connection_ref(retval);
-  O_MUTEX_UNLOCK(cnx_list.lock);
-
-  return retval;
-}
 
 GType
 linc_connection_get_type(void)
@@ -96,6 +46,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
   O_MUTEX_INIT(cnx_list.lock);
 
   object_class->shutdown = linc_connection_destroy;
+  klass->state_changed = linc_connection_real_state_changed;
 }
 
 static void
@@ -110,44 +61,70 @@ linc_connection_destroy    (GObject             *obj)
 {
   LINCConnection *cnx = (LINCConnection *)obj;
 
-  O_MUTEX_LOCK(cnx->incoming_mutex);
-  O_MUTEX_LOCK(cnx->outgoing_mutex);
-  O_MUTEX_DESTROY(cnx->incoming_mutex);
-  O_MUTEX_DESTROY(cnx->outgoing_mutex);
-
-#ifdef XXX_FIXME_XXX
-  if(cnx->incoming_msg)
-    linc_recv_buffer_unuse(cnx->incoming_msg);
-
-  g_list_foreach(cnx->outgoing_mutex, (GFunc)linc_send_buffer_unuse, NULL);
-#endif
-
-  g_source_remove(cnx->tag);
+  if(cnx->tag)
+    g_source_remove(cnx->tag);
   g_free(cnx->remote_host_info);
   g_free(cnx->remote_serv_info);
   close(cnx->fd);
 }
 
-LINCConnection *
-linc_connection_from_fd(int fd, const LINCProtocolInfo *proto,
+static gboolean
+linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer data)
+{
+  LINCConnection *cnx = data;
+
+  if(condition == G_IO_OUT)
+    {
+      linc_connection_state_changed(cnx, LINC_CONNECTED);
+    }
+  else
+    {
+      linc_connection_state_changed(cnx, LINC_DISCONNECTED);
+    }
+
+  return FALSE;
+}
+
+static void
+linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus status)
+{
+  switch(status)
+    {
+    case LINC_CONNECTED:
+#if LINC_SSL_SUPPORT
+      if(cnx->was_initiated)
+	SSL_connect(cnx->ssl);
+      else
+	SSL_accept(cnx->ssl);
+#endif
+      break;
+    case LINC_CONNECTING:
+      if(cnx->tag) g_source_remove(cnx->tag);
+      cnx->tag = g_io_add_watch(cnx->gioc, G_IO_OUT|G_IO_ERR|G_IO_HUP|G_IO_NVAL, linc_connection_connected, cnx);
+      break;
+    case LINC_DISCONNECTED:
+      if(cnx->tag) g_source_remove(cnx->tag);
+      cnx->tag = 0;
+      break;
+    }
+
+  cnx->status = status;
+}
+
+gboolean
+linc_connection_from_fd(LINCConnection *cnx, int fd, const LINCProtocolInfo *proto,
 			const char *remote_host_info,
 			const char *remote_serv_info,
 			gboolean was_initiated,
+			LINCConnectionStatus status,
 			LINCConnectionOptions options)
 {
-  LINCConnection *cnx;
-  GIOChannel *gioc;
-
-  cnx = g_object_new(linc_connection_get_type(), NULL);
-
-  gioc = g_io_channel_unix_new(fd);
+  cnx->gioc = g_io_channel_unix_new(fd);
   cnx->was_initiated = was_initiated;
   cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
   cnx->remote_host_info = g_strdup(remote_host_info);
   cnx->remote_serv_info = g_strdup(remote_serv_info);
   cnx->options = options;
-
-  linc_connection_list_add(cnx);
 
 #if LINC_SSL_SUPPORT
   if(options & LINC_CONNECTION_SSL)
@@ -157,86 +134,67 @@ linc_connection_from_fd(int fd, const LINCProtocolInfo *proto,
     }
 #endif
 
-  if(was_initiated)
-    {
-#if LINC_SSL_SUPPORT
-      SSL_connect(cnx->ssl);
-#endif
-      /* Send greeting message */
-    }
-  else
-    {
-#if LINC_SSL_SUPPORT
-      SSL_accept(cnx->ssl);
-#endif
-    }
+  linc_connection_state_changed(cnx, status);
 
-  return cnx;
+  return TRUE;
 }
 
 /* This will just create the fd, do the connect and all, and then call
    linc_connection_from_fd */
-LINCConnection *
-linc_connection_initiate(const char *proto_name,
+gboolean
+linc_connection_initiate(LINCConnection *cnx, const char *proto_name,
 			 const char *remote_host_info,
 			 const char *remote_serv_info,
 			 LINCConnectionOptions options)
 {
-  LINCConnection *retval = NULL;
   struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0,
 				NULL, NULL, NULL};
   int rv;
   int fd;
   const LINCProtocolInfo *proto;
-
-  retval = linc_connection_list_lookup(proto_name, remote_host_info,
-				       remote_serv_info);
-  if(retval)
-    return retval;
+  gboolean retval = FALSE;
 
   proto = linc_protocol_find(proto_name);
 
   if(!proto)
-    return NULL;
+    return FALSE;
 
   hints.ai_family = proto->family;
   rv = linc_getaddrinfo(remote_host_info, remote_serv_info, &hints, &ai);
   if(rv)
-    return NULL;
+    return FALSE;
 
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
   if(fd < 0)
     goto out;
+  fcntl(fd, F_SETFL, O_NONBLOCK);
+  fcntl(fd, F_SETFD, FD_CLOEXEC);
 
-  if(connect(fd, ai->ai_addr, ai->ai_addrlen))
+  rv = connect(fd, ai->ai_addr, ai->ai_addrlen);
+  if(rv && errno != EINPROGRESS)
     goto out;
 
-  retval = linc_connection_from_fd(fd, proto, remote_host_info,
-				   remote_serv_info, TRUE, options);
+  retval = linc_connection_from_fd(cnx, fd, proto, remote_host_info,
+				   remote_serv_info, TRUE, rv?LINC_CONNECTING:LINC_CONNECTED, options);
 
  out:
-  if(fd >= 0)
-    close(fd);
+  if(!cnx)
+    {
+      if(fd >= 0)
+	close(fd);
+    }
   freeaddrinfo(ai);
 
   return retval;
 }
 
 void
-linc_connection_ref(LINCConnection *cnx)
+linc_connection_state_changed(LINCConnection *cnx, LINCConnectionStatus status)
 {
-  g_object_ref((GObject *)cnx);
-}
+  LINCConnectionClass *klass;
 
-void
-linc_connection_unref(LINCConnection *cnx)
-{
-  GObject *gobj;
+  klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS(cnx);
 
-  O_MUTEX_LOCK(cnx_list.lock);
-  gobj = (GObject *)cnx;
-  if(gobj->ref_count == 1)
-    linc_connection_list_remove(cnx);
-  g_object_unref(gobj);
-  O_MUTEX_UNLOCK(cnx_list.lock);  
+  if(klass->state_changed)
+    klass->state_changed(cnx, status);
 }

@@ -5,4 +5,7 @@ lincinclude_HEADERS=\
 	linc-protocol.h \
 	linc-server.h \
 	linc-types.h \
-	linc.h
+	linc.h \
+	linc-config.h
+
+BUILT_SOURCES=linc-config.h
