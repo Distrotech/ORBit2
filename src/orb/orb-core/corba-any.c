@@ -622,14 +622,30 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 			memcpy (p->_buffer, buf->cur, p->_length);
 			buf->cur = ((guchar *)buf->cur) + p->_length;
 		} else {
+			CORBA_unsigned_long alloc = 1;
+
 			p->_buffer = ORBit_alloc_tcval (tc->subtypes[0],
-							p->_length);
+							MIN (p->_length, alloc));
 			subval = p->_buffer;
 
-			for (i = 0; i < p->_length; i++)
+			for (i = 0; i < p->_length; i++) {
+				if (i == alloc) {
+					size_t delta = (guchar *)subval - (guchar *)p->_buffer;
+
+					p->_buffer = ORBit_realloc_tcval (
+						p->_buffer, tc->subtypes [0],
+						alloc, MIN (alloc * 2, p->_length));
+					alloc = alloc * 2; /* exponential */
+					subval = p->_buffer + delta;
+				}
+
 				if (ORBit_demarshal_value (tc->subtypes[0], &subval,
-							   buf, orb))
+							   buf, orb)) {
+					CORBA_free (p->_buffer);
+					p->_buffer = NULL;
 					return TRUE;
+				}
+			}
 		}
 
 		*val = ((guchar *)*val) + sizeof (CORBA_sequence_CORBA_octet);

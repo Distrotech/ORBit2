@@ -15,6 +15,7 @@
 extern void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer        *buf);
 extern void (*giop_debug_hook_spoofed_reply)    (GIOPRecvBuffer        *buf,
 						 GIOPMessageQueueEntry *ent);
+extern void (*giop_debug_hook_incoming_mangler) (GIOPRecvBuffer        *buf);
 extern void (*giop_debug_hook_new_connection)   (GIOPServer            *server,
 						 GIOPConnection        *new_cnx);
 

@@ -70,8 +70,6 @@ hook_unexpected_frag_reply (GIOPRecvBuffer *buf)
 static void
 test_fragments (void)
 {
-	fprintf (stderr, "Testing fragment support ...\n");
-
 	linc_connection_write (
 		LINC_CONNECTION (cnx),
 		giop_fragment_data,
@@ -111,8 +109,6 @@ test_spoofing (void)
 	GIOPSendBuffer *reply;
 	GIOPMessageQueueEntry ent;
 	CORBA_unsigned_long request_id;
-
-	fprintf (stderr, "Testing spoofing\n");
 
 	request_id = 0x12345;
 	giop_debug_hook_spoofed_reply = test_spoof_hook;
@@ -195,7 +191,6 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 		cnx = tmp;
 	}
 
-
 	do_test ();
 
 	if (reverse) {
@@ -234,6 +229,85 @@ test_cookie (CORBA_ORB orb)
 	fprintf (stderr, " - looks random ?\n");
 }
 
+#define MANGLE_ITERATIONS 1000
+
+/* fraction denominators */
+#define MANGLE_HEADER 8
+#define MANGLE_BODY   64
+
+static int bits_corrupted = 0;
+static int cnx_closed = 0;
+
+static void
+test_incoming_mangler (GIOPRecvBuffer *buf)
+{
+	int r;
+	guchar *start, *p;
+	CORBA_long len;
+
+	switch (buf->state) {
+	case GIOP_MSG_READING_HEADER:
+		start = (guchar *) &buf->msg.header;
+		r = MANGLE_HEADER;
+		break;
+	case GIOP_MSG_READING_BODY:
+		start = (guchar *) buf->message_body + 12;
+		r = MANGLE_BODY;
+		break;
+	default:
+		start = NULL;
+		r = 0;
+		g_error ("Odd msg status");
+		break;
+	}
+
+	len = buf->end - start;
+
+	for (p = start; p < buf->end; p++) {
+		int i = rand ();
+
+		if ((i * 1.0 * r) / (RAND_MAX + 1.0) <= 1.0) {
+			int bit = 1 << ((i >> 8) & 0x7);
+			p--; /* can do the same again */
+			*p ^= bit;
+			bits_corrupted++;
+		}
+	}
+}
+
+static void
+test_mangling_exec (void)
+{
+	linc_connection_write (
+		LINC_CONNECTION (cnx),
+		giop_fragment_data,
+		sizeof (giop_fragment_data),
+		non_blocking);
+
+	wait_for_disconnect (); /* Wait around for things to blow up */
+
+	if (cnx->parent.status == LINC_DISCONNECTED)
+		cnx_closed++;
+}
+
+static void
+test_mangling (CORBA_ORB orb)
+{
+	int i;
+
+	giop_debug_hook_incoming_mangler = test_incoming_mangler;
+
+	fprintf (stderr, "Testing data corruption ...\n");
+	for (i = 0; i < MANGLE_ITERATIONS; i++) {
+		run_test (orb, test_mangling_exec, i % 1);
+	}
+
+	fprintf (stderr, " %d bits corrupted, %d cnx terminated\n",
+		 bits_corrupted, cnx_closed);
+
+	giop_debug_hook_incoming_mangler = NULL;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -246,13 +320,16 @@ main (int argc, char *argv[])
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	non_blocking = linc_write_options_new (FALSE);
 
+	fprintf (stderr, "Testing fragment support ...\n");
 	run_test (orb, test_fragments, FALSE);
 	run_test (orb, test_fragments, TRUE);
+
+	fprintf (stderr, "Testing spoofing ...\n");
 	run_test (orb, test_spoofing, FALSE);
 	run_test (orb, test_spoofing, TRUE);
 
-
 	test_cookie (orb);
+	test_mangling (orb);
 
 	linc_write_options_free (non_blocking);
 	CORBA_ORB_destroy (orb, &ev);
