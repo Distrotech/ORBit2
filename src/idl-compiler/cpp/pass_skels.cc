@@ -544,7 +544,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	m_module << mod_indent << "//Call __init(), passing our \"derived\" C Servant:" << endl
 		 << mod_indent << IDL_IMPL_NS "::CEnvironment ev;" << endl
 		 << mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.get_c_poa_typename ()
-		 << "__init (&m_target, ev._orbitcpp_get_c_object ());" << endl
+		 << "__init (&m_target, ev._orbitcpp_cobj ());" << endl
 		 << mod_indent << "ev.propagate_sysex ();" << endl;
 
 	m_module << --mod_indent << '}' << endl << endl;
@@ -576,7 +576,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 		 << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object (this);" << endl
 		 << mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference (oid);" << endl;
 	m_module << mod_indent << iface.get_cpp_typename_ptr () << " pDerived = "
-		 << stub_name << "::_orbitcpp_wrap (object->_orbitcpp_get_c_object (), true);" << endl;
+		 << stub_name << "::_orbitcpp_wrap (object->_orbitcpp_cobj (), true);" << endl;
 	m_module << mod_indent << "CORBA::release (object);" << endl
 		 << mod_indent << "object = 0;" << endl;
 	m_module << mod_indent << "return pDerived;" << endl;

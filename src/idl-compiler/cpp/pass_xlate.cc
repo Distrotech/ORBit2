@@ -109,7 +109,6 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 
 }
 
-#if 0 //!!!
 void 
 IDLPassXlate::doStruct (IDL_tree  node,
 			IDLScope &scope)
@@ -147,32 +146,38 @@ IDLPassXlate::doStruct (IDL_tree  node,
 	
 	m_header
 	<< --indent << "};" << endl << endl; 
-
-	if(!idlStruct.isVariableLength()){
-		m_header
-		<< indent << "typedef " << idlStruct.getCPPIdentifier()
-		<< "& " << idlStruct.getCPP_out() << ";" << endl << endl;
+#endif
+	// Create _out and _var typedef
+	if (idlStruct.is_fixed ())
+	{
+		m_header << indent << "typedef "
+			 << idlStruct.get_cpp_identifier () << "& "
+			 << idlStruct.get_cpp_identifier () << "_out;"
+			 << endl;
 	} else {
-		m_header
-		<< indent << "typedef "IDL_IMPL_NS "::Data_var<"
-		<< idlStruct.getCPPIdentifier() << "> " 
-		<< idlStruct.getCPP_var() <<";" << endl;
-		m_header
-		<< indent << "typedef "IDL_IMPL_NS "::Data_out<"
-		<< idlStruct.getCPPIdentifier() << "> " 
-		<< idlStruct.getCPP_out() <<";" << endl << endl;
+		string data_prefix = IDL_IMPL_NS "::Data";
+		string data_var = data_prefix + "_var< " + idlStruct.get_cpp_identifier () + ">";
+		string data_out = data_prefix + "_out< " + idlStruct.get_cpp_identifier () + ">";
+		
+		m_header << indent << "typedef " << data_var << " "
+			 << idlStruct.get_cpp_identifier () << "_var;"
+			 << endl;
+
+		m_header << indent << "typedef " << data_out << " "
+			 << idlStruct.get_cpp_identifier () << "_out;"
+			 << endl;
 	}
+	m_header << endl;
 	
 	m_header << indent;
-	if( scope.getTopLevelInterface() )
+	if (scope.getTopLevelInterface())
 		m_header << "static ";
-	m_header
-	<< "const CORBA::TypeCode_ptr _tc_" << idlStruct.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)TC_" + idlStruct.getQualifiedCIdentifier() + ";" << endl;
+	m_header << "const CORBA::TypeCode_ptr _tc_" << idlStruct.get_c_identifier () << " = " 
+		 << "(CORBA::TypeCode_ptr)TC_" + idlStruct.get_c_typename () + ";" << endl;
+#if 0 // !!!
 	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(idlStruct, m_state, *this) );
 #endif
 }
-#endif
 
 #if 0
 void 
@@ -669,7 +674,7 @@ void IDLPassXlate::doInterfaceStaticMethodDefinitions (IDLInterface &iface)
  	m_module << mod_indent << "CORBA::Object_ptr ptr = obj;" << endl;
 
  	m_module << mod_indent << iface.get_c_typename ()
-		 << " cobj = ptr->_orbitcpp_get_c_object ();" << endl;
+		 << " cobj = ptr->_orbitcpp_cobj ();" << endl;
 	m_module << mod_indent << "cobj = ::_orbitcpp::duplicate_guarded (cobj);" << endl;
 	m_module << mod_indent << "return "
 		 << iface.get_cpp_stub_typename () << "::_orbitcpp_wrap (cobj);" << endl;
@@ -711,7 +716,6 @@ void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 }
 #endif
 
-#if 0
 void IDLPassXlate::struct_create_members (const IDLStruct &strct)
 {
 	for (IDLStruct::const_iterator i = strct.begin (); i != strct.end (); i++)
@@ -724,7 +728,6 @@ void IDLPassXlate::struct_create_members (const IDLStruct &strct)
 	}
 	m_header << endl;
 }
-#endif
 
 // IDLWriteArrayProps -------------------------------------------------------
 void IDLWriteArrayProps::run()

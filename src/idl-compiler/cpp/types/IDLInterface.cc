@@ -27,6 +27,8 @@
 
 #include "IDLInterface.hh"
 
+#include "IDLTypedef.hh"
+
 
 /***************************************************
  * Internal
@@ -233,7 +235,7 @@ IDLInterface::stub_impl_arg_pre (ostream        &ostr,
 	case IDL_PARAM_IN:
 		ostr << indent << "const " << get_c_typename () << " "
 		     << get_c_id (cpp_id)
-		     << " = " << cpp_id << "->_orbitcpp_get_c_object ();"
+		     << " = " << cpp_id << "->_orbitcpp_cobj ();"
 		     << endl;
 		break;
 
@@ -406,12 +408,12 @@ IDLInterface::skel_impl_arg_post (ostream        &ostr,
 		break;
 	case IDL_PARAM_INOUT:
 		ostr << indent << "*" << c_id << " = " << get_cpp_id (c_id)
-		     << "._retn ()->_orbitcpp_get_c_object ();"
+		     << "._retn ()->_orbitcpp_cobj ();"
 		     << endl;
 		break;
 	case IDL_PARAM_OUT:
 		ostr << indent << "*" << c_id << " = " << get_cpp_id (c_id)
-		     << "->_orbitcpp_get_c_object ();" << endl;
+		     << "->_orbitcpp_cobj ();" << endl;
 		break;
 	}
 }
@@ -449,7 +451,7 @@ IDLInterface::skel_impl_ret_post (ostream &ostr,
 				  Indent  &indent,
 				  const IDLTypedef *active_typedef) const
 {
-	ostr << indent << "return _retval->_orbitcpp_get_c_object ();" << endl;
+	ostr << indent << "return _retval->_orbitcpp_cobj ();" << endl;
 }
 
 
@@ -506,14 +508,23 @@ IDLInterface::member_init_c (ostream          &ostr,
 }
 
 void
-IDLInterface::member_pack_to_c (ostream      &ostr,
-				Indent       &indent,
-				const string &cpp_id,
-				const string &c_id,
+IDLInterface::member_pack_to_c (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				const string     &c_id,
 				const IDLTypedef *active_typedef) const
 {
-	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_c_object ()"
-	     << ';' << endl;
+	string duplicate;
+	if (active_typedef)
+		duplicate = active_typedef->get_cpp_typename ();
+	else
+		duplicate = get_cpp_typename ();
+
+	duplicate = duplicate + "::_duplicate";
+	
+	ostr << indent << c_id << " = " << duplicate << "("
+	     << "(" << get_cpp_typename () << "_mgr)"
+	     << cpp_id << ")->_orbitcpp_cobj ()" << ';' << endl;
 }
 
 void

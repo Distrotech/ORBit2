@@ -35,7 +35,7 @@
 #include "pass.hh"
 #include "pass_idl_it.hh"
 #include "types/IDLEnum.hh"
-//#include "types/IDLStruct.hh"
+#include "types/IDLStruct.hh"
 //#include "types/IDLUnion.hh"
 #include "types/IDLException.hh"
 #include <libIDL/IDL.h>
@@ -63,8 +63,8 @@ public:
 protected:
 	void doTypedef(IDL_tree node,IDLScope &scope);
 	
-#if 0 //!!!
 	void doStruct(IDL_tree node,IDLScope &scope);
+#if 0 //!!!
 	void doUnion(IDL_tree node,IDLScope &scope);
 #endif
 	void doEnum(IDL_tree node,IDLScope &scope);
@@ -87,9 +87,7 @@ protected:
 	void enumHook(IDL_tree list,IDLScope &scope);
 #endif
 
-#if 0
 	void struct_create_members (const IDLStruct &strct);
-#endif
 };
 
 #if 0 //!!!

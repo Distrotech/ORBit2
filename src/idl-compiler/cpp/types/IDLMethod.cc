@@ -108,8 +108,8 @@ IDLMethod::stub_do_call (ostream &ostr,
 
 	// Create C call expression
 	string c_call_expression =
-		get_c_methodname () + " (_orbitcpp_get_c_object (), " +
-		argument_list + " _ev._orbitcpp_get_c_object ())";
+		get_c_methodname () + " (_orbitcpp_cobj (), " +
+		argument_list + " _ev._orbitcpp_cobj ())";
 	
 	// Do the call
 	m_returntype->stub_impl_ret_call (ostr, indent, c_call_expression);
@@ -124,9 +124,9 @@ IDLMethod::stub_do_call (ostream &ostr,
 	if (m_raises.size ()) // Are there any known user exceptions?
 	{
 		ostr << indent << IDL_CORBA_NS "::RepositoryId const repo_id = "
-		     << "::CORBA_exception_id (_ev._orbitcpp_get_c_object ());" << endl;
+		     << "::CORBA_exception_id (_ev._orbitcpp_cobj ());" << endl;
 		ostr << indent << "void *value = "
-		     << "::CORBA_exception_value (_ev._orbitcpp_get_c_object ());" << endl
+		     << "::CORBA_exception_value (_ev._orbitcpp_cobj ());" << endl
 		     << endl;
 		
 		for (ExceptionList::const_iterator i = m_raises.begin ();

@@ -28,6 +28,7 @@ headers = 		\
   IDLScope.hh		\
   IDLSimpleType.hh	\
   IDLString.hh		\
+  IDLStruct.hh		\
   IDLType.hh		\
   IDLTypeCode.hh	\
   IDLTypedef.hh		\
@@ -52,6 +53,7 @@ modules =		\
   IDLScope.cc		\
   IDLSimpleType.cc	\
   IDLString.cc		\
+  IDLStruct.cc		\
   IDLType.cc		\
   IDLTypeCode.cc	\
   IDLTypedef.cc		\

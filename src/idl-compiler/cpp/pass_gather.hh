@@ -53,8 +53,8 @@ public:
 
 protected:
 	void doTypedef(IDL_tree node,IDLScope &scope);
-#if 0 //!!!
 	void doStruct(IDL_tree node,IDLScope &scope);
+#if 0 //!!!
 	void doUnion(IDL_tree node,IDLScope &scope);
 	void doNative(IDL_tree node,IDLScope &scope);
     
