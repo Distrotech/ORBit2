@@ -65,6 +65,9 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 	if (orbit_local_only)
 		create_options |= LINK_CONNECTION_LOCAL_ONLY;
 
+	if (orbit_local_only || (orbit_use_usocks && !(orbit_use_ipv4 || orbit_use_ipv6 || orbit_use_irda || orbit_use_ssl)))
+			link_use_local_hostname (TRUE);
+
 	for (info = link_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
 

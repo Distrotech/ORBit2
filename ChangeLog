@@ -1,3 +1,10 @@
+2005-02-13  Arvind Samptur  <arvind.samptur@wipro.com
+
+	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers): if we
+	are using LocalOnly option or only UNIX sockets then set
+	hostname to be "localhost"
+	Patch reviewed by Michael Meeks
+
 2005-02-04  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
 
 	* NEWS: Update.
