@@ -157,7 +157,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 	} else
 		IOP_delete_profiles (&profiles);
 
-	retval = ORBit_RootObject_duplicate (retval);
+	retval = ORBit_RootObject_duplicate_T (retval);
 
 	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 

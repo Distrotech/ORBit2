@@ -23,16 +23,15 @@
 
 #include <orbit/orbit.h>
 
-#include "poatest.h"
-#include "poatest-exception.h"
+#include "poatest-basic-shell.h"
+
+PortableServer_POA child_poa = CORBA_OBJECT_NIL;
 
 /*
  * Test specific function
  */
-extern poatest poatest_run (PortableServer_POA        rootpoa, 
-                            PortableServer_POAManager rootpoa_mgr);
-
-int main (int argc, char **argv) 
+int
+main (int argc, char **argv) 
 {
 	CORBA_Environment         ev;
 	CORBA_ORB                 orb;
@@ -47,11 +46,13 @@ int main (int argc, char **argv)
 	/*
 	 * Get the Root POA
 	 */
-	rootpoa = (PortableServer_POA)CORBA_ORB_resolve_initial_references (orb, "RootPOA", &ev);
+	rootpoa = (PortableServer_POA)
+		CORBA_ORB_resolve_initial_references (orb, "RootPOA", &ev);
 	if (POATEST_EX (&ev)) {
 		POATEST_PRINT_EX ("resolve_initial_references : ", &ev);
 		return 1;
 	}
+
 
 	/*
 	 * Get the Root POA's POAManager
@@ -66,9 +67,8 @@ int main (int argc, char **argv)
 	 * Run the test
 	 */
 	poatest_obj = poatest_run (rootpoa, poa_mgr);
-	if (poatest_obj == CORBA_OBJECT_NIL) {
+	if (poatest_obj == CORBA_OBJECT_NIL)
 		return 1;
-	}
 
 	/*
 	 * Call 'test' method and print out execption.
@@ -79,9 +79,15 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	CORBA_Object_release ((CORBA_Object)poatest_obj, &ev);
-	CORBA_Object_release ((CORBA_Object)poa_mgr, &ev);
-	CORBA_Object_release ((CORBA_Object)rootpoa, &ev);
+	CORBA_Object_release ((CORBA_Object) poatest_obj, &ev);
+	CORBA_Object_release ((CORBA_Object) poa_mgr, &ev);
+	CORBA_Object_release ((CORBA_Object) rootpoa, &ev);
+
+	if (child_poa != CORBA_OBJECT_NIL) {
+		PortableServer_POA_destroy (
+			child_poa, CORBA_FALSE, CORBA_FALSE, &ev);
+		CORBA_Object_release ((CORBA_Object) child_poa, &ev);
+	}
 
 	CORBA_ORB_shutdown (orb, CORBA_TRUE, &ev);
 	if (POATEST_EX (&ev)) {
@@ -89,13 +95,13 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	CORBA_ORB_destroy(orb, &ev);
+	CORBA_ORB_destroy (orb, &ev);
 	if (POATEST_EX (&ev)) {
 		POATEST_PRINT_EX ("ORB_destroy : ", &ev);
 		return 1;
 	}
 
-	CORBA_Object_release ((CORBA_Object)orb, &ev);
+	CORBA_Object_release ((CORBA_Object) orb, &ev);
 
 	return 0;
 }

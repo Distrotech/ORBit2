@@ -7,6 +7,7 @@
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
 #include "../util/orbit-options.h"
+#include "orb-core-private.h"
 #include "orbhttp.h"
 
 extern ORBit_option orbit_supported_options[];
@@ -16,7 +17,7 @@ ORBit_service_list_free_ref (gpointer         key,
 			     ORBit_RootObject objref,
 			     gpointer         dummy)
 {
-	ORBit_RootObject_release_T (objref);
+	ORBit_RootObject_release (objref);
 }
 
 static void
@@ -26,11 +27,9 @@ CORBA_ORB_release_fn (ORBit_RootObject robj)
 
 	g_ptr_array_free (orb->adaptors, TRUE);
 
-	g_hash_table_foreach (orb->initial_refs,
-			      (GHFunc)ORBit_service_list_free_ref,
-			      NULL);
-
 	g_hash_table_destroy (orb->initial_refs);
+
+	ORBit_RootObject_shutdown ();
 
 	g_free (orb);
 }
@@ -43,18 +42,20 @@ ORBit_locks_initialize (void)
 	ORBit_RootObject_lifecycle_lock = linc_mutex_new ();
 }
 
+static CORBA_ORB _ORBit_orb = NULL;
+
 CORBA_ORB
 CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORBid orb_identifier,
 		CORBA_Environment *ev)
 {
-	static CORBA_ORB retval = NULL;
+	CORBA_ORB retval;
 	static ORBit_RootObject_Interface orb_if = {
 		ORBIT_ROT_ORB,
 		CORBA_ORB_release_fn
 	};
 
-	if (retval)
+	if ((retval = _ORBit_orb))
 		return (CORBA_ORB) CORBA_Object_duplicate (
 			(CORBA_Object) retval, ev);
 
@@ -68,7 +69,7 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	ORBit_RootObject_init (&retval->root_object, &orb_if);
 	/* released by CORBA_ORB_destroy */
-	ORBit_RootObject_duplicate (retval);
+	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 
 	ORBit_genrand_init (&retval->genrand);
 	retval->default_giop_version = GIOP_LATEST;
@@ -320,18 +321,20 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 
 	objref = g_hash_table_lookup (orb->initial_refs, identifier);
 
-	if(objref)
+	if (objref)
 		return CORBA_Object_duplicate (objref, ev);
 
 	return CORBA_OBJECT_NIL;
 }
 
 static CORBA_TypeCode
-CORBA_TypeCode_allocate(void)
+CORBA_TypeCode_allocate (void)
 {
-  CORBA_TypeCode tc = g_new0(struct CORBA_TypeCode_struct,1);
-  ORBit_RootObject_init(&tc->parent, &ORBit_TypeCode_epv);
-  return ORBit_RootObject_duplicate(tc);
+	CORBA_TypeCode tc = g_new0 (struct CORBA_TypeCode_struct, 1);
+
+	ORBit_RootObject_init (&tc->parent, &ORBit_TypeCode_epv);
+
+	return ORBit_RootObject_duplicate (tc);
 }
 
 CORBA_TypeCode
@@ -826,15 +829,17 @@ CORBA_ORB_shutdown (CORBA_ORB            orb,
 		    const CORBA_boolean  wait_for_completion,
 		    CORBA_Environment   *ev)
 {
-	PortableServer_POA root_poa = g_ptr_array_index (orb->adaptors, 0);
+	PortableServer_POA root_poa;
 
+	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa) {
-		PortableServer_POA_destroy (root_poa, TRUE, wait_for_completion, ev);
+		PortableServer_POA_destroy (
+			root_poa, TRUE, wait_for_completion, ev);
 		if (ev->_major)
 			return;
 	}
 
-	g_slist_foreach (orb->servers, (GFunc)g_object_unref, NULL);
+	g_slist_foreach (orb->servers, (GFunc) g_object_unref, NULL);
 	g_slist_free (orb->servers); 
 	orb->servers = NULL;
 
@@ -849,6 +854,9 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 {
 	PortableServer_POA root_poa;
 
+	g_assert (_ORBit_orb == orb);
+	_ORBit_orb = NULL;
+
 	if (orb->life_flags & ORBit_LifeF_Destroyed)
 		return;
 
@@ -857,13 +865,36 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 		return;
 
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
-	if (root_poa) {
-		if (((ORBit_RootObject)root_poa)->refs != 1)
-			g_warning ("CORBA_ORB_destroy: Application still has %d refs to RootPOA.",
-				   ((ORBit_RootObject)root_poa)->refs - 1);
+	if (root_poa &&
+	    ((ORBit_RootObject) root_poa)->refs != 1)
+		g_warning ("CORBA_ORB_destroy: Application still has %d "
+			   "refs to RootPOA.",
+			   ((ORBit_RootObject)root_poa)->refs - 1);
 
-		ORBit_RootObject_release (root_poa);
-		g_ptr_array_index (orb->adaptors, 0) = NULL;
+	g_hash_table_foreach (orb->initial_refs,
+			      (GHFunc)ORBit_service_list_free_ref,
+			      NULL);
+
+	{
+		int i;
+		int leaked_poas = 0;
+
+		/* Each poa has a ref on the ORB */
+		for (i = 0; i < orb->adaptors->len; i++) {
+			PortableServer_POA poa;
+
+			poa = g_ptr_array_index (orb->adaptors, i);
+
+			if (poa)
+				leaked_poas++;
+		}
+
+		if (leaked_poas)
+			g_warning ("CORBA_ORB_destroy: leaked '%d' POAs", leaked_poas);
+
+		if (((ORBit_RootObject)orb)->refs != 2 + leaked_poas)
+			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
+				   ((ORBit_RootObject)orb)->refs - 1 - leaked_poas);
 	}
 
 	orb->life_flags |= ORBit_LifeF_Destroyed;
@@ -921,10 +952,10 @@ ORBit_set_initial_reference (CORBA_ORB  orb,
 }
 
 void
-ORBit_ORB_forw_bind(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
-		    CORBA_Object oref, CORBA_Environment *ev)
+ORBit_ORB_forw_bind (CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
+		     CORBA_Object oref, CORBA_Environment *ev)
 {
-  g_warning("ORBit_ORB_forw_bind NYI");
+	g_warning("ORBit_ORB_forw_bind NYI");
 }
 
 /*

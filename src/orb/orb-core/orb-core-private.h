@@ -3,10 +3,13 @@
 
 #include <orbit/orbit.h>
 
-CORBA_TypeCode ORBit_get_union_tag(CORBA_TypeCode union_tc, gconstpointer *val,
-				   gboolean update);
-size_t ORBit_gather_alloc_info(CORBA_TypeCode tc);
-void ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc);
+CORBA_TypeCode ORBit_get_union_tag     (CORBA_TypeCode union_tc,
+					gconstpointer *val,
+					gboolean       update);
+size_t         ORBit_gather_alloc_info (CORBA_TypeCode tc);
+void           ORBit_copy_value_core   (gconstpointer *val,
+					gpointer       *newval,
+					CORBA_TypeCode tc);
 
 void         ORBit_register_objref  (CORBA_Object obj);
 CORBA_Object ORBit_objref_get_proxy (CORBA_Object obj);
@@ -52,8 +55,8 @@ GSList          *IOP_profiles_copy        (GSList         *profile_list);
 gboolean ORBit_demarshal_IOR (CORBA_ORB orb, GIOPRecvBuffer *buf,
 			      char **ret_type_id, GSList **ret_profiles);
 
-char   **ORBit_get_typelib_paths (void);
-
-gboolean ORBit_proto_use         (const char *name);
+void     ORBit_RootObject_shutdown (void);
+char   **ORBit_get_typelib_paths   (void);
+gboolean ORBit_proto_use           (const char *name);
 
 #endif

@@ -47,9 +47,10 @@ struct ORBit_RootObject_struct {
 void     ORBit_RootObject_init      (ORBit_RootObject obj,
 				     const ORBit_RootObject_Interface *interface);
 
-gpointer ORBit_RootObject_duplicate (gpointer obj);
-void     ORBit_RootObject_release   (gpointer obj);
-void     ORBit_RootObject_release_T (gpointer obj);
+gpointer ORBit_RootObject_duplicate   (gpointer obj);
+gpointer ORBit_RootObject_duplicate_T (gpointer obj);
+void     ORBit_RootObject_release     (gpointer obj);
+void     ORBit_RootObject_release_T   (gpointer obj);
 
 extern GMutex *ORBit_RootObject_lifecycle_lock;
 

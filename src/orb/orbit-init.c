@@ -17,12 +17,12 @@ ORBit_init_internals (CORBA_ORB          orb,
 	struct timeval         t;
 
 	root_poa = ORBit_POA_setup_root (orb, ev);
-
 	ORBit_set_initial_reference (orb, "RootPOA", root_poa);
+	ORBit_RootObject_release (root_poa);
 
 	poa_current = ORBit_POACurrent_new (orb);
-
 	ORBit_set_initial_reference (orb, "POACurrent", poa_current);
+	ORBit_RootObject_release (poa_current);
 
 	gettimeofday (&t, NULL);
 	srand (t.tv_sec ^ t.tv_usec ^ getpid ());
