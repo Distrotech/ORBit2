@@ -1,5 +1,13 @@
 2001-09-20  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/GIOP/giop-connection.c (giop_connection_handle_input):
+	If linc_connection_read returns 0 and was not passed a length
+	of 0, then the connection has been closed. Unlock incoming_mutex
+	and change state to LINC_DISCONNECTED. Clients should no longer
+	hang when servers have dumped code while servicing a request.
+	
+2001-09-20  Mark McLoughlin <mark@skynet.ie>
+
 	*  ORBit-2.0.pc.in (Requires): add linc.
 
 	* .cvsignore, src/idl-compiler/.cvsignore,

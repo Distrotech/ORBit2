@@ -134,9 +134,15 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		/* FIXME: holding cnx->incoming_mutex here can deadlock ! */
 		n = linc_connection_read (
 			lcnx, cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
-		if (n <= 0) {
+
+		if (n < 0 || !cnx->incoming_msg->left_to_read) {
 			retval = FALSE;
 			goto out;
+		}
+		else if (n == 0) {
+			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
+			return FALSE;
 		}
 
 		info = giop_recv_buffer_data_read (
