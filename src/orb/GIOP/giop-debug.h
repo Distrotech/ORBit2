@@ -3,11 +3,12 @@
 
 #include "../orb-core/orbit-debug.h"
 
-/*
- * Hooks for security / regression testing
- */
-extern void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer *buf);
-
+/* Hooks for security / regression testing */
+extern void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer        *buf);
+extern void (*giop_debug_hook_spoofed_reply)    (GIOPRecvBuffer        *buf,
+						 GIOPMessageQueueEntry *ent);
+extern void (*giop_debug_hook_new_connection)   (GIOPServer            *server,
+						 GIOPConnection        *new_cnx);
 #ifndef G_ENABLE_DEBUG
 
 #define do_giop_dump(fh, ptr, len, off)

@@ -2,6 +2,9 @@
 #include <orbit/GIOP/giop.h>
 #include <orbit/GIOP/giop-connection.h>
 
+void (*giop_debug_hook_new_connection) (GIOPServer     *server,
+					GIOPConnection *new_cnx) = NULL;
+
 GIOPServer *
 giop_server_new (GIOPVersion            giop_version,
 		 const char            *proto_name, 
@@ -42,6 +45,11 @@ giop_server_handle_create_connection (LINCServer *server)
 
 	retval->giop_version = gserver->giop_version;
 	retval->orb_data     = gserver->orb_data;
+
+#ifdef G_ENABLE_DEBUG
+	if (giop_debug_hook_new_connection)
+		giop_debug_hook_new_connection (gserver, retval);
+#endif	
 
 	return (LINCConnection *)retval;
 }

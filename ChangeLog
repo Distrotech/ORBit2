@@ -1,5 +1,22 @@
 2002-06-21  Michael Meeks  <michael@ximian.com>
 
+	* test/test-giop.c (test_spoof_callback),
+	(test_spoof_hook, test_spoofing): impl.
+	(run_test): impl.
+	(wait_for_disconnect): impl.
+	(run_test_hook_new_connection): impl.
+	(main): upd.
+
+	* src/orb/GIOP/giop-server.c
+	(giop_server_handle_create_connection): add a new
+	connection debugging hook.
+
+	* src/orb/GIOP/giop-recv-buffer.c (handle_reply):
+	validate the reply came from the right connection,
+	return TRUE/FALSE depending.
+	(giop_connection_handle_input): terminate connections
+	that do bad things to us.
+
 	* src/orb/orbit-init.c (ORBit_init_internals):
 	add a getuid to the srand.
 

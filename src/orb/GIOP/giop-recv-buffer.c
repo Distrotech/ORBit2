@@ -10,7 +10,9 @@
 
 #undef DEBUG
 
-void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer *buf) = NULL;
+void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer        *buf) = NULL;
+void (*giop_debug_hook_spoofed_reply)    (GIOPRecvBuffer        *buf,
+					  GIOPMessageQueueEntry *ent) = NULL;
 
 
 #define MORE_FRAGMENTS_FOLLOW(buf) ((buf)->msg.header.flags & GIOP_FLAG_FRAGMENTED)
@@ -894,14 +896,17 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 	return FALSE;
 }
 
-static void
+static gboolean
 handle_reply (GIOPRecvBuffer *buf)
 {
 	GList                 *l;
+	gboolean               error;
 	GIOPMessageQueueEntry *ent;
 	CORBA_unsigned_long    request_id;
 
 	request_id = giop_recv_buffer_get_request_id (buf);
+
+	error = FALSE;
 
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 
@@ -915,6 +920,17 @@ handle_reply (GIOPRecvBuffer *buf)
 
 	if (l) {
 		ent = l->data;
+
+		if (ent->cnx != buf->connection) {
+#ifdef G_ENABLE_DEBUG
+			if (giop_debug_hook_spoofed_reply)
+				giop_debug_hook_spoofed_reply (buf, ent);
+#endif
+
+			dprintf (ERRORS, "We received a bogus reply\n");
+			giop_recv_buffer_unuse (buf);
+			return TRUE;
+		}
 
 		ent->buffer = buf;
 #ifdef ORBIT_THREADED
@@ -943,8 +959,10 @@ handle_reply (GIOPRecvBuffer *buf)
 			 * system exception in reply.
 			 */
  		} else {
+#ifdef G_ENABLE_DEBUG
 			if (giop_debug_hook_unexpected_reply)
 				giop_debug_hook_unexpected_reply (buf);
+#endif
 
 #ifdef G_ENABLE_DEBUG
 			else if (_orbit_debug_flags & ORBIT_DEBUG_ERRORS) {
@@ -952,10 +970,13 @@ handle_reply (GIOPRecvBuffer *buf)
 				giop_dump_recv (buf);
 			}
 #endif /* G_ENABLE_DEBUG */
+			error = TRUE;
 		}
 
 		giop_recv_buffer_unuse (buf);
 	}
+
+	return error;
 }
 
 static gboolean
@@ -1113,7 +1134,8 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	switch (buf->msg.header.message_type) {
 	case GIOP_REPLY:
 	case GIOP_LOCATEREPLY:
-		handle_reply (buf);
+		if (handle_reply (buf)) /* dodgy inbound data, pull the cnx */
+			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 		break;
 
 	case GIOP_REQUEST:
