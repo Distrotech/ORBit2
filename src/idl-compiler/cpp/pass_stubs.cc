@@ -131,7 +131,7 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << attr.getType()->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),_ev);" << endl;
+	<< IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),_ev._orbitcpp_get_c_object());" << endl;
 
 	m_module
 	<< mod_indent << "_ev.propagate_sysex();" << endl;
@@ -164,10 +164,10 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 		m_module
 			<< mod_indent << IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()
-			<< "__set_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),"
+			<< "__set_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(), "
 			<<attr.getType()->getCPPStubParameterTerm(IDL_PARAM_IN,"val");
 		m_module
-			<<",_ev);" << endl;
+			<<", _ev._orbitcpp_get_c_object());" << endl;
 
 		m_module
 		  << mod_indent << "_ev.propagate_sysex();" << endl;
@@ -243,9 +243,9 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 	if (exfirst != exlast) { // no exceptions => every user ex is unknown
 		m_module
 		<< mod_indent << IDL_CORBA_NS "::RepositoryId const repo_id = "
-		<<  "::CORBA_exception_id(_ev);" << endl
+		<<  "::CORBA_exception_id(_ev._orbitcpp_get_c_object());" << endl
 		<< mod_indent << "void *value = "
-		<<  "::CORBA_exception_value(_ev);" << endl << endl;
+		<<  "::CORBA_exception_value(_ev._orbitcpp_get_c_object());" << endl << endl;
 
 		while (exfirst != exlast && *exfirst) {
 			m_module
@@ -369,10 +369,10 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	m_header << --indent << "public:" << endl;
 	indent++;
 
-	m_header << indent << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject, bool take_copy = true); //orbitcpp-specific" << endl << endl;
+	m_header << indent << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject, bool take_copy = false); //orbitcpp-specific" << endl << endl;
 		
 	// _orbitcpp wrap method:
-	m_header << indent << "static " << iface.getCPPStub() << "* _orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool take_copy = true);" << endl << endl;
+	m_header << indent << "static " << iface.getCPPStub() << "* _orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool take_copy = false);" << endl << endl;
 
 	// make cast operators for all mi base classes
  	IDLInterface::BaseList::const_iterator
@@ -399,7 +399,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	//Constructor implemention:
 	m_module << IDL_IMPL_NS_ID << "::" << IDL_IMPL_STUB_NS_ID
 		 << iface.getQualifiedCPPIdentifier() << "::" << iface.getCPPStub()
-		 << "(" << iface.getCTypeName() << " cobject, bool take_copy = false)" << endl;
+		 << "(" << iface.getCTypeName() << " cobject, bool take_copy /*= false */)" << endl;
 	m_module << ": " << base_name << "(cobject, take_copy)" << endl
 		 << "{}" << endl
 		 << endl;
@@ -407,7 +407,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	// _orbitcpp wrap method:
 	string classname = IDL_IMPL_NS_ID "::" IDL_IMPL_STUB_NS_ID + iface.getQualifiedCPPIdentifier();
 	m_module
-	    << mod_indent << classname << "* " << classname << "::_orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool take_copy /* = true */)" << endl
+	    << mod_indent << classname << "* " << classname << "::_orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool take_copy /* = false */)" << endl
 	    << mod_indent << "{" << endl
 	    << ++mod_indent << "return new " << classname << " (cobject, take_copy);" << endl
 	    << --mod_indent << "}" << endl << endl;

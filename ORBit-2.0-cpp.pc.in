@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+orbit_idl=@bindir@/orbit-idl-2
+
+
+Name: ORBit-2.0-cpp
+Description: C++ mapping for ORBit-2.0.
+Version: @ORBIT_VERSION@
+Requires: ORBit-2.0
+Libs: -L${libdir} -lORBit-2-cpp
+Cflags:

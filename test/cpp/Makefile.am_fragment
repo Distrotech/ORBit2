@@ -1,5 +1,5 @@
 testcpp_libs = $(top_builddir)/src/orb/libORBit-2.la \
-               $(top_builddir)/src/orb-cpp/liborbitcpp.la \
+               $(top_builddir)/src/orb-cpp/libORBit-2-cpp.la \
 $(ORBIT_LIBS)
 
 INCLUDES =                                 \
