@@ -985,7 +985,8 @@ tc_dec (CORBA_TypeCode  *t,
 		GSList    *l;
 
 		if (lkind != CORBA_tk_recursive) {
-			g_warning ("%s: invalid CORBA_TCKind, lkind=%lu", G_GNUC_FUNCTION, lkind);
+			g_warning ("%s: invalid CORBA_TCKind, lkind=%lu",
+				   G_GNUC_FUNCTION, (unsigned long int) lkind);
 			return TRUE;
 		}
 

@@ -94,7 +94,7 @@ genuid_rand_device (guchar *buffer, int length)
 #include <openssl/rand.h>
 
 static gboolean
-genrand_openssl (guchar *buffer, int length)
+genuid_rand_openssl (guchar *buffer, int length)
 {
 	static RAND_METHOD *rm = NULL;
 

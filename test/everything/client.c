@@ -1251,7 +1251,7 @@ testMisc (test_TestFactory   factory,
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/BAD_OPERATION:1.0"));
 		CORBA_exception_free (ev);
 	}
-	
+
 	g_assert (ORBit_copy_value (NULL, TC_CORBA_boolean) == NULL);
 
 	objref = test_TestFactory_getBasicServer (factory, ev);
@@ -1260,6 +1260,20 @@ testMisc (test_TestFactory   factory,
 	g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
+	{ /* IOR stringification */
+		CORBA_char *ior;
+		CORBA_Object o2;
+
+		ior = CORBA_ORB_object_to_string (global_orb, factory, &ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+		o2 = CORBA_ORB_string_to_object (global_orb, ior, &ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		
+		g_assert (o2 == factory);
+		CORBA_Object_release (o2, &ev);
+	}
+	
 	test_BasicServer_noImplement (objref, ev);
 	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 	g_assert (!strcmp (ev->_id, "IDL:CORBA/NO_IMPLEMENT:1.0"));

@@ -49,4 +49,6 @@ orbit_idl_2_SOURCES=orbit-idl-main.c \
         orbit-idl-c-deps.c \
 	orbit-idl-marshal.c \
 	orbit-idl-marshal.h	\
-	orbit-idl2.h
+	orbit-idl2.h		\
+	foo.cc
+

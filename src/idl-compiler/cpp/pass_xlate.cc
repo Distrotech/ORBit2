@@ -534,9 +534,7 @@ IDLPassXlate::doException (IDL_tree  node,
 		 << "(CORBA::TypeCode_ptr)TC_" + except.get_c_typename ()
 		 << ';' << endl;
 
-#if 0 //!!!
 	ORBITCPP_MEMCHECK( new IDLWriteExceptionAnyFuncs(except, m_state, *this) );
-#endif
 }
 
 
