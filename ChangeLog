@@ -1,3 +1,9 @@
+2002-02-26  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/pass_xlate.cc: 
+	TC_Bonobo_Unknown and similar can not be used via the _orbitcpp::c
+	namespace because they are #defines in the C stubs/skels.
+
 2002-02-24  Sam Couter <scouter@bigpond.net.au>
 
 	* Add G_BEGIN_DECLS and G_END_DECLS around each installed header to
