@@ -471,7 +471,7 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of, "{\n%s retval;\nimpl_POA_%s *newservant;\nPortableServer_ObjectId *objid;\n\n", id, id);
     fprintf(ski->of, "newservant = g_new0(impl_POA_%s, 1);\n", id);
     fprintf(ski->of, "newservant->servant.vepv = &impl_%s_vepv;\n", id);
-    fprintf(ski->of, "newservant->poa = poa;\n");
+    fprintf(ski->of, "newservant->poa = (PortableServer_POA) CORBA_Object_duplicate((CORBA_Object)poa, ev);\n");
     fprintf(ski->of, "POA_%s__init((PortableServer_Servant)newservant, ev);\n", id);
     
     fprintf(ski->of, "   /* Before servant is going to be activated all\n");
@@ -485,8 +485,10 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of, "retval = PortableServer_POA_servant_to_reference(poa, newservant, ev);\n");
     fprintf(ski->of, "\nreturn retval;\n}\n\n");
     fprintf(ski->of, "static void\nimpl_%s__destroy(impl_POA_%s *servant, CORBA_Environment *ev)\n{\n", id, id);
+    fprintf(ski->of, "    CORBA_Object_release ((CORBA_Object) servant->poa, ev);\n\n");
     fprintf(ski->of, "    /* No further remote method calls are delegated to \n");
     fprintf(ski->of, "    * servant and you may free your private attributes. */\n");
+
     fprintf(ski->of, "   /* ------ free private attributes here ------ */\n");
     fprintf(ski->of, "   /* ------ ---------- end ------------- ------ */\n");
     fprintf(ski->of, "\nPOA_%s__fini((PortableServer_Servant)servant, ev);\n", id);
