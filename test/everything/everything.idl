@@ -156,6 +156,7 @@ module test {
 		void opException() raises(TestException);
 		oneway void opOneWay(in string inArg);
 		void noImplement ();
+		void testLargeStringSeq (in StrSeq seq);
 	};
 
 	interface StructServer : BasicServer {
