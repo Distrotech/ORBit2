@@ -534,13 +534,14 @@ orbit_small_demarshal (CORBA_Object           obj,
 		giop_recv_buffer_unuse (recv_buffer);
 
 #ifdef G_ENABLE_DEBUG
-		if (_orbit_debug_flags & ORBIT_DEBUG_TRACES)
+		if (_orbit_debug_flags & ORBIT_DEBUG_TRACES) {
 			if (ev->_major == CORBA_SYSTEM_EXCEPTION)
 				tprintf (" System Exception: '%s' ", ev->_id);
 			else {
 				tprintf (" User Exception: '%s' ", ev->_id);
 				ORBit_trace_any (&ev->_any);
 			}
+		}
 #endif /* G_ENABLE_DEBUG */
 
 		return MARSHAL_EXCEPTION_COMPLETE;

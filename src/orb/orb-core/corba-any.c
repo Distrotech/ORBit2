@@ -893,6 +893,9 @@ ORBit_copy_value (gconstpointer value, CORBA_TypeCode tc)
 {
 	gpointer retval, newval;
 
+	if (!value)
+		return NULL;
+
 	retval = newval = ORBit_alloc_by_tc (tc);
 	ORBit_copy_value_core (&value, &newval, tc);
 

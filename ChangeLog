@@ -1,3 +1,13 @@
+2002-01-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_copy_value): tolerate NULL.
+
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_demarshal): kill warning.
+
+	* test/everything/client.c (testMisc): add a check.
+
 2002-01-21  Xiong Jiang <jxiong@offtopic.org>
 
 	* src/idl-compiler/orbit-idl-c-stubs.c
