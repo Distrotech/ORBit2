@@ -6,6 +6,7 @@
 #include "orb-core-export.h"
 #include "orbit-poa-export.h"
 #include "corba-ops.h"
+#include "orbit-debug.h"
 
 static PortableServer_Servant ORBit_POA_ServantManager_use_servant(
 				     PortableServer_POA poa,
@@ -1006,6 +1007,33 @@ ORBit_POAObject_invoke (ORBit_POAObject    pobj,
 	small_skel (pobj->servant, ret, args, ctx, ev, imp);
 }
 
+static void
+return_exception (GIOPRecvBuffer    *recv_buffer,
+		  ORBit_IMethod     *m_data,
+		  CORBA_Environment *ev)
+{
+	GIOPSendBuffer *send_buffer;
+
+	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
+
+	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {
+		dprintf ("A serious exception occured on a oneway method");
+		return;
+	}
+
+	send_buffer = giop_send_buffer_use_reply (
+		recv_buffer->connection->giop_version,
+		giop_recv_buffer_get_request_id (recv_buffer),
+		ev->_major);
+
+	ORBit_send_system_exception (send_buffer, ev);
+
+	dprintf ("Return exception:\n");
+	do_giop_dump_send (send_buffer);
+	giop_send_buffer_write (send_buffer, recv_buffer->connection);
+	giop_send_buffer_unuse (send_buffer);
+}
+
 /*
  * If invoked in the local case, recv_buffer == NULL.
  * If invoked in the remote cse, ret = args = ctx == NULL.
@@ -1023,7 +1051,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	PortableServer_ServantLocator_Cookie cookie;
 	PortableServer_ObjectId             *oid;
 	PortableServer_ClassInfo            *klass;
-	ORBit_IMethod                       *m_data;
+	ORBit_IMethod                       *m_data = NULL;
 	ORBitSkeleton                        skel = NULL;
 	ORBitSmallSkeleton                   small_skel = NULL;
 	ORBit_POAInvocation		     iframe;
@@ -1097,8 +1125,10 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 			ev, ex_CORBA_OBJECT_NOT_EXIST, 
 			CORBA_COMPLETED_NO);
 
-	if (ev->_major != CORBA_NO_EXCEPTION)
+	if (ev->_major != CORBA_NO_EXCEPTION) {
+		return_exception (recv_buffer, m_data, ev);
 		goto clean_out;
+	}
 
 	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
 
@@ -1110,22 +1140,26 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		small_skel = klass->small_relay_call (
 			pobj->servant, opname, (gpointer *)&m_data, &imp);
 
-	if (!skel && !small_skel) {
+	if (!skel && !small_skel)
 		small_skel = get_small_skel_CORBA_Object (
 			pobj->servant, opname,
 			(gpointer *)&m_data, &imp);
-		if (!small_skel)
+	
+	if ((!small_skel && !skel) || !imp) {
+		if (!imp && (small_skel || skel))
+			CORBA_exception_set_system (
+				ev, ex_CORBA_NO_IMPLEMENT,
+				CORBA_COMPLETED_NO);
+		else
 			CORBA_exception_set_system (
 				ev, ex_CORBA_BAD_OPERATION,
 				CORBA_COMPLETED_NO);
+	}
 
-	} else if (!imp)
-		CORBA_exception_set_system (
-			ev, ex_CORBA_NO_IMPLEMENT,
-			CORBA_COMPLETED_NO);
-
-	if (ev->_major != CORBA_NO_EXCEPTION)
+	if (ev->_major != CORBA_NO_EXCEPTION) {
+		return_exception (recv_buffer, m_data, ev);
 		goto clean_out;
+	}
 
 	if (skel)
 		skel (pobj->servant, recv_buffer, ev, imp);
@@ -1139,13 +1173,12 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		ORBit_small_invoke_adaptor (
 				(ORBit_OAObject)pobj, recv_buffer, m_data, 
 				(gpointer)&invoke_data, ev);
-	}
-	else
+	} else
 		small_skel (pobj->servant, ret, args, ctx, ev, imp);
 
+ clean_out:
 	CORBA_exception_free (ev);
 
- clean_out:
 	if (poa->p_servant_retention == PortableServer_NON_RETAIN)
 		switch (poa->p_request_processing) {
 		case PortableServer_USE_SERVANT_MANAGER:

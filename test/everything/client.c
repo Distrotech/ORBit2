@@ -944,10 +944,29 @@ testMisc (test_TestFactory   factory,
 	/* Non existant method invoke - only for remote */
 	/* FIXME: should not work in local case either ! */
 	if (!factory->adaptor_obj) {
+		/* Invoke a BasicServer method on a TestFactory */
 		foo = test_BasicServer__get_foo (factory, ev);
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/BAD_OPERATION:1.0"));
 		CORBA_exception_free (ev);
+	}
+
+	if (!factory->adaptor_obj) {
+		test_BasicServer objref;
+
+		objref = test_TestFactory_getBasicServer(factory,ev);
+		g_assert(ev->_major == CORBA_NO_EXCEPTION);
+		g_assert(objref != CORBA_OBJECT_NIL);
+		g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+		g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+		test_BasicServer_noImplement (objref, ev);
+		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+		g_assert (!strcmp (ev->_id, "IDL:CORBA/NO_IMPLEMENT:1.0"));
+		CORBA_exception_free (ev);
+
+		CORBA_Object_release (objref, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	}
 		
 	/* Check we are building full type data */

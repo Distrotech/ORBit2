@@ -153,7 +153,8 @@ POA_test_BasicServer__epv BasicServer_epv = {
   BasicServer_opLongLong,
   BasicServer_opEnum,
   BasicServer_opException,
-  BasicServer_opOneWay
+  BasicServer_opOneWay,
+  NULL /* noImplement */
 };
 
 POA_test_BasicServer__vepv BasicServer_vepv = {&BasicServer_base_epv,&BasicServer_epv};

@@ -12,10 +12,7 @@
 #undef DEBUG_TRACE
 
 
-#ifndef TRACE_DEBUG
-
-
-#else /* TRACE_DEBUG */
+#ifdef TRACE_DEBUG
 
 void
 ORBit_trace_objref (const CORBA_Object obj)

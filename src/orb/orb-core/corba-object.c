@@ -542,18 +542,17 @@ ORBitSmallSkeleton
 get_small_skel_CORBA_Object(PortableServer_Servant servant, const char *opname, 
 			    gpointer * m_data, gpointer * impl)
 {
-
 	if (!strcmp (opname, "is_a")) {
-		*m_data = (gpointer)&CORBA_Object__imethods [4];
+		*impl = *m_data = (gpointer)&CORBA_Object__imethods [4];
 		return (ORBitSmallSkeleton) ORBit_impl_CORBA_Object_is_a;
 
 	} else if (!strcmp (opname, "ORBit_get_type_id")) {
-		*m_data = (gpointer)&CORBA_Object__imethods [
+		*impl = *m_data = (gpointer)&CORBA_Object__imethods [
 			CORBA_OBJECT_SMALL_GET_TYPE_ID];
 		return (ORBitSmallSkeleton) ORBit_impl_ORBit_get_type_id;
 
 	} else if (!strcmp (opname, "ORBit_get_iinterface")) {
-		*m_data = (gpointer)&CORBA_Object__imethods [
+		*impl = *m_data = (gpointer)&CORBA_Object__imethods [
 			CORBA_OBJECT_SMALL_GET_IINTERFACE];
 		return (ORBitSmallSkeleton) ORBit_impl_ORBit_get_iinterface;
 	}		

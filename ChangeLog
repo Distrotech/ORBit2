@@ -1,5 +1,22 @@
 2001-09-09  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-object.c
+	(get_small_skel_CORBA_Object): make impl non NULL to
+	simplify checks.
+
+	* test/everything/client.c (testMisc): expand regression
+	tests.
+
+	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):
+	return exceptions that we have thrown, re-organise the
+	exception throwing code to flow more smoothly.
+	(return_exception): impl; ie. with the old 'Lee' stubs,
+	we have no way to tell that the method was oneway - so
+	we might stil try and return an exception - another nail
+	in it's coffin.
+
+2001-09-09  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-typecode.c: fix alignment of
 	CORBA_TC_Object, or we get serious marshaling issues.
 
