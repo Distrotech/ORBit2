@@ -1,5 +1,7 @@
 2003-06-06  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/Makefile.am: poke at deps again [!]
+
 	* src/orb/GIOP/giop-connection.c
 	(giop_connections_shutdown): warn hackers only,
 	an old problem.
