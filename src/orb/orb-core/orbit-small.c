@@ -386,8 +386,6 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	do_giop_dump_send (send_buffer);
 
-	giop_recv_list_setup_queue_entry (mqe, cnx, GIOP_REPLY, request_id);
-
 	if (giop_send_buffer_write (send_buffer, cnx)) {
 		giop_recv_list_destroy_queue_entry (mqe);
 		return FALSE;
@@ -601,9 +599,11 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 		goto system_exception;
 	}
 
-retry_request:
+ retry_request:
 	request_id = GPOINTER_TO_UINT (&obj);
 	completion_status = CORBA_COMPLETED_NO;
+
+	giop_recv_list_setup_queue_entry (&mqe, cnx, GIOP_REPLY, request_id);
 
 	if (!orbit_small_marshal (obj, cnx, &mqe, request_id,
 				  m_data, args, ctx))
@@ -640,6 +640,7 @@ retry_request:
 		dprintf ("Clean demarshal on id 0x%x\n\n", request_id);
 		break;
 	};
+
  clean_out:
 	tprintf ("\n");
 	return;
@@ -1002,3 +1003,137 @@ ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
 	return servant->vepv [offset];
 }
 #endif
+
+typedef struct {
+	GIOPMessageQueueEntry   mqe;
+	CORBA_Object            obj;
+	ORBitAsyncInvokeFunc    fn;
+	gpointer                user_data;
+	gpointer               *args;
+	ORBit_IMethod          *m_data;
+	CORBA_completion_status completion_status;
+} AsyncQueueEntry;
+
+static void
+async_recv_cb (AsyncQueueEntry *aqe)
+{
+	CORBA_Environment *ev, real_ev;
+
+	ev = &real_ev;
+	CORBA_exception_init (ev);
+
+	g_warning ("Async: We need to check the connection before de-marshaling, "
+		   "and flag the right exceptions");
+	g_warning ("ASync: return types stubbed - need an any.");
+
+	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, &aqe->mqe, ev,
+				       NULL, aqe->m_data, aqe->args)) {
+	case MARSHAL_SYS_EXCEPTION_COMPLETE:
+		aqe->completion_status = CORBA_COMPLETED_YES;
+		dprintf ("Sys exception completed on id 0x%x\n\n", aqe->mqe.request_id);
+		goto system_exception;
+
+	case MARSHAL_SYS_EXCEPTION_INCOMPLETE:
+		dprintf ("Sys exception incomplete on id 0x%x\n\n", aqe->mqe.request_id);
+		goto system_exception;
+
+	case MARSHAL_EXCEPTION_COMPLETE:
+		dprintf ("Clean demarshal of exception on id 0x%x\n\n", aqe->mqe.request_id);
+		break;
+
+	case MARSHAL_RETRY:
+		g_warning ("Retry demarshal failed on id 0x%x\n\n", aqe->mqe.request_id);
+		return;
+
+	case MARSHAL_CLEAN:
+		dprintf ("Clean demarshal on id 0x%x\n\n", aqe->mqe.request_id);
+		break;
+	};
+	goto clean_out;
+
+ system_exception:
+	tprintf ("[System exception comm failure] )");
+	CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
+				    aqe->completion_status);
+
+ clean_out:
+	tprintf ("\n");
+
+	aqe->fn (aqe->obj, aqe->m_data, NULL, aqe->args,
+		 aqe->user_data, ev);
+
+	ORBit_RootObject_release (aqe->obj);
+/*	ORBit_RootObject_release (aqe->m_data); */
+	g_free (aqe);
+	CORBA_exception_free (ev);
+}
+
+/**
+ * ORBit_small_invoke_async:
+ * @obj: 
+ * @m_data: 
+ * @fn: 
+ * @user_data: 
+ * @args: 
+ * @ctx: 
+ * @ev:
+ * 
+ *     This method is used to invoke a remote (or local) method
+ * asynchronously. @fn is called back on return - either with an empty
+ * CORBA_Environment indicating success, or with the error.
+ **/
+void
+ORBit_small_invoke_async (CORBA_Object         obj,
+			  ORBit_IMethod       *m_data,
+			  ORBitAsyncInvokeFunc fn,
+			  gpointer             user_data,
+			  gpointer            *args,
+			  CORBA_Context        ctx,
+			  CORBA_Environment   *ev)
+{
+	CORBA_unsigned_long     request_id;
+	GIOPConnection         *cnx;
+	AsyncQueueEntry        *aqe = g_new (AsyncQueueEntry, 1);
+
+	cnx = ORBit_object_get_connection (obj);
+
+	if (!cnx) {
+		dprintf ("Null connection on object '%p'\n", obj);
+		aqe->completion_status = CORBA_COMPLETED_NO;
+		goto system_exception;
+	}
+
+	request_id = GPOINTER_TO_UINT (aqe);
+	aqe->completion_status = CORBA_COMPLETED_NO;
+
+	giop_recv_list_setup_queue_entry (&aqe->mqe, cnx, GIOP_REPLY, request_id);
+
+	if (! (m_data->flags & ORBit_I_METHOD_1_WAY))
+		giop_recv_list_setup_queue_entry_async (
+			&aqe->mqe, (GIOPAsyncCallback) async_recv_cb);
+	else if (fn)
+		g_warning ("oneway method being invoked async with a callback");
+
+	if (!orbit_small_marshal (obj, cnx, &aqe->mqe, request_id,
+				  m_data, args, ctx))
+		goto system_exception;
+
+	aqe->completion_status = CORBA_COMPLETED_MAYBE;
+	aqe->fn = fn;
+	aqe->user_data = user_data;
+	aqe->obj = ORBit_RootObject_duplicate (obj);
+	/* FIXME: perenial ORBit_IMethod lifecycle issues */
+	aqe->m_data = /* ORBit_RootObject_duplicate */ (m_data);
+	aqe->args = args; /* NB. heavy allocation burden on async stubs */
+
+ clean_out:
+	tprintf ("\n");
+	return;
+
+ system_exception:
+	tprintf ("[System exception comm failure] )");
+	CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
+				    aqe->completion_status);
+	g_free (aqe);
+	goto clean_out;
+}

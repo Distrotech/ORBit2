@@ -998,6 +998,68 @@ testMisc (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
+static int done = 0;
+
+static void
+test_BasicServer_opExceptionA_cb (CORBA_Object       object,
+				  ORBit_IMethod     *m_data,
+				  const CORBA_any   *ret,
+				  gpointer          *args,
+				  gpointer           user_data, 
+				  CORBA_Environment *ev)
+{
+	test_TestException *ex;
+
+	g_assert(ev->_major == CORBA_USER_EXCEPTION);
+	g_assert(strcmp(CORBA_exception_id(ev),ex_test_TestException) == 0);
+
+	ex = CORBA_exception_value(ev);
+	g_assert(strcmp(ex->reason,constants_STRING_IN) == 0);
+	g_assert(ex->number == constants_LONG_IN);
+	g_assert(ex->aseq._length == 1);
+	g_assert(ex->aseq._buffer[0] == constants_LONG_IN);
+
+	done = 1;
+}
+
+
+static void
+test_BasicServer_opExceptionA (CORBA_Object       obj,
+			       CORBA_Environment *ev)
+{
+	ORBit_IMethod *m_data;
+
+	m_data = &test_BasicServer__iinterface.methods._buffer[7];
+	/* if this failed, we re-ordered the IDL ... */
+	g_assert (!strcmp (m_data->name, "opException"));
+
+	ORBit_small_invoke_async (
+		obj, m_data, test_BasicServer_opExceptionA_cb,
+		NULL, NULL, NULL, ev);
+}
+
+void
+testAsync (test_TestFactory   factory, 
+	   CORBA_Environment *ev)
+{
+	test_BasicServer objref;
+
+	d_print("Testing Async invocations ...\n");
+	objref = test_TestFactory_getBasicServer (factory,ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+			      
+	done = 0;
+	test_BasicServer_opExceptionA (objref, ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+	while (!done)
+		linc_main_iteration (TRUE);
+
+	CORBA_Object_release(objref, ev);  
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+}
+
+
 static void
 run_tests (test_TestFactory   factory,
 	   CORBA_Environment *ev,
@@ -1039,6 +1101,7 @@ run_tests (test_TestFactory   factory,
 		testContext (factory, ev);
 		testIInterface (factory, ev);
 		testMisc (factory, ev);
+		testAsync (factory, ev);
 #endif
 	}
 	
