@@ -1,3 +1,9 @@
+2003-09-29  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* src/orb/orb-core/orbit-typelib.c (add_if_unique) 
+	(ORBit_get_typelib_paths): update typelib_path semantics
+	to be more sane.
+
 2003-09-22  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* acconfig.h: Removed.
