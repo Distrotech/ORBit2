@@ -54,7 +54,7 @@ w: currently working on stuff related to it, might work
 TYPE		IN	OUT	INOUT	Ret	Ex	Attrib	Array	Struct	Seq	Union
 
 Simple		Y	Y	Y	Y	Y	Y	Y	Y	Y	-
-String		Y	Y	Y	y	Y	y	Y	Y	w	-
+String		Y	Y	Y	y	Y	y	Y	Y	Y	-
 Enums		Y	Y	Y	Y	y	y	y	y	y	-
 Object		Y	Y	Y	Y	Y	y	Y	Y	w	-
 Array/fixed	Y	Y	Y	Y	Y	y	y	Y	-	-
