@@ -1,3 +1,12 @@
+2002-07-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c (ORBit_handle_request):
+	return a system exception if we can't find the method,
+	so the remote end won't just hang forever.
+
+	* src/orb/poa/poa.c (return_exception): split guts out.
+	(ORBit_recv_buffer_return_sys_exception): into here
+
 2002-07-01  Murray Cumming  <murrayc@usa.net>
  
  	* src/idl-compiler/orbit-idl3-types.h:
