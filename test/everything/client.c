@@ -1474,8 +1474,12 @@ test_BasicServer_opStringA_cb (CORBA_Object          object,
 	CORBA_char  *inout_str = NULL, *out_str, *ret_str;
 	CORBA_char **out_str_shim = &out_str;
 
-	gpointer args[] = { NULL, &inout_str, &out_str_shim };
+	gpointer args[3];
 	gpointer ret    = &ret_str;
+
+	args[0] = NULL;
+	args[1] = &inout_str;
+	args[2] = &out_str_shim;
 
 	/* Not a broken connection */
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
@@ -1500,8 +1504,12 @@ test_BasicServer_opStringA (CORBA_Object       obj,
 			    const CORBA_char  *inout_str, 
 			    CORBA_Environment *ev)
 {
-	gpointer args[] = { &in_str, &inout_str, NULL };
+	gpointer args[3];
 	ORBit_IMethod *m_data;
+
+	args[0] = &in_str;
+	args[1] = &inout_str;
+	args[2] = NULL;
 
 	m_data = &test_BasicServer__iinterface.methods._buffer[3];
 	/* if this failed, we re-ordered the IDL ... */
