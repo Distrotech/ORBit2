@@ -153,7 +153,7 @@ struct _LinkWatch {
 /* On Unix socket API calls are no different from normal system calls */
 
 #define LINK_TEMP_FAILURE_RETRY_SOCKET(expression, val) \
-    LINC_TEMP_FAILURE_RETRY_SYSCALL(expression, val)
+    LINK_TEMP_FAILURE_RETRY_SYSCALL(expression, val)
 
 #define LINK_CLOSE_SOCKET(fd)  while (close (fd) < 0 && errno == EINTR)
 
