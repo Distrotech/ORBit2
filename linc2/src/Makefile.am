@@ -13,6 +13,7 @@ liblinc_la_SOURCES=\
 	linc-connection.c \
 	linc-protocols.c \
 	linc-server.c \
+	linc-debug.h	\
 	linc-private.h
 
 liblinc_la_LDFLAGS =                 \
