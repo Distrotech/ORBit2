@@ -1,5 +1,8 @@
 2002-05-12  ERDI Gergo  <cactus@cactus.rulez.org>
 
+	* src/orb-cpp/orbitcpp_sequence.hh: delete buffer as array instead
+	of simple pointer
+
 	* src/idl-compiler/cpp/types/IDLInterface.cc (member_pack_to_c):
 	Cast to a non-const reference instead of a non-const instance
 	before duplicating _mgr's
