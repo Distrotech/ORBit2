@@ -39,9 +39,9 @@ typedef struct {
 #endif
 
   GIOChannel *gioc;
+  LincWatch  *tag;
+  int         fd;
 
-  guint tag;
-  int fd;
   LINCConnectionStatus status;
   LINCConnectionOptions options;
   guint8 was_initiated : 1, is_auth : 1;

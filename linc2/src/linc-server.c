@@ -6,49 +6,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <linc/linc.h>
 #include <linc/linc-server.h>
 #include <linc/linc-connection.h>
-
-
-static void linc_server_init       (LINCServer      *cnx);
-static LINCConnection *linc_server_create_connection (LINCServer      *cnx);
-static void linc_server_dispose    (GObject         *obj);
-static void linc_server_class_init (LINCServerClass *klass);
 
 enum {
   NEW_CONNECTION,
   LAST_SIGNAL
 };
 static guint server_signals[LAST_SIGNAL] = {0};
-
-GType
-linc_server_get_type(void)
-{
-  static GType object_type = 0;
-
-  if (!object_type)
-    {
-      static const GTypeInfo object_info =
-      {
-        sizeof (LINCServerClass),
-        (GBaseInitFunc) NULL,
-        (GBaseFinalizeFunc) NULL,
-        (GClassInitFunc) linc_server_class_init,
-        NULL,           /* class_finalize */
-        NULL,           /* class_data */
-        sizeof (LINCServer),
-        0,              /* n_preallocs */
-        (GInstanceInitFunc) linc_server_init,
-      };
-      
-      object_type = g_type_register_static (G_TYPE_OBJECT,
-                                            "LINCServer",
-                                            &object_info,
-					    0);
-    }  
-
-  return object_type;
-}
 
 static GObjectClass *parent_class = NULL;
 
@@ -87,44 +53,21 @@ my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
 }
 
 static void
-linc_server_class_init (LINCServerClass *klass)
-{
-  GObjectClass *object_class = (GObjectClass *)klass;
-  GClosure *closure;
-  GType ptype;
-
-  object_class->dispose = linc_server_dispose;
-  klass->create_connection = linc_server_create_connection;
-  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
-  closure = g_signal_type_cclosure_new(G_OBJECT_CLASS_TYPE(klass),
-				       G_STRUCT_OFFSET(LINCServerClass, new_connection));
-
-  ptype = G_TYPE_OBJECT;
-  server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
-						 G_OBJECT_CLASS_TYPE(klass),
-						 G_SIGNAL_RUN_LAST, closure,
-						 NULL, NULL,
-						 my_cclosure_marshal_VOID__OBJECT,
-						 G_TYPE_NONE,
-						 1, &ptype);
-}
-
-static void
-linc_server_init       (LINCServer      *cnx)
+linc_server_init (LINCServer *cnx)
 {
   O_MUTEX_INIT(cnx->mutex);
   cnx->fd = -1;
 }
 
 static void
-linc_server_dispose(GObject         *obj)
+linc_server_dispose (GObject *obj)
 {
   LINCServer *cnx = (LINCServer *)obj;
 
   O_MUTEX_DESTROY(cnx->mutex);
   if(cnx->tag)
-    g_source_remove(cnx->tag);
-  cnx->tag = 0;
+    linc_io_remove_watch(cnx->tag);
+  cnx->tag = NULL;
   if(cnx->proto && cnx->proto->destroy)
     cnx->proto->destroy(cnx->fd, cnx->local_host_info, cnx->local_serv_info);
   cnx->proto = NULL;
@@ -332,9 +275,10 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   if((create_options & LINC_CONNECTION_NONBLOCKING))
     {
       gioc = g_io_channel_unix_new(fd);
-      g_assert (cnx->tag == 0);
-      cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-				linc_server_handle_io, cnx);
+      g_assert (cnx->tag == NULL);
+      cnx->tag = linc_io_add_watch (
+	      gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+	      linc_server_handle_io, cnx);
       g_io_channel_unref(gioc);
     }
   cnx->create_options = create_options;
@@ -342,4 +286,56 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   cnx->local_serv_info = g_strdup(servbuf);
 
   return TRUE;
+}
+
+static void
+linc_server_class_init (LINCServerClass *klass)
+{
+  GObjectClass *object_class = (GObjectClass *)klass;
+  GClosure *closure;
+  GType ptype;
+
+  object_class->dispose = linc_server_dispose;
+  klass->create_connection = linc_server_create_connection;
+  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
+  closure = g_signal_type_cclosure_new(G_OBJECT_CLASS_TYPE(klass),
+				       G_STRUCT_OFFSET(LINCServerClass, new_connection));
+
+  ptype = G_TYPE_OBJECT;
+  server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
+						 G_OBJECT_CLASS_TYPE(klass),
+						 G_SIGNAL_RUN_LAST, closure,
+						 NULL, NULL,
+						 my_cclosure_marshal_VOID__OBJECT,
+						 G_TYPE_NONE,
+						 1, &ptype);
+}
+
+GType
+linc_server_get_type(void)
+{
+  static GType object_type = 0;
+
+  if (!object_type)
+    {
+      static const GTypeInfo object_info =
+      {
+        sizeof (LINCServerClass),
+        (GBaseInitFunc) NULL,
+        (GBaseFinalizeFunc) NULL,
+        (GClassInitFunc) linc_server_class_init,
+        NULL,           /* class_finalize */
+        NULL,           /* class_data */
+        sizeof (LINCServer),
+        0,              /* n_preallocs */
+        (GInstanceInitFunc) linc_server_init,
+      };
+      
+      object_type = g_type_register_static (G_TYPE_OBJECT,
+                                            "LINCServer",
+                                            &object_info,
+					    0);
+    }  
+
+  return object_type;
 }

@@ -21,15 +21,17 @@
 typedef struct {
   GObject parent;
 
-  int fd;
+  int     fd;
   O_MUTEX_DEFINE(mutex);
 
-  char *local_host_info, *local_serv_info;
+  char                   *local_host_info;
+  char                   *local_serv_info;
 
-  const LINCProtocolInfo * proto;
-  guint tag;
+  const LINCProtocolInfo *proto;
+  LincWatch              *tag;
+
   /* Options that incoming connections are created with */
-  LINCConnectionOptions create_options;
+  LINCConnectionOptions   create_options;
 } LINCServer;
 
 typedef struct {
