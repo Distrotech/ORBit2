@@ -4,6 +4,7 @@ INCLUDES =                          \
 	-I$(top_srcdir)/include     \
 	-I$(top_builddir)/include   \
 	-DORBIT2_INTERNAL_API       \
+	$(WARN_CFLAGS)              \
 	$(ORBIT_CFLAGS)
 
 bin_PROGRAMS=ior-decode-2 typelib-dump

@@ -4,6 +4,7 @@ noinst_PROGRAMS=					\
 INCLUDES =                           \
 	-I$(top_srcdir)/include	     \
 	-I$(top_builddir)/include    \
+	$(WARN_CFLAGS)               \
 	$(ORBIT_CFLAGS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la

@@ -35,7 +35,8 @@
 
 #include "poatest-basic-shell.h"
 
-void poatest_test_impl (PortableServer_Servant servant, CORBA_Environment *ev) { }
+static void
+poatest_test_impl (PortableServer_Servant servant, CORBA_Environment *ev) { }
 
 PortableServer_ServantBase__epv base_epv = {
 	._private    = NULL,

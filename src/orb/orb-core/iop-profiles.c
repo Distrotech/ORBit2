@@ -858,7 +858,6 @@ IOP_TAG_INTERNET_IOP_marshal (CORBA_Object      obj,
 			      IOP_Profile_info *profile)
 {
 	IOP_TAG_INTERNET_IOP_info *iiop;
-	CORBA_unsigned_long len;
 
 	iiop = (IOP_TAG_INTERNET_IOP_info *) profile;
 
@@ -881,7 +880,6 @@ IOP_TAG_GENERIC_IOP_marshal (CORBA_Object     obj,
 			     IOP_Profile_info *profile)
 {
 	IOP_TAG_GENERIC_IOP_info *giop = (IOP_TAG_GENERIC_IOP_info *) profile;
-	CORBA_unsigned_long       len;
 
 	giop_send_buffer_append (buf, giop_version_ids [giop->iiop_version], 2);
 
@@ -909,7 +907,6 @@ IOP_TAG_ORBIT_SPECIFIC_marshal (CORBA_Object      obj,
 				GIOPSendBuffer   *buf,
 				IOP_Profile_info *profile)
 {
-	CORBA_unsigned_long len;
 	IOP_TAG_ORBIT_SPECIFIC_info *osi;
 	guchar compat_version[2] = { 1, 2 }; /* for ORBit1 */
 

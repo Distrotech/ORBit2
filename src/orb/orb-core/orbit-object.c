@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <orbit/orbit.h>
 
+#include "orb-core-private.h"
+
 static glong alive_root_objects = 0;
 static glong total_refs = 0;
 

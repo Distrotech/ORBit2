@@ -42,7 +42,7 @@ gboolean         in_proc;
 #include "server.c"
 #undef  _IN_CLIENT_
 
-void
+static void
 testConst (void)
 {
 	d_print ("Testing constants...\n");
@@ -56,7 +56,7 @@ testConst (void)
 	g_assert (test_FAVORITE_COLOUR==test_red);
 }
 
-void
+static void
 testAttribute (test_TestFactory factory, 
 	       CORBA_Environment *ev)
 {  
@@ -87,7 +87,7 @@ testAttribute (test_TestFactory factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testString (test_TestFactory   factory, 
 	    CORBA_Environment *ev)
 {
@@ -120,7 +120,7 @@ testString (test_TestFactory   factory,
 }
 
 
-void
+static void
 testLong (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
@@ -144,7 +144,7 @@ testLong (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testLongLong (test_TestFactory   factory, 
 	      CORBA_Environment *ev)
 {
@@ -166,7 +166,7 @@ testLongLong (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testEnum (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
@@ -188,7 +188,7 @@ testEnum (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testException (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -233,7 +233,7 @@ testException (test_TestFactory   factory,
 	g_assert (rev->_major == CORBA_NO_EXCEPTION);
 }
 
-gboolean
+static gboolean
 find_tc (CORBA_sequence_CORBA_TypeCode *tcs, 
 	 const char                    *repo_id)
 {
@@ -246,7 +246,7 @@ find_tc (CORBA_sequence_CORBA_TypeCode *tcs,
 	return FALSE;
 }
 
-void
+static void
 testIInterface (test_TestFactory   factory, 
 		CORBA_Environment *ev)
 {
@@ -317,7 +317,7 @@ testIInterface (test_TestFactory   factory,
 	CORBA_free (tcs);
 }
 
-void
+static void
 testFixedLengthStruct (test_TestFactory   factory, 
 		       CORBA_Environment *ev)
 {
@@ -349,8 +349,9 @@ testFixedLengthStruct (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testVariableLengthStruct (test_TestFactory factory, 
-			      CORBA_Environment *ev)
+static void
+testVariableLengthStruct (test_TestFactory   factory, 
+			  CORBA_Environment *ev)
 {
   test_StructServer objref;
   test_VariableLengthStruct inArg, inoutArg, *outArg, *retn;
@@ -377,8 +378,9 @@ void testVariableLengthStruct (test_TestFactory factory,
 }
 
 
-void testCompoundStruct (test_TestFactory factory, 
-			CORBA_Environment *ev)
+static void
+testCompoundStruct (test_TestFactory   factory, 
+		    CORBA_Environment *ev)
 {
   test_StructServer objref;
   test_CompoundStruct inArg, inoutArg, *outArg, *retn;
@@ -405,7 +407,7 @@ void testCompoundStruct (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testStructAny (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -428,8 +430,9 @@ testStructAny (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testUnboundedSequence (test_TestFactory factory, 
-			   CORBA_Environment *ev)
+static void
+testUnboundedSequence (test_TestFactory   factory, 
+		       CORBA_Environment *ev)
 {
   test_SequenceServer objref;
   test_StrSeq inArg, inoutArg, *outArg, *retn;
@@ -481,7 +484,7 @@ void testUnboundedSequence (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testBoundedSequence (test_TestFactory   factory, 
 		     CORBA_Environment *ev)
 {
@@ -539,8 +542,9 @@ testBoundedSequence (test_TestFactory   factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testFixedLengthUnion (test_TestFactory factory, 
-			  CORBA_Environment *ev)
+static void
+testFixedLengthUnion (test_TestFactory   factory, 
+		      CORBA_Environment *ev)
 {
   test_UnionServer objref;
   test_FixedLengthUnion inArg, inoutArg, outArg, retn;
@@ -571,8 +575,9 @@ void testFixedLengthUnion (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testVariableLengthUnion (test_TestFactory factory, 
-			     CORBA_Environment *ev)
+static void
+testVariableLengthUnion (test_TestFactory   factory, 
+			 CORBA_Environment *ev)
 {
   test_UnionServer objref;
   test_VariableLengthUnion inArg, inoutArg, *outArg, *retn;
@@ -605,8 +610,9 @@ void testVariableLengthUnion (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testFixedLengthArray (test_TestFactory factory, 
-			  CORBA_Environment *ev)
+static void
+testFixedLengthArray (test_TestFactory   factory, 
+		      CORBA_Environment *ev)
 {
   
   test_ArrayServer objref;
@@ -640,8 +646,9 @@ void testFixedLengthArray (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testVariableLengthArray (test_TestFactory factory, 
-			     CORBA_Environment *ev)
+static void
+testVariableLengthArray (test_TestFactory   factory, 
+			 CORBA_Environment *ev)
 {
   test_ArrayServer objref;
   test_StrArray inArg, inoutArg;
@@ -687,8 +694,9 @@ void testVariableLengthArray (test_TestFactory factory,
 }
 
 
-void testAnyLong (test_TestFactory factory, 
-		  CORBA_Environment *ev)
+static void
+testAnyLong (test_TestFactory   factory, 
+	     CORBA_Environment *ev)
 {
   test_AnyServer objref;
   CORBA_any inArg, inoutArg, *outArg, *retn;
@@ -740,7 +748,7 @@ void testAnyLong (test_TestFactory factory,
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testAnyString (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -791,7 +799,7 @@ testAnyString (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testAnyStrSeq (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -811,7 +819,7 @@ testAnyStrSeq (test_TestFactory   factory,
 	CORBA_Object_release (objref, ev);
 }
 
-void
+static void
 testAnyStruct (test_TestFactory   factory, 
 	       CORBA_Environment *ev)
 {
@@ -873,7 +881,7 @@ testAnyStruct (test_TestFactory   factory,
 
 }
 
-void
+static void
 testSequenceOfAny (test_TestFactory   factory, 
 		   CORBA_Environment *ev)
 {
@@ -898,7 +906,7 @@ testSequenceOfAny (test_TestFactory   factory,
 	CORBA_free (anyseq._buffer);
 }
 
-void
+static void
 testAnyException (test_TestFactory   factory, 
 		  CORBA_Environment *ev)
 {
@@ -914,7 +922,7 @@ testAnyException (test_TestFactory   factory,
 	CORBA_free (inArg);
 }
 
-void
+static void
 testTypeCode (test_TestFactory   factory, 
 	      CORBA_Environment *ev)
 {
@@ -945,7 +953,7 @@ testTypeCode (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testContext (test_TestFactory   factory, 
 	     CORBA_Environment *ev)
 {
@@ -990,7 +998,7 @@ testContext (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testMisc (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
@@ -1212,7 +1220,7 @@ test_BasicServer_opStringA (CORBA_Object       obj,
 }
 
 
-void
+static void
 testAsync (test_TestFactory   factory, 
 	   CORBA_Environment *ev)
 {
@@ -1250,7 +1258,7 @@ testAsync (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void
+static void
 testPingPong (test_TestFactory   factory, 
 	      CORBA_Environment *ev)
 {
@@ -1296,7 +1304,7 @@ dummy_cb (LINCConnection *connection, gboolean *invoked)
 	*invoked = TRUE;
 }
 
-void
+static void
 testSegv (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
@@ -1338,7 +1346,7 @@ testSegv (test_TestFactory   factory,
 	}
 }
 
-void
+static void
 test_initial_references (CORBA_ORB          orb,
 			 CORBA_Environment *ev)
 {

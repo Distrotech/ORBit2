@@ -9,6 +9,7 @@ INCLUDES =					\
 	-I$(top_builddir)/include		\
 	-DORBIT_VERSION=\"@ORBIT_VERSION@\"	\
 	-DORBIT2_INTERNAL_API			\
+	$(WARN_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
 libORBit_2_la_SOURCES=orbit-init.c orbit-init.h

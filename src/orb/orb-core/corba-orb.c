@@ -14,7 +14,7 @@
 
 extern ORBit_option orbit_supported_options[];
 
-void
+static void
 ORBit_service_list_free_ref (gpointer         key,
 			     ORBit_RootObject objref,
 			     gpointer         dummy)

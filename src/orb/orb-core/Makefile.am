@@ -10,6 +10,7 @@ INCLUDES =						\
 	-I$(top_builddir)/include/orbit/orb-core	\
 	-DORBIT_TYPELIB_DIR=\""$(TYPELIB_DIR)"\"	\
 	-DORBIT2_INTERNAL_API				\
+	$(WARN_CFLAGS)					\
 	$(ORBIT_CFLAGS)
 
 main_src = \

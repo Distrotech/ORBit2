@@ -117,7 +117,7 @@ giop_IOP_ServiceContextList_free (IOP_ServiceContextList *value)
 		g_free (value->_buffer);
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -189,7 +189,7 @@ giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -236,7 +236,7 @@ giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_reply_1_1(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -264,7 +264,7 @@ giop_recv_buffer_demarshal_reply_1_1(GIOPRecvBuffer *buf)
  return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_reply_1_2(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -294,7 +294,7 @@ giop_recv_buffer_demarshal_reply_1_2(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_cancel(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -311,7 +311,7 @@ giop_recv_buffer_demarshal_cancel(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_locate_request_1_1(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -343,7 +343,7 @@ giop_recv_buffer_demarshal_locate_request_1_1(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_locate_request_1_2(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -362,7 +362,7 @@ giop_recv_buffer_demarshal_locate_request_1_2(GIOPRecvBuffer *buf)
   return giop_GIOP_TargetAddress_demarshal(buf, &buf->msg.u.request_1_2.target);
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_locate_reply_1_1(GIOPRecvBuffer *buf)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
@@ -389,7 +389,7 @@ giop_recv_buffer_demarshal_locate_reply_1_1(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal_locate_reply_1_2 (GIOPRecvBuffer *buf)
 {
 	return giop_recv_buffer_demarshal_locate_reply_1_1 (buf);
@@ -397,7 +397,7 @@ giop_recv_buffer_demarshal_locate_reply_1_2 (GIOPRecvBuffer *buf)
 
 typedef gboolean (*GIOPDecodeFunc) (GIOPRecvBuffer *buf);
 
-gboolean
+static gboolean
 giop_recv_buffer_demarshal (GIOPRecvBuffer *buf)
 {
 	GIOPDecodeFunc              decode_func;

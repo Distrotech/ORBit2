@@ -34,7 +34,7 @@ CORBA_NVList_add_item (CORBA_NVList             list,
 	g_array_append_val (list->list, newval);
 }
 
-void
+static void
 ORBit_NamedValue_free (CORBA_NamedValue *nv)
 {
 	ORBit_free (nv->name);

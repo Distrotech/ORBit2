@@ -22,6 +22,8 @@ INCLUDES =				\
 	-I.				\
 	-I$(top_builddir)/include	\
 	-I$(top_srcdir)/include		\
+	-DORBIT2_INTERNAL_API		\
+	$(WARN_CFLAGS)			\
 	$(ORBIT_NAME_CFLAGS)
 
 CosNaming_built = 							\

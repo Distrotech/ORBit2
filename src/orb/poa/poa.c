@@ -118,22 +118,6 @@ ORBit_POACurrent_get_object (PortableServer_Current  obj,
 	return (ORBit_POAObject) obj->orb->current_invocations->data;
 }
 
-CORBA_unsigned_long
-ORBit_classinfo_lookup_id (const char *type_id)
-{
-	PortableServer_ClassInfo *ci;
-
-	if (!ORBit_class_assignments)
-		return 0;
-
-	ci = g_hash_table_lookup (ORBit_class_assignments, type_id);
-
-	if (!ci)
-		return 0;
-
-	return *ci->class_id;
-}
-
 PortableServer_ClassInfo *
 ORBit_classinfo_lookup (const char *type_id)
 {
@@ -530,7 +514,7 @@ ORBit_ObjectId_sysid_hash (gconstpointer ptr)
 	return *(guint*) oid->_buffer;
 }
 
-guint
+static guint
 ORBit_sequence_CORBA_octet_hash (gconstpointer ptr)
 {
 	const CORBA_sequence_CORBA_octet *so = ptr;
@@ -552,7 +536,7 @@ ORBit_sequence_CORBA_octet_hash (gconstpointer ptr)
  * Returns TRUE if s1 and s2 are the same, FALSE otherwise.
  * Note that this is what the glib hash module wants.
  */
-gint
+static gint
 ORBit_sequence_CORBA_octet_equal (gconstpointer p1, gconstpointer p2)
 {
 	const CORBA_sequence_CORBA_octet *s1 = p1;
@@ -748,7 +732,6 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 		      CORBA_Environment  *ev)
 {
 	PortableServer_ObjectId *oid;
-	CORBA_Object             objref;
 	const char              *type_id = intf;
 
 	g_assert (pobj && !pobj->base.objref);

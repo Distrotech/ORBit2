@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "corba-ops.h"
 #include "orb-core-private.h"
+#include "orb-core-export.h"
 #include "../util/orbit-purify.h"
 
 #undef DEBUG

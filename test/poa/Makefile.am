@@ -1,6 +1,7 @@
 INCLUDES =                         \
 	-I$(top_srcdir)/include    \
 	-I$(top_builddir)/include  \
+	$(WARN_CFLAGS)             \
 	$(ORBIT_CFLAGS)
 
 POA_TESTS_SRCS = poatest-basic01.c \

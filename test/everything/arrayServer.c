@@ -18,7 +18,7 @@
  * Author: Phil Dawes <philipd@users.sourceforge.net>
  */
 
-test_LongArray_slice *
+static test_LongArray_slice *
 ArrayServer_opLongArray(PortableServer_Servant _servant,
 						const test_LongArray inArg,
 						test_LongArray inoutArg,
@@ -46,8 +46,7 @@ ArrayServer_opLongArray(PortableServer_Servant _servant,
 }
 
 
-static
-test_StrArray_slice *
+static test_StrArray_slice *
 ArrayServer_opStrArray(PortableServer_Servant _servant,
 					   const test_StrArray inArg,
 					   test_StrArray inoutArg,
