@@ -38,7 +38,7 @@ IOP_ObjectKey_dump (ORBit_ObjectKey *objkey)
 	GString *str = g_string_sized_new (objkey->_length * 2 + 4);
 
 	for (i = 0; i < objkey->_length; i++)
-		g_string_append_printf (str, "%2x", objkey->_buffer [i]);
+		g_string_append_printf (str, "%02x", objkey->_buffer [i]);
 
 	return g_string_free (str, FALSE);
 }
@@ -61,7 +61,8 @@ IOP_profile_dump (CORBA_Object obj, gpointer p)
 		key = IOP_ObjectKey_dump (obj->object_key);
 		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
 				 iiop->host, iiop->port, key);
-		break;
+		g_free (key);
+ 		break;
 	}
 	
 	case IOP_TAG_GENERIC_IOP: {
@@ -82,6 +83,8 @@ IOP_profile_dump (CORBA_Object obj, gpointer p)
 		g_string_printf (str, "P-OS %s:0x%x '%s'",
 				 os->unix_sock_path, os->ipv6_port,
 				 key);
+
+		g_free (key);
 		break;
 	}
 	case IOP_TAG_MULTIPLE_COMPONENTS:
@@ -90,8 +93,6 @@ IOP_profile_dump (CORBA_Object obj, gpointer p)
 		break;
 	}
 
-	g_free (key);
-	
 	return g_string_free (str, FALSE);
 }
 
@@ -358,6 +359,9 @@ IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
 
 		if (strcmp (iiop1->host, iiop2->host))
 			return FALSE;
+
+		/* FIXME, also compare ssl ports */ 
+
 		break;
 	}
 

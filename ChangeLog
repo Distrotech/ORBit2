@@ -1,4 +1,10 @@
-2003-07-28  Frank Rehberger  <frehberg@localhost.localdomain>
+2003-07-28  Frank Rehberger  <Frank.Rehberger@web.de>
+
+	* src/orb/orb-core/iop-profiles.c (IOP_ObjectKey_dump): zero
+	padding in hex object key
+
+	* src/orb/orb-core/iop-profiles.c (IOP_profile_dump): free
+	temporary 'key'
 
 	* src/orb/orb-core/corba-orb.c (ORBit_initial_references_by_user):
 	protect initial references "RootPOA" and "POACurrent" from being
