@@ -130,14 +130,6 @@ if test x"$ac_cv_sockaddr_has_sa_len" = "xyes" ; then
         AC_DEFINE(HAVE_SOCKADDR_SA_LEN)
 fi
 
-
-dnl in_port_t may not be defined, workaround stolend from Peter Runestig
-dnl http://sources.redhat.com/ml/bug-glibc/2000-12/msg00075.html
-AC_TRY_COMPILE([#include <netinet/in.h>],
-    in_port_t ip = 0; , , AC_CHECK_TYPE(in_port_t, unsigned short int))
-
-
-
 AC_C_BIGENDIAN
 
 AC_MSG_CHECKING(maximum number of iovecs for a writev)

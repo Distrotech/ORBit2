@@ -1,4 +1,12 @@
+2001-09-13  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c (linc_protocol_get_sockinfo_ipv46):
+	use guint instead of in_port_t to fix the issue differently.
+
+	* configure.in: remove bogus in_port_t define.
+
 2001-09-12 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
+
 	* configure.in; compile fix: define in_port_t if it isn't
 
 2001-09-11  Mark McLoughlin <mark@skynet.ie>
