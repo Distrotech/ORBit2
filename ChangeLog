@@ -1,5 +1,13 @@
 2002-02-05  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-any.c: (ORBit_value_equivalent):
+	add union_size to the original pointers.
+
+	* test/everything/client.c: (testAnyEquivalence): re-enable
+	testing this.
+
+2002-02-05  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-any.c: (ORBit_get_union_switch):
 	don't assume pointers are correctly alligned.
 
