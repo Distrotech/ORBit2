@@ -20,7 +20,7 @@ DIE=0
 }
 
 # Check for libtool
-(libtool --version | egrep -q "1.2") || {
+(libtool --version | egrep "1.2") > /dev/null || {
 	echo
 	echo "You must have at minimum libtool version 1.2 installed"
 	echo "to compile ORBit. Download the appropriate package for"
@@ -54,13 +54,18 @@ if test -z "$*"; then
         echo "to pass any to it, please specify them on the $0 command line."
 fi
 
+case $CC in
+xlc )
+  am_opt=--include-deps;;
+esac
+
 for i in .
 do 
   echo processing $i
   (cd $i; \
     libtoolize --copy --force; \
     aclocal $ACLOCAL_FLAGS; autoheader; \
-    automake --add-missing; \
+    automake --add-missing $am_opt; \
     autoheader; \
     autoconf)
 done
@@ -68,8 +73,15 @@ done
 echo processing libIDL
 (cd libIDL; \
     libtoolize --copy --force; \
-    automake --add-missing; \
+    automake --add-missing $am_opt; \
     aclocal $ACLOCAL_FLAGS; \
+    autoconf)
+
+echo processing popt
+(cd popt; \
+    #libtoolize --copy --force; \
+    automake --add-missing $am_opt; \
+    aclocal $ACLOCAL_FLAGS; autoheader; \
     autoconf)
 
 cd $ORIGDIR
