@@ -13,3 +13,5 @@ corba-ops.h
 runidl
 runidl_iop
 runidl_ops
+orbit-interface.h
+runidl_iface
