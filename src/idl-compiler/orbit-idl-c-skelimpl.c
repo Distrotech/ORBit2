@@ -118,14 +118,15 @@ cbe_ski_do_list(CBESkelImplInfo *ski)
 {
   CBESkelImplInfo subski = *ski;
   IDL_tree curitem;
-  unsigned int nl = 0;
+  int nl = 0;
 
   for(curitem = ski->tree; curitem; curitem = IDL_LIST(curitem).next) {
     subski.tree = IDL_LIST(curitem).data;
     orbit_cbe_ski_process_piece(&subski);
-    nl++;
-    if (nl <= 2)
+    if (nl <= 1) {
+	    nl++;
 	    fprintf(ski->of, "\n");
+    }
   }
 }
 
