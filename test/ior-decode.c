@@ -12,7 +12,7 @@ print_objkey (ORBit_ObjectKey *objkey)
 	GString *str = g_string_sized_new (objkey->_length * 2 + 8);
 
 	for (i = 0; i < objkey->_length; i++)
-		g_string_printfa (str, "%02x", objkey->_buffer [i]);
+		g_string_append_printf (str, "%02x", objkey->_buffer [i]);
 
 	printf ("(%d) '%s'", objkey->_length, str->str);
 

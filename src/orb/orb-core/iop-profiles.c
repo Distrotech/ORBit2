@@ -38,7 +38,7 @@ IOP_ObjectKey_dump (ORBit_ObjectKey *objkey)
 	GString *str = g_string_sized_new (objkey->_length * 2 + 4);
 
 	for (i = 0; i < objkey->_length; i++)
-		g_string_printfa (str, "%2x", objkey->_buffer [i]);
+		g_string_append_printf (str, "%2x", objkey->_buffer [i]);
 
 	return g_string_free (str, FALSE);
 }
