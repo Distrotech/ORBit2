@@ -651,8 +651,10 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			m_data->ret));
 
 	if (m_data->arguments._length > 0) {
-		args = alloca (m_data->arguments._length * sizeof (gpointer));
-		scratch = alloca (m_data->arguments._length * sizeof (gpointer));
+		int len = m_data->arguments._length * sizeof (gpointer);
+
+		args = alloca (len);
+		scratch = alloca (len);
 	}		
 
 	for (i = 0; i < m_data->arguments._length; i++) {
@@ -669,7 +671,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			
 		} else { /* OUT */
 			args [i] = &scratch [i];
-			scratch [i] = NULL;
+			scratch [i] = ORBit_alloc_tcval (a->tc, 1);
 		}
 	}
 
@@ -703,7 +705,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 /*				CORBA_free (scratch [i]); */
 			} else { /* OUT */
 				ORBit_marshal_arg (send_buffer, scratch [i], a->tc);
-/*				CORBA_free (scratch [i]); */
+				CORBA_free (scratch [i]);
 			}
 		}
 	}
