@@ -5,4 +5,5 @@ INCLUDES=-I$(top_srcdir)/include -I$(top_builddir)/include \
 
 liborb_util_la_SOURCES= \
 	genrand.c \
-	orbit-util.c
+	orbit-util.c \
+	genrand.h
