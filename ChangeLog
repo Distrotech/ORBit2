@@ -1,3 +1,13 @@
+2001-08-16  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require linc >= 0.1.2
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_handle_input): update sig.
+	(giop_connection_real_state_changed): hack out
+	linc_io_add_watch. Use new linc 'handle_input'
+	abstraction.
+
 2001-08-15  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-deps.c: update.

@@ -3,10 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static void giop_connection_init       (GIOPConnection      *cnx);
-static void giop_connection_dispose    (GObject             *obj);
-static void giop_connection_class_init (GIOPConnectionClass *klass);
-static void giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status);
+static LINCConnectionClass *parent_class = NULL;
 
 static struct {
   O_MUTEX_DEFINE(lock);
@@ -57,6 +54,141 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
   return retval;
 }
 
+static void
+giop_connection_real_state_changed (LINCConnection      *cnx,
+				    LINCConnectionStatus status)
+{
+	GIOPConnection *gcnx = GIOP_CONNECTION (cnx);
+
+	if (parent_class->state_changed)
+		parent_class->state_changed (cnx, status);
+
+	switch (status) {
+	case LINC_DISCONNECTED:
+		O_MUTEX_LOCK (gcnx->incoming_mutex);
+		if (gcnx->incoming_msg)
+			giop_recv_buffer_unuse (gcnx->incoming_msg);
+		gcnx->incoming_msg = NULL;
+		O_MUTEX_UNLOCK (gcnx->incoming_mutex);
+		giop_recv_list_zap (gcnx);
+		break;
+	default:
+		break;
+	}
+}
+
+void
+giop_connection_close (GIOPConnection *cnx)
+{
+	if(cnx->parent.status == LINC_DISCONNECTED)
+		return;
+
+	if(cnx->parent.status == LINC_CONNECTED
+	   && (!cnx->parent.was_initiated
+	       || cnx->giop_version == GIOP_1_2)) {
+		GIOPSendBuffer *buf;
+
+		buf = giop_send_buffer_use_close_connection (cnx->giop_version);
+		giop_send_buffer_write (buf, cnx);
+		fsync (cnx->parent.fd);
+		giop_send_buffer_unuse (buf);
+	}
+	linc_connection_state_changed (LINC_CONNECTION (cnx), LINC_DISCONNECTED);
+}
+
+static void
+giop_connection_dispose (GObject *obj)
+{
+	GIOPConnection *cnx = (GIOPConnection *)obj;
+
+	giop_connection_close (cnx);
+	O_MUTEX_DESTROY (cnx->incoming_mutex);
+	O_MUTEX_DESTROY (cnx->outgoing_mutex);
+
+	O_MUTEX_LOCK (cnx_list.lock);
+	giop_connection_list_remove (cnx);
+	O_MUTEX_UNLOCK (cnx_list.lock);
+
+	if (G_OBJECT_CLASS (parent_class)->dispose)
+		G_OBJECT_CLASS (parent_class)->dispose (obj);
+}
+
+static gboolean
+giop_connection_handle_input (LINCConnection *lcnx)
+{
+	GIOPConnection *cnx = (GIOPConnection *) lcnx;
+	int n;
+	GIOPMessageInfo info;
+	gboolean retval = TRUE;
+
+	O_MUTEX_LOCK(cnx->incoming_mutex);
+
+	do {
+		if (!cnx->incoming_msg)
+			cnx->incoming_msg = giop_recv_buffer_use_buf (
+				cnx->parent.is_auth);
+
+		n = linc_connection_read (
+			lcnx, cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
+		if (n <= 0) {
+			retval = FALSE;
+			goto out;
+		}
+
+		info = giop_recv_buffer_data_read (
+			cnx->incoming_msg, n, cnx->parent.is_auth, cnx);
+
+		if (info != GIOP_MSG_UNDERWAY) {
+			if (info == GIOP_MSG_COMPLETE) {
+				if (cnx->incoming_msg->msg.header.message_type == GIOP_REQUEST) {
+					ORBit_handle_request (cnx->orb_data, cnx->incoming_msg);
+					giop_recv_buffer_unuse (cnx->incoming_msg);
+				}
+			}
+			cnx->incoming_msg = NULL;
+			if (info == GIOP_MSG_INVALID) {
+				/* Zap it for badness.
+				   XXX We should probably handle oversized
+				   messages more graciously XXX */
+				giop_connection_close (cnx);
+				if (!cnx->parent.was_initiated) {
+					giop_connection_unref (cnx); /* If !was_initiated, then
+									a refcount owned by a GIOPServer
+									must be released */
+					retval = FALSE;
+					cnx = NULL;
+				}
+			}
+		}
+	} while (cnx && cnx->incoming_msg);
+
+ out:
+	if (cnx)
+		O_MUTEX_UNLOCK(cnx->incoming_mutex);
+
+	return retval;
+}
+
+static void
+giop_connection_class_init (GIOPConnectionClass *klass)
+{
+  GObjectClass *object_class = (GObjectClass *) klass;
+
+  parent_class = g_type_class_peek_parent (klass);
+
+  object_class->dispose = giop_connection_dispose;
+
+  klass->parent_class.state_changed = giop_connection_real_state_changed;
+  klass->parent_class.handle_input  = giop_connection_handle_input;
+}
+
+static void
+giop_connection_init (GIOPConnection *cnx)
+{
+	O_MUTEX_INIT (cnx->incoming_mutex);
+	O_MUTEX_INIT (cnx->outgoing_mutex);
+}
+
 GType
 giop_connection_get_type(void)
 {
@@ -84,163 +216,6 @@ giop_connection_get_type(void)
     }  
 
   return object_type;
-}
-
-static GObjectClass *parent_class = NULL;
-
-static void
-giop_connection_class_init (GIOPConnectionClass *klass)
-{
-  GObjectClass *object_class = (GObjectClass *)klass;
-
-  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
-  object_class->dispose = giop_connection_dispose;
-  klass->parent_class.state_changed = giop_connection_real_state_changed;
-}
-
-static void
-giop_connection_init       (GIOPConnection      *cnx)
-{
-  O_MUTEX_INIT(cnx->incoming_mutex);
-  O_MUTEX_INIT(cnx->outgoing_mutex);
-}
-
-void
-giop_connection_close (GIOPConnection *cnx)
-{
-  if(cnx->parent.status == LINC_DISCONNECTED)
-    return;
-
-  if(cnx->parent.status == LINC_CONNECTED
-     && (!cnx->parent.was_initiated
-	 || cnx->giop_version == GIOP_1_2))
-    {
-      GIOPSendBuffer *buf;
-
-      buf = giop_send_buffer_use_close_connection(cnx->giop_version);
-      giop_send_buffer_write(buf, cnx);
-      fsync(cnx->parent.fd);
-      giop_send_buffer_unuse(buf);
-    }
-  linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED);
-}
-
-static void
-giop_connection_dispose (GObject *obj)
-{
-  GIOPConnection *cnx = (GIOPConnection *)obj;
-
-  giop_connection_close(cnx);
-  O_MUTEX_DESTROY(cnx->incoming_mutex);
-  O_MUTEX_DESTROY(cnx->outgoing_mutex);
-
-  O_MUTEX_LOCK(cnx_list.lock);
-  giop_connection_list_remove(cnx);
-  O_MUTEX_UNLOCK(cnx_list.lock);
-
-  if(parent_class->dispose)
-    parent_class->dispose(obj);
-}
-
-#ifdef ORBIT_THREADED
-static gboolean
-giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
-     G_GNUC_UNUSED;
-#endif
-static gboolean
-giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
-{
-  GIOPConnection *cnx = data;
-  int n;
-  GIOPMessageInfo info;
-  gboolean retval = TRUE;
-
-  O_MUTEX_LOCK(cnx->incoming_mutex);
-
-  do {
-    if(!cnx->incoming_msg)
-      cnx->incoming_msg = giop_recv_buffer_use_buf(cnx->parent.is_auth);
-
-    n = linc_connection_read(LINC_CONNECTION(cnx), cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
-    if(n <= 0)
-      {
-	retval = FALSE;
-	goto out;
-      }
-
-    info = giop_recv_buffer_data_read(cnx->incoming_msg, n, cnx->parent.is_auth,
-				      cnx);
-    if(info != GIOP_MSG_UNDERWAY)
-      {
-	if(info == GIOP_MSG_COMPLETE)
-	  {
-            if (cnx->incoming_msg->msg.header.message_type == GIOP_REQUEST) {
-	      ORBit_handle_request (cnx->orb_data, cnx->incoming_msg);
-	      giop_recv_buffer_unuse (cnx->incoming_msg);
-	    }
-	  }
-	cnx->incoming_msg = NULL;
-	if(info == GIOP_MSG_INVALID)
-	  {
-	    /* Zap it for badness.
-	       XXX We should probably handle oversized
-	       messages more graciously XXX */
-	    giop_connection_close(cnx);
-	    if(!cnx->parent.was_initiated)
-	      {
-		giop_connection_unref(cnx); /* If !was_initiated, then
-					       a refcount owned by a GIOPServer
-					       must be released */
-		retval = FALSE;
-		cnx = NULL;
-	      }
-	  }
-      }
-  } while(cnx && cnx->incoming_msg);
-
-  /* Lets do something with the recv buffer ? */
-
- out:
-  if(cnx)
-    {
-      O_MUTEX_UNLOCK(cnx->incoming_mutex);
-    }
-
-  if (retval == FALSE)
-    cnx->incoming_tag = NULL;
-
-  return retval;
-}
-
-static void
-giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status)
-{
-  GIOPConnection *gcnx = GIOP_CONNECTION(cnx);
-
-  if(((LINCConnectionClass *)parent_class)->state_changed)
-    ((LINCConnectionClass *)parent_class)->state_changed(cnx, status);
-
-  switch(status)
-    {
-    case LINC_CONNECTED:
-      g_assert (gcnx->incoming_tag == NULL);
-      gcnx->incoming_tag = linc_io_add_watch (
-	      cnx->gioc, G_IO_IN, giop_connection_handle_input, cnx);
-      break;
-    case LINC_DISCONNECTED:
-      O_MUTEX_LOCK(gcnx->incoming_mutex);
-      if(gcnx->incoming_msg)
-	giop_recv_buffer_unuse(gcnx->incoming_msg);
-      gcnx->incoming_msg = NULL;
-      if(gcnx->incoming_tag)
-        linc_io_remove_watch (gcnx->incoming_tag);
-      gcnx->incoming_tag = NULL;
-      O_MUTEX_UNLOCK(gcnx->incoming_mutex);
-      giop_recv_list_zap(gcnx);
-      break;
-    default:
-      break;
-    }
 }
 
 GIOPConnection *
