@@ -127,7 +127,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 			cbe_small_flatten_args (tree, of, "_args");
 
 		fprintf (of, "ORBit_small_invoke_stub (_obj, "
-			 "&%s__itype.methods._buffer [%d], NULL, ", id, *idx);
+			 "&%s__itype.methods._buffer [%d], ", id, *idx);
 
 		if (has_retval)
 			fprintf (of, "&_ORBIT_retval, ");
