@@ -1,3 +1,15 @@
+2003-07-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_initial_references_by_user): fix iterator type.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection): use the (now) thread safe
+	linc_connection_wait_connected [ although not re-enterant
+	sadly ], if we've connected in the past, always return
+	the same connection - but have a go at reviving it if
+	it dropped.
+
 2003-07-09  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testNonExistent): impl.

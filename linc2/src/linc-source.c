@@ -59,7 +59,7 @@ link_source_dispatch (GSource    *source,
 static void
 link_source_finalize (GSource *source)
 {
-	d_printf ("Finalize source %p", source);
+	d_printf ("Finalize source %p\n", source);
 }
 
 GSourceFuncs link_source_watch_funcs = {

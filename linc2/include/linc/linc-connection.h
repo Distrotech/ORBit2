@@ -43,6 +43,7 @@ typedef struct {
 	LinkConnectionOptions   options;
 	guint                   was_initiated : 1;
 	guint                   is_auth : 1;
+	guint                   inhibit_reconnect : 1;
 
 	gchar                  *remote_host_info;
 	gchar                  *remote_serv_info;
@@ -87,6 +88,7 @@ LinkConnection *link_connection_initiate (GType                 derived_type,
 					  LinkConnectionOptions options,
 					  const char           *first_property,
 					  ...);
+LinkConnectionStatus link_connection_try_reconnect (LinkConnection *cnx);
 
 gpointer link_connection_ref   (gpointer cnx);
 void     link_connection_unref (gpointer cnx);

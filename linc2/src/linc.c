@@ -52,10 +52,8 @@ link_thread_io (void)
 {
 	gboolean result;
 
-	/* FIXME: use a read/write lock for better performance */
-	link_lock ();
+	/* FIXME: re-factor this to avoid locking */
 	result = link_io_thread != NULL;
-	link_unlock ();
 
 	return result;
 }
@@ -464,6 +462,8 @@ link_wait (void)
 		g_cond_wait (link_main_cond, link_main_lock);
 	}
 }
+
+
 
 gboolean
 link_is_locked (void)

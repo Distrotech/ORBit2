@@ -113,16 +113,10 @@ typedef struct {
 	gpointer           user_data;
 } BrokenCallback;
 
-static gboolean
-link_connection_broken_idle (gpointer data)
+static void
+link_connection_emit_broken (LinkConnection *cnx, GSList *callbacks)
 {
-	LinkConnection *cnx = data;
-	GSList *l, *callbacks;
-
-	CNX_LOCK (cnx);
-	callbacks = cnx->idle_broken_callbacks;
-	cnx->idle_broken_callbacks = NULL;
-	CNX_UNLOCK (cnx);
+	GSList *l;
 
 	for (l = callbacks; l; l = l->next) {
 		BrokenCallback *bc = l->data;
@@ -130,6 +124,24 @@ link_connection_broken_idle (gpointer data)
 		g_free (bc);
 	}
 	g_slist_free (callbacks);
+}
+
+static gboolean
+link_connection_broken_idle (gpointer data)
+{
+	GSList *callbacks;
+	LinkConnection *cnx = data;
+
+	d_printf ("Connection %p broken idle ...\n", data);
+
+	CNX_LOCK (cnx);
+	callbacks = cnx->idle_broken_callbacks;
+	cnx->idle_broken_callbacks = NULL;
+	cnx->inhibit_reconnect = FALSE;
+	link_signal ();
+	CNX_UNLOCK (cnx);
+
+	link_connection_emit_broken (cnx, callbacks);
 
 	link_connection_unref (cnx);
 
@@ -220,14 +232,35 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 	case LINK_DISCONNECTED:
 		link_source_remove (cnx);
 		link_close_fd (cnx);
+		queue_free (cnx);
 		/* don't free pending queue - we could get re-connected */
 		if (changed) {
+
+			d_printf ("Emitting the broken signal on %p\n", cnx);
 			CNX_UNLOCK (cnx);
 			g_signal_emit (cnx, signals [BROKEN], 0);
 			CNX_LOCK (cnx);
 
-			link_connection_ref_T (cnx);
-			g_idle_add (link_connection_broken_idle, cnx);
+			if (cnx->idle_broken_callbacks) {
+				if (!link_thread_io ()) {
+					GSList *callbacks;
+
+					d_printf ("Immediate broken callbacks at immediately\n");
+
+					callbacks = cnx->idle_broken_callbacks;
+					cnx->idle_broken_callbacks = NULL;
+
+					CNX_UNLOCK (cnx);
+					link_connection_emit_broken (cnx, callbacks);
+					CNX_LOCK (cnx);
+				} else {
+					d_printf ("Queuing broken callbacks at idle\n");
+
+					cnx->inhibit_reconnect = TRUE;
+					link_connection_ref_T (cnx);
+					g_idle_add (link_connection_broken_idle, cnx);
+				}
+			}
 		}
 		break;
 	}
@@ -376,7 +409,9 @@ link_connection_from_fd_T (LinkConnection         *cnx,
 	cnx->options       = options;
 	cnx->priv->fd      = fd;
 
+	g_free (cnx->remote_host_info);
 	cnx->remote_host_info = remote_host_info;
+	g_free (cnx->remote_serv_info);
 	cnx->remote_serv_info = remote_serv_info;
 
 	d_printf ("Cnx from fd (%d) '%s', '%s', '%s'\n",
@@ -502,6 +537,44 @@ link_connection_do_initiate (LinkConnection        *cnx,
 	g_free (saddr);
 
 	return retval;
+}
+
+static LinkConnectionStatus
+link_connection_wait_connected_T (LinkConnection *cnx)
+{
+	while (cnx && cnx->status == LINK_CONNECTING)
+		link_wait ();
+
+	return cnx ? cnx->status : LINK_DISCONNECTED;
+}
+
+LinkConnectionStatus
+link_connection_try_reconnect (LinkConnection *cnx)
+{
+	LinkConnectionStatus status;
+
+	g_return_val_if_fail (LINK_IS_CONNECTION (cnx), LINK_DISCONNECTED);
+
+	CNX_LOCK (cnx);
+
+	d_printf ("Try for reconnection on %p: %d\n",
+		  cnx, cnx->inhibit_reconnect);
+
+	while (cnx->inhibit_reconnect)
+		link_wait ();
+
+	if (cnx->status != LINK_DISCONNECTED)
+		g_warning ("trying to re-connect connected cnx.");
+	else
+		link_connection_do_initiate
+			(cnx, cnx->proto->name, cnx->remote_host_info,
+			 cnx->remote_serv_info, cnx->options);
+
+	status = link_connection_wait_connected_T (cnx);
+
+	CNX_UNLOCK (cnx);
+
+	return status;
 }
 
 /**
@@ -1257,10 +1330,7 @@ link_connection_wait_connected (LinkConnection *cnx)
 
 	CNX_LOCK (cnx);
 
-	while (cnx && cnx->status == LINK_CONNECTING)
-		link_wait ();
-
-	status = cnx ? cnx->status : LINK_DISCONNECTED;
+	status = link_connection_wait_connected_T (cnx);
 
 	CNX_UNLOCK (cnx);
 
