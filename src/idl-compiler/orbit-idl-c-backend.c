@@ -29,6 +29,8 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
 
   ci.ext_dcls = g_string_new(0);
 
+  ci.do_impl_hack = 1;
+  ci.do_skel_defs = rinfo->do_skel_defs;
   for(i = 0; i < 5; i++) {
     if( (1 << i) & rinfo->enabled_passes) {
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);

@@ -248,6 +248,9 @@ c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
         g_free(tname);
     }
     break;
+  case CX_NATIVE:
+    g_error("NATIVE marshalling NYI.");
+    break;
 
   }
 

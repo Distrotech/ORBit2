@@ -17,7 +17,7 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
   fprintf(ci->fh, "#include <string.h>\n");
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
 
-  IDL_tree_walk( tree->tree, /*tfd*/0, IDL_WalkF_TypespecOnly,
+  IDL_tree_walk2( tree->tree, /*tfd*/0, IDL_WalkF_TypespecOnly,
     /*pre*/ cc_output_tc_walker, /*post*/ cc_output_tc_walker, ci);
 
   cc_output_allocs(tree->tree, rinfo, ci);
@@ -27,6 +27,9 @@ static gboolean
 cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data) {
     OIDL_C_Info *ci = user_data;
     IDL_tree tree = tfd->tree;
+
+  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
+	return FALSE;	/* prune */
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_CONST_DCL:
@@ -64,6 +67,9 @@ static void
 cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   if(!tree) return;
+
+  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
+	return;
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:

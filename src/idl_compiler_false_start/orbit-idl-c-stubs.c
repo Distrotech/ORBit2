@@ -80,6 +80,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   oi = tree->data;
   g_assert(oi);
 
+  if ( oidl_tree_is_pidl(tree) )
+  	return;
+
   orbit_cbe_op_write_proto(ci->fh, tree, "", FALSE);
   fprintf(ci->fh, "{\n");
   if(IDL_OP_DCL(tree).raises_expr) {
@@ -462,6 +465,9 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
 {
   char *id;
   OIDL_Except_Info *ei;
+
+  if ( oidl_tree_is_pidl(tree) )
+  	return;
 
   ei = tree->data;
   g_assert(ei);
