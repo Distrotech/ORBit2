@@ -7,7 +7,7 @@ INCLUDES =                           \
 	$(WARN_CFLAGS)               \
 	$(ORBIT_CFLAGS)
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la
+LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
 FOO_IDLOUT=foo.h foo-stubs.c foo-skels.c foo-common.c
 BAA_IDLOUT=baa.h baa-stubs.c baa-skels.c baa-common.c

@@ -18,7 +18,7 @@ noinst_PROGRAMS=test1 \
 
 TESTS = test-dynany test-mem test-performance test-giop
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la
+LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
 test_mem_SOURCES=test-mem.c
 
