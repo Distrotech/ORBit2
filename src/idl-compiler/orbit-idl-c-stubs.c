@@ -101,13 +101,18 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 		g_assert(curitem);
 		id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
 					     "_", 0);
-		fprintf(ci->fh, "if(ORBIT_STUB_IsBypass (_obj, %s__classid))\n", id);
+		fprintf(ci->fh, "if(ORBIT_STUB_IsBypass (_obj, %s__classid)) {\n", id);
+
+		fprintf(ci->fh, "ORBit_POAInvocation _invoke_rec G_GNUC_UNUSED;\n");
+
+		fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj, _invoke_rec);\n");
 
 		fprintf(ci->fh, "%s((POA_%s__epv *)ORBIT_STUB_GetEpv(_obj, %s__classid))->%s(\n"
 			"ORBIT_STUB_GetServant(_obj), ",
 			IDL_OP_DCL(tree).op_type_spec? ORBIT_RETVAL_VAR_NAME " = ":"",
 			id, id, IDL_IDENT(IDL_OP_DCL(tree).ident).str);
 		g_free(id);
+
 		for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
 		    curitem = IDL_LIST(curitem).next) {
 			fprintf(ci->fh, "%s, ",
@@ -117,9 +122,11 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 			fprintf(ci->fh, "_ctx, ");
 
 		fprintf(ci->fh, "ev);\n");
+
+		fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, _invoke_rec);\n");
 	}
 
-	fprintf (of, "else");
+	fprintf (of, " } else");
 	fprintf (of, "#endif ORBIT_STUB_DEBUG_LOCAL\n");
 	fprintf (of, " { /* remote marshal */\n");
 	{
