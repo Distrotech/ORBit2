@@ -1,3 +1,11 @@
+Version 0.1.20
+
+	* fixes (Michael)
+		+ another fd leak
+		+ warning spew
+		+ UDS file leakage
+	* new spec file (Gregory Leblanc)
+
 Version 0.1.19
 
 	* Only emit the 'broken' signal once (Michael)
