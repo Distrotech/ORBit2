@@ -168,7 +168,7 @@ struct _OIDL_Marshal_Node {
   OIDL_Marshal_Where where;
   guint8 arch_head_align, arch_tail_align;
   guint8 iiop_head_align, iiop_tail_align;
-  guint8 nptrs, use_count;
+  gint8 nptrs, use_count;
 };
 
 /* Handling an IDLN_ATTR_DCL:

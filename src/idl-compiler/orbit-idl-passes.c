@@ -885,9 +885,9 @@ oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
 
   switch(node->type) {
   case MARSHAL_LOOP:
-    oidl_pass_choose_where(node->u.loop_info.loop_var);
-    oidl_pass_choose_where(node->u.loop_info.length_var);
-    oidl_pass_choose_where(node->u.loop_info.contents);
+    oidl_node_pass_choose_where(node->u.loop_info.loop_var);
+    oidl_node_pass_choose_where(node->u.loop_info.length_var);
+    oidl_node_pass_choose_where(node->u.loop_info.contents);
     oidl_pass_choose_where_sub_held(node->u.loop_info.loop_var);
     oidl_pass_choose_where_sub_held(node->u.loop_info.length_var);
     if((node->u.loop_info.contents->flags & MN_COALESCABLE)
@@ -905,7 +905,7 @@ oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
     {
       for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
 	sub = ltmp->data;
-	oidl_pass_choose_where(sub);
+	oidl_node_pass_choose_where(sub);
 	if(node->flags & MN_TOPLEVEL)
 	  {
 	    switch(sub->type)
@@ -956,17 +956,27 @@ oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
     }
     break;
   case MARSHAL_SWITCH:
-    oidl_pass_choose_where(node->u.switch_info.discrim);
+    oidl_node_pass_choose_where(node->u.switch_info.discrim);
     oidl_pass_choose_where_sub_held(node->u.switch_info.discrim);
-    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_choose_where, NULL);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_node_pass_choose_where, NULL);
     g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_choose_where_sub_held, NULL);
     break;
   case MARSHAL_CASE:
-    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_choose_where, NULL);
-    oidl_pass_choose_where(node->u.case_info.contents);
+    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_node_pass_choose_where, NULL);
+    oidl_node_pass_choose_where(node->u.case_info.contents);
     oidl_pass_choose_where_sub_held(node->u.case_info.contents);
     break;
   case MARSHAL_COMPLEX:
+    if(node->u.complex_info.type == CX_MARSHAL_METHOD)
+      {
+	if(node->where & MW_Auto)
+	  node->where = MW_Auto;
+	else if(node->where & MW_Alloca)
+	  node->where = MW_Alloca;
+	else if(node->where & MW_Heap)
+	  node->where = MW_Heap;
+      }
+    break;
   case MARSHAL_DATUM:
   case MARSHAL_CONST:
   default:

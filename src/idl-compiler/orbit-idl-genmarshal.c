@@ -106,7 +106,8 @@ oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
   GString *tmpstr;
   char *retval, *ctmp;
   OIDL_Marshal_Node *curnode;
-  guint nptrs = 0, i;
+  int nptrs = 0;
+  int i;
   gboolean did_append = FALSE, new_did_append;
 
   if(!node->name
@@ -550,6 +551,11 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
     if(IDL_PARAM_DCL(curparam).attr == IDL_PARAM_OUT)
       continue;
 
+#if 0
+    if(is_skels && !strcmp(IDL_IDENT(IDL_PARAM_DCL(curparam).simple_declarator).str, "p1"))
+      G_BREAKPOINT();
+#endif
+
     if(is_skels)
       {
 	pi.where = MW_Null|MW_Heap;
@@ -559,8 +565,6 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
     else
       pi.where = MW_Null;
     sub = marshal_populate(curparam, retval, &pi);
-    if(is_skels)
-      sub->flags |= MN_NEED_TMPVAR;
 
     ts = orbit_cbe_get_typespec(curparam);
 
@@ -629,8 +633,6 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     	rvnode->nptrs -= 1;
 	rvnode->flags |= MN_ISSLICE;
       }
-    rvnode->flags |= MN_NEED_TMPVAR;
-
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, rvnode);
 
     g_assert(! rvnode->name);
