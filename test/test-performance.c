@@ -4,9 +4,9 @@
 
 #include <orbit/orbit.h>
 
-GTimer *timer;
-double  bogomark = 0.0;
-double  time;
+static GTimer *timer;
+static double  bogomark = 0.0;
+static double  time;
 
 static void
 test_copy (void)
