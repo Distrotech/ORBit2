@@ -599,13 +599,16 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	CORBA_completion_status completion_status;
 	GIOPConnection         *cnx;
 	GIOPMessageQueueEntry   mqe;
+	ORBit_POAInvocation     invoke_rec;
+
+	ORBIT_STUB_PreCall (obj, invoke_rec);
 
 #ifdef DEBUG_LOCAL_TEST
 	if (obj->pobj) {
 		ORBit_small_invoke_skel (
 			ORBIT_STUB_GetServant (obj),
 			m_data, ret, args, ctx, ev);
-		return;
+		goto clean_out;
 	}
 #endif
 
@@ -628,7 +631,7 @@ retry_request:
 	completion_status = CORBA_COMPLETED_MAYBE;
 
 	if (m_data->flags & ORBit_I_METHOD_1_WAY)
-		return;
+		goto clean_out;
 
 	switch (orbit_small_demarshal (obj, &cnx, &mqe, ev,
 				       ret, m_data, args))
@@ -654,12 +657,14 @@ retry_request:
 		dprintf ("Clean demarshal on id 0x%x\n\n", request_id);
 		break;
 	};
+ clean_out:
+	ORBIT_STUB_PostCall (obj, invoke_rec);
 	return;
 
  system_exception:
 	CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 				    completion_status);
-	return;
+	goto clean_out;
 }
 
 void
