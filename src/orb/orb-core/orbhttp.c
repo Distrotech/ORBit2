@@ -23,14 +23,24 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#  include <arpa/inet.h>
+#endif
 #include <netdb.h>
 #include <fcntl.h> 
 #include <errno.h>
-#include <sys/time.h>
-#include <sys/select.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h>
+#endif
 #include <string.h>
 
 #define CHECK_URI(str) \

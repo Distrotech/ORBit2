@@ -1,3 +1,10 @@
+2003-04-08  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: check for a slew of sys headers.
+
+	* src/orb/orb-core/orbhttp.c: only include
+	headers we have.
+
 2003-04-04  Michael Meeks  <michael@ximian.com>
 
 	* test/poa/poatest-basic11.c (poatest_run): test

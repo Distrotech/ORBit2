@@ -153,7 +153,9 @@ AC_SUBST(ORBIT_NAME_CFLAGS)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
+AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h)
+AC_CHECK_HEADERS(sys/machine.h sys/isa_defs.h sys/poll.h sys/select.h)
+AC_CHECK_HEADERS(sys/time.h netinet/in.h sys/socket.h arpa/inet.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
 AC_CHECK_HEADERS(netinet/in.h sys/un.h openssl/ssl.h)
 AC_CHECK_HEADERS([linux/socket.h])
