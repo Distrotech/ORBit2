@@ -939,9 +939,21 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		ALIGN_COMPARE (a, b, float, float,   ORBIT_ALIGNOF_CORBA_FLOAT);
 		ALIGN_COMPARE (a, b, double, double, ORBIT_ALIGNOF_CORBA_DOUBLE);
 
-		ALIGN_COMPARE (a, b, boolean, octet, ORBIT_ALIGNOF_CORBA_OCTET);
 		ALIGN_COMPARE (a, b, char,    octet, ORBIT_ALIGNOF_CORBA_OCTET);
 		ALIGN_COMPARE (a, b, octet,   octet, ORBIT_ALIGNOF_CORBA_OCTET);
+
+	case CORBA_tk_boolean: {
+		gboolean ba, bb;
+
+		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_OCTET);
+		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_OCTET);
+		ba = *(CORBA_octet *) *a;
+		bb = *(CORBA_octet *) *b;
+		*a = ((guchar *) *a) + sizeof (CORBA_octet);
+		*b = ((guchar *) *b) + sizeof (CORBA_octet);
+
+		return (ba && bb) || (!ba && !bb);
+	}
 
 	case CORBA_tk_string:
 		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_POINTER);
