@@ -1,3 +1,14 @@
+2001-07-13  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_freekids_via_TypeCode_T): kill broken assumption
+	that align == length !
+
+	* src/orb/orb-core/corba-typecode.c
+	(ORBit_tk_to_name): impl.
+
+	* test/test-dynany.c: portability fix for CHECK_OK.
+
 2001-07-12  Darin Adler  <darin@bentspoon.com>
 
 	* include/orbit/poa/Makefile.am: Install poa-basics.h.

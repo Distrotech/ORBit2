@@ -855,3 +855,49 @@ CORBA_TypeCode_equal (CORBA_TypeCode obj,
 
 	return CORBA_TRUE;
 }
+
+const char *
+ORBit_tk_to_name (CORBA_unsigned_long tk)
+{
+#define CSE(a, b) \
+	case CORBA_tk_ ## a: return b;
+
+	switch (tk) {
+		CSE (null, "null");
+		CSE (void, "void");
+		CSE (short, "short");
+		CSE (long, "long");
+		CSE (ushort, "ushort");
+		CSE (ulong, "ulong");
+		CSE (float, "float");
+		CSE (double, "double");
+		CSE (boolean, "boolean");
+		CSE (char, "char");
+		CSE (octet, "octet");
+		CSE (any, "any");
+		CSE (TypeCode, "TypeCode");
+		CSE (Principal, "Principal");
+		CSE (objref, "objref");
+		CSE (struct, "struct");
+		CSE (union, "union");
+		CSE (enum, "enum");
+		CSE (string, "string");
+		CSE (sequence, "sequence");
+		CSE (array, "array");
+		CSE (alias, "alias");
+		CSE (except, "except");
+		CSE (longlong, "longlong");
+		CSE (ulonglong, "ulonglong");
+		CSE (longdouble, "longdouble");
+		CSE (wchar, "wchar");
+		CSE (wstring, "wstring");
+		CSE (fixed, "fixed");
+		CSE (value, "value");
+		CSE (value_box, "value_box");
+		CSE (native, "native");
+		CSE (abstract_interface, "abstract_interface");
+	default:
+		return "Invalid type";
+	}
+}
+

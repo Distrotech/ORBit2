@@ -183,6 +183,9 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
   guchar *retval = NULL;
   CORBA_TypeCode	subtc;
 
+/*  g_warning ("Freeing via tc '%s' at %p",
+    ORBit_tk_to_name (tc->kind), mem);*/
+
   switch(tc->kind) {
   case CORBA_tk_any:
     {
@@ -271,9 +274,10 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
     break;
   default:
     {
-      gulong alignval;
-      alignval = ORBit_gather_alloc_info(tc);
-      retval = ALIGN_ADDRESS(mem, alignval) + alignval;
+      gulong length, align;
+      length = ORBit_gather_alloc_info (tc);
+      align  = ORBit_find_alignment (tc);
+      retval = ALIGN_ADDRESS(mem, align) + length;
     }
     break;
   }

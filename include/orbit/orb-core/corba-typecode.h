@@ -73,5 +73,6 @@ extern const ORBit_RootObject_Interface ORBit_TypeCode_epv;
 
 void ORBit_encode_CORBA_TypeCode(CORBA_TypeCode tc, GIOPSendBuffer* buf);
 gboolean ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf);
+const char *ORBit_tk_to_name (CORBA_unsigned_long tk);
 
 #endif
