@@ -11,4 +11,6 @@ liborbit_c_backend_a_SOURCES=\
 	orbit-idl-c-common.c \
 	orbit-idl-c-skelimpl.c \
 	orbit-idl-c-utils.c \
-	orbit-idl-c-typecode.c
+	orbit-idl-c-typecode.c \
+	orbit-idl-c-marshal.c \
+	orbit-idl-c-demarshal.c

@@ -547,7 +547,7 @@ orbit_cbe_op_write_proto(FILE *of,
   if(for_epv)
     fprintf(of, "PortableServer_Servant _servant, ");
   else
-    fprintf(of, "%s, ", id);
+    fprintf(of, "%s _obj, ", id);
 
   g_free(id);
 

@@ -25,20 +25,27 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:
-    cs_output_stubs(IDL_MODULE(tree).definition_list, rinfo, ci);
+    cs_output_stubs(IDL_MODULE(tree).definition_list, ci);
     break;
   case IDLN_LIST:
     {
       IDL_tree sub;
       for(sub = tree; sub; sub = IDL_LIST(sub).next) {
-	cs_output_stubs(IDL_LIST(sub).data, rinfo, ci);
+	cs_output_stubs(IDL_LIST(sub).data, ci);
       }
     }
     break;
   case IDLN_ATTR_DCL:
+    {
+      OIDL_Attr_Info *ai = tree->data;
+
+      cs_output_stubs(ai->op1, ci);
+      if(ai->op2)
+	cs_output_stubs(ai->op2, ci);
+    }
     break;
   case IDLN_INTERFACE:
-    cs_output_stubs(IDL_INTERFACE(tree).body, rinfo, ci);
+    cs_output_stubs(IDL_INTERFACE(tree).body, ci);
     break;
   case IDLN_OP_DCL:
     cs_output_stub(tree, ci);
@@ -48,7 +55,138 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
   }
 }
 
+/* Here's the fun part ;-) */
+static void cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
+
 static void
 cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 {
+  OIDL_Op_Info *oi;
+
+  oi = tree->data;
+  g_assert(oi);
+
+  orbit_cbe_op_write_proto(ci->fh, tree, "", FALSE);
+  fprintf(ci->fh, "{\n");
+  if(IDL_OP_DCL(tree).raises_expr) {
+    IDL_tree curitem;
+    fprintf(ci->fh, "static const ORBit_exception_demarshal_info _ORBIT_user_exceptions[] = { ");
+    for(curitem = IDL_OP_DCL(tree).raises_expr; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      char *id;
+      IDL_tree curnode = IDL_LIST(curitem).data;
+
+      id = orbit_cbe_get_typename(curnode);
+      fprintf(ci->fh, "{(const CORBA_TypeCode)&TC_%s_struct, (gpointer)_ORBIT_%s_demarshal},",
+	      id, id);
+      g_free(id);
+    }
+    fprintf(ci->fh, "{CORBA_OBJECT_NIL, NULL}};\n");
+  }
+  fprintf(ci->fh, "register GIOP_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;");
+  fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
+  fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
+  fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
+  fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
+
+  if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
+    fprintf(ci->fh, "_ORBIT_retry_request:\n");
+
+  fprintf(ci->fh, "_ORBIT_send_buffer = _ORBIT_recv_buffer = NULL;\n");
+  fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_NO;\n");
+
+  fprintf(ci->fh, "_ORBIT_request_id = alloca(0);\n");
+
+  fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
+
+  fprintf(ci->fh, "{ /* marshalling */\n");
+  fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%d]; } _ORBIT_operation_name_data = { %d, \"%s\" };\n",
+	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
+	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
+	  IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+  fprintf(ci->fh, "static const struct iovec _ORBIT_operation_vec = {(gpointer)&_ORBIT_operation_name_data, %d};\n",
+	  sizeof(CORBA_unsigned_long) +
+	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1);
+
+  cs_stub_alloc_tmpvars(oi->in, ci);
+
+  fprintf(ci->fh, "_ORBIT_send_buffer = \n");
+  fprintf(ci->fh, "giop_send_request_buffer_use(_cnx, NULL, _ORBIT_request_id, %s,\n",
+	  IDL_OP_DCL(tree).f_oneway?"CORBA_FALSE":"CORBA_TRUE");
+  fprintf(ci->fh, "&(_obj->active_profile->object_key_vec), &_ORBIT_operation_vec, &ORBit_default_principal_iovec);\n\n");
+  fprintf(ci->fh, "if(!_ORBIT_send_buffer) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; goto _ORBIT_system_exception; }");
+
+  c_marshal_generate(oi->in, ci);
+
+  fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; _ORBIT_completion_status = CORBA_COMPLETED_MAYBE; goto _ORBIT_system_exception; }\n");
+  fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
+  fprintf(ci->fh, "}\n");
+
+  if(!IDL_OP_DCL(tree).f_oneway) {
+    fprintf(ci->fh, "{ /* demarshalling */\n");
+
+    cs_stub_alloc_tmpvars(oi->out, ci);
+
+    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
+
+    fprintf(ci->fh, "if(!_ORBIT_recv_buffer) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; goto _ORBIT_system_exception; }");
+
+    c_demarshal_generate(oi->out, ci);
+
+    fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+    if(IDL_OP_DCL(tree).op_type_spec)
+      fprintf(ci->fh, "return _ORBIT_retval;\n");
+    else
+      fprintf(ci->fh, "return;");
+
+    fprintf(ci->fh, "}\n");
+  } else
+    fprintf(ci->fh, "return;\n");
+
+  fprintf(ci->fh, "_ORBIT_system_exception:\n");
+  fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
+  fprintf(ci->fh, "return;\n");
+
+#if 0
+  fprintf(ci->fh, "CORBA_exception_set_system(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status);\n");
+  fprintf(ci->fh, "if(_ORBIT_send_buffer) giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
+  fprintf(ci->fh, "if(_ORBIT_recv_buffer) giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+
+  fprintf(ci->fh, "ORBit_handle_exception(_ORBIT_recv_buffer, ev, %s, _obj->orb);\n",
+	  IDL_OP_DCL(tree).raises_expr?"_ORBIT_user_exceptions":"NULL");
+  fprintf(ci->fh, "return;");
+#endif
+
+  fprintf(ci->fh, "}\n");
+}
+
+static void
+cs_stub_alloc_tmpvar(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
+{
+  if(!(node->flags & MN_NEED_TMPVAR))
+    return;
+
+  if(node->flags & MN_NOMARSHAL)
+    fprintf(ci->fh, "register "); /* Help the compiler out */
+
+  if(node->tree) {
+    char *id;
+    orbit_cbe_write_typespec(ci->fh, node->tree);
+    fprintf(ci->fh, " %s;\n", node->name);
+    g_free(id);
+  } else if(node->type == MARSHAL_DATUM) {
+    const char * ctmp;
+    static const char * const size_names[] = {NULL, "CORBA_unsigned_char", "CORBA_unsigned_short", NULL, "CORBA_unsigned_long",
+					      NULL, NULL, NULL, "CORBA_unsigned_long_long"};
+    ctmp = size_names[node->u.datum_info.datum_size];
+    g_assert(ctmp);
+    fprintf(ci->fh, "%s %s;\n", ctmp, node->name);
+  } else
+    g_error("Don't know how to handle tmpvar %s", node->name);
+}
+
+static void
+cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
+{
+  orbit_idl_node_foreach(node, (GFunc)cs_stub_alloc_tmpvar, ci);
 }
