@@ -1,5 +1,10 @@
 2002-05-21  Michael Meeks  <michael@ximian.com>
 
+	* src/cleanup.c: make it work for the simple
+	cases for now.
+
+2002-05-21  Michael Meeks  <michael@ximian.com>
+
 	* src/Makefile.am: add linc-cleanup-sockets.
 
 	* src/cleanup.c: add.
