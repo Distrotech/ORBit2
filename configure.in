@@ -296,6 +296,7 @@ include/orbit/dynamic/Makefile
 test/Makefile
 test/everything/Makefile
 test/inhibit/Makefile
+test/poa/Makefile
 docs/Makefile
 docs/devel/Makefile
 docs/internals/Makefile

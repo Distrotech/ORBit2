@@ -1,5 +1,11 @@
 2001-06-25  Mark McLoughlin <mark@skynet.ie>
 
+	* test/poa/*: import.
+
+	* configure.in, test/Makefile.am: add poa.
+
+2001-06-25  Mark McLoughlin <mark@skynet.ie>
+
 	* include/orbit/poa/poa-types.h,
 	  src/idl-compiler/orbit-idl-c-skels.c,
 	  src/orb/poa/poa-servants.c,
