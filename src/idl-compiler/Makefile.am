@@ -3,8 +3,8 @@ bin_PROGRAMS=orbit-idl
 includedir=$(prefix)/include
 orbitlibdir=$(libdir)/orbit-idl
 
-INCLUDES=-I$(top_builddir) -I$(top_builddir)/src \
-	 -I$(top_srcdir) -I$(top_srcdir)/src \
+INCLUDES=-I$(top_builddir) -I$(top_builddir)/include \
+	 -I$(top_srcdir) -I$(top_srcdir)/include \
 	@GLIB_CFLAGS@ \
 	-DORBITLIBDIR="\"$(orbitlibdir)\"" \
 	-DDEBUG

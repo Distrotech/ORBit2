@@ -383,6 +383,11 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
       break;
     case CX_NATIVE:
       break;
+    case CX_MARSHAL_METHOD:
+      node->arch_head_align = node->arch_tail_align = 1;
+      node->iiop_head_align = 1;
+      node->iiop_tail_align = 1;
+      break;
     }
     break;
   case MARSHAL_LOOP:

@@ -30,31 +30,9 @@ c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean on_sta
 static void
 c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  OIDL_Type_Marshal_Info *tmi = NULL;
   if(!node) return;
 
   if(node->flags & MN_NOMARSHAL) return;
-
-  if(node->tree)
-    tmi = g_hash_table_lookup(cmi->ci->ctxt->type_marshal_info, node->tree);
-  if(tmi)
-    {
-      if(tmi->mtype & MARSHAL_ANY)
-	{
-	  char *ctmp, *ctmp2;
-	  ctmp = oidl_marshal_node_valuestr(node);
-	  ctmp2 = orbit_cbe_get_typespec_str(node->tree);
-	  fprintf(cmi->ci->fh, "ORBit_marshal_arg(_ORBIT_send_buffer, &(%s), TC_%s);\n",
-		  ctmp, ctmp2);
-	  g_free(ctmp);
-	  g_free(ctmp2);
-	  return;
-	}
-      else if(tmi->mtype & MARSHAL_FUNC)
-	g_error("NYI");
-      else
-	g_assert_not_reached();
-    }
 
   if(node->use_count) return;
 
@@ -270,7 +248,31 @@ c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   case CX_NATIVE:
     g_error("NATIVE marshalling NYI.");
     break;
+  case CX_MARSHAL_METHOD:
+    {
+      OIDL_Type_Marshal_Info *tmi;
+      char *ctmp, *ctmp2;
 
+      tmi = oidl_marshal_context_find(cmi->ci->ctxt, node->tree);
+
+      ctmp = oidl_marshal_node_valuestr(node);
+      ctmp2 = orbit_cbe_get_typespec_str(node->tree);
+      switch(tmi->mtype)
+	{
+	case MARSHAL_FUNC:
+	  fprintf(cmi->ci->fh, "%s_marshal(_ORBIT_recv_buffer, &(%s), ev);\n", ctmp2, ctmp);
+	  break;
+	case MARSHAL_ANY:
+	  fprintf(cmi->ci->fh, "ORBit_marshal_arg(_ORBIT_send_buffer, &(%s), TC_%s, ev);\n",
+		  ctmp, ctmp2);
+	  break;
+	default:
+	  g_assert_not_reached();
+	  break;
+	}
+
+    }
+    break;
   }
 
   g_free(ctmp);

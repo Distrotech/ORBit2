@@ -171,7 +171,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "_ORBIT_send_buffer = NULL;\n_ORBIT_recv_buffer = NULL;\n");
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_NO;\n");
 
-  if(sizeof(gpointer) > sizeof(GIOP_unsigned_long))
+  if(sizeof(gpointer) > sizeof(CORBA_unsigned_long))
     fprintf(ci->fh, "_ORBIT_request_id = giop_get_request_id();\n");
   else
     fprintf(ci->fh, "_ORBIT_request_id = GPOINTER_TO_UINT(alloca(0));\n");
