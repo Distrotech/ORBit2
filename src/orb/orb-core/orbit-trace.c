@@ -201,23 +201,36 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 	*val = ((guchar *)*val) + ORBit_gather_alloc_info (tc);
 }
 
+#ifdef TRACE_TIMING
+void
+ORBit_trace_timestamp (void)
+{
+	struct timeval t;
+
+	gettimeofday (&t, NULL);
+	tprintf ("%lu.%lu ", t.tv_sec, t.tv_usec);
+}
+#endif
+
 void
 ORBit_trace_header (CORBA_Object   object,
 		    ORBit_IMethod *m_data)
 {
-#ifdef TRACE_TIMING
-	struct timeval t;
-#endif
 
 	tprintf ("p%4x ", getpid ());
 
-#ifdef TRACE_TIMING
-	gettimeofday (&t, NULL);
-	tprintf ("%lu.%lu ", t.tv_sec, t.tv_usec);
-#endif
+	tprintf_timestamp ();
 	tprintf (": (");
 	ORBit_trace_objref (object);
 	tprintf (")->%s (", m_data->name);
+}
+
+void
+ORBit_trace_end_method (void)
+{
+	tprintf (" ");
+	tprintf_timestamp ();
+	tprintf ("\n");
 }
 
 #endif /* TRACE_DEBUG */
