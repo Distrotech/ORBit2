@@ -220,6 +220,8 @@ ch_output_type_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       ch_output_var(IDL_MEMBER(IDL_LIST(cur).data).type_spec, IDL_LIST(curmem).data, ci);
     }
   }
+  if(!IDL_TYPE_STRUCT(tree).member_list)
+    fprintf(ci->fh, "int dummy;\n");
   fprintf(ci->fh, "} %s;\n\n", id);
 
   ch_type_alloc_and_tc(tree, ci, TRUE);
