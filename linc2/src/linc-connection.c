@@ -69,7 +69,8 @@ linc_connection_destroy    (GObject             *obj)
     g_source_remove(cnx->tag);
   g_free(cnx->remote_host_info);
   g_free(cnx->remote_serv_info);
-  g_io_channel_unref (cnx->gioc);
+  if (cnx->gioc)
+    g_io_channel_unref (cnx->gioc);
   if(cnx->fd >= 0)
     close(cnx->fd);
   if(parent_class->shutdown)
