@@ -389,41 +389,67 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
   }
 }
 
-static void
-oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
+/*
+ * there be dragons here.
+ *
+ * Possible optimizations for a structure with datums sized [2, 1, 1, 2] exist, but I don't know how to do this yet.
+ * You can also optimize [1, 1, 2] in certain cases.
+ */
+/* Right now we don't really use prev_alignment for anything, but we calculate it because it will probably be needed
+   to do the above cases and more */
+static gint
+oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
 {
   gboolean elements_ok;
   OIDL_Marshal_Node *sub;
+  gint retval;
+  gboolean check_marshal;
 
   switch(node->type) {
   case MARSHAL_DATUM:
   case MARSHAL_CONST: /* ??? */
     node->flags |= MN_COALESCABLE;
+    retval = node->iiop_tail_align;
     break;
   case MARSHAL_LOOP:
-    oidl_pass_set_coalescibility(node->u.loop_info.loop_var);
-    oidl_pass_set_coalescibility(node->u.loop_info.length_var);
-    oidl_pass_set_coalescibility(node->u.loop_info.contents);
+    retval = prev_alignment;
+    if(!(node->u.loop_info.loop_var->flags & MN_NOMARSHAL))
+      retval = oidl_pass_set_coalescibility_2(node->u.loop_info.loop_var, prev_alignment);
+    if(!(node->u.loop_info.length_var->flags & MN_NOMARSHAL))
+      retval = oidl_pass_set_coalescibility_2(node->u.loop_info.length_var, retval);
+    if(!(node->u.loop_info.contents->flags & MN_NOMARSHAL))
+      retval = oidl_pass_set_coalescibility_2(node->u.loop_info.contents, retval);
+
     if(node->flags & (MN_ISSEQ|MN_ISSTRING)) break;
     elements_ok = TRUE;
-    if(!(node->u.loop_info.loop_var->flags & MN_NOMARSHAL))
+    check_marshal = FALSE;
+    if(!(node->u.loop_info.loop_var->flags & MN_NOMARSHAL)) {
       elements_ok = elements_ok && (node->u.loop_info.loop_var->flags & MN_COALESCABLE);
-    if(!(node->u.loop_info.length_var->flags & MN_NOMARSHAL))
+    }
+    if(!(node->u.loop_info.length_var->flags & MN_NOMARSHAL)) {
       elements_ok = elements_ok && (node->u.loop_info.length_var->flags & MN_COALESCABLE);
-    if(!(node->u.loop_info.contents->flags & MN_NOMARSHAL))
+    }
+    if(!(node->u.loop_info.contents->flags & MN_NOMARSHAL)) {
       elements_ok = elements_ok && (node->u.loop_info.contents->flags & MN_COALESCABLE);
+    }
     if(elements_ok)
       node->flags |= MN_COALESCABLE;
     break;
   case MARSHAL_SET:
     {
       GSList *ltmp;
+      int tv;
+
       elements_ok = TRUE;
 
+      retval = prev_alignment;
       for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
+
 	sub = ltmp->data;
-	oidl_pass_set_coalescibility(sub);
+	tv = oidl_pass_set_coalescibility_2(sub, retval);
 	if(sub->flags & MN_NOMARSHAL) continue;
+
+	retval = tv;
 
 	elements_ok = elements_ok && (sub->flags & MN_COALESCABLE);
       }
@@ -431,23 +457,33 @@ oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
       if(!elements_ok) break;
 
       elements_ok = TRUE;
-      /* Now figure out alignment stuff */
+      check_marshal = FALSE;
+      /* Now figure out whether alignment issues will allow coalescing */
       for(ltmp = node->u.set_info.subnodes; ltmp && elements_ok; ltmp = g_slist_next(ltmp)) {
 	sub = ltmp->data;
 	if(sub->flags & MN_NOMARSHAL) continue;
 
 	elements_ok = elements_ok
-	  && (sub->iiop_head_align == sub->arch_head_align)
-	  && (sub->iiop_tail_align == sub->iiop_tail_align);
-      }
-      if(!elements_ok) break;
+	  && (sub->iiop_head_align >= sub->arch_head_align)
+	  && (sub->iiop_tail_align >= sub->iiop_tail_align)
+	  && (!check_marshal || (tv >= sub->iiop_head_align));
 
-      node->flags |= MN_COALESCABLE;
+	if(!check_marshal)
+	  tv = sub->iiop_tail_align;
+	else
+	  tv = MIN(sub->iiop_tail_align, tv);
+
+	check_marshal = TRUE;
+      }
+
+      if(elements_ok)
+	node->flags |= MN_COALESCABLE;
     }
     break;
   case MARSHAL_SWITCH:
-    oidl_pass_set_coalescibility(node->u.switch_info.discrim);
-    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_coalescibility, NULL);
+    oidl_pass_set_coalescibility_2(node->u.switch_info.discrim, prev_alignment);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_coalescibility_2,
+		    GUINT_TO_POINTER((int)node->u.switch_info.discrim->iiop_tail_align));
     /* Not usually coalescible, even if children are. */
     if(g_slist_length(node->u.switch_info.cases) < 2) { /* Further improvement possible - this should also kick in if
 							   all the cases use types of the same size. */
@@ -462,14 +498,25 @@ oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
     }
     break;
   case MARSHAL_CASE:
-    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_set_coalescibility, NULL);
-    oidl_pass_set_coalescibility(node->u.case_info.contents);
+    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_set_coalescibility_2, GUINT_TO_POINTER(prev_alignment));
+    retval = oidl_pass_set_coalescibility_2(node->u.case_info.contents, prev_alignment);
     break;
   case MARSHAL_COMPLEX:
+    retval = 1;
     break;
   default:
+    g_warning("default coalesce for %d", node->type);
+    retval = prev_alignment;
     break;
   }
+
+  return retval;
+}
+
+static void
+oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
+{
+  oidl_pass_set_coalescibility_2(node, 1);
 }
 
 static gboolean
@@ -484,16 +531,17 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
       node->flags |= MN_ENDIAN_DEPENDANT;
     break;
   case MARSHAL_SET:
-    for(ltmp = node->u.set_info.subnodes; !btmp && ltmp; ltmp = g_slist_next(ltmp))
-      btmp = btmp || oidl_pass_set_endian_dependant(ltmp->data);
+    for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp))
+      btmp = oidl_pass_set_endian_dependant(ltmp->data) || btmp;
     if(btmp)
       node->flags |= MN_ENDIAN_DEPENDANT;
     break;
   case MARSHAL_LOOP:
-    if(oidl_pass_set_endian_dependant(node->u.loop_info.loop_var)
-       || oidl_pass_set_endian_dependant(node->u.loop_info.length_var)
-       || oidl_pass_set_endian_dependant(node->u.loop_info.contents))
-      node->flags |= MN_ENDIAN_DEPENDANT;      
+    btmp = oidl_pass_set_endian_dependant(node->u.loop_info.loop_var) || btmp;
+    btmp = oidl_pass_set_endian_dependant(node->u.loop_info.length_var) || btmp;
+    btmp = oidl_pass_set_endian_dependant(node->u.loop_info.contents) || btmp;
+    if(btmp)
+      node->flags |= MN_ENDIAN_DEPENDANT;
     break;
   case MARSHAL_SWITCH:
     {
@@ -501,7 +549,7 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
       btmp = oidl_pass_set_endian_dependant(node->u.switch_info.discrim);
 
       for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp))
-	btmp = btmp && oidl_pass_set_endian_dependant(ltmp->data);
+	btmp = oidl_pass_set_endian_dependant(ltmp->data) && btmp;
 
       if(btmp)
 	node->flags |= MN_ENDIAN_DEPENDANT;
@@ -512,11 +560,10 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
       node->flags |= MN_ENDIAN_DEPENDANT;
     break;
   default:
-    btmp = FALSE;
     break;
   }
 
-  return btmp;
+  return (node->flags & MN_ENDIAN_DEPENDANT)?TRUE:FALSE;
 }
 
 static void

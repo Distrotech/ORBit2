@@ -444,7 +444,8 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("DEMARSHAL_CORBA_ALLOC ");
   g_print("] ");
 
-  g_print("*%d\n", tree->nptrs);
+  g_print("*%d arch (%d,%d) iiop (%d,%d)\n", tree->nptrs,
+	  tree->arch_head_align, tree->arch_tail_align, tree->iiop_head_align, tree->iiop_tail_align);
 
   switch(tree->type) {
   case MARSHAL_LOOP:
