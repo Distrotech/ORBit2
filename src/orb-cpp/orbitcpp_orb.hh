@@ -93,10 +93,9 @@ namespace CORBA {
 //      Boolean get_service_information(ServiceType svc_type,ServiceInformation_out svc_info);
 	
 	private:
-	private:
 		void operator=(const ORB&);
 
-		CORBA_ORB_type m_target;	// the C ORB we are wrapping
+		CORBA_ORB m_target;	// the C ORB we are wrapping
 	};
 }
 

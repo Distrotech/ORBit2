@@ -37,6 +37,7 @@
 
 
 namespace CORBA {
+
 	// RG - ServerlessObj
 	// This may possibly serve to separate the Server'ed objects from
 	// the CORBA internal ones. We may not need it, though, if ORBit-C
@@ -56,39 +57,29 @@ namespace CORBA {
 	
 	
 	
-	// This seems to 'inherit' from CORBA_Object_type
-  // - it has the 'base' class as it's only data member so that CORBA::Object* can be cast safely to CORBA_Object* and back.
-  // murrayc.
 	class Object {
-		friend void release(Object_ptr o);
-	
-	protected:
-		CORBA_Object_type m_target;
 		
 	public:
 		// begin ORBit-C++ extension
-		operator CORBA_Object() {
-			return &m_target;
-		}
-		CORBA_Object _orbitcpp_get_c_object() {
-			return *this;
-		}
-
+		operator CORBA_Object();
+		CORBA_Object _orbitcpp_get_c_object();
 		// end ORBit-C++ extension
-		
+
+	protected:
+		Object();
+		~Object();
+
+  private:
+		void operator=(const Object&);
+
+	  friend void release(Object_ptr o);
+	
+  public:	
 		void operator delete(void* c_objref);
 		
-		static Object_ptr _duplicate(Object_ptr o) {
-			return reinterpret_cast<CORBA::Object_ptr>(
-				_orbitcpp::duplicate_guarded(*o)
-			);
-		}
-		static Object_ptr _narrow(Object_ptr o) {
-			return _duplicate(o);
-		}
-		static Object_ptr _nil() {
-			return CORBA_OBJECT_NIL;
-		}
+		static Object_ptr _duplicate(Object_ptr o);
+		static Object_ptr _narrow(Object_ptr o);
+		static Object_ptr _nil();
 
 		// *** FIXME: Need to implement this 
 		// InterfaceDef_ptr _get_interface(); 
@@ -98,13 +89,7 @@ namespace CORBA {
 		ULong _hash(::CORBA::ULong maximum); 
 	
 	protected:
-		Object() {
-		}
-		~Object() {
-		}
-	
-	private:
-		void operator=(const Object&);
+		CORBA_Object m_target;
 	};
 	
 	
