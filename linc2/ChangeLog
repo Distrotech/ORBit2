@@ -1,3 +1,22 @@
+2003-04-10  Michael Meeks  <michael@ximian.com>
+
+	* Thanks to mmokrejs@natur.cuni.cz for the
+	excellent report.
+
+	* src/linc-protocols.c
+	(linc_protocol_is_local_ipv46): explicitely
+	cast h_addr_list[n] to a guint8 * to please OSF/1.
+	(in6_addr): break the Mac OS/X brain-damage hack-around,
+	this needs to be specific to Mac only - it was
+	breaking OSF/1.
+
+	* src/linc-connection.c (write_data):
+	cast iovec->iov_base to guchar * for OSF/1
+	True64 Unix. 
+
+	* src/linc-debug.h: bin bogus ';' on
+	static inline d_printf fallback.
+
 2003-04-03  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c

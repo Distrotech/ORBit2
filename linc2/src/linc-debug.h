@@ -7,7 +7,7 @@
 #undef CONNECTION_DEBUG
 
 #ifndef CONNECTION_DEBUG
-   static inline void d_printf (const char *format, ...) { };
+   static inline void d_printf (const char *format, ...) { }
 #  define STATE_NAME(s) ""
 #else
 #  include <stdio.h>
