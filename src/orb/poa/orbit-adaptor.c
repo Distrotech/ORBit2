@@ -14,7 +14,7 @@ ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
 {
 	g_return_if_fail (adaptor != NULL);
 	g_return_if_fail (thread_hint >= ORBIT_THREAD_HINT_NONE &&
-			  thread_hint <= ORBIT_THREAD_HINT_PER_CONNECTION);
+			  thread_hint <= ORBIT_THREAD_HINT_ALL_AT_IDLE);
 
 	adaptor->thread_hint = thread_hint;
 }

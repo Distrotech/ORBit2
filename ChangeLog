@@ -1,3 +1,9 @@
+2003-04-18  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+                                                                                
+        * src/orb/poa/orbit-adaptor.c
+        (ORBit_ObjectAdaptor_set_thread_hint): Update debugging check to
+        consider the new _IDLE thread hints.
+                                                                                
 2003-04-17  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (test_basic_server):
