@@ -272,9 +272,9 @@ CORBA_ORB_list_initial_services(CORBA_ORB _obj,
 }
 
 CORBA_Object
-CORBA_ORB_resolve_initial_references(CORBA_ORB _obj,
-				     const CORBA_ORB_ObjectId identifier,
-				     CORBA_Environment * ev)
+CORBA_ORB_resolve_initial_references (CORBA_ORB          _obj,
+				      const CORBA_char  *identifier,
+				      CORBA_Environment *ev)
 {
   ORBit_InitialReference *val;
   if(!_obj->initial_refs)
@@ -296,11 +296,11 @@ CORBA_TypeCode_allocate(void)
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_struct_tc(CORBA_ORB _obj,
-			   const CORBA_RepositoryId id,
-			   const CORBA_Identifier name,
-			   const CORBA_StructMemberSeq *members,
-			   CORBA_Environment * ev)
+CORBA_ORB_create_struct_tc (CORBA_ORB                    _obj,
+			    const CORBA_char            *id,
+			    const CORBA_char            *name,
+			    const CORBA_StructMemberSeq *members,
+			    CORBA_Environment           *ev)
 {
   CORBA_TypeCode tc;
   int i;
@@ -344,13 +344,12 @@ CORBA_ORB_create_struct_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_union_tc(CORBA_ORB _obj,
-			  const CORBA_RepositoryId id,
-			  const CORBA_Identifier name,
-			  const CORBA_TypeCode
-			  discriminator_type,
-			  const CORBA_UnionMemberSeq *
-			  members, CORBA_Environment * ev)
+CORBA_ORB_create_union_tc (CORBA_ORB                   _obj,
+			   const CORBA_char           *id,
+			   const CORBA_char           *name,
+			   const CORBA_TypeCode        discriminator_type,
+			   const CORBA_UnionMemberSeq *members,
+			   CORBA_Environment          *ev)
 {
   CORBA_TypeCode tc;
   int i;
@@ -410,11 +409,11 @@ CORBA_ORB_create_union_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_enum_tc(CORBA_ORB _obj,
-			 const CORBA_RepositoryId id,
-			 const CORBA_Identifier name,
-			 const CORBA_EnumMemberSeq *
-			 members, CORBA_Environment * ev)
+CORBA_ORB_create_enum_tc (CORBA_ORB                  _obj,
+			  const CORBA_char          *id,
+			  const CORBA_char          *name,
+			  const CORBA_EnumMemberSeq *members,
+			  CORBA_Environment         *ev)
 {
   CORBA_TypeCode tc;
   int i;
@@ -446,12 +445,11 @@ CORBA_ORB_create_enum_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_alias_tc(CORBA_ORB _obj,
-			  const CORBA_RepositoryId id,
-			  const CORBA_Identifier name,
-			  const CORBA_TypeCode
-			  original_type,
-			  CORBA_Environment * ev)
+CORBA_ORB_create_alias_tc (CORBA_ORB                 _obj,
+			   const CORBA_char         *id,
+			   const CORBA_char         *name,
+			   const CORBA_TypeCode      original_type,
+			   CORBA_Environment        *ev)
 {
   CORBA_TypeCode tc;
 
@@ -481,12 +479,11 @@ CORBA_ORB_create_alias_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_exception_tc(CORBA_ORB _obj,
-			      const CORBA_RepositoryId id,
-			      const CORBA_Identifier name,
-			      const CORBA_StructMemberSeq *
-			      members,
-			      CORBA_Environment * ev)
+CORBA_ORB_create_exception_tc (CORBA_ORB                    _obj,
+			       const CORBA_char            *id,
+			       const CORBA_char            *name,
+			       const CORBA_StructMemberSeq *members,
+			       CORBA_Environment           *ev)
 {
   CORBA_TypeCode tc;
   int i;
@@ -537,10 +534,10 @@ CORBA_ORB_create_exception_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_interface_tc(CORBA_ORB _obj,
-			      const CORBA_RepositoryId id,
-			      const CORBA_Identifier name,
-			      CORBA_Environment * ev)
+CORBA_ORB_create_interface_tc (CORBA_ORB                 _obj,
+			       const CORBA_char         *id,
+			       const CORBA_char         *name,
+			       CORBA_Environment        *ev)
 {
 	CORBA_TypeCode tc;
 
@@ -718,49 +715,49 @@ CORBA_ORB_create_array_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_value_tc(CORBA_ORB _obj,
-			  const CORBA_RepositoryId id,
-			  const CORBA_Identifier name,
-			  const CORBA_ValueModifier type_modifier,
-			  const CORBA_TypeCode concrete_base,
-			  const CORBA_ValueMemberSeq *members,
-			  CORBA_Environment * ev)
+CORBA_ORB_create_value_tc (CORBA_ORB                   _obj,
+			   const CORBA_char           *id,
+			   const CORBA_char           *name,
+			   const CORBA_ValueModifier   type_modifier,
+			   const CORBA_TypeCode        concrete_base,
+			   const CORBA_ValueMemberSeq *members,
+			   CORBA_Environment          *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_value_box_tc(CORBA_ORB _obj,
-			      const CORBA_RepositoryId id,
-			      const CORBA_Identifier name,
-			      const CORBA_TypeCode boxed_type,
-			      CORBA_Environment * ev)
+CORBA_ORB_create_value_box_tc (CORBA_ORB                 _obj,
+			       const CORBA_char         *id,
+			       const CORBA_char         *name,
+			       const CORBA_TypeCode      boxed_type,
+			       CORBA_Environment        *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_native_tc(CORBA_ORB _obj,
-			   const CORBA_RepositoryId id,
-			   const CORBA_Identifier name,
-			   CORBA_Environment * ev)
+CORBA_ORB_create_native_tc (CORBA_ORB                 _obj,
+			    const CORBA_char         *id,
+			    const CORBA_char         *name,
+			    CORBA_Environment        *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_recursive_tc(CORBA_ORB _obj,
-			      const CORBA_RepositoryId id,
-			      CORBA_Environment * ev)
+CORBA_ORB_create_recursive_tc (CORBA_ORB          _obj,
+			       const CORBA_char  *id,
+			       CORBA_Environment *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_abstract_interface_tc(CORBA_ORB _obj,
-				       const CORBA_RepositoryId id,
-				       const CORBA_Identifier name,
-				       CORBA_Environment *ev)
+CORBA_ORB_create_abstract_interface_tc (CORBA_ORB                 _obj,
+				        const CORBA_char         *id,
+				        const CORBA_char         *name,
+				        CORBA_Environment        *ev)
 {
   return CORBA_OBJECT_NIL;
 }
@@ -861,25 +858,25 @@ CORBA_ORB_create_policy(CORBA_ORB _obj,
 }
 
 CORBA_ValueFactory
-CORBA_ORB_register_value_factory(CORBA_ORB _obj,
-				 const CORBA_RepositoryId id,
-				 const CORBA_ValueFactory factory,
-				 CORBA_Environment *ev)
+CORBA_ORB_register_value_factory (CORBA_ORB                 _obj,
+				  const CORBA_char         *id,
+				  const CORBA_ValueFactory  factory,
+				  CORBA_Environment        *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 void
-CORBA_ORB_unregister_value_factory(CORBA_ORB _obj,
-				   const CORBA_RepositoryId id,
-				   CORBA_Environment * ev)
+CORBA_ORB_unregister_value_factory (CORBA_ORB          _obj,
+				    const CORBA_char  *id,
+				    CORBA_Environment *ev)
 {
 }
 
 CORBA_ValueFactory
-CORBA_ORB_lookup_value_factory(CORBA_ORB _obj,
-			       const CORBA_RepositoryId id,
-			       CORBA_Environment * ev)
+CORBA_ORB_lookup_value_factory (CORBA_ORB          _obj,
+			        const CORBA_char  *id,
+			        CORBA_Environment *ev)
 {
   return CORBA_OBJECT_NIL;
 }

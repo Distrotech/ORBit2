@@ -86,10 +86,10 @@ CORBA_ORB_get_default_context(CORBA_ORB orb, CORBA_Context *ctx, CORBA_Environme
 }
 
 void
-CORBA_Context_set_one_value(CORBA_Context ctx,
-			    const CORBA_Identifier prop_name,
-			    const CORBA_char * value,
-			    CORBA_Environment * ev)
+CORBA_Context_set_one_value (CORBA_Context      ctx,
+			     const CORBA_char  *prop_name,
+			     const CORBA_char  *value,
+			     CORBA_Environment *ev)
 {
   gpointer old_nom, old_value;
   g_return_if_fail(ev != NULL);
@@ -210,12 +210,12 @@ ctx_get_values(CORBA_Context ctx, CORBA_Flags op_flags,
 }
 
 void
-CORBA_Context_get_values(CORBA_Context ctx,
-			 const CORBA_Identifier start_scope,
-			 const CORBA_Flags op_flags,
-			 const CORBA_Identifier prop_name,
-			 CORBA_NVList * values,
-			 CORBA_Environment * ev)
+CORBA_Context_get_values (CORBA_Context      ctx,
+			  const CORBA_char  *start_scope,
+			  const CORBA_Flags  op_flags,
+			  const CORBA_char  *prop_name,
+			  CORBA_NVList      *values,
+			  CORBA_Environment *ev)
 {
   char *ctmp;
   int wc_pos;
@@ -262,9 +262,9 @@ delete_props(gpointer key, gpointer value, CTXSearchInfo *csi)
 }
 
 void
-CORBA_Context_delete_values(CORBA_Context ctx,
-			    const CORBA_Identifier prop_name,
-			    CORBA_Environment * ev)
+CORBA_Context_delete_values (CORBA_Context      ctx,
+			     const CORBA_char  *prop_name,
+			     CORBA_Environment *ev)
 {
   char *ctmp;
   int wc_pos;
@@ -303,10 +303,10 @@ CORBA_Context_delete_values(CORBA_Context ctx,
 }
 
 void
-CORBA_Context_create_child(CORBA_Context ctx,
-			   const CORBA_Identifier ctx_name,
-			   CORBA_Context * child_ctx,
-			   CORBA_Environment * ev)
+CORBA_Context_create_child (CORBA_Context      ctx,
+			    const CORBA_char  *ctx_name,
+			    CORBA_Context     *child_ctx,
+			    CORBA_Environment *ev)
 {
   *child_ctx = CORBA_Context_new(ctx, ctx_name, ev);
 }

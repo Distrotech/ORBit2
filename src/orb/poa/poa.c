@@ -717,10 +717,10 @@ error:
 }
 
 static CORBA_Object
-ORBit_POA_obj_to_ref(PortableServer_POA poa,
-		     ORBit_POAObject pobj,
-		     const CORBA_RepositoryId intf,
-		     CORBA_Environment *ev)
+ORBit_POA_obj_to_ref (PortableServer_POA  poa,
+		      ORBit_POAObject     pobj,
+		      const CORBA_char   *intf,
+		      CORBA_Environment  *ev)
 {
   PortableServer_ObjectId *oid;
   CORBA_Object             objref;
@@ -985,34 +985,6 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject pobj,
       |ORBit_LifeF_IsCleanup|ORBit_LifeF_DoEtherealize);
 
     ORBit_RootObject_release(pobj);
-}
-
-/* Request processing */
-static PortableServer_POA
-ORBit_POA_okey_to_poa (CORBA_ORB        orb,
-		       ORBit_ObjectKey *objkey)
-{
-	ORBit_ObjectAdaptor	adaptor;
-	CORBA_long              poanum;
-
-	if (objkey->_length < sizeof (CORBA_long))
-		return NULL;
-
-	poanum = *(CORBA_long*)(objkey->_buffer);
-	if (poanum < 0 || poanum >= orb->adaptors->len)
-		return NULL;
-
-	adaptor = g_ptr_array_index (orb->adaptors, poanum);
-
-	if (objkey->_length < adaptor->adaptor_key._length)
-		return NULL;
-
-	if (memcmp (objkey->_buffer,
-		    adaptor->adaptor_key._buffer, 
-		    adaptor->adaptor_key._length))
-		return NULL;
-
-	return (PortableServer_POA)adaptor;
 }
 
 struct ORBit_POA_invoke_data {
@@ -1797,9 +1769,9 @@ PortableServer_POA_deactivate_object (PortableServer_POA             poa,
 }
 
 CORBA_Object
-PortableServer_POA_create_reference (PortableServer_POA        poa,
-				     const CORBA_RepositoryId  intf,
-				     CORBA_Environment        *ev)
+PortableServer_POA_create_reference (PortableServer_POA  poa,
+				     const CORBA_char   *intf,
+				     CORBA_Environment  *ev)
 {
 	ORBit_POAObject pobj;
 
@@ -1817,7 +1789,7 @@ PortableServer_POA_create_reference (PortableServer_POA        poa,
 CORBA_Object
 PortableServer_POA_create_reference_with_id (PortableServer_POA             poa,
 					     const PortableServer_ObjectId *oid,
-					     const CORBA_RepositoryId       intf,
+					     const CORBA_char              *intf,
 					     CORBA_Environment             *ev)
 {
 	ORBit_POAObject	pobj;

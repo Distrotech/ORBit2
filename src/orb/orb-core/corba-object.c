@@ -352,14 +352,14 @@ CORBA_Object_hash(CORBA_Object _obj,
 }
 
 void
-CORBA_Object_create_request(CORBA_Object _obj,
-			    const CORBA_Context ctx,
-			    const CORBA_Identifier operation,
-			    const CORBA_NVList arg_list,
-			    CORBA_NamedValue * result,
-			    CORBA_Request * request,
-			    const CORBA_Flags req_flag,
-			    CORBA_Environment * ev)
+CORBA_Object_create_request (CORBA_Object         _obj,
+			     const CORBA_Context  ctx,
+			     const CORBA_char    *operation,
+			     const CORBA_NVList   arg_list,
+			     CORBA_NamedValue    *result,
+			     CORBA_Request       *request,
+			     const CORBA_Flags    req_flag,
+			     CORBA_Environment   *ev)
 {
   CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
 }
