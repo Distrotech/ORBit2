@@ -1,9 +1,9 @@
 #include "config.h"
-#include <orbit/IIOP/giop-connection.h>
+#include <linc/linc-connection.h>
 
-static void giop_connection_init       (GIOPConnection      *cnx);
-static void giop_connection_destroy    (GObject             *obj);
-static void giop_connection_class_init (GIOPConnectionClass *klass);
+static void linc_connection_init       (LINCConnection      *cnx);
+static void linc_connection_destroy    (GObject             *obj);
+static void linc_connection_class_init (LINCConnectionClass *klass);
 
 static struct {
   O_MUTEX_DEFINE(lock);
@@ -11,7 +11,7 @@ static struct {
 } cnx_list = {NULL};
 
 static void
-giop_connection_list_add(GIOPConnection *cnx)
+linc_connection_list_add(LINCConnection *cnx)
 {
   O_MUTEX_LOCK(cnx_list.lock);
 
@@ -21,7 +21,7 @@ giop_connection_list_add(GIOPConnection *cnx)
 }
 
 static void
-giop_connection_list_remove(GIOPConnection *cnx)
+linc_connection_list_remove(LINCConnection *cnx)
 {
   O_MUTEX_LOCK(cnx_list.lock);
 
@@ -30,14 +30,14 @@ giop_connection_list_remove(GIOPConnection *cnx)
   O_MUTEX_UNLOCK(cnx_list.lock);
 }
 
-static GIOPConnection *
-giop_connection_list_lookup(const char *proto_name, const char *remote_host_info,
+static LINCConnection *
+linc_connection_list_lookup(const char *proto_name, const char *remote_host_info,
 			    const char *remote_serv_info)
 {
   GList *ltmp;
-  GIOPConnection *retval = NULL;
+  LINCConnection *retval = NULL;
 
-#ifdef ORBIT_THREADSAFE
+#ifdef LINC_THREADSAFE
   if(!cnx_list.lock) /* If things haven't been initialized yet, outta here */
     return NULL;
 #endif
@@ -45,7 +45,7 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
   O_MUTEX_LOCK(cnx_list.lock);
   for(ltmp = cnx_list.list; ltmp && !retval; ltmp = ltmp->next)
     {
-      GIOPConnection *cnx = ltmp->data;
+      LINCConnection *cnx = ltmp->data;
 
       if(!strcmp(remote_host_info, cnx->remote_host_info)
 	 && !strcmp(remote_serv_info, cnx->remote_serv_info)
@@ -53,14 +53,14 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
 	retval = cnx;
     }
   if(retval)
-    giop_connection_ref(retval);
+    linc_connection_ref(retval);
   O_MUTEX_UNLOCK(cnx_list.lock);
 
   return retval;
 }
 
 GType
-giop_connection_get_type(void)
+linc_connection_get_type(void)
 {
   static GType object_type = 0;
 
@@ -68,19 +68,19 @@ giop_connection_get_type(void)
     {
       static const GTypeInfo object_info =
       {
-        sizeof (GIOPConnectionClass),
+        sizeof (LINCConnectionClass),
         (GBaseInitFunc) NULL,
         (GBaseFinalizeFunc) NULL,
-        (GClassInitFunc) giop_connection_class_init,
+        (GClassInitFunc) linc_connection_class_init,
         NULL,           /* class_finalize */
         NULL,           /* class_data */
-        sizeof (GIOPConnection),
+        sizeof (LINCConnection),
         0,              /* n_preallocs */
-        (GInstanceInitFunc) giop_connection_init,
+        (GInstanceInitFunc) linc_connection_init,
       };
       
       object_type = g_type_register_static (G_TYPE_OBJECT,
-                                            "GIOPConnection",
+                                            "LINCConnection",
                                             &object_info);
     }  
 
@@ -88,26 +88,26 @@ giop_connection_get_type(void)
 }
 
 static void
-giop_connection_class_init (GIOPConnectionClass *klass)
+linc_connection_class_init (LINCConnectionClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *)klass;
 
   O_MUTEX_INIT(cnx_list.lock);
 
-  object_class->destroy = giop_connection_destroy;
+  object_class->destroy = linc_connection_destroy;
 }
 
 static void
-giop_connection_init       (GIOPConnection      *cnx)
+linc_connection_init       (LINCConnection      *cnx)
 {
   O_MUTEX_INIT(cnx->incoming_mutex);
   O_MUTEX_INIT(cnx->outgoing_mutex);
 }
 
 static void
-giop_connection_destroy    (GObject             *obj)
+linc_connection_destroy    (GObject             *obj)
 {
-  GIOPConnection *cnx = (GIOPConnection *)obj;
+  LINCConnection *cnx = (LINCConnection *)obj;
 
   O_MUTEX_LOCK(cnx->incoming_mutex);
   O_MUTEX_LOCK(cnx->outgoing_mutex);
@@ -116,9 +116,9 @@ giop_connection_destroy    (GObject             *obj)
 
 #ifdef XXX_FIXME_XXX
   if(cnx->incoming_msg)
-    giop_recv_buffer_unuse(cnx->incoming_msg);
+    linc_recv_buffer_unuse(cnx->incoming_msg);
 
-  g_list_foreach(cnx->outgoing_mutex, (GFunc)giop_send_buffer_unuse, NULL);
+  g_list_foreach(cnx->outgoing_mutex, (GFunc)linc_send_buffer_unuse, NULL);
 #endif
 
   g_source_remove(cnx->tag);
@@ -127,44 +127,44 @@ giop_connection_destroy    (GObject             *obj)
   close(cnx->fd);
 }
 
-GIOPConnection *
-giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto,
+LINCConnection *
+linc_connection_from_fd(int fd, const LINCProtocolInfo *proto,
 			const char *remote_host_info,
 			const char *remote_serv_info,
 			gboolean was_initiated,
-			GIOPConnectionOptions options)
+			LINCConnectionOptions options)
 {
-  GIOPConnection *cnx;
+  LINCConnection *cnx;
 
-  cnx = g_object_new(giop_connection_get_type(), NULL);
+  cnx = g_object_new(linc_connection_get_type(), NULL);
 
   cnx->gioc = g_io_channel_unix_new(fd);
   cnx->was_initiated = was_initiated;
-  cnx->is_auth = (proto->flags & GIOP_PROTOCOL_SECURE)?TRUE:FALSE;
+  cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
   cnx->remote_host_info = g_strdup(remote_host_info);
   cnx->remote_serv_info = g_strdup(remote_serv_info);
   cnx->options = options;
 
-  giop_connection_list_add(cnx);
+  linc_connection_list_add(cnx);
 
-#if ORBIT_SSL_SUPPORT
-  if(options & GIOP_CONNECTION_SSL)
+#if LINC_SSL_SUPPORT
+  if(options & LINC_CONNECTION_SSL)
     {
-      cnx->ssl = SSL_new(giop_ssl_ctx);
+      cnx->ssl = SSL_new(linc_ssl_ctx);
       SSL_set_fd(cnx->ssl, fd);
     }
 #endif
 
   if(was_initiated)
     {
-#if ORBIT_SSL_SUPPORT
+#if LINC_SSL_SUPPORT
       SSL_connect(cnx->ssl);
 #endif
       /* Send greeting message */
     }
   else
     {
-#if ORBIT_SSL_SUPPORT
+#if LINC_SSL_SUPPORT
       SSL_accept(cnx->ssl);
 #endif
     }
@@ -173,32 +173,32 @@ giop_connection_from_fd(int fd, const GIOPProtocolInfo *proto,
 }
 
 /* This will just create the fd, do the connect and all, and then call
-   giop_connection_from_fd */
-GIOPConnection *
-giop_connection_initiate(const char *proto_name,
+   linc_connection_from_fd */
+LINCConnection *
+linc_connection_initiate(const char *proto_name,
 			 const char *remote_host_info,
 			 const char *remote_serv_info,
-			 GIOPConnectionOptions options)
+			 LINCConnectionOptions options)
 {
-  GIOPConnection *retval = NULL;
+  LINCConnection *retval = NULL;
   struct addrinfo *ai, hints = {AI_CANONNAME, 0, SOCK_STREAM, 0, 0,
 				NULL, NULL, NULL};
   int rv;
   int fd;
-  const GIOPProtocolInfo *proto;
+  const LINCProtocolInfo *proto;
 
-  retval = giop_connection_list_lookup(proto_name, remote_host_info,
+  retval = linc_connection_list_lookup(proto_name, remote_host_info,
 				       remote_serv_info);
   if(retval)
     return retval;
 
-  proto = giop_protocol_find(proto_name);
+  proto = linc_protocol_find(proto_name);
 
   if(!proto)
     return NULL;
 
   hints.ai_family = proto->family;
-  rv = giop_getaddrinfo(remote_host_info, remote_serv_info, &hints, &ai);
+  rv = linc_getaddrinfo(remote_host_info, remote_serv_info, &hints, &ai);
   if(rv)
     return NULL;
 
@@ -209,7 +209,7 @@ giop_connection_initiate(const char *proto_name,
   if(connect(fd, ai->ai_addr, ai->ai_addrlen))
     goto out;
 
-  retval = giop_connection_from_fd(fd, proto, remote_host_info,
+  retval = linc_connection_from_fd(fd, proto, remote_host_info,
 				   remote_serv_info, TRUE, options);
 
  out:
@@ -221,20 +221,20 @@ giop_connection_initiate(const char *proto_name,
 }
 
 void
-giop_connection_ref(GIOPConnection *cnx)
+linc_connection_ref(LINCConnection *cnx)
 {
   g_object_ref((GObject *)cnx);
 }
 
 void
-giop_connection_unref(GIOPConnection *cnx)
+linc_connection_unref(LINCConnection *cnx)
 {
   GObject *gobj;
 
   O_MUTEX_LOCK(cnx_list.lock);
   gobj = (GObject *)cnx;
   if(gobj->ref_count == 1)
-    giop_connection_list_remove(cnx);
+    linc_connection_list_remove(cnx);
   g_object_unref(gobj);
   O_MUTEX_UNLOCK(cnx_list.lock);  
 }

@@ -54,9 +54,9 @@ AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
 AC_CHECK_HEADERS(netinet/in.h sys/un.h linux/irda.h openssl/ssl.h)
 
 if test $ac_cv_header_openssl_ssl_h = yes; then
-	HAVE_SSL_SUPPORT=1
+	LINC_SSL_SUPPORT=1
 fi
-AC_SUBST(HAVE_SSL_SUPPORT)
+AC_SUBST(LINC_SSL_SUPPORT)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -121,4 +121,5 @@ AC_OUTPUT([
 Makefile
 src/Makefile
 include/linc/Makefile
+include/linc/linc-config.h
 ])
