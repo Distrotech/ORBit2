@@ -349,22 +349,13 @@ test_blocking (void)
 }
 
 static void
-test_local (void)
+test_local_ipv4 (void)
 {
-	struct sockaddr_in ipv4_addr = { 0 };
-#ifdef AF_INET6
-	struct sockaddr_in6 ipv6_addr = { 0 };
-#endif
+	LincSockLen saddr_len;
 	LINCProtocolInfo *proto;
-
-	fprintf (stderr, "Testing is_local checking ...\n");
-
-	g_assert (!linc_protocol_is_local (NULL, NULL, -1));
-
-	fprintf (stderr, " UNIX\n");
-	proto = linc_protocol_find ("UNIX");
-	g_assert (proto != NULL);
-	g_assert (linc_protocol_is_local (proto, NULL, -1));
+	struct sockaddr *saddr;
+	struct sockaddr_in ipv4_addr = { 0 };
+	static char local_host[NI_MAXHOST] = { 0 };
 
 	fprintf (stderr, " IPv4\n");
 	proto = linc_protocol_find ("IPv4");
@@ -377,11 +368,27 @@ test_local (void)
 		proto, (struct sockaddr *)&ipv4_addr,
 		sizeof (ipv4_addr)));
 
+	if (gethostname (local_host, NI_MAXHOST) == -1)
+		return;
+
+	saddr = linc_protocol_get_sockaddr (
+		proto, local_host, NULL, &saddr_len);
+
+	g_assert (linc_protocol_is_local (proto, saddr, saddr_len));
+	g_free (saddr);
+}
+
+static void
+test_local_ipv6 (void)
+{
+#ifdef AF_INET6
+	LINCProtocolInfo *proto;
+	struct sockaddr_in6 ipv6_addr = { 0 };
+
 	fprintf (stderr, " IPv6\n");
 	proto = linc_protocol_find ("IPv6");
-	if (!proto)
-		return;
-#ifdef AF_INET6
+	g_assert (proto != NULL);
+
 	g_assert (proto != NULL);
 
 	ipv6_addr.sin6_family = AF_INET6;
@@ -390,7 +397,27 @@ test_local (void)
 	g_assert (!linc_protocol_is_local (
 		proto, (struct sockaddr *)&ipv6_addr,
 		sizeof (ipv6_addr)));
+#else
+	g_assert (linc_protocol_find ("IPv6") == NULL);
 #endif
+}
+
+static void
+test_local (void)
+{
+	LINCProtocolInfo *proto;
+
+	fprintf (stderr, "Testing is_local checking ...\n");
+
+	g_assert (!linc_protocol_is_local (NULL, NULL, -1));
+
+	fprintf (stderr, " UNIX\n");
+	proto = linc_protocol_find ("UNIX");
+	g_assert (proto != NULL);
+	g_assert (linc_protocol_is_local (proto, NULL, -1));
+
+	test_local_ipv4 ();
+	test_local_ipv6 ();
 }
 
 int
