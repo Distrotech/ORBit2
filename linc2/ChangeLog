@@ -1,3 +1,7 @@
+2003-11-13  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.9.1
+
 2003-11-11  Justin Schoeman <justin@expertron.co.za>
 
 	* linc2/src/linc.c (link_set_io_thread): Fix command type for

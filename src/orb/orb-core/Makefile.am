@@ -7,6 +7,7 @@ INCLUDES =						\
 	-I$(srcdir)					\
 	-I$(top_srcdir)/include				\
 	-I$(top_builddir)/include			\
+	-I$(top_srcdir)/include/orbit/orb-core	\
 	-I$(top_builddir)/include/orbit/orb-core	\
 	-DORBIT_TYPELIB_DIR=\""$(TYPELIB_DIR)"\"	\
 	-DORBIT2_INTERNAL_API				\
