@@ -50,6 +50,11 @@ using namespace std;
 #define IDL_IMPL_STUB_NS_ID			"stub"
 #define IDL_IMPL_NS					"::" IDL_IMPL_NS_ID
 #define IDL_IMPL_C_NS				"::" IDL_IMPL_NS_ID "::" IDL_IMPL_C_NS_ID
+
+//Uncomment the second line to see the error. murrayc.
+#define IDL_IMPL_C_NS_NOTUSED ""
+//#define IDL_IMPL_C_NS_NOTUSED IDL_IMPL_C_NS "::"
+
 #define IDL_IMPL_TYPE_CONT_NS		"::" IDL_IMPL_NS_ID "::" IDL_IMPL_TYPE_CONT_NS_ID
 #define IDL_IMPL_STUB_NS			"::" IDL_IMPL_NS_ID "::" IDL_IMPL_STUB_NS_ID
 #define IDL_INDENT_AMOUNT			0 // i.e. one tab (>0 count spaces)

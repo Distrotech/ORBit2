@@ -1,3 +1,12 @@
+2002-02-27  Murray Cumming  <murrayc@usa.net>
+
+	* Some C identifiers, such as Bonobo_NotSupported do not seem to be 
+	available via the _orbitcpp::c namespace, even though we #include
+	C headers into that namespace. I don't know why, but I've fixed it
+	temporarily by replacing some uses of the IDL_IMPL_C_NS with
+	IDL_IMPL_C_NS_NOTUSED. To get the old output and error, just 
+	uncomment the 2nd definition of that macro, as described in the code.
+
 2002-02-26  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_xlate.cc: 

@@ -1275,8 +1275,8 @@ IDLInterface::writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,bool pa
 
 // IDLCompound ---------------------------------------------------------------
 void 
-IDLCompound::writeCPackingCode(ostream &header,Indent &indent,ostream &module,Indent &mod_indent) {
-	string cname = IDL_IMPL_C_NS "::" + getQualifiedCIdentifier();
+IDLCompound::writeCPackingCode(ostream &header, Indent &indent,ostream &module, Indent &mod_indent) {
+	string cname = IDL_IMPL_C_NS_NOTUSED + getQualifiedCIdentifier();
 	header
 	<< indent << cname << " *_orbitcpp_pack() const {" << endl;
 	
@@ -1843,7 +1843,7 @@ IDLSequence::getCPPType() const {
 
 	if (m_length == 0) {
 		id << IDL_IMPL_NS_ID "::UnboundedSequenceTmpl< ";
-		id << typespec << dcl << ","
+		id << typespec << dcl << ", "
 			<< getNSScopedCTypeName() << ">";
 	} else {
 		id << IDL_IMPL_NS_ID "::BoundedSequenceTmpl< ";
@@ -1861,7 +1861,7 @@ IDLSequence::getNSScopedCTypeName() const {
 	if(getCTypeName() == "CORBA_sequence_CORBA_any"){
 		return getCTypeName();
 	} else {
-		return IDL_IMPL_C_NS "::" + getCTypeName();
+		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
 	}
 }
 

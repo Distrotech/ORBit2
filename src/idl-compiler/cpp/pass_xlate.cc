@@ -119,7 +119,7 @@ IDLPassXlate::doStruct(IDL_tree node,IDLScope &scope) {
 		<< endl
 		<< indent++ << "void* operator new(size_t) {" << endl
 		<< indent << "return "
-		<< IDL_IMPL_C_NS "::"
+		<< IDL_IMPL_C_NS_NOTUSED
 		<< idlStruct.getQualifiedCIdentifier() << "__alloc();" << endl;
 		m_header
 		<< --indent << "};" << endl << endl;
