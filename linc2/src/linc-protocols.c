@@ -414,9 +414,10 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 		g_snprintf (buf, sizeof (buf),
 			    "%s/linc-%x-%x-%x%x",
 			    linc_tmpdir ? linc_tmpdir : "",
-			    pid, idx++,
+			    pid, idx,
 			    (guint) (rand() ^ t.tv_sec),
 			    (guint) (idx ^ t.tv_usec));
+		idx++;
 #ifdef CONNECTION_DEBUG
 		if (g_file_test (buf, G_FILE_TEST_EXISTS))
 			g_warning ("'%s' already exists !", buf);
