@@ -31,8 +31,10 @@ check_PROGRAMS = $(TESTS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la
 
+ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
+
 POATEST_IDLOUT = poatest.h poatest-common.c poatest-skels.c poatest-stubs.c
-$(POATEST_IDLOUT) : poatest.idl
+$(POATEST_IDLOUT) : poatest.idl $(ORBIT_IDL)
 	$(IDL) --showcpperrors $<
 
 common_srcs = $(POATEST_IDLOUT) poatest-basic-shell.c poatest-exception.h

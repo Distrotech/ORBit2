@@ -1,3 +1,41 @@
+2001-07-11  Mark McLoughlin <mark@skynet.ie>
+
+        * src/idl-compiler/orbit-idl-c-backend.h,
+          src/idl-compiler/orbit-idl-c-common.c,
+          src/idl-compiler/orbit-idl-c-demarshal.c,
+          src/idl-compiler/orbit-idl-c-headers.c,
+          src/idl-compiler/orbit-idl-c-marshal.c,
+          src/idl-compiler/orbit-idl-c-skels.c,
+          src/idl-compiler/orbit-idl-c-stubs.c,
+          src/idl-compiler/orbit-idl-c-utils.c,
+          src/idl-compiler/orbit-idl-main.c,
+          src/idl-compiler/orbit-idl3-types.h: chop, chop.
+        Remove all non-small code. Kill orbit-idl-c-demarshal.c
+        and orbit-idl-c-marshal.c. Add --noidata option.
+
+        * include/orbit/orb-core/orbit-small.h,
+          include/orbit/poa/poa-types.h,
+          src/orb/orb-core/orbit-small.c,
+          src/orb/poa/poa.c: remove all non-small
+        code.
+
+        * src/orb/dynamic/dynany.c,
+          src/orb/poa/poa.c,
+          test/poa/poatest-exception.h: temp hacks
+        to get around fact that orbit-idl is not
+        generating aliased sequence allocbufs.
+
+        * include/orbit/orb-core/Makefile.am,
+          src/orb/dynamic/Makefile.am,
+          src/orb/include/Makefile.am,
+          src/orb/orb-core/Makefile.am,
+          src/orb/poa/Makefile.am: kill --oldstyle,
+        use --noidata.
+
+        * test/poa/Makefile.am: depend on orbit-idl.
+
+        * configure.in: bump up ORBIT_SERIAL.
+
 2001-07-11  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c (CORBA_Object__freekids): 

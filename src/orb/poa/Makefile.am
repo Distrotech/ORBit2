@@ -34,7 +34,7 @@ CLEANFILES=$(BUILT_SOURCES)
 
 $(POA_IDLOUT): poa-defs.idl $(IDL)
 	-(rm -f $(POA_IDLOUT) || true) > /dev/null
-	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) --noidata -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
 	-I$(top_srcdir)/src/orb/orb-core \

@@ -7,6 +7,12 @@
 #include "orbit-poa-export.h"
 #include "corba-ops.h"
 
+/*
+ * FIXME FIXME FIXME
+ * idl compiler needs sorting
+ */
+#define PortableServer_ObjectId_allocbuf CORBA_sequence_CORBA_octet_allocbuf
+
 static PortableServer_Servant ORBit_POA_ServantManager_use_servant(
 				     PortableServer_POA poa,
 				     ORBit_POAObject *pobj,
@@ -1749,7 +1755,6 @@ ORBit_small_handle_request(ORBit_POAObject   *pobj,
   PortableServer_ClassInfo            *klass;
   ORBit_IMethod                       *m_data;
   ORBitSkeleton                        skel = NULL;
-  ORBitSmallSkeleton                   small_skel = NULL;
   gpointer                             imp = NULL;
 
   switch( poa->poa_manager->state ) {
@@ -1805,13 +1810,10 @@ ORBit_small_handle_request(ORBit_POAObject   *pobj,
 
   klass = ORBIT_SERVANT_TO_CLASSINFO(pobj->servant);
   if ( klass->relay_call )
-    skel = klass->relay_call(pobj->servant, recv_buffer, &imp);
+    skel = klass->relay_call(pobj->servant, opname,
+			     (gpointer *)&m_data, &imp);
 
-  if ( skel == NULL && klass->small_relay_call )
-    small_skel = klass->small_relay_call(pobj->servant, opname, 
-					 (gpointer *)&m_data, &imp);
-
-  if( skel == NULL && small_skel == NULL ) {
+  if( skel == NULL ) {
     if ( opname[0] == '_' && strcmp(opname + 1, "is_a") == 0 )
       skel = (gpointer)&ORBit_impl_CORBA_Object_is_a;
     else
@@ -1825,14 +1827,11 @@ ORBit_small_handle_request(ORBit_POAObject   *pobj,
   if ( ev->_major != CORBA_NO_EXCEPTION )
     goto clean_out;
 
-  if ( skel != NULL )
-    skel(pobj->servant, recv_buffer, ev, imp);
-
-  else if ( recv_buffer != NULL )
+  if ( recv_buffer != NULL )
     ORBit_small_invoke_poa(pobj->servant, recv_buffer, m_data, 
-			   small_skel, imp, ev);
+			   skel, imp, ev);
   else
-    small_skel(pobj->servant, ret, args, ctx, ev, imp);
+    skel(pobj->servant, ret, args, ctx, ev, imp);
 
   CORBA_exception_free(ev);
 

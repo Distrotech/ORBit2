@@ -46,8 +46,8 @@ $(main_src) : $(BUILT_SOURCES)
 
 $(top_builddir)/include/orbit/orb-core/corba-defs.h $(IDLOUT): corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
-	--noskels --nodefskels --nostubs \
+	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
+	--noskels --nodefskels --nostubs --noidata \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl
 	for I in $(IDLOUT) corba-defs.h; do \
@@ -57,12 +57,12 @@ $(top_builddir)/include/orbit/orb-core/corba-defs.h $(IDLOUT): corba-defs.idl $(
 
 $(IOP_IDLOUT): iop-defs.idl $(IDL)
 	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
-	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
 	-I$(top_srcdir)/src/idl/interop \
-	--noskels --nodefskels --nostubs \
+	--noskels --nodefskels --nostubs --noidata \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/iop-defs.idl
 	for I in $(IOP_IDLOUT) iop-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
@@ -71,8 +71,7 @@ $(IOP_IDLOUT): iop-defs.idl $(IDL)
 
 $(OPS_IDLOUT): corba-ops.idl $(IDL)
 	-(rm -f $(OPS_IDLOUT) || true) > /dev/null
-	$(IDL) --oldstyle \
-                --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
+	$(IDL) --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
 	for I in $(OPS_IDLOUT); do \
 		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I; \
 	done; \
@@ -85,8 +84,7 @@ $(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT) : $(IFACE_IDLOUT)
 
 $(top_builddir)/include/orbit/orb-core/orbit-interface.h $(IFACE_IDLOUT) : orbit-interface.idl $(IDL)
 	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
-	$(IDL) --oldstyle \
-                --showcpperrors $(top_srcdir)/src/orb/orb-core/orbit-interface.idl
+	$(IDL) --showcpperrors $(top_srcdir)/src/orb/orb-core/orbit-interface.idl
 	cp -f orbit-interface.h $(top_builddir)/include/orbit/orb-core/orbit-interface.h; \
 	rm -f orbit-interface-stubs.c orbit-interface-skels.c
 

@@ -682,7 +682,7 @@ ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 			 CORBA_Context               ctx,
 			 CORBA_Environment          *ev)
 {
-	ORBitSmallSkeleton        small_skel;
+	ORBitSmallSkeleton        skel;
 	PortableServer_ClassInfo *klass;
 	ORBit_IMethod            *real_mdata;
 	gpointer                  imp;
@@ -707,7 +707,7 @@ void
 ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			GIOPRecvBuffer             *recv_buffer,
 			ORBit_IMethod              *m_data,
-			ORBitSmallSkeleton          small_skel,
+			ORBitSkeleton               skel,
 			gpointer                    impl,
 			CORBA_Environment          *ev)
 {
@@ -822,7 +822,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			g_warning ("FIXME: handle context demarshaling failure");
 	}
 
-	small_skel (servant, retval, args, &ctx, ev, impl);
+	skel (servant, retval, args, &ctx, ev, impl);
 
 	if (has_context)
 		ORBit_Context_server_free (&ctx);
