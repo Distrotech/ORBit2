@@ -21,6 +21,8 @@ CORBA_exception_free_T (CORBA_Environment *ev)
 void
 CORBA_exception_free (CORBA_Environment *ev)
 {
+	g_return_if_fail (ev != NULL);
+
 	if (ev->_major != CORBA_NO_EXCEPTION) {
 		LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
@@ -91,6 +93,8 @@ CORBA_exception_set_system (CORBA_Environment *ev,
 {
 	CORBA_SystemException *se;
 
+	g_return_if_fail (ev != NULL);
+
 	se = CORBA_SystemException__alloc ();
 	/* I have never seen a case where 'minor' is actually necessary */
 	se->minor = 0 /* minor */;
@@ -105,6 +109,8 @@ CORBA_exception_set (CORBA_Environment   *ev,
 		     const CORBA_char    *except_repos_id,
 		     void                *param)
 {
+	g_return_if_fail (ev != NULL);
+
 	CORBA_exception_free(ev);
 
 	ev->_major = major;
@@ -140,6 +146,8 @@ CORBA_exception_value (CORBA_Environment *ev)
 void
 CORBA_exception_init (CORBA_Environment *ev)
 {
+	g_return_if_fail (ev != NULL);
+
 	memset (ev, 0, sizeof (CORBA_Environment));
 	ev->_major = CORBA_NO_EXCEPTION;
 }

@@ -1,3 +1,12 @@
+2004-01-15  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-env.c: (CORBA_exception_free),
+	(CORBA_exception_set_system), (CORBA_exception_set),
+	(CORBA_exception_init): add pre-conditions so as to
+	warn people that passing NULL for the environment to
+	CORBA methods is not allowed, without changing the
+	existing behaviour.
+
 2004-01-14  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.9.4
