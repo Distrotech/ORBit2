@@ -28,7 +28,7 @@ AC_ARG_WITH(linc-exec-prefix,[  --with-linc-exec-prefix=PFX  Exec prefix where l
     no_linc=yes
   else
     LINC_CFLAGS="`$LINC_CONFIG $linc_config_args --cflags`"
-    LINC_LIBS="`$LINC_CONFIG $linc_conifg_args --libs`"
+    LINC_LIBS="`$LINC_CONFIG $linc_config_args --libs`"
 
     linc_config_major_version=`$LINC_CONFIG $linc_config_args --version | \
            sed 's/[[^0-9]]*\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\)/\1/'`
