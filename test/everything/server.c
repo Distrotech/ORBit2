@@ -433,6 +433,7 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 #define CLOBBER_SYM(a) G_STMT_START { \
 	g_assert (CORBA_TypeCode_equal ( \
 		interfaces->_buffer[i].tc, (a).tc, ev)); \
+	(a) = interfaces->_buffer [i]; \
 	i++; \
 	} G_STMT_END
 
