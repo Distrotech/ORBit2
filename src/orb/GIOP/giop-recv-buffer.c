@@ -568,7 +568,10 @@ giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
   buf->cur += 4;
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
-    return NULL;
+    {
+      G_BREAKPOINT();
+      return NULL;
+    }
   ptr = buf->cur;
   buf->cur += len;
 

@@ -267,11 +267,11 @@ static void tc_enc(CORBA_TypeCode tc,
       giop_send_buffer_align(c, sizeof(num));
       num = 0;
       tmpi = (guint32*)giop_send_buffer_append_indirect(c, &num, sizeof(num));
-      *tmpi -= c->msg.header.message_size;
+      *tmpi = c->msg.header.message_size;
       end = GIOP_FLAG_ENDIANNESS;
       giop_send_buffer_append_indirect(c, &end, 1);
       (info->encoder)(tc, c, ctx);
-      *tmpi -= c->msg.header.message_size;
+      *tmpi = c->msg.header.message_size - *tmpi;
       ctx->current_idx = tmp_index;
       break;
     case TK_SIMPLE:
