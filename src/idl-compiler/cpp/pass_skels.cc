@@ -489,7 +489,7 @@ IDLPassSkels::defineEPV (IDLInterface &iface,
 {
 	m_module << mod_indent++ << IDL_IMPL_C_NS_NOTUSED
 		 << of.get_c_poa_epv () << ' '
-		 << iface.get_cpp_poa_typename () << "::"
+		 << iface.get_cpp_poa_method_prefix () << "::"
 		 << "_" << of.get_c_typename () << "_epv = {" << endl;
 	m_module << mod_indent << "0, // _private" << endl;
 
