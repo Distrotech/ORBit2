@@ -1,3 +1,7 @@
+2002-08-05  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.5.2
+
 2002-07-31  jacob berkman  <jacob@ximian.com>
 
 	* src/linc-connection.c (LINC_IOV_MAX): bump to 1024 on os x, as
