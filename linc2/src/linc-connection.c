@@ -72,15 +72,34 @@ static gboolean
 linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer data)
 {
   LINCConnection *cnx = data;
+  int rv, n;
+  socklen_t n_size = sizeof(n);
+  gboolean retval = TRUE;
 
-  cnx->tag = 0;
+  switch(cnx->status)
+    {
+    case LINC_CONNECTING:
+      n = 0;
+      rv = getsockopt(cnx->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
+      if(!rv && !n && condition == G_IO_OUT)
+	{
+	  linc_connection_state_changed(cnx, LINC_CONNECTED);
+	  cnx->tag = g_io_add_watch(cnx->gioc,
+				    G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
+				    linc_connection_connected, cnx);
+	  retval = FALSE;
+	}
+      else
+	linc_connection_state_changed(cnx, LINC_DISCONNECTED);
+      break;
+    case LINC_CONNECTED:
+      linc_connection_state_changed(cnx, LINC_DISCONNECTED);
+      break;
+    default:
+      break;
+    }
 
-  if(condition == G_IO_OUT)
-    linc_connection_state_changed(cnx, LINC_CONNECTED);
-  else
-    linc_connection_state_changed(cnx, LINC_DISCONNECTED);
-
-  return FALSE;
+  return retval;
 }
 
 static void
@@ -90,11 +109,18 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
     {
     case LINC_CONNECTED:
 #if LINC_SSL_SUPPORT
-      if(cnx->was_initiated)
-	SSL_connect(cnx->ssl);
-      else
-	SSL_accept(cnx->ssl);
+      if(cnx->options & LINC_CONNECTION_SSL)
+	{
+	  if(cnx->was_initiated)
+	    SSL_connect(cnx->ssl);
+	  else
+	    SSL_accept(cnx->ssl);
+	}
 #endif
+      if(!cnx->tag)
+	cnx->tag = g_io_add_watch(cnx->gioc,
+				  G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
+				  linc_connection_connected, cnx);
       break;
     case LINC_CONNECTING:
       if(cnx->tag) g_source_remove(cnx->tag);
