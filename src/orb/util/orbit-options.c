@@ -164,14 +164,11 @@ ORBit_option_command_line_parse (int                 *argc,
 				 char               **argv,
 				 const ORBit_option  *option_list)
 {
-	/* this must be declared outside of loop, as it holds
-	 * iteration state */
-	ORBit_option *option = NULL;
-	
 	gboolean *erase;
 	gint      i, j, numargs;
 	gchar     name [1024];
 	gchar    *tmpstr;
+	const ORBit_option *option = NULL;
 
 #ifdef DEBUG
 	fprintf (stderr, "Parsing command line for options\n");
@@ -184,73 +181,49 @@ ORBit_option_command_line_parse (int                 *argc,
 
 	for (i = 1, numargs = *argc; i < *argc; i++) {
 
-		/* this is true if previous option name comes with
-		 * argument value, and this value is given as extra
-		 * string on @argv list */
 		if (argv [i][0] != '-') {
 			if (!option)
 				continue;
 
-			/* mark argv-element as consumed  */
 			erase [i] = TRUE;
 			numargs--;
 
-			/* skip argument if target location is
-			 * specified as NULL */
 			if (!option->arg) {
 				option = NULL;
 				continue;
 			}
 
-			/* set argument value */ 
 			ORBit_option_set (option, argv [i]);
-
-			/* reset state variable and continue with new
-			 * loop */
 			option = NULL;
 			continue;
-                }
-		/* if this argument starts with '-' the user did not
-		 * specify option value as expected - go on with usual
-		 * processing */ 
-		else if (option && option->type != ORBIT_OPTION_NONE)
+
+                } else if (option && option->type != ORBIT_OPTION_NONE)
 			g_warning ("Option %s requires an argument\n",
 				   option->name);
 
-		/* skip characters until '-' or end of string is found  */
                 tmpstr = argv [i];
                 while (*tmpstr && *tmpstr == '-')
 			tmpstr++;
 		
-		/* copy argument string into temporary buffer */
                 strncpy (name, tmpstr, sizeof (name) - 1);
 		name [sizeof (name) - 1] = '\0';
 
-		/* search for '=' in argument string and replace by
-		 * '\0' as string seperator */
                 tmpstr = strchr (name, '=');
                 if (tmpstr)
                         *tmpstr++ = '\0';
 
-		/* find corresponding option declaration */
                 for (option = option_list; option->name; option++)
 			if (!strcmp (name, option->name))
 				break;
 
-		/* if string is not known as ORBit2 option skip the
-		 * argument */ 
 		if (!option->name) {
 			option = NULL;
 			continue;
 		}
 		
-		/* mark argument as consumed */ 
 		erase [i] = TRUE;
 		numargs--;
 
-		/* call ORBit_option_set, if argument is expteced and
-		 * if option value was attached with '=' to option
-		 * name */ 
 		if (option->type != ORBIT_OPTION_NONE && tmpstr) {
 			ORBit_option_set (option, tmpstr);
 			option = NULL;
@@ -270,7 +243,6 @@ ORBit_option_command_line_parse (int                 *argc,
 
         *argc = numargs;
 
-	/* clean up local resources */ 
         g_free (erase);
 }
 
