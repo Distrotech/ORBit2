@@ -59,6 +59,7 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 	}
 	case CORBA_tk_except:
 	case CORBA_tk_struct:
+		mem = ALIGN_ADDRESS (mem, tc->c_align);
 		for (i = 0; i < tc->sub_parts; i++) {
 			subtc = tc->subtypes [i];
 			mem = ALIGN_ADDRESS (mem, subtc->c_align);
@@ -69,7 +70,10 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 	case CORBA_tk_union: {
 		int sz = 0;
 		int al = 1;
-		gconstpointer cmem = mem;
+		gconstpointer cmem;
+
+		cmem = ALIGN_ADDRESS (mem, MAX (tc->discriminator->c_align,
+						tc->c_align));
 		subtc = ORBit_get_union_tag (tc, &cmem, TRUE);
 		for (i = 0; i < tc->sub_parts; i++) {
 			al = MAX (al, tc->subtypes [i]->c_align);
