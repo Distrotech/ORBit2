@@ -81,7 +81,7 @@ echo processing popt
 (cd popt; \
     #libtoolize --copy --force; \
     automake --add-missing $am_opt; \
-    aclocal $ACLOCAL_FLAGS; \
+    aclocal $ACLOCAL_FLAGS; autoheader; \
     autoconf)
 
 cd $ORIGDIR
