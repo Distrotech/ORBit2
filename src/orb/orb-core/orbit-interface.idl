@@ -1,0 +1,45 @@
+#ifndef _ORBIT_INTERFACE_IDL_
+#define _ORBIT_INTERFACE_IDL_
+
+module ORBit {
+	typedef long IArgFlag;
+	const long I_ARG_IN         = 1;
+	const long I_ARG_OUT        = 2;
+	const long I_ARG_INOUT      = 4;
+	const long I_ARG_FIXED_SIZE = 8;
+
+	struct IArg {
+		TypeCode tc;
+		IArgFlag flags;
+		string   name;
+	};
+
+	typedef sequence<IArg>     IArgs;
+	typedef sequence<TypeCode> ITypes;
+
+	typedef long IMethodFlag;
+
+	const long I_METHOD_NORMAL         = 0;
+	const long I_METHOD_1_WAY          = 1;
+	const long I_METHOD_ALL_BASE       = 2;
+	const long I_METHOD_NO_OUT         = 4;
+	const long I_METHOD_RET_FIXED_SIZE = 8;
+
+	struct IMethod {
+		IArgs       arguments;
+		ITypes      exceptions;
+		TypeCode    ret;
+		string      name;
+		long        name_len;
+		IMethodFlag flags;
+	};
+
+	typedef sequence<IMethod> IMethods;
+
+	struct IInterface {
+		string   repo_id;
+		IMethods methods;
+	};
+}; /* module ORBit */
+
+#endif /* _ORBIT_INTERFACE_IDL_ */
