@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <linc/linc.h>
 #include "linc-private.h"
-
-gboolean broken;
 
 #define SYS_SOCKET_BUFFER_MAX (512 * 1024)
 #define BUFFER_MAX 1024
@@ -47,19 +49,23 @@ init_tmp (void)
 static void
 broken_cb (LINCConnection *cnx, gpointer user_data)
 {
-	g_assert (user_data == &broken);
+	g_assert (user_data == NULL);
 
-	broken = TRUE;
+	exit (13);
 }
 
-GType test_cnx_type = 0;
+GType    test_server_cnx_type = 0;
+GType    test_client_cnx_type = 0;
+gboolean connected = FALSE;
 
 static LINCConnection *
 test_server_create_connection (LINCServer *cnx)
 {
 	GType t;
 
-	t = test_cnx_type ? test_cnx_type : linc_connection_get_type ();
+	t = test_server_cnx_type ? test_server_cnx_type : linc_connection_get_type ();
+
+	connected = TRUE;
 
 	return g_object_new (t, NULL);
 }
@@ -84,7 +90,10 @@ create_server (LINCServer **server)
 static void
 create_client (LINCServer *server, LINCConnection **client)
 {
-	*client = g_object_new (linc_connection_get_type (), NULL);
+	*client = g_object_new (
+			test_client_cnx_type ? test_client_cnx_type :
+					       linc_connection_get_type (),
+			NULL);
 	
 	g_assert (linc_connection_initiate (
 		*client, "UNIX",
@@ -96,30 +105,88 @@ create_client (LINCServer *server, LINCConnection **client)
 				   (gpointer *) client);
 }
 
+static gboolean 
+test_broken_cnx_handle_input (LINCConnection *cnx)
+{
+	glong  ret;
+	guchar buffer;
+
+	ret = linc_connection_read (cnx, &buffer, 1, FALSE);
+
+	g_assert (ret == LINC_IO_FATAL_ERROR);
+
+	return TRUE;
+}
+
+static void
+test_broken_cnx_class_init (LINCConnectionClass *klass)
+{
+	klass->handle_input = test_broken_cnx_handle_input;
+}
+
+static GType
+test_get_broken_cnx_type (void)
+{
+	static GType object_type = 0;
+
+	if (!object_type) {
+		static const GTypeInfo object_info = {
+			sizeof (LINCConnectionClass),
+			(GBaseInitFunc) NULL,
+			(GBaseFinalizeFunc) NULL,
+			(GClassInitFunc) test_broken_cnx_class_init,
+			NULL,           /* class_finalize */
+			NULL,           /* class_data */
+			sizeof (LINCConnection),
+			0,              /* n_preallocs */
+			(GInstanceInitFunc) NULL,
+		};
+      
+		object_type = g_type_register_static (
+			LINC_TYPE_CONNECTION, "TestConnection",
+			&object_info, 0);
+	}
+
+	return object_type;
+}
+
 static void
 test_broken (void)
 {
 	LINCServer     *server;
 	LINCConnection *client;
+	pid_t           child;
+	int             status;
 
 	fprintf (stderr, "Testing 'broken' ...\n");
 
 	create_server (&server);
 
-	create_client (server, &client);
+	if ((child = fork ()) == 0) { /* child */
+		test_client_cnx_type = test_get_broken_cnx_type ();
+		create_client (server, &client);
+		test_client_cnx_type = 0;
 
-	broken = FALSE;
-	g_signal_connect (G_OBJECT (client), "broken",
-			  G_CALLBACK (broken_cb), &broken);
+		g_signal_connect (G_OBJECT (client), "broken",
+				  G_CALLBACK (broken_cb), NULL);
+
+		g_object_unref (G_OBJECT (server));
+		g_assert (server == NULL);
+
+		linc_main_loop_run ();
+
+		g_assert_not_reached ();
+	}
+
+	while (!connected)
+		linc_main_iteration (FALSE);
+	connected = FALSE;
+
 	g_object_unref (G_OBJECT (server));
 	g_assert (server == NULL);
 
-	linc_main_iteration (FALSE); /* connect & break */
-
-	g_assert (broken);
-
-	g_object_unref (G_OBJECT (client));
-	g_assert (client == NULL);
+	waitpid (child, &status, 0);
+	g_assert (WIFEXITED (status) && WEXITSTATUS (status) == 13);
 }
 
 static GIOCondition
@@ -169,7 +236,7 @@ blocking_cb (LINCConnection *cnx,
 }
 
 static gboolean 
-test_cnx_handle_input (LINCConnection *cnx)
+test_blocking_cnx_handle_input (LINCConnection *cnx)
 {
 	static gulong idx = 0;
 	glong  size, i;
@@ -187,13 +254,13 @@ test_cnx_handle_input (LINCConnection *cnx)
 }
 
 static void
-test_cnx_class_init (LINCConnectionClass *klass)
+test_blocking_cnx_class_init (LINCConnectionClass *klass)
 {
-	klass->handle_input = test_cnx_handle_input;
+	klass->handle_input = test_blocking_cnx_handle_input;
 }
 
 static GType
-test_get_cnx_type (void)
+test_get_blocking_cnx_type (void)
 {
 	static GType object_type = 0;
 
@@ -202,7 +269,7 @@ test_get_cnx_type (void)
 			sizeof (LINCConnectionClass),
 			(GBaseInitFunc) NULL,
 			(GBaseFinalizeFunc) NULL,
-			(GClassInitFunc) test_cnx_class_init,
+			(GClassInitFunc) test_blocking_cnx_class_init,
 			NULL,           /* class_finalize */
 			NULL,           /* class_data */
 			sizeof (LINCConnection),
@@ -231,7 +298,7 @@ test_blocking (void)
 	fprintf (stderr, "Testing blocking code ...\n");
 
 	/* Create our own LincConnection to verify input */
-	test_cnx_type = test_get_cnx_type ();
+	test_server_cnx_type = test_get_blocking_cnx_type ();
 
 	create_server (&server);
 	create_client (server, &client);
@@ -274,7 +341,7 @@ test_blocking (void)
 	g_object_unref (G_OBJECT (server));
 	g_assert (server == NULL);
 
-	test_cnx_type = 0;
+	test_server_cnx_type = 0;
 
 	linc_write_options_free (options);
 }
