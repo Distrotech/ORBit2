@@ -268,6 +268,7 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 #define CORBA_BASE_TYPES \
 	     CORBA_tk_short: \
 	case CORBA_tk_long: \
+	case CORBA_tk_enum: \
 	case CORBA_tk_ushort: \
 	case CORBA_tk_ulong: \
 	case CORBA_tk_float: \
