@@ -1,3 +1,11 @@
+2001-09-03 Mark McLoughlin <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	Big cleanup. Split out the generation of individual
+	TypeCode members from cbe_tc_generate into seperate
+	functions. Also seperate functions for various anon
+	arrays.
+
 2001-09-01  Darin Adler  <darin@bentspoon.com>
 
 	* src/orb/orb-core/.cvsignore: New generated file that needs
