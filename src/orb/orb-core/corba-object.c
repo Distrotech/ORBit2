@@ -23,11 +23,11 @@ static GMutex *object_lock = NULL;
 static guint
 g_CORBA_Object_hash (gconstpointer key)
 {
-	/* type_id is not reliable: cf. corbaloc */
-
 	CORBA_Object obj = (gpointer) key;
 
+	/* type_id is not reliable: cf. corbaloc */
 	g_assert (obj->object_key != NULL);
+
         return IOP_ObjectKey_hash (obj->object_key);
 }
 
