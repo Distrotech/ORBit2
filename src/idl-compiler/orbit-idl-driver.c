@@ -25,6 +25,8 @@
 #include "config.h"
 
 #include "orbit-idl2.h"
+#include "orbit-idl-backend.h"
+#include "orbit-idl-c-backend.h"
 
 #include <string.h>
 
@@ -55,19 +57,14 @@ orbit_idl_tree_fake_ops (IDL_tree tree, IDL_ns ns)
 	}
 }
 
-int
+gboolean
 orbit_idl_to_backend (const char    *filename,
 		      OIDL_Run_Info *rinfo)
 {
-	OIDL_Backend_Info *binfo;
-	IDL_ns             ns;
-	IDL_tree           tree;
-	int                errcode;
-
-	binfo = orbit_idl_backend_for_lang (rinfo->output_language,
-					    rinfo->backend_directory);
-
-	g_return_val_if_fail (binfo && binfo->op_output, 0);
+	IDL_ns   ns;
+	IDL_tree tree;
+	int      errcode;
+	gboolean retval;
 
 	errcode = IDL_parse_filename (
 			filename, rinfo->cpp_args, NULL,
@@ -94,7 +91,10 @@ orbit_idl_to_backend (const char    *filename,
 
 	orbit_idl_tree_fake_ops (tree, ns);
 
-	binfo->op_output (tree, rinfo);
+	if (!strcmp (rinfo->output_language, "c")) 
+		retval = orbit_idl_output_c (tree, rinfo);
+	else
+		retval = orbit_idl_backend_output (rinfo, tree);
 
-	return 1;
+	return retval;
 }

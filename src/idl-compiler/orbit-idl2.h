@@ -3,9 +3,11 @@
 
 #include "orbit-idl3-types.h"
 
-int orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo);
+gboolean orbit_idl_to_backend     (const char    *filename,
+				   OIDL_Run_Info *rinfo);
 
-OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang, const char *backend_dir);
+gboolean orbit_idl_backend_output (OIDL_Run_Info *rinfo,
+				   IDL_tree       tree);
 
 /* Utils */
 void orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns);
