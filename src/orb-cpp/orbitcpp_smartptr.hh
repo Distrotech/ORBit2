@@ -151,7 +151,7 @@ namespace _orbitcpp {
 			::CORBA::release(m_objectref);
 			m_objectref = O::_nil();
 		}
-		ObjectPtr_out(ObjectPtr_out &out) 
+		ObjectPtr_out(ObjectPtr_out const & out) 
 			: m_objectref(out.m_objectref) {
 		}
   
@@ -287,7 +287,7 @@ namespace _orbitcpp {
 			delete m_data;
 			m_data = NULL;
 		}
-		Data_out(Data_out &src)
+		Data_out(Data_out const & src)
 			: m_data(src.m_data) {
 		}
 		~Data_out() {
@@ -410,7 +410,7 @@ namespace _orbitcpp {
 			delete m_data;
 			m_data = NULL;
 		}
-		DataVar_out(DataVar_out &src)
+		DataVar_out(DataVar_out const & src)
 			: m_data(src.m_data) {
 		}
 		~DataVar_out() {
@@ -491,7 +491,7 @@ namespace _orbitcpp {
 	  public:
 		Sequence_out(T *&data)	: Super(data) {}
 		Sequence_out(Data_var<T> &var)	: Super(var) {}
-		Sequence_out(Sequence_out &src)	: Super(src) {}
+		Sequence_out(Sequence_out const & src)	: Super(src) {}
 
 		// assignment
 		Sequence_out &operator=(Sequence_out &src) {
@@ -699,7 +699,7 @@ namespace _orbitcpp {
 			m_data = NULL;
 		}
 
-		ArrayVariable_out(ArrayVariable_out &src)
+		ArrayVariable_out(ArrayVariable_out const &src)
 			: m_data(src.m_data) {
 	  	}
 
@@ -1004,7 +1004,7 @@ namespace _orbitcpp {
 	  		Properties::free(m_data);
 	  		m_data = NULL;
 	  	}
-		String_out(String_out &s)
+		String_out(String_out const & s)
 			: m_data(s.m_data) {
 	  	}
   
