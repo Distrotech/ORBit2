@@ -292,6 +292,8 @@ link_server_setup (LinkServer            *srv,
 		return FALSE;
 	}
 
+	srv->proto = proto;
+
 	if (local_host_info)
 		local_host = local_host_info;
 	else
@@ -411,7 +413,6 @@ link_server_setup (LinkServer            *srv,
 
 	g_free (saddr);
 
-	srv->proto = proto;
 	srv->priv->fd = fd;
 
 	if (create_options & LINK_CONNECTION_NONBLOCKING) {
