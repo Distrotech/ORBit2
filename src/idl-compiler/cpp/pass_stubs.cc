@@ -349,7 +349,8 @@ IDLPassStubs::doInterface(IDLInterface &iface) {
 	// constructors (no public ones, esp. no copy constructor)
 	m_header 
 	<< indent << iface.getCPPStub() << "();" << endl
-	<< indent << iface.getCPPStub() << "(" << iface.getCPPStub() << " const &src);" << endl;
+	<< indent << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject);" << endl
+  << indent << iface.getCPPStub() << "(" << iface.getCPPStub() << " const &src);" << endl;
 
 	// end orbitcpp internal section
 	indent--;
@@ -379,6 +380,14 @@ IDLPassStubs::doInterface(IDLInterface &iface) {
 	*/
 
 	
+  //Constructor implemention:
+  m_module <<
+  IDL_IMPL_NS_ID << "::" << IDL_IMPL_STUB_NS_ID << iface.getQualifiedCPPIdentifier() << "::" << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject)" << endl
+  << ++indent << "m_target = cobject;" << endl;
+  indent--;
+  m_module << "}" << endl
+  << endl;
+
 	// translate operations (same thing as above)
 	first = iface.m_all_mi_bases.begin();
 	last = iface.m_all_mi_bases.end();
@@ -417,10 +426,9 @@ void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
 		<< ++indent << "CORBA::Object_ptr ptr = obj;" << endl;
 		m_header
 		<< indent << iface.getNSScopedCTypeName()
-		<< " cobj = reinterpret_cast<CORBA_Object>(ptr);" << endl
+		<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
 		<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
-		<< indent << "return "
-		<< indent << "reinterpret_cast< " << iface.getQualifiedCPP_ptr()+"&>(cobj);" << endl;
+		<< indent << "return new " << iface.getQualifiedCPPIdentifier() << "(cobj);" << endl;
 	} else {	
 		m_header
 		<< ++indent << "return "

@@ -45,16 +45,22 @@ CORBA_Object CORBA::Object::_orbitcpp_get_c_object() {
 	return m_target;
 }
 
-CORBA::Object::Object() {
+CORBA::Object::Object()
+{
 }
 
-CORBA::Object::~Object() {
+CORBA::Object::Object(CORBA_Object cobject)
+{
+  ::_orbitcpp::CEnvironment ev;
+	m_target = CORBA_Object_duplicate(cobject, ev);
+}
+
+CORBA::Object::~Object()
+{
 }
 
 CORBA::Object_ptr CORBA::Object::_duplicate(Object_ptr o) {
-	return reinterpret_cast<CORBA::Object_ptr>(
-		_orbitcpp::duplicate_guarded(*o)
-	);
+	return new CORBA::Object( _orbitcpp::duplicate_guarded(o->_orbitcpp_get_c_object()) );
 }
 
 CORBA::Object_ptr CORBA::Object::_narrow(Object_ptr o) {
@@ -67,9 +73,10 @@ CORBA::Object_ptr CORBA::Object::_nil() {
 
 
 void 
-CORBA::Object::operator delete(void* c_objref) {
+CORBA::Object::operator delete(void* cpp_objref) {
+	Object* pObject = static_cast<Object*>(cpp_objref);
 	CEnvironment ev;
-	CORBA_Object_release(reinterpret_cast<CORBA_Object>(c_objref),ev);
+	CORBA_Object_release(pObject->_orbitcpp_get_c_object(), ev);
 	ev.propagate_sysex();
 }
 

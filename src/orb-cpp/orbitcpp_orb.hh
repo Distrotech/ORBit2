@@ -46,9 +46,13 @@ namespace CORBA {
 		// allow ORB_init to create this object
 		friend CORBA::ORB_ptr ORB_init(int& argc, char** argv,
 									   const char* orb_identifier);
+
 	public:
-		void operator delete(void* c_orb) {
-			_orbitcpp::release_guarded(reinterpret_cast<CORBA_Object>(c_orb));
+		ORB(CORBA_ORB cobject);
+
+		void operator delete(void* cpp_orb) {
+			Object* pObject = static_cast<Object*>(cpp_orb);
+			_orbitcpp::release_guarded(pObject->_orbitcpp_get_c_object());
 		}
 	
 	

@@ -1073,13 +1073,16 @@ IDLInterface::isBaseClass(IDLInterface *iface) {
 }
 
 bool
-IDLInterface::requiresSmartPtr() const {
-	for(IDLInterface::BaseList::const_iterator it=m_allbases.begin();
-		it !=m_allbases.end(); it++) {
-		if((*it)->m_all_mi_bases.begin() != (*it)->m_all_mi_bases.end()) {
+IDLInterface::requiresSmartPtr() const
+{
+	for(IDLInterface::BaseList::const_iterator it = m_allbases.begin(); it != m_allbases.end(); it++)
+	{
+		if( (*it)->m_all_mi_bases.begin() != (*it)->m_all_mi_bases.end() )
+		{
 			return true;
 		}
 	}
+
 	return false;
 }
 

@@ -1,3 +1,13 @@
+2002-03-05  Murray Cumming  <murrayc@usa.net>
+
+	* Uses of reinterpret_cast<> to get C++ instances from C instances 
+	need to be changed to create new C++ instances instead. This changes
+	some of them, but to test whether it works, it seems that I first need
+	to remove all of this including-into-_orbitcpp::c-namespace stuff, 
+	because it seems to work differntly for normal stubs and Bonobo stubs.
+	It's probably related to Bonobo's #including of pregenerated headers.
+	I'll do this next.
+
 2002-03-01  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_xlate.cc:
