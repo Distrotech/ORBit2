@@ -280,8 +280,8 @@ giop_thread_new (GMainContext *context)
 	tdata->incoming = g_cond_new ();
 	tdata->wake_context = context;
 	tdata->keys = NULL;
-	tdata->async_ents = g_queue_new();
-	tdata->request_queue = g_queue_new();
+	tdata->async_ents = NULL;
+	tdata->request_queue = NULL;
 
 	if (giop_main_thread)
 		tdata->request_handler = giop_main_thread->request_handler;
@@ -331,8 +331,13 @@ giop_thread_free (GIOPThread *tdata)
 	
 	g_mutex_free (tdata->lock);
 	g_cond_free (tdata->incoming);
-	g_queue_free (tdata->async_ents);
-	g_queue_free (tdata->request_queue);
+#ifdef G_ENABLE_DEBUG
+	if (tdata->async_ents)
+		g_warning ("Leaked async ents");
+	if (tdata->request_queue)
+		g_warning ("Leaked request queue");
+#endif
+	g_queue_free (tdata->invoke_policies);
 	
 	g_free (tdata);
 }
@@ -434,9 +439,18 @@ giop_mainloop_handle_input (GIOChannel     *source,
 			    gpointer        data)
 {
 	char c;
+	GIOPThread *tdata = giop_thread_self ();
 
 	read (WAKEUP_POLL, &c, sizeof (c));
-	giop_recv_handle_queued_input ();
+
+	LINK_MUTEX_LOCK (tdata->lock);
+	while (!giop_thread_queue_empty_T (tdata)) {
+		LINK_MUTEX_UNLOCK (tdata->lock);
+		giop_thread_queue_process (NULL);
+		LINK_MUTEX_LOCK (tdata->lock);
+	}
+	LINK_MUTEX_UNLOCK (tdata->lock);
+
 
 	return TRUE;
 }
@@ -453,15 +467,14 @@ giop_request_handler_thread (gpointer data, gpointer user_data)
 	dprintf (GIOP, "Thread %p woken to handle request", tdata);
 
 	do {
-		giop_thread_request_process (tdata);
+		giop_thread_queue_process (tdata);
 
 		g_mutex_lock (giop_pool_hash_lock);
 		LINK_MUTEX_LOCK (tdata->lock);
 
-		if (done = g_queue_is_empty (tdata->request_queue)) {
-			for (l = tdata->keys; l != NULL; l = l->next) {
+		if ((done = giop_thread_queue_empty_T (tdata))) {
+			for (l = tdata->keys; l != NULL; l = l->next)
 				giop_thread_key_release_T (l->data);
-			}
 			g_list_free (tdata->keys);
 			tdata->keys = NULL;
 		}
@@ -566,28 +579,19 @@ giop_invoke_async (GIOPMessageQueueEntry *ent)
 	if (!giop_thread_io ())
 		ent->async_cb (ent);
 
-	else if (ent->src_thread == giop_main_thread) {
-
-		if (giop_thread_self () == giop_main_thread)
-			ent->async_cb (ent);
-
-		else {
-			GIOPThread *tdata = ent->src_thread;
-
-			g_mutex_lock (tdata->lock); /* ent_lock */
-
-			buf = NULL;
-			g_queue_push_tail (tdata->async_ents, ent);
-			
-			g_assert (tdata->wake_context);
-			giop_incoming_signal_T (tdata);
-
-			g_mutex_unlock (tdata->lock); /* ent_unlock */
-		}
-	} else { /* Push callback to a new thread */
-		g_warning ("FIXME: emit async callback in it's own thread ?");
-
+	else if (ent->src_thread == giop_thread_self ())
 		ent->async_cb (ent);
+
+	else {
+		GIOPThread *tdata = ent->src_thread;
+		
+		g_mutex_lock (tdata->lock); /* ent_lock */
+
+		buf = NULL;
+		tdata->async_ents = g_list_prepend (tdata->async_ents, ent);
+		giop_incoming_signal_T (tdata);
+		
+		g_mutex_unlock (tdata->lock); /* ent_unlock */
 	}
 
 	/* NB. At the tail end of async_cb 'Ent' is invalid / freed */
@@ -641,17 +645,123 @@ typedef struct {
 	gpointer recv_buffer;
 } GIOPQueueEntry;
 
-void
-giop_thread_request_process (GIOPThread *tdata)
+/* this sucks, we need a wider scale re-factor */
+#include "../orb-core/orbit-policy.h"
+#include "orbit/poa/poa-types.h"
+
+static GList *
+first_valid_request (GIOPThread *tdata, gboolean *no_policy)
 {
+	GList *l;
+	ORBitPolicy *policy;
+
+	if (!tdata->invoke_policies || !tdata->invoke_policies->head) {
+		*no_policy = TRUE;
+		return NULL;
+	}
+
+	*no_policy = FALSE;
+
+	for (l = tdata->request_queue; l; l = l->next) {
+		int i;
+		GIOPQueueEntry *qe = l->data;
+		ORBit_POAObject pobj = qe->poa_object;
+
+		for (i = 0; i < policy->allowed_poas->len; i++)
+			if (g_ptr_array_index (policy->allowed_poas, i) == pobj->poa)
+				return l;
+	}
+
+	return NULL;
+}
+
+gboolean
+giop_thread_queue_empty_T (GIOPThread *tdata)
+{
+	gboolean no_policy;
+	
+	if (first_valid_request (tdata, &no_policy))
+		return FALSE;
+
+	else if (no_policy)
+		return (!tdata->request_queue &&
+			!tdata->async_ents);
+
+	else
+		return TRUE;
+}
+
+static gpointer
+giop_list_pop (GList **list)
+{
+	gpointer p;
+
+	if (!*list)
+		return NULL;
+	
+	p = (*list)->data;
+	*list = g_list_delete_link (*list, *list);
+
+	return p;
+}
+
+void
+giop_thread_queue_process (GIOPThread *tdata)
+{
+	GIOPMessageQueueEntry *ent;
 	GIOPQueueEntry *qe = NULL;
+	GList   *request;
+	gboolean no_policy;
 
-	LINK_MUTEX_LOCK (tdata->lock);
-	qe = g_queue_pop_head (tdata->request_queue);	
-	LINK_MUTEX_UNLOCK (tdata->lock);
+	if (!tdata)
+		tdata = giop_thread_self ();
 
-	if (qe)
+	request = first_valid_request (tdata, &no_policy);
+
+	dprintf (MESSAGES, "handle queued input [%p], (%d)\n", request, no_policy);
+
+	LINK_MUTEX_LOCK (tdata->lock); /* ent_lock */
+
+	if (no_policy)
+		ent = giop_list_pop (&tdata->async_ents);
+	else
+		ent = NULL;
+
+	if (!ent) {
+		if (no_policy)
+			qe = giop_list_pop (&tdata->request_queue);
+
+		else if (request) {
+			qe = request->data;
+			tdata->request_queue = g_list_delete_link (tdata->request_queue, request);
+		}
+	}
+
+	dprintf (MESSAGES, "Queue pop %p, %p, %d", ent, qe);
+	
+	LINK_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
+
+	if (ent)
+		giop_invoke_async (ent);
+
+	if (qe) {
 		tdata->request_handler (qe->poa_object, qe->recv_buffer, NULL);
+		g_free (qe);
+	}
+}
+
+void
+giop_thread_queue_tail_wakeup (GIOPThread *tdata)
+{
+	if (!tdata)
+		return; /* FIXME: no I/O thread */
+
+	LINK_MUTEX_LOCK (tdata->lock); /* ent_lock */
+
+	if ((tdata->request_queue || tdata->async_ents) && tdata->wake_context)
+		wakeup_mainloop ();
+
+	LINK_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
 }
 
 void
@@ -674,7 +784,7 @@ giop_thread_request_push (GIOPThread *tdata,
 
 	LINK_MUTEX_LOCK (tdata->lock);
 
-	g_queue_push_tail (tdata->request_queue, qe);
+	tdata->request_queue = g_list_append (tdata->request_queue, qe);
 	giop_incoming_signal_T (tdata);
 
 	LINK_MUTEX_UNLOCK (tdata->lock);

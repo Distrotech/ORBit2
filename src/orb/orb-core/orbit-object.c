@@ -51,6 +51,7 @@ object_hash_dump (gpointer key,
 		TYPE_CASE (ORBGROUP, "ORB Group");
 		TYPE_CASE (POAMANAGER, "POA Manager");
 		TYPE_CASE (POACURRENT, "Current POA");
+		TYPE_CASE (CLIENT_POLICY, "Client policy");
 	}
 
 	if (!str)

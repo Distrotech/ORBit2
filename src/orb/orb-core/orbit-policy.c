@@ -1,42 +1,65 @@
 #include <stdarg.h>
+#include <string.h>
+#include "../util/orbit-purify.h"
 #include "orbit-policy.h"
 #include "orbit-debug.h"
+#include "orbit-object.h"
+#include "orbit/GIOP/giop.h"
 
 GType
 ORBit_policy_ex_get_type (void)
 {
-	return 0;
+	return 0; /* FIXME: maybe use GObject some day ? */
 }
+
+static void
+ORBit_policy_free_fn (ORBit_RootObject obj)
+{
+	ORBitPolicy *p = (ORBitPolicy *) obj;
+	g_ptr_array_free (p->allowed_poas, TRUE);
+	p_free (p, ORBitPolicy);
+}
+
+static const ORBit_RootObject_Interface ORBit_Policy_epv = {
+	ORBIT_ROT_CLIENT_POLICY,
+	ORBit_policy_free_fn
+};
 
 ORBitPolicy *
 ORBit_policy_new (GType        type,
 		  const char  *first_prop,
 		  ...)
 {
-	return NULL;
+	va_list      args;
+	const char  *name;
+	ORBitPolicy *policy = g_new0 (ORBitPolicy, 1);
+	ORBit_RootObject_init (&policy->parent, &ORBit_Policy_epv);
+
+	policy->allowed_poas = g_ptr_array_sized_new (1);
+
+	va_start (args, first_prop);
+	for (name = first_prop; name; name = va_arg (args, char *)) {
+		if (!strcmp (name, "allow")) {
+			gpointer poa = va_arg (args, void *);
+			g_ptr_array_add (policy->allowed_poas, poa);
+		}
+	}
+
+	va_end (args);
+
+	return ORBit_RootObject_duplicate_T (policy);
 }
 
 ORBitPolicy *
 ORBit_policy_ref (ORBitPolicy *p)
 {
-	if (p) {
-		LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
-		g_object_ref (p);
-		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
-	}
-
-	return p;
+	return ORBit_RootObject_duplicate (p);
 }
 
 void
 ORBit_policy_unref (ORBitPolicy *p)
 {
-	if (!p)
-		return;
-
-	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
-	g_object_unref (p);
-	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	ORBit_RootObject_release (p);
 }
 
 void
@@ -45,51 +68,40 @@ ORBit_object_set_policy (CORBA_Object obj,
 {
 	if (obj == CORBA_OBJECT_NIL)
 		return;
+	ORBit_policy_unref (obj->invoke_policy);
+	obj->invoke_policy = ORBit_policy_ref (p);
 }
 
-static GStaticPrivate policy_private = G_STATIC_PRIVATE_INIT;
-
-static void
-policy_queue_free (gpointer data)
+ORBitPolicy *
+ORBit_object_get_policy (CORBA_Object obj)
 {
-	ORBitPolicy *p;
-	GQueue *queue = data;
-
-	if (queue->length)
-		dprintf (MESSAGES, "Leaked %d policies\n", queue->length);
-
-	while ((p = g_queue_pop_head (queue)))
-		ORBit_policy_unref (p);
-
-	g_queue_free (queue);
+	if (obj == CORBA_OBJECT_NIL)
+		return CORBA_OBJECT_NIL;
+	else
+		return ORBit_policy_ref (obj->invoke_policy);
 }
 
 void
 ORBit_policy_push (ORBitPolicy *p)
 {
-	GQueue *queue;
+	GIOPThread *tdata = giop_thread_self ();
 
-	if (!(queue = g_static_private_get (&policy_private))) {
-		queue = g_queue_new ();
-		/* FIXME: should check the queue on free */
-		g_static_private_set (&policy_private, queue,
-				      policy_queue_free);
-	}
+	if (!tdata->invoke_policies)
+		tdata->invoke_policies = g_queue_new ();
 	
-	g_queue_push_head (queue, ORBit_policy_ref (p));
+	g_queue_push_head (tdata->invoke_policies, ORBit_policy_ref (p));
 }
 
 void
 ORBit_policy_pop (void)
 {
-	GQueue *queue;
+	GIOPThread *tdata = giop_thread_self ();
 
-	if (!(queue = g_static_private_get (&policy_private)))
+	if (!tdata->invoke_policies)
 		g_warning ("No policy queue to pop from");
 	else {
 		ORBitPolicy *p;
-
-		p = g_queue_pop_head (queue);
+		p = g_queue_pop_head (tdata->invoke_policies);
 		ORBit_policy_unref (p);
 	}
 }

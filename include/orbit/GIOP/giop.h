@@ -41,8 +41,10 @@ gboolean    giop_thread_same_key         (gpointer    key,
 void        giop_thread_key_add          (GIOPThread *tdata,
 					  gpointer    key);
 void        giop_thread_key_release      (gpointer    key);
-void        giop_thread_request_process  (GIOPThread *tdata);
 void        giop_thread_new_check        (GIOPThread *opt_self);
+void        giop_thread_queue_process    (GIOPThread *tdata);
+gboolean    giop_thread_queue_empty_T    (GIOPThread *tdata);
+void        giop_thread_queue_tail_wakeup(GIOPThread *tdata);
 
 #endif /* ORBIT2_INTERNAL_API */
 

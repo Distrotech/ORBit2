@@ -25,8 +25,11 @@ struct _GIOPThread {
 
 	GList        *keys;	/* ie. per POA, per Connection, per Object etc. */
 
-	GQueue       *async_ents;
-	GQueue       *request_queue;
+	GList        *async_ents;
+	GList        *request_queue;
+
+	GQueue       *invoke_policies;
+
 	void        (*request_handler) (gpointer poa_object,
 					gpointer recv_buffer,
 					gpointer dummy);

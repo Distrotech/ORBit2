@@ -42,6 +42,8 @@
 
 extern CORBA_ORB global_orb;
 gboolean         in_proc;
+gboolean         thread_safe = FALSE;
+gboolean         thread_tests = FALSE;
 
 /* Ugly- but hey */
 #define _IN_CLIENT_
@@ -1733,6 +1735,7 @@ testPingPong (test_TestFactory   factory,
 	
 	before_remote_hash = CORBA_Object_hash (l_objref, 0, ev);
 
+
 	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	
@@ -1834,6 +1837,42 @@ testPingPong (test_TestFactory   factory,
 
 	CORBA_Object_release (objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release (l_objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release (r_objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
+testPolicy (test_TestFactory   factory,
+	    gboolean           thread_tests,
+	    CORBA_Environment *ev)
+{
+	ORBitPolicy *policy;
+	test_PingPongServer r_objref, l_objref;
+
+	if (thread_tests || !thread_safe)
+		return;
+
+	d_print ("Testing policy code ...\n");
+	r_objref = test_TestFactory_createPingPongServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	l_objref = TestFactory_createPingPongServer (NULL, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (l_objref, ev); /* only want 1 ref */
+	g_assert (ORBit_small_get_servant (l_objref) != NULL);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+	policy = ORBit_policy_new (ORBIT_TYPE_POLICY_EX,
+				   "allow", global_poa, NULL);
+	ORBit_object_set_policy (r_objref, policy);
+	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	ORBit_object_set_policy (r_objref, NULL);
+	ORBit_policy_unref (policy);
 
 	CORBA_Object_release (l_objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
@@ -2094,8 +2133,10 @@ run_tests (test_TestFactory   factory,
 		if (!thread_tests)
 			testAsync (factory, ev);
 #endif
-		if (!in_proc)
+		if (!in_proc) {
 			testPingPong (factory, thread_tests, ev);
+			testPolicy (factory, thread_tests, ev);
+		}
 		testMisc (factory, ev);
 		testLifeCycle (factory, ev);
 	}
@@ -2183,8 +2224,6 @@ main (int argc, char *argv [])
 	test_TestFactory   factory;
 	ORBit_IInterfaces *interfaces = NULL;
 	gboolean           gen_imodule = FALSE;
-	gboolean           thread_safe = FALSE;
-	gboolean           thread_tests = FALSE;
 	const char        *orb_name;
 	int                i;
 
