@@ -1,5 +1,9 @@
 2003-06-09  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.7.2
+
+2003-06-09  Michael Meeks  <michael@ximian.com>
+
 	* include/orbit/orb-core/corba-object-type.h:
 	internalize the CORBA_Object layout.
 

@@ -1,3 +1,19 @@
+ORBit2-2.7.2
+
+	* bug fixes
+		+ fixed docs build (Gustavo Varneiro)
+		+ thread pool fix (Alex)
+		+ build fixes (Waschk, oGalaxy, Michael)
+	* features (Michael)
+		+ vastly improved thread safety (& Alex)
+		+ improved regression tests
+		+ much improved ABI
+		+ implemented POA thread policies
+		+ client side re-enterancy guard policies
+		+ internalized linc as 'linc2/link'
+		+ in-proc cross-thread invocation
+		+ poa copying API
+
 ORBit2-2.7.1
 
 	* bug fixes
