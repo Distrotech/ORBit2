@@ -143,7 +143,9 @@ ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
 			 ORBIT_MEMHOW_TYPECODE|num_elements, sizeof(*pre), (gpointer)&pre,
 			 /*align*/0);
   ORBIT_MEM_MAGICSET(pre->magic);
+
   pre->tc = ORBit_RootObject_duplicate(tc);
+
   return mem;
 }
 

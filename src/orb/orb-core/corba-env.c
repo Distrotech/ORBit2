@@ -215,7 +215,7 @@ ORBit_send_user_exception(GIOPSendBuffer *send_buffer,
 
   for(i = 0; user_exceptions[i].tc != CORBA_OBJECT_NIL; i++)
     {
-      if(!strcmp(user_exceptions[i].tc->repo_id, ev->_any._type->repo_id))
+      if(!strcmp(user_exceptions[i].tc->repo_id, ev->_id))
 	break;
     }
 
@@ -231,10 +231,10 @@ ORBit_send_user_exception(GIOPSendBuffer *send_buffer,
   else
     {
       CORBA_unsigned_long len;
-      len = strlen(ev->_any._type->repo_id) + 1;
+      len = strlen(ev->_id) + 1;
       giop_send_buffer_align(send_buffer, sizeof(len));
       giop_send_buffer_append_indirect(send_buffer, &len, sizeof(len));
-      giop_send_buffer_append(send_buffer, ev->_any._type->repo_id, len);
+      giop_send_buffer_append(send_buffer, ev->_id, len);
 
       if(user_exceptions[i].marshal && ev->_any._value)
 	user_exceptions[i].marshal(send_buffer, ev);

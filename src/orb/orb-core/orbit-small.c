@@ -24,10 +24,11 @@
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
 {
-	/* Wasted stack frame overhead, not to loose semantic
-	   value of an _alloc, and hence retaining maintainability
-	   NB. speed is not a concern whatsoever */
-	return ORBit_alloc_tcval (tc, 1);
+	gpointer mem;
+
+	mem = ORBit_alloc_tcval (tc, 1);
+
+	return mem;
 }
 
 gpointer
@@ -162,6 +163,8 @@ ORBit_handle_exception_array (GIOPRecvBuffer *rb, CORBA_Environment *ev,
   else
     my_repoid = NULL;
 
+  dprintf ("Received exception '%s'\n", my_repoid ? my_repoid : "<Null>");
+
   reply_status = giop_recv_buffer_reply_status(rb);
   if(reply_status == CORBA_SYSTEM_EXCEPTION)
     {
@@ -224,6 +227,44 @@ ORBit_handle_exception_array (GIOPRecvBuffer *rb, CORBA_Environment *ev,
  errout:
   CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
 			     CORBA_COMPLETED_MAYBE);
+}
+
+void
+ORBit_small_send_user_exception(GIOPSendBuffer *send_buffer,
+				CORBA_Environment *ev,
+				const ORBit_ITypes *types)
+{
+  int i;
+
+  for (i = 0; i < types->_length; i++)
+    {
+      if(!strcmp(types->_buffer[i]->repo_id, ev->_id))
+	break;
+    }
+
+  if (i >= types->_length)
+    {
+      CORBA_Environment fakeev;
+      CORBA_exception_init(&fakeev);
+      CORBA_exception_set_system(&fakeev, ex_CORBA_UNKNOWN,
+				 CORBA_COMPLETED_MAYBE);
+      ORBit_send_system_exception(send_buffer, &fakeev);
+      CORBA_exception_free(&fakeev);
+      g_warning ("Some clown returned undeclared exception '%s' ", ev->_id);
+    }
+  else
+    {
+      CORBA_unsigned_long len = strlen(ev->_id) + 1;
+
+      giop_send_buffer_align(send_buffer, sizeof(len));
+      giop_send_buffer_append_indirect(send_buffer, &len, sizeof(len));
+      giop_send_buffer_append(send_buffer, ev->_id, len);
+
+      dprintf ("Returning exception of type '%s'\n", ev->_id);
+
+      ORBit_marshal_arg (send_buffer, ev->_any._value,
+			 types->_buffer[i]);
+    }
 }
 
 static void
@@ -373,6 +414,7 @@ _ORBit_generic_marshal (CORBA_Object           obj,
 typedef enum {
 	_ORBIT_MARSHAL_SYS_EXCEPTION_INCOMPLETE,
 	_ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE,
+	_ORBIT_MARSHAL_EXCEPTION_COMPLETE,
 	_ORBIT_MARSHAL_RETRY,
 	_ORBIT_MARSHAL_CLEAN
 } DeMarshalRetType;
@@ -550,7 +592,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 			recv_buffer, ev, &m_data->exceptions, obj->orb);
 		giop_recv_buffer_unuse (recv_buffer);
 
-		return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
+		return _ORBIT_MARSHAL_EXCEPTION_COMPLETE;
 	}
 }
 
@@ -613,6 +655,10 @@ retry_request:
 	case _ORBIT_MARSHAL_SYS_EXCEPTION_INCOMPLETE:
 		dprintf ("Sys exception incomplete on id 0x%x\n\n", request_id);
 		goto system_exception;
+
+	case _ORBIT_MARSHAL_EXCEPTION_COMPLETE:
+		dprintf ("Clean demarshal of exception on id 0x%x\n\n", request_id);
+		break;
 
 	case _ORBIT_MARSHAL_RETRY:
 		dprintf ("Retry demarshal on id 0x%x\n\n", request_id);
@@ -730,6 +776,12 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	if (!send_buffer) {
 		dprintf ("Weird, no send_buffer");
 		return;
+
+	} else if (ev->_major == CORBA_USER_EXCEPTION) {
+		ORBit_small_send_user_exception (
+			send_buffer, ev, &m_data->exceptions);
+		CORBA_exception_free (ev);
+
 	} else if (ev->_major != CORBA_NO_EXCEPTION)
 		ORBit_send_system_exception (send_buffer, ev);
 	

@@ -772,8 +772,7 @@ run_tests (test_TestFactory   factory,
     testString(factory,ev);
     testLong(factory,ev);
     testEnum(factory,ev);
-    if (in_proc)
-      testException(factory,ev); // Fails.
+    testException(factory,ev);
     testFixedLengthStruct(factory,ev);
     testVariableLengthStruct(factory,ev);
     testCompoundStruct(factory,ev);
@@ -791,7 +790,8 @@ run_tests (test_TestFactory   factory,
     testSequenceOfAny(factory,ev);
     if (in_proc)
       testTypeCode(factory,ev); // Fails.
-    testContext(factory,ev);
+    if (in_proc)
+      testContext(factory,ev);
   }
 }
 
