@@ -1,3 +1,7 @@
+2003-03-25  Richard Kinder <r_kinder@yahoo.com>
+        * src/services/name/orbit-name-server.c: return CORBA_OBJECT_NIL rather
+        than NULL, clean up rn_unref functions. Fixes #109125.
+
 2003-03-24  Richard Kinder <r_kinder@yahoo.com>
         * src/orb/poa/poa.c: Change return values for ORBit_POA_is_inuse and
         ORBit_POA_destroy to gboolean's, not CORBA_boolean's. Fixes #109066
