@@ -59,7 +59,8 @@ linc_connection_dispose (GObject *obj)
 		parent_class->dispose (obj);
 }
 
-#define ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI)
+#define ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
+#define IN_CONDS  (G_IO_PRI|G_IO_IN)
 
 static gboolean
 linc_connection_connected (GIOChannel  *gioc,
@@ -78,7 +79,7 @@ linc_connection_connected (GIOChannel  *gioc,
 	klass = LINC_CONNECTION_CLASS (G_OBJECT_GET_CLASS (data));
 
 	if (cnx->status == LINC_CONNECTED &&
-	    condition & G_IO_IN &&
+	    condition & IN_CONDS &&
 	    klass->handle_input)
 		retval = klass->handle_input (cnx);
 
@@ -132,7 +133,7 @@ linc_connection_real_state_changed (LINCConnection      *cnx,
 #endif
 		if (!cnx->tag)
 			cnx->tag = linc_io_add_watch (
-				cnx->gioc, ERR_CONDS | G_IO_IN,
+				cnx->gioc, ERR_CONDS | IN_CONDS,
 				linc_connection_connected, cnx);
 		break;
 
