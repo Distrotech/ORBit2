@@ -1,5 +1,17 @@
 2001-05-18  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c (PortableServer_POA_find_POA): bugfix.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): duplicate
+	the ORB before returning it.
+
+	* src/orb/orb-core/corba-object.c (ORBit_delete_profiles): upd.
+	(ORBit_handle_location_forward, ORBit_demarshal_IOR): upd.
+	(CORBA_Object_release_cb): finish.
+	(ORBit_objref_find): fix leak.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-typecode.c (tc_dec): remove broken
 	ref set to 1.
 

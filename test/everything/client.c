@@ -20,6 +20,7 @@
 
 #include <glib.h>
 #include <stdio.h>
+#include <string.h>
 #include "everything.h"
 #include "constants.h"
 
@@ -759,6 +760,9 @@ void testContext(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
   CORBA_Object_release (outArg, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  CORBA_Object_release (objref, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
 static void
@@ -806,7 +810,9 @@ int main(int argc, char *argv[])
   CORBA_Environment ev;
   CORBA_ORB orb;
   test_TestFactory factory;
-  int i;
+
+/*  g_mem_set_vtable (glib_mem_profiler_table);*/
+
   CORBA_exception_init(&ev);
   orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
   g_assert(ev._major == CORBA_NO_EXCEPTION);
@@ -844,8 +850,12 @@ int main(int argc, char *argv[])
   run_tests (factory, &ev, FALSE);
   
   CORBA_Object_release(factory, &ev);
-  CORBA_Object_release((CORBA_Object)orb, &ev);
   g_assert(ev._major == CORBA_NO_EXCEPTION);
+
+  CORBA_ORB_destroy (orb, &ev);
+  g_assert(ev._major == CORBA_NO_EXCEPTION);
+
+  CORBA_exception_free (&ev);
 
   return 0;
 }

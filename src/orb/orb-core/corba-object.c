@@ -43,17 +43,33 @@ static void IOP_components_free(GSList *components)
 }
 
 static void
+ORBit_delete_profiles (GSList **profiles)
+{
+  if (profiles && *profiles) {
+    g_slist_foreach (*profiles, (GFunc) ORBit_profile_free, NULL);
+    g_slist_free (*profiles);
+    *profiles = NULL;
+  }
+}
+
+static void
 CORBA_Object_release_cb(ORBit_RootObject robj)
 {
-  CORBA_Object obj = (CORBA_Object)robj;
+  CORBA_Object obj = (CORBA_Object) robj;
 
-  g_hash_table_remove(objrefs, obj);
-  giop_connection_unref(obj->connection);
-  g_slist_foreach(obj->profile_list, (GFunc)ORBit_profile_free, NULL);
-  g_slist_free(obj->profile_list);
-  g_free(obj->type_id);
-  /* XXX finish me */
-  g_free(obj);
+  g_hash_table_remove (objrefs, obj);
+
+  giop_connection_unref (obj->connection);
+
+  g_free (obj->type_id);
+
+  ORBit_delete_profiles (&obj->profile_list);
+  ORBit_delete_profiles (&obj->forward_locations);
+
+  if (obj->bypass_obj)
+	  ORBit_RootObject_release (obj->bypass_obj);
+
+  g_free (obj);
 }
 
 static ORBit_RootObject_Interface objref_if = {
@@ -91,7 +107,7 @@ ORBit_objref_find(CORBA_ORB orb, const char *type_id, GSList *profiles)
   if(!retval)
     retval = ORBit_objref_new(orb, type_id, profiles);
   else
-    g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
+    ORBit_delete_profiles (&profiles);
 
   retval = CORBA_Object_duplicate(retval, NULL);
 
@@ -267,6 +283,8 @@ _ORBit_object_get_connection(CORBA_Object obj)
   if(ORBit_try_connection(obj))
     return obj->connection;
   
+  g_assert (obj->connection == NULL);
+
   for(cur = plist; cur; cur = cur->next)
     {
       IOP_Profile_info *pi = cur->data;
@@ -289,12 +307,6 @@ _ORBit_object_get_connection(CORBA_Object obj)
   return NULL;
 }
 
-static void
-ORBit_delete_profiles(GSList *profiles)
-{
-  g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
-}
-
 GIOPConnection *
 ORBit_handle_location_forward(GIOPRecvBuffer *buf,
 			      CORBA_Object obj)
@@ -305,8 +317,7 @@ ORBit_handle_location_forward(GIOPRecvBuffer *buf,
   if(ORBit_demarshal_IOR(obj->orb, buf, NULL, &profiles))
     goto out;
 
-  if(obj->forward_locations)
-    ORBit_delete_profiles(obj->forward_locations);
+  ORBit_delete_profiles(&obj->forward_locations);
 
   obj->forward_locations = profiles;
 
@@ -792,7 +803,9 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
       }
 }
 
+/* FIXME: WTF ! */
 static GIOPRecvBuffer *gbuf = NULL;
+
 static IOP_ObjectKey_info *
 IOP_ObjectKey_demarshal(GIOPRecvBuffer *buf)
 {
@@ -1452,7 +1465,7 @@ ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
   return FALSE;
 
  errout:
-  ORBit_delete_profiles(profiles);
+  ORBit_delete_profiles(&profiles);
   return TRUE;
 }
 

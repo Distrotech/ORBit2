@@ -64,8 +64,7 @@ PortableServer_POA_find_POA(PortableServer_POA _obj,
 			    const CORBA_boolean activate_it,
 			    CORBA_Environment * ev)
 {
-  PortableServer_POA child_poa;
-
+  PortableServer_POA child_poa = NULL;
 
   if(_obj->child_poas)
     child_poa = g_hash_table_lookup(_obj->child_poas, adapter_name);
@@ -580,6 +579,7 @@ ORBit_POACurrent_free_fn(ORBit_RootObject obj_in)
 {
   PortableServer_Current poacur = (PortableServer_Current)obj_in;
   ORBit_RootObject_release(poacur->orb);
+  poacur->orb = NULL;
   g_free(poacur);
 }
 
@@ -869,7 +869,8 @@ ORBit_POA_is_inuse(PortableServer_POA poa,
   if ( consider_children )
     {
       gboolean is_inuse = FALSE;
-      g_hash_table_foreach(poa->child_poas, check_child_poa_inuse, &is_inuse);
+      if (poa->child_poas)
+        g_hash_table_foreach(poa->child_poas, check_child_poa_inuse, &is_inuse);
       if(is_inuse)
 	return TRUE;
     }
@@ -1315,6 +1316,7 @@ ORBit_POA_free_fn(ORBit_RootObject obj_in)
 {
     PortableServer_POA poa = (PortableServer_POA)obj_in;
     ORBit_RootObject_release(poa->orb);
+    poa->orb = NULL;
     g_free(poa);
 }
 

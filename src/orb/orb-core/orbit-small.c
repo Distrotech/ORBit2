@@ -1,16 +1,7 @@
 /*
- * An attempt to shrink the beast to a managable size.
- */
-
-/*
- * FIXME: would a function table be a good solution -
- * and also manage the complexity - and also allow us
- * to marshal direct to the wire ?
- * Could we manage offsets and deal with the wierd
- * indirection ?
- *
  * FIXME: We need some global I/F -> m_data lookup action
- * FIXME: We need to deal with CORBA_Contexts
+ * FIXME: We need to map interface inheritance.
+ * FIXME: Add #ifdef ORBIT_PURIFY support.
  */
 
 #include "config.h"

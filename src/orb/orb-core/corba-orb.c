@@ -76,7 +76,7 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
   retval->poas = g_ptr_array_new();
   ORBit_init_internals(retval, ev);
 
-  return retval;
+  return CORBA_Object_duplicate ((CORBA_Object) retval, ev);
 }
 
 CORBA_char *

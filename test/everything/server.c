@@ -20,7 +20,7 @@
 
 #include "everything.h"
 #include <stdio.h>
-
+#include <string.h>
 
 // Singleton accessor for the test factory
 test_TestFactory getFactoryInstance(CORBA_Environment *ev);
@@ -222,6 +222,7 @@ getFactoryInstance (CORBA_Environment *ev)
 	return CORBA_Object_duplicate (factory, ev);
 }
 
+#ifndef _IN_CLIENT_
 static int
 dump_ior (CORBA_ORB orb, const char *fname, CORBA_Environment *ev)
 {
@@ -244,6 +245,7 @@ dump_ior (CORBA_ORB orb, const char *fname, CORBA_Environment *ev)
 
 	return 0;
 }
+#endif
 
 PortableServer_POA
 start_poa (CORBA_ORB orb, CORBA_Environment *ev)
@@ -308,6 +310,8 @@ test_TestFactory_Servant servant;
 	CORBA_Environment *ev = &real_ev;
 	CORBA_ORB orb;
 
+/*	g_mem_set_vtable (glib_mem_profiler_table); */
+
 	free (malloc (8)); /* -lefence */
 
 	CORBA_exception_init(&real_ev);
@@ -335,8 +339,13 @@ test_TestFactory_Servant servant;
 	if (!dump_ior (orb, "iorfile", ev)) {
 		CORBA_ORB_run (orb, ev);
 		return 0;
-	} else
-		return 1;
+	}
+
+	CORBA_ORB_destroy (orb, ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	
+	CORBA_exception_free (ev);
+	return 1;
 #else
 	return factory;
 #endif
