@@ -1,5 +1,11 @@
 2002-03-05  Murray Cumming  <murrayc@usa.net>
 
+	* Commented-out all use of the _orbitcpp::c namespace. The 
+	IDL_IMPL_C_NS_NOTUSED macros are still in place so someone can restore 
+	this if they figure out why it didn't work.
+
+2002-03-05  Murray Cumming  <murrayc@usa.net>
+
 	* Uses of reinterpret_cast<> to get C++ instances from C instances 
 	need to be changed to create new C++ instances instead. This changes
 	some of them, but to test whether it works, it seems that I first need
