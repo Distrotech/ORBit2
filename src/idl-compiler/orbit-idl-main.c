@@ -209,8 +209,8 @@ int main(int argc, const char *argv[])
 	  cl_disable_skels ? "" : "skels ",
 	  cl_disable_common ? "" : "common ",
 	  cl_disable_headers ? "" : "headers ",
-	  cl_enable_skeleton_impl ? "" : "skel_impl ",
-	  cl_enable_imodule ? "" : "imodule");
+	  cl_enable_skeleton_impl ? "skel_impl " : "",
+	  cl_enable_imodule ? "imodule" : "");
 	   
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {
