@@ -1309,7 +1309,7 @@ link_connection_remove_broken_cb (LinkConnection    *cnx,
 		if (broken_callback_match (l->data, opt_fn, opt_user_data))
 			cnx->idle_broken_callbacks =
 				g_slist_delete_link (cnx->idle_broken_callbacks,
-						     l->data);
+						     l);
 	}	
 
 	CNX_UNLOCK (cnx);
