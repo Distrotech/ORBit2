@@ -25,22 +25,6 @@
 #include <linc/linc-config.h>
 #include <linc/linc-connection.h>
 
-struct _LINCWriteOpts {
-	gboolean block_on_write;
-};
-
-struct _LINCConnectionPrivate {
-#ifdef LINC_SSL_SUPPORT
-	SSL         *ssl;
-#endif
-	LincWatch   *tag;
-	int          fd;
-
-	gulong       max_buffer_bytes;
-	gulong       write_queue_bytes;
-	GList       *write_queue;
-};
-
 static GObjectClass *parent_class = NULL;
 
 enum {
@@ -87,10 +71,12 @@ queue_signal (LINCConnection *cnx,
 	cnx->priv->write_queue_bytes += delta;
 	new_size = cnx->priv->write_queue_bytes;
 
+	g_object_ref (G_OBJECT (cnx));
+
 	if (cnx->options & LINC_CONNECTION_BLOCK_SIGNAL) {
 		if (new_size == 0 ||
-		    (old_size < cnx->priv->max_buffer_bytes &&
-		     new_size > cnx->priv->max_buffer_bytes) ||
+		    (old_size < (cnx->priv->max_buffer_bytes >> 1) &&
+		     new_size >= (cnx->priv->max_buffer_bytes >> 1)) ||
 		    new_size >= cnx->priv->max_buffer_bytes)
 			g_signal_emit (G_OBJECT (cnx),
 				       linc_connection_signals [BLOCKING],
@@ -99,6 +85,8 @@ queue_signal (LINCConnection *cnx,
 
 	if (cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
 		linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+
+	g_object_unref (G_OBJECT (cnx));
 }
 
 static gulong

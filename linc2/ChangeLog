@@ -1,5 +1,23 @@
 2001-12-31  Michael Meeks  <michael@ximian.com>
 
+	* test/test-linc.c (test_blocking),
+	(blocking_cb, knobble_watch): impl.
+
+	* src/linc-connection.c: (queue_signal): add ref. guards.
+	& signal half full buffer as specified.
+
+	* src/linc-server.c, src/linc-source.c,
+	* src/linc-connection.c: move private struct defs into
+
+	* src/linc-private.h: here.
+
+	* test/Makefile.am: upd. include path.
+
+	* test/test-linc.c (create_server),
+	(create_client, test_broken): split out of (main).
+
+2001-12-31  Michael Meeks  <michael@ximian.com>
+
 	* configure.in: bump version to 0.1.12
 
 2001-12-28  Michael Meeks  <michael@ximian.com>

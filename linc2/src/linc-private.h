@@ -15,6 +15,46 @@
 #include "config.h"
 #include <linc/linc.h>
 
+/*
+ * Really raw internals, exported for the tests
+ */
+
+struct _LINCServerPrivate {
+	int        fd;
+	GMutex    *mutex;
+	LincWatch *tag;
+	GSList    *connections;
+};
+
+struct _LINCWriteOpts {
+	gboolean block_on_write;
+};
+
+struct _LINCConnectionPrivate {
+#ifdef LINC_SSL_SUPPORT
+	SSL         *ssl;
+#endif
+	LincWatch   *tag;
+	int          fd;
+
+	gulong       max_buffer_bytes;
+	gulong       write_queue_bytes;
+	GList       *write_queue;
+};
+
+typedef struct {
+	GSource       source;
+
+	GPollFD       pollfd;
+	GIOCondition  condition;
+	GIOFunc       callback;
+} LincUnixWatch;
+
+struct _LincWatch {
+	GSource *main_source;
+	GSource *linc_source;
+};
+
 #ifdef LINC_SSL_SUPPORT
 
 #include <openssl/ssl.h>
