@@ -51,7 +51,7 @@ linc_source_dispatch (GSource    *source,
   
 	func = (GIOFunc) callback;
 
-	return (*func) (NULL,
+	return (*func) (watch->channel,
 			watch->pollfd.revents & watch->condition,
 			user_data);
 }
@@ -82,6 +82,7 @@ linc_source_set_condition (LincUnixWatch *watch,
 static GSource *
 linc_source_create_watch (GMainContext *context,
 			  int           fd,
+			  GIOChannel   *channel,
 			  GIOCondition  condition,
 			  GIOFunc       func,
 			  gpointer      user_data)
@@ -94,6 +95,7 @@ linc_source_create_watch (GMainContext *context,
 	watch = (LincUnixWatch *) source;
 
 	watch->pollfd.fd = fd;
+	watch->channel   = channel;
 
 	linc_source_set_condition (watch, condition);
 
@@ -123,12 +125,12 @@ linc_io_add_watch_fd (int          fd,
 
 	/* Linc loop */
 	w->linc_source = linc_source_create_watch (
-		linc_main_get_context (), fd, condition,
-		func, user_data);
+		linc_main_get_context (), fd, NULL,
+		condition, func, user_data);
 
 	/* Main loop */
 	w->main_source = linc_source_create_watch (
-		NULL, fd, condition, func, user_data);
+		NULL, fd, NULL, condition, func, user_data);
 
 	return w;
 }
@@ -154,9 +156,21 @@ linc_io_add_watch (GIOChannel    *channel,
 		   GIOFunc        func,
 		   gpointer       user_data)
 {
-	return linc_io_add_watch_fd (
-		g_io_channel_unix_get_fd (channel),
+	LincWatch *w;
+	int       fd = g_io_channel_unix_get_fd(channel);
+
+	w = g_new (LincWatch, 1);
+
+	/* Linc loop */
+	w->linc_source = linc_source_create_watch (
+		linc_main_get_context (), fd, channel,
 		condition, func, user_data);
+
+	/* Main loop */
+	w->main_source = linc_source_create_watch (
+		NULL, fd, channel, condition, func, user_data);
+
+	return w;
 }
 
 /**
