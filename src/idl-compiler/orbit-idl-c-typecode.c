@@ -737,64 +737,73 @@ orbit_output_tcstruct_digits_scale (FILE *fh, IDL_tree node)
 		fprintf (fh, "0, 0");
 }
 
-static gint
-orbit_find_c_align (IDL_tree node)
+static void
+orbit_add_align (GSList **max, const char *str)
 {
-	gint c_align = 1;
+	GSList *l;
 
+	for (l = *max; l; l = l->next) {
+		if (!strcmp (l->data, str))
+			return;
+	}
+	*max = g_slist_prepend (*max, (gpointer) str);
+}
+
+static GSList *
+orbit_find_c_align (GSList *max, IDL_tree node)
+{
 	node = orbit_cbe_get_typespec (node);	
 
 	switch (IDL_NODE_TYPE (node)) {
 	case IDLN_TYPE_INTEGER:
 		switch (IDL_TYPE_INTEGER (node).f_type) {
 		case IDL_INTEGER_TYPE_SHORT:
-			c_align = ORBIT_ALIGNOF_CORBA_SHORT;
+			orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_SHORT");
 			break;
 		case IDL_INTEGER_TYPE_LONG:
-			c_align = ORBIT_ALIGNOF_CORBA_LONG;
+			orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_LONG");
 			break;
 		case IDL_INTEGER_TYPE_LONGLONG:
-			c_align = ORBIT_ALIGNOF_CORBA_LONG_LONG;
+			orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_LONG_LONG");
 			break;
 		}
 		break;
 	case IDLN_TYPE_FLOAT:
 		switch (IDL_TYPE_FLOAT (node).f_type) {
 		case IDL_FLOAT_TYPE_FLOAT:
-			c_align = ORBIT_ALIGNOF_CORBA_FLOAT;
+			orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_FLOAT");
 			break;
 		case IDL_FLOAT_TYPE_DOUBLE:
-			c_align = ORBIT_ALIGNOF_CORBA_DOUBLE;
+			orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_DOUBLE");
 			break;
 		case IDL_FLOAT_TYPE_LONGDOUBLE:
-			c_align = ORBIT_ALIGNOF_CORBA_LONG_DOUBLE;
+			orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_LONG_DOUBLE");
 			break;
 		}
 		break;
 	case IDLN_TYPE_ENUM:
-		c_align = ORBIT_ALIGNOF_CORBA_LONG;
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_LONG");
 		break;
 	case IDLN_TYPE_CHAR: /* drop through */
 	case IDLN_TYPE_BOOLEAN:
 	case IDLN_TYPE_OCTET:
-		c_align = ORBIT_ALIGNOF_CORBA_CHAR;
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_CHAR");
 		break;
 	case IDLN_TYPE_WIDE_CHAR:
-		c_align = ORBIT_ALIGNOF_CORBA_SHORT;
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_SHORT");
 		break;
 	case IDLN_TYPE_UNION: {
 		IDL_tree l = IDL_TYPE_UNION (node).switch_body;
 
-		c_align = ORBIT_ALIGNOF_CORBA_STRUCT;
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_STRUCT");
 
 		for (; l; l = IDL_LIST (l).next) {
 			IDL_tree subtype = IDL_MEMBER (IDL_CASE_STMT (
-					IDL_LIST (l).data).element_spec).type_spec;
-
-			c_align = MAX (c_align, orbit_find_c_align (subtype));
-		}
+				IDL_LIST (l).data).element_spec).type_spec;
+			max = orbit_find_c_align (max, subtype);
 		}
 		break;
+	}
 	case IDLN_EXCEPT_DCL: /* drop through */
 	case IDLN_TYPE_STRUCT: {
 		IDL_tree l = IDL_TYPE_STRUCT (node).member_list;
@@ -802,33 +811,32 @@ orbit_find_c_align (IDL_tree node)
 		for (; l; l = IDL_LIST (l).next) {
 			IDL_tree member = IDL_MEMBER (IDL_LIST (l).data).type_spec;
 
-			c_align = MAX (c_align, orbit_find_c_align (member));
-		}
+			max = orbit_find_c_align (max, member);
 		}
 		break;
+	}
 	case IDLN_TYPE_STRING: /* drop through */
 	case IDLN_TYPE_WIDE_STRING:
 	case IDLN_TYPE_OBJECT:
 	case IDLN_TYPE_TYPECODE:
 	case IDLN_FORWARD_DCL:
 	case IDLN_INTERFACE:
-		c_align = ORBIT_ALIGNOF_CORBA_POINTER;
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_POINTER");
 		break;
 	case IDLN_TYPE_ARRAY: {
-		IDL_tree subtype = IDL_TYPE_DCL ( IDL_get_parent_node (node, IDLN_TYPE_DCL, NULL)
-							).type_spec;
-
-		c_align = orbit_find_c_align (subtype);
-		}
+		IDL_tree subtype = IDL_TYPE_DCL (
+			IDL_get_parent_node (node, IDLN_TYPE_DCL, NULL)).type_spec;
+		max = orbit_find_c_align (max, subtype);
 		break;
+	}
 	case IDLN_TYPE_SEQUENCE:
-		c_align = MAX (MAX (ORBIT_ALIGNOF_CORBA_STRUCT,
-				    ORBIT_ALIGNOF_CORBA_LONG),
-				    ORBIT_ALIGNOF_CORBA_POINTER);
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_STRUCT");
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_LONG");
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_POINTER");
 		break;
 	case IDLN_TYPE_ANY:
-		c_align =  MAX (ORBIT_ALIGNOF_CORBA_STRUCT,
-			        ORBIT_ALIGNOF_CORBA_POINTER);
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_STRUCT");
+		orbit_add_align (&max, "ORBIT_ALIGNOF_CORBA_POINTER");
 		break;
 	default:
 		g_error ("Can't find alignment %s\n", 
@@ -836,13 +844,42 @@ orbit_find_c_align (IDL_tree node)
 		break;
 	}
 
-	return c_align;
+	return max;
 }
 
 static void
 orbit_output_tcstruct_c_align (FILE *fh, IDL_tree node)
 {
-	fprintf (fh, "%d", orbit_find_c_align (node));
+	GSList *max;
+	GString *str = g_string_sized_new (120);
+
+	max = orbit_find_c_align (NULL, node);
+
+	if (!max)
+		g_string_append (str, "1");
+
+	else if (!max->next)
+		g_string_append (str, max->data);
+
+	else {
+		int i = 0;
+		GSList *l;
+
+		for (l = max; l; l = l->next) {
+			g_string_append (str, "MAX (");
+			g_string_append (str, l->data);
+			g_string_append (str, ", ");
+			i++;
+		}
+		
+		g_string_append (str, "1");
+		for (; i > 0; i--)
+			g_string_append_c (str, ')');
+	}
+
+	fprintf (fh, "%s", str->str);
+
+	g_string_free (str, TRUE);
 }
 
 static void
