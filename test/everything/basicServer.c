@@ -25,7 +25,8 @@
 static
 CORBA_char *
 BasicServer__get_foo(PortableServer_Servant servant,
-					 CORBA_Environment *ev) {
+		     CORBA_Environment *ev)
+{
   return CORBA_string_dup(constants_STRING_RETN);  
 }
 
@@ -33,15 +34,17 @@ BasicServer__get_foo(PortableServer_Servant servant,
 static
 void
 BasicServer__set_foo(PortableServer_Servant servant,
-					 const CORBA_char *val,
-					 CORBA_Environment *ev) {
+		     const CORBA_char *val,
+		     CORBA_Environment *ev)
+{
   g_assert(strcmp(val,constants_STRING_IN)==0);
 }
 
 static
 CORBA_long
 BasicServer__get_bah(PortableServer_Servant servant,
-					 CORBA_Environment *ev) {
+		     CORBA_Environment *ev)
+{
   return constants_LONG_RETN;
 }
 
@@ -49,10 +52,11 @@ BasicServer__get_bah(PortableServer_Servant servant,
 static  
 CORBA_char *
 BasicServer_opString(PortableServer_Servant servant,
-					 const CORBA_char* inArg, 
-					 CORBA_char **inoutArg,
-					 CORBA_char **outArg,
-					 CORBA_Environment *ev) {
+		     const CORBA_char* inArg, 
+		     CORBA_char **inoutArg,
+		     CORBA_char **outArg,
+		     CORBA_Environment *ev)
+{
   g_assert(strcmp(inArg,constants_STRING_IN)==0);
   g_assert(strcmp(*inoutArg,constants_STRING_INOUT_IN)==0);
   
@@ -65,10 +69,11 @@ BasicServer_opString(PortableServer_Servant servant,
 static  
 CORBA_long
 BasicServer_opLong(PortableServer_Servant servant,
-					 const CORBA_long inArg, 
-					 CORBA_long *inoutArg,
-					 CORBA_long *outArg,
-					 CORBA_Environment *ev) {
+		   const CORBA_long inArg, 
+		   CORBA_long *inoutArg,
+		   CORBA_long *outArg,
+		   CORBA_Environment *ev)
+{
   g_assert(inArg == constants_LONG_IN);
   g_assert(*inoutArg == constants_LONG_INOUT_IN);
   
@@ -80,10 +85,11 @@ BasicServer_opLong(PortableServer_Servant servant,
 static  
 test_AnEnum
 BasicServer_opEnum(PortableServer_Servant servant,
-					 const test_AnEnum inArg, 
-					 test_AnEnum *inoutArg,
-					 test_AnEnum *outArg,
-					 CORBA_Environment *ev) {
+		   const test_AnEnum inArg, 
+		   test_AnEnum *inoutArg,
+		   test_AnEnum *outArg,
+		   CORBA_Environment *ev)
+{
   g_assert(inArg == test_ENUM_IN);
   g_assert(*inoutArg == test_ENUM_INOUT_IN);
   
@@ -96,7 +102,8 @@ BasicServer_opEnum(PortableServer_Servant servant,
 static  
 void
 BasicServer_opException(PortableServer_Servant servant,
-				   CORBA_Environment *ev) {
+			CORBA_Environment *ev)
+{
   test_TestException *ex = test_TestException__alloc();
   ex->reason=CORBA_string_dup(constants_STRING_IN);
   ex->number = constants_LONG_IN;
@@ -109,6 +116,13 @@ BasicServer_opException(PortableServer_Servant servant,
   CORBA_exception_set(ev,CORBA_USER_EXCEPTION,ex_test_TestException,ex);
 }
 
+static void
+BasicServer_opOneWay (PortableServer_Servant servant,
+		      const CORBA_char      *str,
+		      CORBA_Environment     *ev)
+{
+	g_assert (!strcmp (str, constants_STRING_IN));
+}
 
 
 PortableServer_ServantBase__epv BasicServer_base_epv = {NULL,NULL,NULL};
@@ -122,6 +136,7 @@ POA_test_BasicServer__epv BasicServer_epv = {
   BasicServer_opLong,
   BasicServer_opEnum,
   BasicServer_opException,
+  BasicServer_opOneWay
 };
 
 POA_test_BasicServer__vepv BasicServer_vepv = {&BasicServer_base_epv,&BasicServer_epv};

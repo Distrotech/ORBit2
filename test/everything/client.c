@@ -26,8 +26,14 @@
 #include "everything.h"
 #include "constants.h"
 
-#define TIMING_RUN
+#undef PROFILING
+#undef TIMING_RUN
 #undef BIG_STUBS
+
+
+#ifdef PROFILING
+#  define TIMING_RUN
+#endif
 
 #ifdef TIMING_RUN
 #  define d_print(a)
@@ -105,6 +111,9 @@ void testString(test_TestFactory factory,
   g_assert(strcmp(inout,constants_STRING_INOUT_OUT)==0);
   g_assert(strcmp(out,constants_STRING_OUT)==0);
   g_assert(strcmp(retn,constants_STRING_RETN)==0);	
+
+  test_BasicServer_opOneWay (objref, constants_STRING_IN, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
   
   CORBA_free(inout);
   CORBA_free(out);
@@ -939,7 +948,9 @@ int main(int argc, char *argv[])
 
   run_tests (factory, &ev, FALSE);
 
+#ifdef PROFILING
   sleep (1000);
+#endif
   
   CORBA_Object_release(factory, &ev);
   g_assert(ev._major == CORBA_NO_EXCEPTION);

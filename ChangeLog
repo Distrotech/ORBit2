@@ -1,3 +1,14 @@
+2001-07-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_dump_send, giop_dump_recv),
+	(dump): move here.
+
+	* test/everything/basicServer.c (BasicServer_opOneWay): impl.
+
+	* test/everything/client.c (testString): call it.
+
+	* test/everything/everything.idl: add opOneWay to BasicServer.
+
 2001-07-24  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_poa): don't send
