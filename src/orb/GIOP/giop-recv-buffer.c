@@ -286,7 +286,11 @@ giop_recv_buffer_demarshal_reply_1_2(GIOPRecvBuffer *buf)
   buf->cur += 4;
 
   buf->msg.u.reply_1_2.service_context._buffer = NULL;
-  return giop_IOP_ServiceContextList_demarshal(buf, &buf->msg.u.reply_1_2.service_context);
+  if(giop_IOP_ServiceContextList_demarshal(buf, &buf->msg.u.reply_1_2.service_context))
+    return TRUE;
+
+  buf->cur = ALIGN_ADDRESS(buf->cur, 8);
+  return FALSE;
 }
 
 gboolean

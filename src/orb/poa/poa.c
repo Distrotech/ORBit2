@@ -552,7 +552,38 @@ PortableServer_POA_activate_object_with_id(PortableServer_POA _obj,
 					   const PortableServer_Servant p_servant,
 					   CORBA_Environment * ev)
 {
-  g_error("NYI");
+  PortableServer_ServantBase *servant = p_servant;
+  ORBit_POAObject *newobj;
+
+  ev->_major = CORBA_NO_EXCEPTION;
+  if(!_obj || !id || !p_servant)
+    {
+      CORBA_exception_set_system(ev, ex_CORBA_BAD_PARAM,
+				 CORBA_COMPLETED_NO);
+      return;
+    }
+
+  newobj = ORBit_POA_oid_to_obj(_obj, id, /*active*/0, ev);
+  if ( ev->_major )
+    return;
+  if ( newobj && newobj->servant!=0 )
+    {
+      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
+			  ex_PortableServer_POA_ObjectAlreadyActive, 
+			  NULL);
+      return;
+    }
+  if((_obj->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
+     (ORBIT_SERVANT_TO_POAOBJECT(servant) != 0))
+    {
+      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
+			  ex_PortableServer_POA_ServantAlreadyActive,
+			  NULL);
+      return;
+    }
+  if ( newobj==0 )
+    newobj = ORBit_POA_create_object(_obj, id, /*isDef*/FALSE, ev);
+  ORBit_POA_activate_object(_obj, newobj, servant, ev);
 }
 
 void
