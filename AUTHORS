@@ -1,5 +1,11 @@
-This whole saga started by Dick Porter <dick@acm.org> and Elliot Lee
-<sopwith@redhat.com>
+This whole saga started by Dick Porter <dick@acm.org> and
+Elliot Lee <sopwith@redhat.com>
+
+For version 2 ORBit was substantialy re-written by:
+
+Elliot Lee <sopwith@redhat.com>
+Michael Meeks <michael@ximian.com>
+Mark McLouglin <mark@skynet.ie>
 
 Other people who have contributed code include:
 Philip Dawes <philipd@parallax.co.uk>
