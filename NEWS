@@ -1,3 +1,8 @@
+ORBit2-2.9.6
+
+	* bug fixes
+		+ PPC union walking bug (Michael, Jeroen Z)
+
 ORBit2-2.9.5
 
 	* bug fixes
