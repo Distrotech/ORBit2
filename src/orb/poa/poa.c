@@ -487,16 +487,19 @@ ORBit_POA_handle_held_requests(PortableServer_POA poa)
 }
 
 static void
-ORBit_POA_free_fn(ORBit_RootObject obj_in)
+ORBit_POA_free_fn (ORBit_RootObject obj)
 {
-    PortableServer_POA poa = (PortableServer_POA) obj_in;
-    ORBit_RootObject_release_T (poa->orb);
-    g_hash_table_destroy (poa->oid_to_obj_map);
-    g_hash_table_destroy (poa->child_poas);
-    ORBit_free_T (poa->name);
-    ORBit_free_T (((ORBit_ObjectAdaptor)poa)->adaptor_key._buffer);
-    poa->orb = NULL;
-    g_free (poa);
+	PortableServer_POA poa = (PortableServer_POA)obj;
+
+	g_hash_table_destroy (poa->oid_to_obj_map);
+	g_hash_table_destroy (poa->child_poas);
+
+	ORBit_RootObject_release_T (poa->orb);
+	ORBit_free_T (poa->name);
+	ORBit_free_T (((ORBit_ObjectAdaptor)poa)->adaptor_key._buffer);
+
+	poa->orb = NULL;
+	g_free (poa);
 }
 
 static const ORBit_RootObject_Interface ORBit_POA_epv = {
