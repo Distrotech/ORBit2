@@ -1,5 +1,9 @@
 2002-02-04  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-context.c
+	(ORBit_Context_free_fn): remove ourselves correctly
+	from the parent.
+
 	* test/everything/client.c (testAnyEquivalence):
 	knobble for now so we pass the tests.
 
