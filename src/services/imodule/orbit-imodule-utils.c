@@ -32,7 +32,8 @@
 #include "orbit-imodule-libidl-utils.h"
 
 static CORBA_StructMemberSeq *
-ORBit_imodule_get_struct_members (IDL_tree           tree,
+ORBit_imodule_get_struct_members (GHashTable        *typecodes,
+				  IDL_tree           tree,
 				  CORBA_Environment *ev)
 {
 	CORBA_StructMemberSeq *members;
@@ -57,7 +58,7 @@ ORBit_imodule_get_struct_members (IDL_tree           tree,
 		IDL_tree       dcl;
 
 		subtc = ORBit_imodule_get_typecode (
-				IDL_MEMBER (IDL_LIST (l).data).type_spec);
+				typecodes, IDL_MEMBER (IDL_LIST (l).data).type_spec);
 
 		for (dcl = IDL_MEMBER (IDL_LIST (l).data).dcls; dcl;
 		     dcl = IDL_LIST (dcl).next, i++) {
@@ -158,7 +159,8 @@ ORBit_imodule_setup_label_any (CORBA_TypeCode  tc,
 }
 
 static CORBA_UnionMemberSeq *
-ORBit_imodule_get_union_members (IDL_tree           tree,
+ORBit_imodule_get_union_members (GHashTable        *typecodes,
+				 IDL_tree           tree,
 				 CORBA_TypeCode     switchtc,
 				 CORBA_Environment *ev)
 {
@@ -185,7 +187,8 @@ ORBit_imodule_get_union_members (IDL_tree           tree,
 		member = IDL_CASE_STMT (IDL_LIST (l).data).element_spec;
 		g_assert (IDL_NODE_TYPE (member) == IDLN_MEMBER);
 
-		subtc = ORBit_imodule_get_typecode (IDL_MEMBER (member).type_spec);
+		subtc = ORBit_imodule_get_typecode (
+				typecodes, IDL_MEMBER (member).type_spec);
 		dcl = IDL_LIST (IDL_MEMBER (member).dcls).data;
 
 		for (label = IDL_CASE_STMT (IDL_LIST (l).data).labels; label;
@@ -238,40 +241,43 @@ ORBit_imodule_get_enum_members (IDL_tree           tree,
 	return members;
 }
 
-static GHashTable *typecode_hash = NULL;
-
 static CORBA_TypeCode
-ORBit_imodule_lookup_typecode (const char *repo_id)
+ORBit_imodule_lookup_typecode (GHashTable *typecodes,
+			       const char *repo_id)
 {
-	if (!typecode_hash)
+	if (!typecodes)
 		return CORBA_OBJECT_NIL;
 
 	return (CORBA_TypeCode) CORBA_Object_duplicate (
-					g_hash_table_lookup (typecode_hash, repo_id),
+					g_hash_table_lookup (typecodes, repo_id),
 					NULL);
 }
 
 static void
-ORBit_imodule_register_typecode (const char     *repo_id,
+ORBit_imodule_register_typecode (GHashTable     *typecodes,
+				 const char     *repo_id,
 				 CORBA_TypeCode  tc)
 {
-	if (!typecode_hash)
-		typecode_hash = g_hash_table_new_full (
-					g_str_hash, g_str_equal,
-					g_free,
-					(GDestroyNotify) CORBA_Object_release);
-
-	g_return_if_fail (g_hash_table_lookup (typecode_hash, repo_id) == NULL);
+	g_return_if_fail (g_hash_table_lookup (typecodes, repo_id) == NULL);
 
 	g_hash_table_insert (
-		typecode_hash, g_strdup (repo_id),
+		typecodes, g_strdup (repo_id),
 		CORBA_Object_duplicate ((CORBA_Object) tc, NULL));
 }
 
-void
-ORBit_imodule_cleanup_typecodes (void)
+GHashTable *
+ORBit_imodule_new_typecodes (void)
 {
-	g_hash_table_destroy (typecode_hash);
+	return g_hash_table_new_full (
+			g_str_hash, g_str_equal,
+			g_free,
+			(GDestroyNotify) CORBA_Object_release);
+}
+
+void
+ORBit_imodule_free_typecodes (GHashTable *typecodes)
+{
+	g_hash_table_destroy (typecodes);
 }
 
 IDL_tree
@@ -438,7 +444,8 @@ ORBit_imodule_find_c_align (IDL_tree node)
 }
 
 CORBA_TypeCode
-ORBit_imodule_get_typecode (IDL_tree tree)
+ORBit_imodule_get_typecode (GHashTable *typecodes,
+			    IDL_tree    tree)
 {
 	CORBA_Environment env;
 	CORBA_TypeCode    retval = CORBA_OBJECT_NIL;
@@ -450,7 +457,8 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 
 	switch (IDL_NODE_TYPE (tree)) {
 	case IDLN_MEMBER:
-		retval = ORBit_imodule_get_typecode (IDL_MEMBER (tree).type_spec);
+		retval = ORBit_imodule_get_typecode (
+				typecodes, IDL_MEMBER (tree).type_spec);
 		break;
 	case IDLN_TYPE_ANY:
 		retval = (CORBA_TypeCode)
@@ -537,12 +545,14 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 		break;
   	case IDLN_TYPE_STRUCT:
 		retval = ORBit_imodule_lookup_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_STRUCT (tree).ident).repo_id);
 
 		if (!retval) {
 			CORBA_StructMemberSeq *members;
 
-			members = ORBit_imodule_get_struct_members (tree, &env);
+			members = ORBit_imodule_get_struct_members (
+						typecodes, tree, &env);
 
 			retval = CORBA_ORB_create_struct_tc (NULL,
 					IDL_IDENT (IDL_TYPE_STRUCT (tree).ident).repo_id,
@@ -550,6 +560,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 					members, &env);
 
 			ORBit_imodule_register_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_STRUCT (tree).ident).repo_id, retval);
 
 			CORBA_free (members);
@@ -557,12 +568,14 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 		break;
 	case IDLN_EXCEPT_DCL:
 		retval = ORBit_imodule_lookup_typecode (
+				typecodes,
 				IDL_IDENT (IDL_EXCEPT_DCL (tree).ident).repo_id);
 
 		if (!retval) {
 			CORBA_StructMemberSeq *members;
 
-			members = ORBit_imodule_get_struct_members (tree, &env);
+			members = ORBit_imodule_get_struct_members (
+						typecodes, tree, &env);
 
 			retval = CORBA_ORB_create_exception_tc (NULL,
 					IDL_IDENT (IDL_EXCEPT_DCL (tree).ident).repo_id,
@@ -570,6 +583,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 					members, &env);
 
 			ORBit_imodule_register_typecode (
+				typecodes,
 				IDL_IDENT (IDL_EXCEPT_DCL (tree).ident).repo_id, retval);
 
 			CORBA_free (members);
@@ -588,7 +602,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 		g_assert (IDL_NODE_TYPE (type_dcl) == IDLN_TYPE_DCL);
 
 		subtc = ORBit_imodule_get_typecode (
-				IDL_TYPE_DCL (type_dcl).type_spec),
+				typecodes, IDL_TYPE_DCL (type_dcl).type_spec),
 		retval = CORBA_ORB_create_array_tc (NULL,
 				IDL_INTEGER (IDL_LIST (sizer).data).value,
 				subtc, &env);
@@ -604,12 +618,13 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 
 		subtc = retval;
 		retval = ORBit_imodule_create_alias_typecode (
-				IDL_TYPE_ARRAY (tree).ident, subtc);
+				typecodes, IDL_TYPE_ARRAY (tree).ident, subtc);
 		CORBA_Object_release ((CORBA_Object) subtc, NULL);
 		}
 		break;
 	case IDLN_TYPE_UNION:
 		retval = ORBit_imodule_lookup_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_UNION (tree).ident).repo_id);
 		
 		if (!retval) {
@@ -617,9 +632,10 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 			CORBA_TypeCode        switchtc;
 
 			switchtc = ORBit_imodule_get_typecode (
-					IDL_TYPE_UNION (tree).switch_type_spec);
+					typecodes, IDL_TYPE_UNION (tree).switch_type_spec);
 
-			members = ORBit_imodule_get_union_members (tree, switchtc, &env);
+			members = ORBit_imodule_get_union_members (
+						typecodes, tree, switchtc, &env);
 
 			retval = CORBA_ORB_create_union_tc (NULL,
 					IDL_IDENT (IDL_TYPE_UNION (tree).ident).repo_id,
@@ -628,6 +644,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 			CORBA_Object_release ((CORBA_Object) switchtc, NULL);
 
 			ORBit_imodule_register_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_UNION (tree).ident).repo_id, retval);
 
 			CORBA_free (members);
@@ -635,6 +652,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 		break;
 	case IDLN_TYPE_ENUM:
 		retval = ORBit_imodule_lookup_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_ENUM (tree).ident).repo_id);
 		if (!retval) {
 			CORBA_EnumMemberSeq *members;
@@ -647,13 +665,15 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 					members, &env);
 
 			ORBit_imodule_register_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_ENUM (tree).ident).repo_id, retval);
 
 			CORBA_free (members);
 		}
 		break;
 	case IDLN_IDENT:
-		retval = ORBit_imodule_lookup_typecode (IDL_IDENT (tree).repo_id);
+		retval = ORBit_imodule_lookup_typecode (
+				typecodes, IDL_IDENT (tree).repo_id);
 		g_assert (retval != NULL);
 		break;
 	case IDLN_TYPE_SEQUENCE: {
@@ -664,7 +684,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 			bound = IDL_INTEGER (IDL_TYPE_SEQUENCE (tree).positive_int_const).value;
 
 		subtc = ORBit_imodule_get_typecode (
-				IDL_TYPE_SEQUENCE (tree).simple_type_spec),
+				typecodes, IDL_TYPE_SEQUENCE (tree).simple_type_spec),
 		retval = CORBA_ORB_create_sequence_tc (NULL,
 				bound, subtc, &env);
 		CORBA_Object_release ((CORBA_Object) subtc, NULL);
@@ -676,6 +696,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 	case IDLN_FORWARD_DCL:
 	case IDLN_INTERFACE:
 		retval = ORBit_imodule_lookup_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_ENUM (tree).ident).repo_id);
 		if (!retval) {
 			retval = CORBA_ORB_create_interface_tc (NULL,
@@ -684,6 +705,7 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 					&env);
 
 			ORBit_imodule_register_typecode (
+				typecodes,
 				IDL_IDENT (IDL_TYPE_ENUM (tree).ident).repo_id, retval);
 		}
 		break;
@@ -715,7 +737,8 @@ ORBit_imodule_get_typecode (IDL_tree tree)
 }
 
 CORBA_TypeCode
-ORBit_imodule_create_alias_typecode (IDL_tree       tree,
+ORBit_imodule_create_alias_typecode (GHashTable    *typecodes,
+				     IDL_tree       tree,
 				     CORBA_TypeCode original_type)
 {
 	CORBA_Environment env;
@@ -724,7 +747,7 @@ ORBit_imodule_create_alias_typecode (IDL_tree       tree,
 	CORBA_exception_init (&env);
 
 	g_return_val_if_fail (IDL_NODE_TYPE (tree) == IDLN_IDENT, NULL);
-	g_return_val_if_fail (g_hash_table_lookup (typecode_hash,
+	g_return_val_if_fail (g_hash_table_lookup (typecodes,
 						   IDL_IDENT (tree).repo_id) == NULL, NULL);
 
 	retval = CORBA_ORB_create_alias_tc (NULL,
@@ -732,7 +755,8 @@ ORBit_imodule_create_alias_typecode (IDL_tree       tree,
 			IDL_IDENT (tree).str,
 			original_type, &env);
 
-	ORBit_imodule_register_typecode (IDL_IDENT (tree).repo_id, retval);
+	ORBit_imodule_register_typecode (
+			typecodes, IDL_IDENT (tree).repo_id, retval);
 
 	if (env._major != CORBA_NO_EXCEPTION)
 		g_warning ("ORBit_imodule_create_alias_typecode: exception %s", env._id);
