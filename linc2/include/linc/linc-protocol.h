@@ -16,8 +16,8 @@ typedef struct {
   int addr_len;
   int stream_proto_num;
   LINCProtocolFlags flags;
-  void (* setup)(int fd);
-  void (* destroy)(int fd, struct sockaddr *saddr);
+  void (* setup)(int fd, LINCConnectionOptions cnx_flags);
+  void (* destroy)(int fd, const char *host_info, const char *serv_info);
   int (* getaddrinfo)(const char *nodename, const char *servname,
 		      const struct addrinfo *hints, struct addrinfo **res);
   int (* getnameinfo)(const struct sockaddr *sa, socklen_t salen,

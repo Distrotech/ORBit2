@@ -1,5 +1,6 @@
 #include "config.h"
 #include <linc/linc-protocol.h>
+#include <linc/linc-connection.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -22,12 +23,12 @@
 #include <linux/irda.h>
 #endif
 
-static void af_unix_destroy(int fd, struct sockaddr *saddr);
+static void af_unix_destroy(int fd, const char *host_info, const char *serv_info);
 static int irda_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
 static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
 			    int flags);
-static void tcp_setup(int fd);
+static void tcp_setup(int fd, LINCConnectionOptions cnx_flags);
 static int sys_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res);
 static int sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    char *host, size_t hostlen, char *serv, size_t servlen,
@@ -168,11 +169,9 @@ linc_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 /* Routines for AF_UNIX */
 #ifdef AF_UNIX
 static void
-af_unix_destroy(int fd, struct sockaddr *saddr)
+af_unix_destroy(int fd, const char *host_info, const char *serv_info)
 {
-  struct sockaddr_un *sau = (struct sockaddr_un *)saddr;
-
-  unlink(sau->sun_path);
+  unlink(serv_info);
 }
 #endif
 
@@ -367,15 +366,18 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 }
 
 static void
-tcp_setup(int fd)
+tcp_setup(int fd, LINCConnectionOptions cnx_flags)
 {
 #ifdef TCP_NODELAY
-  struct protoent *proto;
-  int on;
-  proto = getprotobyname("tcp");
-  if(!proto)
-    return;
-  on = 1;
-  setsockopt(fd, proto->p_proto, TCP_NODELAY, &on, sizeof(on));
+  if(!(cnx_flags & LINC_CONNECTION_SSL))
+    {
+      struct protoent *proto;
+      int on;
+      proto = getprotobyname("tcp");
+      if(!proto)
+	return;
+      on = 1;
+      setsockopt(fd, proto->p_proto, TCP_NODELAY, &on, sizeof(on));
+    }
 #endif
 }
