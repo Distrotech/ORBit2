@@ -1,3 +1,28 @@
+2003-04-28  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Added --enable-gtk-doc.
+
+	* docs/tmpl/linc-config.sgml: Added this file.  Document
+	LINC_SSL_SUPPORT.
+
+	* docs/linc-docs.sgml: Replace header with the docbook-4.1.2/xml
+	one.  Removed the "linc" chapter, so that the section entries
+	become toplevel instead.  Added the linc-config section.
+
+	* docs/linc-sections.txt: Removed LINCProtocolInfo from section
+	linc-types, since it is already present in section linc-protocol.
+	Made the macro LINC_SSL_SUPPORT, in the linc-config section, appear.
+
+	* autogen.sh: Source system's gnome-autogen.sh instead of doing
+	our own checks.
+
+	* docs/Makefile.am: Replaced the boilerplate gtk-doc makefile
+	section with include $(top_srcdir)/gtk-doc.make.
+	(MKDB_OPTIONS): Added --sgml-mode --output-format=xml.
+
+	* configure.in: Replace the gtk-doc check with the macro
+	GTK_DOC_CHECK.
+
 2003-04-24  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c

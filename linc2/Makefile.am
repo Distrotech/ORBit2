@@ -16,3 +16,4 @@ $(pkgconfig_DATA): config.status
 
 bin_SCRIPTS = linc-config
 
+DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
