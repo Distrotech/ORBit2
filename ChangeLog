@@ -1,3 +1,25 @@
+2003-06-09  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(orbit_idl_output_c_common): guard the skel
+	marshallers so they arn't built in the imodule.
+
+	* configure.in (ORBIT_SERIAL): bump it.
+
+	* include/orbit/poa/orbit-adaptor.h:
+	internalize everything except the thread hint bits.
+
+	* include/orbit/poa/poa-types.h: internalize
+	ORBit_POAObejct_type, drastically prune the
+	macros / ABI exposure.
+
+	* src/orb/orb-core/orbit-small.c: disable
+	ORBIT_SMALL_FAST_LOCALS to hugely prune our
+	ABI.
+
+	* src/orb/poa/poa.c (ORBit_c_stub_invoke):
+	add pre/post call macro values in comments here.
+
 2003-06-06  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/Makefile.am: poke at deps again [!]

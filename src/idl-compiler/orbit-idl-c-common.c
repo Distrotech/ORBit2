@@ -638,8 +638,11 @@ orbit_idl_output_c_common (IDL_tree       tree,
 	/* FIXME: this is slightly nasty, but we need these in common,
 	   and this fixes an internal build issue */
 	if (rinfo->enabled_passes & OUTPUT_SKELS ||
-	    rinfo->enabled_passes & OUTPUT_STUBS)
+	    rinfo->enabled_passes & OUTPUT_STUBS) {
+		fprintf (ci->fh, "\n#ifndef ORBIT_IDL_C_IMODULE_%s\n",ci->c_base_name);
 		cc_output_skels (tree, rinfo, ci, NULL);
+		fprintf (ci->fh, "\n#endif\n");
+	}
 
 	cc_output_typecodes (tree, ci);
 

@@ -15,6 +15,10 @@
 #include "poa-private.h"
 #include "orbit-poa.h"
 
+#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) {                      \
+  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci); \
+}
+
 #define POA_LOCK(poa)   LINK_MUTEX_LOCK(poa->base.lock)
 #define POA_UNLOCK(poa) LINK_MUTEX_UNLOCK(poa->base.lock)
 
@@ -2472,12 +2476,22 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 	    (method_impl = get_c_method (obj, class_id,
 					 &servant, method_offset))) {
 		
-		ORBIT_STUB_PreCall (obj);
+		/* Unwound PreCall
+		   ++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );	    \
+		   (obj)->orb->current_invocations =                           \
+		   g_slist_prepend ((obj)->orb->current_invocations,   \
+		   (obj)->adaptor_obj);               \
+		*/
 
 		skel_impl (servant, ret, args, ctx, ev, method_impl);
-		
-		ORBIT_STUB_PostCall (obj);
-		
+
+		/* Unwound PostCall
+		   (obj)->orb->current_invocations =                                                      \
+		   g_slist_remove ((obj)->orb->current_invocations, pobj);                        \
+		   --(((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt);                                    \
+		   if (((ORBit_POAObject)(obj)->adaptor_obj)->life_flags & ORBit_LifeF_NeedPostInvoke)    \
+		   ORBit_POAObject_post_invoke (((ORBit_POAObject)(obj)->adaptor_obj));           \
+		*/
 	} else
 		ORBit_small_invoke_stub_n
 			(obj, methods, method_index,

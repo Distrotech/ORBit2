@@ -336,7 +336,7 @@ create_object (PortableServer_POA poa,
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("servant_to_reference failed: %d\n", ev->_major);
 
-	g_assert (ORBIT_STUB_GetServant (object) == servant);
+	g_assert (ORBit_small_get_servant (object) == servant);
 	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
 
 	CORBA_free (objid);
@@ -438,7 +438,7 @@ create_TestFactory (PortableServer_POA        poa,
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("servant_to_reference failed: %d\n", ev->_major);
 
-	g_assert (ORBIT_STUB_GetServant (object) == servant);
+	g_assert (ORBit_small_get_servant (object) == servant);
 	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
 
 	CORBA_free (objid);
