@@ -153,7 +153,7 @@ cbe_skel_interface_print_relayers(const CBESkelInterfaceTraverseInfo *iti)
 		iti->curlevel + 1, opi->opname + iti->curlevel+1);
       fprintf(iti->ci->fh, "*impl = (gpointer)servant->vepv->%s_epv->%s;\n",
 	      opi->iface_id, opi->opname);
-      fprintf(iti->ci->fh, "{volatile ORBit_IInterface *_t_=&%s__iinterface;*m_data = (gpointer)&_t_->methods._buffer [%d];}\n",
+      fprintf(iti->ci->fh, "{ORBit_IInterface *volatile _t_=&%s__iinterface;*m_data = (gpointer)&_t_->methods._buffer [%d];}\n",
 	      opi->iface_id, opi->idx);
       fprintf(iti->ci->fh, "return (ORBitSmallSkeleton)_ORBIT_skel_small_%s_%s;\n",
 	      opi->iface_id, opi->opname);

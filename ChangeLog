@@ -11,11 +11,16 @@
 	* test/test-giop.c (run_test): Use IPv4 instead of UNIX domain
 	sockets on Win32.
 
+	* src/idl-compiler/orbit-idl-c-skels.c
+	(cbe_skel_interface_print_relayers): It's the temporary pointer
+	that should be declared volatile, not what it's pointing to. Now
+	auto-import actually works also from optimized code.
+
 2005-02-21  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Use -DPOPT_STATIC on Win32 when building the IDL
-	compiler and name server, so that we avoid the problems
-	with referring to variables imported from a DLL in static
+	compiler and name server, so that we avoid the problems with
+	referring to variables imported from a DLL in static
 	initializers. In newer libpopt distributions the headers have
 	dllimport decorations for the variables exported from libpopt
 	unless one defines POPT_STATIC.
