@@ -267,6 +267,9 @@ ck_skel_alloc_tmpvar(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
   if(!(node->flags & MN_NEED_TMPVAR))
     return;
 
+  /* bad hack to avoid shadowing the global _ORBIT_retval thingie */
+  if(!strcmp(node->name, ORBIT_RETVAL_VAR_NAME)) return;
+
   if(node->flags & MN_NOMARSHAL)
     fprintf(ci->fh, "register "); /* Help the compiler out */
 
