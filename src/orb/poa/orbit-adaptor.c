@@ -36,7 +36,7 @@ ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 	objkey = giop_recv_buffer_get_objkey (recv_buffer);
 	adaptor = ORBit_adaptor_find (orb, objkey);
 
-	if (!adaptor)
+	if (!adaptor || !objkey)
 		return;
 
 	adaptor->handle_request (adaptor, recv_buffer, objkey);
