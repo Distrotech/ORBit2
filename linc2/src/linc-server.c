@@ -249,7 +249,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
   if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-  {
+    {
       freeaddrinfo(ai);
       return FALSE;
     }
@@ -264,12 +264,12 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   cnx->proto = proto;
   cnx->fd = fd;
   if((create_options & LINC_CONNECTION_NONBLOCKING))
-  {
-    gioc = g_io_channel_unix_new(fd);
-    cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-			      linc_server_handle_io, cnx);
-    g_io_channel_unref(gioc);
-  }
+    {
+      gioc = g_io_channel_unix_new(fd);
+      cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+				linc_server_handle_io, cnx);
+      g_io_channel_unref(gioc);
+    }
   cnx->create_options = create_options;
   cnx->local_host_info = g_strdup(hnbuf);
   cnx->local_serv_info = g_strdup(servbuf);
