@@ -1,5 +1,11 @@
 2002-03-01  Murray Cumming  <murrayc@usa.net>
 
+	* src/idl-compiler/cpp/types.hh: Another use of IDL_IMPL_C_NS, this
+	time in IDLStrcut::getNSScopedCTypeName().	
+	See previous ChangeLog entry.
+
+2002-03-01  Murray Cumming  <murrayc@usa.net>
+
 	* src/idl-compiler/cpp/types.cc: Commented out the generation of
 	operator new() and allocbuf() template specializations for 
 	sequences because we are generating duplicate, clashing, code

@@ -1120,7 +1120,7 @@ public:
 	}
 
 	string getNSScopedCTypeName() const {
-		return IDL_IMPL_C_NS "::" + getCTypeName();
+		return IDL_IMPL_C_NS_NOTUSED + getCTypeName();
 	}
 
 	string getNSScopedCPPTypeName() const { 
