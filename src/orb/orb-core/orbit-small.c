@@ -1145,3 +1145,23 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 	g_free (aqe);
 	goto clean_out;
 }
+
+gpointer
+ORBit_small_get_servant (CORBA_Object obj)
+{
+	return NULL;
+}
+
+ORBitConnectionStatus
+ORBit_small_get_connection_status (CORBA_Object obj)
+{
+	return 0;
+}
+
+ORBitConnectionStatus
+ORBit_small_listen_for_broken (CORBA_Object obj,
+			       GCallback    fn,
+			       gpointer     user_data)
+{
+	return 0;
+}
