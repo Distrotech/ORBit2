@@ -31,6 +31,7 @@ ORBit_ObjectKey *IOP_profiles_sync_objkey (GSList          *profiles);
 ORBit_ObjectKey *IOP_ObjectKey_copy       (ORBit_ObjectKey *src);
 gboolean         IOP_ObjectKey_equal      (ORBit_ObjectKey *a,
 					   ORBit_ObjectKey *b);
+guint            IOP_ObjectKey_hash       (ORBit_ObjectKey *k);
 gboolean         IOP_profile_get_info     (CORBA_Object     obj,
 					   gpointer        *pinfo,
 					   GIOPVersion     *iiop_version,
