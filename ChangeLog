@@ -1,3 +1,7 @@
+2002-04-30  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/orb-cpp/orbitcpp_sequence.hh: New implementation
+
 2002-04-30  Diego Sevilla Ruiz  <dsevilla@um.es>
 
 	* src/idl-compiler/cpp/types/IDLArray.cc (typedef_decl_write): 
