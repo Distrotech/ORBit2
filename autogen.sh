@@ -59,7 +59,7 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-for i in .
+for i in . libIDL popt
 do 
   echo processing $i
   (cd $i; \
@@ -69,20 +69,6 @@ do
     autoheader; \
     autoconf)
 done
-
-echo processing libIDL
-(cd libIDL; \
-    libtoolize --copy --force; \
-    automake --add-missing $am_opt; \
-    aclocal $ACLOCAL_FLAGS; \
-    autoconf)
-
-echo processing popt
-(cd popt; \
-    #libtoolize --copy --force; \
-    automake --add-missing $am_opt; \
-    aclocal $ACLOCAL_FLAGS; autoheader; \
-    autoconf)
 
 cd $ORIGDIR
 

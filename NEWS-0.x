@@ -1,3 +1,23 @@
+Feb 23, 1999:
+	ORBit 0.4.0 release
+		. 'CORBA::TypeCode', 'any' support.
+		. CORBA_EXCEPTION_USER support.
+		. Client-side interface repo support.
+		. Object location forwarding support.
+		. Read orbitrc file for per-system & per-user settings.
+		. Event service implementation.
+		. Improved naming service (impl. now available as a
+		  library).
+		. TCP Wrappers support, and expanded request
+		  authentication capabilities.
+		. Now a BOA-free ORB(tm) :)
+		. DII & DSI (untested beyond compilation & careful thought).
+		. Substantial speedups in some areas.
+		. More utilities and test programs.
+		. Portability and bug fixes.
+		. Includes libIDL 0.6 and all the changes that come with it.
+	I think that's all. :)
+
 Sep 21, 1998:
 	ORBit 0.3.0 release
 		. Transparent same-address-space object calls.
