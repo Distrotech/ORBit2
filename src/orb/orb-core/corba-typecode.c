@@ -702,6 +702,185 @@ CORBA_TypeCode_equivalent (CORBA_TypeCode obj,
 	return typecode_equiv_internal (obj, tc, FALSE, ev);
 }
 
+CORBA_TCKind CORBA_TypeCode_kind(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	return obj->kind;
+}
+
+static void bad_kind (CORBA_Environment *ev)
+{
+	CORBA_TypeCode_BadKind *err;
+	err = g_new (CORBA_TypeCode_BadKind, 1);
+	if (err == NULL) {
+		CORBA_exception_set_system (ev, ex_CORBA_NO_MEMORY,
+					    CORBA_COMPLETED_NO);
+	} else {
+		err->dummy = 23;
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     "IDL:omg.org/CORBA/TypeCode/BadKind/1.0",
+				     err);
+	}
+}
+
+CORBA_RepositoryId CORBA_TypeCode_id(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_objref || obj->kind == CORBA_tk_struct
+	       || obj->kind == CORBA_tk_union || obj->kind == CORBA_tk_enum
+		   || obj->kind == CORBA_tk_alias || obj->kind == CORBA_tk_except)) {
+		bad_kind (ev);
+		return NULL;
+	}
+	return (CORBA_RepositoryId)obj->repo_id;
+}
+
+CORBA_Identifier CORBA_TypeCode_name(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_objref || obj->kind == CORBA_tk_struct
+	       || obj->kind == CORBA_tk_union || obj->kind == CORBA_tk_enum
+		   || obj->kind == CORBA_tk_alias || obj->kind == CORBA_tk_except)) {
+		bad_kind (ev);
+		return NULL;
+	}
+
+	return (CORBA_Identifier)obj->name;
+}
+
+CORBA_unsigned_long CORBA_TypeCode_member_count(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_struct || obj->kind == CORBA_tk_union
+	       || obj->kind == CORBA_tk_except || obj->kind == CORBA_tk_enum)) {
+		bad_kind (ev);
+		return 0;
+	}
+	return obj->sub_parts;
+}
+
+static void bounds_error (CORBA_Environment *ev)
+{
+	CORBA_TypeCode_Bounds *err;
+	err = g_new (CORBA_TypeCode_Bounds, 1);
+	if (err == NULL) {
+		CORBA_exception_set_system (ev, ex_CORBA_NO_MEMORY,
+					    CORBA_COMPLETED_NO);
+	} else {
+		err->dummy = 23;
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     "IDL:omg.org/CORBA/TypeCode/Bounds/1.0",
+				     err);
+	}
+}
+
+CORBA_Identifier CORBA_TypeCode_member_name(CORBA_TypeCode obj, CORBA_unsigned_long index, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_struct || obj->kind == CORBA_tk_union
+	       || obj->kind == CORBA_tk_except || obj->kind == CORBA_tk_enum)) {
+		bad_kind (ev);
+		return NULL;
+	}
+	if (index > obj->sub_parts) {
+		bounds_error (ev);
+		return NULL;
+	}
+	return (CORBA_Identifier)obj->subnames[index];
+}
+
+CORBA_TypeCode CORBA_TypeCode_member_type(CORBA_TypeCode obj, CORBA_unsigned_long index, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_struct || obj->kind == CORBA_tk_union
+	       || obj->kind == CORBA_tk_except)) {
+		bad_kind (ev);
+		return NULL;
+	}
+	if (index > obj->sub_parts) {
+		bounds_error (ev);
+		return NULL;
+	}
+	return obj->subtypes[index];
+}
+
+CORBA_any *CORBA_TypeCode_member_label(CORBA_TypeCode obj, CORBA_unsigned_long index, CORBA_Environment *ev)
+{
+	CORBA_any *retval = NULL;
+
+	if (obj->kind != CORBA_tk_union) {
+		bad_kind (ev);
+		return NULL;
+	}
+	if (index > obj->sub_parts) {
+		bounds_error (ev);
+		return NULL;
+	}
+	retval = CORBA_any__alloc();
+	if (retval == NULL) {
+		CORBA_exception_set_system (ev, ex_CORBA_NO_MEMORY,
+					    CORBA_COMPLETED_NO);
+	} else {
+		retval->_type = ORBit_RootObject_duplicate(obj->discriminator);
+		retval->_value =
+			ORBit_copy_value(&obj->sublabels[index], retval->_type);
+		retval->_release = CORBA_TRUE;
+	}
+
+	return retval;
+}
+
+CORBA_TypeCode CORBA_TypeCode_discriminator_type(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (obj->kind != CORBA_tk_union) {
+		bad_kind (ev);
+		return NULL;
+	}
+	return obj->discriminator;
+}
+
+CORBA_long CORBA_TypeCode_default_index(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (obj->kind != CORBA_tk_union) {
+		bad_kind (ev);
+		return 0;
+	}
+	return obj->default_index;
+}
+
+CORBA_unsigned_long CORBA_TypeCode_length(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_string || obj->kind == CORBA_tk_wstring
+	       || obj->kind == CORBA_tk_sequence || obj->kind == CORBA_tk_array)) {
+		bad_kind (ev);
+		return 0;
+	}
+	return obj->length;
+}
+
+CORBA_TypeCode CORBA_TypeCode_content_type(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (! (obj->kind == CORBA_tk_sequence || obj->kind == CORBA_tk_array
+	       || obj->kind == CORBA_tk_alias)) {
+		bad_kind (ev);
+		return NULL;
+	}
+	g_assert (obj->sub_parts == 1);
+	return obj->subtypes[0];
+}
+
+CORBA_unsigned_short CORBA_TypeCode_fixed_digits(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (obj->kind != CORBA_tk_fixed) {
+		bad_kind (ev);
+		return 0;
+	}
+	return obj->digits;
+}
+
+CORBA_short CORBA_TypeCode_fixed_scale(CORBA_TypeCode obj, CORBA_Environment *ev)
+{
+	if (obj->kind != CORBA_tk_fixed) {
+		bad_kind (ev);
+		return 0;
+	}
+	return obj->scale;
+}
+
 const char *
 ORBit_tk_to_name (CORBA_unsigned_long tk)
 {
