@@ -2,11 +2,10 @@
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
-void CORBA_free(gpointer mem)
+void CORBA_free (gpointer mem)
 {
-  ORBit_free(mem);
+	ORBit_free (mem);
 }
-
 
 gpointer
 ORBit_alloc_core(size_t block_size,
@@ -99,24 +98,27 @@ ORBit_free_T(gpointer mem)
 }
 
 void
-ORBit_free(gpointer mem)
+ORBit_free (gpointer mem)
 {
-  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
-  ORBit_free_T (mem);
+	ORBit_free_T (mem);
 
-  O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
+	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 }
 
 gpointer
-ORBit_alloc_simple(size_t block_size)
+ORBit_alloc_simple (size_t block_size)
 {
-  gpointer	mem, pre;
-  if ( !block_size )
-    return 0;
-  mem = ORBit_alloc_core(block_size,
-			 ORBIT_MEMHOW_SIMPLE, 0, &pre, /*align*/0);
-  return mem;
+	gpointer mem, pre;
+
+	if (!block_size)
+		return 0;
+
+	mem = ORBit_alloc_core (
+		block_size, ORBIT_MEMHOW_SIMPLE, 0, &pre, /*align*/0);
+
+	return mem;
 }
 
 gpointer
@@ -285,15 +287,15 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
 }
 
 gpointer
-ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
+ORBit_freekids_via_TypeCode (CORBA_TypeCode tc, gpointer mem)
 {
-  gpointer ret;
+	gpointer ret;
 
-  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
-  ret = ORBit_freekids_via_TypeCode_T (tc, mem);
+	ret = ORBit_freekids_via_TypeCode_T (tc, mem);
 
-  O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
+	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
-  return ret;
+	return ret;
 }

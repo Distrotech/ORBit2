@@ -1,52 +1,49 @@
 #include <orbit/orbit.h>
 
-O_MUTEX_DEFINE(ORBit_RootObject_lifecycle_lock);
-
 void
-ORBit_RootObject_init(ORBit_RootObject obj, const ORBit_RootObject_Interface * interface)
+ORBit_RootObject_init (ORBit_RootObject obj,
+		       const ORBit_RootObject_Interface * interface)
 {
-  obj->interface = interface;
-  obj->refs = 0;
+	obj->interface = interface;
+	obj->refs = 0;
 }
 
 gpointer
-ORBit_RootObject_duplicate(gpointer obj)
+ORBit_RootObject_duplicate (gpointer obj)
 {
-  ORBit_RootObject robj = obj;
+	ORBit_RootObject robj = obj;
 
-  if(robj && robj->refs != ORBIT_REFCOUNT_STATIC)
-    robj->refs++;
+	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC)
+		robj->refs++;
 
-  return obj;
+	return obj;
 }
 
 void
-ORBit_RootObject_release_T(gpointer obj)
+ORBit_RootObject_release_T (gpointer obj)
 {
-  ORBit_RootObject robj = obj;
+	ORBit_RootObject robj = obj;
 
-  if(robj && robj->refs != ORBIT_REFCOUNT_STATIC)
-    {
-      g_assert(robj->refs < ORBIT_REFCOUNT_MAX && robj->refs > 0);
+	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC) {
+		g_assert (robj->refs < ORBIT_REFCOUNT_MAX && robj->refs > 0);
 
-      robj->refs--;
-      if(robj->refs == 0)
-	{
-	  if(robj->interface && robj->interface->destroy)
-	    (* robj->interface->destroy)(robj);
-	  else
-	    g_free(robj);
+		robj->refs--;
+		if (robj->refs == 0) {
+			if (robj->interface && robj->interface->destroy)
+				robj->interface->destroy (robj);
+			else
+				g_free (robj);
+		}
 	}
-    }
 }
 
 void
-ORBit_RootObject_release(gpointer obj)
+ORBit_RootObject_release (gpointer obj)
 {
-  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
-  ORBit_RootObject_release_T (obj);
+	ORBit_RootObject_release_T (obj);
 
-  O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
+	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 }
 
