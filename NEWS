@@ -1,3 +1,16 @@
+Version 2.3.100
+
+	* Bugs
+		+ more regression tests (Michael)
+		+ IDL compiler fixage (Laszlo Peter, Michael)
+		+ FreeBSD build fixage (Theo Van Klaveren)
+		+ hashing issues (Michael)
+		+ union alignment fixage (Mark, Laszlo)
+		+ re-work debug code (Mark)
+		+ typecode marshaling byteswaps (Mark)
+		+ any de-marshaling byteswaps (Mark)
+		+ build fixage (Jacob)
+
 Version 2.3.99
 
 	* Features
