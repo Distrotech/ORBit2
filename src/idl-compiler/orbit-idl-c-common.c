@@ -493,6 +493,7 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
   if(tmi->mtype & MARSHAL_FUNC)
     {
       pi.flags = PI_BUILD_FUNC;
+      pi.where = MW_Null|MW_Heap;
       node = marshal_populate(tree, NULL, &pi);
       orbit_idl_do_node_passes(node, FALSE);
 
@@ -509,24 +510,21 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
 
   if(tmi->dmtype & MARSHAL_FUNC)
     {
-      GString *tmpstr;
       pi.flags = PI_BUILD_FUNC;
+      pi.where = MW_Null|MW_Heap;
       node = marshal_populate(tree, NULL, &pi);
+      node->nptrs = 1;
       orbit_idl_do_node_passes(node, TRUE);
 
-      node->name = "_ORBIT_retval";
+      node->name = "_ORBIT_val";
       node->nptrs = oidl_param_numptrs(tree, DATA_OUT);
 
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_RETURN);
-      fprintf(ci->fh, " %s_demarshal(GIOPSendBuffer *_ORBIT_recv_buffer)\n{\n", ctmp);
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_RETURN);
-      fprintf(ci->fh, " _ORBIT_retval;\n");
+      fprintf(ci->fh, " %s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_OUT);
+      fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev)\n{\n");
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-      tmpstr = g_string_new(NULL);
-      cbe_stub_op_retval_alloc(ci->fh, tree, tmpstr);
-      g_string_free(tmpstr, TRUE);
       orbit_cbe_alloc_tmpvars(node, ci);
-      c_demarshalling_generate(node, ci, FALSE);
+      c_demarshalling_generate(node, ci, FALSE, TRUE);
       fprintf(ci->fh, "}\n");
     }
   g_free(ctmp);

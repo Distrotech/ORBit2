@@ -923,13 +923,14 @@ print_marshal_funcs(gpointer key, gpointer value, gpointer data)
     {
       fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
       orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
-      fprintf(ci->fh, " _ORBIT_val);\n");
+      fprintf(ci->fh, " _ORBIT_val, CORBA_Environment *ev);\n");
     }
 
   if(tmi->dmtype & MARSHAL_FUNC)
     {
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_RETURN);
-      fprintf(ci->fh, " %s_demarshal(GIOPSendBuffer *_ORBIT_recv_buffer);\n", ctmp);
+      fprintf(ci->fh, "void %s_demarshal(GIOPSendBuffer *_ORBIT_recv_buffer, ", ctmp);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
+      fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev);\n");
     }
 
   g_free(ctmp);

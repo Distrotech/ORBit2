@@ -58,7 +58,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 			         ?(IDLF_SRCFILES|IDLF_INHIBIT_INCLUDES):0)
 			       |IDLF_CODEFRAGS,
 			       rinfo->idl_warn_level);
-  if(rinfo->debug_level > 1)
+  if(rinfo->debug_level > 3)
     orbit_idl_print_node(tree, 0);
 
   if(IDL_SUCCESS != errcode) {
@@ -76,6 +76,11 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   otree.tree = tree;
 
   otree.ctxt = oidl_marshal_context_new(tree);
+  if(rinfo->debug_level > 2)
+    {
+      g_print("                        ----- Marshal context dump: -----\n");
+      oidl_marshal_context_dump(otree.ctxt);
+    }
 
   orbit_idl_tree_populate(otree.tree, namespace, &otree);
   orbit_idl_do_passes(otree.tree, rinfo);

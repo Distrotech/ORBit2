@@ -18,10 +18,12 @@ typedef struct {
 typedef struct {
   OIDL_C_Info *ci;
   gchar *orb_name;
+  gboolean curptr_in_local;
   guint8 last_tail_align;
   guint8 alloc_on_stack : 1; /* TRUE for demarshalling in skeletons, etc. */
   guint8 endian_swap_pass : 1; /* Demarshalling, again */
   guint8 in_skels : 1;
+  guint8 subfunc : 1;
 } OIDL_C_Marshal_Info;
 
 void orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
@@ -36,7 +38,7 @@ void orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, O
 void orbit_output_typecode(OIDL_C_Info *ci, IDL_tree ts);
 
 void c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean on_stack);
-void c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels);
+void c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels, gboolean subfunc);
 
 /* utils */
 void cbe_stub_op_retval_alloc(FILE *of, IDL_tree node, GString *tmpstr);

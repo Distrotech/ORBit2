@@ -10,11 +10,11 @@ static void c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_demarshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_demarshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
-static void c_demarshal_load_curptr(OIDL_C_Marshal_Info *cmi);
-static void c_demarshal_store_curptr(OIDL_C_Marshal_Info *cmi);
+static void c_demarshal_validate_curptr(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
+static void c_demarshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 
 void
-c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels)
+c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels, gboolean subfunc)
 {
   OIDL_C_Marshal_Info cmi;
 
@@ -22,28 +22,29 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
   cmi.last_tail_align = 1;
   cmi.endian_swap_pass = TRUE;
   cmi.in_skels = in_skels?1:0;
+  cmi.subfunc = subfunc;
 
-  c_demarshal_load_curptr(&cmi);
-
-  if(in_skels) {
-    cmi.alloc_on_stack = TRUE;
+  cmi.curptr_in_local = FALSE;
+  cmi.alloc_on_stack = in_skels;
+  if(in_skels)
     cmi.orb_name = "ORBIT_SERVANT_TO_ORB(_ORBIT_servant)";
-  } else {
-    cmi.alloc_on_stack = FALSE;
-#if 0
-    cmi.orb_name = "_obj->orb";
-#else
+  else
     cmi.orb_name = "GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer)->connection->orb_data";
-#endif
-  }
 
   if(node->flags & MN_ENDIAN_DEPENDANT)
     {
+      gboolean start_in_local;
+
+      c_demarshal_validate_curptr(node, &cmi);
+      start_in_local = cmi.curptr_in_local;
+      c_demarshal_alignfor(node, &cmi);
+      cmi.last_tail_align = node->iiop_head_align; /* We already did the alignment outside of the 'if' */
       fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
       c_demarshal_generate(node, &cmi);
       fprintf(ci->fh, "} else {\n");
-      cmi.last_tail_align = 1;
+      cmi.last_tail_align = node->iiop_head_align; /* We already did the alignment outside of the 'if' */
       cmi.endian_swap_pass = FALSE;
+      cmi.curptr_in_local = start_in_local;
       c_demarshal_generate(node, &cmi);
       fprintf(ci->fh, "}\n");
     }
@@ -51,6 +52,7 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
     {
       cmi.last_tail_align = 1;
       cmi.endian_swap_pass = FALSE;
+      cmi.curptr_in_local = FALSE;
       c_demarshal_generate(node, &cmi);
     }
 }
@@ -64,6 +66,8 @@ c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   if(node->use_count) return;
 
   node->use_count++;
+
+  c_demarshal_validate_curptr(node, cmi);
 
   switch(node->type) {
   case MARSHAL_DATUM:
@@ -82,6 +86,7 @@ c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     c_demarshal_set(node, cmi);
     break;
   default:
+    g_assert_not_reached();
     break;
   }
 
@@ -97,24 +102,38 @@ c_demarshal_update_curptr(OIDL_Marshal_Node *node, char *sizestr, OIDL_C_Marshal
 }
 
 static void
-c_demarshal_load_curptr(OIDL_C_Marshal_Info *cmi)
+c_demarshal_validate_curptr(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  fprintf(cmi->ci->fh, "_ORBIT_curptr = GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur;\n");
-}
+  gboolean desired_curptr_in_local_state;
 
-static void
-c_demarshal_store_curptr(OIDL_C_Marshal_Info *cmi)
-{
-  fprintf(cmi->ci->fh, "GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur = _ORBIT_curptr;\n");
+  if(node->flags & MN_NEED_CURPTR_LOCAL)
+    desired_curptr_in_local_state = TRUE;
+  else if(node->flags & MN_NEED_CURPTR_RECVBUF)
+    desired_curptr_in_local_state = FALSE;
+  else
+    return;
+
+  if(desired_curptr_in_local_state != cmi->curptr_in_local)
+    {
+      if(desired_curptr_in_local_state)
+	fprintf(cmi->ci->fh, "_ORBIT_curptr = GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur;\n");
+      else
+	fprintf(cmi->ci->fh, "GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur = _ORBIT_curptr;\n");
+
+      cmi->curptr_in_local = desired_curptr_in_local_state;
+    }
 }
 
 static void
 c_demarshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   /* do we need to generate an alignment space? */
-  if(node->iiop_head_align > cmi->last_tail_align) {
-    fprintf(cmi->ci->fh, "_ORBIT_curptr = ALIGN_ADDRESS(_ORBIT_curptr, %d);\n", node->iiop_head_align);
-  }
+  if(node->iiop_head_align > cmi->last_tail_align)
+    {
+      fprintf(cmi->ci->fh, "%s = ALIGN_ADDRESS(_ORBIT_curptr, %d);\n",
+	      cmi->curptr_in_local?"_ORBIT_curptr":"GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur",
+	      node->iiop_head_align);
+    }
 
   cmi->last_tail_align = node->iiop_tail_align;
 }
@@ -250,9 +269,14 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     g_string_free(tmpstr, TRUE);
   } else {
     cmi->last_tail_align = MIN(cmi->last_tail_align, node->u.loop_info.contents->iiop_tail_align);
+    c_demarshal_validate_curptr(node->u.loop_info.contents, cmi); /* We must explicitly do this here,
+								     otherwise bad things will happen -
+								     it will keep updating local from recvbuf or vice versa,
+								     inside the loop, and that is Very Bad(tm) */
     fprintf(cmi->ci->fh, "for(%s = 0; %s < %s; %s++) {\n", ctmp_loop, ctmp_loop, ctmp_len, ctmp_loop);
     /* XXX: what does the next line (loop_var) do? Anything useful? */
-    c_demarshal_generate(node->u.loop_info.loop_var, cmi);
+    /* c_demarshal_generate(node->u.loop_info.loop_var, cmi); */
+    g_assert(node->u.loop_info.loop_var->flags & MN_NOMARSHAL);
     /* this next line does the element-by-element work! */
     c_demarshal_generate(node->u.loop_info.contents, cmi);
     fprintf(cmi->ci->fh, "}\n\n");
@@ -321,10 +345,12 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   char *ctmp;
   const char *do_dup;
 
-  c_demarshal_store_curptr(cmi);
   ctmp = oidl_marshal_node_valuestr(node);
 
-  do_dup = (cmi->alloc_on_stack && (node->where & (MW_Alloca|MW_Msg)))?"CORBA_FALSE":"CORBA_TRUE";
+  if(cmi->subfunc)
+    do_dup = "do_dup";
+  else
+    do_dup = (cmi->alloc_on_stack && (node->where & (MW_Alloca|MW_Msg)))?"CORBA_FALSE":"CORBA_TRUE";
 
   switch(node->u.complex_info.type) {
   case CX_CORBA_FIXED:
@@ -352,7 +378,6 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     {
       OIDL_Type_Marshal_Info *tmi;
       char *ctmp, *ctmp2;
-      const char *do_dup;
 
       tmi = oidl_marshal_context_find(cmi->ci->ctxt, node->tree);
 
@@ -362,7 +387,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       switch(tmi->mtype)
 	{
 	case MARSHAL_FUNC:
-	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, %s, %s, ev);\n", ctmp2, ctmp, do_dup);
+	  fprintf(cmi->ci->fh, "%s_demarshal(_ORBIT_recv_buffer, &(%s), %s, ev);\n", ctmp2, ctmp, do_dup);
 	  break;
 	case MARSHAL_ANY:
 	  fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s);\n", ctmp);
@@ -376,9 +401,10 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 	}
     }    
     break;
+  default:
+    g_assert_not_reached();
+    break;
   }
-
-  c_demarshal_load_curptr(cmi);
 
   g_free(ctmp);
 }

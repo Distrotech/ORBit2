@@ -415,6 +415,14 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
 
   if(!tree) { g_print("Nil\n"); return; }
 
+  if(tree->use_count)
+    {
+      g_print("Recursive loopback to %p\n", tree);
+      return;
+    }
+
+  tree->use_count++;
+
   ctmp = oidl_marshal_node_fqn(tree);
   if(tree->name)
     g_print("\"%s\" (\"%s\") ", tree->name, ctmp);
@@ -443,6 +451,16 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("ENDIAN_DEPENDANT ");
   if(tree->flags & MN_DEMARSHAL_UPDATE_AFTER)
     g_print("DEMARSHAL_UPDATE_AFTER ");
+  if(tree->flags & MN_RECURSIVE_TOP)
+    g_print("RECURSIVE_TOP ");
+  if(tree->flags & MN_TOPLEVEL)
+    g_print("TOPLEVEL ");
+  if(tree->flags & MN_PARAM_INOUT)
+    g_print("PARAM_INOUT ");
+  if(tree->flags & MN_NEED_CURPTR_LOCAL)
+    g_print("NEED_CURPTR_LOCAL ");
+  if(tree->flags & MN_NEED_CURPTR_RECVBUF)
+    g_print("NEED_CURPTR_RECVBUF ");
   g_print("] ");
 
   g_print("*%d arch (%d,%d) iiop (%d,%d)\n", tree->nptrs,
@@ -514,6 +532,8 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_warning("Don't know any details about %s nodes", nodenames[tree->type]);
     break;
   }
+
+  tree->use_count--;
 } 
 
 IDL_tree
@@ -736,32 +756,32 @@ oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice)
 
   g_assert(param);
 
-    switch(IDL_NODE_TYPE(param)) {
-    case IDLN_TYPE_STRUCT:
-    case IDLN_TYPE_UNION:
-    	if(((role == DATA_RETURN) || (role == DATA_OUT))
-	    && !orbit_cbe_type_is_fixed_length(param))
-	retval++;
-        break;
-    case IDLN_TYPE_ARRAY:
-        if ( role == DATA_RETURN ) {
-            *isSlice = TRUE;
-	    retval = 1;
- 	} else if (role==DATA_OUT && !orbit_cbe_type_is_fixed_length(param)) {
-            *isSlice = TRUE;
-	    retval = 2;
-	}
-        break;
-    case IDLN_NATIVE:
-	if ( IDL_NATIVE(param).user_type
-	  && strcmp(IDL_NATIVE(param).user_type,"IDL_variable_length_struct")==0 ) {
-	  	return role==DATA_OUT ? 2 : 1;
-	  }
-	break;
-      
-    default:
-      break;
+  switch(IDL_NODE_TYPE(param)) {
+  case IDLN_TYPE_STRUCT:
+  case IDLN_TYPE_UNION:
+    if(((role == DATA_RETURN) || (role == DATA_OUT))
+       && !orbit_cbe_type_is_fixed_length(param))
+      retval++;
+    break;
+  case IDLN_TYPE_ARRAY:
+    if ( role == DATA_RETURN ) {
+      *isSlice = TRUE;
+      retval = 1;
+    } else if (role==DATA_OUT && !orbit_cbe_type_is_fixed_length(param)) {
+      *isSlice = TRUE;
+      retval = 2;
     }
+    break;
+  case IDLN_NATIVE:
+    if ( IDL_NATIVE(param).user_type
+	 && strcmp(IDL_NATIVE(param).user_type,"IDL_variable_length_struct")==0 ) {
+      return role==DATA_OUT ? 2 : 1;
+    }
+    break;
+      
+  default:
+    break;
+  }
 
   typeidx = typeoffsets[IDL_NODE_TYPE(param)];
   g_assert(typeidx >= 0);
@@ -774,7 +794,7 @@ oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice)
   default: g_assert_not_reached();
   }
 
-  retval+=nptrrefs_required[typeidx][role];
+  retval += nptrrefs_required[typeidx][role];
   return retval;
 }
 
