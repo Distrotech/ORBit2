@@ -1,5 +1,12 @@
 2003-03-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c (scan_socket_dir): handle
+	non-existant directories gracefully.
+
+	* test/everything/test.sh: stop 'make check'
+	destroying the system socket directory - and causing
+	all manner of grief.
+
 	* src/orb/GIOP/giop-connection.c
 	(giop_connection_initiate): bin last ORBIT_THREADED
 	conditionals.
