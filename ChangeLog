@@ -1,3 +1,12 @@
+2002-12-17  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(orbit_add_align): impl.
+	(orbit_find_c_align): re-write to use a string
+	list of the ALIGNOF defines.
+	(orbit_output_tcstruct_c_align): build a MAX
+	statement, where appropriate.
+
 2002-12-26  James Henstridge  <james@daa.com.au>
 
 	* src/orb/orb-core/Makefile.am (IDL_FLAGS): add -I. to IDL_FLAGS.
