@@ -1,4 +1,4 @@
-noinst_PROGRAMS = client server
+check_PROGRAMS = client server
 
 EVERYTHING_BUILT = \
 	everything.h        \
@@ -61,6 +61,7 @@ Everything_module_la_SOURCES = \
 	everything-imodule.c
 Everything_module_la_LIBADD = \
         $(top_builddir)/src/orb/libORBit-2.la
+
 server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
 server_LDFLAGS = -static -module
 server.c : $(included_src)
