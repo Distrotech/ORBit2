@@ -709,7 +709,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 		g_signal_new ("blocking",
 			      G_TYPE_FROM_CLASS (object_class),
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (LINCConnectionClass, broken),
+			      G_STRUCT_OFFSET (LINCConnectionClass, blocking),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__ULONG,
 			      G_TYPE_NONE, 1, G_TYPE_ULONG);
