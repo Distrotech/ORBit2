@@ -1,5 +1,6 @@
-LDADDS = $(top_builddir)/src/orb/libORBit-2.la		\
-	$(ORBIT_LIBS)
+testcpp_libs = $(top_builddir)/src/orb/libORBit-2.la \
+               $(top_builddir)/src/orb-cpp/liborbitcpp.la \
+$(ORBIT_LIBS)
 
 INCLUDES =                                 \
 	-I$(top_srcdir)/include            \
@@ -9,7 +10,6 @@ INCLUDES =                                 \
 	-I$(top_srcdir)/src/orb            \
 	-I$(top_srcdir)/src                \
 	-DORBIT2_INTERNAL_API              \
-	$(WARN_CFLAGS)                     \
 	$(ORBIT_CFLAGS) \
   -Igenerated
 

@@ -1,3 +1,8 @@
+2002-03-06  Murray Cumming  <murrayc@usa.net>
+
+	* Fixed link problem in test/cpp. Of course, the cpp orb code is in an
+	additional library.
+
 2002-03-05  Murray Cumming  <murrayc@usa.net>
 
 	* Added helloworld example from the external orbit-cpp-examples 
