@@ -52,7 +52,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   errcode = IDL_parse_filename(filename, rinfo->cpp_args, NULL,
 			       &tree, &namespace,
 			       IDLF_TYPECODES|IDLF_CODEFRAGS,
-			       rinfo->debug_level);
+			       IDL_WARNINGMAX);
 
   if(IDL_SUCCESS != errcode) {
     if(errcode == -1)
