@@ -23,7 +23,7 @@ struct CORBA_TypeCode_struct {
   CORBA_long default_index;	/* for union */
   CORBA_unsigned_short digits; /* for fixed */
   CORBA_short scale;	     /* for fixed */
-  CORBA_unsigned_long flags;
+  CORBA_short c_align;
 };
 
 #define TC_null ((CORBA_TypeCode)&TC_null_struct)

@@ -3,63 +3,18 @@
 #include "orb-core-private.h"
 #include <string.h>
 
-gint
-ORBit_find_alignment(CORBA_TypeCode tc)
+/*
+ * FIXME: remove this
+ */
+inline gint
+ORBit_find_alignment (CORBA_TypeCode tc)
 {
-  gint retval = 1;
-  int i;
+	if (tc->c_align == -1)
+		g_error ("Don't know the alignment for %s %d\n",
+			 tc->name ? tc->name : "anonymous",
+			 tc->kind);
 
-  while (tc->kind == CORBA_tk_alias)
-    tc = tc->subtypes[0];
-
-  switch(tc->kind) {
-  case CORBA_tk_union:
-    retval = MAX(retval, ORBit_find_alignment(tc->discriminator));
-  case CORBA_tk_except:
-  case CORBA_tk_struct:
-#if ORBIT_ALIGNOF_CORBA_STRUCT > 1
-    retval = MAX(retval, ORBIT_ALIGNOF_CORBA_STRUCT);
-#endif
-    for(i = 0; i < tc->sub_parts; i++)
-      retval = MAX(retval, ORBit_find_alignment(tc->subtypes[i]));
-    return retval;
-  case CORBA_tk_ulong:
-  case CORBA_tk_long:
-  case CORBA_tk_enum:
-    return ORBIT_ALIGNOF_CORBA_LONG;
-  case CORBA_tk_ushort:
-  case CORBA_tk_short:
-  case CORBA_tk_wchar:
-    return ORBIT_ALIGNOF_CORBA_SHORT;
-  case CORBA_tk_longlong:
-  case CORBA_tk_ulonglong:
-    return ORBIT_ALIGNOF_CORBA_LONG_LONG;
-  case CORBA_tk_longdouble:
-    return ORBIT_ALIGNOF_CORBA_LONG_DOUBLE;
-  case CORBA_tk_float:
-    return ORBIT_ALIGNOF_CORBA_FLOAT;
-  case CORBA_tk_double:
-    return ORBIT_ALIGNOF_CORBA_DOUBLE;
-  case CORBA_tk_boolean:
-  case CORBA_tk_char:
-  case CORBA_tk_octet:
-    return ORBIT_ALIGNOF_CORBA_CHAR;
-  case CORBA_tk_string:
-  case CORBA_tk_wstring:
-  case CORBA_tk_TypeCode:
-  case CORBA_tk_objref:
-    return ORBIT_ALIGNOF_CORBA_POINTER;
-  case CORBA_tk_sequence:
-    return ORBIT_ALIGNOF_CORBA_SEQ;
-  case CORBA_tk_any:
-    return ORBIT_ALIGNOF_CORBA_ANY;
-  case CORBA_tk_array:
-    return ORBit_find_alignment(tc->subtypes[0]);
-  case CORBA_tk_fixed:
-    return MAX(ORBIT_ALIGNOF_CORBA_SHORT, ORBIT_ALIGNOF_CORBA_STRUCT);
-  default:
-    return 1;
-  }
+	return tc->c_align;
 }
 
 size_t

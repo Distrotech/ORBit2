@@ -122,13 +122,14 @@ const ORBit_RootObject_Interface ORBit_TypeCode_epv = {
   ORBit_TypeCode_free_fn
 };
 
-#define DEF_TC_BASIC(nom) \
-struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = { \
-  {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC}, \
-  CORBA_tk_##nom, \
-  #nom, \
-  "IDL:CORBA/" #nom ":1.0", \
-  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0 \
+#define DEF_TC_BASIC(nom, c_align)                               \
+	struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = {  \
+		{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},    \
+		CORBA_tk_##nom,                                  \
+		#nom,                                            \
+		"IDL:CORBA/" #nom ":1.0",                        \
+		0, 0, NULL, NULL, NULL,                          \
+		CORBA_OBJECT_NIL, -1, 0, 0, 0, c_align           \
 }
 
 #define CORBA_tk_Object CORBA_tk_objref
@@ -143,35 +144,35 @@ struct CORBA_TypeCode_struct TC_null_struct = {
   CORBA_tk_null,
   "null",
   "Null",
-  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0
+  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0, -1
 };
 struct CORBA_TypeCode_struct TC_void_struct = {
   {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
   CORBA_tk_void,
   "void",
   "IDL:CORBA/void:1.0",
-  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0
+  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0, -1
 };
 
-DEF_TC_BASIC(char);
-DEF_TC_BASIC(wchar);
-DEF_TC_BASIC(string);
-DEF_TC_BASIC(long);
-DEF_TC_BASIC(unsigned_long);
-DEF_TC_BASIC(float);
-DEF_TC_BASIC(double);
-DEF_TC_BASIC(short);
-DEF_TC_BASIC(unsigned_short);
-DEF_TC_BASIC(boolean);
-DEF_TC_BASIC(octet);
-DEF_TC_BASIC(any);
-DEF_TC_BASIC(TypeCode);
-DEF_TC_BASIC(Principal);
-DEF_TC_BASIC(Object);
-DEF_TC_BASIC(wstring);
-DEF_TC_BASIC(long_double);
-DEF_TC_BASIC(long_long);
-DEF_TC_BASIC(unsigned_long_long);
+DEF_TC_BASIC(char, ORBIT_ALIGNOF_CORBA_CHAR);
+DEF_TC_BASIC(wchar, ORBIT_ALIGNOF_CORBA_WCHAR);
+DEF_TC_BASIC(string, ORBIT_ALIGNOF_CORBA_POINTER);
+DEF_TC_BASIC(long, ORBIT_ALIGNOF_CORBA_LONG);
+DEF_TC_BASIC(unsigned_long, ORBIT_ALIGNOF_CORBA_LONG);
+DEF_TC_BASIC(float, ORBIT_ALIGNOF_CORBA_FLOAT);
+DEF_TC_BASIC(double, ORBIT_ALIGNOF_CORBA_DOUBLE);
+DEF_TC_BASIC(short, ORBIT_ALIGNOF_CORBA_SHORT);
+DEF_TC_BASIC(unsigned_short, ORBIT_ALIGNOF_CORBA_SHORT);
+DEF_TC_BASIC(boolean, ORBIT_ALIGNOF_CORBA_BOOLEAN);
+DEF_TC_BASIC(octet, ORBIT_ALIGNOF_CORBA_OCTET);
+DEF_TC_BASIC(any, ORBIT_ALIGNOF_CORBA_ANY);
+DEF_TC_BASIC(TypeCode, ORBIT_ALIGNOF_CORBA_POINTER);
+DEF_TC_BASIC(Principal, -1);
+DEF_TC_BASIC(Object, -1);
+DEF_TC_BASIC(wstring, ORBIT_ALIGNOF_CORBA_POINTER);
+DEF_TC_BASIC(long_double, ORBIT_ALIGNOF_CORBA_LONG_DOUBLE);
+DEF_TC_BASIC(long_long, ORBIT_ALIGNOF_CORBA_LONG_LONG);
+DEF_TC_BASIC(unsigned_long_long, ORBIT_ALIGNOF_CORBA_LONG_LONG);
 
 gpointer
 CORBA_TypeCode__freekids(gpointer mem, gpointer dat)
@@ -209,6 +210,7 @@ ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf)
 
   ctx.current_idx=0;
   ctx.prior_tcs=NULL;
+
   retval = tc_dec(tc, buf, &ctx);
   for(l=ctx.prior_tcs;l;l=l->next)
     g_free(l->data);
@@ -487,6 +489,67 @@ CDR_get_const_string(GIOPRecvBuffer *buf, char **ptr)
   return FALSE;
 }
 
+static CORBA_short
+ORBit_TC_find_c_alignment (CORBA_TypeCode tc)
+{
+	CORBA_short retval = 1;
+	int         i;
+
+	while (tc->kind == CORBA_tk_alias)
+		tc = tc->subtypes[0];
+
+	switch(tc->kind) {
+	case CORBA_tk_union:
+		retval = MAX (retval,
+			      ORBit_TC_find_c_alignment (tc->discriminator));
+	case CORBA_tk_except:
+	case CORBA_tk_struct:
+#if ORBIT_ALIGNOF_CORBA_STRUCT > 1
+		retval = MAX (retval, ORBIT_ALIGNOF_CORBA_STRUCT);
+#endif
+		for(i = 0; i < tc->sub_parts; i++)
+			retval = MAX (retval, 
+				      ORBit_TC_find_c_alignment (tc->subtypes[i]));
+		return retval;
+	case CORBA_tk_ulong:
+	case CORBA_tk_long:
+	case CORBA_tk_enum:
+		return ORBIT_ALIGNOF_CORBA_LONG;
+	case CORBA_tk_ushort:
+	case CORBA_tk_short:
+	case CORBA_tk_wchar:
+		return ORBIT_ALIGNOF_CORBA_SHORT;
+	case CORBA_tk_longlong:
+	case CORBA_tk_ulonglong:
+		return ORBIT_ALIGNOF_CORBA_LONG_LONG;
+	case CORBA_tk_float:
+		return ORBIT_ALIGNOF_CORBA_FLOAT;
+	case CORBA_tk_double:
+		return ORBIT_ALIGNOF_CORBA_DOUBLE;
+	case CORBA_tk_longdouble:
+		return ORBIT_ALIGNOF_CORBA_LONG_DOUBLE;
+	case CORBA_tk_boolean:
+	case CORBA_tk_char:
+	case CORBA_tk_octet:
+		return ORBIT_ALIGNOF_CORBA_CHAR;
+	case CORBA_tk_string:
+	case CORBA_tk_wstring:
+	case CORBA_tk_TypeCode:
+	case CORBA_tk_objref:
+		return ORBIT_ALIGNOF_CORBA_POINTER;
+	case CORBA_tk_sequence:
+		return ORBIT_ALIGNOF_CORBA_SEQ;
+	case CORBA_tk_any:
+		return ORBIT_ALIGNOF_CORBA_ANY;
+	case CORBA_tk_array:
+		return ORBit_TC_find_c_alignment (tc->subtypes[0]);
+	case CORBA_tk_fixed:
+		return ORBIT_ALIGNOF_CORBA_FIXED;
+	default:
+		return 1;
+	}
+}
+
 static gboolean
 tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 {
@@ -564,6 +627,8 @@ tc_dec(CORBA_TypeCode* t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   node->tc=tc;
   ctx->prior_tcs=g_slist_prepend(ctx->prior_tcs, node);
   *t=tc;
+
+  tc->c_align = ORBit_TC_find_c_alignment (tc);
 
   return FALSE;
 }

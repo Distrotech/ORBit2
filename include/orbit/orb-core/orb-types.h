@@ -23,6 +23,9 @@
 					    ORBIT_ALIGNOF_CORBA_LONG),   \
 					    ORBIT_ALIGNOF_CORBA_POINTER)
 
+/* alignment of CORBA_fixed_d_s */
+#define ORBIT_ALIGNOF_CORBA_FIXED  MAX (    ORBIT_ALIGNOF_CORBA_SHORT,   \
+					    ORBIT_ALIGNOF_CORBA_STRUCT);
 
 typedef CORBA_char *CORBA_ORBid;
 typedef struct _CORBA_any CORBA_any;

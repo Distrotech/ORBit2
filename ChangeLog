@@ -1,3 +1,22 @@
+2001-08-31 Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-typecode.h:
+	(CORBA_TypeCode_struct): fill unused flags,
+	add c_align.
+
+	* include/orbit/orb-core/orb-types.h: add alignment
+	macro for fixed types.
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(orbit_find_c_alignment) impl.
+
+	* src/orb/orb-core/corba-any.c(ORBit_find_alignment):
+	replace with temporary wrapper.
+
+	* src/orb/orb-core/corba-typecode.c
+	(ORBit_TC_find_c_alignment): impl.
+	(tc_dec): update.
+
 2001-08-30 Mark McLoughlin <mark@skynet.ie>
 
 	* acconfig.h, configure.in, 
