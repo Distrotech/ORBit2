@@ -1,5 +1,5 @@
 #include "config.h"
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
 /* So we can check if we need to retry */
 #include <openssl/bio.h>
 #endif
@@ -115,7 +115,7 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
   switch(status)
     {
     case LINC_CONNECTED:
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
       if(cnx->options & LINC_CONNECTION_SSL)
 	{
 	  if(cnx->was_initiated)
@@ -163,7 +163,7 @@ linc_connection_from_fd(LINCConnection *cnx, int fd,
   if(proto->setup)
     proto->setup(fd, options);
 
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
   if(options & LINC_CONNECTION_SSL)
     {
       cnx->ssl = SSL_new(linc_ssl_ctx);
@@ -253,7 +253,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
     return -1;
 
   do {
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
     if(cnx->options & LINC_CONNECTION_SSL)
       n = SSL_read(cnx->ssl, buf, len);
     else
@@ -262,7 +262,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 
       if(n < 0)
 	{
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
 	  if(cnx->options & LINC_CONNECTION_SSL)
 	    {
 	      gulong rv;
@@ -312,7 +312,7 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 
   while(len > 0)
     {
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
       if(cnx->options & LINC_CONNECTION_SSL)
 	n = SSL_write(cnx->ssl, buf, len);
       else
@@ -321,7 +321,7 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 
       if(n < 0)
 	{
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
 	  if(cnx->options & LINC_CONNECTION_SSL)
 	    {
 	      gulong rv;
@@ -372,7 +372,7 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
 
   fd = cnx->fd;
 
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
   if(cnx->options & LINC_CONNECTION_SSL)
     {
       for(n = 0; n < nvecs; n++)
