@@ -1,3 +1,11 @@
+2001-11-18  Miles Lane  <miles@megapathdsl.net>
+
+	* include/linc/linc-types.h: replace include of 
+	gobject/gobject.h with glib-object.h, due to a 
+	change in gobject/gobject.h that forces an #error 
+	for all direct includes.
+	This checkin was approved by Havoc.
+
 2001-11-16  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: bump ver to 0.1.9
