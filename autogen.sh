@@ -67,7 +67,7 @@ echo processing libIDL
 
 cd $ORIGDIR
 
-echo "Running ./configure --enable-maintainer-mode" "$@"
+echo "Running $srcdir/configure --enable-maintainer-mode" "$@"
 $srcdir/configure --enable-maintainer-mode "$@"
 
 echo 
