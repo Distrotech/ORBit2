@@ -1,5 +1,6 @@
 #include "config.h"
 #include <orbit/GIOP/giop.h>
+#include <string.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
 static void giop_connection_destroy    (GObject             *obj);
@@ -53,7 +54,7 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
 	 && !strcmp(remote_serv_info, cnx->parent.remote_serv_info)
 	 && !strcmp(proto_name, cnx->parent.proto->name)
 	 && cnx->parent.status != LINC_DISCONNECTED
-	 && ((cnx->parent.flags & LINC_CONNECTION_SSL)==(is_ssl?LINC_CONNECTION_SSL:0)))
+	 && ((cnx->parent.options & LINC_CONNECTION_SSL)==(is_ssl?LINC_CONNECTION_SSL:0)))
 	retval = cnx;
     }
   if(retval)
@@ -234,7 +235,7 @@ giop_connection_initiate(const char *proto_name,
   O_MUTEX_LOCK(cnx_list.lock);
 
   cnx = giop_connection_list_lookup(proto_name, remote_serv_info,
-				    remote_serv_info, (options&LINC_CONNECTION_SSL)?is_ssl:FALSE);
+				    remote_serv_info, (options&LINC_CONNECTION_SSL)?TRUE:FALSE);
 
   if(!cnx)
     {

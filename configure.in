@@ -253,6 +253,7 @@ src/idl/CORBA_PIDL/Makefile
 src/idl/interop/Makefile
 src/idl/misc/Makefile
 src/orb/Makefile
+src/orb/include/Makefile
 src/orb/util/Makefile
 src/orb/GIOP/Makefile
 src/orb/orb-core/Makefile
@@ -264,6 +265,7 @@ include/orbit/orbit-config.h
 include/orbit/GIOP/Makefile
 include/orbit/util/Makefile
 include/orbit/orb-core/Makefile
+include/orbit/poa/Makefile
 docs/Makefile
 docs/devel/Makefile
 docs/internals/Makefile

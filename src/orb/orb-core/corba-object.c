@@ -1,23 +1,39 @@
+#include "config.h"
 #include <orbit/orbit.h>
+#include <string.h>
+#include "corba-ops.h"
 
 static void ORBit_profile_free(IOP_Profile_info *p);
-static guint g_CORBA_Object_hash(CORBA_Object _obj);
-static gboolean g_CORBA_Object_equal(CORBA_Object _obj,
-				     CORBA_Object other_object);
+static guint g_CORBA_Object_hash(gconstpointer key);
+static gboolean g_CORBA_Object_equal(gconstpointer a, gconstpointer b);
 static IOP_Profile_info *IOP_profile_find(GSList *list, IOP_ProfileId type,
 					  GSList **pos);
 static IOP_Component_info *IOP_component_find(GSList *list, IOP_ComponentId type,
 					      GSList **pos);
+extern void IOP_components_free(GSList *components);
 
 static GHashTable *objrefs = NULL;
+
+static CORBA_unsigned_long
+ORBit_classinfo_lookup_id(const char *type_id)
+{
+  return 0;
+}
+
+#define ORBIT_SERVANT_TO_CLASSINFO(x) NULL
 
 static void
 CORBA_Object_release_cb(ORBit_RootObject robj)
 {
   CORBA_Object obj = (CORBA_Object)robj;
 
+  g_hash_table_remove(objrefs, obj);
   giop_connection_unref(obj->connection);
-  g_slist_foreach(obj->profile_list, );
+  g_slist_foreach(obj->profile_list, (GFunc)ORBit_profile_free, NULL);
+  g_slist_free(obj->profile_list);
+  g_free(obj->type_id);
+  /* XXX finish me */
+  g_free(obj);
 }
 
 static ORBit_RootObject_Interface objref_if = {
@@ -30,7 +46,8 @@ ORBit_objref_new(CORBA_ORB orb, const char *type_id, GSList *profiles)
 {
   CORBA_Object retval;
   retval = g_new0(struct CORBA_Object_type, 1);
-  ORBit_RootObject_init((ORBit_RootObject)retval, iface);
+
+  ORBit_RootObject_init((ORBit_RootObject)retval, &objref_if);
   retval->type_id = g_strdup(type_id);
   retval->profile_list = profiles;
   retval->orb = orb;
@@ -44,7 +61,7 @@ ORBit_objref_find(CORBA_ORB orb, const char *type_id, GSList *profiles)
   CORBA_Object retval = CORBA_OBJECT_NIL;
   struct CORBA_Object_type fakeme = {{0}};
 
-  fakeme.type_id = type_id;
+  fakeme.type_id = (char *)type_id;
   fakeme.profile_list = profiles;
 
   O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
@@ -84,13 +101,17 @@ ORBit_try_connection(CORBA_Object obj)
 }
 
 static IOP_Profile_info *
-IOP_profile_find(GSList *list, IOP_ProfileId type)
+IOP_profile_find(GSList *list, IOP_ProfileId type, GSList **pos)
 {
   for(; list; list = list->next)
     {
       IOP_Profile_info *pi = list->data;
       if(pi->profile_type == type)
-	return pi;
+	{
+	  if(pos)
+	    *pos = list;
+	  return pi;
+	}
     }
 
   return NULL;
@@ -118,7 +139,6 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
   IOP_TAG_ORBIT_SPECIFIC_info *osi;
   IOP_TAG_INTERNET_IOP_info *iiop;
   IOP_TAG_GENERIC_IOP_info *giop;
-  IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
 
   *ssl = FALSE;
 
@@ -136,7 +156,7 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
       {
 	IOP_TAG_SSL_SEC_TRANS_info *ssli;
 	ssli = (IOP_TAG_SSL_SEC_TRANS_info *)
-	  IOP_component_find(iiop->components, IOP_TAG_SSL_SEC_TRANS);
+	  IOP_component_find(iiop->components, IOP_TAG_SSL_SEC_TRANS, NULL);
 	if(ssli)
 	  {
 	    g_snprintf(tmpbuf, 8, "%d", ssli->port);
@@ -156,7 +176,8 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
       {
 	IOP_TAG_GENERIC_SSL_SEC_TRANS_info *ssli;
 	ssli = (IOP_TAG_GENERIC_SSL_SEC_TRANS_info *)
-	  IOP_component_find(giop->components, IOP_TAG_GENERIC_SSL_SEC_TRANS);
+	  IOP_component_find(giop->components, IOP_TAG_GENERIC_SSL_SEC_TRANS,
+			     NULL);
 	if(ssli)
 	  {
 	    *service = ssli->service;
@@ -167,13 +188,14 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
       {
 	IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
 	mci = (IOP_TAG_MULTIPLE_COMPONENTS_info *)
-	  IOP_profile_find(obj->profile_list);
+	  IOP_profile_find(obj->profile_list, IOP_TAG_MULTIPLE_COMPONENTS, NULL);
 	*oki = NULL;
 	if(mci)
 	  {
 	    IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
 	    coki = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
-	      IOP_component_find(mci->components, IOP_TAG_COMPLETE_OBJECT_KEY);
+	      IOP_component_find(mci->components, IOP_TAG_COMPLETE_OBJECT_KEY,
+				 NULL);
 	    if(coki)
 	      *oki = coki->oki;
 	  }
@@ -205,26 +227,9 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
   return FALSE;
 }
 
-static gboolean
-IOP_profile_holds_address(IOP_ProfileId id)
-{
-  switch(id)
-    {
-    case IOP_TAG_INTERNET_IOP:
-    case IOP_TAG_ORBIT_SPECIFIC:
-    case IOP_TAG_GENERIC_IOP:
-      return TRUE;
-      break;
-    }
-
-  return FALSE;
-}
-
 GIOPConnection *
 _ORBit_object_get_connection(CORBA_Object obj)
 {
-  char *;
-  int i, ni, j, nj;
   GSList *plist, *cur;
   char tbuf[20];
 
@@ -305,13 +310,13 @@ CORBA_Object_is_a(CORBA_Object _obj,
       CORBA_unsigned_long clsid
 	= ORBit_classinfo_lookup_id(logical_type_id);
       PortableServer_ClassInfo *ci 
-	= ORBIT_SERVANT_TO_CLASSINFO(obj->bypass_obj->servant);
+	= ORBIT_SERVANT_TO_CLASSINFO(_obj->bypass_obj->servant);
       return (clsid && (clsid < ci->vepvlen) && ci->vepvmap[clsid]);
   
       return CORBA_FALSE;
     }
   else
-    return CORBA_Object__is_a(_obj, logical_type_id, ev);
+    return ORBit_ObjectImpl__is_a(_obj, logical_type_id, ev);
 }
 
 CORBA_boolean
@@ -324,7 +329,7 @@ CORBA_Object_non_existent(CORBA_Object _obj,
 }
 
 static gboolean
-IOP_Profile_equal(gpointer d1, gpointer p2)
+IOP_Profile_equal(gpointer d1, gpointer d2)
 {
   IOP_TAG_INTERNET_IOP_info *iiop1, *iiop2;
   IOP_TAG_GENERIC_IOP_info *giop1, *giop2;
@@ -370,10 +375,11 @@ IOP_Profile_equal(gpointer d1, gpointer p2)
 }
 
 static gboolean
-g_CORBA_Object_equal(CORBA_Object _obj, CORBA_Object other_object)
+g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
 {
   GSList *cur1, *cur2;
-
+  CORBA_Object _obj = (CORBA_Object)a;
+  CORBA_Object other_object = (CORBA_Object)b;
   if(_obj == other_object)
     return TRUE;
   if(!(_obj && other_object))
@@ -416,9 +422,9 @@ profile_hash(gpointer item, gpointer data)
 {
   IOP_Profile_info *p = item;
   guint *h = data;
-  IOP_TAG_INTERNET_IOP *iiop;
-  IOP_TAG_GENERIC_IOP *giop;
-  IOP_TAG_ORBIT_SPECIFIC *osi;
+  IOP_TAG_INTERNET_IOP_info *iiop;
+  IOP_TAG_GENERIC_IOP_info *giop;
+  IOP_TAG_ORBIT_SPECIFIC_info *osi;
   IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
   IOP_UnknownProfile_info *upi;
 
@@ -452,9 +458,10 @@ profile_hash(gpointer item, gpointer data)
 }
 
 static guint
-g_CORBA_Object_hash(CORBA_Object _obj)
+g_CORBA_Object_hash(gconstpointer key)
 {
   guint retval;
+  CORBA_Object _obj;
 
   retval = g_str_hash(_obj->type_id);
   g_slist_foreach(_obj->profile_list, profile_hash, &retval);
@@ -553,7 +560,7 @@ IOP_UnknownComponent_marshal(GIOPSendBuffer *buf, IOP_Component_info *ci)
 static void
 IOP_components_marshal(GIOPSendBuffer *buf, GSList *components)
 {
-  CORBA_unsigned_long len, i, *lenptr;
+  CORBA_unsigned_long len, *lenptr;
   GSList *cur;
   len = g_slist_length(components);
   giop_send_buffer_align(buf, 4);
@@ -565,7 +572,8 @@ IOP_components_marshal(GIOPSendBuffer *buf, GSList *components)
       giop_send_buffer_align(buf, 4);
       giop_send_buffer_append(buf, &ci->component_type, 4);
       len = buf->msg.header.message_size;
-      lenptr = giop_send_buffer_append_indirect(buf, &len, 4);
+      lenptr = (CORBA_unsigned_long *)
+	giop_send_buffer_append_indirect(buf, &len, 4);
 
       switch(ci->component_type)
 	{
@@ -590,7 +598,7 @@ IOP_TAG_INTERNET_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
   IOP_TAG_INTERNET_IOP_info *iiop = (IOP_TAG_INTERNET_IOP_info *)profile;
   CORBA_unsigned_long len;
 
-  giop_send_buffer_append(buf, giop_version_ids[iiop->version], 2);
+  giop_send_buffer_append(buf, giop_version_ids[iiop->iiop_version], 2);
   len = strlen(iiop->host) + 1;
   giop_send_buffer_align(buf, 4);
   giop_send_buffer_append_indirect(buf, &len, 4);
@@ -610,7 +618,7 @@ IOP_TAG_GENERIC_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
   IOP_TAG_GENERIC_IOP_info *giop = (IOP_TAG_GENERIC_IOP_info *)profile;
   CORBA_unsigned_long len;
 
-  giop_send_buffer_append(buf, giop_version_ids[giop->version], 2);
+  giop_send_buffer_append(buf, giop_version_ids[giop->iiop_version], 2);
   len = strlen(giop->proto) + 1;
   giop_send_buffer_align(buf, 4);
   giop_send_buffer_append_indirect(buf, &len, 4);
@@ -626,8 +634,7 @@ IOP_TAG_GENERIC_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
   giop_send_buffer_append_indirect(buf, &len, 4);
   giop_send_buffer_append(buf, giop->service, len);
 
-
-  IOP_components_marshal(buf, iiop->components);
+  IOP_components_marshal(buf, giop->components);
 }
 
 static void
@@ -662,7 +669,8 @@ ORBit_marshal_profile(GIOPSendBuffer *buf, IOP_Profile_info *profile)
   CORBA_unsigned_long *seqlen, dumb;
   giop_send_buffer_align(buf, 4);
   giop_send_buffer_append(buf, &profile->profile_type, 4);
-  seqlen = giop_send_buffer_append_indirect(buf, &dumb, 4);
+  seqlen = (CORBA_unsigned_long *)
+    giop_send_buffer_append_indirect(buf, &dumb, 4);
   *seqlen = 0;
 
   dumb = buf->msg.header.message_size;
@@ -688,6 +696,7 @@ void
 ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
 {
   CORBA_unsigned_long type_len, num_profiles;
+  GSList *cur;
 
   giop_send_buffer_align(buf, 4);
   type_len = strlen(obj->type_id) + 1;
@@ -740,7 +749,6 @@ IOP_TAG_SSL_SEC_TRANS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
 {
   IOP_TAG_SSL_SEC_TRANS_info *retval = NULL;
   GIOPRecvBuffer *sub;
-  CORBA_unsigned_long len;
 
   sub = giop_recv_buffer_use_encaps_buf(buf);
   if(!sub)
@@ -763,7 +771,8 @@ IOP_TAG_SSL_SEC_TRANS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
   sub->cur += 2;
 
   giop_recv_buffer_unuse(sub);
-  return retval;
+
+  return (IOP_Component_info *)retval;
 }
 
 
@@ -791,7 +800,7 @@ IOP_TAG_GENERIC_SSL_SEC_TRANS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
   retval->service = g_memdup(sub->cur, len);
 
   giop_recv_buffer_unuse(sub);
-  return retval;
+  return (IOP_Component_info *)retval;
 
  errout:
   g_free(retval);
@@ -814,15 +823,14 @@ IOP_TAG_COMPLETE_OBJECT_KEY_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
 }
 
 static IOP_Component_info *
-IOP_UnknownComponent_demarshal(IOP_ComponentId p, GIOPRecvBuffer *buf,
-			     CORBA_ORB orb)
+IOP_UnknownComponent_demarshal(IOP_ComponentId p, GIOPRecvBuffer *buf)
 {
   IOP_UnknownComponent_info *retval;
   CORBA_unsigned_long len;
 
   if((buf->cur + 4) > buf->end)
     return NULL;
-  len = *(CORBA_unsigned_long)buf->cur;
+  len = *(CORBA_unsigned_long *)buf->cur;
   buf->cur += 4;
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
@@ -847,13 +855,12 @@ IOP_components_demarshal(GIOPRecvBuffer *buf, GSList **components)
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
   if((buf->cur + 4) > buf->end)
     return TRUE;
-  len = *(CORBA_unsigned_long)buf->cur;
+  len = *(CORBA_unsigned_long*)buf->cur;
   buf->cur += 4;
   for(i = 0; i < len; i++)
     {
       IOP_ComponentId cid;
       IOP_Component_info *c;
-      GIOPRecvBuffer *subbuf;
 
       buf->cur = ALIGN_ADDRESS(buf->cur, 4);
       if((buf->cur + 4) > buf->end)
@@ -863,16 +870,16 @@ IOP_components_demarshal(GIOPRecvBuffer *buf, GSList **components)
       switch(cid)
 	{
 	case IOP_TAG_COMPLETE_OBJECT_KEY:
-	  c = IOP_TAG_COMPLETE_OBJECT_KEY_demarshal(buf);
+	  c = IOP_TAG_COMPLETE_OBJECT_KEY_demarshal(cid, buf);
 	  break;
 	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
-	  c = IOP_TAG_GENERIC_SSL_SEC_TRANS_demarshal(buf);
+	  c = IOP_TAG_GENERIC_SSL_SEC_TRANS_demarshal(cid, buf);
 	  break;
 	case IOP_TAG_SSL_SEC_TRANS:
-	  c = IOP_TAG_SSL_SEC_TRANS_demarshal(buf);
+	  c = IOP_TAG_SSL_SEC_TRANS_demarshal(cid, buf);
 	  break;
 	default:
-	  c = IOP_UnknownComponent_demarshal(buf);
+	  c = IOP_UnknownComponent_demarshal(cid, buf);
 	  break;
 	}
       if(c)
@@ -898,7 +905,7 @@ IOP_UnknownProfile_demarshal(IOP_ProfileId p, GIOPRecvBuffer *buf,
 
   if((buf->cur + 4) > buf->end)
     return NULL;
-  len = *(CORBA_unsigned_long)buf->cur;
+  len = *(CORBA_unsigned_long*)buf->cur;
   buf->cur += 4;
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
@@ -974,7 +981,7 @@ IOP_TAG_MULTIPLE_COMPONENTS_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
       retval->components = components;
     }
   giop_recv_buffer_unuse(buf);
-  return retval;
+  return (IOP_Profile_info*)retval;
 }
 
 static IOP_Profile_info *
@@ -1025,7 +1032,7 @@ IOP_TAG_GENERIC_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
   buf->cur += 4;
 
   retval = g_new0(IOP_TAG_GENERIC_IOP_info, 1);
-  retval->version = version;
+  retval->iiop_version = version;
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
     goto errout;
@@ -1123,7 +1130,7 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
   buf->cur += 4;
 
   retval = g_new0(IOP_TAG_INTERNET_IOP_info, 1);
-  retval->version = version;
+  retval->iiop_version = version;
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
     goto errout;
@@ -1174,7 +1181,7 @@ ORBit_demarshal_profile(GIOPRecvBuffer *buf, CORBA_ORB orb)
   p = *(CORBA_unsigned_long *)buf->cur;
   buf->cur += 4;
 
-  switch(p->profile_type)
+  switch(p)
     {
     case IOP_TAG_INTERNET_IOP:
       retval = IOP_TAG_INTERNET_IOP_demarshal(p, buf, orb);

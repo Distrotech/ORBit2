@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 void
 ORBit_genrand_init(ORBit_genrand *gr)

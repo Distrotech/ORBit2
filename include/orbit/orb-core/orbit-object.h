@@ -2,6 +2,7 @@
 #define ORBIT_OBJECT_H 1
 
 #include <glib.h>
+#include <linc/linc.h>
 
 typedef enum {
 	ORBIT_ROT_NULL,

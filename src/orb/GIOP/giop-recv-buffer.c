@@ -754,16 +754,16 @@ giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth)
 guint
 giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
 {
-  switch(buf->header.version[1])
+  switch(buf->msg.header.version[1])
     {
     case 0:
-      return buf->msg.reply_1_0.reply_status;
+      return buf->msg.u.reply_1_0.reply_status;
       break;
     case 1:
-      return buf->msg.reply_1_1.reply_status;
+      return buf->msg.u.reply_1_1.reply_status;
       break;
     case 2:
-      return buf->msg.reply_1_2.reply_status;
+      return buf->msg.u.reply_1_2.reply_status;
       break;
     }
 
@@ -773,16 +773,18 @@ giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
 char *
 giop_recv_buffer_get_opname(GIOPRecvBuffer *buf)
 {
-  switch(buf->header.version[1])
+  switch(buf->msg.header.version[1])
     {
     case 0:
-      return buf->msg.request_1_0.operation;
+      return buf->msg.u.request_1_0.operation;
       break;
     case 1:
-      return buf->msg.request_1_1.operation;
+      return buf->msg.u.request_1_1.operation;
       break;
     case 2:
-      return buf->msg.request_1_2.operation;
+      return buf->msg.u.request_1_2.operation;
       break;
     }
+
+  return NULL;
 }
