@@ -9,10 +9,10 @@
 #include <fcntl.h>
 #include <errno.h>
 
-static void linc_connection_init       (LINCConnection      *cnx);
-static void linc_connection_real_state_changed (LINCConnection  *cnx, LINCConnectionStatus status);
-static void linc_connection_dispose    (GObject             *obj);
-static void linc_connection_class_init (LINCConnectionClass *klass);
+static void linc_connection_real_state_changed (LINCConnection      *cnx,
+						LINCConnectionStatus status);
+static void linc_connection_dispose            (GObject             *obj);
+static void linc_connection_class_init         (LINCConnectionClass *klass);
 
 GType
 linc_connection_get_type(void)
@@ -31,7 +31,7 @@ linc_connection_get_type(void)
         NULL,           /* class_data */
         sizeof (LINCConnection),
         0,              /* n_preallocs */
-        (GInstanceInitFunc) linc_connection_init,
+        (GInstanceInitFunc) NULL,
       };
       
       object_type = g_type_register_static (G_TYPE_OBJECT,
@@ -56,17 +56,12 @@ linc_connection_class_init (LINCConnectionClass *klass)
 }
 
 static void
-linc_connection_init       (LINCConnection      *cnx)
-{
-}
-
-static void
 linc_source_remove (LINCConnection *cnx, gboolean unref)
 {
   if(cnx->tag) {
-    guint thetag = cnx->tag;
-    cnx->tag = 0;
-    g_source_remove(thetag);
+    LincWatch *thewatch = cnx->tag;
+    cnx->tag = NULL;
+    linc_io_remove_watch (thewatch);
     if (unref) 
       g_object_unref (G_OBJECT (cnx));
   }
@@ -111,10 +106,12 @@ linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer dat
       if(!rv && !n && condition == G_IO_OUT)
 	{
 	  linc_connection_state_changed(cnx, LINC_CONNECTED);
-	  g_assert (cnx->tag == 0);
-	  cnx->tag = g_io_add_watch(cnx->gioc,
-				    G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
-				    linc_connection_connected, cnx);
+	  g_assert (cnx->tag == NULL);
+	  cnx->tag = linc_io_add_watch(
+		  cnx->gioc,
+		  G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
+		  linc_connection_connected, cnx);
+
 	  retval = FALSE;
 	}
       else {
@@ -151,14 +148,17 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
 	    SSL_accept(cnx->ssl);
 	}
 #endif
-      if(!cnx->tag)
-	cnx->tag = g_io_add_watch(cnx->gioc,
-				  G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
-				  linc_connection_connected, cnx);
+      if (!cnx->tag)
+	cnx->tag = linc_io_add_watch (
+		cnx->gioc,
+		G_IO_ERR|G_IO_HUP|G_IO_NVAL|G_IO_PRI,
+		linc_connection_connected, cnx);
       break;
     case LINC_CONNECTING:
       linc_source_remove (cnx, FALSE);
-      cnx->tag = g_io_add_watch(cnx->gioc, G_IO_OUT|G_IO_ERR|G_IO_HUP|G_IO_NVAL, linc_connection_connected, cnx);
+      cnx->tag = linc_io_add_watch (
+	      cnx->gioc, G_IO_OUT|G_IO_ERR|G_IO_HUP|G_IO_NVAL,
+	      linc_connection_connected, cnx);
       break;
     case LINC_DISCONNECTED:
 /*      g_warning ("Linc disconnected tag %d fd '%d'",
@@ -279,7 +279,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
   if(cnx->options & LINC_CONNECTION_NONBLOCKING)
     {
       while(cnx->status == LINC_CONNECTING)
-	g_main_iteration(TRUE);
+	linc_main_iteration(TRUE);
     }
 
   if(cnx->status != LINC_CONNECTED)
@@ -303,7 +303,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 	      if((rv == SSL_ERROR_WANT_READ
 		  || rv == SSL_ERROR_WANT_WRITE)
 		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		g_main_iteration(FALSE);
+		linc_main_iteration(FALSE);
 	      else
 		return -1;
 	    }
@@ -312,7 +312,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 	    {
 	      if(errno == EAGAIN
 		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		g_main_iteration(FALSE);
+		linc_main_iteration(FALSE);
 	      else
 		return -1;
 	    }
@@ -338,7 +338,7 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
   if(cnx->options & LINC_CONNECTION_NONBLOCKING)
     {
       while(cnx->status == LINC_CONNECTING)
-	g_main_iteration(TRUE);
+	linc_main_iteration(TRUE);
     }
 
   g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
@@ -362,7 +362,7 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 	      if((rv == SSL_ERROR_WANT_READ
 		  || rv == SSL_ERROR_WANT_WRITE)
 		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		g_main_iteration(FALSE);
+		linc_main_iteration(FALSE);
 	      else
 		return -1;
 	    }
@@ -371,7 +371,7 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 	    {
 	      if(errno == EAGAIN
 		 && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-		g_main_iteration(FALSE);
+		linc_main_iteration(FALSE);
 	      else
 		return -1;
 	    }
@@ -398,7 +398,7 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
   if(cnx->options & LINC_CONNECTION_NONBLOCKING)
     {
       while(cnx->status == LINC_CONNECTING)
-	g_main_iteration(TRUE);
+	linc_main_iteration(TRUE);
     }
 
   g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
@@ -428,8 +428,8 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
 	{
 	  if(errno == EAGAIN
 	     && (cnx->options & LINC_CONNECTION_NONBLOCKING))
-	    g_main_iteration(FALSE); /* Try to give other things a
-					chance to run */
+	    linc_main_iteration(FALSE); /* Try to give other things a
+					   chance to run */
 	  else
 	    return -1; /* Unhandlable error */
 	}

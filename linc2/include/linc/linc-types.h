@@ -60,4 +60,6 @@ extern pthread_mutexattr_t linc_mutex_attrs;
 
 #endif
 
+typedef struct _LincWatch LincWatch;
+
 #endif
