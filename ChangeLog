@@ -1,3 +1,10 @@
+2004-02-12  Chris Toshok  <toshok@ximian.com>
+
+	* src/orb/orb-core/Makefile.am (INCLUDES): change the order so
+	that top_builddir is always listed first.  This keeps heads in
+	top_srcdir from ending up in the .dep files and causing make
+	distcheck to fail.
+
 2004-02-10  Tomasz K³oczko <kloczek@pld.org.pl>
 
 	* acinclude.m4: added missing [] quotation first parameter of
