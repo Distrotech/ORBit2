@@ -1,3 +1,12 @@
+2004-04-24  Dan Winship  <danw@ximian.com>
+
+	* src/services/imodule/Makefile.am (LDADD): Remove
+	$(LOCAL_LINC_LIBS). (Only libORBit-2 itself should be linking
+	against it.)
+
+	* src/services/name/Makefile.am (libORBitCosNaming_2_la_LDFLAGS):
+	Likewise
+	
 2004-04-24  Frank Rehberger  <frehberg@fresa.casa.in-berlin.de>
 
 	* MAINTAINERS: maintainer-ship handed over to  frehberg@gnome-de.org

@@ -18,7 +18,6 @@ libORBitCosNaming_2_la_LDFLAGS =					\
 	-version-info $(LT_VERSION)					\
 	-no-undefined							\
 	$(ORBIT_NAME_LIBS)						\
-	$(LOCAL_LINC_LIBS)						\
 	$(top_builddir)/src/orb/libORBit-2.la
 
 INCLUDES =				\

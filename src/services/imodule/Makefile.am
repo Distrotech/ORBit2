@@ -14,7 +14,6 @@ INCLUDES =				\
 
 LDADD = $(ORBIT_LIBS)				\
 	$(ORBIT_IDL_LIBS)			\
-	$(LOCAL_LINC_LIBS)			\
 	$(top_builddir)/src/orb/libORBit-2.la
 
 imoduleincludedir      = $(includedir)/orbit-2.0/ORBitservices
