@@ -62,6 +62,8 @@ scan_socket_dir (const char *dir, const char *prefix)
 	g_return_val_if_fail (prefix != NULL, NULL);
 	
 	dirh = opendir (dir);
+	if (!dirh)
+		return NULL;
 	prefix_len = strlen (prefix);
 
 	while ((dent = readdir (dirh))) {
