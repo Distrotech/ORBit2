@@ -701,13 +701,14 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 		return CORBA_OBJECT_NIL;
 	
 	return ORBit_RootObject_duplicate (objref);
-
+#if 0
  raise_invalid_name:
 	CORBA_exception_set (ev,
 			     CORBA_USER_EXCEPTION,
 			     ex_CORBA_ORB_InvalidName,
 			     NULL);
 	return CORBA_OBJECT_NIL;
+#endif
 }
 
 static CORBA_TypeCode

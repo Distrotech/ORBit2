@@ -1264,7 +1264,7 @@ ORBit_sequence_concat (gpointer      sequence,
 	guint element_size;
 	guchar *src;
 	CORBA_TypeCode tc, subtc;
-  	CORBA_sequence_CORBA_octet *seq = append;
+  	CORBA_sequence_CORBA_octet *seq = (CORBA_sequence_CORBA_octet *)append;
 
 	g_return_if_fail (seq != NULL);
 	g_return_if_fail (seq->_length <= seq->_maximum);

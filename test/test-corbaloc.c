@@ -22,7 +22,7 @@
 #include <string.h>
 #include <orbit/orbit.h> 
 
-gboolean
+static gboolean
 IOP_ObjectKey_equal (ORBit_ObjectKey *a,
 		     ORBit_ObjectKey *b);
 
@@ -30,8 +30,7 @@ gboolean
 IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
 		   gpointer d1, gpointer d2);
 
-static
-gboolean
+static gboolean
 IOP_ObjectKey_equal (ORBit_ObjectKey *a,
 		     ORBit_ObjectKey *b)
 {
@@ -57,8 +56,7 @@ if ((_ev)->_major != CORBA_NO_EXCEPTION) {                   \
 
 /* this implementation realizes a full comparison of profiles and
  * differs from the original one found in corba-object.c.*/ 
-static 
-gboolean
+static gboolean
 object_equal (gconstpointer a, gconstpointer b)
 {
 	GSList *cur1, *cur2;
@@ -91,8 +89,7 @@ object_equal (gconstpointer a, gconstpointer b)
 /**
  *
  */
-static
-void
+static void
 export_object_to_stream (CORBA_ORB          orb,
 			 CORBA_Object       obj,
 			 FILE              *stream,
@@ -180,8 +177,7 @@ const struct ObjrefPair objref_str[] =
 	}
 };
 
-int
-main (int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
 	glong   i = 0;
 	
 			      
