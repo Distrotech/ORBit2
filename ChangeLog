@@ -1,5 +1,9 @@
 2004-01-14  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.9.4
+
+2004-01-14  Michael Meeks  <michael@ximian.com>
+
 	* test/everything/client.c (testWithException): add.
 
 	* src/orb/orb-core/orbit-small.c
