@@ -6,6 +6,8 @@
 #ifndef LINK_HACKS_H
 #define LINK_HACKS_H
 
+#include <sys/types.h>
+
 #ifdef HAVE_WINSOCK2_H
 #  include <winsock2.h>
 #else
@@ -35,7 +37,6 @@
 #  endif
 #endif
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #ifdef HAVE_UNISTD_H
