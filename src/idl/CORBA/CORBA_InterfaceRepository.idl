@@ -527,8 +527,8 @@
     const ValueModifier VM_ABSTRACT     = 2;
     const ValueModifier VM_TRUNCATABLE  = 3;
 
-    interface TypeCode {                            // PIDL
-#       pragma version TypeCode 2.3
+    interface TTypeCode {                            // PIDL
+#       pragma version TTypeCode 2.3
         exception   Bounds {};
         exception   BadKind {};
         // for all TypeCode kinds

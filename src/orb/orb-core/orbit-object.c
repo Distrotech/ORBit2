@@ -3,7 +3,7 @@
 O_MUTEX_DEFINE(ORBit_RootObject_lifecycle_lock);
 
 void
-ORBit_RootObject_init(ORBit_RootObject obj, ORBit_RootObject_Interface * const interface)
+ORBit_RootObject_init(ORBit_RootObject obj, const ORBit_RootObject_Interface * interface)
 {
 #ifdef ORBIT_THREADSAFE
   if(!ORBit_RootObject_lifecycle_lock)
@@ -31,13 +31,13 @@ ORBit_RootObject_release(gpointer obj)
 
   O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
 
-  if(obj && obj->refs != ORBIT_REFCOUNT_STATIC)
+  if(robj && robj->refs != ORBIT_REFCOUNT_STATIC)
     {
-      g_assert(obj->refs < ORBIT_REFCOUNT_MAX && obj->refs > 0);
+      g_assert(robj->refs < ORBIT_REFCOUNT_MAX && robj->refs > 0);
 
-      obj->refs--;
-      if(obj->refs == 0)
-	(* obj->interface->destroy)(robj);
+      robj->refs--;
+      if(robj->refs == 0)
+	(* robj->interface->destroy)(robj);
     }
 
   O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);

@@ -15,8 +15,9 @@
 //    definition that results in valid IDL, even if it doesn't yield
 //    useful stubs and skeletons. Of course, PIDL never results in
 //    the standard stubs so that's not a problem.
+#ifndef __ORBIT_IDL__
 #define native typedef long
-
+#endif
 
 module PortableServer {
 #   pragma version PortableServer 2.3
