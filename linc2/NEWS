@@ -1,3 +1,7 @@
+Version 0.1.18
+
+	* default to not use OpenSSL (Michael)
+
 Version 0.1.17
 
 	* NI_MAXHOST not defined problem (Michael)
