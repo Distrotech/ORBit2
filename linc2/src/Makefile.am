@@ -24,7 +24,8 @@ liblinc_la_SOURCES =		\
 liblinc_la_LDFLAGS =                 \
 	$(LINC_LIBS)                 \
 	$(SSL_LIBS)                  \
-	-version-info $(LT_VERSION)
+	-version-info $(LT_VERSION)  \
+	-no-undefined
 
 linc_cleanup_sockets_SOURCES = \
 	cleanup.c

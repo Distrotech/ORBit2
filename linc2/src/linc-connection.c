@@ -610,7 +610,7 @@ write_data (LINCConnection *cnx, QueuedWrite *qw)
 
 			if (n) {
 				qw->vecs->iov_len  -= n;
-				qw->vecs->iov_base += n;
+				qw->vecs->iov_base = (guchar *)qw->vecs->iov_base + n;
 			}
 		}
 	}

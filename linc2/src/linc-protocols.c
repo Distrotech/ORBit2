@@ -281,7 +281,7 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 			struct in_addr ipv4_addr;
 			
 			if (!ipv4_addr_from_addr (&ipv4_addr,
-						  local_hostent->h_addr_list [i],
+						  (guint8 *)local_hostent->h_addr_list [i],
 						  local_hostent->h_length))
 				continue;
 
@@ -694,10 +694,17 @@ linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
  */
 #ifdef AF_INET6
 
+/*
+ *   We need some explicit check for Macs here - OSF1 does this
+ * right, and does not use a #define; so the Mac gets to break for
+ * now, until someone sends me a patch.
+ */
+#ifdef MAC_OS_X_IS_SO_BROKEN
 /* FIXME: is IN6ADDR_ANY_INIT exported on Mac OS X ? */
 /* on Mac OS X 10.1 inaddr6_any isn't exported by libc */
-#ifndef in6addr_any
+#  ifndef in6addr_any
 	static const struct in6_addr in6addr_any = { { { 0 } } };
+#  endif
 #endif
 
 static gboolean
