@@ -53,7 +53,7 @@ ACLOCAL="$ACLOCAL $ac_cv_orbit_aclocal_flags"
 AC_ARG_ENABLE(http, [--enable-http enables http connections],, enable_http=no)
 AM_CONDITIONAL(ENABLE_HTTP, test x"$enable_http" = xyes)
 if test x"$enable_http" = xyes ; then
-  AC_DEFINE(ENABLE_HTTP, 1)
+  AC_DEFINE(ENABLE_HTTP, 1, [Define if HTTP connections are available])
 fi
 dnl --enable-comile-warnings
 AC_ARG_ENABLE(compile-warnings, [  --enable-compile-warnings=[no/yes] Turn on compiler warnings.], [enable_compile_warnings="$enableval"],[enable_compile_warnings="yes"])
@@ -266,17 +266,17 @@ AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
 AC_CHECK_FUNC(getaddrinfo,,[AC_CHECK_LIB(nsl,getaddrinfo)])
 if test x"$ac_cv_func_getaddrinfo" = "xyes" ; then
-	AC_DEFINE(HAVE_GETADDRINFO)
+	AC_DEFINE(HAVE_GETADDRINFO, 1, [Define if getaddrinfo() is available])
 fi
 AC_CHECK_FUNC(getnameinfo,,[AC_CHECK_LIB(nsl,getnameinfo)])
 if test x"$ac_cv_func_getnameinfo" = "xyes" ; then
-	AC_DEFINE(HAVE_GETNAMEINFO)
+	AC_DEFINE(HAVE_GETNAMEINFO, 1, [Define if getnameinfo() is available])
 fi
 have_inet_pton=no
 AC_CHECK_FUNC(inet_pton,,)
 if test x"$ac_cv_func_inet_pton" = "xyes" ; then
 	have_inet_pton=yes
-        AC_DEFINE(HAVE_INET_PTON)
+        AC_DEFINE(HAVE_INET_PTON, 1, [Define if inet_pton() is available])
 fi
 
 # AC_CHECK_TYPE doesn't work here.
@@ -286,7 +286,7 @@ AC_TRY_COMPILE(
 #include <sys/socket.h>],
   [socklen_t len;],
   [AC_MSG_RESULT(yes)],
-  [AC_DEFINE(socklen_t, size_t)
+  [AC_DEFINE(socklen_t, size_t, [Define socklen_t to be of type size_t])
    AC_MSG_RESULT(no)])
 
 # Blatantly stolen from configure.in in the sample code from 
@@ -300,7 +300,7 @@ ac_cv_sockaddr_has_sa_len,
         ac_cv_sockaddr_has_sa_len=yes,
         ac_cv_sockaddr_has_sa_len=no))
 if test x"$ac_cv_sockaddr_has_sa_len" = "xyes" ; then
-        AC_DEFINE(HAVE_SOCKADDR_SA_LEN)
+        AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define if sockaddr has sa_len member])
 fi
 
 dnl

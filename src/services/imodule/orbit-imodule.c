@@ -512,7 +512,8 @@ build_cpp_args (const char *path,
 		const char *cpp_args)
 {
 	char *ret;
-	char *base;
+	const char *base;
+	char *base_cpy;
 	int   i;
 
 	base = g_basename (path);
@@ -520,14 +521,14 @@ build_cpp_args (const char *path,
 		ret = g_strconcat ("-D__ORBIT_IDL__ ", cpp_args, NULL);
 	} else {
 		/* base minus .idl extension */
-		base = g_strndup (base, strlen (base) - 4);
-		for (i = 0; base[i] != '\0'; i++) {
-			if (base[i] == '-')
-				base[i] = '_';
+		base_cpy = g_strndup (base, strlen (base) - 4);
+		for (i = 0; base_cpy[i] != '\0'; i++) {
+			if (base_cpy[i] == '-')
+				base_cpy[i] = '_';
 		}
-		ret = g_strconcat ("-D__ORBIT_IDL__ -D__", base,
+		ret = g_strconcat ("-D__ORBIT_IDL__ -D__", base_cpy,
 				   "_COMPILATION ", cpp_args, NULL);
-		g_free (base);
+		g_free (base_cpy);
 	}
 	return ret;
 }
