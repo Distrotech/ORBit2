@@ -1,3 +1,10 @@
+2005-03-11  Arvind Samptur  <arvind.samptur@wipro.com>
+
+	* src/linc-server.c (link_server_setup): Fill the LinkServer proto
+	with the info as soon as we find one. In case we cannot setup the 
+	connection the link_protocol_destroy_cnx () throws up a proto not 
+	found assertion which is not true. Patch reviewed by Micheal Meeks.
+
 2005-03-10  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-protocols.c (link_get_local_hostname): Make sure
