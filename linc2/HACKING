@@ -14,3 +14,6 @@ weeks, go ahead and commit, but please CC the list as you commit.
 
 	Build sheriff commits are welcome - in accordance with the
 relevant build sheriff constraints.
+
+	Members of the GNOME packaging product may commit fixes to
+the .spec files.
