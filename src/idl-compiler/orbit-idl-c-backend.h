@@ -16,7 +16,6 @@ typedef struct {
   guint8 last_tail_align;
   guint8 alloc_on_stack : 1; /* TRUE for demarshalling in skeletons, etc. */
   guint8 endian_swap_pass : 1; /* Demarshalling, again */
-  guint8 curptr_loaded : 1; /* ditto */
 } OIDL_C_Marshal_Info;
 
 void orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);

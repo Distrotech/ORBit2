@@ -14,7 +14,7 @@ oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, co
   retval->name = (char *)name;
 
   if(parent)
-    retval->flags = (parent->flags & (MN_LOOPED));
+    retval->flags |= (parent->flags & (MN_LOOPED));
 
   return retval;
 }
