@@ -473,10 +473,7 @@ IDLStruct::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 	string cpp_type = active_typedef ?
 		active_typedef->get_cpp_typename () : get_cpp_typename ();
 	
-	if (is_fixed ())
-		return cpp_type;
-	else
-		return cpp_type + "_var";
+	return cpp_type;
 }
 
 string
@@ -509,10 +506,6 @@ IDLStruct::member_init_cpp (ostream          &ostr,
 			    const string     &cpp_id,
 			    const IDLTypedef *active_typedef) const
 {
-	string cpp_type = active_typedef ?
-		active_typedef->get_cpp_typename () : get_cpp_typename ();
-	
-	ostr << indent << cpp_id << " = new " << cpp_type << ";" << endl;
 }
 
 void
@@ -521,7 +514,6 @@ IDLStruct::member_init_c (ostream          &ostr,
 			  const string     &cpp_id,
 			  const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
 }
 
 void
@@ -533,9 +525,7 @@ IDLStruct::member_pack_to_c (ostream          &ostr,
 {
 	// FIXME: Write passthrough optimization impl
 	
-	string accessor = is_fixed () ? "." : "->";
-
-	ostr << indent << cpp_id << accessor << "_orbitcpp_pack"
+	ostr << indent << cpp_id << "._orbitcpp_pack"
 	     << " (" << c_id << ");" << endl;
 }
 
@@ -548,8 +538,6 @@ IDLStruct::member_unpack_from_c  (ostream          &ostr,
 {
 	// FIXME: Write passthrough optimization impl
 
-	string accessor = is_fixed () ? "." : "->";
-
-	ostr << indent << cpp_id << accessor << "_orbitcpp_unpack"
-	     << " (" << c_id << ");" << endl;
+	ostr << indent << cpp_id << "._orbitcpp_unpack"
+	     << " (" << c_id << ");" << endl;	
 }
