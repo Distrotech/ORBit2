@@ -11,16 +11,18 @@
    . We can't use MW_Auto for inout stuff, and MW_Alloca requires some conniving.
 
    Are there any cases where a marshal method is valid in a child but not a parent?
-   . MW_Msg only applies to coalescable items.
+   . MW_Msg only applies to coalescable items (loop or set containers, or 
 
    The process of figuring out where to stick a variable goes like this:
-   If it is a toplevel:
-      If it is looped and marshallable, then use MW_Alloca
-      else use MW_Auto
-   else:
       The container always has to do the allocating, not the contained.
-      Types of containers are loop & switch - a set is sort of a container but it just passes the allocations on from its parent.
 
+      Types of containers are loop, switch, toplevel, and set.
+
+      A loop container just has to allocate space for its immediate contents (e.g. using sizeof) except in MW_Msg case
+      where no allocation necessary.
+      A set container has to know about coalescibility.
+      A switch container & set container both use the same allocation thing for children.
+      A toplevel container will know how to do var setup and allocation.
 */
 
 static OIDL_Marshal_Node *
