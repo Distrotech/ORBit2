@@ -1,3 +1,8 @@
+Version 0.5.5
+
+	* fixes
+		+ PATH_MAX issues for Hurd (Marcus Brinkmann)
+
 Version 0.5.4
 
 	* fixes
