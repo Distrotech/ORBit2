@@ -17,8 +17,11 @@ typedef enum {
   GIOP_1_0,
   GIOP_1_1,
   GIOP_1_2,
-  GIOP_LATEST = GIOP_1_2
+  GIOP_LATEST = GIOP_1_2,
+  GIOP_NUM_VERSIONS
 } GIOPVersion;
+
+extern const char giop_version_ids[GIOP_NUM_VERSIONS][2];
 
 typedef struct {
   CORBA_char magic[4];
@@ -205,6 +208,8 @@ typedef struct {
 } GIOPMsgLocateReply;
 
 typedef struct {
+  GIOPMsgHeader header;
+
   union {
     GIOPMsgRequest_1_0 request_1_0;
     GIOPMsgRequest_1_1 request_1_1;
@@ -215,5 +220,18 @@ typedef struct {
     GIOPMsgLocateReply locate_reply;
   } u;
 } GIOPMsg;
+
+#define GIOP_FLAG_BIG_ENDIAN 0
+#define GIOP_FLAG_LITTLE_ENDIAN 1
+
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+#  define GIOP_FLAG_ENDIANNESS GIOP_FLAG_BIG_ENDIAN
+#elif G_BYTE_ORDER == G_LITTLE_ENDIAN
+#  define GIOP_FLAG_ENDIANNESS GIOP_FLAG_LITTLE_ENDIAN
+#else
+#  error "Unsupported endianness on this system."
+#endif
+
+#define giop_endian_conversion_needed(to_endianness) ((to_endianness)!=GIOP_FLAG_ENDIANNESS)
 
 #endif

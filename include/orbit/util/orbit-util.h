@@ -6,7 +6,7 @@
 #include <orbit/util/basic_types.h>
 #include <orbit/util/thread-safety.h>
 
-/* Align an address upward to a boundary, expressed as a number of bytes.
+/* Align a value upward to a boundary, expressed as a number of bytes.
    E.g. align to an 8-byte boundary with argument of 8.  */
 
 /*
@@ -15,7 +15,10 @@
  *    ~(boundary - 1)
  */
 
+#define ALIGN_VALUE(this, boundary) \
+  (( ((gulong)(this)) + (((gulong)(boundary)) -1)) & (~(((gulong)(boundary))-1)))
+
 #define ALIGN_ADDRESS(this, boundary) \
-  ((gpointer)((( ((gulong)(this)) + (((gulong)(boundary)) -1)) & (~(((gulong)(boundary))-1)))))
+  ((gpointer)ALIGN_ADDRESS(this, boundary))
 
 #endif

@@ -1,7 +1,6 @@
 #include "config.h"
 #include <orbit/IIOP/giop-server.h>
 #include <orbit/IIOP/giop-connection.h>
-#include <netdb.h>
 
 static void giop_server_init       (GIOPServer      *server);
 static void giop_server_class_init (GIOPServerClass *klass);
