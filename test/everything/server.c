@@ -354,7 +354,7 @@ test_TestFactory_Servant servant;
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
 	factory = create_TestFactory (poa, &servant, ev);
-	CORBA_Object_release (poa, ev);
+	CORBA_Object_release ((CORBA_Object)poa, ev);
 	g_assert (factory != CORBA_OBJECT_NIL);
 
 	/* a quick local test */

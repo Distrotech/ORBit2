@@ -83,6 +83,22 @@ BasicServer_opLong(PortableServer_Servant servant,
 }
 
 static  
+CORBA_long_long
+BasicServer_opLongLong(PortableServer_Servant servant,
+		       const CORBA_long_long inArg, 
+		       CORBA_long_long *inoutArg,
+		       CORBA_long_long *outArg,
+		       CORBA_Environment *ev)
+{
+  g_assert(inArg == constants_LONG_LONG_IN);
+  g_assert(*inoutArg == constants_LONG_LONG_INOUT_IN);
+  
+  *inoutArg = constants_LONG_LONG_INOUT_OUT;
+  *outArg = constants_LONG_LONG_OUT;;
+  return constants_LONG_LONG_RETN;
+}
+
+static  
 test_AnEnum
 BasicServer_opEnum(PortableServer_Servant servant,
 		   const test_AnEnum inArg, 
@@ -134,6 +150,7 @@ POA_test_BasicServer__epv BasicServer_epv = {
   BasicServer__get_bah,
   BasicServer_opString,
   BasicServer_opLong,
+  BasicServer_opLongLong,
   BasicServer_opEnum,
   BasicServer_opException,
   BasicServer_opOneWay

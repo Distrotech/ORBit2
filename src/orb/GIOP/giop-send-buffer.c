@@ -358,7 +358,6 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 				 gulong          align_len)
 {
 	guchar *indirect;
-	gulong  indirect_left;
 
 	/* FIXME: could make this more efficient by in-lining the align
 	   more aggressively here */
@@ -370,7 +369,6 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 	}
 
 	indirect = buf->indirect;
-	indirect_left = buf->indirect_left;
 
 	if (mem)
 		memcpy (indirect, mem, align_len);

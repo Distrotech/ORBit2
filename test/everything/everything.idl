@@ -24,7 +24,7 @@ module test {
 	const char CONST_CHAR = 't';
 	const short CONST_SHORT = 0x1234;
 	const long CONST_LONG = 0x12345678;
-	const long long CONST_LONGLONG = 0x12345678;
+	const long long CONST_LONG_LONG = 0x12345678;
 	const string CONST_STRING = "ConstString";
 	const float CONST_FLOAT = 1234.56;
 	const double CONST_DOUBLE = 1234.5678;
@@ -142,6 +142,7 @@ module test {
 		readonly attribute long bah;
 		string opString(in string inArg, inout string inoutArg, out string outArg);
 		long opLong(in long inArg, inout long inoutArg, out long outArg);
+		long long opLongLong(in long long inArg, inout long long inoutArg, out long long outArg);
 		AnEnum opEnum(in AnEnum inArg, inout AnEnum inoutArg, out AnEnum outArg);
 		void opException() raises(TestException);
 		oneway void opOneWay(in string inArg);
