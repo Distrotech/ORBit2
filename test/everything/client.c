@@ -368,6 +368,19 @@ testException (test_BasicServer   objref,
 	CORBA_free (cpyev);
 }
 
+static void
+testBoolAlign (test_BasicServer   objref,
+	       CORBA_Environment *ev)
+{
+	char *inoutArg;
+
+	d_print ("Testing bool arg. alignment ...\n");
+
+	inoutArg = CORBA_string_dup("foo");
+	test_BasicServer_testBoolString (objref, TRUE, "retout", &inoutArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
 static CORBA_TypeCode
 find_tc (CORBA_sequence_CORBA_TypeCode *tcs, 
 	 const char                    *repo_id)
@@ -2076,6 +2089,7 @@ test_basic_server (test_TestFactory   factory,
 	testLongDouble (objref, ev);
 	testEnum       (objref, ev);
 	testException  (objref, ev);
+	testBoolAlign  (objref, ev);
 
 	CORBA_Object_release (objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);

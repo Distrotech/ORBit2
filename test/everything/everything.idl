@@ -176,6 +176,8 @@ module test {
 
 		long   getObjectCount ();
 		Object getObject      (in long which);
+
+		void testBoolString (in boolean inBool, in string inArg, inout string inoutArg);
 	};
 
 	interface StructServer : BasicServer {
