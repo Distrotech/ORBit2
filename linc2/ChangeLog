@@ -1,3 +1,7 @@
+2001-11-06  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_init): init with G_TYPE_DEBUG_OBJECTS.
+
 2001-10-30  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: version 0.1.6.
