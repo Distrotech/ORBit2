@@ -21,8 +21,9 @@ else
     echo "Running with socketdir: '$ORBIT_TMPDIR'";
 fi
 
-
-for params in '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --thread-tests'	\
+for params in '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --ORBCorbaloc=1'  \
+              '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --ORBCorbaloc=1'  \
+              '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --thread-tests'	\
 	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --thread-tests'	\
 	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1'		\
 	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0'		\
