@@ -1,18 +1,8 @@
 TODO:
 
-idl-compiler:
-
-	memory management
-	. Get all the MN_TOPLEVEL details & impl worked out
-		- write standard routines for "print out the variables I need". Also make all immediate children of a toplevel
-		just be MN_NEED_TMPVAR and allocate that way...
-	. Fix the demarshalling code to use the hints (fun fun!)
-	. Right now the skels put an 'if(ev->_major == CORBA_NO_EXCEPTION)' for every item that needs freeing.
-	Group things up properly.
-
-	bounds checking
-	. need some sort of expression tree thing
-	typedef struct {
-		int required_size;
-		char *varname;
-	} OIDL_Marshal_Bounds_Requirements;
+src/orb/IIOP:
+	I think it will need a rewrite :(
+	- Does not use GObject
+	- Doesn't handle different GIOP 1.0+ versions
+	- Not threaded
+	- No support for different transports
