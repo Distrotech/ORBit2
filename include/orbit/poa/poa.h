@@ -87,4 +87,16 @@ void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
 void ORBit_POAObject_post_invoke(    ORBit_POAObject *obj);
 
 
+PortableServer_ObjectId *PortableServer_string_to_ObjectId(CORBA_char *str,
+                                                           CORBA_Environment *nv);
+
+PortableServer_ObjectId *PortableServer_wstring_to_ObjectId(CORBA_wchar *str,
+                                                            CORBA_Environment *ev);
+
+CORBA_char *PortableServer_ObjectId_to_string(PortableServer_ObjectId *oid,
+                                              CORBA_Environment *ev);
+
+CORBA_wchar *PortableServer_ObjectId_to_wstring(PortableServer_ObjectId *oid,
+                                                CORBA_Environment *ev);
+
 #endif
