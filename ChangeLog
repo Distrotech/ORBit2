@@ -1,5 +1,13 @@
 2001-07-13  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (testString): use the getIOR
+	method to test stringification.
+
+	* test/everything/server.c
+	(TestFactory_getBasicServerIOR): impl.
+
+2001-07-13  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/poa.c (ORBit_small_handle_request):
 	re-indent to make legible.
 

@@ -55,15 +55,30 @@ typedef struct {
 static
 test_BasicServer
 TestFactory_getBasicServer(PortableServer_Servant servant,
-						   CORBA_Environment *ev) {
+			   CORBA_Environment *ev)
+{
   test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
   return CORBA_Object_duplicate(this->basicServerRef,ev);
 }
 
 static
+CORBA_char *
+TestFactory_getBasicServerIOR(PortableServer_Servant servant,
+			      CORBA_Environment *ev)
+{
+  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
+  
+
+  return CORBA_ORB_object_to_string (
+	  ORBIT_SERVANT_TO_ORB (servant),
+	  this->basicServerRef,ev);
+}
+
+static
 test_StructServer
 TestFactory_getStructServer(PortableServer_Servant servant,
-						   CORBA_Environment *ev) {
+			    CORBA_Environment *ev)
+{
   test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
   return CORBA_Object_duplicate(this->structServerRef,ev);
 }
@@ -71,7 +86,8 @@ TestFactory_getStructServer(PortableServer_Servant servant,
 static
 test_SequenceServer
 TestFactory_getSequenceServer(PortableServer_Servant servant,
-						   CORBA_Environment *ev) {
+			      CORBA_Environment *ev)
+{
   test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
   return CORBA_Object_duplicate(this->sequenceServerRef,ev);
 }
@@ -79,7 +95,8 @@ TestFactory_getSequenceServer(PortableServer_Servant servant,
 static
 test_UnionServer
 TestFactory_getUnionServer(PortableServer_Servant servant,
-						   CORBA_Environment *ev) {
+			   CORBA_Environment *ev)
+{
   test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
   return CORBA_Object_duplicate(this->unionServerRef,ev);
 }
@@ -87,7 +104,8 @@ TestFactory_getUnionServer(PortableServer_Servant servant,
 static
 test_ArrayServer
 TestFactory_getArrayServer(PortableServer_Servant servant,
-						   CORBA_Environment *ev) {
+			   CORBA_Environment *ev)
+{
   test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
   return CORBA_Object_duplicate(this->arrayServerRef,ev);
 }
@@ -95,7 +113,8 @@ TestFactory_getArrayServer(PortableServer_Servant servant,
 static
 test_AnyServer
 TestFactory_getAnyServer(PortableServer_Servant servant,
-						   CORBA_Environment *ev) {
+			 CORBA_Environment *ev)
+{
   test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
   return CORBA_Object_duplicate(this->anyServerRef,ev);
 }
@@ -129,6 +148,7 @@ PortableServer_ServantBase__epv TestFactory_base_epv = {NULL,test_TestFactory__f
 POA_test_TestFactory__epv TestFactory_epv = {
   NULL,
   TestFactory_getBasicServer,
+  TestFactory_getBasicServerIOR,
   TestFactory_getStructServer,
   TestFactory_getSequenceServer,
   TestFactory_getUnionServer,
