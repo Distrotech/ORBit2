@@ -1,5 +1,17 @@
 2001-08-28 Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-any.c
+	(ORBit_find_alignment): no need to recurse for aliases.
+	(ORBit_gather_alloc_info): ditto.
+	(ORBit_get_union_switch): ditto.
+	(ORBit_demarshal_value): ditto.
+	(ORBit_copy_value_core): ditto.
+	(ORBit_value_equivalent): ditto.
+	(ORBit_marhsal_value): ditto and fix silly bug with
+	previous commit.
+	
+2001-08-28 Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-any.c(ORBit_marhsal_value):
 	cleanup and document.
 

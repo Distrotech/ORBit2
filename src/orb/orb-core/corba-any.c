@@ -9,6 +9,9 @@ ORBit_find_alignment(CORBA_TypeCode tc)
   gint retval = 1;
   int i;
 
+  while (tc->kind == CORBA_tk_alias)
+    tc = tc->subtypes[0];
+
   switch(tc->kind) {
   case CORBA_tk_union:
     retval = MAX(retval, ORBit_find_alignment(tc->discriminator));
@@ -51,7 +54,6 @@ ORBit_find_alignment(CORBA_TypeCode tc)
   case CORBA_tk_any:
     return ALIGNOF_CORBA_ANY;
   case CORBA_tk_array:
-  case CORBA_tk_alias:
     return ORBit_find_alignment(tc->subtypes[0]);
   case CORBA_tk_fixed:
     return MAX(ALIGNOF_CORBA_SHORT, ALIGNOF_CORBA_STRUCT);
@@ -65,6 +67,9 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
 {
   int i, n, align=1, prevalign, sum, prev;
   size_t block_size;
+
+  while (tc->kind == CORBA_tk_alias)
+    tc = tc->subtypes[0];
 
   switch(tc->kind) {
   case CORBA_tk_long:
@@ -138,8 +143,6 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
     block_size = ORBit_gather_alloc_info(tc->subtypes[0]);
     return block_size * tc->length;
     break;
-  case CORBA_tk_alias:
-    return ORBit_gather_alloc_info(tc->subtypes[0]);
   case CORBA_tk_longlong:
   case CORBA_tk_ulonglong:
     return sizeof(CORBA_long_long);
@@ -170,6 +173,9 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 {
 	CORBA_unsigned_long i, ulval;
 	gconstpointer       subval;
+
+	while (tc->kind == CORBA_tk_alias)
+		tc = tc->subtypes[0];
 
 	switch(tc->kind) {
 	case CORBA_tk_wchar:
@@ -295,8 +301,8 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 			break;
 		}
 		*val = ((guchar *)*val) + sizeof (CORBA_sequence_CORBA_octet);
-		break;
 		}
+		break;
 	case CORBA_tk_array:
 		switch (tc->subtypes[0]->kind) {
 		case CORBA_tk_boolean:
@@ -313,10 +319,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 			}
 			break;
 			}
-		break;
 		}
-	case CORBA_tk_alias:
-		ORBit_marshal_value (buf, val, tc->subtypes[0]);
 		break;
 	case CORBA_tk_longlong:
 	case CORBA_tk_ulonglong:
@@ -348,6 +351,9 @@ ORBit_get_union_switch(CORBA_TypeCode tc, gconstpointer *val,
 {
   glong retval = 0; /* Quiet gcc */
 
+  while (tc->kind == CORBA_tk_alias)
+    tc = tc->subtypes[0];
+
   switch(tc->kind) {
   case CORBA_tk_ulong:
   case CORBA_tk_long:
@@ -365,9 +371,6 @@ ORBit_get_union_switch(CORBA_TypeCode tc, gconstpointer *val,
   case CORBA_tk_octet:
     retval = *(CORBA_octet *)*val;
     if(update) *val = ((guchar *)*val) + sizeof(CORBA_char);
-    break;
-  case CORBA_tk_alias:
-    return ORBit_get_union_switch(tc->subtypes[0], val, update);
     break;
   default:
     g_error("Wow, some nut has passed us a weird type[%d] as a union discriminator!", tc->kind);
@@ -443,6 +446,9 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 		      CORBA_ORB orb)
 {
   CORBA_long i;
+
+  while (tc->kind == CORBA_tk_alias)
+    tc = tc->subtypes[0];
 
   switch(tc->kind) {
   case CORBA_tk_short:
@@ -705,10 +711,6 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       if(ORBit_demarshal_value(tc->subtypes[0], val, buf, dup_strings, orb))
 	return TRUE;
     break;
-  case CORBA_tk_alias:
-    if(ORBit_demarshal_value(tc->subtypes[0], val, buf, dup_strings, orb))
-      return TRUE;
-    break;
   case CORBA_tk_fixed:
   default:
     return TRUE;
@@ -780,6 +782,9 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
   CORBA_long i;
   gconstpointer pval1; 
   gpointer pval2;
+
+  while (tc->kind == CORBA_tk_alias)
+    tc = tc->subtypes[0];
 
   switch(tc->kind) {
   case CORBA_tk_wchar:
@@ -939,9 +944,6 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
       ORBit_copy_value_core(val, newval, tc->subtypes[0]);
     }
     break;
-  case CORBA_tk_alias:
-    ORBit_copy_value_core(val, newval, tc->subtypes[0]);
-    break;
   case CORBA_tk_fixed:
     g_error("CORBA_fixed NYI!");
     break;
@@ -993,6 +995,9 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 {
 	gboolean ret;
 	int i;
+
+	while (tc->kind == CORBA_tk_alias)
+		tc = tc->subtypes[0];
 
 	switch (tc->kind) {
 	case CORBA_tk_null:
@@ -1131,9 +1136,6 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 				return FALSE;
 		}
 		return TRUE;
-
-	case CORBA_tk_alias:
-		return ORBit_value_equivalent (a, b, tc->subtypes [0], ev);
 
 	default:
 		g_warning ("ORBit_value_equivalent unimplemented");
