@@ -281,7 +281,7 @@ ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 			       CORBA_Object    obj)
 {
 	GIOPConnection *retval = NULL;
-	GSList *profiles;
+	GSList         *profiles = NULL;
 
 	if (ORBit_demarshal_IOR (obj->orb, buf, NULL, &profiles))
 		goto out;
@@ -453,8 +453,8 @@ ORBit_demarshal_object (CORBA_Object   *obj,
 			GIOPRecvBuffer *buf,
 			CORBA_ORB       orb)
 {
-	char   *type_id;
-	GSList *profiles;
+	gchar  *type_id = NULL;
+	GSList *profiles = NULL;
 
 	if (ORBit_demarshal_IOR (orb, buf, &type_id, &profiles))
 		return TRUE;
