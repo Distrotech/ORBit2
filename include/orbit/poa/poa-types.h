@@ -16,6 +16,10 @@ typedef struct {
 	ORBit_IInterface        *idata;
 } PortableServer_ClassInfo;
 
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
+#ifdef ORBIT2_INTERNAL_API
+
 struct ORBit_POAObject_type {
 	struct ORBit_OAObject_type     base;
 
@@ -31,10 +35,6 @@ struct ORBit_POAObject_type {
 	ORBit_POAObject                next;
 };
 
-#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
-
-#ifdef ORBIT2_INTERNAL_API
-
 #define ORBit_LifeF_NeedPostInvoke      (1<<0)
 #define ORBit_LifeF_DoEtherealize       (1<<1)
 #define ORBit_LifeF_IsCleanup           (1<<2)
@@ -44,6 +44,11 @@ struct ORBit_POAObject_type {
 #define ORBit_LifeF_DestroyDo           (1<<8)
 #define ORBit_LifeF_Destroying          (1<<9)
 #define ORBit_LifeF_Destroyed           (1<<10)
+
+#define ORBIT_SERVANT_TO_CLASSINFO(servant) (                          \
+  (PortableServer_ClassInfo*)                                          \
+  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )     \
+)
 
 #endif /* ORBIT2_INTERNAL_API */
 
@@ -62,53 +67,18 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 		     ORBitSmallSkeleton  skel_impl);
 
 #define ORBIT_VEPV_OFFSET(vepv_type,epv_member) \
-	((CORBA_unsigned_long) ((long)((guint8 *) &((vepv_type *) 0)->epv_member)) / sizeof (GFunc))
+       ((CORBA_unsigned_long) (G_STRUCT_OFFSET (vepv_type, epv_member)) / sizeof (GFunc))
 
-#define ORBIT_SERVANT_TO_CLASSINFO(servant) ( 				\
-  (PortableServer_ClassInfo*) 						\
-  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )	\
-)
-
-#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) { 			\
-  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci);	\
-}
-
-#define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant, major)				\
-	( ((PortableServer_ServantBase *)(servant))->vepv [major] )
- 
-#define ORBIT_POAOBJECT_TO_EPVPTR(pobj, clsid)								\
-		ORBIT_SERVANT_MAJOR_TO_EPVPTR ((pobj)->servant, (pobj)->vepvmap_cache [(clsid)])
-
-#define ORBIT_STUB_IsBypass(obj, classid)								\
-		(classid && (obj) && ((CORBA_Object)obj)->adaptor_obj &&				\
-		((CORBA_Object)obj)->adaptor_obj->interface->adaptor_type & ORBIT_ADAPTOR_POA &&	\
-		((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant)
-
-#define ORBIT_STUB_GetEpv(obj, clsid) \
-		((gpointer)ORBIT_POAOBJECT_TO_EPVPTR(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj), (clsid)))
-
-#define ORBIT_STUB_GetServant(obj) \
-		(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant)
-
-#ifdef ORBIT_IN_PROC_COMPLIANT
-#define ORBIT_STUB_PreCall(obj) {                                   \
-	++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );	    \
-	(obj)->orb->current_invocations =                           \
-		g_slist_prepend ((obj)->orb->current_invocations,   \
-				 (obj)->adaptor_obj);               \
-}
-
-#define ORBIT_STUB_PostCall(obj) {                                                             \
-	(obj)->orb->current_invocations =                                                      \
-                g_slist_remove ((obj)->orb->current_invocations, pobj);                        \
-	--(((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt);                                    \
-	if (((ORBit_POAObject)(obj)->adaptor_obj)->life_flags & ORBit_LifeF_NeedPostInvoke)    \
-		ORBit_POAObject_post_invoke (((ORBit_POAObject)(obj)->adaptor_obj));           \
-}
-#else
+/*
+ * These macros are deprecated, they remain on the off-chance that
+ * someone compiles a really, really old stub. Their functionality
+ * is always short-circuited because ORBit_small_flags &
+ * ORBIT_SMALL_FAST_LOCALS is now never true.
+ */
+#define ORBIT_STUB_IsBypass(obj, classid) FALSE
+#define ORBIT_STUB_GetEpv(obj, clsid)     NULL
 #define ORBIT_STUB_PreCall(x)
 #define ORBIT_STUB_PostCall(x)
-#endif
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 

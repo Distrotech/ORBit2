@@ -36,7 +36,7 @@
 #include "orb-core-private.h"
 #include "orbit-debug.h"
 
-int ORBit_small_flags = ORBIT_SMALL_FAST_LOCALS;
+int ORBit_small_flags = 0;
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
