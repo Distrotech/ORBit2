@@ -1,3 +1,11 @@
+Jun 10, 1999:
+	ORBit 0.4.90 prerelease
+		. New IDL compiler (fixes some bugs, probably causes others)
+		. Bug fixes:
+			Non-blocking-fds patch from Owen.
+			Handle some errors better in servers, by actually returning an exception.
+			Automatically mark outgoing connections as authenticated.
+			Speed up libIIOP in some critical places.
 Apr 07, 1999:
 	ORBit 0.4.3 release
 		. Bug fixes
