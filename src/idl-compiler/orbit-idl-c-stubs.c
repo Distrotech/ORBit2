@@ -134,7 +134,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
 				 "_", 0);
     fprintf(ci->fh, "if(ORBIT_STUB_IsBypass(_obj,%s__classid))\n{\n", id);
-    fprintf(ci->fh, "ORBit_POAInvokation invoke_rec;\n");
+    fprintf(ci->fh, "ORBit_POAInvocation invoke_rec;\n");
 
     fprintf(ci->fh, "POA_%s__epv *_epv=(POA_%s__epv*)ORBIT_STUB_GetEpv(_obj,%s__classid);\n",
 	    id, id, id);

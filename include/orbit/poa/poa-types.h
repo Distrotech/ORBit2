@@ -8,16 +8,29 @@ typedef gpointer PortableServer_Servant;
 #error "Include mixup"
 #endif
 
+#define ORBit_LifeF_NeedPostInvoke      (1<<0)
+#define ORBit_LifeF_DoEtherealize       (1<<1)
+#define ORBit_LifeF_IsCleanup           (1<<2)
+#define ORBit_LifeF_DeactivateDo        (1<<4)
+#define ORBit_LifeF_Deactivating        (1<<5)
+#define ORBit_LifeF_Deactivated         (1<<6)
+#define ORBit_LifeF_DestroyDo           (1<<8)
+#define ORBit_LifeF_Destroying          (1<<9)
+#define ORBit_LifeF_Destroyed           (1<<10)
+
 typedef struct {
   PortableServer_Servant servant;
-  gpointer oid;
+  gpointer poa;
+  gpointer object_id;
   int *use_count;
   GFunc death_callback;
   gpointer user_data;
 } ORBit_POAObject;
 
-typedef struct {
-} ORBit_POAInvokation;
+#define ORBIT_SERVANT_TO_POAOBJECT(s) \
+((ORBit_POAObject *)((PortableServer_ServantBase*)(s))->_private)
+
+typedef struct ORBit_POAInvocation ORBit_POAInvocation;
 
 #if !defined(ORBIT_DECL_PortableServer_POA) && !defined(_PortableServer_POA_defined)
 #define ORBIT_DECL_PortableServer_POA 1
@@ -48,7 +61,7 @@ typedef void (*ORBitSkeleton)(PortableServer_ServantBase *_ORBIT_servant,
 typedef ORBitSkeleton (*ORBit_impl_finder)(PortableServer_ServantBase *servant,
 					   gpointer _ORBIT_recv_buffer,
 					   gpointer *implementation);
-typedef void (*ORBit_vepvmap_init)(void);
+typedef void (*ORBit_vepvmap_init)(ORBit_VepvIdx *map);
 
 typedef struct {
   ORBit_impl_finder relay_call;

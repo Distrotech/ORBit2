@@ -3,6 +3,12 @@
 #include <orbit/orb-core/corba-environment.h>
 
 void
+ORBit_handle_system_exception(CORBA_Environment *ev,
+			      CORBA_completion_status status,
+			      GIOPRecvBuffer *buf,
+			      GIOPSendBuffer *sendbuf);
+
+void
 CORBA_exception_set_system(CORBA_Environment *ev,
 			   CORBA_char *except_repos_id,
 			   CORBA_completion_status completed)

@@ -14,7 +14,8 @@ liborb_core_la_SOURCES=\
 	orbhttp.c \
 	orbhttp.h \
 	orbit-object.c \
-	corba-object.c
+	corba-object.c \
+	corba-policy.c
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c

@@ -38,6 +38,8 @@ struct CORBA_ORB_type {
 
   GList *servers;
   GPtrArray *poas;
+  gpointer poa_current;
+  gpointer poa_current_invocations;
 };
 
 #endif
