@@ -2,8 +2,8 @@
 #define __ORBIT_DEBUG_H__
 
 /*
- * Flip this switch to dump GIOP messages
- * as they are sent and received.
+ * Flip this switch to dump 
+ * general debug messages.
  */
 #undef DEBUG
 
@@ -31,16 +31,12 @@
 
 static inline void dprintf (const char *format, ...) { };
 #define dump_arg(a,b)
-#define do_giop_dump_send(a)
-#define do_giop_dump_recv(a)
 
 #else /* DEBUG */
 
 #include <stdio.h>
 
 #define dprintf(format...) fprintf(stderr, format)
-#define do_giop_dump_send(a) giop_dump_send(a)
-#define do_giop_dump_recv(a) giop_dump_recv(a)
 
 static inline void
 dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)

@@ -1,5 +1,19 @@
 2001-12-07  Mark McLoughlin  <mark@skynet.ie>
 
+	* include/orbit/GIOP/giop-recv-buffer.h:
+	  include/orbit/GIOP/giop-send-buffer.h:
+	  src/orb/orb-core/orbit-debug.h:
+	  src/orb/orb-core/orbit-small.c:
+	  src/orb/poa/poa.c:
+	  src/orb/GIOP/giop.c:
+	  src/orb/GIOP/giop-recv-buffer.c: rework the recv
+	buffer dumping to do it as we receive.
+
+	* src/orb/orb-core/iop-profiles.c:
+	(CodeSetComponent_demarshal): fix silly.
+
+2001-12-07  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/idl-compiler/orbit-idl-c-typecode.c:
 	(orbit_find_c_align):  only calculate the alignment of
 	the union.

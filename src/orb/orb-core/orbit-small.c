@@ -30,9 +30,9 @@
 #include <glib/garray.h>
 
 #include <orbit/orbit.h>
-#include <orbit/GIOP/giop.h>
 
 #include "../poa/orbit-poa-export.h"
+#include "../GIOP/giop-debug.h"
 #include "orb-core-private.h"
 #include "orbit-debug.h"
 
@@ -400,8 +400,6 @@ orbit_small_demarshal (CORBA_Object           obj,
 		return MARSHAL_SYS_EXCEPTION_INCOMPLETE;
 	}
 
-	do_giop_dump_recv (recv_buffer);
-
 	if (giop_recv_buffer_reply_status (recv_buffer) != GIOP_NO_EXCEPTION)
  		goto msg_exception;
 
@@ -647,8 +645,6 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	CORBA_TypeCode             tc;
 	gboolean                   has_context;
 	int                        i;
-
-	do_giop_dump_recv (recv_buffer);
 
 	orb = ((ORBit_POAObject)adaptor_obj)->poa->orb;
 

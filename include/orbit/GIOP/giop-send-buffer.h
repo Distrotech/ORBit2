@@ -62,8 +62,6 @@ void giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary);
 int giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx);
 CORBA_unsigned_long giop_get_request_id(void);
 
-void giop_dump_send (GIOPSendBuffer *send_buffer);
-
 #endif /* ORBIT2_INTERNAL_API */
 
 #endif

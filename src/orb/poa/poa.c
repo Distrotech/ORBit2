@@ -6,6 +6,7 @@
 #include <orbit-debug.h>
 #include "../util/orbit-purify.h"
 #include "../orb-core/orbit-debug.h"
+#include "../GIOP/giop-debug.h"
 #include "poa-macros.h"
 
 #include "orbit-poa.h"
