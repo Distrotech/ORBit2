@@ -1,5 +1,5 @@
 #include "config.h"
-#include <orbit/GIOP/giop-connection.h>
+#include <orbit/GIOP/giop.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
 static void giop_connection_destroy    (GObject             *obj);
@@ -111,37 +111,74 @@ giop_connection_init       (GIOPConnection      *cnx)
 static void
 giop_connection_destroy    (GObject             *obj)
 {
-#ifdef ORBIT_THREADSAFE
   GIOPConnection *cnx = (GIOPConnection *)obj;
-#endif
 
   O_MUTEX_LOCK(cnx->incoming_mutex);
-  O_MUTEX_LOCK(cnx->outgoing_mutex);
-  O_MUTEX_DESTROY(cnx->incoming_mutex);
-  O_MUTEX_DESTROY(cnx->outgoing_mutex);
-
-#ifdef XXX_FIXME_XXX
   if(cnx->incoming_msg)
     giop_recv_buffer_unuse(cnx->incoming_msg);
+  g_source_remove(cnx->incoming_tag);
 
-  g_list_foreach(cnx->outgoing_mutex, (GFunc)giop_send_buffer_unuse, NULL);
-#endif
+  O_MUTEX_LOCK(cnx->outgoing_mutex);
+  if(cnx->parent.status == LINC_CONNECTED
+     && (!cnx->parent.was_initiated
+	 || cnx->giop_version == GIOP_1_2))
+    {
+      GIOPSendBuffer *buf;
+
+      buf = giop_send_buffer_use_close_connection(cnx->giop_version);
+      giop_send_buffer_write(buf, cnx);
+      giop_send_buffer_unuse(buf);
+    }
+
+  O_MUTEX_DESTROY(cnx->incoming_mutex);
+  O_MUTEX_DESTROY(cnx->outgoing_mutex);
 
   if(parent_class->shutdown)
     parent_class->shutdown(obj);
 }
 
+static gboolean
+giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
+{
+  GIOPConnection *cnx = data;
+  int n;
+  GIOPMessageInfo info;
+
+  O_MUTEX_LOCK(cnx->incoming_mutex);
+
+  if(!cnx->incoming_msg)
+    cnx->incoming_msg = giop_recv_buffer_use_buf(cnx->parent.is_auth);
+
+  n = linc_connection_read(LINC_CONNECTION(cnx), cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
+  if(n < 0)
+    goto out;
+
+  info = giop_recv_buffer_data_read(cnx->incoming_msg, n, cnx->parent.is_auth);
+  if(info != GIOP_MSG_UNDERWAY)
+    {
+      cnx->incoming_msg = NULL;
+      if(info == GIOP_MSG_INVALID)
+	linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED); /* Zap it for badness.
+										   XXX We should probably handle oversized
+										   messages more graciously XXX */
+    }
+
+ out:
+  O_MUTEX_UNLOCK(cnx->incoming_mutex);
+
+  return TRUE;
+}
+
 static void
 giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status)
 {
+  GIOPConnection *gcnx = GIOP_CONNECTION(cnx);
+
   if(((LINCConnectionClass *)parent_class)->state_changed)
     ((LINCConnectionClass *)parent_class)->state_changed(cnx, status);
 
   if(status == LINC_CONNECTED)
-    {
-      if(cnx->was_initiated)
-	/* Send greeting */ ;
-    }
+    gcnx->incoming_tag = g_io_add_watch(cnx->gioc, G_IO_IN, giop_connection_handle_input, cnx);
 }
 
 GIOPConnection *

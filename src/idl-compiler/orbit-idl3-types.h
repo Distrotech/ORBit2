@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <libIDL/IDL.h>
-#include <orbit/util/basic_types.h>
+#include <orbit/util/orbit-util.h>
 #include <orbit/orbit-config.h>
 
 typedef struct _OIDL_Marshal_Context OIDL_Marshal_Context;
@@ -84,7 +84,8 @@ typedef enum {
   MN_PARAM_INOUT = 1<<12, /* For a node representing the top of an inout param, where we need to allocate slightly differently */
   MN_NEED_CURPTR_LOCAL = 1<<13,
   MN_NEED_CURPTR_RECVBUF = 1<<14,
-  MN_ISSLICE = 1<<15
+  MN_ISSLICE = 1<<15,
+  MN_WIDESTRING = 1<<16 /* variant of MN_ISSTRING - MN_ISSTRING will also be set */
 } OIDL_Marshal_Node_Flags;
 
 /**

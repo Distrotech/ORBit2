@@ -1,4 +1,4 @@
-SUBDIRS=GIOP util
+SUBDIRS=GIOP util orb-core
 
 orbitincludedir=$(includedir)/orbit
 orbitinclude_HEADERS=orbit.h orbit-config.h

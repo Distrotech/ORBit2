@@ -176,7 +176,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   fprintf(ci->fh, "{ /* marshalling */\n");
   fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%lu]; } _ORBIT_operation_name_data = { %lu, \"%s\" };\n",
-	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
+	  /* We align it now instead of at runtime */
+	  ALIGN_VALUE(strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1, sizeof(CORBA_unsigned_long)),
 	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
 	  IDL_IDENT(IDL_OP_DCL(tree).ident).str);
   fprintf(ci->fh, "const struct iovec _ORBIT_operation_vec = {(gpointer)&_ORBIT_operation_name_data, %lu};\n",

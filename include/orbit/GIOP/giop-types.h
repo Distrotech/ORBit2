@@ -6,6 +6,8 @@
 #include <orbit/orbit-config.h>
 #include <orbit/util/orbit-util.h>
 
+#define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
+
 typedef struct _GIOPRecvBuffer GIOPRecvBuffer;
 typedef struct _GIOPSendBuffer GIOPSendBuffer;
 
@@ -48,22 +50,34 @@ typedef enum
   GIOP_NO_EXCEPTION,
   GIOP_USER_EXCEPTION,
   GIOP_SYSTEM_EXCEPTION,
-  GIOP_LOCATION_FORWARD
-} GIOPReplyStatusType;
+  GIOP_LOCATION_FORWARD,
+  GIOP_LOCATION_FORWARD_PERM,
+  GIOP_NEEDS_ADDRESSING_MODE
+} GIOPReplyStatusType_1_2;
 
 typedef enum
 {
   GIOP_UNKNOWN_OBJECT,
   GIOP_OBJECT_HERE,
-  GIOP_OBJECT_FORWARD
-} GIOPLocateStatusType;
+  GIOP_OBJECT_FORWARD,
+  GIOP_OBJECT_FORWARD_PERM,
+  GIOP_LOC_SYSTEM_EXCEPTION,
+  GIOP_LOC_NEEDS_ADDRESSING_MODE
+} GIOPLocateStatusType_1_2;
+
+typedef CORBA_unsigned_long IOP_ServiceId;
+typedef struct {
+  IOP_ServiceId context_id;
+  CORBA_sequence_octet context_data;
+} IOP_ServiceContext;
 
 typedef struct {
-  int dummy;
+  CORBA_unsigned_long _length;
+  IOP_ServiceContext *_buffer;
+  CORBA_boolean _release : 1;
 } IOP_ServiceContextList;
 
-typedef struct {
-} CORBA_Principal;
+typedef CORBA_sequence_octet CORBA_Principal;
 
 typedef struct {
 } CORBA_sequence_IOP_TaggedComponent;
@@ -190,8 +204,16 @@ typedef struct {
 typedef struct {
   IOP_ServiceContextList service_context;
   CORBA_unsigned_long request_id;
-  GIOPReplyStatusType reply_status;
-} GIOPMsgReply;
+  GIOPReplyStatusType_1_2 reply_status; /* lame */
+} GIOPMsgReply_1_0;
+
+typedef GIOPMsgReply_1_0 GIOPMsgReply_1_1;
+
+typedef struct {
+  CORBA_unsigned_long request_id;
+  GIOPReplyStatusType_1_2 reply_status;
+  IOP_ServiceContextList service_context;
+} GIOPMsgReply_1_2;
 
 typedef struct {
   CORBA_unsigned_long request_id;
@@ -200,12 +222,26 @@ typedef struct {
 typedef struct {
   CORBA_unsigned_long request_id;
   CORBA_sequence_octet object_key;
-} GIOPMsgLocateRequest;
+} GIOPMsgLocateRequest_1_0;
+
+typedef GIOPMsgLocateRequest_1_0 GIOPMsgLocateRequest_1_1;
 
 typedef struct {
   CORBA_unsigned_long request_id;
-  GIOPLocateStatusType locate_status;
-} GIOPMsgLocateReply;
+  GIOP_TargetAddress target;
+} GIOPMsgLocateRequest_1_2;
+
+typedef struct {
+  CORBA_unsigned_long request_id;
+  GIOPLocateStatusType_1_2 locate_status; /* lame */
+} GIOPMsgLocateReply_1_0;
+
+typedef GIOPMsgLocateReply_1_0 GIOPMsgLocateReply_1_1;
+
+typedef struct {
+  CORBA_unsigned_long request_id;
+  GIOPLocateStatusType_1_2 locate_status;
+} GIOPMsgLocateReply_1_2;
 
 typedef struct {
   GIOPMsgHeader header;
@@ -214,15 +250,22 @@ typedef struct {
     GIOPMsgRequest_1_0 request_1_0;
     GIOPMsgRequest_1_1 request_1_1;
     GIOPMsgRequest_1_2 request_1_2;
-    GIOPMsgReply reply;
+    GIOPMsgReply_1_0 reply_1_0;
+    GIOPMsgReply_1_1 reply_1_1;
+    GIOPMsgReply_1_2 reply_1_2;
     GIOPMsgCancelRequest cancel_request;
-    GIOPMsgLocateRequest locate_request;
-    GIOPMsgLocateReply locate_reply;
+    GIOPMsgLocateRequest_1_0 locate_request_1_0;
+    GIOPMsgLocateRequest_1_1 locate_request_1_1;
+    GIOPMsgLocateRequest_1_2 locate_request_1_2;
+    GIOPMsgLocateReply_1_0 locate_reply_1_0;
+    GIOPMsgLocateReply_1_1 locate_reply_1_1;
+    GIOPMsgLocateReply_1_2 locate_reply_1_2;
   } u;
 } GIOPMsg;
 
 #define GIOP_FLAG_BIG_ENDIAN 0
 #define GIOP_FLAG_LITTLE_ENDIAN 1
+#define GIOP_FLAG_FRAGMENTED 2
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 #  define GIOP_FLAG_ENDIANNESS GIOP_FLAG_BIG_ENDIAN
@@ -232,6 +275,6 @@ typedef struct {
 #  error "Unsupported endianness on this system."
 #endif
 
-#define giop_endian_conversion_needed(to_endianness) ((to_endianness)!=GIOP_FLAG_ENDIANNESS)
+#define giop_endian_conversion_needed(to_endianness) ((to_endianness&GIOP_FLAG_LITTLE_ENDIAN)!=GIOP_FLAG_ENDIANNESS)
 
 #endif

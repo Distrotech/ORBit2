@@ -296,6 +296,7 @@ static void
 c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   char *ctmp, *ctmp_len, *ctmp_loop, *ctmp_contents;
+  gboolean loopvar_set = FALSE;
 
   ctmp = oidl_marshal_node_valuestr(node);
   ctmp_loop = oidl_marshal_node_valuestr(node->u.loop_info.loop_var);
@@ -303,10 +304,12 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   ctmp_contents = oidl_marshal_node_valuestr(node->u.loop_info.contents);
 
   c_demarshal_generate(node->u.loop_info.length_var, cmi);
+  if(node->flags & MN_WIDESTRING)
+    fprintf(cmi->ci->fh, "%s /= sizeof(CORBA_wchar);\n", ctmp_len);
 
   if(cmi->alloc_on_stack && (node->u.loop_info.contents->where == MW_Alloca)) {
-    fprintf(cmi->ci->fh, "%s%s = g_alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
-	    ctmp_contents, ctmp_len);
+    fprintf(cmi->ci->fh, "%s%s = g_alloca(sizeof(%s) * (%s%s));\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
+	    ctmp_contents, ctmp_len, (node->flags & MN_WIDESTRING)?"+1":"");
     if(node->flags & MN_ISSEQ)
       fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
   } else if(node->u.loop_info.contents->where == MW_Msg
@@ -337,7 +340,9 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       }
       fprintf(cmi->ci->fh, "%s._release = CORBA_TRUE;\n", ctmp);
     } else if(node->flags & MN_ISSTRING)
-      fprintf(cmi->ci->fh, "%s = CORBA_string_alloc(%s);\n", ctmp, ctmp_len);
+      fprintf(cmi->ci->fh, "%s = CORBA_%sstring_alloc(%s%s);\n", ctmp, (node->flags & MN_WIDESTRING)?"w":"",
+	      ctmp_len,
+	      (node->flags & MN_WIDESTRING)?"+1":"");
     g_free(tcname);
     g_free(tname);
   } else
@@ -380,7 +385,15 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     /* this next line does the element-by-element work! */
     c_demarshal_generate(node->u.loop_info.contents, cmi);
     fprintf(cmi->ci->fh, "}\n\n");
+    loopvar_set = TRUE;
   }
+  if(node->flags & MN_WIDESTRING)
+    {
+      /* NUL-terminate it */
+      if(!loopvar_set)
+	fprintf(cmi->ci->fh, "%s = %s;\n", ctmp_loop, ctmp_len);
+      fprintf(cmi->ci->fh, "%s = 0;\n", ctmp_contents);
+    }
 
   g_free(ctmp_contents);
   g_free(ctmp_len);
