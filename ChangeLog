@@ -1,5 +1,8 @@
 2001-10-16  Ross Golder  <rossg@durban.golder.org>
 
+	* orbit-config.in: replaced with orbit2-config.in
+	* orbit2-config.in: use pkg-config ORBit2 for --cflags
+
 	* ORBit.spec.in: update.
 
 	* ORBit2.m4: was generating stubs etc with older IDL compiler.
