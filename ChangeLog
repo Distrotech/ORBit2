@@ -1,3 +1,7 @@
+2003-12-04  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.8.3
+
 2003-11-06  Padraig O'Briain <padraig.obriain@sun.com>
 
 	* linc2/src/linc-server.c (link_server_handle_io): Change g_error
