@@ -1,3 +1,19 @@
+2004-08-25  Michael Haubenwallner <michael.haubenwallner@salomon.at>
+
+	* src/orb/orb-core/allocators.c (ORBit_freekids_via_TypeCode_T):
+	Step over align-holes at the end of structures (bug#151023)
+	* src/orb/orb-core/corba-any.c
+	(ORBit_marshal_value) (ORBit_demarshal_value)
+	(ORBit_copy_value_core) (ORBit_value_equivalent):
+	Ditto.
+	* test/everything/everything.idl
+	test/everything/client.c
+	test/everything/structServer.c:
+	Added testcase for bug#151023, align-holes at the end of structures.
+	* test/everything/constants.h:
+	Ditto.
+	Added constants for CHAR and OCTET.
+
 2004-08-19  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.11.2
