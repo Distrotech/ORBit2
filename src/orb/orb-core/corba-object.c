@@ -657,8 +657,10 @@ CORBA_Object_is_a (CORBA_Object       obj,
 	static GQuark  omg_corba_object_quark = 0;
 	CORBA_boolean  retval;
 	gpointer       servant;
-	gpointer       args[] = { (gpointer *)&logical_type_id };
+	gpointer       args[] = { NULL };
 	GQuark         logical_type_quark;
+
+	args[0] = (gpointer *)&logical_type_id;
 
 	if (!corba_object_quark)
 		corba_object_quark = g_quark_from_static_string (

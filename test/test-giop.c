@@ -10,7 +10,9 @@
 #include "test-giop-frag.h"
 
 #ifndef G_ENABLE_DEBUG
+#ifdef __GNUC__
 #  warning GIOP test hooks only enabled in a debugging build
+#endif
 int
 main (int argc, char *argv[])
 {

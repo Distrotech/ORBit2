@@ -9,6 +9,8 @@
  * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
  *                 Sun Microsystems, Inc.
  */
+#include <config.h>
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
