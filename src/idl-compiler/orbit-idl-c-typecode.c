@@ -420,7 +420,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
 	  tci->structname);
 
   /* pseudoobject stuff */
-  fprintf(tci->of, "{ &ORBit_TypeCode_epv, ORBIT_REFCNT_STATIC },\n");
+  fprintf(tci->of, "{ &ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC },\n");
 
   switch(IDL_NODE_TYPE(tci->ts)) {
   case IDLN_TYPE_ARRAY:

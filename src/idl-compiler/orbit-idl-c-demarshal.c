@@ -33,7 +33,7 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
   if(in_skels)
     cmi.orb_name = "ORBIT_SERVANT_TO_ORB(_ORBIT_servant)";
   else
-    cmi.orb_name = "GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer)->connection->orb_data";
+    cmi.orb_name = "_ORBIT_recv_buffer->connection->orb_data";
 
   if(node->flags & MN_ENDIAN_DEPENDANT)
     {
@@ -51,7 +51,7 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
 	  node->pre = NULL;
 	}
 
-      fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
+      fprintf(ci->fh, "if(giop_msg_conversion_needed(_ORBIT_recv_buffer)) {\n");
       c_demarshal_generate(node, &cmi);
       fprintf(ci->fh, "} else {\n");
       cmi.last_tail_align = node->iiop_head_align; /* We already did the alignment outside of the 'if' */
@@ -129,6 +129,7 @@ c_demarshal_generate_check(OIDL_Marshal_Length *len, OIDL_C_Marshal_Info *cmi)
 {
   char *curptr_name;
   char len_str[1024];
+  gboolean is_const = TRUE;
 
   if(!len)
     return;
@@ -136,15 +137,21 @@ c_demarshal_generate_check(OIDL_Marshal_Length *len, OIDL_C_Marshal_Info *cmi)
   if(len->mult_expr)
     {
       char *fqn = oidl_marshal_node_valuestr(len->mult_expr);
+
+      is_const = FALSE;
       g_snprintf(len_str, sizeof(len_str), "%d + %s*%s", len->len, len->mult_const, fqn);
       g_free(fqn);
     }
   else
     g_snprintf(len_str, sizeof(len_str), "%d", len->len);
-  curptr_name = cmi->curptr_in_local?"_ORBIT_curptr":"GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur";
+  curptr_name = cmi->curptr_in_local?"_ORBIT_curptr":"_ORBIT_recv_buffer->cur";
   fprintf(cmi->ci->fh, "{\nregister const long _ORBIT_checklen = %s;\n", len_str);
-  fprintf(cmi->ci->fh, "if((%s + %s) < %s || (%s + %s) >= _ORBIT_buf_end)\n", curptr_name, "_ORBIT_checklen", curptr_name,
-	  curptr_name, "_ORBIT_checklen");
+  if(is_const)
+    fprintf(cmi->ci->fh, "if((%s + %s) >= _ORBIT_buf_end)\n",
+	    curptr_name, "_ORBIT_checklen");
+  else
+    fprintf(cmi->ci->fh, "if((%s + %s) < %s || (%s + %s) >= _ORBIT_buf_end)\n", curptr_name, "_ORBIT_checklen", curptr_name,
+	    curptr_name, "_ORBIT_checklen");
   fprintf(cmi->ci->fh, "%s;\n", cmi->marshal_error_exit);
   fprintf(cmi->ci->fh, "}\n");
 }
@@ -221,9 +228,9 @@ c_demarshal_validate_curptr(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   if(desired_curptr_in_local_state != cmi->curptr_in_local)
     {
       if(desired_curptr_in_local_state)
-	fprintf(cmi->ci->fh, "_ORBIT_curptr = GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur;\n");
+	fprintf(cmi->ci->fh, "_ORBIT_curptr = _ORBIT_recv_buffer->cur;\n");
       else
-	fprintf(cmi->ci->fh, "GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur = _ORBIT_curptr;\n");
+	fprintf(cmi->ci->fh, "_ORBIT_recv_buffer->cur = _ORBIT_curptr;\n");
 
       cmi->curptr_in_local = desired_curptr_in_local_state;
     }
@@ -236,7 +243,7 @@ c_demarshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   if(node->iiop_head_align > cmi->last_tail_align)
     {
       fprintf(cmi->ci->fh, "%s = ALIGN_ADDRESS(_ORBIT_curptr, %d);\n",
-	      cmi->curptr_in_local?"_ORBIT_curptr":"GIOP_RECV_BUFFER(_ORBIT_recv_buffer)->cur",
+	      cmi->curptr_in_local?"_ORBIT_curptr":"_ORBIT_recv_buffer->cur",
 	      node->iiop_head_align);
     }
 
@@ -509,7 +516,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 	  break;
 	case MARSHAL_ANY:
 	  fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s);\n", ctmp);
-	  fprintf(cmi->ci->fh, "if(ORBit_TypeCode_demarshal_value(TC_%s, &_valref, _ORBIT_recv_buffer, %s, %s, ev))\n%s;\n",
+	  fprintf(cmi->ci->fh, "if(ORBit_TypeCode_demarshal_value(TC_%s, &_valref, _ORBIT_recv_buffer, %s, %s))\n%s;\n",
 		  ctmp2, do_dup, cmi->orb_name, cmi->marshal_error_exit);
 	  fprintf(cmi->ci->fh, "}\n");
 	  break;

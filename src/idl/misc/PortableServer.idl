@@ -27,7 +27,7 @@ module PortableServer {
     native Servant;
     typedef sequence<octet> ObjectId;
     exception ForwardRequest {
-        Object forward_reference;
+        CORBA::Object forward_reference;
     };
     
     // Policy interfaces
@@ -219,9 +219,9 @@ module PortableServer {
                                     raises (ObjectNotActive, WrongPolicy);
         
         // reference creation operations
-        Object create_reference (    in CORBA::RepositoryId intf)
+        CORBA::Object create_reference (    in CORBA::RepositoryId intf)
                                     raises (WrongPolicy);
-        Object create_reference_with_id (
+        CORBA::Object create_reference_with_id (
                                     in ObjectId             oid,
                                     in CORBA::RepositoryId  intf)
                                     raises (WrongPolicy);
@@ -229,15 +229,15 @@ module PortableServer {
         // Identity mapping operations:
         ObjectId servant_to_id(     in Servant              p_servant) 
                                     raises (ServantNotActive, WrongPolicy);
-        Object servant_to_reference(in Servant              p_servant) 
-                                    raises (ServantNotActive, WrongPolicy);
-        Servant reference_to_servant(in Object              reference)
+        CORBA::Object servant_to_reference(in Servant              p_servant) 
+	  raises (ServantNotActive, WrongPolicy);
+        Servant reference_to_servant(in CORBA::Object              reference)
                                     raises(ObjectNotActive, WrongPolicy);
-        ObjectId reference_to_id(   in Object               reference)
+        ObjectId reference_to_id(   in CORBA::Object               reference)
                                     raises (WrongAdapter, WrongPolicy);
         Servant id_to_servant(      in ObjectId             oid)
                                     raises (ObjectNotActive, WrongPolicy);
-        Object id_to_reference(     in ObjectId             oid)
+        CORBA::Object id_to_reference(     in ObjectId             oid)
                                         raises (ObjectNotActive, WrongPolicy);
     };
     

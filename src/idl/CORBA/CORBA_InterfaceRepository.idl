@@ -3,6 +3,29 @@
 
 #pragma prefix "omg.org"
 
+    interface Container;
+    interface Repository;
+    interface AliasDef;
+    interface ArrayDef;
+    interface AttributeDef;
+    interface ConstantDef;
+    interface Contained;
+    interface Container;
+    interface EnumDef;
+    interface ExceptionDef;
+    interface FixedDef;
+    interface IDLType;
+    interface InterfaceDef;
+    interface IRObject;
+    interface ModuleDef;
+    interface NativeDef;
+    interface OperationDef;
+    interface PrimitiveDef;
+    interface Repository;
+    interface SequenceDef;
+    interface StringDef;
+    interface StructDef;
+
     typedef string ScopedName;
     typedef string RepositoryId;
     enum DefinitionKind {
@@ -527,8 +550,9 @@
     const ValueModifier VM_ABSTRACT     = 2;
     const ValueModifier VM_TRUNCATABLE  = 3;
 
-    interface TTypeCode {                            // PIDL
-#       pragma version TTypeCode 2.3
+#pragma pidl push
+    interface TypeCode {                            // PIDL
+#       pragma version TypeCode 2.3
         exception   Bounds {};
         exception   BadKind {};
         // for all TypeCode kinds
@@ -570,3 +594,4 @@
         ValueModifier   type_modifier()         raises(BadKind);
         TypeCode        concrete_base_type()    raises(BadKind);
     };
+#pragma pidl pop

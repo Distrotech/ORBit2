@@ -15,6 +15,7 @@
 
 typedef struct _GIOPRecvBuffer GIOPRecvBuffer;
 typedef struct _GIOPSendBuffer GIOPSendBuffer;
+typedef struct _GIOPConnection GIOPConnection;
 
 typedef enum {
   GIOP_CONNECTION_SSL

@@ -20,5 +20,5 @@ IDLOUT = corba-defs.h
 
 $(IDLOUT) runidl: $(top_srcdir)/src/orb/orb-core/corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA --noskels --nodefskels --nostubs \
+	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA --noskels --nodefskels --nostubs --nocommon \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl

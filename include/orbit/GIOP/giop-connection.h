@@ -20,16 +20,18 @@
 #define GIOP_IS_CONNECTION_CLASS(class)   (((GTypeClass*) (class)) != NULL && \
 				    GIOP_TYPE_IS_CONNECTION (((GTypeClass*) (class))->g_type))
 
-typedef struct {
+struct _GIOPConnection {
   LINCConnection parent;
 
   O_MUTEX_DEFINE(incoming_mutex);
   GIOPRecvBuffer *incoming_msg;
-  guint incoming_tag;
   O_MUTEX_DEFINE(outgoing_mutex);
 
+  gpointer orb_data;
+
+  guint incoming_tag;
   GIOPVersion giop_version;
-} GIOPConnection;
+};
 
 typedef struct {
   LINCConnectionClass parent_class;

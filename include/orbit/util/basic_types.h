@@ -16,6 +16,8 @@ typedef gunichar2 CORBA_wchar;
 typedef guchar CORBA_boolean;
 typedef guchar CORBA_octet;
 typedef gdouble CORBA_long_double;
+/* Bad hack, oh well */
+typedef CORBA_char *CORBA_string;
 
 typedef struct {
   CORBA_unsigned_long _length;
@@ -23,7 +25,11 @@ typedef struct {
   CORBA_boolean _release : 1;
 } CORBA_sequence_octet;
 
-typedef struct _CORBA_Object *CORBA_Object;
+#if !defined(ORBIT_DECL_CORBA_Object) && !defined(_CORBA_Object_defined)
+#define ORBIT_DECL_CORBA_Object 1
+#define _CORBA_Object_defined 1
+typedef struct CORBA_Object_type *CORBA_Object;
+#endif
 
 #ifdef G_HAVE_GINT64
 #define HAVE_CORBA_LONG_LONG

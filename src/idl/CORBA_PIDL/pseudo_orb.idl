@@ -67,15 +67,12 @@ module CORBA {
 
 // The "define" fakes out the compiler to let it compile the "Context" 
 //    interface and references to it even though "context" is a keyword
-#define Context CContext
 
 // The "define" fakes out the compiler to let it compile the "Object" 
 //    interface and references to it even though "Object" is a keyword
-#define Object OObject
 
 // The "define" fakes out the compiler to let it compile the "ValueBase" 
 //    valuetype and references to it even though "ValueBase" is a keyword
-#define ValueBase VValueBase
 
 // Forward references, alphabetically 
     interface Context;                   // Chapter  7, CORBA_Context.idl
@@ -110,4 +107,3 @@ module CORBA {
 };
 
 #endif // _PSEUDO_ORB_IDL_
-

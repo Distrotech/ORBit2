@@ -143,7 +143,7 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
     }
     break;
   case IDLN_TYPE_STRING:
-    retval = "CORBA_char*";	/* this is non-standard! */
+    retval = "CORBA_string";	/* this is non-standard! */
     break;
   case IDLN_TYPE_OCTET:
     retval = "CORBA_octet";
