@@ -1,16 +1,28 @@
 #include "orbit-idl-marshal.h"
 
+static const char *marshal_methods[] = {
+  "inline", "func", "any"
+};
+
+static OIDL_Marshal_Method
+oidl_marshal_methods_avail(void)
+{
+  return MARSHAL_ANY;
+}
+
 static gint
 oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add, gboolean named_type)
 {
   gboolean add_it = FALSE;
-  OIDL_Marshal_Method mtype=MARSHAL_ALL, dmtype=MARSHAL_ALL;
+  OIDL_Marshal_Method mtype, dmtype;
   OIDL_Type_Marshal_Info *tmi = NULL;
   gint add_size = 0;
   gint retval = 1;
 
   if(!node)
     return 0;
+
+  mtype = dmtype = oidl_marshal_methods_avail();
 
   switch(IDL_NODE_TYPE(node))
     {
@@ -228,6 +240,22 @@ oidl_marshal_context_free(OIDL_Marshal_Context *ctxt)
 }
 
 static void
+print_mm(OIDL_Marshal_Method mm)
+{
+  int i;
+
+  for(i = 0; i < MARSHAL_NUM; i++)
+    {
+      if(mm & ((1 << i) - 1))
+	g_print("|");
+
+      if(mm & (1 << i))
+	g_print("%s", marshal_methods[i]);
+    }
+  g_print("%s", mm?" ":". ");
+}
+
+static void
 dump_tmi(gpointer key, gpointer value, gpointer data)
 {
   IDL_tree tree = key, ident = NULL;
@@ -263,9 +291,12 @@ dump_tmi(gpointer key, gpointer value, gpointer data)
 	break;
       }
 
-  g_print("(%s) [%p] mtype %x dmtype %x used %d size %d\n",
-	  IDL_tree_type_names[IDL_NODE_TYPE(tree)], tree,
-	  tmi->mtype, tmi->dmtype, tmi->use_count, tmi->size);
+  g_print("(%s) [%p] ", IDL_tree_type_names[IDL_NODE_TYPE(tree)], tree);
+  g_print("mtype ");
+  print_mm(tmi->mtype);
+  g_print("dmtype ");
+  print_mm(tmi->dmtype);
+  g_print("used %d size %d size-impact %d\n", tmi->use_count, tmi->size, tmi->use_count * tmi->size);
 }
 
 void

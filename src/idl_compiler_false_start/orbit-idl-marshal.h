@@ -78,7 +78,9 @@ struct _OIDL_Marshal_Node {
   guint8 nptrs;
 };
 
-typedef enum { MARSHAL_INLINE=1<<0, MARSHAL_FUNC=1<<1, MARSHAL_ANY=1<<2, MARSHAL_ALL=0xFFFF } OIDL_Marshal_Method;
+typedef enum { MARSHAL_INLINE=1<<0, MARSHAL_FUNC=1<<1, MARSHAL_ANY=1<<2,
+	       MARSHAL_ALL=0xFFFF } OIDL_Marshal_Method;
+#define MARSHAL_NUM 3
 
 typedef struct {
   OIDL_Marshal_Method mtype, dmtype;
