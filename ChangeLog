@@ -1,3 +1,26 @@
+2002-06-26  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (concat_frags):
+	propagate out of memory condition upwards.
+	(giop_connection_remove_frag): move buffer unuse here.
+	conditionalize debug hooks on a debug build.
+	(giop_connection_handle_input): close the connection
+	on out of bound input more aggressively.
+	(concat_frags): make sure head->end points at the
+	right bound.
+	(giop_recv_buffer_handle_fragmented): build the overall
+	length into the head message_size, and bounds check it
+	against MSG_SIZE_LIMIT.
+
+	* test/ior-decode.c (main): re-hash & expand.
+
+2002-06-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(alloc_buffer): 
+	(giop_recv_msg_reading_body): handle the out of
+	memory situation gracefully.
+
 2002-06-25  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c

@@ -251,6 +251,7 @@ main (int argc, char *argv[])
 	run_test (orb, test_spoofing, FALSE);
 	run_test (orb, test_spoofing, TRUE);
 
+
 	test_cookie (orb);
 
 	linc_write_options_free (non_blocking);
