@@ -11,11 +11,10 @@ INCLUDES =                          \
 
 bin_PROGRAMS=ior-decode-2 typelib-dump
 noinst_PROGRAMS=test1 \
-	test-exception-server test-exception-client \
 	echo-client echo-client-t echo-server \
 	empty-client empty-server \
 	test-any-client test-any-server \
-	test-dynany test-mem test-performance test-giop 
+	test-dynany test-mem test-performance test-giop
 
 TESTS = test-dynany test-mem test-performance test-giop
 
@@ -32,12 +31,6 @@ test_performance_SOURCES = 	\
 test_giop_SOURCES =		\
 	test-giop.c		\
 	test-giop-frag.h
-
-
-TEST_EXCEPTION_IDLOUT=test-exception.h test-exception-skels.c \
-                      test-exception-common.c  test-exception-stubs.c
-test_exception_server_SOURCES= test-exception-server.c $(TEST_EXCEPTION_IDLOUT)
-test_exception_client_SOURCES= test-exception-client.c $(TEST_EXCEPTION_IDLOUT)
 
 TEST_ANY_IDLOUT=test-any.h test-any-common.c test-any-stubs.c test-any-skels.c
 test_any_client_SOURCES=test-any-client.c $(TEST_ANY_IDLOUT)
@@ -68,12 +61,10 @@ test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
 test_dynany_LDFLAGS=-lm
 
 IDL_FLAGS =  --showcpperrors
-IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl \
-          test-exception.idl
+IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl
 include $(top_srcdir)/Makefile.shared
 
 BUILT_SOURCES =            \
-	$(TEST_EXCEPTION_IDLOUT) \
 	$(EMPTY_IDLOUT)    \
 	$(ECHO_IDLOUT)     \
 	$(IDLOUT)          \
