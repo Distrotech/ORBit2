@@ -2,7 +2,7 @@ libORBitservicesincludedir = $(includedir)/orbit-2.0/ORBitservices
 
 lib_LTLIBRARIES=libORBitCosNaming-2.la
 
-bin_PROGRAMS = name-client-2 orbit-name-server-2
+noinst_PROGRAMS = name-client-2 orbit-name-server-2
 
 lib_LIBRARIES = libname-server-2.a
 

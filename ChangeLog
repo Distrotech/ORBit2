@@ -1,3 +1,8 @@
+2002-07-10  Brian Cameron  <Brian.Cameron@sun.com>
+	* src/services/name/Makefile.am
+	No longer install name-client-2 or orbit-name-server-2
+	since they are not used.
+
 2002-07-10  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: detect the dofus earlier and more
