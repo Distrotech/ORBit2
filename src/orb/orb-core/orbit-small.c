@@ -14,6 +14,7 @@
  *    * do more alloca's for basic things
  *    * more IDL compiler help for allocation and indirection
  *    decisions - these are closely tied
+ *    * No alias types in the structures ... nice :-)
  *  Elsewhere:
  *    * store object profiles in GIOP format for fast marshaling
  *    * make locking more chunky _T everything.
@@ -292,7 +293,7 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 	_ORBIT_HANDLE_TYPE (double, double, double, 64, 8, "%g");
 */
 
-#define CORBA_BASE_TYPES \
+#define BASE_TYPES \
 	     CORBA_tk_short: \
 	case CORBA_tk_long: \
 	case CORBA_tk_enum: \
@@ -307,6 +308,21 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 	case CORBA_tk_ulonglong: \
 	case CORBA_tk_longdouble: \
 	case CORBA_tk_wchar
+
+#define STRUCT_UNION_TYPES \
+	     CORBA_tk_struct: \
+	case CORBA_tk_union: \
+	case CORBA_tk_except
+
+#define OBJ_STRING_TYPES \
+	     CORBA_tk_objref: \
+	case CORBA_tk_TypeCode: \
+	case CORBA_tk_string: \
+	case CORBA_tk_wstring
+
+#define SEQ_ANY_TYPES \
+	     CORBA_tk_sequence: \
+	case CORBA_tk_any
 
 typedef struct {
 	CORBA_unsigned_long len;
@@ -408,13 +424,13 @@ typedef enum {
 } DeMarshalRetType;
 
 static DeMarshalRetType
-_ORBit_generic_demarshal (CORBA_Object           obj,
-			  GIOPConnection       **cnx,
-			  GIOPMessageQueueEntry *mqe,
-			  CORBA_Environment     *ev,
-			  gpointer               ret,
-			  ORBit_IMethod         *m_data,
-			  gpointer              *args)
+orbit_small_demarshal (CORBA_Object           obj,
+		       GIOPConnection       **cnx,
+		       GIOPMessageQueueEntry *mqe,
+		       CORBA_Environment     *ev,
+		       gpointer               ret,
+		       ORBit_IMethod         *m_data,
+		       gpointer              *args)
 {
 	gpointer        data;
 	CORBA_TypeCode  tc;
@@ -443,26 +459,20 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 			tc = tc->subtypes [0];
 
 		switch (tc->kind) {
-		case CORBA_BASE_TYPES:
-		case CORBA_tk_objref:
-		case CORBA_tk_TypeCode:
-		case CORBA_tk_string:
-		case CORBA_tk_wstring:
+		case BASE_TYPES:
+		case OBJ_STRING_TYPES:
 			do_demarshal_value (recv_buffer, &ret, tc, orb);
 			dprintf ("base type / [p]obj / [w]string");
 			break;
 
-		case CORBA_tk_struct:
-		case CORBA_tk_union:
-		case CORBA_tk_except:
+		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 				do_demarshal_value (recv_buffer, &ret, tc, orb);
 				dprintf ("misc. fixed");
 				break;
 			} /* drop through */
 
-		case CORBA_tk_any:
-		case CORBA_tk_sequence:
+		case SEQ_ANY_TYPES:
 		case CORBA_tk_array:
 		default:
 			data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, orb);
@@ -504,11 +514,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 				arg = args [i];
 
 			switch (tc->kind) {
-			case CORBA_BASE_TYPES:
-			case CORBA_tk_objref:
-			case CORBA_tk_TypeCode:
-			case CORBA_tk_string:
-			case CORBA_tk_wstring: {
+			case OBJ_STRING_TYPES: {
 				if (a->flags & ORBit_I_ARG_INOUT) {
 					if (tc->kind == CORBA_tk_TypeCode ||
 					    tc->kind == CORBA_tk_objref)
@@ -517,19 +523,18 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 						 tc->kind == CORBA_tk_wstring)
 						CORBA_free (*(gpointer *) arg);
 				}
-
+				/* drop through */
+			case BASE_TYPES:
 				do_demarshal_value (
 					recv_buffer, &arg, tc, orb);
 				dprintf ("base / allocated type");
 				break;
 			}
 
-			case CORBA_tk_union:
-			case CORBA_tk_struct:
-			case CORBA_tk_except:
-			case CORBA_tk_sequence:
+			case STRUCT_UNION_TYPES:
+			case SEQ_ANY_TYPES:
 			case CORBA_tk_array:
-			case CORBA_tk_any: {
+			default:
 				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					do_demarshal_value (recv_buffer, &arg, tc, orb);
 					break;
@@ -539,12 +544,6 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 				} else
 					*(gpointer *)args [i] = ORBit_demarshal_arg (
 						recv_buffer, tc, TRUE, obj->orb);
-				break;
-			}
- 
-			default:
-				g_warning ("Unknown type %d",
-					   tc->kind);
 				break;
 			}
 			dprintf ("\n");
@@ -614,8 +613,8 @@ retry_request:
 	if (m_data->flags & ORBit_I_METHOD_1_WAY)
 		return;
 
-	switch (_ORBit_generic_demarshal (obj, &cnx, &mqe, ev,
-					  ret, m_data, args))
+	switch (orbit_small_demarshal (obj, &cnx, &mqe, ev,
+				       ret, m_data, args))
 	{
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		completion_status = CORBA_COMPLETED_YES;
@@ -707,17 +706,11 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			tc = tc->subtypes [0];
 
 		switch (tc->kind) {
-		case CORBA_BASE_TYPES:
-		case CORBA_tk_objref:
-		case CORBA_tk_TypeCode:
-		case CORBA_tk_string:
-		case CORBA_tk_wstring:
-			/* FIXME: could be alloca */
-			retval = ORBit_alloc_tcval (tc, 1);
+		case BASE_TYPES:
+		case OBJ_STRING_TYPES:
+			retval = alloca (ORBit_gather_alloc_info (tc));
 			break;
-		case CORBA_tk_struct:
-		case CORBA_tk_union:
-		case CORBA_tk_except:
+		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 				retval = ORBit_alloc_tcval (tc, 1);
 				break;
@@ -750,17 +743,12 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 				tc = tc->subtypes [0];
 
 			switch (tc->kind) {
-			case CORBA_BASE_TYPES:
-			case CORBA_tk_objref:
-			case CORBA_tk_TypeCode:
-			case CORBA_tk_string:
-			case CORBA_tk_wstring:
+			case BASE_TYPES:
+			case OBJ_STRING_TYPES:
 				p = args [i] = alloca (ORBit_gather_alloc_info (tc));
 				do_demarshal_value (recv_buffer, &p, tc, orb);
 				break;
-			case CORBA_tk_struct:
-			case CORBA_tk_union:
-			case CORBA_tk_except:
+			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					p = args [i] = alloca (ORBit_gather_alloc_info (tc));
@@ -782,17 +770,13 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			args [i] = &scratch [i];
 
 			switch (tc->kind) {
-			case CORBA_BASE_TYPES:
-			case CORBA_tk_objref:
-			case CORBA_tk_TypeCode:
-			case CORBA_tk_string:
-			case CORBA_tk_wstring:
+			case BASE_TYPES:
+			case OBJ_STRING_TYPES:
+				retval = alloca (ORBit_gather_alloc_info (tc));
 				/* FIXME: could be alloca */
 				scratch [i] = ORBit_alloc_tcval (tc, 1);
 				break;
-			case CORBA_tk_struct:
-			case CORBA_tk_union:
-			case CORBA_tk_except:
+			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					scratch [i] = ORBit_alloc_tcval (tc, 1);
@@ -840,18 +824,13 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 			switch (tc->kind) {
 				
-			case CORBA_BASE_TYPES:
-			case CORBA_tk_objref:
-			case CORBA_tk_TypeCode:
-			case CORBA_tk_string:
-			case CORBA_tk_wstring:
+			case BASE_TYPES:
+			case OBJ_STRING_TYPES:
 				ORBit_marshal_arg (send_buffer, retval, m_data->ret);
 				dprintf ("base/[p]obj/string");
 				break;
 
-			case CORBA_tk_struct:
-			case CORBA_tk_union:
-			case CORBA_tk_except:
+			case STRUCT_UNION_TYPES:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					ORBit_marshal_arg (send_buffer, retval, m_data->ret);
 					dprintf ("fixed");
@@ -861,11 +840,9 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			case CORBA_tk_any:
 			case CORBA_tk_sequence:
 			case CORBA_tk_array:
+			default:
 				ORBit_marshal_arg (send_buffer, *(gpointer *)retval, m_data->ret);
 				dprintf ("pointer baa");
-				break;
-			default:
-				g_assert_not_reached ();
 				break;
 			}
 			dprintf ("\n");
@@ -893,16 +870,17 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 	if (m_data->ret) {
 		switch (m_data->ret->kind) {
-		case CORBA_BASE_TYPES:
+		case BASE_TYPES:
+			break;
 		case CORBA_tk_objref:
 		case CORBA_tk_TypeCode:
+			CORBA_Object_release (*(CORBA_Object *) retval, ev);
+			break;
 		case CORBA_tk_string:
 		case CORBA_tk_wstring:
-			CORBA_free (retval);
+			CORBA_free (*(char **) retval);
 			break;
-		case CORBA_tk_struct:
-		case CORBA_tk_union:
-		case CORBA_tk_except:
+		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 				CORBA_free (retval);
 				break;
@@ -916,16 +894,16 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	for (i = 0; i < m_data->arguments._length; i++) {
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
 		
+		tc = a->tc;
+			
+		while (tc->kind == CORBA_tk_alias)
+			tc = tc->subtypes [0];
+			
 		if (a->flags & ORBit_I_ARG_IN ||
 		    a->flags & ORBit_I_ARG_INOUT) {
 			
-			tc = a->tc;
-			
-			while (tc->kind == CORBA_tk_alias)
-				tc = tc->subtypes [0];
-			
 			switch (tc->kind) {
-			case CORBA_BASE_TYPES:
+			case BASE_TYPES:
 				break;
 			case CORBA_tk_objref:
 			case CORBA_tk_TypeCode:
@@ -935,9 +913,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			case CORBA_tk_wstring:
 				CORBA_free (*(char **) args [i]);
 				break;
-			case CORBA_tk_struct:
-			case CORBA_tk_union:
-			case CORBA_tk_except:
+			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
 				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					ORBit_freekids_via_TypeCode (tc, args [i]);
@@ -948,9 +924,23 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 				CORBA_free (args [i]);
 				break;
 			}
-		} else /* Out */
-			if (ev->_major == CORBA_NO_EXCEPTION)
+		} else if (ev->_major == CORBA_NO_EXCEPTION) { /* Out */
+			switch (tc->kind) {
+			case BASE_TYPES:
+				break;
+			case CORBA_tk_objref:
+			case CORBA_tk_TypeCode:
+				CORBA_Object_release (*(CORBA_Object *) scratch [i], ev);
+				break;
+			case CORBA_tk_string:
+			case CORBA_tk_wstring:
+				CORBA_free (*(char **) scratch [i]);
+				break;
+			default:
 				CORBA_free (scratch [i]);
+				break;
+			}
+		}
 	}
 	
 	CORBA_exception_free (ev);
