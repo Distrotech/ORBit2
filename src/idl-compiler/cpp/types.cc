@@ -1192,7 +1192,9 @@ IDLInterface::writeCPPStubReturnDemarshalCode(ostream &ostr,Indent &indent,
 											  IDLTypedef const *activeTypedef = NULL) const {
 	// must return stub ptr and not ptr in order to work when smart pointers are used
 	ostr
-		<< indent << "return reinterpret_cast< " << getQualifiedCPPStub() << " *>(_retval);" << endl;
+		<< indent << getQualifiedCPPStub() << "* _cpp_retval = new " << getQualifiedCPPStub () << "(_retval);" << endl
+		<< indent << "CORBA_Object_release (_retval, 0);" << endl
+		<< indent << "return _cpp_retval;" << endl;
 }
 
 
