@@ -248,15 +248,87 @@ IDLInterface::writeCPPSkelReturnMarshalCode (ostream          &ostr,
 					     bool              passthru,
 					     IDLTypedef const *activeTypedef = NULL) const
 {
-	if (passthru)
-		ostr << indent << "return _retval;" << endl;
-	else 
-		ostr << indent << "return " << getQualifiedCPPCast ("_retval")
-		     << ";" << endl;
+	ostr << indent << "return _retval;" << endl;
 }
 
 string
 IDLInterface::getQualifiedCPPCast (string const &expr) const
 {
 	return getQualifiedCPPStub () + "::_orbitcpp_wrap ((" + expr + "), false)";
+}
+
+void
+IDLInterface::getCPPMemberDeclarator (string const     &id,
+				      string           &typespec,
+				      string           &dcl,
+				      IDLTypedef const *activeTypedef = NULL) const
+{
+	typespec = getQualifiedCPP_mgr (getRootScope ()) + "_forwarder";
+	dcl = id;
+}
+
+string
+IDLInterface::getForwarder () const
+{
+    return getCPPIdentifier () + "_forwarder";
+}
+
+void
+IDLInterface::writeForwarder (ostream &header_ostr,
+			      Indent  &header_indent,
+			      ostream &impl_ostr,
+			      Indent  &impl_indent) const
+{
+	// Forwarder header
+	header_ostr << header_indent << "class " << getForwarder () << endl
+		    << header_indent << "{" << endl;
+	header_ostr << ++header_indent << getCTypeName () << " &c_obj;" << endl;
+	header_ostr << --header_indent << "public:" << endl;
+	header_ostr << ++header_indent << getForwarder () << " ("
+		    << getCTypeName () << " &c_obj);" << endl;
+	header_ostr << header_indent << "void operator=" << " ("
+		    << getCPP_mgr () << " &cpp_obj);" << endl;
+	header_ostr << header_indent << "operator " << getCPP_mgr () << " () const;" << endl;
+	header_ostr << header_indent << getCPP_mgr () << " operator-> () const;" << endl;
+	header_ostr << --header_indent << "};" << endl << endl;
+	
+	// Forwarder implementation
+	string mgr_name =
+		getQualifiedCPPIdentifier (getRootScope ()) + "_mgr";
+	
+	impl_ostr << impl_indent << getQualifiedForwarder () << "::"
+		  << getForwarder () << " (" << getCTypeName () << " &c_obj_) :" << endl
+		  << impl_indent << "c_obj (c_obj_)" << endl
+		  << impl_indent << "{}" << endl << endl;
+	
+	impl_ostr << impl_indent << "void " << getQualifiedForwarder () << "::"
+		  << "operator= (" << mgr_name << " &cpp_obj)" << endl
+		  << impl_indent << "{" << endl
+		  << ++impl_indent << "c_obj =  cpp_obj->_orbitcpp_get_c_object ();" << endl
+		  << --impl_indent << "}" << endl << endl;
+	
+	impl_ostr << impl_indent << getQualifiedForwarder () << "::"
+		  << "operator " << mgr_name << " () const" << endl
+		  << impl_indent << "{" << endl
+		  << ++impl_indent << "return "
+		  << IDL_IMPL_STUB_NS << getNSScopedCPPTypeName ()
+		  << "::_orbitcpp_wrap (c_obj);" << endl
+		  << --impl_indent << "}" << endl << endl;
+
+	// We need to remove '::' from the beginning of
+	// getQualifiedForwarder for operator implementations to work
+	string forwarder_classname_raw = getQualifiedForwarder ();
+	string::iterator i = forwarder_classname_raw.begin ();
+	while (i != forwarder_classname_raw.end () && *i == ':')
+		i++;
+
+	string forwarder_classname (i, forwarder_classname_raw.end ());
+	
+	impl_ostr << impl_indent << mgr_name << " "
+		  << forwarder_classname << "::operator-> () const" << endl
+		  << impl_indent << "{" << endl
+		  << ++impl_indent << "return "
+		  << IDL_IMPL_STUB_NS << getNSScopedCPPTypeName ()
+		  << "::_orbitcpp_wrap (c_obj);" << endl
+		  << --impl_indent << "}" << endl << endl;
 }

@@ -29,6 +29,7 @@ headers = \
   IDLStruct.hh \
   IDLType.hh \
   IDLTypeCode.hh \
+  IDLTypedef.hh \
   IDLUnion.hh \
   IDLUserDefScopeType.hh \
   IDLUserDefSimpleType.hh \
@@ -52,6 +53,7 @@ modules = \
   IDLStruct.cc \
   IDLType.cc \
   IDLTypeCode.cc \
+  IDLTypedef.cc \
   IDLUnion.cc \
   IDLUserDefScopeType.cc \
   IDLUserDefSimpleType.cc \

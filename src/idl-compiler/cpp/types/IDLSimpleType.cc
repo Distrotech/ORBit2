@@ -52,7 +52,7 @@ void IDLSimpleType::getCPPMemberDeclarator(string const &id,string &typespec,str
 							IDLTypedef const *activeTypedef = NULL) const
 {
 	typespec = getTypeName();
-	dcl = id;
+	dcl = "&" + id;
 }
 
 void IDLSimpleType::writeTypedef(ostream &ostr,Indent &indent,IDLCompilerState &state,
@@ -190,4 +190,18 @@ void IDLSimpleType::writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,b
 string IDLSimpleType::getInvalidReturn() const
 {
 	return "return 0;";
+}
+
+string
+IDLSimpleType::getQualifiedForwarder () const
+{
+	return getTypeName () + "&";
+}
+
+void
+IDLSimpleType::writeForwarder (ostream &header_ostr,
+			       Indent  &header_indent,
+			       ostream &impl_ostr,
+			       Indent  &impl_indent) const
+{
 }
