@@ -80,6 +80,7 @@ gpointer ORBit_alloc_tcval(CORBA_TypeCode tc, guint nelements);
 #define ORBit_alloc(sz, len, fnc) ORBit_alloc_kidfnc( (sz), (len), (fnc))
 
 #define CORBA_sequence_set_release(s,r) (s)->_release = r
+#define CORBA_sequence_get_release(s) (s)->_release
 
 gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
 gpointer CORBA_Object__freekids(gpointer mem, gpointer data);

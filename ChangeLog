@@ -1,2 +1,35 @@
+2001-05-04  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/*: import & port.
+
+	* src/orb/orb-core/corba-any.c (ORBit_any_equivalent),
+	copy straight from ORBit stable - no mods.
+	(ORBit_value_equivalent): ditto + add scratch to union_tag
+	handling.
+	(ORBit_copy_value_core): fix bug in CORBA_tk_union handling
+
+	* src/orb/orb-core/corba-typecode.c (CORBA_TypeCode_equal): copy
+	straight from ORBit stable - no mods.
+
+	* test/Makefile.am (SUBDIRS): add 'everything'
+
+	* src/idl-compiler/orbit-idl-c-common.c (orbit_idl_output_c_common): 
+	setup ORBit_zero_int as a static local.
+
+	* include/orbit/orb-core/allocators.h (CORBA_sequence_get_release): 
+	define CORBA_sequence_get_release
+
+	* src/idl-compiler/orbit-idl-c-skels.c:
+	add G_GNUC_UNUSED attribute to some potentialy unused bits.
+
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	add G_GNUC_UNUSED attribute to some potentialy unused bits.
+	(cs_output_stub): always generate _ORBIT_demarshal_error.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any_get_release): impl.
+
+	* test/everything/Makefile.am: update.
+	
+
 Do not touch this file. Run 'rcs2log' or use bonsai
 (http://cvs.gnome.org/)

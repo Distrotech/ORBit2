@@ -224,7 +224,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "{ /* demarshalling */\n");
 
     if(oi->out_stubs)
-      fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+      fprintf(ci->fh, "register guchar *_ORBIT_curptr G_GNUC_UNUSED;\n");
 
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_buffer_get(&_ORBIT_mqe, TRUE);\n");
 
@@ -266,8 +266,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	cbe_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci);
       }
 
-    if(IDL_OP_DCL(tree).parameter_dcls)
-      fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
+    fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
     fprintf(ci->fh, "_ORBIT_system_exception_ex = ex_CORBA_MARSHAL;\n");
   }
   fprintf(ci->fh, "_ORBIT_system_exception:\n");

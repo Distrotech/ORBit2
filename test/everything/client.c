@@ -468,8 +468,9 @@ void testVariableLengthArray(test_TestFactory factory,
 }
 
 
-void testAnyLong(test_TestFactory factory, 
-				 CORBA_Environment *ev) {
+void testAnyLong (test_TestFactory factory, 
+		  CORBA_Environment *ev)
+{
   test_AnyServer objref;
   CORBA_any inArg, inoutArg, *outArg, *retn;
   CORBA_long tmp, tmp1;
@@ -479,27 +480,27 @@ void testAnyLong(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   tmp = constants_LONG_IN;
-  inArg._type = (CORBA_TypeCode)TC_long;
+  inArg._type = (CORBA_TypeCode)TC_CORBA_long;
   inArg._value = &tmp;
   CORBA_any_set_release(&inArg, CORBA_FALSE);
 
-  inoutArg._type = (CORBA_TypeCode)TC_long;
+  inoutArg._type = (CORBA_TypeCode)TC_CORBA_long;
   tmp1 = constants_LONG_INOUT_IN;
   inoutArg._value = &tmp1;
   CORBA_any_set_release(&inoutArg, CORBA_FALSE);
     
   retn = test_AnyServer_opAnyLong(objref,&inArg,&inoutArg,&outArg,ev);
 
-  g_assert( CORBA_TypeCode_equal(inArg._type,TC_long,ev) );
+  g_assert( CORBA_TypeCode_equal(inArg._type,TC_CORBA_long,ev) );
   g_assert(*(CORBA_long*)inArg._value == constants_LONG_IN);
 
-  g_assert( CORBA_TypeCode_equal(inoutArg._type,TC_long,ev) );
+  g_assert( CORBA_TypeCode_equal(inoutArg._type,TC_CORBA_long,ev) );
   g_assert(*(CORBA_long*)inoutArg._value == constants_LONG_INOUT_OUT);
 
-  g_assert( CORBA_TypeCode_equal(outArg->_type,TC_long,ev) );
+  g_assert( CORBA_TypeCode_equal(outArg->_type,TC_CORBA_long,ev) );
   g_assert(*(CORBA_long*)outArg->_value == constants_LONG_OUT);
 
-  g_assert( CORBA_TypeCode_equal(retn->_type,TC_long,ev) );
+  g_assert( CORBA_TypeCode_equal(retn->_type,TC_CORBA_long,ev) );
   g_assert(*(CORBA_long*)retn->_value == constants_LONG_RETN);
 
   if(CORBA_any_get_release(&inArg)){
@@ -528,26 +529,26 @@ void testAnyString(test_TestFactory factory,
   objref = test_TestFactory_getAnyServer(factory,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
-  inArg._type = (CORBA_TypeCode)TC_string;
+  inArg._type = (CORBA_TypeCode)TC_CORBA_string;
   inArg._value = &constants_STRING_IN;
   CORBA_any_set_release(&inArg, CORBA_FALSE);
 
-  inoutArg._type = (CORBA_TypeCode)TC_string;
+  inoutArg._type = (CORBA_TypeCode)TC_CORBA_string;
   inoutArg._value = &constants_STRING_INOUT_IN;
   CORBA_any_set_release(&inoutArg, CORBA_FALSE);
   
   retn = test_AnyServer_opAnyString(objref,&inArg,&inoutArg,&outArg,ev);
 
-  g_assert(CORBA_TypeCode_equal(inArg._type,TC_string,ev));
+  g_assert(CORBA_TypeCode_equal(inArg._type,TC_CORBA_string,ev));
   g_assert(strcmp(*(CORBA_char **)inArg._value,constants_STRING_IN) == 0);
 
-  g_assert(CORBA_TypeCode_equal(inoutArg._type,TC_string,ev) );
+  g_assert(CORBA_TypeCode_equal(inoutArg._type,TC_CORBA_string,ev) );
   g_assert(strcmp(*(CORBA_char **)inoutArg._value,constants_STRING_INOUT_OUT) == 0);
 
-  g_assert(CORBA_TypeCode_equal(outArg->_type,TC_string,ev) );
+  g_assert(CORBA_TypeCode_equal(outArg->_type,TC_CORBA_string,ev) );
   g_assert(strcmp(*(CORBA_char **)outArg->_value,constants_STRING_OUT) == 0);
 
-  g_assert(CORBA_TypeCode_equal(retn->_type,TC_string,ev) );
+  g_assert(CORBA_TypeCode_equal(retn->_type,TC_CORBA_string,ev) );
   g_assert(strcmp(*(CORBA_char **)retn->_value,constants_STRING_RETN) == 0);
 
   if(CORBA_any_get_release(&inArg)){
@@ -639,7 +640,7 @@ void testSequenceOfAny(test_TestFactory factory,
   anyseq._length= 2;
   
   for (i=0;i<anyseq._length;i++){
-	anyseq._buffer[i]._type = (CORBA_TypeCode)TC_string;
+	anyseq._buffer[i]._type = (CORBA_TypeCode)TC_CORBA_string;
 	anyseq._buffer[i]._value = &constants_STRING_IN;
 	CORBA_any_set_release(&anyseq._buffer[i], CORBA_FALSE);
   }
