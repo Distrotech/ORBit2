@@ -127,6 +127,11 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   struct addrinfo *ai, hints = {0};
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
 
+#if !LINC_SSL_SUPPORT
+  if((create_options & LINC_CONNECTION_SSL)
+     return FALSE;
+#endif
+
   proto = linc_protocol_find(proto_name);
   if(!proto)
     return FALSE;
