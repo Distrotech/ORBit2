@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <orbit/orbit-config.h>
 #include <orbit/util/os-feature-alloca.h>
+#include <orbit/util/thread-safety.h>
 
 /* Align an address upward to a boundary, expressed as a number of bytes.
    E.g. align to an 8-byte boundary with argument of 8.  */
