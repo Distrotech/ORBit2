@@ -154,6 +154,8 @@ linc_io_add_watch_fd (int          fd,
 	if (!linc_get_threaded ()) /* Main loop too */
 		w->main_source = linc_source_create_watch (
 			NULL, fd, NULL, condition, func, user_data);
+	else
+		w->main_source = NULL;
 
 	return w;
 }
@@ -190,8 +192,11 @@ linc_io_add_watch (GIOChannel    *channel,
 		condition, func, user_data);
 
 	/* Main loop */
-	w->main_source = linc_source_create_watch (
-		NULL, fd, channel, condition, func, user_data);
+	if (!linc_get_threaded ()) /* Main loop too */
+		w->main_source = linc_source_create_watch (
+			NULL, fd, channel, condition, func, user_data);
+	else
+		w->main_source = NULL;
 
 	return w;
 }
@@ -209,9 +214,11 @@ linc_io_remove_watch (LincWatch *w)
 		linc_source_set_condition (w->main_source, 0);
 		linc_source_set_condition (w->linc_source, 0);
 
-		g_source_destroy (w->main_source);
-		g_source_unref   (w->main_source);
-
+		if (w->main_source) {
+			g_source_destroy (w->main_source);
+			g_source_unref   (w->main_source);
+		} /* else - threaded */
+		
 		g_source_destroy (w->linc_source);
 		g_source_unref   (w->linc_source);
 

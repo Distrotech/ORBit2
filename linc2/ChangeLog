@@ -1,3 +1,16 @@
+2002-11-29  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-source.c (linc_io_add_watch):
+	don't add a main watch if threaded.
+	(linc_io_remove_watch): don't destroy a
+	NULL main_source.
+
+	* src/linc.c (linc_object_unref): do an
+	idle unref (in the linc mainloop) if we're
+	threaded, and it's the last ref.
+	(linc_fast_unref): split.
+	(linc_idle_unref): impl.
+
 2002-11-02  Michael Meeks  <michael@ximian.com>
 
 	* test/test-linc.c
