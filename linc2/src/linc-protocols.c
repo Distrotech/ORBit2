@@ -25,6 +25,7 @@
 #endif
 
 static char *link_tmpdir = NULL;
+static gboolean use_local_host = FALSE;
 
 /*
  * make_local_tmpdir:
@@ -134,6 +135,9 @@ link_get_local_hostname (void)
 {
 	static char local_host[NI_MAXHOST] = { 0 };
 
+	if (use_local_host)
+		return "localhost";
+
 	if (local_host [0])
 		return local_host;
 
@@ -141,6 +145,12 @@ link_get_local_hostname (void)
 		return NULL;
 
 	return local_host;
+}
+
+void
+link_use_local_hostname (gboolean use)
+{
+        use_local_host = use;
 }
 
 /*
