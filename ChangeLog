@@ -1,5 +1,28 @@
 2003-07-07  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (testPingPong): reset max_buffer
+	on the cnx to 0 afterwards the test - ie. don't poison other
+	stuff.
+
+	* src/orb/orb-core/orbit-small.c (async_recv_cb):
+	call destroy_queue_entry on the mqe.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_setup_queue_entry)
+	(giop_recv_list_destroy_queue_entry): hold a ref. on the cnx.
+	(giop_recv_destroy_queue_entry_T): split out.
+
+	* src/orb/dynamic/dynany.c (ORBit_DynAnyFactory_new): impl.
+
+	* src/orb/orbit-init.c (ORBit_init_internals): register
+	DynAnyFactory - a completely bogus object to satisfy the spec.
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_initial_references_by_user): cleanup.
+
+2003-07-07  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/test.sh: put the failures first.
+
 	* src/orb/GIOP/giop-send-buffer.c
 	(giop_send_buffer_unuse): shrink indirect chunk size, so
 	we don't keep vast buffers kicking around.

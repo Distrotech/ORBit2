@@ -13,9 +13,10 @@ void
 ORBit_init_internals (CORBA_ORB          orb,
 		      CORBA_Environment *ev)
 {
-	PortableServer_POA     root_poa;
-	PortableServer_Current poa_current;
-	struct timeval         t;
+	PortableServer_POA       root_poa;
+	PortableServer_Current   poa_current;
+	DynamicAny_DynAnyFactory dynany_factory;
+	struct timeval           t;
 
 	root_poa = ORBit_POA_setup_root (orb, ev);
 	ORBit_set_initial_reference (orb, "RootPOA", root_poa);
@@ -24,6 +25,10 @@ ORBit_init_internals (CORBA_ORB          orb,
 	poa_current = ORBit_POACurrent_new (orb);
 	ORBit_set_initial_reference (orb, "POACurrent", poa_current);
 	ORBit_RootObject_release (poa_current);
+
+	dynany_factory = ORBit_DynAnyFactory_new (orb, ev);
+	ORBit_set_initial_reference (orb, "DynAnyFactory", dynany_factory);
+	ORBit_RootObject_release (dynany_factory);
 
 	/* need to srand for linc's node creation */
 	gettimeofday (&t, NULL);

@@ -29,6 +29,7 @@
 #include "config.h"
 #include "orbit/orbit.h"
 #include "orb-core/orb-core-private.h"
+#include "../orbit-init.h"
 #include "../util/orbit-purify.h"
 
 #define o_return_val_if_fail(expr, val) if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO); return (val); }
@@ -644,6 +645,13 @@ dynany_create (const CORBA_TypeCode type,
 		ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
 
 	return CORBA_OBJECT_NIL;
+}
+
+DynamicAny_DynAnyFactory
+ORBit_DynAnyFactory_new (CORBA_ORB orb, CORBA_Environment *ev)
+{
+	/* FIXME: make this useful for scripting one day */
+	return (DynamicAny_DynAnyFactory) TC_void;
 }
 
 DynamicAny_DynAny

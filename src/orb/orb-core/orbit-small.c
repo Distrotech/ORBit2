@@ -1126,6 +1126,7 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 
 	ORBit_RootObject_release (aqe->obj);
 /*	ORBit_RootObject_release (aqe->m_data); */
+	giop_recv_list_destroy_queue_entry (&aqe->mqe);
 	g_free (aqe);
 	CORBA_exception_free (ev);
 }
