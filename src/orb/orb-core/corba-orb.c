@@ -132,30 +132,28 @@ ORBit_locks_initialize (void)
 static void
 ORBit_setup_debug_flags (void)
 {
+	static GDebugKey debug_keys[] = {
+		{ "traces",   ORBIT_DEBUG_TRACES },
+		{ "timings",  ORBIT_DEBUG_TIMINGS },
+		{ "types",    ORBIT_DEBUG_TYPES },
+		{ "messages", ORBIT_DEBUG_MESSAGES },
+		{ "objects",  ORBIT_DEBUG_OBJECTS },
+	};
 	const char *env_string;
 
 	env_string = g_getenv ("ORBIT2_DEBUG");
 
-	if (env_string) {
-		static GDebugKey debug_keys[] = {
-			{ "traces",   ORBIT_DEBUG_TRACES },
-			{ "timings",  ORBIT_DEBUG_TIMINGS },
-			{ "types",    ORBIT_DEBUG_TYPES },
-			{ "messages", ORBIT_DEBUG_MESSAGES },
-			{ "objects",  ORBIT_DEBUG_OBJECTS },
-		};
-
+	if (env_string)
 		_orbit_debug_flags |=
 			g_parse_debug_string (env_string,
 					      debug_keys,
 					      G_N_ELEMENTS (debug_keys));
 
-		if (orbit_debug_options)
-			_orbit_debug_flags |=
-				g_parse_debug_string (orbit_debug_options,
-						      debug_keys,
-						      G_N_ELEMENTS (debug_keys));
-	}
+	if (orbit_debug_options)
+		_orbit_debug_flags |=
+			g_parse_debug_string (orbit_debug_options,
+					      debug_keys,
+					      G_N_ELEMENTS (debug_keys));
 }
 #endif /* G_ENABLE_DEBUG */
 
