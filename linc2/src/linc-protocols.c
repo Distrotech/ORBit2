@@ -43,6 +43,10 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 
+#if !defined (NI_MAXSERV) || !defined (NI_MAXHOST)
+#include <netdb.h>
+#endif
+
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 
