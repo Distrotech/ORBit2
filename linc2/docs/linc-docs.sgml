@@ -1,23 +1,26 @@
-<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
-<!ENTITY linc-LINCConnection SYSTEM "sgml/linc-connection.sgml">
-<!ENTITY linc-LINCServer SYSTEM "sgml/linc-server.sgml">
-<!ENTITY linc-config SYSTEM "sgml/config.sgml">
-<!ENTITY linc-linc-protocol SYSTEM "sgml/linc-protocol.sgml">
-<!ENTITY linc-linc-types SYSTEM "sgml/linc-types.sgml">
-<!ENTITY linc-linc SYSTEM "sgml/linc.sgml">
-<!ENTITY linc-linc-config SYSTEM "sgml/linc-config.sgml">
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY linc-LINCConnection SYSTEM "xml/linc-connection.xml">
+<!ENTITY linc-LINCServer SYSTEM "xml/linc-server.xml">
+<!ENTITY linc-config SYSTEM "xml/config.xml">
+<!ENTITY linc-linc-protocol SYSTEM "xml/linc-protocol.xml">
+<!ENTITY linc-linc-types SYSTEM "xml/linc-types.xml">
+<!ENTITY linc-linc SYSTEM "xml/linc.xml">
+<!ENTITY linc-linc-config SYSTEM "xml/linc-config.xml">
 ]>
 <book id="index">
   <bookinfo>
     <title>Linc Reference Manual</title>
   </bookinfo>
 
-  <chapter>
-    <title>Linc</title>
+<!--   <chapter> -->
+<!--     <title>Linc</title> -->
     &linc-linc-protocol;
     &linc-LINCConnection; 
     &linc-LINCServer;
     &linc-linc-types;
+    &linc-linc-config;
     &linc-linc;
-  </chapter>
+<!--   </chapter> -->
 </book>

@@ -46,7 +46,6 @@ linc_set_tmpdir
 <FILE>linc-types</FILE>
 LINCConnectionOptions
 LincWatch
-LINCProtocolInfo
 LINC_MUTEX_LOCK
 LINC_MUTEX_UNLOCK
 linc_mutex_new
@@ -66,7 +65,6 @@ linc_main_loop_run
 
 <SECTION>
 <FILE>linc-config</FILE>
-<SUBSECTION Standard>
 LINC_SSL_SUPPORT
 </SECTION>
 

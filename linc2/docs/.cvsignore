@@ -1,7 +1,7 @@
 Makefile
 Makefile.in
 html
-sgml
+xml
 *.stamp
 linc.args
 linc.hierarchy
@@ -10,4 +10,6 @@ linc-decl.txt
 linc-decl-list.txt
 linc-undocumented.txt
 linc-unused.txt
+linc.interfaces
+linc.prerequisites
 *.lo

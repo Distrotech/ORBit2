@@ -2,7 +2,7 @@
 LINCConnection
 
 <!-- ##### SECTION Short_Description ##### -->
-the basic connection object
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -86,8 +86,6 @@ the basic connection object
 @nvecs: 
 @opt_write_opts: 
 @Returns: 
-<!-- # Unused Parameters # -->
-@total_size: 
 
 
 <!-- ##### FUNCTION linc_connection_state_changed ##### -->

@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-LINCServer
+linc-config
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -14,16 +14,12 @@ LINCServer
 
 </para>
 
-<!-- ##### FUNCTION linc_server_setup ##### -->
-<para>
+<!-- ##### MACRO LINC_SSL_SUPPORT ##### -->
 
+<para>
+    This macro is defined, with value 1, if linc was configured with
+SSL support.  Otherwise it is undefined.
 </para>
 
-@cnx: 
-@proto_name: 
-@local_host_info: 
-@local_serv_info: 
-@create_options: 
-@Returns: 
 
 
