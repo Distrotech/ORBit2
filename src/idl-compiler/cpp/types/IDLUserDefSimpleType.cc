@@ -76,15 +76,16 @@ IDLUserDefSimpleType::stub_impl_arg_call (const string   &cpp_id,
 					  IDL_param_attr  direction) const
 {
 	string retval;
+	string expr = "(" + get_c_typename () + ")" + cpp_id;
 	
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		retval = cpp_id;
+		retval = expr;
 		break;
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
-		retval = "&" + cpp_id;
+		retval = "&" + expr;
 		break;
 	}
 	
@@ -121,7 +122,8 @@ IDLUserDefSimpleType::stub_impl_ret_call (ostream      &ostr,
 					  Indent       &indent,
 					  const string &c_call_expression) const
 {
-	ostr << indent << get_cpp_typename () << " _retval = " << c_call_expression
+	ostr << indent << get_cpp_typename () << " _retval = "
+	     << "(" << get_cpp_typename () << ")" << c_call_expression
 	     << ';' << endl;
 }
 
@@ -129,7 +131,7 @@ void
 IDLUserDefSimpleType::stub_impl_ret_post (ostream &ostr,
 					  Indent  &indent) const
 {
-	// Do nothing
+	ostr << indent << "return _retval;" << endl;
 }
 	
 
@@ -170,15 +172,16 @@ IDLUserDefSimpleType::skel_impl_arg_call (const string   &c_id,
 					  IDL_param_attr  direction) const
 {
 	string retval;
+	string expr = "(" + get_cpp_typename () + ")" + c_id;
 	
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		retval =  c_id;
+		retval =  expr;
 		break;
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
-		retval = "*" + c_id;
+		retval = "*" + expr;
 		break;
 	}
 	
@@ -207,7 +210,7 @@ void
 IDLUserDefSimpleType::skel_impl_ret_pre (ostream &ostr,
 					 Indent  &indent) const
 {
-	ostr << indent << get_cpp_typename () << " _retval"
+	ostr << indent << get_c_typename () << " _retval"
 	     << ';' << endl;
 }
 
@@ -216,7 +219,8 @@ IDLUserDefSimpleType::skel_impl_ret_call (ostream      &ostr,
 					  Indent       &indent,
 					  const string &cpp_call_expression) const
 {
-	ostr << indent << " _retval = " << cpp_call_expression
+	ostr << indent << " _retval = "
+	     << "(" << get_c_typename () << ")" << cpp_call_expression
 	     << ';' << endl;
 }
 
@@ -224,7 +228,7 @@ void
 IDLUserDefSimpleType::skel_impl_ret_post (ostream &ostr,
 					  Indent  &indent) const
 {
-	// Do nothing
+	ostr << indent << "return _retval;" << endl;
 }
 
 
