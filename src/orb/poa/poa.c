@@ -663,10 +663,8 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 	oid = pobj->object_id;
 
 	pobj->base.objref = ORBit_objref_new (poa->poa_manager->orb,
+					      &pobj->base,
 					      g_quark_from_string (type_id));
-
-	/* released by CORBA_Object_release */
-	pobj->base.objref->adaptor_obj = ORBit_RootObject_duplicate (pobj);
 
 	return ORBit_RootObject_duplicate (pobj->base.objref);
 }

@@ -30,6 +30,7 @@
 #include "orbit/orbit.h"
 
 #define NUM_RUNS 1
+#define NUM_THREADS 0
 
 #undef TIMING_RUN
 
@@ -1558,7 +1559,7 @@ testAsync (test_TestFactory   factory,
 
 	if (in_proc) {
 		g_assert (objref->profile_list == NULL);
-		g_assert (ORBit_object_get_connection (objref) == NULL);
+		g_assert (ORBit_small_get_connection_ref (objref) == NULL);
 	}
 			      
 	done = 0;
@@ -1659,7 +1660,7 @@ testPingPong (test_TestFactory   factory,
 
 	if (!in_proc) {
 		int i;
-		ORBitConnection *cnx = ORBit_small_get_connection (r_objref);
+		ORBitConnection *cnx = ORBit_small_get_connection_ref (r_objref);
 		const char *base =
 			"This string is in order to provide some "
 			"more bulky data on the wire, the larger "
@@ -1857,6 +1858,7 @@ test_basic_server (test_TestFactory   factory,
 
 static void
 run_tests (test_TestFactory   factory, 
+	   gboolean           reenterant_only,
 	   CORBA_Environment *ev)
 {
 	int i;
@@ -1889,19 +1891,57 @@ run_tests (test_TestFactory   factory,
 		testContext (factory, ev);
 		testIInterface (factory, ev);
 #ifndef TIMING_RUN
-		testAsync (factory, ev);
+		if (!reenterant_only)
+			testAsync (factory, ev);
 #endif
 		if (!in_proc)
 			testPingPong (factory, ev);
 		testMisc (factory, ev);
-#if NUM_RUNS == 1
-		testSegv (factory, ev);
-#endif
 	}
 	
 #if NUM_RUNS > 1
 	g_warning ("Did '%d' iterations", i);
 #endif
+}
+
+static gpointer
+test_thread (gpointer data)
+{
+	CORBA_Environment ev[1];
+	test_TestFactory factory = data;
+
+	CORBA_exception_init (ev);
+	run_tests (factory, TRUE, ev);
+	CORBA_exception_free (ev);
+
+	return data;
+}
+
+static void
+run_threaded_tests (test_TestFactory   factory, 
+		    CORBA_Environment *ev)
+{
+	int i;
+	GError *error = NULL;
+	GThread **threads;
+
+	if (!NUM_THREADS)
+		return;
+
+	fprintf (stderr, "Testing with %d threads\n", NUM_THREADS);
+
+	threads = g_new0 (GThread *, NUM_THREADS);
+
+	for (i = 0; i < NUM_THREADS; i++) {
+		threads [i] = g_thread_create
+			( test_thread, factory, TRUE, &error);
+		g_assert (!error);
+	}
+
+	for (i = 0; i < NUM_THREADS; i++) {
+		if (!(g_thread_join (threads [i]) == factory))
+			g_error ("Wierd thread join problem '%d'", i);
+	}
 }
 
 static void
@@ -1938,7 +1978,7 @@ test_init (CORBA_Environment *ev)
 int
 main (int argc, char *argv [])
 {
-	CORBA_Environment  ev;
+	CORBA_Environment  ev[1];
 	test_TestFactory   factory;
 	ORBit_IInterfaces *interfaces = NULL;
 	gboolean           gen_imodule = FALSE;
@@ -1946,13 +1986,13 @@ main (int argc, char *argv [])
 	const char        *orb_name;
 	int                i;
 
-	CORBA_exception_init (&ev);
+	CORBA_exception_init (ev);
 
 /* FIXME - make this work nicely sometime.
-	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
-	CORBA_Object_release (global_orb, &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	global_orb = CORBA_ORB_init (&argc, argv, "", ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (global_orb, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 */
 	for (i = 0; i < argc; i++) {
 		if (!strcmp (argv [i], "--gen-imodule"))
@@ -1966,8 +2006,8 @@ main (int argc, char *argv [])
 	else
 		orb_name = "orbit-local-orb";
 
-	global_orb = CORBA_ORB_init (&argc, argv, orb_name, &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	global_orb = CORBA_ORB_init (&argc, argv, orb_name, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	if (gen_imodule) {
 		CORBA_sequence_CORBA_TypeCode *typecodes = NULL;
@@ -1979,11 +2019,11 @@ main (int argc, char *argv [])
 
 		CORBA_free (typecodes);
 
-		init_iinterfaces (interfaces, &ev);
+		init_iinterfaces (interfaces, ev);
 	}
 
-	test_init (&ev);
-	test_initial_references (global_orb, &ev);
+	test_init (ev);
+	test_initial_references (global_orb, ev);
 
 	free (malloc (8)); /* -lefence */
 
@@ -1993,15 +2033,17 @@ main (int argc, char *argv [])
 	in_proc = TRUE;
 
 	fprintf (stderr, "\n --- In proc ---\n\n\n");
-	factory = get_server (global_orb, &ev);
+	factory = get_server (global_orb, ev);
 	g_assert (factory->profile_list == NULL);
 	g_assert (ORBit_object_get_connection (factory) == NULL);
 
-	test_time_noop (factory, &ev);
-	run_tests (factory, &ev);
+	test_time_noop (factory, ev);
+	run_tests (factory, FALSE, ev);
+	if (threaded)
+		run_threaded_tests (factory, ev);
 
-	CORBA_Object_release (factory, &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	factory = CORBA_OBJECT_NIL;
 
 	fprintf (stderr, "\n\n --- Out of proc ---\n\n\n");
@@ -2019,31 +2061,34 @@ main (int argc, char *argv [])
 		fclose (infile);
 		ior [size] = '\0';   /* insure that string is terminated correctly */
 
-		factory = CORBA_ORB_string_to_object (global_orb, ior, &ev);
-		g_assert (ev._major == CORBA_NO_EXCEPTION);
+		factory = CORBA_ORB_string_to_object (global_orb, ior, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-		if (CORBA_Object_non_existent (factory, &ev))
+		if (CORBA_Object_non_existent (factory, ev))
 			g_error  ("Can't contact the server");
-		g_assert (ev._major == CORBA_NO_EXCEPTION);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	}
-	run_tests (factory, &ev);
+	run_tests (factory, FALSE, ev);
+	if (threaded)
+		run_threaded_tests (factory, ev);
+	testSegv (factory, ev);
 
-	CORBA_Object_release (factory, &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	if (gen_imodule)
 		CORBA_free (interfaces);
 
-	CORBA_Object_release ((CORBA_Object) global_poa, &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release ((CORBA_Object) global_poa, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	
-	CORBA_ORB_destroy (global_orb, &ev);
-	CORBA_exception_free (&ev);
+	CORBA_ORB_destroy (global_orb, ev);
+	CORBA_exception_free (ev);
 
-	CORBA_Object_release ((CORBA_Object) global_orb, &ev);
-	g_assert (ev._major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release ((CORBA_Object) global_orb, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	CORBA_exception_free (&ev);
+	CORBA_exception_free (ev);
 
 	d_print ("All tests passed successfully\n");
 

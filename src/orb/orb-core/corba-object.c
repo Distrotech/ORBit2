@@ -144,7 +144,9 @@ static ORBit_RootObject_Interface objref_if = {
 };
 
 CORBA_Object
-ORBit_objref_new (CORBA_ORB orb, GQuark type_id)
+ORBit_objref_new (CORBA_ORB      orb,
+		  ORBit_OAObject adaptor_obj,
+		  GQuark         type_id)
 {
 	CORBA_Object retval;
 
@@ -154,6 +156,7 @@ ORBit_objref_new (CORBA_ORB orb, GQuark type_id)
 
 	retval->type_qid = type_id;
 	retval->orb = orb;
+	retval->adaptor_obj = ORBit_RootObject_duplicate (adaptor_obj);
 
 	return retval;
 }
@@ -191,7 +194,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 #endif /* G_ENABLE_DEBUG */
 
 	if (!retval) {
-		retval = ORBit_objref_new (orb, fakeme.type_qid);
+		retval = ORBit_objref_new (orb, NULL, fakeme.type_qid);
 		retval->profile_list = profiles;
 		retval->object_key   = fakeme.object_key;
 		ORBit_register_objref (retval);
@@ -236,7 +239,7 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 	OBJECT_UNLOCK (obj);
 
 	/* We need a pseudo-remote reference */
-	iobj = ORBit_objref_new (obj->orb, obj->type_qid);
+	iobj = ORBit_objref_new (obj->orb, NULL, obj->type_qid);
 	iobj->profile_list = IOP_profiles_copy (obj->profile_list);
 	iobj->object_key = IOP_ObjectKey_copy (obj->object_key);
 
@@ -254,7 +257,7 @@ ORBit_try_connection (CORBA_Object obj)
 			retval = FALSE;
 		else {
 			switch (linc_connection_get_status
-					(LINC_CONNECTION (obj->connection))) {
+					((LINCConnection *) obj->connection)) {
 			case LINC_CONNECTING:
 				dprintf (GIOP, "ORBit_try_connection bypassed while connecting ...");
 			case LINC_CONNECTED:
@@ -267,7 +270,7 @@ ORBit_try_connection (CORBA_Object obj)
 		}
 	} else {
 		switch (linc_connection_wait_connected
-				(LINC_CONNECTION (obj->connection))) {
+				((LINCConnection *) obj->connection)) {
 		case LINC_CONNECTING:
 			g_assert_not_reached();
 			break;
