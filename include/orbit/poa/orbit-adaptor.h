@@ -114,6 +114,8 @@ typedef void (*ORBitReqHandlerFunc) (ORBit_ObjectAdaptor         adaptor,
 struct ORBit_ObjectAdaptor_type {
 	struct ORBit_RootObject_struct parent;
 
+	GMutex                        *lock;
+
 	ORBitReqHandlerFunc            handle_request;
 
 	ORBit_AdaptorKey               adaptor_key;

@@ -1,5 +1,24 @@
 2003-04-01  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa-private.h: add.
+
+	* src/orb/poa/poa.c (ORBit_POA_free_fn, ORBit_POA_new):
+	add a per poa lock, add '_T' suffixes to things that
+	take / release no locks. Push POA_[UN]LOCK throught,
+	need some work on pre-conditions though.
+	(ORBit_POAObject_handle_request): do some ref holding
+	over invocation & re-factor exception processing.
+
+	* src/orb/poa/poa-manager.c
+	(PortableServer_POAManager_get_state): lock
+	sprinkling.
+
+	* src/orb/poa/poa.c (ORBit_POACurrent_get_object):
+	hold the orb lock while poking at current_invocations.
+	(ORBit_POAObject_handle_request),
+	(PortableServer_POA_servant_to_reference): ditto.
+	(push_request): split out
+
 	* src/orb/orb-core/orbit-small.c
 	(orbit_small_demarshal): add comment for Rich Burridge.
 

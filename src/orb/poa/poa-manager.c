@@ -2,6 +2,12 @@
 #include <orbit/orbit.h>
 #include "orbit-poa.h"
 #include "../util/orbit-purify.h"
+#include "poa-private.h"
+
+GMutex *_ORBit_poa_manager_lock = NULL;
+
+#define POA_MGR_LOCK(pmgr)   LINC_MUTEX_LOCK (_ORBit_poa_manager_lock);
+#define POA_MGR_UNLOCK(pmgr) LINC_MUTEX_UNLOCK (_ORBit_poa_manager_lock);
 
 static void
 ORBit_POAManager_free_fn (ORBit_RootObject obj)
@@ -36,14 +42,18 @@ ORBit_POAManager_register_poa (PortableServer_POAManager  poa_mgr,
 {
 	g_assert (g_slist_find (poa_mgr->poa_collection, poa) == NULL);
 
+	POA_MGR_LOCK (poa_mgr);
 	poa_mgr->poa_collection = g_slist_append (poa_mgr->poa_collection, poa);
+	POA_MGR_UNLOCK (poa_mgr);
 }
 
 void
 ORBit_POAManager_unregister_poa (PortableServer_POAManager poa_mgr, 
 				 PortableServer_POA        poa)
 {
+	POA_MGR_LOCK (poa_mgr);
 	poa_mgr->poa_collection = g_slist_remove (poa_mgr->poa_collection, poa);
+	POA_MGR_UNLOCK (poa_mgr);
 }
 
 /*
@@ -63,20 +73,25 @@ PortableServer_POAManager_activate (PortableServer_POAManager  manager,
 		return;
 	}
 
-	if (manager->state == PortableServer_POAManager_INACTIVE) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POAManager_AdapterInactive,
-				     NULL);
-		return;
+	POA_MGR_LOCK (poa_mgr);
+
+	if (manager->state == PortableServer_POAManager_INACTIVE)
+		CORBA_exception_set
+			(ev, CORBA_USER_EXCEPTION,
+			 ex_PortableServer_POAManager_AdapterInactive,
+			 NULL);
+	else {
+		manager->state = PortableServer_POAManager_ACTIVE;
+
+		for (l = manager->poa_collection; l; l = l->next) {
+			PortableServer_POA poa = (PortableServer_POA)l->data;
+
+			/* FIXME: need better locking here */
+			ORBit_POA_handle_held_requests (poa);
+		}
 	}
 
-	manager->state = PortableServer_POAManager_ACTIVE;
-
-	for (l = manager->poa_collection; l; l = l->next) {
-		PortableServer_POA poa = (PortableServer_POA)l->data;
-
-		ORBit_POA_handle_held_requests (poa);
-	}
+	POA_MGR_UNLOCK (poa_mgr);
 }
 
 void
@@ -90,18 +105,20 @@ PortableServer_POAManager_hold_requests (PortableServer_POAManager  manager,
 		return;
 	}
 
-	if (manager->state == PortableServer_POAManager_INACTIVE) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POAManager_AdapterInactive,
-				     NULL);
-		return;
+	POA_MGR_LOCK (poa_mgr);
+	if (manager->state == PortableServer_POAManager_INACTIVE)
+		CORBA_exception_set
+			(ev, CORBA_USER_EXCEPTION,
+			 ex_PortableServer_POAManager_AdapterInactive,
+			 NULL);
+	else {
+		manager->state = PortableServer_POAManager_HOLDING;
+
+		if (!wait_for_completion)
+			g_warning ("hold_requests not finished - don't "
+				   "know how to kill outstanding request fulfillments");
 	}
-
-	manager->state = PortableServer_POAManager_HOLDING;
-
-	if (!wait_for_completion)
-		g_warning ("hold_requests not finished - don't know how to kill "
-			   "outstanding request fulfillments");
+	POA_MGR_UNLOCK (poa_mgr);
 }
 
 void
@@ -115,18 +132,21 @@ PortableServer_POAManager_discard_requests (PortableServer_POAManager  manager,
 		return;
 	}
 
-	if (manager->state == PortableServer_POAManager_INACTIVE) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POAManager_AdapterInactive,
-				     NULL);
-		return;
+	POA_MGR_LOCK (poa_mgr);
+
+	if (manager->state == PortableServer_POAManager_INACTIVE)
+		CORBA_exception_set
+			(ev, CORBA_USER_EXCEPTION,
+			 ex_PortableServer_POAManager_AdapterInactive,
+			 NULL);
+	else {
+		manager->state = PortableServer_POAManager_DISCARDING;
+
+		if (!wait_for_completion)
+			g_warning ("discard_requests not finished - don't know how to kill "
+				   "outstanding request fulfillments");
 	}
-
-	manager->state = PortableServer_POAManager_DISCARDING;
-
-	if (!wait_for_completion)
-		g_warning ("discard_requests not finished - don't know how to kill "
-			   "outstanding request fulfillments");
+	POA_MGR_UNLOCK (poa_mgr);
 }
 
 void
@@ -143,31 +163,40 @@ PortableServer_POAManager_deactivate (PortableServer_POAManager  manager,
 		return;
 	}
 
-	if (manager->state == PortableServer_POAManager_INACTIVE) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POAManager_AdapterInactive,
-				     NULL);
-		return;
+	POA_MGR_LOCK (poa_mgr);
+	if (manager->state == PortableServer_POAManager_INACTIVE)
+		CORBA_exception_set
+			(ev, CORBA_USER_EXCEPTION,
+			 ex_PortableServer_POAManager_AdapterInactive,
+			 NULL);
+	else {
+		if (wait_for_completion)
+			for (l = manager->poa_collection; l; l = l->next)
+				if (!ORBit_POA_is_inuse (l->data, FALSE, ev)) {
+					CORBA_exception_set_system
+						(ev, ex_CORBA_BAD_INV_ORDER,
+						 CORBA_COMPLETED_NO);
+					POA_MGR_UNLOCK (poa_mgr);
+					return;
+				}
+
+		manager->state = PortableServer_POAManager_INACTIVE;
+
+		for (l = manager->poa_collection; l; l = l->next)
+			ORBit_POA_deactivate (l->data, etherealize_objects, ev);
 	}
-
-	if (wait_for_completion)
-		for(l = manager->poa_collection; l; l = l->next)
-			if (!ORBit_POA_is_inuse (l->data, FALSE, ev)) {
-				CORBA_exception_set_system (ev,
-							    ex_CORBA_BAD_INV_ORDER,
-							    CORBA_COMPLETED_NO);
-				return;
-			}
-
-	manager->state = PortableServer_POAManager_INACTIVE;
-
-	for (l = manager->poa_collection; l; l = l->next)
-		ORBit_POA_deactivate (l->data, etherealize_objects, ev);
+	POA_MGR_UNLOCK (poa_mgr);
 }
 
 PortableServer_POAManager_State
 PortableServer_POAManager_get_state (PortableServer_POAManager  manager,
 				     CORBA_Environment         *ev)
 {
-	return manager->state;
+	PortableServer_POAManager_State state;
+
+	POA_MGR_LOCK (poa_mgr);
+	state = manager->state;
+	POA_MGR_UNLOCK (poa_mgr);
+
+	return state;
 }

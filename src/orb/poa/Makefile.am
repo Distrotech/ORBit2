@@ -23,7 +23,8 @@ main_src = \
 	poa.c \
 	orbit-poa-export.h \
 	orbit-poa.h \
-	poa-macros.h	\
+	poa-private.h \
+	poa-macros.h \
 	poa-manager.c \
 	poa-policy.c \
 	poa-servants.c \
