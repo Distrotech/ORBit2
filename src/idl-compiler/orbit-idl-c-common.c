@@ -733,16 +733,14 @@ cc_small_output_iargs (FILE *of, const char *method, IDL_tree tree)
 		fprintf (of, "\"%s\"", IDL_IDENT (IDL_PARAM_DCL (
 			IDL_LIST (sub).data).simple_declarator).str);
 
-		fprintf (of, " },\n");
+		fprintf (of, " }%s\n", IDL_LIST (sub).next ? "," : "");
 
 		g_free (tc);
 		arg_count++;
 	}
 
-	if (arg_count) {
-		fprintf (of, "\t{ TC_null, 0, NULL }\n");
+	if (arg_count)
 		fprintf (of, "};\n");
-	}
 }
 
 static void
@@ -834,7 +832,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 	/* IArgs arguments */
 	if (arg_count)
 		fprintf (of, "\t\t{ %d, %d, %s__arginfo, FALSE },\n",
-			 arg_count + 1, arg_count + 1, fullname);
+			 arg_count, arg_count, fullname);
 	else
 		fprintf (of, "\t\t{ 0, 0, NULL, FALSE },\n");
 
@@ -861,7 +859,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 		fprintf (of, "\t\tTC_%s, ", type_id);
 		g_free (type_id);
 	} else
-		fprintf (of, "CORBA_OBJECT_NIL, ");
+		fprintf (of, "TC_void, ");
 
 	/* string name, long name_len */
 	method = IDL_IDENT (IDL_OP_DCL (tree).ident).str;
@@ -971,7 +969,7 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 	for (l = list; l; l = l->next) {
 		g_slist_free (((Interface *)l->data)->methods);
 		g_free (l->data);
-		}
+	}
 
 	g_slist_free (list);
 }
