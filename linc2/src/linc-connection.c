@@ -126,7 +126,7 @@ link_connection_broken_idle (gpointer data)
 
 	for (l = callbacks; l; l = l->next) {
 		BrokenCallback *bc = l->data;
-		bc->fn (cnx, l->data);
+		bc->fn (cnx, bc->user_data);
 		g_free (bc);
 	}
 	g_slist_free (callbacks);
