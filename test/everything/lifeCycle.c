@@ -35,9 +35,34 @@ LifeCycleServer_deactivateOnReturn (PortableServer_Servant  servant,
 	CORBA_free (oid);
 }
 
+static void
+LifeCycleServer_deactivateUnrefOnReturn (PortableServer_Servant  servant,
+					 CORBA_Environment      *ev)
+{
+	CORBA_Object self_ref;
+
+	/* Will only 'work' in-proc */
+	PortableServer_ObjectId *oid;
+
+	oid = PortableServer_POA_servant_to_id (global_poa, servant, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	PortableServer_POA_deactivate_object (global_poa, oid, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_free (oid);
+
+	self_ref = PortableServer_POA_servant_to_reference (global_poa, servant, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release (self_ref, ev);
+	CORBA_Object_release (self_ref, ev);
+}
+
 static POA_test_LifeCycleServer__epv LifeCycleServer_epv = {
 	NULL,
-	LifeCycleServer_deactivateOnReturn
+	LifeCycleServer_deactivateOnReturn,
+	LifeCycleServer_deactivateUnrefOnReturn
 };
 
 static PortableServer_ServantBase__epv LifeCycleServer_base_epv = {

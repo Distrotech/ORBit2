@@ -1,3 +1,21 @@
+2003-10-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): on HUP goto
+	msg_error so we don't leave the cnx->incoming_msg
+	hanging around.
+
+2003-10-30  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/lifeCycle.c
+	(LifeCycleServer_deactivateUnrefOnReturn): a nasty
+	in-proc hack that unreferences our CORBA_Object
+	handle.
+
+	* test/everything/client.c (testLifeCycle): use
+	the ORBit_small_invoke_stub_n path, used by older
+	stubs.
+
 2003-10-29  Justin Schoeman <justin@expertron.co.za>
 
 	* src/orb/orb-core/orbit-object.c (ORBit_RootObject_shutdown): fix
