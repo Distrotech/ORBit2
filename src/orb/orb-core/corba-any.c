@@ -839,13 +839,15 @@ ORBit_copy_value_core (gconstpointer *val,
 			ORBit_copy_value_core (val, newval, tc->subtypes[i]);
 		break;
 	case CORBA_tk_union: {
-		CORBA_TypeCode utc = ORBit_get_union_tag (tc, (gconstpointer *)val, FALSE);
+		CORBA_TypeCode utc;
 		gint	       union_align = tc->c_align;
 		gint	       discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
 		size_t	       union_size = ORBit_gather_alloc_info (tc);
 
 		pval1 = *val = ALIGN_ADDRESS (*val, discrim_align);
 		pval2 = *newval = ALIGN_ADDRESS (*newval, discrim_align);
+
+		utc = ORBit_get_union_tag (tc, (gconstpointer *)val, FALSE);
 
 		ORBit_copy_value_core (&pval1, &pval2, tc->discriminator);
 
