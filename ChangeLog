@@ -1,5 +1,9 @@
 2001-07-04  Mark McLoughlin <mark@skynet.ie>
 
+	* configure.in: updated glib check.
+
+2001-07-04  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/orbit-interface.idl,
 	  src/idl-compiler/orbit-idl-c-common.c,
 	  src/idl-compiler/orbit-idl-c-headers.c:
