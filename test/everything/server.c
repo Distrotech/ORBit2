@@ -128,6 +128,16 @@ TestFactory_getContextServer(PortableServer_Servant servant,
   return CORBA_Object_duplicate(this->contextServerRef,ev);
 }
 
+static CORBA_char *
+TestFactory_segv (PortableServer_Servant servant,
+		  const CORBA_char      *when,
+		  CORBA_Environment     *ev)
+{
+	/* A very cunning bit of code */
+	*((guchar *) NULL) = 0;
+
+	return CORBA_string_dup ("I'm dead");
+}
 
 static
 void test_TestFactory__fini(PortableServer_Servant servant, CORBA_Environment *ev) {
@@ -156,6 +166,7 @@ POA_test_TestFactory__epv TestFactory_epv = {
   TestFactory_getArrayServer,
   TestFactory_getAnyServer,
   TestFactory_getContextServer,
+  TestFactory_segv
 };
 
 POA_test_TestFactory__vepv TestFactory_vepv = {&TestFactory_base_epv,&TestFactory_epv};

@@ -1,5 +1,16 @@
 2001-10-18  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (testSegv): invoke a remote segv.
+	(run_tests): upd.
+
+	* test/everything/server.c (TestFactory_segv): impl. a segv.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_handle_input): kill uber wierd error
+	handling, and make return value always TRUE.
+
+2001-10-18  Michael Meeks  <michael@ximian.com>
+
 	* include/orbit/orb-core/corba-object-type.h: make type_id
 	a GQuark to save space, and time.
 

@@ -57,6 +57,7 @@ module test {
 		ArrayServer getArrayServer();
 		AnyServer getAnyServer();
 		ContextServer getContextServer();
+		string segv (in string when);
 		BaseServer getBaseServer();
 		DerivedServer getDerivedServer();
 		BaseServer getDerivedServerAsBaseServer();

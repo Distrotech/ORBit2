@@ -1129,6 +1129,18 @@ testAsync (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
+void
+testSegv (test_TestFactory   factory, 
+	  CORBA_Environment *ev)
+{
+	d_print ("Testing Fatal invocations ...\n");
+	if (!in_proc) {
+		test_TestFactory_segv (factory, "do it!", ev); 
+		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+		g_assert (!strcmp (ev->_id, "IDL:CORBA/COMM_FAILURE:1.0"));
+		CORBA_exception_free (ev);
+	}
+}
 
 static void
 run_tests (test_TestFactory   factory, 
@@ -1171,6 +1183,10 @@ run_tests (test_TestFactory   factory,
 		testIInterface (factory, ev);
 		testMisc (factory, ev);
 		testAsync (factory, ev);
+#endif
+
+#ifndef TIMING_RUN
+		testSegv (factory, ev);
 #endif
 	}
 	
