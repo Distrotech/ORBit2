@@ -16,7 +16,8 @@ linc_init(void)
 {
   pthread_mutexattr_init(&linc_mutex_attrs);
   pthread_mutexattr_settype(&linc_mutex_attrs, PTHREAD_MUTEX_RECURSIVE);
-  g_thread_init(NULL);
+  if (!g_thread_supported()) g_thread_init (NULL);
+
   g_type_init();
 
   linc_loop = g_main_new(FALSE);
