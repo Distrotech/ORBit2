@@ -1,3 +1,7 @@
+2003-08-26  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.8.0
+
 2003-08-21  Frank Rehberger  <Frank.Rehberger@xtradyne.de>
 
 	* src/orb/orb-core/corba-any.c (ORBit_sequence_concat): initial
