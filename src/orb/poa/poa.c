@@ -5,6 +5,7 @@
 #include <orb-core-export.h>
 #include <orbit-debug.h>
 #include "../util/orbit-purify.h"
+#include "poa-macros.h"
 
 #include "orbit-poa.h"
 
@@ -1850,21 +1851,15 @@ PortableServer_POA_servant_to_id (PortableServer_POA            poa,
 {
 	PortableServer_ServantBase *servant = p_servant;
 	ORBit_POAObject             pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant);
-	gboolean                    defserv, retain, implicit, unique;
+	gboolean                    defserv = IS_USE_DEFAULT_SERVANT (poa);
+	gboolean                    retain = IS_RETAIN (poa);
+	gboolean                    implicit = IS_IMPLICIT_ACTIVATION (poa);
+	gboolean                    unique = IS_UNIQUE_ID (poa);
 
-	g_return_val_if_fail (p_servant, NULL);
+	poa_sys_exception_val_if_fail (servant, ex_CORBA_BAD_PARAM, NULL);
 
-	defserv   = (poa->p_request_processing  == PortableServer_USE_DEFAULT_SERVANT);
-	retain    = (poa->p_servant_retention   == PortableServer_RETAIN);
-	implicit  = (poa->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION);
-	unique    = (poa->p_id_uniqueness       == PortableServer_UNIQUE_ID);
-
-	if (!(defserv || (retain && (unique || implicit)))) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POA_WrongPolicy,
-				     NULL);
-		return NULL;
-	}
+	poa_exception_val_if_fail (defserv || (retain && (unique || implicit)),
+				   ex_PortableServer_POA_WrongPolicy, NULL);
 
 	if (retain && unique && pobj && pobj->servant == p_servant)
 		return ORBit_sequence_CORBA_octet_dup (pobj->object_id);
@@ -1908,18 +1903,15 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 {
 	PortableServer_ServantBase *servant = p_servant;
 	ORBit_POAObject             pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant);
-	gboolean                    retain, implicit, unique;
+	gboolean                    retain = IS_RETAIN (poa);
+	gboolean                    implicit = IS_IMPLICIT_ACTIVATION (poa);
+	gboolean                    unique = IS_UNIQUE_ID (poa);
 
-	retain   = (poa->p_servant_retention   == PortableServer_RETAIN);
-	implicit = (poa->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION);
-	unique   = (poa->p_id_uniqueness       == PortableServer_UNIQUE_ID);
+	poa_sys_exception_val_if_fail (servant, ex_CORBA_BAD_PARAM, CORBA_OBJECT_NIL);
 
-	if (!(retain && (unique || implicit))) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POA_WrongPolicy,
-				     NULL);
-		return CORBA_OBJECT_NIL;
-	}
+	poa_exception_val_if_fail (retain && (unique || implicit),
+				   ex_PortableServer_POA_WrongPolicy,
+				   CORBA_OBJECT_NIL);
 
 	if (retain && unique && pobj)
 		if (pobj->base.objref)
@@ -1963,39 +1955,28 @@ PortableServer_POA_reference_to_servant (PortableServer_POA  poa,
 					 const CORBA_Object  reference,
 					 CORBA_Environment  *ev)
 {
-	if (reference == CORBA_OBJECT_NIL)
-		return NULL;
+	poa_sys_exception_val_if_fail (reference != CORBA_OBJECT_NIL,
+				       ex_CORBA_BAD_PARAM, NULL);
 
-	if (poa->p_request_processing != PortableServer_USE_DEFAULT_SERVANT && 
-	    poa->p_servant_retention  != PortableServer_RETAIN) {
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POA_WrongPolicy,
-				     NULL);
-		return NULL;
-	}
+	poa_exception_val_if_fail (IS_USE_DEFAULT_SERVANT (poa) || IS_RETAIN (poa),
+				   ex_PortableServer_POA_WrongPolicy, NULL);
 
 	/*
-	 * FIXME: Is this correct
+	 * FIXME: Is this correct?
 	 */
-	if (poa->p_servant_retention == PortableServer_RETAIN ) {
-		if (!reference->adaptor_obj) {
-			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-					     ex_PortableServer_POA_WrongAdapter,
-					     NULL);
-			return NULL;
-		}
+	if (IS_RETAIN (poa)) {
+		poa_exception_val_if_fail (reference->adaptor_obj,
+					   ex_PortableServer_POA_WrongAdapter, 
+					   NULL);
 
 		if (((ORBit_POAObject)reference->adaptor_obj)->servant)
 			return ((ORBit_POAObject)reference->adaptor_obj)->servant;
 	}
 
-	if (poa->p_request_processing == PortableServer_USE_DEFAULT_SERVANT &&
-	    poa->default_servant)
+	if (IS_USE_DEFAULT_SERVANT (poa) && poa->default_servant)
 		return poa->default_servant;
 
-	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-			     ex_PortableServer_POA_ObjectNotActive,
-			     NULL);
+	poa_exception_val_if_fail (FALSE, ex_PortableServer_POA_ObjectNotActive, NULL);
 
 	return NULL;
 }
@@ -2007,17 +1988,15 @@ PortableServer_POA_reference_to_id (PortableServer_POA  poa,
 {
 	ORBit_POAObject pobj;
 
-	if (reference == CORBA_OBJECT_NIL)
-		return NULL;
+	poa_sys_exception_val_if_fail (reference != CORBA_OBJECT_NIL,
+				       ex_CORBA_BAD_PARAM, NULL);
 
 	pobj = (ORBit_POAObject)reference->adaptor_obj;
 	if (pobj)
 		return (PortableServer_ObjectId *)
 				ORBit_sequence_CORBA_octet_dup (pobj->object_id);
 
-	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-			     ex_PortableServer_POA_WrongAdapter,
-			     NULL);
+	poa_exception_val_if_fail (FALSE, ex_PortableServer_POA_WrongAdapter, NULL);
 
 	return NULL;
 }
@@ -2027,29 +2006,22 @@ PortableServer_POA_id_to_servant (PortableServer_POA             poa,
 				  const PortableServer_ObjectId *oid,
 				  CORBA_Environment             *ev)
 {
-	if (poa->p_request_processing != PortableServer_USE_DEFAULT_SERVANT &&
-	    poa->p_servant_retention  != PortableServer_RETAIN) {
+	poa_sys_exception_val_if_fail (oid, ex_CORBA_BAD_PARAM, NULL);
 
-		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-				     ex_PortableServer_POA_WrongPolicy,
-				     NULL);
-		return NULL;
-	}
+	poa_exception_val_if_fail (IS_USE_DEFAULT_SERVANT (poa) || IS_RETAIN (poa),
+				   ex_PortableServer_POA_WrongPolicy, NULL);
 
-	if (poa->p_servant_retention == PortableServer_RETAIN) {
+	if (IS_RETAIN (poa)) {
 		ORBit_POAObject pobj = ORBit_POA_oid_to_obj (poa, oid, TRUE, NULL);
 
 		if (pobj && pobj->servant)
 			return pobj->servant;
 	}
 
-	if (poa->p_request_processing == PortableServer_USE_DEFAULT_SERVANT &&
-	    poa->default_servant)
+	if (IS_USE_DEFAULT_SERVANT (poa) && poa->default_servant)
 		return poa->default_servant;
 
-	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-			     ex_PortableServer_POA_ObjectNotActive,
-			     NULL);
+	poa_exception_val_if_fail (FALSE, ex_PortableServer_POA_ObjectNotActive, NULL);
 
 	return NULL;
 }
@@ -2060,6 +2032,8 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 				    CORBA_Environment             *ev)
 {
 	ORBit_POAObject pobj;
+
+	poa_sys_exception_val_if_fail (oid, ex_CORBA_BAD_PARAM, CORBA_OBJECT_NIL);
 
 	pobj = ORBit_POA_oid_to_obj (poa, oid, TRUE, ev);
 	if (ev->_major != CORBA_NO_EXCEPTION)
