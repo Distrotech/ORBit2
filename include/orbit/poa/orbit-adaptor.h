@@ -23,6 +23,9 @@ ORBitThreadHint ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor
 
 #ifdef ORBIT2_INTERNAL_API
 
+void                ORBit_handle_locate_request     (CORBA_ORB          orb, 
+						     GIOPRecvBuffer    *recv_buffer);
+
 void                ORBit_handle_request            (CORBA_ORB          orb, 
 						     GIOPRecvBuffer    *recv_buffer);
 
