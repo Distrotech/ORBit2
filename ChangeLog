@@ -1,3 +1,9 @@
+2002-07-23  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/pass_skels.cc: in POA_Obj::_this(), use
+	POA::servant_to_id instead of activate_object, to allow multiple
+	calls to _this()
+
 2002-07-21  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/types/IDLUnion.cc: Implemented IN

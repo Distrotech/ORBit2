@@ -43,4 +43,4 @@ libORBit_2_cpp_la_SOURCES = \
 			$(libORBit_2_cppinclude_HEADERS)
 
 libORBit_2_cpp_la_LDFLAGS = -version-info $(LT_VERSION)
-libORBit_2_cpp_la_LIBADD = $(ORBIT_LIBS) -lstdc++
+libORBit_2_cpp_la_LIBADD = $(ORBIT_LIBS) $(top_builddir)/src/orb/libORBit-2.la -lstdc++
