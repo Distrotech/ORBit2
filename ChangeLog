@@ -1,3 +1,10 @@
+2003-11-03  Justin Schoeman <justin@expertron.co.za>
+
+	* src/orb/orb-core/corba-orb.c (ORBit_initial_references_by_user):
+	Destroy the NameService object after calling 
+	ORBit_set_initial_reference on it, as ORBit_set_initial_reference 
+	dup's the object.
+
 2003-10-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (giop_thread_free):

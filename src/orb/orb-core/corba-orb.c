@@ -294,6 +294,7 @@ ORBit_initial_references_by_user (CORBA_ORB          orb,
 			 * IDL:omg.org/CosNaming/NamingContext using _is_a()
 			 * operation */ 
 			ORBit_set_initial_reference (orb, "NameService", objref);
+			ORBit_RootObject_release (objref);
 		}
 	}
 
