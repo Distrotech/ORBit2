@@ -809,21 +809,24 @@ typecode_equiv_internal (CORBA_TypeCode obj,
 		    || obj->sub_parts != tc->sub_parts)
 			return CORBA_FALSE;
 		for (i = 0; i < obj->sub_parts; ++i)
-			if (! CORBA_TypeCode_equal (obj->subtypes[i],
-						    tc->subtypes[i], ev))
+			if (! typecode_equiv_internal (obj->subtypes[i],
+						       tc->subtypes[i],
+						       strict_equal, ev))
 				return CORBA_FALSE;
 		break;
 	case CORBA_tk_union:
 		if (strcmp (obj->repo_id, tc->repo_id)
 		    || obj->sub_parts != tc->sub_parts
-		    || ! CORBA_TypeCode_equal (obj->discriminator,
-					       tc->discriminator, ev)
+		    || ! typecode_equiv_internal (obj->discriminator,
+						   tc->discriminator,
+						   strict_equal, ev)
 		    || obj->default_index != tc->default_index)
 			return CORBA_FALSE;
 		for (i = 0; i < obj->sub_parts; ++i)
 
-			if (! CORBA_TypeCode_equal (obj->subtypes[i],
-						    tc->subtypes[i], ev)
+			if (! typecode_equiv_internal (obj->subtypes[i],
+						       tc->subtypes[i],
+						       strict_equal, ev)
 			    || ! ORBit_any_equivalent (&obj->sublabels[i],
 						       &tc->sublabels[i], ev))
 				return CORBA_FALSE;
@@ -843,8 +846,9 @@ typecode_equiv_internal (CORBA_TypeCode obj,
 			return CORBA_FALSE;
 		g_assert (obj->sub_parts == 1);
 		g_assert (tc->sub_parts == 1);
-		return CORBA_TypeCode_equal (obj->subtypes[0], tc->subtypes[0],
-					     ev);
+		return typecode_equiv_internal (obj->subtypes[0],
+						tc->subtypes[0],
+						strict_equal, ev);
 	case CORBA_tk_alias:
 		if (strcmp (obj->repo_id, tc->repo_id))
 			return CORBA_FALSE;
@@ -852,8 +856,9 @@ typecode_equiv_internal (CORBA_TypeCode obj,
 		g_assert (obj->sub_parts == 1);
 		g_assert (tc->sub_parts == 1);
 
-		return CORBA_TypeCode_equal (obj->subtypes[0], tc->subtypes[0],
-					       ev);
+		return typecode_equiv_internal (obj->subtypes[0],
+						tc->subtypes[0],
+						strict_equal, ev);
 		break;
 	case CORBA_tk_recursive:
 		return obj->recurse_depth == tc->recurse_depth;
