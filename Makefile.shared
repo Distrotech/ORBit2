@@ -1,6 +1,9 @@
 IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl-2$(EXEEXT)
 
-%.h %-stubs.c %-skels.c %-common.c %-imodule.c %-skelimpl.c: $(IDL_DIR)%.idl $(IDL_COMPILER)
+%-stubs.c %-skels.c %-common.c %-imodule.c %-skelimpl.c: %.h
+	true
+
+%.h: $(IDL_DIR)%.idl $(IDL_COMPILER)
 	-(rm -f $(*).h $(*)-stubs.c $(*)-skels.c $(*)-common.c $(*)-imodule.c $(*)-skelimpl.c || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS) --deps $(*D)/.deps/$(*F).idl.P $< 
 	for I in $(*).h $(*)-stubs.c $(*)-skels.c $(*)-common.c $(*)-imodule.c $(*)-skelimpl.c; do \

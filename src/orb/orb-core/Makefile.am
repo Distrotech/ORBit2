@@ -53,7 +53,8 @@ liborb_core_la_SOURCES= \
 
 IDLOUT=corba-defs-common.c
 DEFS_IDLOUT=iop-defs-common.c
-OPS_IDLOUT= corba-ops.h corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
+OPS_IDLOUT_H= corba-ops.h
+OPS_IDLOUT_C= corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
 IFACE_IDLOUT=orbit-interface-common.c
 
 $(liborb_core_la_OBJECTS) : $(BUILT_SOURCES)
@@ -69,10 +70,13 @@ IDL_FILES=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl
 include $(top_srcdir)/Makefile.shared
 
 IDL_FLAGS_CORBA_OPS = --showcpperrors
-$(OPS_IDLOUT): corba-ops.idl $(IDL_COMPILER)
-	-(rm -f $(OPS_IDLOUT) || true) > /dev/null
+$(OPS_IDLOUT_C): $(OPS_IDLOUT_H)
+	true
+
+$(OPS_IDLOUT_H): corba-ops.idl $(IDL_COMPILER)
+	-(rm -f $(OPS_IDLOUT_C) $(OPS_IDLOUT_H) || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS_CORBA_OPS) --deps .deps/corba-ops.idl.P $<
-	for I in $(OPS_IDLOUT); do								\
+	for I in $(OPS_IDLOUT_C) $(OPS_IDLOUT_H); do								\
 		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I;	\
 	done;											\
 	sed -e "s,Z,_,g" corba-ops-skels.c > corba-ops-skels.c.out;				\
@@ -83,7 +87,7 @@ $(IFACE_IDLOUT) : orbit-interface.idl $(IDL_COMPILER)
 	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS_INTERFACE) --deps .deps/orbit-interface.idl.P $<
 
-BUILT_SOURCES = $(IFACE_IDLOUT) $(IDLOUT) $(DEFS_IDLOUT) $(OPS_IDLOUT)
+BUILT_SOURCES = $(IFACE_IDLOUT) $(IDLOUT) $(DEFS_IDLOUT) $(OPS_IDLOUT_C) $(OPS_IDLOUT_H)
 CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = $(IDL_FILES)
 

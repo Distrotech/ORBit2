@@ -1,3 +1,9 @@
+2003-07-30  Michael Meeks  <michael@ximian.com>
+
+	* Makefile.shared: parallel build messing.
+
+	* src/orb/orb-core/Makefile.am: parallel build fixage.
+
 2003-07-29  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: disable linux/irda.h check / include,
