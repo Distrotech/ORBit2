@@ -1,3 +1,9 @@
+2002-08-07  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_type_alloc_and_tc): add missing '\n's spiking
+	build, thanks Jody.
+
 2002-08-05  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-object.c

@@ -648,9 +648,9 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
   }
 
   fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
-  fprintf (ci->fh, "static ");
+  fprintf (ci->fh, "static\n");
   fprintf (ci->fh, "#else\n");
-  fprintf (ci->fh, "extern ");
+  fprintf (ci->fh, "extern\n");
   fprintf (ci->fh, "#endif\n");
   fprintf (ci->fh, "const struct CORBA_TypeCode_struct TC_%s_struct;\n", ctmp);
 
