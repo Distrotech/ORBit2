@@ -48,5 +48,6 @@ extern gboolean oidl_tree_is_pidl(IDL_tree tree);
 
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
+#define ORBIT_EPV_VAR_NAME    "_ORBIT_epv"
 
 #endif /* ORBIT_IDL2_H */
