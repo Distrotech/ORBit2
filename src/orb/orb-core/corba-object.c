@@ -510,7 +510,7 @@ ORBit_impl_ORBit_get_iinterface (PortableServer_ServantBase *servant,
 	const char *repo_id = *(const char **)args[0];
 
 	*(ORBit_IInterface **)ret = ORBit_small_get_iinterface (
-		NULL, repo_id, ev);
+		CORBA_OBJECT_NIL, repo_id, ev);
 }
 
 ORBitSmallSkeleton
@@ -540,21 +540,24 @@ get_small_skel_CORBA_Object(PortableServer_Servant servant, const char *opname,
  * Arguments' Definitions.
  */
 
-static ORBit_IArg CORBA_Object_is_a__arginfo[] = {
+static ORBit_IArg
+CORBA_Object_is_a__arginfo[] = {
    {
    TC_CORBA_string, ORBit_I_ARG_IN, "logical_type_id"
    },
    {NULL, 0, NULL}
 };
 
-static ORBit_IArg CORBA_Object_is_equivalent__arginfo[] = {
+static ORBit_IArg
+CORBA_Object_is_equivalent__arginfo[] = {
    {
     TC_CORBA_Object, ORBit_I_ARG_IN, "other_object"
    },
    {NULL, 0, NULL}
 };
 
-static ORBit_IArg CORBA_Object_hash__arginfo[] = {
+static ORBit_IArg
+CORBA_Object_hash__arginfo[] = {
    {
     TC_CORBA_unsigned_long, 
     ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE,
@@ -563,7 +566,8 @@ static ORBit_IArg CORBA_Object_hash__arginfo[] = {
    {NULL, 0, NULL}
 };
 
-static ORBit_IArg CORBA_Object_create_request__arginfo[] = {
+static ORBit_IArg
+CORBA_Object_create_request__arginfo[] = {
    {
     TC_CORBA_Context, ORBit_I_ARG_IN, "ctx"
    },
@@ -587,7 +591,8 @@ static ORBit_IArg CORBA_Object_create_request__arginfo[] = {
    {NULL, 0, NULL}
 };
 
-static ORBit_IArg CORBA_Object_get_policy__arginfo[] = {
+static ORBit_IArg
+CORBA_Object_get_policy__arginfo[] = {
    {
     TC_CORBA_PolicyType,
     ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE,
@@ -596,7 +601,8 @@ static ORBit_IArg CORBA_Object_get_policy__arginfo[] = {
    {NULL, 0, NULL}
 };
 
-static ORBit_IArg CORBA_Object_ORBit_get_iinterface__arginfo[] = {
+static ORBit_IArg
+CORBA_Object_ORBit_get_iinterface__arginfo[] = {
    {
     TC_CORBA_string,
     ORBit_I_ARG_IN,
@@ -605,7 +611,13 @@ static ORBit_IArg CORBA_Object_ORBit_get_iinterface__arginfo[] = {
    {NULL, 0, NULL}
 };
 
-static ORBit_IArg CORBA_Object_set_policy_overrides__arginfo[] = {
+static CORBA_TypeCode
+CORBA_Object_ORBit_get_iinterface__exceptinfo[] = {
+	TC_ORBit_NoIInterface, NULL
+};
+
+static ORBit_IArg
+CORBA_Object_set_policy_overrides__arginfo[] = {
    {
     TC_CORBA_PolicyList, ORBit_I_ARG_IN, "policies"
    },
@@ -621,7 +633,8 @@ static ORBit_IArg CORBA_Object_set_policy_overrides__arginfo[] = {
  * Methods' Definitions.
  */
 
-ORBit_IMethod CORBA_Object__imethods[] = {
+ORBit_IMethod
+CORBA_Object__imethods[] = {
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
@@ -709,7 +722,7 @@ ORBit_IMethod CORBA_Object__imethods[] = {
    {
     {1, 1, CORBA_Object_ORBit_get_iinterface__arginfo, FALSE},
     {0, 0, NULL, FALSE},
-    {0, 0, NULL, FALSE},
+    {1, 1, CORBA_Object_ORBit_get_iinterface__exceptinfo, FALSE},
     TC_ORBit_IInterface, "ORBit_get_iinterface", 21, 0
    }
 };
@@ -718,7 +731,8 @@ ORBit_IMethod CORBA_Object__imethods[] = {
  * Interface Definition.
  */
 
-ORBit_IInterface CORBA_Object__itype = {
+ORBit_IInterface
+CORBA_Object__itype = {
   TC_CORBA_Object, 
   {12, 12, CORBA_Object__imethods, FALSE},
   {0, 0, NULL, FALSE}

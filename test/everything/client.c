@@ -215,17 +215,20 @@ void testIInterface(test_TestFactory factory,
 
   /* Get interface data */
   iinterface = ORBit_small_get_iinterface (
-	  CORBA_OBJECT_NIL, "foo_bar_jelly", ev);
+	  objref, "foo_bar_jelly", ev);
   g_assert(ev->_major != CORBA_NO_EXCEPTION);
   g_assert(iinterface == NULL);
   g_assert(!strcmp(ev->_id, ex_ORBit_NoIInterface));
   CORBA_exception_free (ev);
 
   iinterface = ORBit_small_get_iinterface (
-	  CORBA_OBJECT_NIL, "IDL:orbit/test/StructServer:1.0", ev);
+	  objref, "IDL:orbit/test/StructServer:1.0", ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
   g_assert(iinterface != NULL);
   g_assert(!strcmp(iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
+
+  CORBA_Object_release (objref, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
 void testFixedLengthStruct(test_TestFactory factory, 
