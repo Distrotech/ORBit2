@@ -1,5 +1,13 @@
 2001-05-24  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-object.c (g_CORBA_Object_equal): uglify,
+	we need to be able to scan for MULTIPLE_COMPONENTS profiles in
+	order to do the GIOP profile comparison (get_mci): impl helper.
+	(IOP_Profile_equal): similarly uglify.
+
+	* src/orb/poa/poa.c (ORBit_POA_oid_to_ref): set the profile_type
+	on the iiop profile.
+
 	* src/orb/orb-core/corba-object.c (ORBit_objref_new): actualy
 	insert new object references into the objrefs hash.
 	(IOP_Profile_dump): impl.

@@ -1,0 +1,11 @@
+Makefile.in
+.deps
+everything-stubs.c
+everything-skels.c
+everything-common.c
+everything.h
+Makefile
+.libs
+iorfile
+client
+server

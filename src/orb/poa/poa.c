@@ -1012,6 +1012,7 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 	  if(!iiop)
 	    {
 	      iiop = g_new0(IOP_TAG_INTERNET_IOP_info, 1);
+	      iiop->parent.profile_type = IOP_TAG_INTERNET_IOP;
 	      iiop->host = g_strdup(serv->local_host_info);
 	      profiles = g_slist_append(profiles, iiop);
 	    }

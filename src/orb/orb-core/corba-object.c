@@ -405,7 +405,9 @@ IOP_ObjectKey_dump (IOP_ObjectKey_info *oki)
 }
 
 static gboolean
-IOP_Profile_equal(gpointer d1, gpointer d2)
+IOP_Profile_equal(gpointer d1, gpointer d2,
+		  IOP_TAG_MULTIPLE_COMPONENTS_info *mci1,
+		  IOP_TAG_MULTIPLE_COMPONENTS_info *mci2)
 {
 	IOP_ProfileId t1, t2;
 
@@ -433,12 +435,33 @@ IOP_Profile_equal(gpointer d1, gpointer d2)
 		IOP_TAG_GENERIC_IOP_info *giop1 = d1;
 		IOP_TAG_GENERIC_IOP_info *giop2 = d2;
 
+		if (!(mci1 || mci2))
+			return FALSE;
+
 		if (strcmp (giop1->service, giop2->service))
 			return FALSE;
 		if (strcmp (giop1->host, giop2->host))
 			return FALSE;
 		if (strcmp (giop1->proto, giop2->proto))
 			return FALSE;
+
+		{ /* Oh, the ugliness */
+			IOP_TAG_COMPLETE_OBJECT_KEY_info *c1, *c2;
+
+			c1 = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
+				IOP_component_find(mci1->components,
+						   IOP_TAG_COMPLETE_OBJECT_KEY,
+						   NULL);
+			c2 = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
+				IOP_component_find(mci2->components,
+						   IOP_TAG_COMPLETE_OBJECT_KEY,
+						   NULL);
+			if (!(c1 || c2))
+				return FALSE;
+
+			if (!IOP_ObjectKey_equal (c1->oki, c2->oki))
+				return FALSE;
+		}
 		break;
 	}
 
@@ -454,7 +477,14 @@ IOP_Profile_equal(gpointer d1, gpointer d2)
 			return FALSE;
 		break;
 	}
-	case IOP_TAG_MULTIPLE_COMPONENTS:
+	case IOP_TAG_MULTIPLE_COMPONENTS: {
+		static int warned = 0;
+		if (!(warned++)) /* FIXME: */
+			g_warning ("IOP_Profile_equal: no multiple "
+				   "components support");
+		return FALSE;
+		break;
+	}
 	default:
 		g_warning ("No IOP_Profile_match for component");
 		return FALSE;
@@ -512,22 +542,39 @@ IOP_Profile_dump(gpointer p)
 	return g_string_free (str, FALSE);
 }
 
+static IOP_TAG_MULTIPLE_COMPONENTS_info *
+get_mci (GSList *p)
+{
+  for (; p; p = p->next) {
+    if (((IOP_Profile_info *)p->data)->profile_type ==
+	IOP_TAG_MULTIPLE_COMPONENTS)
+	    return p->data;
+  }
+  return NULL;
+}
+
 static gboolean
 g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
 {
   GSList *cur1, *cur2;
   CORBA_Object _obj = (CORBA_Object)a;
   CORBA_Object other_object = (CORBA_Object)b;
+  IOP_TAG_MULTIPLE_COMPONENTS_info *mci1, *mci2;
+
   if(_obj == other_object)
     return TRUE;
   if(!(_obj && other_object))
     return FALSE;
 
+  mci1 = get_mci (_obj->profile_list);
+  mci2 = get_mci (other_object->profile_list);
+
   for(cur1 = _obj->profile_list; cur1; cur1 = cur1->next)
     {
       for(cur2 = other_object->profile_list; cur2; cur2 = cur2->next)
 	{
-           if(IOP_Profile_equal(cur1->data, cur2->data))
+           if(IOP_Profile_equal(cur1->data, cur2->data,
+				mci1, mci2))
 	     {
                 char *a, *b;
 		a = IOP_Profile_dump (cur1->data);
