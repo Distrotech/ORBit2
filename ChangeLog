@@ -1,3 +1,8 @@
+2001-12-08  Kristian Rietveld  <kris@gtk.org>
+
+	* src/orb/GIOP/giop-send-buffer.c: move down sys/uio.h, so it
+	builds on FreeBSD
+
 2001-12-07  Laszlo Peter  <laca@ireland.sun.com>
 
 	* src/orb/orb-core/orbit-debug.h:
