@@ -1,3 +1,12 @@
+2001-11-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_append_aligned): remove erroneous
+	assertion - the indirect (system) align and message
+	align are not synchronized.
+	(giop_send_buffer_append_string): fix an incredibly
+	daft bug; accelerate further.
+
 2001-11-02  Abel Cheung  <maddog@linux.org.hk>
 
 	* configure.in: Update required linc version.
