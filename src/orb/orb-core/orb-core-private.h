@@ -41,7 +41,6 @@ void     ORBit_trace_objref   (const CORBA_Object   obj);
 void     ORBit_trace_any      (const CORBA_any     *any);
 void     ORBit_trace_typecode (const CORBA_TypeCode tc);
 void     ORBit_trace_value    (gconstpointer       *val,
-			       CORBA_TypeCode       tc,
-			       ORBit_marshal_value_info *mi);
+			       CORBA_TypeCode       tc);
 
 #endif
