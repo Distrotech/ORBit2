@@ -669,6 +669,9 @@ linc_connection_flush_write_queue (LINCConnection *cnx)
 		}
 	}
 
+	fprintf (stderr, "Bogus double unlock ...\n");
+	LINC_MUTEX_UNLOCK (cnx->priv->write_lock);
+
 	d_printf ("Blocked write queue %s\n", done_writes ?
 		  "flushed & empty" : "still active");
 
@@ -720,7 +723,7 @@ linc_connection_writev (LINCConnection       *cnx,
 
 	if (linc_get_threaded () &&
 	    !linc_in_io_thread ()) {
-		d_printf ("Transfer output to main thread");
+		d_printf ("Transfer output to main thread\n");
 		linc_object_ref (cnx);
 		queue_flattened (cnx, vecs, nvecs);
 		LINC_MUTEX_UNLOCK (cnx->priv->write_lock);
@@ -820,11 +823,6 @@ linc_connection_dispose (GObject *obj)
 	linc_source_remove (cnx);
 	queue_free (cnx);
 
-	if (cnx->priv->write_lock) {
-		g_mutex_free (cnx->priv->write_lock);
-		cnx->priv->write_lock = NULL;
-	}
-
 	parent_class->dispose (obj);
 }
 
@@ -834,6 +832,12 @@ linc_connection_finalize (GObject *obj)
 	LINCConnection *cnx = (LINCConnection *)obj;
 
 	linc_close_fd (cnx);
+
+	if (cnx->priv->write_lock) {
+		d_printf ("destroy lock on connection %p\n", cnx);
+		g_mutex_free (cnx->priv->write_lock);
+		cnx->priv->write_lock = NULL;
+	}
 
 	g_free (cnx->remote_host_info);
 	g_free (cnx->remote_serv_info);
