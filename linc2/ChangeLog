@@ -1,3 +1,13 @@
+2005-02-07  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-debug.h: Don't define CONNECTION_DEBUG on Win32, done
+	with the heavy debugging for now.
+
+	* src/linc-source.c (link_source_dispatch): Unselect socket
+	events, so that we have to re-select them with WSAEventSelect() in
+	link_source_prepare(). Don't know why, but this prevents the test
+	in ../test/everything from hanging after the async tests.
+
 2005-02-02  Hans Petter Jansson  <hpj@novell.com>
 
 	* src/linc-compat.h: Include <sys/types.h> before the optional stuff.

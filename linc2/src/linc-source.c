@@ -4,8 +4,9 @@
  * Authors:
  *    Owen Taylor   (owen@redhat.com)
  *    Michael Meeks (michael@ximian.com)
+ *    Tor Lillqvist (tml@novell.com)
  *
- * Copyright 1998, 2001, Red Hat, Inc., Ximian, Inc.,
+ * Copyright 1998, 2001, 2005, Red Hat, Inc., Ximian, Inc., Novell, Inc.
  */
 
 #include <sys/types.h>
@@ -29,12 +30,13 @@ static char *
 fd_mask (int mask)
 {
   static char buf[100];
+  int checked_bits = 0;
   char *bufp = buf;
 
   if (mask == 0)
     return "";
 
-#define BIT(n) if (mask & FD_##n) bufp += sprintf (bufp, "%s" #n, (bufp>buf ? "|" : ""))
+#define BIT(n) checked_bits |= FD_##n; if (mask & FD_##n) bufp += sprintf (bufp, "%s" #n, (bufp>buf ? "|" : ""))
 
   BIT (READ);
   BIT (WRITE);
@@ -49,6 +51,9 @@ fd_mask (int mask)
   
 #undef BIT
 
+  if ((mask & ~checked_bits) != 0)
+	  bufp += sprintf (bufp, "|%#x", mask & ~checked_bits);
+  
   return buf;
 }
 
@@ -62,23 +67,10 @@ link_source_prepare (GSource *source,
 	LinkUnixWatch *watch = (LinkUnixWatch *) source;
 	int event_mask = 0;
 
-#if 0
-	if (watch->condition & G_IO_IN) {
-		u_long nread;
-		if (ioctlsocket (watch->socket, FIONREAD, &nread) == 0) {
-			d_printf ("FIONREAD %d: %d\n", watch->socket, nread);
-			if (nread > 0) {
-				watch->pollfd.revents = G_IO_IN;
-				return TRUE;
-			}
-		}
-	}
-#endif
-
 	if (watch->condition & G_IO_IN)
 		event_mask |= (FD_READ | FD_ACCEPT | FD_CLOSE);
 	if (watch->condition & G_IO_OUT)
-		event_mask |= (FD_WRITE /*| FD_CONNECT*/);
+		event_mask |= (FD_WRITE | FD_CONNECT);
 	if (watch->condition & G_IO_HUP)
 		event_mask |= FD_CLOSE;
 
@@ -136,12 +128,25 @@ link_source_dispatch (GSource    *source,
 			watch->pollfd.revents = 0;
 			if (events.lNetworkEvents & (FD_READ | FD_ACCEPT | FD_CLOSE))
 				watch->pollfd.revents |= G_IO_IN;
-			if (events.lNetworkEvents & (FD_WRITE /*| FD_CONNECT*/))
+			if (events.lNetworkEvents & (FD_WRITE | FD_CONNECT))
 				watch->pollfd.revents |= G_IO_OUT;
 			if (events.lNetworkEvents & (FD_CLOSE))
 				watch->pollfd.revents |= G_IO_HUP;
 		}
 	}
+
+	/* XXX For some reason we get hangs eventually, for instance
+	 * in test/everything, unless we reset the selected event mask
+	 * here, set event_mask to zero, and thus have to call
+	 * WSAEventSelect() anew in link_source_prepare()).
+	 */
+	d_printf ("WSAEventSelect (%d, %#x, {})\n",
+		  watch->socket, watch->pollfd.fd);
+	if (WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd,
+			    0) == SOCKET_ERROR)
+		d_printf ("WSAEventSelect() failed: %s\n",
+			  link_strerror (WSAGetLastError ()));
+	watch->event_mask = 0;
 #endif
 
 	func = (GIOFunc) callback;
@@ -342,7 +347,11 @@ link_watch_move_io (LinkWatch *w,
 
 	w->link_source = link_source_create_watch
 		(link_thread_io_context (),
+#ifdef G_OS_WIN32
+		 w_cpy.socket,
+#else
 		 w_cpy.pollfd.fd,
+#endif
 		 w_cpy.channel, w_cpy.condition,
 		 w_cpy.callback, w_cpy.user_data);
 }
