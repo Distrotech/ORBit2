@@ -56,7 +56,9 @@ namespace CORBA {
 	
 	
 	
-	
+	// This seems to 'inherit' from CORBA_Object_type
+  // - it has the 'base' class as it's only data member so that CORBA::Object* can be cast safely to CORBA_Object* and back.
+  // murrayc.
 	class Object {
 		friend void release(Object_ptr o);
 	
