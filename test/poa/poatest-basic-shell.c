@@ -81,6 +81,19 @@ int main( int argc, char **argv ) {
  CORBA_Object_release( (CORBA_Object)poatest_obj, &ev );
  CORBA_Object_release( (CORBA_Object)poa_mgr, &ev );
  CORBA_Object_release( (CORBA_Object)rootpoa, &ev );
+
+ CORBA_ORB_shutdown(orb, CORBA_TRUE, &ev);
+ if ( POATEST_EX(&ev) ) {
+    POATEST_PRINT_EX("ORB_shutdown : ", &ev);
+    return 1;
+    }
+
+ CORBA_ORB_destroy(orb, &ev);
+ if ( POATEST_EX(&ev) ) {
+    POATEST_PRINT_EX("ORB_destroy : ", &ev);
+    return 1;
+    }
+
  CORBA_Object_release( (CORBA_Object)orb, &ev );
 
  return 0;

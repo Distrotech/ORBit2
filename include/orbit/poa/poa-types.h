@@ -19,12 +19,17 @@ typedef gpointer PortableServer_Servant;
 #define ORBit_LifeF_Destroyed           (1<<10)
 
 typedef struct {
+  struct ORBit_RootObject_struct parent;
+
+  /* The object is activated if servant is non-NULL */
   PortableServer_Servant servant;
   gpointer poa;
   gpointer object_id;
+
 #ifdef ORBIT_BYPASS_MAPCACHE
 	ORBit_VepvIdx*	vepvmap_cache;
 #endif
+
   guint16 life_flags;
   guint16 use_cnt; /* method invokations */
 } ORBit_POAObject;

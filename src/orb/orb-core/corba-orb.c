@@ -45,7 +45,9 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 
   retval = g_new0(struct CORBA_ORB_type, 1);
 
-  ORBit_RootObject_init((ORBit_RootObject)retval, &orb_if);
+  ORBit_RootObject_init(&retval->root_object, &orb_if);
+  /* released by CORBA_ORB_destroy */
+  ORBit_RootObject_duplicate(retval);
 
   ORBit_genrand_init(&retval->genrand);
   retval->default_giop_version = GIOP_LATEST;
@@ -820,10 +822,11 @@ CORBA_ORB_shutdown(CORBA_ORB orb,
 		   const CORBA_boolean wait_for_completion,
 		   CORBA_Environment * ev)
 {
-  if ( g_ptr_array_index(orb->poas, 0) ) /* Root POA */
+  PortableServer_POA root_poa = g_ptr_array_index(orb->poas, 0);
+
+  if ( root_poa != NULL )
     {
-      PortableServer_POA_destroy( g_ptr_array_index(orb->poas, 0), 
-				  TRUE, wait_for_completion, ev);
+      PortableServer_POA_destroy( root_poa, TRUE, wait_for_completion, ev);
       if (ev->_major)
 	/* This is prob. an INV_ORDER exception */
 	return;
@@ -858,15 +861,24 @@ CORBA_ORB_destroy(CORBA_ORB orb, CORBA_Environment * ev)
       g_ptr_array_index(orb->poas, 0) = NULL;
     }
 
+#if 0
 #ifndef G_DISABLE_ASSERT
   {
     int pi;
     for (pi = 0; pi < orb->poas->len; pi++)
       {
-	PortableServer_POA *poa = g_ptr_array_index(orb->poas,pi);
+	PortableServer_POA poa = g_ptr_array_index(orb->poas,pi);
+	/*
+	 * FIXME:
+	 * This is just not true !
+	 * The application may still have refs to its POAs
+	 * or to its objects, in which case the poa has
+	 * not gone away.
 	g_assert(poa == NULL);
+	 */
       }
   }
+#endif
 #endif
   orb->life_flags |= ORBit_LifeF_Destroyed;
   ORBit_RootObject_release(orb);
