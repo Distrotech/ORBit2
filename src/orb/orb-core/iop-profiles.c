@@ -1150,7 +1150,7 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 		if (!(warned++))
 			g_warning ("Ignoring incoming code_sets component");
 
-		if (buf->cur + sequence_length * 4 < buf->end)
+		if (buf->cur + sequence_length * 4 <= buf->end)
 			buf->cur += sequence_length * 4;
 		else
 			return FALSE;
