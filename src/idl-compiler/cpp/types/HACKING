@@ -51,15 +51,15 @@ w: currently working on stuff related to it, might work
 -: not implemented yet
 
 
-TYPE		IN	OUT	INOUT	Ret	Ex	Attrib	Array	Struct	Union	Seq
+TYPE		IN	OUT	INOUT	Ret	Ex	Attrib	Array	Struct	Seq	Union
 
-Simple		Y	Y	Y	Y	Y	Y	Y	Y	-	-
-String		Y	Y	Y	y	Y	y	Y	Y	-	-
-Enums		Y	Y	Y	Y	y	y	y	y	-	-
-Object		Y	Y	Y	Y	Y	y	Y	Y	-	-
+Simple		Y	Y	Y	Y	Y	Y	Y	Y	Y	-
+String		Y	Y	Y	y	Y	y	Y	Y	w	-
+Enums		Y	Y	Y	Y	y	y	y	y	y	-
+Object		Y	Y	Y	Y	Y	y	Y	Y	w	-
 Array/fixed	Y	Y	Y	Y	Y	y	y	Y	-	-
 Array/var	Y	Y	Y	Y	Y	y	y	Y	-	-
-Struct/fixed	Y	Y	Y	Y	Y	y	Y	Y	-	-
-Struct/var	Y	Y	Y	Y	Y	y	Y	Y	-	-
+Struct/fixed	Y	Y	Y	Y	Y	y	Y	Y	w	-
+Struct/var	Y	Y	Y	Y	Y	y	Y	Y	w	-
+Sequence	Y	Y	Y	Y	w	y	w	w	-	-
 Union		-	-	-	-	-	-	-	-	-	-
-Sequence	-	-	-	-	-	-	-	-	-	-

@@ -430,7 +430,7 @@ IDLStruct::skel_impl_ret_pre (ostream          &ostr,
 	if (is_fixed ())
 		ostr << indent << cpp_typename << " _cpp_retval;" << endl;
 	else
-		ostr << indent << cpp_typename << " *_cpp_retval = 0;" << endl;
+		ostr << indent << cpp_typename << "_var _cpp_retval = 0;" << endl;
 }
 
 void
@@ -465,9 +465,7 @@ IDLStruct::skel_impl_ret_post (ostream          &ostr,
 			ostr << indent << c_typename << " _c_retval;" << endl;
 			ostr << indent << "_cpp_retval._orbitcpp_pack (_c_retval);" << endl;
 		} else {
-			ostr << indent << c_typename << " *_c_retval = "
-			     << "_cpp_retval->_orbitcpp_pack ();" << endl;
-			ostr << indent << "delete _cpp_retval;" << endl;
+			ostr << indent << "return _cpp_retval->_orbitcpp_pack ();" << endl;
 		}
 
 		ostr << indent << "return _c_retval;" << endl;
