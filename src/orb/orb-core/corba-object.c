@@ -8,12 +8,6 @@
 #include "orbit-debug.h"
 #include "../util/orbit-purify.h"
 
-/*
- * HashTable of Object Adaptor generated refs that have 
- * been externalised and refs that we have received.
- */
-static GHashTable *objrefs = NULL;
-
 static guint
 g_CORBA_Object_hash (gconstpointer key)
 {
@@ -67,32 +61,53 @@ g_CORBA_Object_equal (gconstpointer a, gconstpointer b)
 void
 ORBit_register_objref (CORBA_Object obj)
 {
-	if (!objrefs)
-		objrefs = g_hash_table_new (
-			g_CORBA_Object_hash, g_CORBA_Object_equal);
+	CORBA_ORB orb = obj->orb;
 
+	g_assert (orb != NULL);
 	g_assert (obj->object_key != NULL);
 	g_assert (obj->profile_list != NULL);
 
-	g_hash_table_insert (objrefs, obj, obj);
+	LINC_MUTEX_LOCK (orb->lock);
+
+	if (!orb->objrefs)
+		orb->objrefs = g_hash_table_new (
+			g_CORBA_Object_hash, g_CORBA_Object_equal);
+	g_hash_table_insert (orb->objrefs, obj, obj);
+
+	LINC_MUTEX_UNLOCK (orb->lock);
 }
 
 static CORBA_Object
 ORBit_lookup_objref (CORBA_Object obj)
 {
-	if (!objrefs || !obj->profile_list)
-		return NULL;
+	CORBA_Object result;
+	CORBA_ORB orb = obj->orb;
 
-	return g_hash_table_lookup (objrefs, obj);
+	g_assert (orb != NULL);
+
+	LINC_MUTEX_LOCK (orb->lock);
+	if (!orb->objrefs || !obj->profile_list)
+		result = NULL;
+	else
+		result = g_hash_table_lookup (orb->objrefs, obj);
+	LINC_MUTEX_UNLOCK (orb->lock);
+
+	return result;
 }
 
 static void
 CORBA_Object_release_cb (ORBit_RootObject robj)
 {
 	CORBA_Object obj = (CORBA_Object) robj;
+	CORBA_ORB    orb = obj->orb;
 
-	if (obj->profile_list)
-		g_hash_table_remove (objrefs, obj);
+	g_assert (orb != NULL);
+
+	if (obj->profile_list) {
+		LINC_MUTEX_LOCK (orb->lock);
+		g_hash_table_remove (orb->objrefs, obj);
+		LINC_MUTEX_UNLOCK (orb->lock);
+	}
 
 	ORBit_free_T (obj->object_key);
 
@@ -138,6 +153,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 	CORBA_Object retval = CORBA_OBJECT_NIL;
 	struct CORBA_Object_type fakeme = {{0}};
 
+	fakeme.orb = orb;
 	fakeme.type_qid = g_quark_from_string (type_id);
 	fakeme.profile_list = profiles;
 	fakeme.object_key = IOP_profiles_sync_objkey (profiles);

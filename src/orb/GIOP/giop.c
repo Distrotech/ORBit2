@@ -412,27 +412,32 @@ giop_shutdown (void)
 	if (!giop_is_threaded)
 		giop_connections_shutdown ();
 
-	g_main_loop_quit (linc_loop); /* break into the linc loop */
-	if (giop_main_loop) {
+	if (linc_loop) /* break into the linc loop */
+		g_main_loop_quit (linc_loop);
+	if (giop_main_loop)
 		g_main_loop_quit (giop_main_loop);
-		g_warning ("Quit ORB run loop");
-	}
 
 	if (giop_is_threaded) {
 		if (!giop_thread_self ()->wake_context)
 			g_error ("Must shutdown ORB from main thread");
 
-		g_thread_join (giop_incoming_thread);
-		giop_incoming_thread = NULL;
+		if (giop_incoming_thread) {
+			g_thread_join (giop_incoming_thread);
+			giop_incoming_thread = NULL;
+		}
 
-		g_source_destroy (giop_main_source);
-		g_source_unref (giop_main_source);
-		giop_main_source = NULL;
+		if (giop_main_source) {
+			g_source_destroy (giop_main_source);
+			g_source_unref (giop_main_source);
+			giop_main_source = NULL;
+		}
 
-		close (WAKEUP_WRITE);
-		close (WAKEUP_POLL);
-		WAKEUP_WRITE = -1;
-		WAKEUP_POLL = -1;
+		if (WAKEUP_WRITE >= 0) {
+			close (WAKEUP_WRITE);
+			close (WAKEUP_POLL);
+			WAKEUP_WRITE = -1;
+			WAKEUP_POLL = -1;
+		}
 	}
 }
 

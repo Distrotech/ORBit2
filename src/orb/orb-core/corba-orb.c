@@ -96,15 +96,28 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 }
 
 static void
+strip_object_profiles (gpointer o, gpointer b, gpointer c)
+{
+	CORBA_Object obj = o;
+	IOP_delete_profiles (obj->orb, &obj->profile_list);
+	IOP_delete_profiles (obj->orb, &obj->forward_locations);
+}
+
+static void
 ORBit_ORB_shutdown_servers (CORBA_ORB orb)
 {
 	LINC_MUTEX_LOCK (orb->lock);
 
+	if (orb->objrefs) {
+		g_hash_table_foreach (orb->objrefs,
+				      strip_object_profiles, NULL);
+		g_hash_table_destroy (orb->objrefs);
+		orb->objrefs = NULL;
+	}
+
 	IOP_shutdown_profiles (orb->profiles);
 	orb->profiles = NULL;
 
-	if (giop_threaded ())
-		g_warning ("FIXME: this needs delaying till worker thread exit");
 	g_slist_foreach (orb->servers, (GFunc) g_object_unref, NULL);
 	g_slist_free (orb->servers); 
 	orb->servers = NULL;
@@ -957,20 +970,22 @@ CORBA_ORB_shutdown (CORBA_ORB           orb,
 {
 	PortableServer_POA root_poa;
 
-	if (init_level > 0)
-		return;
-
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa) {
 		PortableServer_POA_destroy (
 			root_poa, TRUE, wait_for_completion, ev);
-		if (ev->_major)
-			return;
+		if (ev->_major) {
+			if (wait_for_completion)
+				g_warning ("FIXME: wait for "
+					   "completion unimplemented");
+			else
+				return;
+		}
 	}
 
-	ORBit_ORB_shutdown_servers (orb);
-
 	giop_shutdown ();
+
+	ORBit_ORB_shutdown_servers (orb);
 }
 
 void
@@ -987,10 +1002,11 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 	if (init_level > 0)
 		return;
 
+	CORBA_ORB_shutdown (orb, TRUE, ev);
+
 	g_assert (_ORBit_orb == orb);
 	_ORBit_orb = NULL;
 
-	CORBA_ORB_shutdown (orb, TRUE, ev);
 	if (ev->_major)
 		return;
 
