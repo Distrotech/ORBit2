@@ -1,3 +1,7 @@
+2001-07-13  Mark McLoughlin <mark@skynet.ie>
+
+	* docs/devel/internals/poa-notes.txt: added.
+
 2001-07-13  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testString): use the getIOR
