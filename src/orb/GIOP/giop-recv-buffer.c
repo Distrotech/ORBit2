@@ -980,6 +980,7 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 
 		if (!cnx->parent.is_auth &&
 		    buf->msg.header.message_size > giop_initial_msg_size_limit) {
+			dprintf (ERRORS, "Message exceeded initial size limit\n");
 			error = TRUE;
 			giop_connection_remove_frag (cnx, list);
 		}
@@ -1129,8 +1130,10 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 
 	/* NB. at least CLOSECONNECTION has 0 length message_size */
 
-	if (!is_auth && buf->msg.header.message_size > giop_initial_msg_size_limit)
+	if (!is_auth && buf->msg.header.message_size > giop_initial_msg_size_limit) {
+		dprintf (ERRORS, "Message exceeded unauthorized size limit\n");
 		return TRUE;
+	}
 
 	if (alloc_buffer (buf, NULL, buf->msg.header.message_size))
 		return TRUE;

@@ -383,10 +383,8 @@ ORBit_Context_demarshal (CORBA_Context   parent,
 	char               *key, *value;
 
 	initme->parent.refs = ORBIT_REFCOUNT_STATIC;
-
 	initme->parent_ctx = parent;
-	
-	initme->mappings = NULL; /* init, in case 'goto errout' occures */
+	initme->mappings = NULL;
  
 	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 	if ((buf->cur + 4) > buf->end)
@@ -400,10 +398,8 @@ ORBit_Context_demarshal (CORBA_Context   parent,
 
 	if (nstrings)
 		initme->mappings = g_hash_table_new (g_str_hash, g_str_equal);
-	else {
-		initme->mappings = NULL;
+	else
 		goto errout;
-	}
 
 	for (i = 0; i < nstrings; ) {
 		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
