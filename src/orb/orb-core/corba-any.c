@@ -656,9 +656,8 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_SEQ);
       p = *val;
       buf->cur = ALIGN_ADDRESS(buf->cur, sizeof(CORBA_long));
-      if((buf->cur + sizeof(CORBA_long)*2) > buf->end)
+      if((buf->cur + sizeof(CORBA_long)) > buf->end)
 	return TRUE;
-      buf->cur += sizeof(CORBA_long); /* skip maximum */
       if(giop_msg_conversion_needed(buf))
 	p->_length = GUINT32_SWAP_LE_BE(*(CORBA_unsigned_long *)buf->cur);
       else

@@ -24,7 +24,7 @@ LDFLAGS = -static
 
 client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
 client_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
-client_LDADD = -lefence $(LDADD)
+client_LDADD = $(LDADD)
 
 included_src = \
 	basicServer.c    \

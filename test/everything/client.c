@@ -53,6 +53,7 @@ void testAttribute(test_TestFactory factory,
   g_assert(strcmp(val,constants_STRING_RETN)==0);	
   CORBA_free(val);
   test_BasicServer__set_foo(objref,constants_STRING_IN,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   lval = test_BasicServer__get_bah(objref,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);  
@@ -411,6 +412,7 @@ void testFixedLengthArray(test_TestFactory factory,
 	inoutArg[i] = constants_SEQ_LONG_INOUT_IN[i];
 
   retn = test_ArrayServer_opLongArray(objref,inArg,inoutArg,outArg,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   for(i=0;i<constants_SEQLEN;i++)
 	g_assert(inArg[i]==constants_SEQ_LONG_IN[i]);
@@ -445,6 +447,7 @@ void testVariableLengthArray(test_TestFactory factory,
 	inoutArg[i] = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[i]);
 
   retn = test_ArrayServer_opStrArray(objref,inArg,inoutArg,&outArg,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   for(i=0;i<constants_SEQLEN;i++)
 	CORBA_free (inArg[i]); 
@@ -493,6 +496,7 @@ void testAnyLong (test_TestFactory factory,
   CORBA_any_set_release(&inoutArg, CORBA_FALSE);
     
   retn = test_AnyServer_opAnyLong(objref,&inArg,&inoutArg,&outArg,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   g_assert( CORBA_TypeCode_equal(inArg._type,TC_CORBA_long,ev) );
   g_assert(*(CORBA_long*)inArg._value == constants_LONG_IN);
@@ -541,6 +545,7 @@ void testAnyString(test_TestFactory factory,
   CORBA_any_set_release(&inoutArg, CORBA_FALSE);
   
   retn = test_AnyServer_opAnyString(objref,&inArg,&inoutArg,&outArg,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   g_assert(CORBA_TypeCode_equal(inArg._type,TC_CORBA_string,ev));
   g_assert(strcmp(*(CORBA_char **)inArg._value,constants_STRING_IN) == 0);
@@ -596,6 +601,7 @@ void testAnyStruct(test_TestFactory factory,
   CORBA_any_set_release(&inoutArg, CORBA_TRUE);
 
   retn = test_AnyServer_opAnyStruct(objref,&inArg,&inoutArg,&outArg,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   
   g_assert(CORBA_TypeCode_equal(inArg._type,TC_test_VariableLengthStruct,ev));

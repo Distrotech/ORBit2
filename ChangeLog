@@ -1,3 +1,8 @@
+2001-05-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value): 
+	don't try to de-marshal a _maximum that isn't there.
+
 2001-05-10  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-utils.c

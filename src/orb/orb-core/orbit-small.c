@@ -644,11 +644,14 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 	dprintf ("Method '%s' on '%p'\n", m_data->name, servant);
 
+	giop_dump_recv (recv_buffer);
+
 	orb = ORBIT_SERVANT_TO_ORB (servant);
 
 	if (m_data->ret)
-		retval = alloca (ORBit_gather_alloc_info (
-			m_data->ret));
+		retval = ORBit_alloc_tcval (m_data->ret, 1);
+/* FIXME: alloca ? alloca (ORBit_gather_alloc_info ( 
+   m_data->ret)); */
 
 	if (m_data->arguments._length > 0) {
 		int len = m_data->arguments._length * sizeof (gpointer);
@@ -689,9 +692,58 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		ORBit_send_system_exception (send_buffer, ev);
 	
 	else { /* Marshal return values */
+		CORBA_TypeCode tc;
 
-		if (m_data->ret)
-			ORBit_marshal_arg (send_buffer, retval, m_data->ret);
+		if ((tc = m_data->ret)) {
+			dprintf ("ret: ");
+
+		alias_on_return:
+			switch (tc->kind) {
+				
+			case CORBA_tk_alias:
+				tc = tc->subtypes[0];
+				goto alias_on_return;
+				
+#define _ORBIT_HANDLE_TYPE(tk,ct,st,bt,by,fmt) \
+			case CORBA_tk_##tk:
+				_ORBIT_BASE_TYPES
+					ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
+				dprintf ("base type");
+				break;
+#undef _ORBIT_HANDLE_TYPE				       
+				
+			case CORBA_tk_objref:
+			case CORBA_tk_TypeCode:
+			case CORBA_tk_string:
+			case CORBA_tk_wstring:
+				ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T2 - ok */
+				dprintf ("obj/string");
+				break;
+				
+			case CORBA_tk_array:
+				ORBit_marshal_arg (send_buffer, *(gpointer *)retval, m_data->ret); /* T1 */
+				dprintf ("array");
+				break;
+				
+			case CORBA_tk_any:
+			case CORBA_tk_struct:
+			case CORBA_tk_union:
+			case CORBA_tk_sequence:
+			case CORBA_tk_except:
+				if (m_data->flags & ORBit_I_METHOD_RET_FIXED_SIZE) {
+					ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
+					dprintf ("fixed");
+				} else {
+					ORBit_marshal_arg (send_buffer, *(gpointer *)retval, m_data->ret); /* T1 */
+					dprintf ("pointer baa");
+				}
+				break;
+			default:
+				g_assert_not_reached ();
+			}
+			dprintf ("\n");
+		}
+
 
 		for (i = 0; i < m_data->arguments._length; i++) {
 			ORBit_IArg *a = &m_data->arguments._buffer [i];
@@ -709,6 +761,8 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			}
 		}
 	}
+
+	giop_dump_send (send_buffer);
 
 	giop_send_buffer_write (send_buffer, recv_buffer->connection);
 	giop_send_buffer_unuse (send_buffer);
