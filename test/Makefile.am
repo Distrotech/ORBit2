@@ -47,8 +47,15 @@ IDL_FLAGS =  --showcpperrors
 IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl
 include $(top_srcdir)/Makefile.shared
 
+BUILT_SOURCES =            \
+	$(EMPTY_IDLOUT)    \
+	$(ECHO_IDLOUT)     \
+	$(IDLOUT)          \
+	$(TEST_ANY_IDLOUT) \
+	$(DYNANY_IDLOUT)
 
-BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT) $(DYNANY_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES)
 
-EXTRA_DIST=$(IDL_FILES)
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)

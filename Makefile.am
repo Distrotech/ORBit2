@@ -4,10 +4,10 @@ SUBDIRS=src include test docs
 
 bin_SCRIPTS=orbit2-config
 
-EXTRA_DIST=ORBit.spec.in ORBit2.m4 ORBit-2.0.pc.in ORBit-CosNaming-2.0.pc.in
-
-dist-hook: ORBit.spec
-	cp ORBit.spec $(distdir)
+EXTRA_DIST =            \
+	ORBit2.m4       \
+	HACKING         \
+	MAINTAINERS
 
 rpms: distcheck
 	rpm -ta $(top_builddir)/@PACKAGE@-@VERSION@.tar.gz

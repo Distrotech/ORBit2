@@ -76,7 +76,9 @@ $(IFACE_IDLOUT) : orbit-interface.idl $(IDL_COMPILER)
 	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS_INTERFACE) --deps .deps/orbit-interface.idl.P $<
 
+BUILT_SOURCES = $(IFACE_IDLOUT) $(IDLOUT) $(DEFS_IDLOUT) $(OPS_IDLOUT)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES)
 
-BUILT_SOURCES= $(IFACE_IDLOUT) $(IDLOUT) $(DEFS_IDLOUT) $(OPS_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES)
-EXTRA_DIST=$(IDL_FILES)
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)

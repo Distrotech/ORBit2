@@ -50,13 +50,16 @@ poatest_basic08_SOURCES = $(common_srcs) poatest-basic08.c
 poatest_basic09_SOURCES = $(common_srcs) poatest-basic09.c 
 poatest_basic10_SOURCES = $(common_srcs) poatest-basic10.c 
 
-BUILT_SOURCES=$(POATEST_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES)
-EXTRA_DIST=$(IDL_FILES) README
-
 README : $(POA_TESTS_SRCS)
 	awk -F'*' 'BEGIN { intest = 0; } \
                    /^ \* Test/ { intest = 1; } \
                    intest == 1 && /^ \*\// { intest=0; print "\n"; } \
                    intest == 1 && /^ \*/ { print $$2; } ' \
                          $(POA_TESTS_SRCS) > README
+
+BUILT_SOURCES = $(POATEST_IDLOUT)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES) README
+
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)

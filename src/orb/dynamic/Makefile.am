@@ -14,8 +14,6 @@ INCLUDES =                                      \
 
 DYNAMIC_IDLOUT=dynamic-defs-common.c
 
-BUILT_SOURCES=$(DYNAMIC_IDLOUT)
-
 IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	--define=Object=OObject --define=TypeCode=TTypeCode	\
 	-I$(top_srcdir)/src/idl/CORBA				\
@@ -26,5 +24,9 @@ IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 IDL_FILES=dynamic-defs.idl
 include $(top_srcdir)/Makefile.shared
 
-EXTRA_DIST=$(IDL_FILES)
+BUILT_SOURCES = $(DYNAMIC_IDLOUT)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES)
 
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)

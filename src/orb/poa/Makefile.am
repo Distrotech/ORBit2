@@ -27,10 +27,6 @@ liborb_poa_la_SOURCES=\
 	$(POA_IDLOUT) \
 	$(main_src)
 
-EXTRA_DIST=poa-defs.idl
-BUILT_SOURCES=$(POA_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES)
-
 IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\
 	-I$(top_srcdir)/src/idl/misc				\
@@ -40,3 +36,10 @@ IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
         --showcpperrors
 IDL_FILES=poa-defs.idl
 include $(top_srcdir)/Makefile.shared
+
+BUILT_SOURCES = $(POA_IDLOUT)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = $(IDL_FILES)
+
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)
