@@ -1,0 +1,21 @@
+// This gets prepended to all the repoids:
+#pragma prefix "PhilDawes"
+
+
+module Test {
+
+    interface OutputStream {
+	void print (in string message);
+    };
+
+    struct SimpleStructArg {
+	OutputStream stream;
+	long         number;
+    };
+    
+    interface TestIface {
+	void test_in (in SimpleStructArg in_struct, in string greeting);
+    };
+    
+};
+

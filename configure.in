@@ -263,8 +263,13 @@ include/orbit/poa/Makefile
 include/orbit/dynamic/Makefile
 test/Makefile
 test/cpp/Makefile
+
 test/cpp/helloworld/Makefile
 test/cpp/helloworld/generated/Makefile
+
+test/cpp/struct-simple/Makefile
+test/cpp/struct-simple/generated/Makefile
+
 test/everything/Makefile
 test/inhibit/Makefile
 test/poa/Makefile
