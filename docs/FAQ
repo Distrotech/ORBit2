@@ -11,15 +11,17 @@ The ORBit2 FAQ - v 0.1
 		+ is ORBit2 thread safe ?
 			+ how do I enable a threaded ORB ?
 			+ what is this re-enterancy thing ?
-			+ can I have each invocation handled by a
-			  different thread ?
+			+ can I invoke methods from multiple threads ?
 			+ can I receive invocations in multiple
 			  threads ?
-			+ can I invoke methods from multiple threads ?
+			+ can I have each invocation handled by a
+			  different thread ?
 
 		+ how does the new 'type' system work ?
 			+ what do you mean by 'type' data ?
 			+ how do we get type data for an interface ?
+				+ Type data from an object reference ?
+				+ Type data from a type library ?
 			+ what is a type library (or imodule) ?
 			+ how do I find which type libraries are installed ?
 			+ why bother generating type information from
@@ -29,7 +31,9 @@ The ORBit2 FAQ - v 0.1
 	+ Misc.
 		+ where can I find out more about CORBA ?
 		+ what is the purify cleanliness option ?
+		+ how do I enable ORB debugging ?
 		+ how do I enable reference tracking ?
+		+ what's all this about random numbers ?
 		+ my skels leak memory - why ?
 		+ why should I not use _release ?
 		+ why can't I keep a pointer to an argument ?
@@ -328,6 +332,25 @@ guestimation.
 which can be helpful for poorer man's memory debugging tools, such as
 memprof.
 
+** how do I enable ORB debugging ?
+
+	ORBit2 provides some nice mechanisms for debugging your
+application. To make sure support for them is compiled into the ORB
+you need to pass the --enable-debug option at configure time.
+
+	By passing a colon seperated list of flags to the ORB using
+either the ORBIT2_DEBUG environment variable or the --ORBDebugFlags=
+command line option, you can switch on the various features. The
+available flags are:
+
+	+ messages : enable general debug messages.
+	+ traces   : enable an strace-like of trace of method
+	             invocations.
+	+ timings  : add microsecond time stamps to the trace.
+	+ types    : debug typelib loading.
+	+ objects  : enable object profile related messages.
+	+ all      : enable all of the above flags.
+		
 ** how do I enable reference tracking ?
 
 	The ORB by default accounts for all it's object resouces, and
