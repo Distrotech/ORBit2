@@ -9,6 +9,7 @@ bin_SCRIPTS=orbit2-config
 EXTRA_DIST =		\
 	ORBit2.m4	\
 	ORBit.spec	\
+	orbit2-zip.in	\
 	HACKING		\
 	MAINTAINERS	\
 	Makefile.shared

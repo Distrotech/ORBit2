@@ -1,3 +1,11 @@
+2005-02-08  Tor Lillqvist  <tml@novell.com>
+
+	* orbit2-zip.in: New file, expands to a script to be used for
+	packaging ORBit2 distributions as zipfiles for Windows.
+
+	* configure.in
+	* Makefile.am: Generate and distribute it.
+
 2005-02-07  Tor Lillqvist  <tml@novell.com>
 
 	* test/Makefile.am (check_PROGRAMS): Must use check_PROGRAMS as
