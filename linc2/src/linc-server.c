@@ -214,6 +214,9 @@ linc_server_handle_io (GIOChannel  *gioc,
 		g_value_set_object (parms, G_OBJECT (server));
 		g_value_init (parms + 1, G_TYPE_OBJECT);
 		g_value_set_object (parms + 1, G_OBJECT (connection));
+
+		d_printf ("p %d, Non-accepted input on fd %d",
+			  getpid (), server->priv->fd);
 		
 		g_signal_emitv (parms, server_signals [NEW_CONNECTION], 0, NULL);
 		
@@ -304,9 +307,14 @@ linc_server_setup (LINCServer            *cnx,
 		d_printf ("bind really failed errno: %d\n", errno);
 
 	if (!n)
-		n = getsockname (fd, saddr, &saddr_len);
+		n = fcntl (fd, F_SETFD, FD_CLOEXEC);
 	else
 		d_printf ("listen failed errno: %d\n", errno);
+
+	if (!n)
+		n = getsockname (fd, saddr, &saddr_len);
+	else
+		d_printf ("failed to set cloexec on %d", fd);
 
 	if (n) {
 		close (fd);
@@ -326,7 +334,7 @@ linc_server_setup (LINCServer            *cnx,
 	cnx->proto = proto;
 	cnx->priv->fd = fd;
 
-	if ((create_options & LINC_CONNECTION_NONBLOCKING)) {
+	if (create_options & LINC_CONNECTION_NONBLOCKING) {
 		g_assert (cnx->priv->tag == NULL);
 
 		cnx->priv->tag = linc_io_add_watch_fd (
@@ -334,7 +342,7 @@ linc_server_setup (LINCServer            *cnx,
 			linc_server_handle_io, cnx);
 	}
 
-	cnx->create_options  = create_options;
+	cnx->create_options = create_options;
 
 	if (local_host_info) {
 		g_free (hostname);

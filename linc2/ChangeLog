@@ -1,3 +1,8 @@
+2002-01-03  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_setup): set
+	FD_CLOEXEC - on the server's connection.
+
 2002-01-03  Laszlo Peter  <laca@ireland.sun.com>
 
 	* configure.in: add check for -lresolv
