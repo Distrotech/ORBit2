@@ -765,6 +765,13 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci)
 	  " INIT_VEPVMAP_%s};\n",
 	  id, IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id, id);
 
+  {
+  	const char *finref = 
+      		"((PortableServer_ServantBase*)servant)->vepv[0]->finalize";
+  	fprintf(ci->fh, "if ( %s == 0 ) { ", finref);
+      	fprintf(ci->fh, "%s = POA_%s__fini;\n", finref, id);
+  	fprintf(ci->fh, "}\n");
+  }
   fprintf(ci->fh,
 	  "  PortableServer_ServantBase__init(((PortableServer_ServantBase *)servant), env);\n");
 
