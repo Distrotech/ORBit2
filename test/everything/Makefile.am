@@ -2,12 +2,13 @@ noinst_PROGRAMS = client server
 
 EVERYTHING_BUILT = \
 	everything.h        \
-	everything-stubs.c  \
+	everything-common.c \
 	everything-skels.c  \
-	everything-common-hack.c
+	everything-stubs.c
 
 INCLUDES = \
 	-I$(top_srcdir)/include		\
+	-I$(top_builddir)/include		\
 	-I$(top_builddir)/src		\
 	-I$(top_builddir)/src/ORBitutil \
 	-I$(top_srcdir)/src/orb		\
@@ -21,7 +22,7 @@ LDADD = $(top_builddir)/src/orb/libORBit.la		\
 
 LDFLAGS = -static
 
-client_SOURCES=client.c ${EVERYTHING_BUILT} everything.idl constants.h
+client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
 client_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 client_LDADD = -lefence $(LDADD)
 
@@ -39,13 +40,7 @@ server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 
 ${EVERYTHING_BUILT}: everything.idl $(ORBIT_IDL)
-	$(ORBIT_IDL) $(srcdir)/everything.idl
-
-everything-common-hack.c : everything-common.c
-	sed -e 's/TC_DEF_TC_CORBA_sequence_CORBA_string/FOO_BAR_BAZ/' everything-common.c | \
-	sed -e "s/TC_IMPL_TC_CORBA_sequence_CORBA_string_[0-9] == '.'/1/" \
-	> everything-common-hack.c
-
+	$(ORBIT_IDL) --small-stubs $(srcdir)/everything.idl
 
 CLEANFILES = ${EVERYTHING_BUILT} iorfile
 BUILT_SOURCES = ${EVERYTHING_BUILT}

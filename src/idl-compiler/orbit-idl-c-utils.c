@@ -651,3 +651,145 @@ orbit_cbe_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
   orbit_idl_node_foreach(node, (GFunc)orbit_cbe_alloc_tmpvar, ci);
 }
+
+
+char *
+orbit_cbe_op_get_interface_name (IDL_tree op)
+{
+	return IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
+		IDL_INTERFACE (IDL_get_parent_node (
+			op, IDLN_INTERFACE, NULL)).ident), "_", 0);
+}
+
+
+#define BASE_TYPES \
+	     IDLN_TYPE_INTEGER: \
+	case IDLN_TYPE_FLOAT: \
+	case IDLN_TYPE_ENUM: \
+        case IDLN_TYPE_BOOLEAN: \
+	case IDLN_TYPE_CHAR: \
+	case IDLN_TYPE_WIDE_CHAR: \
+	case IDLN_TYPE_OCTET
+
+#define STRING_TYPES \
+	     IDLN_TYPE_STRING: \
+	case IDLN_TYPE_WIDE_STRING
+
+#define OBJREF_TYPES \
+	     IDLN_TYPE_OBJECT: \
+	case IDLN_INTERFACE: \
+	case IDLN_FORWARD_DCL
+
+static const char *
+cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
+{
+	gboolean is_fixed;
+
+	is_fixed = orbit_cbe_type_is_fixed_length (typespec);
+
+	switch (role) {
+	case DATA_IN:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_NATIVE:
+			return "(gpointer)&";
+
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_SEQUENCE:
+		case IDLN_TYPE_ARRAY:
+		case IDLN_TYPE_TYPECODE:
+			return "(gpointer)";
+			
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+		};
+		return NULL;
+
+	case DATA_INOUT:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ARRAY:
+		case IDLN_NATIVE:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_SEQUENCE:
+			return "&";
+
+		case IDLN_TYPE_TYPECODE:
+			return "";
+
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+		};
+		return NULL;
+
+	case DATA_OUT:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_NATIVE:
+			return "&";
+
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ARRAY:
+			if (is_fixed)
+				return "&";
+
+		case IDLN_TYPE_SEQUENCE:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_TYPECODE:
+			return "";
+
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+		};
+		return NULL;
+
+	case DATA_RETURN:
+		g_error ("No data return handler");
+		return NULL;
+	}
+
+	return NULL;
+}
+
+void
+cbe_small_output_args (IDL_tree tree, FILE *of,
+		       const char *name, const char *prefix)
+{
+	IDL_tree l;
+
+	fprintf (of, "gpointer %s[] = { \n", name);
+	
+	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
+	     l = IDL_LIST(l).next) {
+		IDL_tree decl = IDL_LIST (l).data;
+		IDL_tree tspec = orbit_cbe_get_typespec (decl);
+		IDL_ParamRole r = 0;
+
+		switch(IDL_PARAM_DCL(decl).attr) {
+		case IDL_PARAM_IN:    r = DATA_IN;    break;
+		case IDL_PARAM_INOUT: r = DATA_INOUT; break;
+		case IDL_PARAM_OUT:   r = DATA_OUT;   break;
+		default:
+			g_error("Unknown IDL_PARAM type");
+		}
+		
+		fprintf (of, "%s%s%s%c ", cs_small_flatten_ref (r, tspec), prefix,
+			 IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str,
+			 IDL_LIST (l).next ? ',' : ' ');
+	}
+	fprintf (of, "};");
+}

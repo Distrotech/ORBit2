@@ -64,5 +64,7 @@ void cbe_op_param_free(IDL_tree tree, OIDL_C_Info *ci, gboolean is_skels);
 void cbe_op_retval_free(IDL_tree tree, OIDL_C_Info *ci);
 gint orbit_cbe_eval_const_node(OIDL_Marshal_Node *node);
 char *orbit_cbe_get_typecode_name (IDL_tree tree);
+char *orbit_cbe_op_get_interface_name (IDL_tree op);
+void cbe_small_output_args (IDL_tree tree, FILE *of, const char *name, const char *prefix);
 
 #endif

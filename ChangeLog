@@ -1,3 +1,32 @@
+2001-05-10  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/poa/poa-types.h:
+	add ORBit_small_impl_finder, add ORBitSmallSkeleton.
+
+2001-05-09  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/Makefile.am: remove ugly hack.
+
+2001-05-08  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-skels.c (ck_output_small_skel): 
+	impl.
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(cs_small_flatten_ref, cbe_small_output_args): move here
+	from orbit-idl-c-stubs.c
+
+	* src/idl-compiler/orbit-idl-c-skels.c
+	(cbe_skel_interface_print_relayers),
+	(cbe_skel_interface_print_relayer): make small variants
+	like to change sig to have const char *method, but needs
+	poa work... perhaps expand the PortableServer_ClassInfo
+	struct with a more sensible option ? / put it on the
+	object.
+	
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(orbit_cbe_param_printptrs): unused - kill.
+
 2001-05-05  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-headers.c
