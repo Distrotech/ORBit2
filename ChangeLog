@@ -1,3 +1,13 @@
+2001-08-11  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/poa/orbit-poa.h,
+	  src/orb/poa/poa.c:
+	(ORBit_POA_make_sysoid): Always use random
+	 data. Rename to ORBit_POA_new_system_objid.
+	(ORBit_POA_create_object): make static. Remove
+	 unused asDefault arg.
+	(ORBit_POAObject ORBit_POA_okey_to_obj): kill unused.
+
 2001-08-10  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c 

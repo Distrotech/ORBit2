@@ -32,6 +32,10 @@ static void ORBit_POA_handle_request (PortableServer_POA          poa,
 				      GIOPRecvBuffer             *recv_buffer,
 				      CORBA_sequence_CORBA_octet *objkey);
 
+static ORBit_POAObject ORBit_POA_create_object (PortableServer_POA             poa,
+						const PortableServer_ObjectId *objid,
+						CORBA_Environment             *ev);
+
 static gboolean            ORBit_POAObject_is_active        (ORBit_POAObject    pobj);
 
 static IOP_ObjectKey_info* ORBit_POAObject_object_to_objkey (ORBit_POAObject    pobj);
@@ -266,7 +270,7 @@ PortableServer_POA_activate_object(PortableServer_POA _obj,
       return NULL;
     }
 
-  newobj = ORBit_POA_create_object(_obj, /*oid*/NULL, /*isDef*/FALSE, ev);
+  newobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
   ORBit_POA_activate_object(_obj, newobj, servant, ev);
   return (PortableServer_ObjectId*)ORBit_sequence_CORBA_octet_dup(newobj->object_id);
 }
@@ -307,7 +311,7 @@ PortableServer_POA_activate_object_with_id(PortableServer_POA _obj,
       return;
     }
   if ( newobj==0 )
-    newobj = ORBit_POA_create_object(_obj, id, /*isDef*/FALSE, ev);
+    newobj = ORBit_POA_create_object(_obj, id, ev);
   ORBit_POA_activate_object(_obj, newobj, servant, ev);
 }
 
@@ -353,7 +357,7 @@ PortableServer_POA_create_reference(PortableServer_POA _obj,
       return NULL;
     }
 
-  pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, /*isDef*/0, ev);
+  pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
 
   return ORBit_POA_obj_to_ref(_obj, pobj, intf, ev);
 }
@@ -368,7 +372,7 @@ PortableServer_POA_create_reference_with_id(PortableServer_POA _obj,
 
   pobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/0, /*ev*/0);
   if ( pobj == NULL )
-    pobj = ORBit_POA_create_object(_obj, oid, /*isDef*/0, ev);
+    pobj = ORBit_POA_create_object(_obj, oid, ev);
 
   return ORBit_POA_obj_to_ref(_obj, pobj, intf, ev);
 }
@@ -397,7 +401,7 @@ PortableServer_POA_servant_to_id(PortableServer_POA _obj,
     return ORBit_sequence_CORBA_octet_dup(pobj->object_id);
   else if ( retain && implicit && (!unique || pobj==0) )
     {
-      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, /*isDef*/0, ev);
+      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
       ORBit_POA_activate_object(_obj, pobj, servant, ev);
       /* XXX: seems like above activate could fail in many ways! */
       return ORBit_sequence_CORBA_octet_dup(pobj->object_id);
@@ -451,7 +455,7 @@ PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
     }
   else if ( retain && implicit && (!unique || pobj==0) )
     {
-      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, /*isDef*/FALSE, ev);
+      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
       ORBit_POA_activate_object(_obj, pobj, servant, ev);
       /* XXX: seems like above activate could fail in many ways! */
       return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
@@ -859,23 +863,29 @@ ORBit_POA_is_inuse(PortableServer_POA poa,
   return CORBA_FALSE;
 }
 
-void
-ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
+static PortableServer_ObjectId*
+ORBit_POA_new_system_objid (PortableServer_POA poa)
 {
-  int	randlen;
-  guint32 *iptr;
+	PortableServer_ObjectId *objid;
+	int                      randlen;
 
-  g_assert( poa->p_id_assignment == PortableServer_SYSTEM_ID );
-  randlen = (poa->p_servant_retention == PortableServer_RETAIN)
-    ? poa->obj_rand_len : 0;
-  oid->_length = oid->_maximum = sizeof(guint32) + randlen;
-  oid->_buffer = PortableServer_ObjectId_allocbuf(oid->_length);
-  oid->_release = CORBA_TRUE;
-  iptr = (guint32*)(oid->_buffer);
-  *iptr = ++(poa->next_sysid);
-  if ( randlen > 0 )
-    ORBit_genrand_buf( &poa->orb->genrand, oid->_buffer+sizeof(guint32),
-		       randlen);
+	g_assert (poa->p_id_assignment == PortableServer_SYSTEM_ID);
+
+	randlen = ORBIT_RAND_DATA_LEN;
+
+	objid           = PortableServer_ObjectId__alloc ();
+	objid->_length  = objid->_maximum = sizeof (CORBA_unsigned_long) + ORBIT_RAND_DATA_LEN;
+	objid->_buffer  = PortableServer_ObjectId_allocbuf (objid->_length);
+	objid->_release = CORBA_TRUE;
+
+	*(guint32 *)(objid->_buffer) = ++(poa->next_sysid);
+
+	if (randlen > 0)
+		ORBit_genrand_buf (&poa->orb->genrand,
+				   objid->_buffer + sizeof (CORBA_unsigned_long),
+				   randlen);
+
+	return objid;
 }
 
 static IOP_ObjectKey_info*
@@ -1256,8 +1266,6 @@ ORBit_POA_set_policy(PortableServer_POA poa,
     }
 }
 
-#define ORBIT_RAND_KEY_LEN 8
-
 static void
 ORBit_POA_check_policy_conflicts(PortableServer_POA poa,
 				 CORBA_Environment *ev)
@@ -1265,8 +1273,8 @@ ORBit_POA_check_policy_conflicts(PortableServer_POA poa,
   gboolean bad = FALSE;
   if ( poa->p_lifespan == PortableServer_TRANSIENT )
     {
-      if ( poa->poa_rand_len < 0 ) poa->poa_rand_len = ORBIT_RAND_KEY_LEN;
-      if ( poa->obj_rand_len < 0 ) poa->obj_rand_len = ORBIT_RAND_KEY_LEN;
+      if ( poa->poa_rand_len < 0 ) poa->poa_rand_len = ORBIT_RAND_DATA_LEN;
+      if ( poa->obj_rand_len < 0 ) poa->obj_rand_len = ORBIT_RAND_DATA_LEN;
     }
   if ( poa->p_lifespan == PortableServer_PERSISTENT )
     {
@@ -1521,64 +1529,48 @@ ORBit_OAObject_Interface_type ORBit_POAObject_methods = {
     a bogus oid under SYSTEM_ID, we will assert or segfault. This
     is allowed by the CORBA spec.
 */
-ORBit_POAObject
-ORBit_POA_create_object(PortableServer_POA poa, 
-			const PortableServer_ObjectId *oid, CORBA_boolean asDefault,
-			CORBA_Environment *ev) 
+static ORBit_POAObject
+ORBit_POA_create_object (PortableServer_POA             poa,
+			 const PortableServer_ObjectId *objid,
+			 CORBA_Environment             *ev)
 {
-    ORBit_POAObject newobj;
-    PortableServer_ObjectId *newoid;
+	ORBit_POAObject newobj;
 
-    newobj = g_new0(struct ORBit_POAObject_type, 1);
-    /*
-     * No need to duplicate POAObject here 'cause
-     * it will be immediately duplicated by being
-     * activated or associated with a ref.
-     */
-    ORBit_RootObject_init((ORBit_RootObject)newobj, &ORBit_POAObject_if);
+	newobj = g_new0 (struct ORBit_POAObject_type, 1);
+	ORBit_RootObject_init ((ORBit_RootObject)newobj, &ORBit_POAObject_if);
 
-    /* released in ORBit_POAObject_release_cb */
-    newobj->poa = ORBit_RootObject_duplicate(poa);
+	/* released in ORBit_POAObject_release_cb */
+	newobj->poa = ORBit_RootObject_duplicate (poa);
 
-    ((ORBit_OAObject)newobj)->interface = &ORBit_POAObject_methods;
+	((ORBit_OAObject)newobj)->interface = &ORBit_POAObject_methods;
 
-    if ( asDefault )
-      {
-	/* It would be nice if we could mark this in some way... */
-    	g_assert(poa->p_request_processing == PortableServer_USE_DEFAULT_SERVANT);
-      }
-    else
-      {
-	newobj->object_id = newoid = PortableServer_ObjectId__alloc();
-	if ( poa->p_id_assignment == PortableServer_SYSTEM_ID )
-	  {
-	    if ( oid )
-	      {
-		g_assert( oid->_length 
-			  == sizeof(CORBA_unsigned_long) + poa->obj_rand_len );
-		newoid->_length = oid->_length;
-		newoid->_buffer = PortableServer_ObjectId_allocbuf(oid->_length);
-		newoid->_release = CORBA_TRUE;
-		memcpy(newoid->_buffer, oid->_buffer, oid->_length);
-	      }
-	    else
-	      ORBit_POA_make_sysoid(poa, newobj->object_id);
-	  }
-	else
-	  {
-	    /* USER_ID */
-	    newoid->_length = oid->_length;
-	    newoid->_buffer = PortableServer_ObjectId_allocbuf(oid->_length);
-	    newoid->_release = CORBA_TRUE;
-	    memcpy(newoid->_buffer, oid->_buffer, oid->_length);
-	  }
+	if (poa->p_id_assignment == PortableServer_SYSTEM_ID) {
+		if (objid) {
+			g_assert(objid->_length == sizeof (CORBA_unsigned_long) + ORBIT_RAND_DATA_LEN);
+
+			newobj->object_id          = PortableServer_ObjectId__alloc ();
+			newobj->object_id->_length = objid->_length;
+			newobj->object_id->_buffer = PortableServer_ObjectId_allocbuf (objid->_length);
+			newobj->object_id->_release = CORBA_TRUE;
+
+			memcpy (newobj->object_id->_buffer, objid->_buffer, objid->_length);
+		}
+		else
+			newobj->object_id = ORBit_POA_new_system_objid (poa);
+	}
+	else {
+		newobj->object_id           = PortableServer_ObjectId__alloc ();
+		newobj->object_id->_length  = objid->_length;
+		newobj->object_id->_buffer  = PortableServer_ObjectId_allocbuf (objid->_length);
+		newobj->object_id->_release = CORBA_TRUE;
+
+		memcpy(newobj->object_id->_buffer, objid->_buffer, objid->_length);
+	}
 
 	g_hash_table_insert(poa->oid_to_obj_map, newobj->object_id, newobj);
-      }
 
-    return newobj;
+	return newobj;
 }
-
 
 /*
     Normally this is called for normal servants in RETAIN mode. 
@@ -1952,7 +1944,7 @@ ORBit_POA_handle_request (PortableServer_POA          poa,
 
 		case PortableServer_USE_DEFAULT_SERVANT: /* drop through */
 		case PortableServer_USE_SERVANT_MANAGER:
-			pobj = ORBit_POA_create_object (poa, &oid, FALSE, &env);
+			pobj = ORBit_POA_create_object (poa, &oid, &env);
 			break;
 
 		default:
@@ -2154,14 +2146,4 @@ ORBit_POAObject_post_invoke(ORBit_POAObject pobj)
 	ORBit_POA_deactivate_object(pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
     	/* WATCHOUT: pobj may not exist anymore! */
     }
-}
-
-ORBit_POAObject
-ORBit_POA_okey_to_obj(PortableServer_POA poa, CORBA_sequence_CORBA_octet *okey)
-{
-  PortableServer_ObjectId	oid;
-
-  if ( !ORBit_POA_okey_to_oid(poa, okey, &oid) )
-    return NULL;
-  return ORBit_POA_oid_to_obj(poa, &oid, /*active*/0, /*ev*/0);
 }
