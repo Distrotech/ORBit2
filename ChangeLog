@@ -1,3 +1,9 @@
+2003-06-27  Frank Rehberger  <frehberg@localhost.localdomain>
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_resolve_initial_references): 
+	feature-disabled: disabled exceptions that broke GNOME in
+	bonobo_arg_new().  Feature should be re-enabled for later release.
+
 2003-06-24  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testUnboundedSequence): fix silly.
