@@ -1220,16 +1220,16 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 }
 
 static void
-ORBit_POA_handle_request (PortableServer_POA          poa,
-			  GIOPRecvBuffer             *recv_buffer,
-			  ORBit_ObjectKey            *objkey)
+ORBit_POA_handle_request (PortableServer_POA poa,
+			  GIOPRecvBuffer    *recv_buffer,
+			  ORBit_ObjectKey   *objkey)
 {
 	ORBit_POAObject         pobj;
 	CORBA_Identifier        opname;
 	PortableServer_ObjectId oid;
 	CORBA_Environment       env;
 
-	CORBA_exception_init(&env);
+	CORBA_exception_init (&env);
 
 	if (!ORBit_POA_okey_to_objid (poa, objkey, &oid)) {
 		CORBA_exception_set_system (&env, 
@@ -1239,12 +1239,14 @@ ORBit_POA_handle_request (PortableServer_POA          poa,
 	}
 
 	pobj = ORBit_POA_oid_to_obj (poa, &oid, FALSE, &env);
+
 	if (!pobj)
-		switch( poa->p_request_processing ) {
+		switch (poa->p_request_processing) {
 		case PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY:
-			CORBA_exception_set_system (&env, 
-						    ex_CORBA_OBJECT_NOT_EXIST, 
-						    CORBA_COMPLETED_NO);
+			CORBA_exception_set_system (
+				&env, ex_CORBA_OBJECT_NOT_EXIST, 
+				CORBA_COMPLETED_NO);
+			goto send_sys_ex;
 			break;
 
 		case PortableServer_USE_DEFAULT_SERVANT: /* drop through */
@@ -1257,14 +1259,18 @@ ORBit_POA_handle_request (PortableServer_POA          poa,
 			break;
 		}
 
-	g_assert ( pobj != NULL );
+	if (!pobj)
+		CORBA_exception_set_system (
+			&env, ex_CORBA_OBJECT_NOT_EXIST, 
+			CORBA_COMPLETED_NO);
+	else {
+		opname = giop_recv_buffer_get_opname (recv_buffer);
+		
+		ORBit_POAObject_handle_request (pobj, opname, NULL, NULL, 
+						NULL, recv_buffer, &env);
+	}
 
-	opname = giop_recv_buffer_get_opname (recv_buffer);
-
-	ORBit_POAObject_handle_request (pobj, opname, NULL, NULL, 
-					NULL, recv_buffer, &env);
-
-send_sys_ex:
+ send_sys_ex:
 	if (env._major == CORBA_SYSTEM_EXCEPTION) {
 		GIOPSendBuffer *reply_buf;
 
@@ -1275,8 +1281,7 @@ send_sys_ex:
 		ORBit_send_system_exception (reply_buf, &env);
 		giop_send_buffer_write (reply_buf, recv_buffer->connection);
 		giop_send_buffer_unuse (reply_buf);
-	}
-	else
+	} else
 		g_assert (env._major == CORBA_NO_EXCEPTION);
 
 	CORBA_exception_free(&env);
