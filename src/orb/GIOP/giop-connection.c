@@ -104,11 +104,10 @@ giop_connection_init       (GIOPConnection      *cnx)
 }
 
 static void
-giop_connection_destroy    (GObject             *obj)
+giop_connection_close (GIOPConnection *cnx)
 {
-  GIOPConnection *cnx = (GIOPConnection *)obj;
-
-  O_MUTEX_LOCK(cnx->incoming_mutex);
+  if(cnx->parent.status == LINC_DISCONNECTED)
+    return;
 
   if(cnx->parent.status == LINC_CONNECTED
      && (!cnx->parent.was_initiated
@@ -118,13 +117,19 @@ giop_connection_destroy    (GObject             *obj)
 
       buf = giop_send_buffer_use_close_connection(cnx->giop_version);
       giop_send_buffer_write(buf, cnx);
+      fsync(cnx->parent.fd);
       giop_send_buffer_unuse(buf);
     }
-  O_MUTEX_LOCK(cnx->outgoing_mutex);
+  linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED);
+}
 
-  O_MUTEX_UNLOCK(cnx->incoming_mutex);
+static void
+giop_connection_destroy    (GObject             *obj)
+{
+  GIOPConnection *cnx = (GIOPConnection *)obj;
+
+  giop_connection_close(cnx);
   O_MUTEX_DESTROY(cnx->incoming_mutex);
-  O_MUTEX_UNLOCK(cnx->outgoing_mutex);
   O_MUTEX_DESTROY(cnx->outgoing_mutex);
 
   if(parent_class->shutdown)
@@ -163,15 +168,28 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
       {
 	cnx->incoming_msg = NULL;
 	if(info == GIOP_MSG_INVALID)
-	  /* Zap it for badness.
-	     XXX We should probably handle oversized
-	     messages more graciously XXX */
-	  linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED);
+	  {
+	    /* Zap it for badness.
+	       XXX We should probably handle oversized
+	       messages more graciously XXX */
+	    giop_connection_close(cnx);
+	    if(!cnx->parent.was_initiated)
+	      {
+		giop_connection_unref(cnx); /* If !was_initiated, then
+					       a refcount owned by a GIOPServer
+					       must be released */
+		retval = FALSE;
+		cnx = NULL;
+	      }
+	  }
       }
-  } while(cnx->incoming_msg);
+  } while(cnx && cnx->incoming_msg);
 
  out:
-  O_MUTEX_UNLOCK(cnx->incoming_mutex);
+  if(cnx)
+    {
+      O_MUTEX_UNLOCK(cnx->incoming_mutex);
+    }
 
   return retval;
 }
@@ -279,4 +297,21 @@ giop_connection_initiate(const char *proto_name,
   O_MUTEX_UNLOCK(cnx_list.lock);
 
   return cnx;
+}
+
+void
+giop_connection_remove_by_orb(gpointer match_orb_data)
+{
+  GList *link;
+
+  O_MUTEX_LOCK(cnx_list.lock);
+  for (link = cnx_list.list; link; )
+    {
+      GIOPConnection *cnx = link->data;
+      link = link->next;
+      if ( cnx->orb_data == match_orb_data )
+	cnx_list.list = g_list_delete_link(cnx_list.list, link);
+      giop_connection_close (cnx);
+    }
+  O_MUTEX_UNLOCK(cnx_list.lock);
 }

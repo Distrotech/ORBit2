@@ -724,7 +724,7 @@ void
 giop_recv_list_destroy_queue_entry(GIOPMessageQueueEntry *ent)
 {
   O_MUTEX_LOCK(giop_queued_messages_lock);
-  giop_queued_messages = g_list_remove(giop_queued_messages, &ent);
+  giop_queued_messages = g_list_remove(giop_queued_messages, ent);
   O_MUTEX_UNLOCK(giop_queued_messages_lock);
 
 #ifdef ORBIT_THREADED
