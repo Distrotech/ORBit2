@@ -455,6 +455,8 @@ test_struct (CORBA_ORB orb, CORBA_Environment *ev)
 {
 	DynamicAny_DynAny dyn_any, sub_any;
 	DynamicAny_DynStruct dyn_struct;
+	DynamicAny_NameValuePairSeq *members;
+	DynamicAny_NameDynAnyPairSeq *dyn_members;
 	CORBA_TCKind kind;
 	CORBA_char  *str;
 	CORBA_double dv = 1.23;
@@ -528,6 +530,24 @@ test_struct (CORBA_ORB orb, CORBA_Environment *ev)
 
 	g_assert (DynamicAny_DynAny_next (dyn_any, ev));
 	CHECK_OK (ev);
+
+	members = DynamicAny_DynStruct_get_members (dyn_any, ev);
+	g_assert (members != NULL);
+	CHECK_OK (ev);
+
+	DynamicAny_DynStruct_set_members (dyn_any, members, ev);
+	CHECK_OK (ev);
+
+	CORBA_free (members);
+
+	dyn_members = DynamicAny_DynStruct_get_members_as_dyn_any (dyn_any, ev);
+	g_assert (dyn_members != NULL);
+	CHECK_OK (ev);
+
+	DynamicAny_DynStruct_set_members_as_dyn_any (dyn_any, dyn_members, ev);
+	CHECK_OK (ev);
+
+	CORBA_free (dyn_members);
 
 	CORBA_Object_release ((CORBA_Object) dyn_any, ev);
 	CHECK_OK (ev);
