@@ -5,7 +5,7 @@ INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
-bin_PROGRAMS=ior-decode
+bin_PROGRAMS=ior-decode typelib-dump
 noinst_PROGRAMS=test1 \
 	echo-client echo-server \
 	empty-client empty-server \
@@ -36,6 +36,8 @@ test1_SOURCES=test1.c $(IDLOUT)
 $(srcdir)/test1.c: test1.h
 
 ior_decode_SOURCES=ior-decode.c
+
+typelib_dump_SOURCES=typelib-dump.c
 
 DYNANY_IDLOUT=dynany.h dynany-common.c
 test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c

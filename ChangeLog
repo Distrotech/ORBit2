@@ -1,5 +1,11 @@
 2001-08-08  Michael Meeks  <michael@ximian.com>
 
+	* test/Makefile.am: add typelib-dump
+
+	* test/typelib-dump.c (dump_iface): impl.
+
+2001-08-08  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/iop-profiles.c (IOP_component_free):
 	don't free the non-allocated oki - it's part of the
 	component's structure.
