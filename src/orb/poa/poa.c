@@ -1195,6 +1195,21 @@ local_main_handle (gpointer data)
 	return FALSE;
 }
 
+/* Utter hack ... */
+static void
+queue_request (ORBit_POAObject  pobj,
+	       GIOPRecvBuffer  *recv_buffer)
+{
+	LocalClosure *lc;
+
+	lc = g_new0 (LocalClosure, 1);
+
+	lc->pobj = pobj;
+	lc->recv_buffer = recv_buffer;
+
+	g_idle_add (local_main_handle, lc);
+}
+
 static void
 ORBit_POA_handle_request (PortableServer_POA poa,
 			  GIOPRecvBuffer    *recv_buffer,
@@ -1234,24 +1249,20 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 	else {
 		if (giop_threaded ()) {
 			switch (poa->p_thread) {
-			case PortableServer_SINGLE_THREAD_MODEL: {
-				/* Utter hack ... */
-				LocalClosure *lc = g_new0 (LocalClosure, 1);
-				lc->pobj = pobj;
-				lc->recv_buffer = recv_buffer;
-				g_idle_add (local_main_handle, lc);
+			case PortableServer_SINGLE_THREAD_MODEL:
+				queue_request (pobj, recv_buffer);
+				break;
+			case PortableServer_ORB_CTRL_MODEL: {
+				ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
+
+				if (adaptor->thread_hint == ORBIT_THREAD_HINT_NONE)
+					queue_request (pobj, recv_buffer);
+				else {
+					g_warning ("Binning incoming requests in threaded mode");
+					giop_recv_buffer_unuse (recv_buffer);
+				}
 				break;
 			}
-
-			case PortableServer_ORB_CTRL_MODEL:
-			case PortableServer_THREAD_PER_OBJECT:
-				/* Impl. the above first */
-			case PortableServer_THREAD_PER_REQUEST:
-			case PortableServer_THREAD_PER_POA:
-			case PortableServer_THREAD_PER_CONNECTION:
-				g_warning ("Binning incoming requests in threaded mode");
-				giop_recv_buffer_unuse (recv_buffer);
-				break;
 			default:
 				g_assert_not_reached ();
 				break;

@@ -8,6 +8,25 @@
 #include "orbit-poa.h"
 #include "../orb-core/orbit-debug.h"
 
+void
+ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
+				     ORBitThreadHint     thread_hint)
+{
+	g_return_if_fail (adaptor != NULL);
+	g_return_if_fail (thread_hint >= ORBIT_THREAD_HINT_NONE &&
+			  thread_hint <= ORBIT_THREAD_HINT_PER_CONNECTION);
+
+	adaptor->thread_hint = thread_hint;
+}
+
+ORBitThreadHint
+ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor)
+{
+	g_return_val_if_fail (adaptor != NULL, ORBIT_THREAD_HINT_NONE);
+
+	return adaptor->thread_hint;
+}
+
 CORBA_long
 ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
 		     CORBA_ORB           orb)
@@ -23,6 +42,8 @@ ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
 		g_ptr_array_index    (orb->adaptors, adaptor_id) = adaptor;
 	}
 	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+
+	adaptor->thread_hint = ORBIT_THREAD_HINT_NONE;
 
 	adaptor->adaptor_key._length  = ORBIT_ADAPTOR_PREFIX_LEN;
 	adaptor->adaptor_key._buffer  =
