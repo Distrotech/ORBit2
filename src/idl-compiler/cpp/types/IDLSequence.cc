@@ -176,6 +176,9 @@ IDLSequence::stub_impl_arg_call (const string     &cpp_id,
 				 IDL_param_attr    direction,
 				 const IDLTypedef *active_typedef) const
 {
+	if (direction == IDL_PARAM_OUT)
+		return "&_c_" + cpp_id;
+	
 	return "_c_" + cpp_id;
 }
 	
@@ -186,10 +189,20 @@ IDLSequence::stub_impl_arg_post (ostream          &ostr,
 				 IDL_param_attr    direction,
 				 const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+	string cpp_type = active_typedef->get_cpp_typename ();
+	
 	if (direction == IDL_PARAM_INOUT)
 	{
 		// Load back values
 		ostr << indent << cpp_id << "._orbitcpp_unpack ("
+		     << "*_c_" << cpp_id << ");" << endl;
+	}
+
+	if (direction == IDL_PARAM_OUT)
+	{
+		ostr << indent << cpp_id << " = new " << cpp_type << ";" << endl;
+		ostr << indent << cpp_id << "->_orbitcpp_unpack ("
 		     << "*_c_" << cpp_id << ");" << endl;
 	}
 	
@@ -202,28 +215,43 @@ IDLSequence::stub_impl_arg_post (ostream          &ostr,
 string
 IDLSequence::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+	return active_typedef->get_cpp_typename () + "*";
 }
 	
 void
 IDLSequence::stub_impl_ret_pre (ostream &ostr,
-			   Indent  &indent,
-			   const IDLTypedef *active_typedef) const
+				Indent  &indent,
+				const IDLTypedef *active_typedef) const
 {
+	// Do nothing
 }
 
 void
 IDLSequence::stub_impl_ret_call (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &c_call_expression,
-			    const IDLTypedef *active_typedef) const
+				 Indent           &indent,
+				 const string     &c_call_expression,
+				 const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+	
+	ostr << indent << active_typedef->get_c_typename () << " *_c_retval"
+	     << " = " << c_call_expression << ";" << endl;
 }
 
 void
 IDLSequence::stub_impl_ret_post (ostream          &ostr,
-			    Indent           &indent,
-			    const IDLTypedef *active_typedef) const
+				 Indent           &indent,
+				 const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+	string cpp_type = active_typedef->get_cpp_typename ();
+	
+	ostr << indent << cpp_type << " *_cpp_retval = new "
+	     << cpp_type << ";" << endl;
+	ostr << indent << "_cpp_retval->_orbitcpp_unpack (*_c_retval);" << endl;
+	ostr << indent << "CORBA_free (_c_retval);" << endl << endl;
+	ostr << indent << "return _cpp_retval;" << endl;
 }
 	
 
@@ -295,9 +323,18 @@ IDLSequence::skel_impl_arg_post (ostream          &ostr,
 				 IDL_param_attr    direction,
 				 const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+	string cpp_type = active_typedef->get_cpp_typename ();
+	
 	if (direction == IDL_PARAM_INOUT)
 		ostr << indent << "_cpp_" << c_id << "._orbitcpp_pack"
 		     << " (*" << c_id << ");" << endl;
+
+	if (direction == IDL_PARAM_OUT)
+	{
+		ostr << indent << "*" << c_id << " = "
+		     << "_cpp_" << c_id << "->_orbitcpp_pack ();" << endl;
+	}
 }
 
 
@@ -306,28 +343,37 @@ IDLSequence::skel_impl_arg_post (ostream          &ostr,
 string
 IDLSequence::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+
+	return active_typedef->get_c_typename () + "*";
 }
 
 void
 IDLSequence::skel_impl_ret_pre (ostream          &ostr,
-			   Indent           &indent,
-			   const IDLTypedef *active_typedef) const
+				Indent           &indent,
+				const IDLTypedef *active_typedef) const
 {
+	g_assert (active_typedef);
+
+	ostr << indent << active_typedef->get_cpp_typename ()
+	     << "_var _cpp_retval;" << endl;
 }
 
 void
 IDLSequence::skel_impl_ret_call (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &cpp_call_expression,
-			    const IDLTypedef *active_typedef) const
+				 Indent           &indent,
+				 const string     &cpp_call_expression,
+				 const IDLTypedef *active_typedef) const
 {
+	ostr << indent << "_cpp_retval = " << cpp_call_expression << ";" << endl;
 }
 
 void
 IDLSequence::skel_impl_ret_post (ostream          &ostr,
-			    Indent           &indent,
-			    const IDLTypedef *active_typedef) const
+				 Indent           &indent,
+				 const IDLTypedef *active_typedef) const
 {
+	ostr << indent << "return _cpp_retval->_orbitcpp_pack ();" << endl << endl;
 }
 
 
