@@ -112,109 +112,6 @@ linc_init (gboolean init_threads)
 	linc_lifecycle_mutex = linc_mutex_new ();
 }
 
-struct _LincWatch {
-	guint main_id;
-	guint linc_id;
-};
-
-#ifdef WATCH_DEBUG
-static GSList *watches = NULL;
-#endif
-
-/**
- * linc_io_add_watch:
- * @channel: the GIOChannel to watch
- * @condition: the condition mask to watch for
- * @func: the function to invoke when a condition is met
- * @user_data: a user data closure
- * 
- * This routine creates a watch on an IO channel that operates both in
- * the standard glib mainloop, but also in the 'linc' mainloop so we
- * can iterate that without causing re-enterancy.
- * 
- * Return value: a pointer identifying the watch.
- **/
-LincWatch *
-linc_io_add_watch (GIOChannel    *channel,
-		   GIOCondition   condition,
-		   GIOFunc        func,
-		   gpointer       user_data)
-{
-	GSource  *source;
-	LincWatch *w;
-  
-	g_return_val_if_fail (channel != NULL, 0);
-
-	w = g_new (LincWatch, 1);
-
-	/* Linc loop */
-	source = g_io_create_watch (channel, condition);
-	g_source_set_can_recurse (source, TRUE);
-	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
-	w->linc_id = g_source_attach (source, linc_context);
-	g_source_unref (source);
-
-	/* Main loop */
-	source = g_io_create_watch (channel, condition);
-	g_source_set_can_recurse (source, TRUE);
-	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
-	w->main_id = g_source_attach (source, NULL);
-	g_source_unref (source);
-
-#ifdef WATCH_DEBUG
-	source = g_main_context_find_source_by_id (
-		NULL, w->main_id);
-	g_assert (source != NULL);
-	g_assert (source->poll_fds != NULL);
-
-	source = g_main_context_find_source_by_id (
-		linc_context, w->linc_id);
-	g_assert (source != NULL);
-	g_assert (source->poll_fds != NULL);
-
-	watches = g_slist_prepend (watches, w);
-#endif
-	
-	return w;
-}
-
-/**
- * linc_io_remove_watch:
- * @watch: the handle of a watch on a GIOChannel
- * 
- * This removes a watch by it's handle in @w
- **/
-void
-linc_io_remove_watch (LincWatch *w)
-{
-	if (w) {
-		GSource *source;
-
-#ifdef WATCH_DEBUG
-		watches = g_slist_remove (watches, w);
-#endif
-
-		/* If these warnings fire, we're prolly returning
-		   TRUE from the source's handler somewhere in error */
-		   
-		source = g_main_context_find_source_by_id (
-			NULL, w->main_id);
-		if (source)
-			g_source_destroy (source);
-		else
-			g_warning ("Missing source on main context");
-
-		source = g_main_context_find_source_by_id (
-			linc_context, w->linc_id);
-		if (source)
-			g_source_destroy (source);
-		else
-			g_warning ("Missing source on linc context");
-
-		g_free (w);
-	}
-}
-
 /**
  * linc_main_iteration:
  * @block_for_reply: whether we should wait for a reply
@@ -225,25 +122,6 @@ linc_io_remove_watch (LincWatch *w)
 void
 linc_main_iteration (gboolean block_for_reply)
 {
-#ifdef WATCH_DEBUG
-	GSList *l;
-
-	g_assert (watches != NULL);
-
-	for (l = watches; l; l = l->next) {
-		LincWatch *w = l->data;
-		GSource *source = g_main_context_find_source_by_id (
-			linc_context, w->linc_id);
-		GPollFD *fd;
-
-		g_warning ("source %p", source);
-
-		fd = source->poll_fds->data;
-		g_warning ("pollrec fd %d, (0x%x, 0x%x)",
-			   fd->fd, fd->events, fd->revents);
-	}
-#endif
-
 	g_main_context_iteration (
 		linc_context, block_for_reply);
 }
@@ -331,4 +209,10 @@ GMainLoop *
 linc_main_get_loop (void)
 {
 	return linc_loop;
+}
+
+GMainContext *
+linc_main_get_context (void)
+{
+	return linc_context;
 }

@@ -239,7 +239,6 @@ linc_server_setup (LINCServer            *cnx,
 		   LINCConnectionOptions  create_options)
 {
 	const LINCProtocolInfo *proto;
-	GIOChannel             *gioc;
 	int                     fd, n;
 	struct sockaddr        *saddr;
 	socklen_t               saddr_len;
@@ -335,15 +334,11 @@ linc_server_setup (LINCServer            *cnx,
 	cnx->priv->fd = fd;
 
 	if ((create_options & LINC_CONNECTION_NONBLOCKING)) {
-		gioc = g_io_channel_unix_new (fd);
-
 		g_assert (cnx->priv->tag == NULL);
 
-		cnx->priv->tag = linc_io_add_watch (
-			gioc, LINC_IN_CONDS | LINC_ERR_CONDS,
+		cnx->priv->tag = linc_io_add_watch_fd (
+			fd, LINC_IN_CONDS | LINC_ERR_CONDS,
 			linc_server_handle_io, cnx);
-
-		g_io_channel_unref (gioc);
 	}
 
 	cnx->create_options  = create_options;

@@ -218,6 +218,7 @@ linc.pc
 linc.spec
 Makefile
 src/Makefile
+test/Makefile
 docs/Makefile
 include/Makefile
 include/linc/Makefile

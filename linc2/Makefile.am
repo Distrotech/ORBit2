@@ -1,4 +1,4 @@
-SUBDIRS=include src docs
+SUBDIRS=include src test docs
 
 m4datadir=$(datadir)/aclocal
 m4data_DATA=linc.m4

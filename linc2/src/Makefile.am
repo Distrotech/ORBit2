@@ -8,13 +8,14 @@ INCLUDES =                         \
 	$(WARN_CFLAGS)             \
 	-D_GNU_SOURCE
 
-liblinc_la_SOURCES=\
-	linc.c \
-	linc-connection.c \
-	linc-protocols.c \
-	linc-server.c \
-	linc-debug.h	\
-	linc-private.h
+liblinc_la_SOURCES =		\
+	linc.c			\
+	linc-connection.c	\
+	linc-debug.h		\
+	linc-private.h		\
+	linc-protocols.c	\
+	linc-server.c		\
+	linc-source.c
 
 liblinc_la_LDFLAGS =                 \
 	$(LINC_LIBS)                 \

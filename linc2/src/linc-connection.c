@@ -28,7 +28,6 @@ struct _LINCConnectionPrivate {
 #ifdef LINC_SSL_SUPPORT
 	SSL        *ssl;
 #endif
-	GIOChannel *gioc;
 	LincWatch  *tag;
 	int         fd;
 };
@@ -63,8 +62,8 @@ linc_source_add (LINCConnection *cnx,
 {
 	g_assert (cnx->priv->tag == NULL);
 
-	cnx->priv->tag = linc_io_add_watch (
-		cnx->priv->gioc, condition,
+	cnx->priv->tag = linc_io_add_watch_fd (
+		cnx->priv->fd, condition,
 		linc_connection_connected, cnx);
 
 	d_printf ("Added watch on %d (0x%x)\n",
@@ -88,11 +87,6 @@ linc_connection_dispose (GObject *obj)
 
 	linc_source_remove (cnx);
 
-	if (cnx->priv->gioc) {
-		g_io_channel_unref (cnx->priv->gioc);
-		cnx->priv->gioc = NULL;
-	}
-
 	parent_class->dispose (obj);
 }
 
@@ -109,19 +103,6 @@ linc_connection_finalize (GObject *obj)
 	g_free (cnx->priv);
 
 	parent_class->finalize (obj);
-}
-
-
-/*
- * FIXME: a horribly inefficient way to simply stop
- * listening for G_IO_OUT - which we use initialy to
- * be notified of connection.
- */
-static void
-linc_source_unwatch_out (LINCConnection *cnx)
-{
-	linc_source_remove (cnx);
-	linc_source_add (cnx, LINC_ERR_CONDS | LINC_IN_CONDS);
 }
 
 static gboolean
@@ -153,7 +134,11 @@ linc_connection_connected (GIOChannel  *gioc,
 			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
 			if (!rv && !n && condition == G_IO_OUT) {
 				d_printf ("State changed to connected on %d\n", cnx->priv->fd);
-				linc_source_unwatch_out (cnx);
+
+				linc_watch_set_condition (
+					cnx->priv->tag,
+					LINC_ERR_CONDS | LINC_IN_CONDS);
+
 				linc_connection_state_changed (cnx, LINC_CONNECTED);
 				
 			} else {
@@ -220,10 +205,13 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		break;
 
 	case LINC_CONNECTING:
-		/* FIXME: We might be re-connecting, and need to watch
-		 * G_IO_OUT - again this could be more efficient */
-		linc_source_remove (cnx);
-		linc_source_add (cnx, G_IO_OUT | LINC_ERR_CONDS);
+
+		if (cnx->priv->tag) /* re-connecting */
+			linc_watch_set_condition (
+				cnx->priv->tag,
+				G_IO_OUT | LINC_ERR_CONDS);
+		else
+			linc_source_add (cnx, G_IO_OUT | LINC_ERR_CONDS);
 		break;
 
 	case LINC_DISCONNECTED:
@@ -267,7 +255,6 @@ linc_connection_from_fd (LINCConnection         *cnx,
 	cnx->proto         = proto;
 	cnx->options       = options;
 	cnx->priv->fd      = fd;
-	cnx->priv->gioc    = g_io_channel_unix_new (fd);
 
 	cnx->remote_host_info = remote_host_info;
 	cnx->remote_serv_info = remote_serv_info;
