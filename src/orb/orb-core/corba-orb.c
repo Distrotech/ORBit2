@@ -232,6 +232,7 @@ ORBit_setup_debug_flags (void)
 
 static CORBA_ORB _ORBit_orb = NULL;
 static gulong    init_level = 0;
+static gboolean  atexit_shutdown = FALSE;
 
 /*
  *   This is neccessary to clean up any remaining UDS
@@ -247,6 +248,7 @@ shutdown_orb (void)
 		return;
 
 	init_level = 1; /* clobber it */
+	atexit_shutdown = TRUE;
 	
 	CORBA_exception_init (&ev);
 
@@ -254,6 +256,8 @@ shutdown_orb (void)
 	ORBit_RootObject_release (orb);
 
 	CORBA_exception_free (&ev);
+
+	atexit_shutdown = FALSE;
 }
 
 static
@@ -1162,9 +1166,10 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 	if (root_poa &&
 	    ((ORBit_RootObject) root_poa)->refs != 1) {
 #ifdef G_ENABLE_DEBUG
-		g_warning ("CORBA_ORB_destroy: Application still has %d "
-			   "refs to RootPOA.",
-			   ((ORBit_RootObject)root_poa)->refs - 1);
+		if (!atexit_shutdown)
+			g_warning ("CORBA_ORB_destroy: Application still has %d "
+				   "refs to RootPOA.",
+				   ((ORBit_RootObject)root_poa)->refs - 1);
 #endif
 		CORBA_exception_set_system (
 			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
@@ -1193,7 +1198,9 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 		if (leaked_adaptors) {
 #ifdef G_ENABLE_DEBUG
-			g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors", leaked_adaptors);
+			if (!atexit_shutdown)
+				g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors",
+					   leaked_adaptors);
 #endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
@@ -1201,11 +1208,13 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
 #ifdef G_ENABLE_DEBUG
-			if (((ORBit_RootObject)orb)->refs == 1 + leaked_adaptors)
-				g_warning ("CORBA_ORB_destroy: ORB unreffed but not _destroy'd");
-			else
-				g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
-					   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
+			if (!atexit_shutdown) {
+				if (((ORBit_RootObject)orb)->refs == 1 + leaked_adaptors)
+					g_warning ("CORBA_ORB_destroy: ORB unreffed but not _destroy'd");
+				else
+					g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
+						   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
+			}
 #endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
@@ -1218,7 +1227,7 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 	/* At this stage there should be 1 ref left in the system -
 	 * on the ORB */
-	if (ORBit_RootObject_shutdown ())
+	if (ORBit_RootObject_shutdown (!atexit_shutdown))
 		CORBA_exception_set_system (
 			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 }

@@ -264,14 +264,14 @@ ORBit_try_connection_T (CORBA_Object obj)
 	case LINK_DISCONNECTED:
 		/* Have a go at reviving it */
 		dprintf (MESSAGES, "re-connecting dropped cnx %p", cnx);
-		if (giop_connection_try_reconnect (cnx) == LINK_CONNECTED)
+		if (giop_connection_try_reconnect (GIOP_CONNECTION (cnx)) == LINK_CONNECTED)
 			retval = TRUE;
 		break;
 	}
 
 	OBJECT_LOCK (obj);
 
-	g_assert (obj->connection == cnx);
+	g_assert (LINK_CONNECTION (obj->connection) == cnx);
 
 	return retval;
 }
