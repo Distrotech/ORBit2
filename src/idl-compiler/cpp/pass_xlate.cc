@@ -666,7 +666,7 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 		     << iface.getCPP_mgr () << " &cpp_obj);" << endl;
 	    m_header << indent << "operator " << iface.getCPP_mgr () << " () const;" << endl;
 	}
-	m_header << --indent << "};" << endl;
+	m_header << --indent << "};" << endl << endl;
 
 	// Forwarder implementation
 	string fw_full_class_name =
