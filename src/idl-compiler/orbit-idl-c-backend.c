@@ -72,62 +72,68 @@ char *
 orbit_idl_c_filename_for_pass (const char *input_filename, 
                                int pass)
 {
-  char *filename;
-  char *basename;
-  char *dot;
-  const char *tack_on = NULL;
+	char *filename;
+	char *basename;
+	char *dot;
+	const char *tack_on = NULL;
   
-  basename = g_path_get_basename (input_filename);
-  dot = strrchr (basename, '.');
-  if (dot != NULL) {
-    *dot = '\0';
-  }
+	basename = g_path_get_basename (input_filename);
+	dot = strrchr (basename, '.');
+	if (dot != NULL)
+		*dot = '\0';
 
-  switch(pass) {
-  case OUTPUT_STUBS:
-    tack_on = "-stubs.c";
-    break;
-  case OUTPUT_SKELS:
-    tack_on = "-skels.c";
-    break;
-  case OUTPUT_COMMON:
-    tack_on = "-common.c";
-    break;
-  case OUTPUT_HEADERS:
-    tack_on = ".h";
-    break;
-  case OUTPUT_SKELIMPL:
-    tack_on = "-skelimpl.c";
-    break;
-  case OUTPUT_IMODULE:
-    tack_on = "-imodule.c";
-    break;
-  default:
-    g_error("Unknown output pass");
-    break;
-  }
+	switch (pass) {
+	case OUTPUT_STUBS:
+		tack_on = "-stubs.c";
+		break;
+	case OUTPUT_SKELS:
+		tack_on = "-skels.c";
+		break;
+	case OUTPUT_COMMON:
+		tack_on = "-common.c";
+		break;
+	case OUTPUT_HEADERS:
+		tack_on = ".h";
+		break;
+	case OUTPUT_SKELIMPL:
+		tack_on = "-skelimpl.c";
+		break;
+	case OUTPUT_IMODULE:
+		tack_on = "-imodule.c";
+		break;
+	default:
+		g_error("Unknown output pass");
+		break;
+	}
 
-  filename = g_strconcat (basename, tack_on, NULL);
-  g_free (basename);
-  return filename;
+	filename = g_strconcat (basename, tack_on, NULL);
+	g_free (basename);
+
+	return filename;
 }
 
 static FILE *
-out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
+out_for_pass (const char    *input_filename,
+	      int            pass,
+	      OIDL_Run_Info *rinfo)
 {
-  char *output_filename;
-  char *cmdline;
+	char *output_filename;
+	char *cmdline;
 
-  if (pass == OUTPUT_DEPS) {
-    return fopen (rinfo->deps_file, "w");
-  } else {
-    output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
+	if (pass == OUTPUT_DEPS) {
+		if (rinfo->deps_file)
+			return fopen (rinfo->deps_file, "w");
+		else
+			return NULL;
+	} else {
+		output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
 
-    cmdline = g_alloca(strlen(rinfo->output_formatter) + strlen(output_filename) 
-		       + sizeof(" > "));
-    sprintf(cmdline, "%s > %s", rinfo->output_formatter, output_filename);
+		cmdline = g_alloca (strlen (rinfo->output_formatter) +
+				    strlen (output_filename) +
+				    sizeof(" > "));
+		sprintf (cmdline, "%s > %s", rinfo->output_formatter, output_filename);
 
-    g_free (output_filename);
-    return popen(cmdline, "w");
-  }
+		g_free (output_filename);
+		return popen (cmdline, "w");
+	}
 }
