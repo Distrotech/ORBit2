@@ -12,7 +12,7 @@ BuildRequires:   glib2-devel
 
 %description 
 linc is a library that eases the task of writing networked servers &
-clients. It takes care of connection initiation and maintainance, and the
+clients. It takes care of connection initiation and maintenance, and the
 details of various transports. It is used by ORBit2 to handle message
 transmission/receipt.
 
