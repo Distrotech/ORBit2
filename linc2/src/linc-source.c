@@ -17,6 +17,7 @@
 #include <fcntl.h>
 
 #include <glib.h>
+#include "linc-debug.h"
 #include "linc-private.h"
 
 static gboolean 
@@ -55,11 +56,17 @@ linc_source_dispatch (GSource    *source,
 			user_data);
 }
 
+static void
+linc_source_finalize (GSource *source)
+{
+	d_printf ("Finalize source %p", source);
+}
+
 GSourceFuncs linc_source_watch_funcs = {
 	linc_source_prepare,
 	linc_source_check,
 	linc_source_dispatch,
-	/* source_finalize (GSource *source) */
+	linc_source_finalize
 };
 
 static void

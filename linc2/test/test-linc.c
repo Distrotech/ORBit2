@@ -250,6 +250,8 @@ test_blocking (void)
 	g_assert (server == NULL);
 
 	test_cnx_type = 0;
+
+	linc_write_options_free (options);
 }
 
 int
