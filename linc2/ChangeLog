@@ -1,3 +1,9 @@
+2002-10-24  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_object_unref): handle the
+	  last ref sanely, so we don't deadlock doing
+	  subsequent unrefs.
+
 2002-10-18  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.7.0
