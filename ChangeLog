@@ -1,3 +1,9 @@
+2002-05-20  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.110
+
+	* prune cleanup from the build, will move to linc.
+
 2002-05-16  Jacob Berkman  <jacob@ximian.com>
 
 	* src/cleanup/Makefile.am (orbit_cleanup_sockets_LDADD): fix LDADD
