@@ -147,11 +147,6 @@ giop_connection_dispose (GObject *obj)
 		cnx->incoming_mutex = NULL;
 	}
 
-	if (cnx->outgoing_mutex) {
-		g_mutex_free (cnx->outgoing_mutex);
-		cnx->outgoing_mutex = NULL;
-	}
-
 	giop_connection_destroy_frags (cnx);
 
 	giop_connection_list_remove (cnx);
@@ -179,7 +174,6 @@ static void
 giop_connection_init (GIOPConnection *cnx)
 {
 	cnx->incoming_mutex = linc_mutex_new ();
-	cnx->outgoing_mutex = linc_mutex_new ();
 }
 
 GType
