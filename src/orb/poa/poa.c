@@ -1081,9 +1081,13 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		switch (poa->poa_manager->state) {
 
 		case PortableServer_POAManager_HOLDING:
-			if (recv_buffer)
+			if (recv_buffer) {
+				g_warning ("POAManager in holding state. "
+					   "Queueing '%s' method request", opname);
+						
 				poa->held_requests = g_slist_prepend (
 					poa->held_requests, recv_buffer);
+			}
 			else
 				CORBA_exception_set_system (
 					ev, ex_CORBA_TRANSIENT,
