@@ -119,7 +119,8 @@ namespace _orbitcpp {
 	private:
 
 		void free() {
-			::CORBA::release(reinterpret_cast<CORBA::Object*>(m_objectref));
+			if (m_objectref != O::_nil ())
+				::CORBA::release(reinterpret_cast<CORBA::Object*>(m_objectref));
 			m_objectref = O::_nil();
 		}
 

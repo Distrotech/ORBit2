@@ -1,3 +1,9 @@
+2002-04-16  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/orb-cpp/orbitcpp_object.hh: 
+	* src/orb-cpp/orbitcpp_smartptr.hh: Check for object != NIL before
+	releasing it
+
 2002-03-30  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/orbit-idl-c-utils.c (cs_small_unflatten_ref):
