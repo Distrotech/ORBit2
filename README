@@ -1,2 +1,4 @@
 Code for an ORB written in C will spontaneously evolve here. C, ObjC, and
 Scheme bindings will be supported, eventually.
+
+Read 'NEWS', 'TODO', and 'docs/*' if you're bored.
