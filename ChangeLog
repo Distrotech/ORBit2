@@ -1,3 +1,11 @@
+2001-06-18  Erik Walthinsen  <omega@temple-baptist.com>
+
+	* ORBit-2.0.pc.in, ORBit-CosNaming-2.0.pc.in: brought in from
+	ORBit-martin-forked.
+
+	* .cvsignore, Makefile.am, configure.in: added necessary lines
+	for above .pc files to be created/installed.
+
 2001-05-04  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/*: import & port.
