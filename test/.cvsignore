@@ -13,6 +13,7 @@ test-any.h
 ior-decode-2
 test1
 echo-client
+echo-client-t
 echo-server
 test-any-client
 test-any-server

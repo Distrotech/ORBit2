@@ -11,7 +11,7 @@ INCLUDES =                          \
 
 bin_PROGRAMS=ior-decode-2 typelib-dump
 noinst_PROGRAMS=test1 \
-	echo-client echo-server \
+	echo-client echo-client-t echo-server \
 	empty-client empty-server \
 	test-any-client test-any-server \
 	test-dynany test-mem test-performance test-giop
@@ -39,8 +39,9 @@ $(srcdir)/test-any-client.c $(srcdir)/test-any-server.c: test-any.h
 
 ECHO_IDLOUT=echo.h echo-common.c echo-stubs.c echo-skels.c
 echo_client_SOURCES=echo-client.c $(ECHO_IDLOUT)
-echo_server_SOURCES=echo-server.c echo-srv.c $(ECHO_IDLOUT) echo-share.h
-$(srcdir)/echo-client.c $(srcdir)/echo-server.c $(srcdir)/echo-srv.c: echo.h
+echo_client_t_SOURCES=echo-client-t.c $(ECHO_IDLOUT)
+echo_server_SOURCES=echo-server.c echo-srv.c $(ECHO_IDLOUT) echo-share.h$
+$(srcdir)/echo-client-t.c $(srcdir)/echo-client.c $(srcdir)/echo-server.c $(srcdir)/echo-srv.c: echo.h
 
 EMPTY_IDLOUT=empty.h empty-common.c empty-stubs.c empty-skels.c
 empty_client_SOURCES=empty-client.c $(EMPTY_IDLOUT)

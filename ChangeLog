@@ -1,3 +1,9 @@
+2002-10-24  Michael Meeks  <michael@ximian.com>
+
+	* test/echo-client-t.c (echo_client_thread):
+	add a threaded test client, so we at least know
+	where things break.
+
 2002-10-18  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.5.0
