@@ -1,3 +1,10 @@
+2003-06-30  Padraig O'Briain <padraig.obriain@sun.com>
+
+	* linc2/src/linc-connection.c: Move link_source_remove and 
+	link_source_add to before link_connection_state_changed_T_R.
+
+	This fixes bug #116350.
+
 2003-06-28  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* docs/api/Makefile.am (DOC_SOURCE_DIR): indicate a source dir, so
