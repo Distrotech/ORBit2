@@ -1,4 +1,4 @@
-The ORBit2 FAQ - v 0.1
+The ORBit2 FAQ - v 0.3
   Michael Meeks (michael@ximian.com)
 
 * Contents
@@ -87,16 +87,19 @@ In many ways:
 
 ** Is ORBit2 thread safe ?
 
-	ORBit2 is theoreticaly thread safe, ie. we thought about it a
+	ORBit2-2.5.X is fairly thread safe, ie. we thought about it a
 bit during the design - which is nominaly thread safe, we added a lot
 of locks, and we fixed deadlocks when they were found. It has yet to
 be tested in anger in a multi-threaded environment.
 
 *** How do I enable a threaded ORB ?
 
-	Before you initialize the ORB ( or bonobo ) you need to call
-linc_set_threaded (TRUE), this will cause all the locking to be setup
-correctly. Calling this after locks have been created will not work.
+	Simply initialize the ORB with an orb_identifier of
+"orbit-local-mt-orb", this causes all the locking to be setup
+correctly, and the IO thread to be spun up. Of course, ORBit2 works in
+an indentical fashion to the single threaded case with this, but
+allows different POA threading policies, and thread safe client
+invocation when this is called.
 
 *** What is this re-enterancy thing ?
 
@@ -109,19 +112,11 @@ threaded operation currently.
 
 	Yes, this should present no particular problem.
 
-*** Can I receive invocations in multiple threads ?
-
-
-	Yes - assuming you have a glib mainloop ( or a linc_mainloop )
-running in one or several of your threads. The precice thread that the
-invocation is recieved in is unpredictable.
-
 *** Can I have each invocation handled by a different thread ?
 
 	Currently no - there is tentative compile time support in the
-ORB for this mode of operation, but currently no effort has been put
-into this. If the compile time support for this is enabled, the
-mainloop and re-enterant processing is disabled.
+ORB for this mode of operation, and work is ongoing, you need to set
+the right policy on your POA adaptor.
 
 
 ** How does the new 'type' system work ?
