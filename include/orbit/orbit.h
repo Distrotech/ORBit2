@@ -12,8 +12,10 @@
 
 #include <orbit/orbit-types.h>
 #include <orbit/GIOP/giop.h>
+
 #include <orbit/orb-core/orb-core.h>
 #include <orbit/poa/poa.h>
+#include <orbit/goa/orbit-goa.h>
 #include <orbit/dynamic/dynamic.h>
 
 G_BEGIN_DECLS

@@ -15,6 +15,7 @@ ORBit_init_internals (CORBA_ORB          orb,
 {
 	PortableServer_POA     root_poa;
 	PortableServer_Current poa_current;
+	ORBit_GOA              goa;
 	struct timeval         t;
 
 	root_poa = ORBit_POA_setup_root (orb, ev);
@@ -24,6 +25,10 @@ ORBit_init_internals (CORBA_ORB          orb,
 	poa_current = ORBit_POACurrent_new (orb);
 	ORBit_set_initial_reference (orb, "POACurrent", poa_current);
 	ORBit_RootObject_release (poa_current);
+
+	goa = ORBit_goa_initial_reference (orb, FALSE);
+	ORBit_set_initial_reference (orb, "GOA", goa);
+	ORBit_RootObject_release (goa);
 
 	/* need to srand for linc's node creation */
 	gettimeofday (&t, NULL);

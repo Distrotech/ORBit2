@@ -1,7 +1,7 @@
 #ifndef PORTABLESERVER_POA_TYPE_H
 #define PORTABLESERVER_POA_TYPE_H 1
 
-#include <orbit/poa/orbit-adaptor.h>
+#include <orbit/orb-core/orbit-adaptor.h>
 
 G_BEGIN_DECLS
 
@@ -20,7 +20,6 @@ struct PortableServer_POA_type {
 
 	guint16                         use_cnt;
 	guint16                         life_flags;
-	int                             poa_id;
 	int                             next_sysid;
 	char                           *name;
 	CORBA_ORB                       orb;

@@ -30,16 +30,17 @@ test_TestFactory getFactoryInstance(CORBA_Environment *ev);
 
 typedef void (*init_fn_t) (PortableServer_Servant, CORBA_Environment *);
 
-CORBA_Object create_object (PortableServer_POA poa,
-			    init_fn_t          fn,
-			    gpointer           servant,
-			    CORBA_Environment *ev);
+CORBA_Object create_poa_object (PortableServer_POA poa,
+				init_fn_t          fn,
+				gpointer           servant,
+				CORBA_Environment *ev);
 
 CORBA_ORB          global_orb;
 PortableServer_POA global_poa;
+ORBit_GOA          global_goa;
 
-#include "basicServer.c"
-#include "structServer.c"
+#include "test-basic-server.c"
+#include "test-struct-server.c"
 #include "sequenceServer.c"
 #include "unionServer.c"
 #include "arrayServer.c"
@@ -50,6 +51,9 @@ PortableServer_POA global_poa;
 
 typedef struct {
 	POA_test_TestFactory baseServant;
+
+	ORBitGServant       *basic_server_servant;
+	ORBitGServant       *struct_server_servant;
 
 	test_BasicServer     basicServerRef;
 	test_StructServer    structServerRef;
@@ -140,7 +144,7 @@ TestFactory_createPingPongServer (PortableServer_Servant servant,
 {
 	test_PingPongServer obj;
 
-	obj = create_object (
+	obj = create_poa_object (
 		global_poa, POA_test_PingPongServer__init,
 		create_ping_pong_servant (), ev);
 
@@ -182,8 +186,8 @@ TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	obj = create_object (poa, POA_test_DeadReferenceObj__init,
-			     &DeadReferenceObj_servant, ev);
+	obj = create_poa_object (poa, POA_test_DeadReferenceObj__init,
+				 &DeadReferenceObj_servant, ev);
 
 	CORBA_Object_release ((CORBA_Object) poa, ev);
 	CORBA_Object_release ((CORBA_Object) poa_current, ev);
@@ -214,6 +218,9 @@ test_TestFactory__fini (PortableServer_Servant  servant,
 	test_TestFactory_Servant *this;
 
 	this = (test_TestFactory_Servant*) servant;
+
+	g_object_unref (this->basic_server_servant);
+	g_object_unref (this->struct_server_servant);
 
 	CORBA_Object_release (this->basicServerRef, ev);
 	CORBA_Object_release (this->structServerRef, ev);
@@ -279,10 +286,10 @@ start_poa (CORBA_ORB orb, CORBA_Environment *ev)
 }
 
 CORBA_Object
-create_object (PortableServer_POA poa,
-	       init_fn_t          fn,
-	       gpointer           servant,
-	       CORBA_Environment *ev)
+create_poa_object (PortableServer_POA poa,
+		   init_fn_t          fn,
+		   gpointer           servant,
+		   CORBA_Environment *ev)
 {
 	CORBA_Object             object;
 	PortableServer_ObjectId *objid;
@@ -311,41 +318,61 @@ create_object (PortableServer_POA poa,
 	return object;
 }
 
+static CORBA_Object
+create_goa_object (ORBit_GOA           goa,
+		   GType               servant_type,
+		   ORBitGServant     **servant_loc,
+		   CORBA_Environment  *ev)
+{
+	CORBA_Object   retval;
+	ORBitGServant *servant;
+
+	servant = g_object_new (servant_type, NULL);
+
+	retval = ORBit_GOA_servant_to_reference (goa, servant, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	*servant_loc = servant;
+
+	return retval;
+}
+
 /* constructor */
 static void
-test_TestFactory__init (PortableServer_Servant servant, 
-			PortableServer_POA poa, 
-			CORBA_Environment *ev)
+test_TestFactory__init (PortableServer_Servant  servant, 
+			PortableServer_POA      poa, 
+			ORBit_GOA               goa,
+			CORBA_Environment      *ev)
 {
 	test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;  
 	this->baseServant._private = NULL;
 	this->baseServant.vepv = &TestFactory_vepv;
 
-	this->basicServerRef = create_object (
-		poa, POA_test_BasicServer__init,
-		&BasicServer_servant, ev);
+	this->basicServerRef = create_goa_object (
+		goa, TEST_TYPE_BASIC_SERVER,
+		&this->basic_server_servant, ev);
 
-	this->structServerRef = create_object (
-		poa, POA_test_StructServer__init,
-		&StructServer_servant, ev);
+	this->structServerRef = create_goa_object (
+		goa, TEST_TYPE_STRUCT_SERVER,
+		&this->struct_server_servant, ev);
 
-	this->sequenceServerRef = create_object (
+	this->sequenceServerRef = create_poa_object (
 		poa, POA_test_SequenceServer__init,
 		&SequenceServer_servant, ev);
 
-	this->unionServerRef = create_object (
+	this->unionServerRef = create_poa_object (
 		poa, POA_test_UnionServer__init,
 		&UnionServer_servant, ev);
 
-	this->arrayServerRef = create_object (
+	this->arrayServerRef = create_poa_object (
 		poa, POA_test_ArrayServer__init,
 		&ArrayServer_servant, ev);
 
-	this->anyServerRef = create_object (
+	this->anyServerRef = create_poa_object (
 		poa, POA_test_AnyServer__init,
 		&AnyServer_servant, ev);
 
-	this->contextServerRef = create_object (
+	this->contextServerRef = create_poa_object (
 		poa, POA_test_ContextServer__init,
 		&ContextServer_servant, ev);
 
@@ -390,6 +417,7 @@ dump_ior (CORBA_ORB orb, const char *fname, CORBA_Environment *ev)
 
 static CORBA_Object
 create_TestFactory (PortableServer_POA        poa,
+		    ORBit_GOA                 goa,
 		    test_TestFactory_Servant *servant,
 		    CORBA_Environment        *ev)
 {
@@ -397,7 +425,7 @@ create_TestFactory (PortableServer_POA        poa,
 	PortableServer_ObjectId *objid;
 
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
-	test_TestFactory__init (servant, poa, ev);
+	test_TestFactory__init (servant, poa, goa, ev);
 	if (ev->_major != CORBA_NO_EXCEPTION)
 		g_error ("object__init failed: %d\n", ev->_major);
 	g_assert (ORBIT_SERVANT_TO_CLASSINFO (servant) != NULL);
@@ -453,7 +481,11 @@ test_TestFactory_Servant servant;
 	global_poa = start_poa (global_orb, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	factory = create_TestFactory (global_poa, &servant, ev);
+	global_goa = (ORBit_GOA)
+			CORBA_ORB_resolve_initial_references (global_orb, "GOA", ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	factory = create_TestFactory (global_poa, global_goa, &servant, ev);
 	g_assert (factory != CORBA_OBJECT_NIL);
 
 	/* a quick local test */
@@ -471,6 +503,9 @@ test_TestFactory_Servant servant;
 		CORBA_ORB_run (global_orb, ev);
 
 	CORBA_Object_release ((CORBA_Object) global_poa, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release ((CORBA_Object) global_goa, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	CORBA_Object_release (factory, ev);

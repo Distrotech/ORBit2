@@ -35,16 +35,16 @@ client_DEPENDENCIES=${EVERYTHING_BUILT} $(included_src)
 client_LDADD = $(LDADD)
 client_LDFLAGS = -static -module
 
-included_src = \
-	anyServer.c	 \
-	arrayServer.c    \
-	basicServer.c    \
-	contextServer.c  \
-	deadReference.c  \
-	pingServer.c     \
-	sequenceServer.c \
-	structServer.c   \
-	unionServer.c
+included_src =			\
+	anyServer.c		\
+	arrayServer.c		\
+	contextServer.c		\
+	deadReference.c		\
+	pingServer.c		\
+	sequenceServer.c	\
+	unionServer.c		\
+	test-basic-server.c	\
+	test-struct-server.c
 
 orbittypelibdir = $(libdir)/orbit-2.0
 orbittypelib_LTLIBRARIES = Everything_module.la

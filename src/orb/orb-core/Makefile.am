@@ -17,6 +17,7 @@ INCLUDES =						\
 
 main_src = \
 	corba-orb.c \
+	orbit-adaptor.c \
 	orbhttp.c \
 	orbhttp.h \
 	orbit-object.c \

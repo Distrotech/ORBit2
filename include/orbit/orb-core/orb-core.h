@@ -17,5 +17,6 @@
 #include <orbit/orb-core/corba-context.h>
 
 #include <orbit/orb-core/orbit-small.h>
+#include <orbit/orb-core/orbit-adaptor.h>
 
 #endif

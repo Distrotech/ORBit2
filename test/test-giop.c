@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include <orbit/orbit.h>
-#include <orbit/poa/orbit-adaptor.h>
+#include <orbit/orb-core/orbit-adaptor.h>
 #include "GIOP/giop-debug.h"
 
 #include "test-giop-frag.h"

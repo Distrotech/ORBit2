@@ -51,7 +51,6 @@ typedef PortableServer_ServantBase       PortableServer_RefCountServantBase;
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 typedef struct ORBit_POAObject_type *ORBit_POAObject;
-typedef struct ORBit_OAObject_type  *ORBit_OAObject;
 
 typedef gshort ORBit_VepvIdx;
 

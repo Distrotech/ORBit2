@@ -1,15 +1,12 @@
-poaincludedir=$(includedir)/orbit-2.0/orbit/poa
-poainclude_HEADERS= \
-	poa-types.h	\
-	poa.h		\
-	poa-basics.h	\
-	poa-defs.h	\
-	poa-policy.h	\
-	portableserver-poa-type.h \
-	portableserver-current-type.h
+goaincludedir = $(includedir)/orbit-2.0/orbit/goa
 
+goainclude_HEADERS =		\
+	goa-basics.h		\
+	orbit-goa.h		\
+	orbit-gservant.h	\
+	gobject-adaptor.h
 
-BUILT_SOURCES = poa-defs.h
+BUILT_SOURCES = gobject-adaptor.h
 
 IDL_FLAGS =  -I$(top_srcdir)/src/idl/CORBA_PIDL				\
 	-I$(top_srcdir)/src/idl/CORBA					\
@@ -18,8 +15,8 @@ IDL_FLAGS =  -I$(top_srcdir)/src/idl/CORBA_PIDL				\
 	--define=Object=OObject --define=TypeCode=TTypeCode		\
 	--noskels --nodefskels --nostubs --nocommon --noidata		\
         --showcpperrors
-IDL_FILES=poa-defs.idl
-IDL_DIR=$(top_srcdir)/src/orb/poa/
+IDL_FILES =gobject-adaptor.idl
+IDL_DIR = $(top_srcdir)/src/orb/goa/
 include $(top_srcdir)/Makefile.shared
 
 CLEANFILES=$(BUILT_SOURCES)

@@ -1095,6 +1095,22 @@ CORBA_ORB_shutdown (CORBA_ORB           orb,
 			return;
 	}
 
+	{
+		int i;
+
+		for (i = 0; i < orb->adaptors->len; i++) {
+			ORBit_ObjectAdaptor adaptor;
+
+			adaptor = g_ptr_array_index (orb->adaptors, i);
+
+			if (adaptor && adaptor->adaptor_type == ORBIT_ADAPTOR_GOA) {
+				ORBit_GOA_destroy ((ORBit_GOA) adaptor, wait_for_completion, ev);
+				if (ev->_major)
+					return;
+			}
+		}
+	}
+
 	ORBit_ORB_shutdown_servers (orb);
 
 	giop_connection_remove_by_orb (orb);
@@ -1146,7 +1162,7 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 		int i;
 		int leaked_adaptors = 0;
 
-		/* Each poa has a ref on the ORB */
+		/* Each adaptor has a ref on the ORB */
 		for (i = 0; i < orb->adaptors->len; i++) {
 			ORBit_ObjectAdaptor adaptor;
 

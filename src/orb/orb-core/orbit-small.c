@@ -685,7 +685,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	gboolean                   has_context;
 	int                        i;
 
-	orb = ((ORBit_POAObject)adaptor_obj)->poa->orb;
+	orb = adaptor_obj->adaptor->orb;
 
 	has_context = (m_data->contexts._length > 0);
 
@@ -1170,19 +1170,33 @@ ORBit_small_invoke_async (CORBA_Object         obj,
 gpointer
 ORBit_small_get_servant (CORBA_Object obj)
 {
-	ORBit_POAObject pobj;
+	CORBA_Environment env;
+	gpointer          retval = NULL;
 
 	if (!obj || !obj->adaptor_obj || !obj->adaptor_obj->interface)
 		return NULL;
 
-	if (obj->adaptor_obj->interface->adaptor_type != ORBIT_ADAPTOR_POA) {
-		g_warning ("Not a poa object !");
-		return NULL;
+	CORBA_exception_init (&env);
+
+	switch (obj->adaptor_obj->interface->adaptor_type) {
+	case ORBIT_ADAPTOR_POA:
+		retval = PortableServer_POA_reference_to_servant (
+				(PortableServer_POA) obj->adaptor_obj->adaptor,
+				obj, &env);
+		break;
+	case ORBIT_ADAPTOR_GOA:
+		retval = ORBit_GOA_reference_to_servant (
+				(ORBit_GOA) obj->adaptor_obj->adaptor,
+				obj, &env);
+		break;
+	default:
+		g_warning ("Not a POA or GOA object");
+		break;
 	}
 
-	pobj = (ORBit_POAObject)obj->adaptor_obj;
+	CORBA_exception_free (&env);
 
-	return pobj ? pobj->servant : NULL;
+	return retval;
 }
 
 static ORBitConnectionStatus

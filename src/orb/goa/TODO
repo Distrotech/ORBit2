@@ -1,0 +1,18 @@
+
+
+* regression tests
+
+* idl compiler work
+
+* local stubs
+
+* re-entrancy method flag
+
+* The POA and GOA should be lazily initted. If
+  you're just a client you'll never need the
+  object adaptor initted or if you just want
+  to use the GOA, you don't want the POA initted.
+
+* Do #define ORBIT2_*_API for the GOA headers.
+
+

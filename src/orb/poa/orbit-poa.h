@@ -3,17 +3,6 @@
 
 #include "config.h"
 
-/*
- * Our object key is 28 bytes long and looks like this:
- *
- * .----- adaptor prefix -----.---------- ObjectId -----------,
- * |      4            16     |      4              4         |
- * | adaptor idx | orb cookie | object idx | object id random |
- */
-
-#define ORBIT_ADAPTOR_KEY_LEN     (128/8)
-#define ORBIT_ADAPTOR_PREFIX_LEN  (sizeof (CORBA_long) + ORBIT_ADAPTOR_KEY_LEN)
-
 /* We have an an auto-inc + 32 bits of poor randomness */
 #define ORBIT_OBJECT_ID_LEN 4
 

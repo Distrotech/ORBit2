@@ -1,7 +1,7 @@
 #ifndef POA_TYPES_H
 #define POA_TYPES_H 1
 
-#include <orbit/poa/orbit-adaptor.h>
+#include <orbit/orb-core/orbit-adaptor.h>
 
 G_BEGIN_DECLS
 

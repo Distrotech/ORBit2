@@ -66,6 +66,7 @@ copy_iinterface (const ORBit_IInterface *idata, gboolean shallow)
 {
 	/* FIXME: we deep copy always for now - we should speed this up */
 	/* FIXME: we need to set a flag here */
+	/* FIXME: keep in sync with goa/orbit-gservant.c:copy_iinterface */
 	return ORBit_copy_value (idata, TC_ORBit_IInterface);
 }
 
@@ -150,6 +151,16 @@ ORBit_small_get_iinterface (CORBA_Object       opt_object,
 	else if ((ci = ORBit_classinfo_lookup (type_id))) {
 		retval = copy_iinterface (ci->idata, TRUE);
 
+	} else if (opt_object && opt_object->adaptor_obj &&
+		 opt_object->adaptor_obj->interface->adaptor_type == ORBIT_ADAPTOR_GOA) {
+		ORBitGServant *gservant;
+
+		gservant = ORBit_gservant_from_reference (opt_object);
+		g_assert (gservant != NULL);
+
+		retval = ORBit_gservant_get_iinterface (gservant, type_id, ev);
+
+		g_object_unref (gservant);
 	} else if (opt_object) {
 		/* FIXME: first walk the object's data,
 		   if local, we might have unregistered

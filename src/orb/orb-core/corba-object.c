@@ -517,7 +517,7 @@ CORBA_Object_is_a (CORBA_Object       obj,
 	return retval;
 }
 
-static gboolean
+gboolean
 ORBit_IInterface_is_a (ORBit_IInterface *idata, const char *type_id)
 {
 	int i;
@@ -787,6 +787,6 @@ CORBA_Object__imethods[] = {
 ORBit_IInterface
 CORBA_Object__iinterface = {
   TC_CORBA_Object, 
-  {12, 12, CORBA_Object__imethods, FALSE},
+  {14, 14, CORBA_Object__imethods, FALSE},
   {0, 0, NULL, FALSE}
 };

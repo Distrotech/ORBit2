@@ -6,6 +6,7 @@ orbcoreinclude_HEADERS =		\
 	corba-object-type.h		\
 	corba-orb-type.h		\
 	corba-orb.h			\
+	orbit-adaptor.h			\
 	corba-pobj.h			\
 	corba-typecode-type.h		\
 	orb-core.h			\

@@ -10,9 +10,10 @@ G_BEGIN_DECLS
 /* #define ORBIT_THREADED 1 */
 #endif
 
+typedef struct _GIOPRecvBuffer GIOPRecvBuffer;
+
 #ifdef ORBIT2_INTERNAL_API
 
-typedef struct _GIOPRecvBuffer GIOPRecvBuffer;
 typedef struct _GIOPSendBuffer GIOPSendBuffer;
 typedef struct _GIOPConnection GIOPConnection;
 

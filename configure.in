@@ -228,6 +228,7 @@ src/orb/GIOP/Makefile
 src/orb/orb-core/Makefile
 src/orb/dynamic/Makefile
 src/orb/poa/Makefile
+src/orb/goa/Makefile
 src/services/Makefile
 src/services/name/Makefile
 include/Makefile
@@ -237,6 +238,7 @@ include/orbit/GIOP/Makefile
 include/orbit/util/Makefile
 include/orbit/orb-core/Makefile
 include/orbit/poa/Makefile
+include/orbit/goa/Makefile
 include/orbit/dynamic/Makefile
 test/Makefile
 test/everything/Makefile

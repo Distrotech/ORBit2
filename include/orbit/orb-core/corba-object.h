@@ -25,6 +25,9 @@ CORBA_Object    ORBit_objref_new            (CORBA_ORB       orb,
  */
 #include <orbit/orb-core/orbit-interface.h>
 
+gboolean ORBit_IInterface_is_a (ORBit_IInterface *idata,
+				const char       *type_id);
+
 #define CORBA_OBJECT_SMALL_GET_TYPE_ID    12
 #define CORBA_OBJECT_SMALL_GET_IINTERFACE 13
 

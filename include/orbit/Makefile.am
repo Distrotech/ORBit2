@@ -1,4 +1,4 @@
-SUBDIRS=GIOP util orb-core poa dynamic
+SUBDIRS=GIOP util orb-core poa goa dynamic
 
 orbitincludedir=$(includedir)/orbit-2.0/orbit
 orbitinclude_HEADERS=orbit.h orbit-config.h orbit-types.h

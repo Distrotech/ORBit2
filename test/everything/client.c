@@ -1352,12 +1352,12 @@ testMisc (test_TestFactory   factory,
 	} else { /* Lets do some things on a de-activated ref */
 		test_BasicServer         obj;
 		PortableServer_ObjectId *oid;
-		POA_test_BasicServer     servant = {
-			NULL, &BasicServer_vepv
+		POA_test_AnyServer       servant = {
+			NULL, &AnyServer_vepv
 		};
 
-		obj = create_object (
-			global_poa, POA_test_BasicServer__init,
+		obj = create_poa_object (
+			global_poa, POA_test_AnyServer__init,
 			&servant, ev);
 
 		oid = PortableServer_POA_servant_to_id (
@@ -1369,12 +1369,7 @@ testMisc (test_TestFactory   factory,
 	
 		CORBA_free (oid);
 
-		test_BasicServer_opException (obj, ev);
-		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-		g_assert (!strcmp (ev->_id, ex_CORBA_OBJECT_NOT_EXIST));
-		CORBA_exception_free (ev);
-
-		test_BasicServer_opOneWay (obj, "Foo", ev);
+		test_AnyServer_opAnyStrSeq (obj, ev);
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 		g_assert (!strcmp (ev->_id, ex_CORBA_OBJECT_NOT_EXIST));
 		CORBA_exception_free (ev);

@@ -1,0 +1,43 @@
+#pragma inhibit push
+#include "corba-defs.idl"
+#pragma inhibit pop
+
+module ORBit {
+	native GServant;
+
+	interface GOA {
+		/**
+		 * destroy:
+		 * @wait_for_completion:
+		 *    if #TRUE, blocks the currently executing thread until
+		 *    all method invocations currently dispatched from this
+		 *    GOA are completed. If the thread is in an invocation
+		 *    dispatched from this GOA, then the BAD_INV_ORDER
+		 *    system exception is raised.
+		 *    if #FALSE, the GOA is destroyed after all current
+		 *    method invocations have completed
+		 *
+		 * Destroys the GOA and de-activates all associated servants.
+		 */
+		void          destroy              (in boolean       wait_for_completion);
+
+		/**
+		 * servant_to_reference:
+		 * @p_servant: the servant for which to obtain an object reference.
+		 *
+		 * Returns: an object reference which encapsulates the information
+		 *          required to invoke a method on the object.
+		 */
+		CORBA::Object servant_to_reference (in GServant      gservant);
+
+		/**
+		 * reference_to_servant:
+		 * @reference: object refernce from which to obtain a servant.
+		 *
+		 * Returns: returns the servant which instantiates the object
+		 *          referred to by @reference.
+		 */
+		GServant      reference_to_servant (in CORBA::Object reference);
+
+	};
+};

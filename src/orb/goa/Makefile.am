@@ -1,4 +1,6 @@
-noinst_LTLIBRARIES=liborb-poa.la
+NULL = 
+
+noinst_LTLIBRARIES = liborb-goa.la
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl-2
 
@@ -8,6 +10,7 @@ INCLUDES =						\
 	-I$(top_builddir)/src/orb/orb-core		\
 	-I$(top_srcdir)/src/orb/orb-core		\
 	-I$(top_builddir)/include/orbit/poa		\
+	-I$(top_builddir)/include/orbit/goa		\
 	-I$(top_srcdir)/include/orbit/orb-core		\
 	-I$(top_builddir)/include/orbit/orb-core	\
 	-I$(top_srcdir)/src/orb/poa			\
@@ -15,36 +18,33 @@ INCLUDES =						\
 	$(WARN_CFLAGS)					\
 	$(ORBIT_DEBUG_CFLAGS)				\
 	$(DISABLE_DEPRECATED_CFLAGS)			\
-	$(ORBIT_CFLAGS)
+	$(ORBIT_CFLAGS)					\
+	$(NULL)
 
-POA_IDLOUT=poa-defs-common.c
+GOA_IDLOUT = gobject-adaptor-common.c
 
-main_src = \
-	poa.c \
-	orbit-poa-export.h \
-	orbit-poa.h \
-	poa-macros.h	\
-	poa-manager.c \
-	poa-policy.c \
-	poa-servants.c
+liborb_goa_la_SOURCES =			\
+	$(GOA_IDLOUT)			\
+	orbit-goa.c			\
+	orbit-gservant.c		\
+	$(NULL)
 
-liborb_poa_la_SOURCES=\
-	$(POA_IDLOUT) \
-	$(main_src)
-
-IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
+IDL_FLAGS =							\
+	-I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\
 	-I$(top_srcdir)/src/idl/misc				\
 	-I$(top_srcdir)/src/orb/orb-core			\
-	--noskels --nodefskels --nostubs --noidata --noheaders  \
+	--noskels --nodefskels --nostubs --noidata --noheaders	\
 	--define=Object=OObject --define=TypeCode=TTypeCode	\
-        --showcpperrors
-IDL_FILES=poa-defs.idl
+        --showcpperrors						\
+	$(NULL)
+
+IDL_FILES = gobject-adaptor.idl
 include $(top_srcdir)/Makefile.shared
 
-BUILT_SOURCES = $(POA_IDLOUT)
-CLEANFILES = $(BUILT_SOURCES)
-EXTRA_DIST = $(IDL_FILES)
+BUILT_SOURCES = $(GOA_IDLOUT)
+CLEANFILES    = $(BUILT_SOURCES)
+EXTRA_DIST    = $(IDL_FILES)
 
 dist-hook:
 	cd $(distdir); rm -f $(BUILT_SOURCES)

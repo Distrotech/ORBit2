@@ -1,4 +1,4 @@
-SUBDIRS=include orb-core util GIOP poa dynamic
+SUBDIRS=include orb-core util GIOP poa goa dynamic
 
 lib_LTLIBRARIES=libORBit-2.la
 
@@ -25,6 +25,7 @@ libORBit_2_la_LIBADD= \
 	GIOP/libGIOP.la \
 	orb-core/liborb-core.la \
 	poa/liborb-poa.la \
+	goa/liborb-goa.la \
 	dynamic/liborb-dynamic.la
 
 inst-lib: all-recursive install-libLTLIBRARIES

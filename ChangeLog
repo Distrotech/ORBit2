@@ -1,3 +1,97 @@
+2002-09-03  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/goa/*, src/orb/goa/*: prototype
+	implementation for a GObject based object adaptor.
+
+	* configure.in: build the goa Makefiles.
+
+	* include/orbit/GIOP/giop-basics.h: define GIOPRecvBuffer
+	outside of ORBIT2_INTERNAL_API.
+
+	* include/orbit/Makefile.am:
+	* include/orbit/orb-core/Makefile.am: build the goa dirs.
+
+	* include/orbit/orb-core/corba-object.h: export
+	ORBit_IInterface_is_a for the GOA.
+
+	* include/orbit/orb-core/orb-core.h: include orbit-adaptor.h.
+
+	* include/orbit/orb-core/orb-types.h: define ORBit_OAObject.
+
+	* include/orbit/orb-core/orbit-adaptor.h: move here from
+	src/orb/poa.
+
+	* include/orbit/orbit-types.h:
+	* include/orbit/orbit.h: include the GOA headers.
+
+	* include/orbit/poa/Makefile.am: 
+	* include/orbit/poa/orbit-adaptor.h: remove orbit-adaptor.h.
+
+	* include/orbit/poa/poa-basics.h: don't define ORBit_OAObject.
+
+	* include/orbit/poa/poa-types.h: update.
+
+	* include/orbit/poa/poa.h: move ORBit_recv_buffer_return_sys_exception
+	to orbit-adaptor.h.
+
+	* include/orbit/poa/portableserver-poa-type.h: don't store poa_id
+	here. We now store it on the ORBit_ObjectAdaptor.
+
+	* src/orb/Makefile.am: link against goa/liborb-goa.la.
+
+	* src/orb/orbit-init.c: (ORBit_init_internals): register the GOA
+	reference.
+
+	* src/orb/orb-core/Makefile.am: build orbit-adaptor.c.
+
+	* src/orb/orb-core/corba-object.c: (ORBit_IInterface_is_a):
+	export. Also fixup imethods vector length.
+
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_shutdown): destroy
+	the GOA.
+
+	* src/orb/orb-core/orbit-adaptor.c: move here from src/orb/poa
+	and fixup some small problems with the virtualisation.
+
+	* src/orb/orb-core/orbit-small.c:
+	(ORBit_small_invoke_adaptor): don't assume its a POA object.
+	(ORBit_small_get_servant): use the adaptor's reference_to_servant
+	methods instead of poking in structures.
+
+	* src/orb/orb-core/orbit-typelib.c:
+	(ORBit_small_get_iinterface): handle GOA based objects.
+
+	* src/orb/poa/Makefile.am:
+	* src/orb/poa/orbit-adaptor.c: remove orbit-adaptor.c.
+
+	* src/orb/poa/orbit-poa.h: move the key length defines into
+	orbit-adaptor.h.
+	* src/orb/poa/poa.c:
+	(ORBit_POA_current_invocations_push),
+	(ORBit_POA_current_invocations_pop),
+	(ORBit_POA_current_invocations_peek): implement.
+	(ORBit_POA_destroy): check the child poa is actually a poa.
+	(ORBit_POA_free_fn): use ORBit_adaptor_free.
+	(ORBit_POA_new): upd.
+	(ORBit_POA_obj_to_ref): kill unused object id.
+	
+	* test/everything/Makefile.am: build GOA implementations
+	of basicServer and structServer.
+
+	* test/everything/basicServer.c:
+	* test/everything/structServer.c: remove.
+
+	* test/everything/client.c: (testMisc):
+	* test/everything/server.c: (TestFactory_createPingPongServer),
+	(TestFactory_createDeadReferenceObj), (test_TestFactory__fini),
+	(create_poa_object), (create_goa_object), (test_TestFactory__init),
+	(create_TestFactory), (get_server):
+
+	* test/everything/test-basic-server.[ch]:
+	* test/everything/test-struct-server.[ch: impl.
+
+	* test/test-giop.c: upd.
+
 2002-08-23  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.4.3
