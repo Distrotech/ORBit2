@@ -1,3 +1,11 @@
+2003-10-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POA_destroy_T): make
+	the adaptor array walk slightly faster.
+
+	* test/everything/client.c (test_time_noop):
+	fix timer leak.
+
 2003-10-08  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* src/orb/orb-core/corba-typecode.c: (CORBA_TypeCode_id),
