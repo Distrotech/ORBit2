@@ -33,7 +33,7 @@ LDADD = $(top_builddir)/src/orb/libORBit-2.la
 
 POATEST_IDLOUT = poatest.h poatest-common.c poatest-skels.c poatest-stubs.c
 $(POATEST_IDLOUT) : poatest.idl
-	$(IDL) --showcpperrors poatest.idl
+	$(IDL) --showcpperrors $<
 
 common_srcs = $(POATEST_IDLOUT) poatest-basic-shell.c poatest-exception.h
 
