@@ -1,6 +1,13 @@
 2001-11-01  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_servant): tolerate a NULL obj.
+
+	* test/everything/client.c (testMisc): add test.
+
+2001-11-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_get_servant): fixup.
 	(get_status): use correct LINC_CONNECTION enum.
 

@@ -1043,6 +1043,7 @@ testMisc (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	/* Check that various bonobo hooks work */
+	g_assert (ORBit_small_get_servant (NULL) == NULL);
 	if (in_proc) {
 		g_assert (ORBit_small_get_servant (factory));
 		g_assert (ORBit_small_get_connection_status (factory) ==

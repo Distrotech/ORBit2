@@ -1151,7 +1151,7 @@ ORBit_small_get_servant (CORBA_Object obj)
 {
 	ORBit_POAObject pobj;
 
-	if (!obj->adaptor_obj || !obj->adaptor_obj->interface)
+	if (!obj || !obj->adaptor_obj || !obj->adaptor_obj->interface)
 		return NULL;
 
 	if (obj->adaptor_obj->interface->adaptor_type != ORBIT_ADAPTOR_POA) {
