@@ -9,8 +9,8 @@
  * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
  *                 Sun Microsystems, Inc.
  */
-#ifndef _LINC_CONNECTION_H_
-#define _LINC_CONNECTION_H_
+#ifndef _LINK_CONNECTION_H_
+#define _LINK_CONNECTION_H_
 
 #include <glib/gmacros.h>
 
@@ -22,119 +22,119 @@ G_BEGIN_DECLS
 #include <linc/linc-types.h>
 #include <linc/linc-protocol.h>
 
-#define LINC_TYPE_CONNECTION            (linc_connection_get_type())
-#define LINC_TYPE_IS_CONNECTION(type)   (G_TYPE_FUNDAMENTAL (type) == LINC_TYPE_CONNECTION)
-#define LINC_CONNECTION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), LINC_TYPE_CONNECTION, LINCConnection))
-#define LINC_CONNECTION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LINC_TYPE_CONNECTION, LINCConnectionClass))
-#define LINC_IS_CONNECTION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LINC_TYPE_CONNECTION))
-#define LINC_IS_CONNECTION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LINC_TYPE_CONNECTION))
+#define LINK_TYPE_CONNECTION            (link_connection_get_type())
+#define LINK_TYPE_IS_CONNECTION(type)   (G_TYPE_FUNDAMENTAL (type) == LINK_TYPE_CONNECTION)
+#define LINK_CONNECTION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), LINK_TYPE_CONNECTION, LinkConnection))
+#define LINK_CONNECTION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LINK_TYPE_CONNECTION, LinkConnectionClass))
+#define LINK_IS_CONNECTION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LINK_TYPE_CONNECTION))
+#define LINK_IS_CONNECTION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LINK_TYPE_CONNECTION))
 
-typedef enum { LINC_CONNECTING, LINC_CONNECTED, LINC_DISCONNECTED } LINCConnectionStatus;
+typedef enum { LINK_CONNECTING, LINK_CONNECTED, LINK_DISCONNECTED } LinkConnectionStatus;
 
-typedef struct _LINCWriteOpts         LINCWriteOpts;
-typedef struct _LINCConnectionPrivate LINCConnectionPrivate;
+typedef struct _LinkWriteOpts         LinkWriteOpts;
+typedef struct _LinkConnectionPrivate LinkConnectionPrivate;
 
 typedef struct {
 	GObject                 parent;
 
-	const LINCProtocolInfo *proto;
+	const LinkProtocolInfo *proto;
 
-	LINCConnectionStatus    status;
-	LINCConnectionOptions   options;
+	LinkConnectionStatus    status;
+	LinkConnectionOptions   options;
 	guint                   was_initiated : 1;
 	guint                   is_auth : 1;
 
 	gchar                  *remote_host_info;
 	gchar                  *remote_serv_info;
 
-	LINCConnectionPrivate  *priv;
-} LINCConnection;
+	LinkConnectionPrivate  *priv;
+} LinkConnection;
 
 typedef struct {
 	GObjectClass parent_class;
 
 	/* subclasses should call parent impl first */
-	void     (* state_changed) (LINCConnection      *cnx,
-				    LINCConnectionStatus status);
-	gboolean (* handle_input)  (LINCConnection      *cnx);
+	void     (* state_changed) (LinkConnection      *cnx,
+				    LinkConnectionStatus status);
+	gboolean (* handle_input)  (LinkConnection      *cnx);
 
 	/* signals */
-	void     (* broken)        (LINCConnection      *cnx);
+	void     (* broken)        (LinkConnection      *cnx);
 	/*
 	 * Emitted when the buffer is emptied, half full or
 	 * before disconnect
 	 */
-	void     (* blocking)      (LINCConnection      *cnx,
+	void     (* blocking)      (LinkConnection      *cnx,
 				    gulong               buffer_size);
-} LINCConnectionClass;
+} LinkConnectionClass;
 
-GType    linc_connection_get_type (void) G_GNUC_CONST;
+GType    link_connection_get_type (void) G_GNUC_CONST;
 
-gboolean linc_connection_from_fd  (LINCConnection       *cnx,
+gboolean link_connection_from_fd  (LinkConnection       *cnx,
 				   int                   fd,
-				   const LINCProtocolInfo *proto,
+				   const LinkProtocolInfo *proto,
 				   gchar                *remote_host_info,
 				   gchar                *remote_serv_info,
 				   gboolean              was_initiated,
-				   LINCConnectionStatus  status,
-				   LINCConnectionOptions options);
+				   LinkConnectionStatus  status,
+				   LinkConnectionOptions options);
 
-gboolean linc_connection_initiate (LINCConnection       *cnx,
+gboolean link_connection_initiate (LinkConnection       *cnx,
 				   const char           *proto_name,
 				   const char           *remote_host_info,
 				   const char           *remote_serv_info,
-				   LINCConnectionOptions options);
+				   LinkConnectionOptions options);
 
-LINCConnection *linc_connection_initiate_list (GType                 derived_type,
+LinkConnection *link_connection_initiate_list (GType                 derived_type,
 					       const char           *proto_name,
 					       const char           *remote_host_info,
 					       const char           *remote_serv_info,
-					       LINCConnectionOptions options,
+					       LinkConnectionOptions options,
 					       const char           *first_property,
 					       ...);
 
-gpointer linc_connection_ref   (gpointer cnx);
-void     linc_connection_unref (gpointer cnx);
+gpointer link_connection_ref   (gpointer cnx);
+void     link_connection_unref (gpointer cnx);
 
 typedef enum {
-	LINC_IO_OK = 0,
-	LINC_IO_FATAL_ERROR = -1,
-	LINC_IO_QUEUED_DATA = -2
-} LINCIOStatus;
+	LINK_IO_OK = 0,
+	LINK_IO_FATAL_ERROR = -1,
+	LINK_IO_QUEUED_DATA = -2
+} LinkIOStatus;
 
-glong        linc_connection_read     (LINCConnection       *cnx,
+glong        link_connection_read     (LinkConnection       *cnx,
 				       guchar               *buf,
 				       int                   len,
 				       gboolean              block_for_full_read);
 
 /* Return values from these functions are going to be "abnormal",
    since they make sure to write all the data out */
-LINCIOStatus linc_connection_write    (LINCConnection       *cnx,
+LinkIOStatus link_connection_write    (LinkConnection       *cnx,
 				       const guchar         *buf,
 				       gulong                len,
-				       const LINCWriteOpts  *opt_write_opts);
+				       const LinkWriteOpts  *opt_write_opts);
 
-LINCIOStatus linc_connection_writev   (LINCConnection       *cnx,
+LinkIOStatus link_connection_writev   (LinkConnection       *cnx,
 				       struct iovec         *vecs,
 				       int                   nvecs,
-				       const LINCWriteOpts  *opt_write_opts);
+				       const LinkWriteOpts  *opt_write_opts);
 
-void         linc_connection_state_changed (LINCConnection      *cnx,
-					    LINCConnectionStatus status);
+void         link_connection_state_changed (LinkConnection      *cnx,
+					    LinkConnectionStatus status);
 
-LINCConnectionStatus linc_connection_get_status     (LINCConnection *cnx);
-void                 linc_connection_disconnect     (LINCConnection *cnx);
-LINCConnectionStatus linc_connection_wait_connected (LINCConnection *cnx);
+LinkConnectionStatus link_connection_get_status     (LinkConnection *cnx);
+void                 link_connection_disconnect     (LinkConnection *cnx);
+LinkConnectionStatus link_connection_wait_connected (LinkConnection *cnx);
 
 /*
  * Proposed new blocking API ...
  */
-void           linc_connection_set_max_buffer    (LINCConnection *cnx,
+void           link_connection_set_max_buffer    (LinkConnection *cnx,
 						  gulong          max_buffer_bytes);
-LINCWriteOpts *linc_write_options_new            (gboolean        block_on_write);
+LinkWriteOpts *link_write_options_new            (gboolean        block_on_write);
 /* Space for future expansion: timeout, individual msg. buffering constraints etc. */
-void           linc_write_options_free           (LINCWriteOpts  *write_opts);
+void           link_write_options_free           (LinkWriteOpts  *write_opts);
 
 G_END_DECLS
 
-#endif /* _LINC_CONNECTION_H */
+#endif /* _LINK_CONNECTION_H */

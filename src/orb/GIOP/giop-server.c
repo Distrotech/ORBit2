@@ -12,17 +12,17 @@ giop_server_new (GIOPVersion            giop_version,
 		 const char            *proto_name, 
 		 const char            *local_host_info,
 		 const char            *local_serv_info,
-		 LINCConnectionOptions  create_options,
+		 LinkConnectionOptions  create_options,
 		 gpointer               create_orb_data)
 {
 	GIOPServer *server = (GIOPServer *)
 		g_object_new (GIOP_TYPE_SERVER, NULL);
 
-	create_options |= LINC_CONNECTION_NONBLOCKING;
+	create_options |= LINK_CONNECTION_NONBLOCKING;
 
 	server->giop_version = giop_version;
 
-	if (!linc_server_setup (LINC_SERVER (server), proto_name, 
+	if (!link_server_setup (LINK_SERVER (server), proto_name, 
 				local_host_info, local_serv_info, 
 				create_options)) {
 
@@ -35,8 +35,8 @@ giop_server_new (GIOPVersion            giop_version,
 	return server;
 }
 
-static LINCConnection *
-giop_server_handle_create_connection (LINCServer *server)
+static LinkConnection *
+giop_server_handle_create_connection (LinkServer *server)
 {
 	GIOPConnection *retval;
 	GIOPServer     *gserver = (GIOPServer *) server;
@@ -51,7 +51,7 @@ giop_server_handle_create_connection (LINCServer *server)
 		giop_debug_hook_new_connection (gserver, retval);
 #endif	
 
-	return (LINCConnection *)retval;
+	return (LinkConnection *)retval;
 }
 
 static void
@@ -79,7 +79,7 @@ giop_server_get_type(void)
 		};
       
 		object_type = g_type_register_static (
-			linc_server_get_type (),
+			link_server_get_type (),
 			"GIOPServer",
 			&object_info, 0);
 	}  

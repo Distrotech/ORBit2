@@ -21,8 +21,8 @@ static uid_t            genuid_uid;
 
 /* This is quite possibly a complete waste of cycles */
 static GMutex          *inc_lock = NULL;
-#define INC_LOCK()      LINC_MUTEX_LOCK (inc_lock)
-#define INC_UNLOCK()    LINC_MUTEX_UNLOCK (inc_lock)
+#define INC_LOCK()      LINK_MUTEX_LOCK (inc_lock)
+#define INC_UNLOCK()    LINK_MUTEX_UNLOCK (inc_lock)
 
 /**
  * ORBit_genuid_init:
@@ -40,7 +40,7 @@ ORBit_genuid_init (ORBitGenUidType type)
 	
 	genuid_pid = getpid ();
 	genuid_uid = getuid ();
-	inc_lock = linc_mutex_new();
+	inc_lock = link_mutex_new();
 
 	glib_prng = g_rand_new ();
 	g_get_current_time (&time);
@@ -56,7 +56,7 @@ ORBit_genuid_init (ORBitGenUidType type)
 			random_fd = open ("/dev/random", O_RDONLY);
 
 		hit_strength = (random_fd >= 0);
-#if LINC_SSL_SUPPORT
+#if LINK_SSL_SUPPORT
 		hit_strength = TRUE; /* foolishly trust OpenSSL */
 #endif
 		break;
@@ -113,7 +113,7 @@ genuid_rand_device (guchar *buffer, int length)
 	return TRUE;
 }
 
-#if LINC_SSL_SUPPORT
+#if LINK_SSL_SUPPORT
 #include <openssl/rand.h>
 
 static gboolean
@@ -210,7 +210,7 @@ ORBit_genuid_buffer (guint8         *buffer,
 		if (random_fd >= 0 &&
 		    genuid_rand_device (buffer, length))
 			return;
-#if LINC_SSL_SUPPORT
+#if LINK_SSL_SUPPORT
 		else if (genuid_rand_openssl (buffer, length))
 			return;
 #endif

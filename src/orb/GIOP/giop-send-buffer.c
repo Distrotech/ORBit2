@@ -23,7 +23,7 @@ giop_send_buffer_init (gboolean wipe)
 #else
 	giop_blank_wire_data = wipe;
 #endif
-	send_buffer_list_lock = linc_mutex_new ();
+	send_buffer_list_lock = link_mutex_new ();
 }
 
 /* Marshal it at compile time so we don't have to do it over and over. This just stores codeset info to say that
@@ -204,9 +204,9 @@ giop_send_buffer_use_message_error (GIOPVersion giop_version)
 void
 giop_send_buffer_unuse (GIOPSendBuffer *buf)
 {
-	LINC_MUTEX_LOCK (send_buffer_list_lock);
+	LINK_MUTEX_LOCK (send_buffer_list_lock);
 	send_buffer_list = g_slist_prepend (send_buffer_list, buf);
-	LINC_MUTEX_UNLOCK (send_buffer_list_lock);
+	LINK_MUTEX_UNLOCK (send_buffer_list_lock);
 }
 
 static void
@@ -413,20 +413,20 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 			gboolean        blocking)
 {
 	int retval;
-	static LINCWriteOpts *non_block = NULL;
+	static LinkWriteOpts *non_block = NULL;
 
 	if (!non_block)
-		non_block = linc_write_options_new (FALSE);
+		non_block = link_write_options_new (FALSE);
 
 	/* FIXME: if a FRAGMENT, assert the 8 byte tail align,
 	   &&|| giop_send_buffer_align (buf, 8); */
 
-	retval = linc_connection_writev (
-		(LINCConnection *) cnx, buf->iovecs,
+	retval = link_connection_writev (
+		(LinkConnection *) cnx, buf->iovecs,
 		buf->num_used, 
 		blocking ? NULL : non_block);
 
-	if (!blocking && retval == LINC_IO_QUEUED_DATA)
+	if (!blocking && retval == LINK_IO_QUEUED_DATA)
 		retval = 0;
 
 	/* FIXME: we need to flag the connection disconnected on fatal error */
@@ -444,7 +444,7 @@ giop_send_buffer_use (GIOPVersion giop_version)
 		((int) giop_version) >= 0 &&
 		giop_version < GIOP_NUM_VERSIONS, NULL);
 
-	LINC_MUTEX_LOCK (send_buffer_list_lock);
+	LINK_MUTEX_LOCK (send_buffer_list_lock);
 	if (send_buffer_list) {
 		GSList *ltmp;
 
@@ -452,7 +452,7 @@ giop_send_buffer_use (GIOPVersion giop_version)
 		send_buffer_list = g_slist_remove_link (
 			send_buffer_list, ltmp);
 
-		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
+		LINK_MUTEX_UNLOCK (send_buffer_list_lock);
 
 		buf = ltmp->data;
 		g_slist_free_1 (ltmp);
@@ -468,7 +468,7 @@ giop_send_buffer_use (GIOPVersion giop_version)
 
 		buf->num_indirects_used = 0;
 	} else {
-		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
+		LINK_MUTEX_UNLOCK (send_buffer_list_lock);
 
 		buf = g_new0 (GIOPSendBuffer, 1);
 

@@ -6,23 +6,23 @@
  *
  * Copyright 2002, Ximian, Inc.,
  */
-#ifndef _LINC_SOURCE_H_
-#define _LINC_SOURCE_H_
+#ifndef _LINK_SOURCE_H_
+#define _LINK_SOURCE_H_
 
 G_BEGIN_DECLS
 
 /*
  * A dead simple, raw source - with fast conditon change.
  */
-GSource *linc_source_create_watch  (GMainContext *context,
+GSource *link_source_create_watch  (GMainContext *context,
 				    int           fd,
 				    GIOChannel   *opt_channel,
 				    GIOCondition  condition,
 				    GIOFunc       func,
 				    gpointer      user_data);
-void     linc_source_set_condition (GSource      *source,
+void     link_source_set_condition (GSource      *source,
 				    GIOCondition  condition);
 
 G_END_DECLS
 
-#endif /* _LINC_SOURCE_H_ */
+#endif /* _LINK_SOURCE_H_ */

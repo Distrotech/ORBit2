@@ -14,9 +14,9 @@
 static void
 test_protos (void)
 {
-	LINCProtocolInfo *info;
+	LinkProtocolInfo *info;
 
-	info = linc_protocol_all ();
+	info = link_protocol_all ();
 
 	fprintf (stderr, "Available protocols: {\n");
 
@@ -43,13 +43,13 @@ init_tmp (void)
 
 	dir = g_strconcat ("/tmp/orbit-", user, NULL);
 
-	linc_set_tmpdir (dir);
+	link_set_tmpdir (dir);
 
 	g_free (dir);
 }
 
 static void
-broken_cb (LINCConnection *cnx, gpointer user_data)
+broken_cb (LinkConnection *cnx, gpointer user_data)
 {
 	g_assert (user_data == NULL);
 
@@ -60,12 +60,12 @@ GType    test_server_cnx_type = 0;
 GType    test_client_cnx_type = 0;
 gboolean connected = FALSE;
 
-static LINCConnection *
-test_server_create_connection (LINCServer *cnx)
+static LinkConnection *
+test_server_create_connection (LinkServer *cnx)
 {
 	GType t;
 
-	t = test_server_cnx_type ? test_server_cnx_type : linc_connection_get_type ();
+	t = test_server_cnx_type ? test_server_cnx_type : link_connection_get_type ();
 
 	connected = TRUE;
 
@@ -73,57 +73,57 @@ test_server_create_connection (LINCServer *cnx)
 }
 
 static void
-create_server (LINCServer **server)
+create_server (LinkServer **server)
 {
-	LINCServerClass *klass;
+	LinkServerClass *klass;
 
-	klass = g_type_class_ref (linc_server_get_type ());
+	klass = g_type_class_ref (link_server_get_type ());
 	klass->create_connection = test_server_create_connection;
 
-	*server = g_object_new (linc_server_get_type (), NULL);
+	*server = g_object_new (link_server_get_type (), NULL);
 	
-	g_assert (linc_server_setup (*server, "UNIX", NULL, NULL,
-				     LINC_CONNECTION_NONBLOCKING));
+	g_assert (link_server_setup (*server, "UNIX", NULL, NULL,
+				     LINK_CONNECTION_NONBLOCKING));
 
 	g_object_add_weak_pointer (G_OBJECT (*server),
 				   (gpointer *) server);
 }
 
 static void
-create_client (LINCServer *server, LINCConnection **client)
+create_client (LinkServer *server, LinkConnection **client)
 {
 	*client = g_object_new (
 			test_client_cnx_type ? test_client_cnx_type :
-					       linc_connection_get_type (),
+					       link_connection_get_type (),
 			NULL);
 	
-	g_assert (linc_connection_initiate (
+	g_assert (link_connection_initiate (
 		*client, "UNIX",
 		server->local_host_info,
 		server->local_serv_info,
-		LINC_CONNECTION_NONBLOCKING));
+		LINK_CONNECTION_NONBLOCKING));
 
 	g_object_add_weak_pointer (G_OBJECT (*client),
 				   (gpointer *) client);
 }
 
 static gboolean 
-test_broken_cnx_handle_input (LINCConnection *cnx)
+test_broken_cnx_handle_input (LinkConnection *cnx)
 {
 	glong  ret;
 	guchar buffer;
 
-	ret = linc_connection_read (cnx, &buffer, 1, FALSE);
+	ret = link_connection_read (cnx, &buffer, 1, FALSE);
 
-	g_assert (ret == LINC_IO_FATAL_ERROR);
+	g_assert (ret == LINK_IO_FATAL_ERROR);
 
-	linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+	link_connection_state_changed (cnx, LINK_DISCONNECTED);
 
 	return TRUE;
 }
 
 static void
-test_broken_cnx_class_init (LINCConnectionClass *klass)
+test_broken_cnx_class_init (LinkConnectionClass *klass)
 {
 	klass->handle_input = test_broken_cnx_handle_input;
 }
@@ -135,19 +135,19 @@ test_get_broken_cnx_type (void)
 
 	if (!object_type) {
 		static const GTypeInfo object_info = {
-			sizeof (LINCConnectionClass),
+			sizeof (LinkConnectionClass),
 			(GBaseInitFunc) NULL,
 			(GBaseFinalizeFunc) NULL,
 			(GClassInitFunc) test_broken_cnx_class_init,
 			NULL,           /* class_finalize */
 			NULL,           /* class_data */
-			sizeof (LINCConnection),
+			sizeof (LinkConnection),
 			0,              /* n_preallocs */
 			(GInstanceInitFunc) NULL,
 		};
       
 		object_type = g_type_register_static (
-			LINC_TYPE_CONNECTION, "TestConnection",
+			LINK_TYPE_CONNECTION, "TestConnection",
 			&object_info, 0);
 	}
 
@@ -157,8 +157,8 @@ test_get_broken_cnx_type (void)
 static void
 test_broken (void)
 {
-	LINCServer     *server;
-	LINCConnection *client;
+	LinkServer     *server;
+	LinkConnection *client;
 	pid_t           child;
 	int             status;
 
@@ -177,13 +177,13 @@ test_broken (void)
 		g_object_unref (G_OBJECT (server));
 		g_assert (server == NULL);
 
-		linc_main_loop_run ();
+		link_main_loop_run ();
 
 		g_assert_not_reached ();
 	}
 
 	while (!connected)
-		linc_main_iteration (FALSE);
+		link_main_iteration (FALSE);
 	connected = FALSE;
 
 	g_object_unref (G_OBJECT (server));
@@ -197,14 +197,14 @@ static GIOCondition
 knobble_watch (LincWatch *watch, GIOCondition new_cond)
 {
 	GIOCondition   old_cond;
-	LincUnixWatch *a = (LincUnixWatch *) watch->linc_source;
+	LincUnixWatch *a = (LincUnixWatch *) watch->link_source;
 	LincUnixWatch *b = (LincUnixWatch *) watch->main_source;
 
 	g_assert (watch != NULL);
 
 	g_assert ((old_cond = a->condition) == b->condition);
 	
-	linc_watch_set_condition (watch, new_cond);
+	link_watch_set_condition (watch, new_cond);
 
 	return old_cond;
 }
@@ -212,11 +212,11 @@ knobble_watch (LincWatch *watch, GIOCondition new_cond)
 typedef struct {
 	int             status;
 	GIOCondition    old_cond;
-	LINCConnection *s_cnx;
+	LinkConnection *s_cnx;
 } BlockingData;
 
 static void
-blocking_cb (LINCConnection *cnx,
+blocking_cb (LinkConnection *cnx,
 	     gulong          buffer_size,
 	     gpointer        user_data)
 {
@@ -232,21 +232,21 @@ blocking_cb (LINCConnection *cnx,
 
 		/* flush the queue to other side */
 		while (cnx->priv->write_queue != NULL &&
-		       cnx->status == LINC_CONNECTED)
-			linc_main_iteration (FALSE);
+		       cnx->status == LINK_CONNECTED)
+			link_main_iteration (FALSE);
 
-		g_assert (cnx->status == LINC_CONNECTED);
+		g_assert (cnx->status == LINK_CONNECTED);
 	}
 }
 
 static gboolean 
-test_blocking_cnx_handle_input (LINCConnection *cnx)
+test_blocking_cnx_handle_input (LinkConnection *cnx)
 {
 	static  gulong idx = 0;
 	glong   size, i;
 	guint32 buffer[1024];
 
-	size = linc_connection_read (cnx, (guchar *) buffer, 512, TRUE);
+	size = link_connection_read (cnx, (guchar *) buffer, 512, TRUE);
 	g_assert (size != -1);
 	g_assert ((size & 0x3) == 0);
 	g_assert (size <= 512);
@@ -258,7 +258,7 @@ test_blocking_cnx_handle_input (LINCConnection *cnx)
 }
 
 static void
-test_blocking_cnx_class_init (LINCConnectionClass *klass)
+test_blocking_cnx_class_init (LinkConnectionClass *klass)
 {
 	klass->handle_input = test_blocking_cnx_handle_input;
 }
@@ -270,19 +270,19 @@ test_get_blocking_cnx_type (void)
 
 	if (!object_type) {
 		static const GTypeInfo object_info = {
-			sizeof (LINCConnectionClass),
+			sizeof (LinkConnectionClass),
 			(GBaseInitFunc) NULL,
 			(GBaseFinalizeFunc) NULL,
 			(GClassInitFunc) test_blocking_cnx_class_init,
 			NULL,           /* class_finalize */
 			NULL,           /* class_data */
-			sizeof (LINCConnection),
+			sizeof (LinkConnection),
 			0,              /* n_preallocs */
 			(GInstanceInitFunc) NULL,
 		};
       
 		object_type = g_type_register_static (
-			LINC_TYPE_CONNECTION, "TestConnection",
+			LINK_TYPE_CONNECTION, "TestConnection",
 			&object_info, 0);
 	}
 
@@ -293,9 +293,9 @@ static void
 test_blocking (void)
 {
 	BlockingData    bd;
-	LINCServer     *server;
-	LINCConnection *client;
-	LINCWriteOpts  *options;
+	LinkServer     *server;
+	LinkConnection *client;
+	LinkWriteOpts  *options;
 	guint32         buffer[1024] = { 0 };
 	glong           l;
 	int             i;
@@ -307,7 +307,7 @@ test_blocking (void)
 
 	create_server (&server);
 	create_client (server, &client);
-	linc_main_iteration (FALSE); /* connect */
+	link_main_iteration (FALSE); /* connect */
 
 	g_assert (server->priv->connections != NULL);
 	bd.s_cnx = server->priv->connections->data;
@@ -315,11 +315,11 @@ test_blocking (void)
 	g_assert (bd.s_cnx->priv->tag != NULL);
 	bd.old_cond = knobble_watch (bd.s_cnx->priv->tag, 0); /* stop it listening */
 
-	options = linc_write_options_new (FALSE);
-	linc_connection_set_max_buffer (client, BUFFER_MAX);
+	options = link_write_options_new (FALSE);
+	link_connection_set_max_buffer (client, BUFFER_MAX);
 	g_signal_connect (G_OBJECT (client), "blocking",
 			  G_CALLBACK (blocking_cb), &bd);
-	client->options |= LINC_CONNECTION_BLOCK_SIGNAL;
+	client->options |= LINK_CONNECTION_BLOCK_SIGNAL;
 
 	l = 0;
 	bd.status = 0;
@@ -329,51 +329,51 @@ test_blocking (void)
 		for (j = 0; j < 128/4; j++)
 			buffer [j] = l++;
 
-		linc_connection_write (
+		link_connection_write (
 			client, (guchar *) buffer, 128, options);
-		if (client->status != LINC_CONNECTED)
+		if (client->status != LINK_CONNECTED)
 			break;
 	}
 
-	g_assert (client->status == LINC_CONNECTED);
+	g_assert (client->status == LINK_CONNECTED);
 	g_assert (bd.status >= 3);
 
 	g_object_unref (G_OBJECT (client));
 	g_assert (client == NULL);
 
-	linc_main_iteration (FALSE);
+	link_main_iteration (FALSE);
 
 	g_object_unref (G_OBJECT (server));
 	g_assert (server == NULL);
 
 	test_server_cnx_type = 0;
 
-	linc_write_options_free (options);
+	link_write_options_free (options);
 }
 
 static void
 test_local_ipv4 (void)
 {
 	LincSockLen saddr_len;
-	LINCProtocolInfo *proto;
+	LinkProtocolInfo *proto;
 	struct sockaddr *saddr;
 	struct sockaddr_in ipv4_addr = { 0 };
 
 	fprintf (stderr, " IPv4\n");
-	proto = linc_protocol_find ("IPv4");
+	proto = link_protocol_find ("IPv4");
 	g_assert (proto != NULL);
 
 	ipv4_addr.sin_family = AF_INET;
 	ipv4_addr.sin_port = 1234;
 	memset (&ipv4_addr.sin_addr.s_addr, 0xaa, 4);
-	g_assert (!linc_protocol_is_local (
+	g_assert (!link_protocol_is_local (
 		proto, (struct sockaddr *)&ipv4_addr,
 		sizeof (ipv4_addr)));
 
-	saddr = linc_protocol_get_sockaddr (
-		proto, linc_get_local_hostname (), NULL, &saddr_len);
+	saddr = link_protocol_get_sockaddr (
+		proto, link_get_local_hostname (), NULL, &saddr_len);
 
-	g_assert (linc_protocol_is_local (proto, saddr, saddr_len));
+	g_assert (link_protocol_is_local (proto, saddr, saddr_len));
 	g_free (saddr);
 }
 
@@ -381,11 +381,11 @@ static void
 test_local_ipv6 (void)
 {
 #ifdef AF_INET6
-	LINCProtocolInfo *proto;
+	LinkProtocolInfo *proto;
 	struct sockaddr_in6 ipv6_addr = { 0 };
 
 	fprintf (stderr, " IPv6\n");
-	proto = linc_protocol_find ("IPv6");
+	proto = link_protocol_find ("IPv6");
 	g_assert (proto != NULL);
 
 	g_assert (proto != NULL);
@@ -393,27 +393,27 @@ test_local_ipv6 (void)
 	ipv6_addr.sin6_family = AF_INET6;
 	ipv6_addr.sin6_port = 1234;
 	memset (&ipv6_addr.sin6_addr.s6_addr, 0xaa, 16);
-	g_assert (!linc_protocol_is_local (
+	g_assert (!link_protocol_is_local (
 		proto, (struct sockaddr *)&ipv6_addr,
 		sizeof (ipv6_addr)));
 #else
-	g_assert (linc_protocol_find ("IPv6") == NULL);
+	g_assert (link_protocol_find ("IPv6") == NULL);
 #endif
 }
 
 static void
 test_local (void)
 {
-	LINCProtocolInfo *proto;
+	LinkProtocolInfo *proto;
 
 	fprintf (stderr, "Testing is_local checking ...\n");
 
-	g_assert (!linc_protocol_is_local (NULL, NULL, -1));
+	g_assert (!link_protocol_is_local (NULL, NULL, -1));
 
 	fprintf (stderr, " UNIX\n");
-	proto = linc_protocol_find ("UNIX");
+	proto = link_protocol_find ("UNIX");
 	g_assert (proto != NULL);
-	g_assert (linc_protocol_is_local (proto, NULL, -1));
+	g_assert (link_protocol_is_local (proto, NULL, -1));
 
 	test_local_ipv4 ();
 	test_local_ipv6 ();
@@ -454,11 +454,11 @@ test_hosts_lookup (void)
 {
 	int i;
 	struct hostent *hent;
-	LINCProtocolInfo *proto;
+	LinkProtocolInfo *proto;
 	LincSockLen saddr_len;
 	struct sockaddr_in *addr;
 		
-	hent = gethostbyname (linc_get_local_hostname ());
+	hent = gethostbyname (link_get_local_hostname ());
 	g_assert (hent != NULL);
 
 	fprintf (stderr, " official name '%s' aliases: ",
@@ -470,8 +470,8 @@ test_hosts_lookup (void)
 
 	verify_addr_is_loopback (hent->h_addr_list [0], hent->h_length);
 
-	proto = linc_protocol_find ("IPv4");
-	addr = (struct sockaddr_in *)linc_protocol_get_sockaddr (
+	proto = link_protocol_find ("IPv4");
+	addr = (struct sockaddr_in *)link_protocol_get_sockaddr (
 		proto, "127.0.0.1", "1047", &saddr_len);
 	g_assert (addr != NULL);
 	g_assert (saddr_len == sizeof (struct sockaddr_in));
@@ -486,24 +486,24 @@ test_host (void)
 	char *hostname;
 	LincSockLen saddr_len;
 	struct sockaddr *saddr;
-	LINCProtocolInfo *proto;
+	LinkProtocolInfo *proto;
 
-	proto = linc_protocol_find ("IPv4");
+	proto = link_protocol_find ("IPv4");
 	g_assert (proto != NULL);
 	g_assert (proto->get_sockinfo != NULL);
 
-	saddr = linc_protocol_get_sockaddr (
-		proto, linc_get_local_hostname (),
+	saddr = link_protocol_get_sockaddr (
+		proto, link_get_local_hostname (),
 		NULL, &saddr_len);
 	g_assert (saddr != NULL);
 
-	g_assert (linc_protocol_get_sockinfo (
+	g_assert (link_protocol_get_sockinfo (
 		proto, saddr, &hostname, &portnum));
 
 	g_free (saddr);
 
 	fprintf (stderr, " '%s': '%s' \n",
-		 linc_get_local_hostname (),
+		 link_get_local_hostname (),
 		 hostname);
 
 	g_free (hostname);
@@ -515,7 +515,7 @@ test_host (void)
 int
 main (int argc, char **argv)
 {	
-	linc_init (FALSE);
+	link_init (FALSE);
 	init_tmp ();
 
 	test_protos ();

@@ -52,7 +52,7 @@ PingPongServer_opOneWay (PortableServer_Servant servant,
 			 CORBA_Environment     *ev)
 {
 	/* Do nothing, but try and confuse the queue */
-	linc_main_iteration (FALSE);
+	link_main_iteration (FALSE);
 }
 
 static void

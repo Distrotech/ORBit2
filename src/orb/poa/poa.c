@@ -15,8 +15,8 @@
 #include "poa-private.h"
 #include "orbit-poa.h"
 
-#define POA_LOCK(poa)   LINC_MUTEX_LOCK(poa->base.lock)
-#define POA_UNLOCK(poa) LINC_MUTEX_UNLOCK(poa->base.lock)
+#define POA_LOCK(poa)   LINK_MUTEX_LOCK(poa->base.lock)
+#define POA_UNLOCK(poa) LINK_MUTEX_UNLOCK(poa->base.lock)
 
 static GMutex     *ORBit_class_assignment_lock    = NULL;
 static GHashTable *ORBit_class_assignments        = NULL;
@@ -104,14 +104,14 @@ ORBit_POACurrent_get_object (PortableServer_Current  obj,
 
 	g_assert (obj && obj->parent.interface->type == ORBIT_ROT_POACURRENT);
 
-	LINC_MUTEX_LOCK (obj->orb->lock);
+	LINK_MUTEX_LOCK (obj->orb->lock);
 	if (obj->orb->current_invocations == NULL)
 		CORBA_exception_set_system
 			(ev, ex_PortableServer_Current_NoContext,
 			 CORBA_COMPLETED_NO);
 	else
 		pobj = (ORBit_POAObject) obj->orb->current_invocations->data;
-	LINC_MUTEX_UNLOCK (obj->orb->lock);
+	LINK_MUTEX_UNLOCK (obj->orb->lock);
 
 	return pobj;
 }
@@ -121,10 +121,10 @@ ORBit_classinfo_lookup (const char *type_id)
 {
 	PortableServer_ClassInfo *ci = NULL;
 
-	LINC_MUTEX_LOCK   (ORBit_class_assignment_lock);
+	LINK_MUTEX_LOCK   (ORBit_class_assignment_lock);
 	if (ORBit_class_assignments)
 		ci = g_hash_table_lookup (ORBit_class_assignments, type_id);
-	LINC_MUTEX_UNLOCK (ORBit_class_assignment_lock);
+	LINK_MUTEX_UNLOCK (ORBit_class_assignment_lock);
 
 	return ci;
 }
@@ -168,7 +168,7 @@ ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
 	 * FIXME: a double check/lock/write barrier pattern
 	 * would be far faster here.
 	 */
-	LINC_MUTEX_LOCK (ORBit_class_assignment_lock);
+	LINK_MUTEX_LOCK (ORBit_class_assignment_lock);
 
 	ORBit_classinfo_register (ci);
 	if (!ci->vepvmap) {
@@ -190,7 +190,7 @@ ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
 		}
 	}
 	
-	LINC_MUTEX_UNLOCK (ORBit_class_assignment_lock);
+	LINK_MUTEX_UNLOCK (ORBit_class_assignment_lock);
 
 	if (!servant->vepv[0]->finalize)
 		servant->vepv[0]->finalize = opt_finalize;
@@ -694,7 +694,7 @@ ORBit_POA_new (CORBA_ORB                  orb,
 			(GHashFunc) ORBit_sequence_CORBA_octet_hash,
 			(GEqualFunc) ORBit_sequence_CORBA_octet_equal);
 
-	poa->base.lock = linc_mutex_new ();
+	poa->base.lock = link_mutex_new ();
 
 	ORBit_POAManager_register_poa (manager, poa);
 
@@ -1140,10 +1140,10 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	}
 
 	pobj->use_cnt++;
-	LINC_MUTEX_LOCK (poa->orb->lock);
+	LINK_MUTEX_LOCK (poa->orb->lock);
 	poa->orb->current_invocations =
 		g_slist_prepend (poa->orb->current_invocations, pobj);
-	LINC_MUTEX_UNLOCK (poa->orb->lock);
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
 	
 	if (ev->_major == CORBA_NO_EXCEPTION && !pobj->servant)
 		CORBA_exception_set_system (
@@ -1225,11 +1225,11 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 			break;
 		}
 
-	LINC_MUTEX_LOCK (poa->orb->lock);
+	LINK_MUTEX_LOCK (poa->orb->lock);
 /*	g_assert ((ORBit_POAObject)poa->orb->current_invocations->data == pobj); */
 	poa->orb->current_invocations =
 		g_slist_remove (poa->orb->current_invocations, pobj);
-	LINC_MUTEX_UNLOCK (poa->orb->lock);
+	LINK_MUTEX_UNLOCK (poa->orb->lock);
 	pobj->use_cnt--;
 
 	if (pobj->life_flags & ORBit_LifeF_NeedPostInvoke)
@@ -2103,14 +2103,14 @@ PortableServer_POA_servant_to_id (PortableServer_POA            poa,
 		 * The stricter form could be implemented, 
 		 * but it would only add more code...
 		 */
-		LINC_MUTEX_LOCK (poa->orb->lock);
+		LINK_MUTEX_LOCK (poa->orb->lock);
 		for (l = poa->orb->current_invocations; l; l = l->next) {
 			ORBit_POAObject pobj = l->data;
 
 			if (pobj->servant == servant)
 				objid = ORBit_sequence_CORBA_octet_dup (pobj->object_id);
 		}
-		LINC_MUTEX_UNLOCK (poa->orb->lock);
+		LINK_MUTEX_UNLOCK (poa->orb->lock);
 	}
 
 	if (!objid)
@@ -2168,14 +2168,14 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 		 * go backward from servant to pobj to use_cnt, but we
 		 * dont do this since forward search is more general 
 		 */
-		LINC_MUTEX_LOCK (poa->orb->lock);
+		LINK_MUTEX_LOCK (poa->orb->lock);
 		for (l = poa->orb->current_invocations; l; l = l->next) {
 			ORBit_POAObject pobj = l->data;
 
 			if (pobj->servant == servant)
 				result = ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 		}
-		LINC_MUTEX_UNLOCK (poa->orb->lock);
+		LINK_MUTEX_UNLOCK (poa->orb->lock);
 	}
 
 	if (result == CORBA_OBJECT_NIL)
@@ -2316,8 +2316,8 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 void
 ORBit_poa_init (void)
 {
-	ORBit_class_assignment_lock = linc_mutex_new ();
-	_ORBit_poa_manager_lock = linc_mutex_new ();
+	ORBit_class_assignment_lock = link_mutex_new ();
+	_ORBit_poa_manager_lock = link_mutex_new ();
 	giop_thread_set_main_handler (ORBit_POAObject_invoke_incoming_request);
 }
 

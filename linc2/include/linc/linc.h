@@ -9,8 +9,8 @@
  * Copyright 2001, Red Hat, Inc., Ximian, Inc.,
  *                 Sun Microsystems, Inc.
  */
-#ifndef _LINC_H_
-#define _LINC_H_
+#ifndef _LINK_H_
+#define _LINK_H_
 
 #include <linc/linc-config.h>
 #include <linc/linc-types.h>
@@ -21,29 +21,29 @@
 
 G_BEGIN_DECLS
 
-extern GMainLoop *linc_loop;
+extern GMainLoop *link_loop;
 
-void       linc_init             (gboolean       init_threads);
-void       linc_shutdown         (void);
+void       link_init             (gboolean       init_threads);
+void       link_shutdown         (void);
 
-LincWatch *linc_io_add_watch     (GIOChannel    *channel,
+LincWatch *link_io_add_watch     (GIOChannel    *channel,
 				  GIOCondition   condition,
 				  GIOFunc        func,
 				  gpointer       user_data);
-void       linc_io_remove_watch  (LincWatch     *watch);
-void       linc_main_iteration   (gboolean       block_for_reply);
-gboolean   linc_main_pending     (void);
-void       linc_main_loop_run    (void);
-GMainLoop *linc_main_get_loop    (void);
-guint      linc_main_idle_add    (GSourceFunc    function,
+void       link_io_remove_watch  (LincWatch     *watch);
+void       link_main_iteration   (gboolean       block_for_reply);
+gboolean   link_main_pending     (void);
+void       link_main_loop_run    (void);
+GMainLoop *link_main_get_loop    (void);
+guint      link_main_idle_add    (GSourceFunc    function,
 				  gpointer       data);
 
 /* Deprecated bits ... */
-void       linc_set_threaded     (gboolean       threaded);
-gpointer   linc_object_ref       (gpointer object);
-void       linc_object_unref     (gpointer object);
-GMutex    *linc_object_get_mutex (void);
+void       link_set_threaded     (gboolean       threaded);
+gpointer   link_object_ref       (gpointer object);
+void       link_object_unref     (gpointer object);
+GMutex    *link_object_get_mutex (void);
 
 G_END_DECLS
 
-#endif /* _LINC_H_ */
+#endif /* _LINK_H_ */

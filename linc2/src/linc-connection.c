@@ -17,7 +17,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef LINC_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
 #include <openssl/ssl.h>
 #endif
 
@@ -39,11 +39,11 @@ static GCond  *cnx_condition = NULL;
 static GList  *initiated_list = NULL;
 
 #define CNX_LOCK(cnx)      G_STMT_START { \
-	LINC_MUTEX_LOCK (cnx_lock); \
+	LINK_MUTEX_LOCK (cnx_lock); \
 	/* g_warning ("Lock"); */ \
 } G_STMT_END
 #define CNX_UNLOCK(cnx)    G_STMT_START { \
-	LINC_MUTEX_UNLOCK (cnx_lock); \
+	LINK_MUTEX_UNLOCK (cnx_lock); \
 	/* g_warning ("Unlock"); */ \
 } G_STMT_END
 
@@ -51,16 +51,16 @@ static GList  *initiated_list = NULL;
 #define CNX_LIST_UNLOCK()    CNX_UNLOCK(0); /* for now */
 #define CNX_AND_LIST_LOCK(cnx)   CNX_LOCK(cnx);   /* for now */
 #define CNX_AND_LIST_UNLOCK(cnx) CNX_UNLOCK(cnx); /* for now */
-#define CNX_IS_LOCKED(cnx) linc_mutex_is_locked (cnx_lock)
+#define CNX_IS_LOCKED(cnx) link_mutex_is_locked (cnx_lock)
 
-static gboolean linc_connection_io_handler (GIOChannel  *gioc,
+static gboolean link_connection_io_handler (GIOChannel  *gioc,
 					    GIOCondition condition,
 					    gpointer     data);
 
-#define linc_connection_ref_T(cnx) g_object_ref (cnx)
+#define link_connection_ref_T(cnx) g_object_ref (cnx)
 
 gpointer
-linc_connection_ref (gpointer cnx)
+link_connection_ref (gpointer cnx)
 {
 	CNX_AND_LIST_LOCK (cnx);
 	g_object_ref (cnx);
@@ -70,7 +70,7 @@ linc_connection_ref (gpointer cnx)
 }
 
 void
-linc_connection_unref (gpointer cnx)
+link_connection_unref (gpointer cnx)
 {
 	gboolean tail_unref = FALSE;
 
@@ -93,12 +93,12 @@ linc_connection_unref (gpointer cnx)
 }
 
 static void
-linc_close_fd (LINCConnection *cnx)
+link_close_fd (LinkConnection *cnx)
 {
 	if (cnx->priv->fd >= 0) {
 		d_printf ("Close %d\n", cnx->priv->fd);
 
-		LINC_CLOSE (cnx->priv->fd);
+		LINK_CLOSE (cnx->priv->fd);
 	}
 	cnx->priv->fd = -1;
 }
@@ -112,21 +112,21 @@ typedef struct {
 } QueuedWrite;
 
 static void
-linc_connection_state_changed_T (LINCConnection      *cnx,
-				 LINCConnectionStatus status)
+link_connection_state_changed_T (LinkConnection      *cnx,
+				 LinkConnectionStatus status)
 {
-	LINCConnectionClass *klass;
+	LinkConnectionClass *klass;
 
 	g_assert (CNX_IS_LOCKED (cnx));
 
-	klass = (LINCConnectionClass *)G_OBJECT_GET_CLASS (cnx);
+	klass = (LinkConnectionClass *)G_OBJECT_GET_CLASS (cnx);
 
 	if (klass->state_changed)
 		klass->state_changed (cnx, status);
 }
 
 static void
-queue_signal_T_R (LINCConnection *cnx,
+queue_signal_T_R (LinkConnection *cnx,
 		  glong           delta)
 {
 	gulong old_size;
@@ -140,7 +140,7 @@ queue_signal_T_R (LINCConnection *cnx,
 	cnx->priv->write_queue_bytes += delta;
 	new_size = cnx->priv->write_queue_bytes;
 
-	if (cnx->options & LINC_CONNECTION_BLOCK_SIGNAL) {
+	if (cnx->options & LINK_CONNECTION_BLOCK_SIGNAL) {
 		if (new_size == 0 ||
 		    (old_size < (cnx->priv->max_buffer_bytes >> 1) &&
 		     new_size >= (cnx->priv->max_buffer_bytes >> 1)) ||
@@ -153,7 +153,7 @@ queue_signal_T_R (LINCConnection *cnx,
 
 	if (cnx->priv->max_buffer_bytes &&
 	    cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
-		linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
+		link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
 }
 
 static gulong
@@ -170,7 +170,7 @@ calc_size (struct iovec *src_vecs,
 }
 
 static void
-queue_flattened_T_R (LINCConnection *cnx,
+queue_flattened_T_R (LinkConnection *cnx,
 		     struct iovec   *src_vecs,
 		     int             nvecs,
 		     gboolean        update_poll)
@@ -204,15 +204,15 @@ queue_flattened_T_R (LINCConnection *cnx,
 	queue_signal_T_R (cnx, total_size);
 
 	if (update_poll) {
-		LINCCommandSetCondition *cmd;
+		LinkCommandSetCondition *cmd;
 
-		g_assert (linc_get_threaded ());
+		g_assert (link_get_threaded ());
 
-		cmd = g_new (LINCCommandSetCondition, 1);
-		cmd->cmd.type = LINC_COMMAND_SET_CONDITION;
-		cmd->cnx = linc_connection_ref_T (cnx);
-		cmd->condition = (LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
-		linc_exec_command (&cmd->cmd);
+		cmd = g_new (LinkCommandSetCondition, 1);
+		cmd->cmd.type = LINK_COMMAND_SET_CONDITION;
+		cmd->cnx = link_connection_ref_T (cnx);
+		cmd->condition = (LINK_ERR_CONDS | LINK_IN_CONDS | G_IO_OUT);
+		link_exec_command (&cmd->cmd);
 	}
 }
 
@@ -224,7 +224,7 @@ queued_write_free (QueuedWrite *qw)
 }
 
 static void
-queue_free (LINCConnection *cnx)
+queue_free (LinkConnection *cnx)
 {
 	GList *l;
 
@@ -236,49 +236,49 @@ queue_free (LINCConnection *cnx)
 }
 
 static void
-linc_source_remove (LINCConnection *cnx)
+link_source_remove (LinkConnection *cnx)
 {
 	if (cnx->priv->tag) {
 		LincWatch *thewatch = cnx->priv->tag;
 		cnx->priv->tag = NULL;
-		linc_io_remove_watch (thewatch);
+		link_io_remove_watch (thewatch);
 		d_printf ("Removed watch on %d\n", cnx->priv->fd);
 	}
 }
 
 static void
-linc_source_add (LINCConnection *cnx,
+link_source_add (LinkConnection *cnx,
 		 GIOCondition    condition)
 {
 	g_assert (cnx->priv->tag == NULL);
 
-	cnx->priv->tag = linc_io_add_watch_fd (
+	cnx->priv->tag = link_io_add_watch_fd (
 		cnx->priv->fd, condition,
-		linc_connection_io_handler, cnx);
+		link_connection_io_handler, cnx);
 
 	d_printf ("Added watch on %d (0x%x)\n",
 		 cnx->priv->fd, condition);
 }
 
 /*
- * linc_connection_class_state_changed:
- * @cnx: a #LINCConnection
- * @status: a #LINCConnectionStatus value.
+ * link_connection_class_state_changed:
+ * @cnx: a #LinkConnection
+ * @status: a #LinkConnectionStatus value.
  *
- * Set up linc's #GSources if the connection is in the #LINC_CONNECTED
- * or #LINC_CONNECTING state.
+ * Set up linc's #GSources if the connection is in the #LINK_CONNECTED
+ * or #LINK_CONNECTING state.
  *
- * Remove the #GSources if the state has channged to #LINC_DISCONNECTED,
+ * Remove the #GSources if the state has channged to #LINK_DISCONNECTED,
  * close the socket and a gobject broken signal which may be caught by
  * the application.
  *
  * Also perform SSL specific operations if the connection has move into
- * the #LINC_CONNECTED state.
+ * the #LINK_CONNECTED state.
  */
 
 static void
-linc_connection_class_state_changed (LINCConnection      *cnx,
-				     LINCConnectionStatus status)
+link_connection_class_state_changed (LinkConnection      *cnx,
+				     LinkConnectionStatus status)
 {
 	gboolean changed;
 
@@ -291,9 +291,9 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 	cnx->status = status;
 
 	switch (status) {
-	case LINC_CONNECTED:
-#ifdef LINC_SSL_SUPPORT
-		if (cnx->options & LINC_CONNECTION_SSL) {
+	case LINK_CONNECTED:
+#ifdef LINK_SSL_SUPPORT
+		if (cnx->options & LINK_CONNECTION_SSL) {
 			if (cnx->was_initiated)
 				SSL_connect (cnx->priv->ssl);
 			else
@@ -301,22 +301,22 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		}
 #endif
 		if (!cnx->priv->tag)
-			linc_source_add (cnx, LINC_ERR_CONDS | LINC_IN_CONDS);
+			link_source_add (cnx, LINK_ERR_CONDS | LINK_IN_CONDS);
 		break;
 
-	case LINC_CONNECTING:
+	case LINK_CONNECTING:
 
 		if (cnx->priv->tag) /* re-connecting */
-			linc_watch_set_condition (
+			link_watch_set_condition (
 				cnx->priv->tag,
-				G_IO_OUT | LINC_ERR_CONDS);
+				G_IO_OUT | LINK_ERR_CONDS);
 		else
-			linc_source_add (cnx, G_IO_OUT | LINC_ERR_CONDS);
+			link_source_add (cnx, G_IO_OUT | LINK_ERR_CONDS);
 		break;
 
-	case LINC_DISCONNECTED:
-		linc_source_remove (cnx);
-		linc_close_fd (cnx);
+	case LINK_DISCONNECTED:
+		link_source_remove (cnx);
+		link_close_fd (cnx);
 		/* don't free pending queue - we could get re-connected */
 		if (changed) {
 			CNX_UNLOCK (cnx);
@@ -328,17 +328,17 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 }
 
 static void
-linc_connection_from_fd_T (LINCConnection         *cnx,
+link_connection_from_fd_T (LinkConnection         *cnx,
 			   int                     fd,
-			   const LINCProtocolInfo *proto,
+			   const LinkProtocolInfo *proto,
 			   gchar                  *remote_host_info,
 			   gchar                  *remote_serv_info,
 			   gboolean                was_initiated,
-			   LINCConnectionStatus    status,
-			   LINCConnectionOptions   options)
+			   LinkConnectionStatus    status,
+			   LinkConnectionOptions   options)
 {
 	cnx->was_initiated = was_initiated;
-	cnx->is_auth       = (proto->flags & LINC_PROTOCOL_SECURE);
+	cnx->is_auth       = (proto->flags & LINK_PROTOCOL_SECURE);
 	cnx->proto         = proto;
 	cnx->options       = options;
 	cnx->priv->fd      = fd;
@@ -354,47 +354,47 @@ linc_connection_from_fd_T (LINCConnection         *cnx,
 	if (proto->setup)
 		proto->setup (fd, options);
 
-#ifdef LINC_SSL_SUPPORT
-	if (options & LINC_CONNECTION_SSL) {
-		cnx->priv->ssl = SSL_new (linc_ssl_ctx);
+#ifdef LINK_SSL_SUPPORT
+	if (options & LINK_CONNECTION_SSL) {
+		cnx->priv->ssl = SSL_new (link_ssl_ctx);
 		SSL_set_fd (cnx->priv->ssl, fd);
 	}
 #endif
 	g_assert (CNX_IS_LOCKED (0));
-	linc_connection_state_changed_T (cnx, status);
+	link_connection_state_changed_T (cnx, status);
 }
 
 /*
- * linc_connection_from_fd:
- * @cnx: a #LINCConnection.
+ * link_connection_from_fd:
+ * @cnx: a #LinkConnection.
  * @fd: a connected/connecting file descriptor.
- * @proto: a #LINCProtocolInfo.
+ * @proto: a #LinkProtocolInfo.
  * @remote_host_info: protocol dependant host information; gallocation swallowed
  * @remote_serv_info: protocol dependant service information(e.g. port number). gallocation swallowed
  * @was_initiated: #TRUE if the connection was initiated by us.
- * @status: a #LINCConnectionStatus value.
- * @options: combination of #LINCConnectionOptions.
+ * @status: a #LinkConnectionStatus value.
+ * @options: combination of #LinkConnectionOptions.
  *
  * Fill in @cnx, call protocol specific initialisation methonds and then
- * call linc_connection_state_changed.
+ * call link_connection_state_changed.
  *
  * Must be called from the I/O thread.
  *
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 gboolean
-linc_connection_from_fd (LINCConnection         *cnx,
+link_connection_from_fd (LinkConnection         *cnx,
 			 int                     fd,
-			 const LINCProtocolInfo *proto,
+			 const LinkProtocolInfo *proto,
 			 gchar                  *remote_host_info,
 			 gchar                  *remote_serv_info,
 			 gboolean                was_initiated,
-			 LINCConnectionStatus    status,
-			 LINCConnectionOptions   options)
+			 LinkConnectionStatus    status,
+			 LinkConnectionOptions   options)
 {
 	CNX_LOCK (cnx);
 
-	linc_connection_from_fd_T (cnx, fd, proto,
+	link_connection_from_fd_T (cnx, fd, proto,
 				   remote_serv_info, remote_serv_info,
 				   was_initiated, status, options);
 	CNX_UNLOCK (cnx);
@@ -403,12 +403,12 @@ linc_connection_from_fd (LINCConnection         *cnx,
 }
 
 /**
- * linc_connection_initiate_list:
- * @derived_type: a #LINCConnection derived type
+ * link_connection_initiate_list:
+ * @derived_type: a #LinkConnection derived type
  * @proto_name: the name of the protocol to use.
  * @host: protocol dependant host information.
  * @service: protocol dependant service information(e.g. port number).
- * @options: combination of #LINCConnectionOptions.
+ * @options: combination of #LinkConnectionOptions.
  * @opt_construct_fn: optional constructor fn for new cnx's or NULL
  * @user_data: optional user data for constructor
  * 
@@ -418,38 +418,38 @@ linc_connection_from_fd (LINCConnection         *cnx,
  * 
  * Return value: an incremented cnx ref.
  **/
-LINCConnection *
-linc_connection_initiate_list (GType                 derived_type,
+LinkConnection *
+link_connection_initiate_list (GType                 derived_type,
 			       const char           *proto_name,
 			       const char           *remote_host_info,
 			       const char           *remote_serv_info,
-			       LINCConnectionOptions options,
+			       LinkConnectionOptions options,
 			       const char           *first_property,
 			       ...)
 {
 	va_list args;
 	GList *l;
 	gboolean initiated = TRUE;
-	LINCConnection *cnx = NULL;
-	const LINCProtocolInfo *proto;
+	LinkConnection *cnx = NULL;
+	const LinkProtocolInfo *proto;
 
 	va_start (args, first_property);
 
-	proto = linc_protocol_find (proto_name);
+	proto = link_protocol_find (proto_name);
 
 	CNX_LIST_LOCK();
 
 	g_assert (CNX_IS_LOCKED (0));
 
 	for (l = initiated_list; l; l = l->next) {
-		LINCConnection *cnx = l->data;
+		LinkConnection *cnx = l->data;
 
 		if (cnx->proto == proto &&
-		    cnx->status != LINC_DISCONNECTED &&
-		    ((cnx->options & LINC_CONNECTION_SSL) == (options & LINC_CONNECTION_SSL)) &&
+		    cnx->status != LINK_DISCONNECTED &&
+		    ((cnx->options & LINK_CONNECTION_SSL) == (options & LINK_CONNECTION_SSL)) &&
 		    !strcmp (remote_host_info, cnx->remote_host_info) &&
 		    !strcmp (remote_serv_info, cnx->remote_serv_info)) {
-			cnx = linc_connection_ref_T (cnx);
+			cnx = link_connection_ref_T (cnx);
 			/* FIXME: pull last hit to head of list ? */
 			break;
 		}
@@ -458,11 +458,11 @@ linc_connection_initiate_list (GType                 derived_type,
 	if (!cnx) {
 		g_assert (CNX_IS_LOCKED (0));
 
-		cnx = LINC_CONNECTION
+		cnx = LINK_CONNECTION
 			(g_object_new_valist (derived_type, first_property, args));
 
 		g_assert (CNX_IS_LOCKED (0));
-		if ((initiated = linc_connection_initiate
+		if ((initiated = link_connection_initiate
 				     (cnx, proto_name, remote_host_info,
 				      remote_serv_info, options)))
 			initiated_list = g_list_prepend (initiated_list, cnx);
@@ -471,7 +471,7 @@ linc_connection_initiate_list (GType                 derived_type,
 	CNX_LIST_UNLOCK();
 
 	if (!initiated) {
-		linc_connection_unref (cnx);
+		link_connection_unref (cnx);
 		cnx = NULL;
 	}
 
@@ -481,12 +481,12 @@ linc_connection_initiate_list (GType                 derived_type,
 }
 
 /*
- * linc_connection_initiate:
- * @cnx: a #LINCConnection.
+ * link_connection_initiate:
+ * @cnx: a #LinkConnection.
  * @proto_name: the name of the protocol to use.
  * @host: protocol dependant host information.
  * @service: protocol dependant service information(e.g. port number).
- * @options: combination of #LINCConnectionOptions.
+ * @options: combination of #LinkConnectionOptions.
  *
  * Initiate a connection to @service on @host using the @proto_name protocol.
  *
@@ -496,31 +496,31 @@ linc_connection_initiate_list (GType                 derived_type,
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 gboolean
-linc_connection_initiate (LINCConnection        *cnx,
+link_connection_initiate (LinkConnection        *cnx,
 			  const char            *proto_name,
 			  const char            *host,
 			  const char            *service,
-			  LINCConnectionOptions  options)
+			  LinkConnectionOptions  options)
 {
-	const LINCProtocolInfo *proto;
+	const LinkProtocolInfo *proto;
 	int                     rv;
 	int                     fd;
 	gboolean                retval = FALSE;
 	struct sockaddr        *saddr;
 	LincSockLen		saddr_len;
 
-	proto = linc_protocol_find (proto_name);
+	proto = link_protocol_find (proto_name);
 
 	if (!proto)
 		return FALSE;
 
-	saddr = linc_protocol_get_sockaddr (
+	saddr = link_protocol_get_sockaddr (
 		proto, host, service, &saddr_len);
 
 	if (!saddr && (strcmp (proto_name, "IPv6") ==0)) {/* Falling back to IPv4 */
-		proto = linc_protocol_find ("IPv4");
+		proto = link_protocol_find ("IPv4");
 		
-		saddr = linc_protocol_get_sockaddr (
+		saddr = link_protocol_get_sockaddr (
 			proto, host, service, &saddr_len);
 	}
 
@@ -533,7 +533,7 @@ linc_connection_initiate (LINCConnection        *cnx,
 	if (fd < 0)
 		goto out;
 
-	if (options & LINC_CONNECTION_NONBLOCKING)
+	if (options & LINK_CONNECTION_NONBLOCKING)
 		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0)
 			goto out;
 
@@ -548,17 +548,17 @@ linc_connection_initiate (LINCConnection        *cnx,
 		 fd, rv, errno);
 
 	g_assert (CNX_IS_LOCKED (0));
-	linc_connection_from_fd_T
+	link_connection_from_fd_T
 		(cnx, fd, proto, 
 		 g_strdup (host), g_strdup (service),
-		 TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
+		 TRUE, rv ? LINK_CONNECTING : LINK_CONNECTED,
 		 options);
 	retval = TRUE;
 
  out:
 	if (!retval && fd >= 0) {
 		d_printf ("initiation failed\n");
-		LINC_CLOSE (fd);
+		LINK_CLOSE (fd);
 	}
 
 	g_free (saddr);
@@ -567,23 +567,23 @@ linc_connection_initiate (LINCConnection        *cnx,
 }
 
 /*
- * linc_connection_state_changed:
- * @cnx: a #LINCConnection.
- * @status: a #LINCConnectionStatus.
+ * link_connection_state_changed:
+ * @cnx: a #LinkConnection.
+ * @status: a #LinkConnectionStatus.
  *
- * A wrapper for the #LINCConnectionClass's state change method.
+ * A wrapper for the #LinkConnectionClass's state change method.
  */
 void
-linc_connection_state_changed (LINCConnection      *cnx,
-			       LINCConnectionStatus status)
+link_connection_state_changed (LinkConnection      *cnx,
+			       LinkConnectionStatus status)
 {
 	CNX_LOCK (cnx);
-	linc_connection_state_changed_T (cnx, status);
+	link_connection_state_changed_T (cnx, status);
 	CNX_UNLOCK (cnx);
 }
 
 /**
- * linc_connection_read:
+ * link_connection_read:
  * @cnx: the connection to write to
  * @buf: a pointer to the start of an array of bytes to read data into
  * @len: the length of the array in bytes to read ingo
@@ -595,7 +595,7 @@ linc_connection_state_changed (LINCConnection      *cnx,
  * Return value: number of bytes written on success; negative on error.
  **/
 glong
-linc_connection_read (LINCConnection *cnx,
+link_connection_read (LinkConnection *cnx,
 		      guchar         *buf,
 		      int             len,
 		      gboolean        block_for_full_read)
@@ -609,14 +609,14 @@ linc_connection_read (LINCConnection *cnx,
 
 	CNX_LOCK (cnx);
 
-	if (cnx->status != LINC_CONNECTED)
+	if (cnx->status != LINK_CONNECTED)
 		goto fatal_error;
 
 	do {
 		int n;
 
-#ifdef LINC_SSL_SUPPORT
-		if (cnx->options & LINC_CONNECTION_SSL)
+#ifdef LINK_SSL_SUPPORT
+		if (cnx->options & LINK_CONNECTION_SSL)
 			n = SSL_read (cnx->priv->ssl, buf, len);
 		else
 #endif
@@ -625,15 +625,15 @@ linc_connection_read (LINCConnection *cnx,
 		g_assert (n <= len);
 
 		if (n < 0) {
-#ifdef LINC_SSL_SUPPORT
-			if (cnx->options & LINC_CONNECTION_SSL) {
+#ifdef LINK_SSL_SUPPORT
+			if (cnx->options & LINK_CONNECTION_SSL) {
 				gulong rv;
 
 				rv = SSL_get_error (cnx->priv->ssl, n);
 
 				if ((rv == SSL_ERROR_WANT_READ ||
 				     rv == SSL_ERROR_WANT_WRITE) &&
-				    (cnx->options & LINC_CONNECTION_NONBLOCKING))
+				    (cnx->options & LINK_CONNECTION_NONBLOCKING))
 					goto out;
 				else
 					goto fatal_error;
@@ -644,7 +644,7 @@ linc_connection_read (LINCConnection *cnx,
 					continue;
 
 				else if (errno == EAGAIN &&
-					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
+					 (cnx->options & LINK_CONNECTION_NONBLOCKING))
 					goto out;
 
 				else if (errno == EBADF) {
@@ -657,7 +657,7 @@ linc_connection_read (LINCConnection *cnx,
 
 		} else if (n == 0) {
 			d_printf ("we got EOF on fd %d\n", cnx->priv->fd);
-			bytes_read = LINC_IO_FATAL_ERROR;
+			bytes_read = LINK_IO_FATAL_ERROR;
 			goto out;
 		} else {
 			buf += n;
@@ -674,63 +674,63 @@ linc_connection_read (LINCConnection *cnx,
 
  fatal_error:
 	CNX_UNLOCK (cnx);
-	return LINC_IO_FATAL_ERROR;
+	return LINK_IO_FATAL_ERROR;
 }
 
 /* Determine the maximum size of the iovec vector */
 
 #if defined (MAXIOV) /* HPUX */
-# define LINC_IOV_MAX (MAXIOV)
+# define LINK_IOV_MAX (MAXIOV)
 #elif defined (IOV_MAX) /* AIX */
-# define LINC_IOV_MAX (IOV_MAX)
+# define LINK_IOV_MAX (IOV_MAX)
 #elif defined (_SC_IOV_MAX) /* SGI */
-# define LINC_IOV_MAX_INIT (sysconf (_SC_IOV_MAX))
+# define LINK_IOV_MAX_INIT (sysconf (_SC_IOV_MAX))
 #elif defined (__APPLE__)
 /* Even though the write(2) man page mentions it, UIO_MAXIOV is only
  * available if KERNEL is defined on MacOS X 10.1
  */
-#  define LINC_IOV_MAX 1024
+#  define LINK_IOV_MAX 1024
 #elif defined (UIO_MAXIOV) /* Glibc */
-# define LINC_IOV_MAX (UIO_MAXIOV)
+# define LINK_IOV_MAX (UIO_MAXIOV)
 #else /* Safe Guess */
-# define LINC_IOV_MAX 16
+# define LINK_IOV_MAX 16
 #endif
 
 /* If the value requires initialization, define the function here */
-#if defined (LINC_IOV_MAX_INIT)
-# define LINC_IOV_MAX linc_iov_max
-  static guint linc_iov_max = 0;
+#if defined (LINK_IOV_MAX_INIT)
+# define LINK_IOV_MAX link_iov_max
+  static guint link_iov_max = 0;
   static inline void
-  linc_iov_max_init () 
+  link_iov_max_init () 
   {
-    if (linc_iov_max == 0)
+    if (link_iov_max == 0)
       {
         gint max;
-        G_LOCK_DEFINE_STATIC (linc_iov_max);
-        G_LOCK (linc_iov_max);
-        if (linc_iov_max == 0)
+        G_LOCK_DEFINE_STATIC (link_iov_max);
+        G_LOCK (link_iov_max);
+        if (link_iov_max == 0)
           {
-            max = LINC_IOV_MAX_INIT;
+            max = LINK_IOV_MAX_INIT;
             if (max <= 0)
               max = 16;
-            linc_iov_max = max;
+            link_iov_max = max;
           }
-        G_UNLOCK (linc_iov_max);
+        G_UNLOCK (link_iov_max);
       }
   }
 #else
-# define linc_iov_max_init()
+# define link_iov_max_init()
 #endif
 
 static glong
-write_data_T (LINCConnection *cnx, QueuedWrite *qw)
+write_data_T (LinkConnection *cnx, QueuedWrite *qw)
 {
 	glong bytes_written = 0;
 
-	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
-			      LINC_IO_FATAL_ERROR);
+	g_return_val_if_fail (cnx->status == LINK_CONNECTED,
+			      LINK_IO_FATAL_ERROR);
 
-	linc_iov_max_init ();
+	link_iov_max_init ();
 
 	while ((qw->nvecs > 0) && (qw->vecs->iov_len > 0)) {
 		int n;
@@ -738,30 +738,30 @@ write_data_T (LINCConnection *cnx, QueuedWrite *qw)
 		d_printf ("write_data %ld bytes to fd %d - ",
 			  calc_size (qw->vecs, qw->nvecs), cnx->priv->fd);
 
-#ifdef LINC_SSL_SUPPORT
-		if (cnx->options & LINC_CONNECTION_SSL)
+#ifdef LINK_SSL_SUPPORT
+		if (cnx->options & LINK_CONNECTION_SSL)
 			n = SSL_write (cnx->priv->ssl, qw->vecs->iov_base,
 				       qw->vecs->iov_len);
 		else
 #endif
 			n = writev (cnx->priv->fd, qw->vecs,
-				    MIN (qw->nvecs, LINC_IOV_MAX));
+				    MIN (qw->nvecs, LINK_IOV_MAX));
 
 		d_printf ("wrote %d bytes\n", n);
 
 		if (n < 0) {
-#ifdef LINC_SSL_SUPPORT
-			if (cnx->options & LINC_CONNECTION_SSL) {
+#ifdef LINK_SSL_SUPPORT
+			if (cnx->options & LINK_CONNECTION_SSL) {
 				gulong rv;
 					
 				rv = SSL_get_error (cnx->priv->ssl, n);
 					
 				if ((rv == SSL_ERROR_WANT_READ || 
 				     rv == SSL_ERROR_WANT_WRITE) &&
-				    cnx->options & LINC_CONNECTION_NONBLOCKING)
-					return LINC_IO_QUEUED_DATA;
+				    cnx->options & LINK_CONNECTION_NONBLOCKING)
+					return LINK_IO_QUEUED_DATA;
 				else
-					return LINC_IO_FATAL_ERROR;
+					return LINK_IO_FATAL_ERROR;
 			} else
 #endif
 			{
@@ -769,17 +769,17 @@ write_data_T (LINCConnection *cnx, QueuedWrite *qw)
 					continue;
 
 				else if (errno == EAGAIN &&
-					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
-					return LINC_IO_QUEUED_DATA;
+					 (cnx->options & LINK_CONNECTION_NONBLOCKING))
+					return LINK_IO_QUEUED_DATA;
 
 				else if (errno == EBADF)
 					g_warning ("Serious fd usage error %d", cnx->priv->fd);
 				
-				return LINC_IO_FATAL_ERROR; /* Unhandlable error */
+				return LINK_IO_FATAL_ERROR; /* Unhandlable error */
 			}
 
 		} else if (n == 0) /* CHECK: is this really an error condition */
-			return LINC_IO_FATAL_ERROR;
+			return LINK_IO_FATAL_ERROR;
 
 		else {
 			bytes_written += n;
@@ -801,8 +801,8 @@ write_data_T (LINCConnection *cnx, QueuedWrite *qw)
 }
 
 static gboolean
-linc_connection_should_block (LINCConnection      *cnx,
-			      const LINCWriteOpts *opt_write_opts)
+link_connection_should_block (LinkConnection      *cnx,
+			      const LinkWriteOpts *opt_write_opts)
 {
 	if (!opt_write_opts)
 		return TRUE;
@@ -815,7 +815,7 @@ linc_connection_should_block (LINCConnection      *cnx,
 
 /* Always called in main thread */
 static void
-linc_connection_flush_write_queue_T_R (LINCConnection *cnx)
+link_connection_flush_write_queue_T_R (LinkConnection *cnx)
 {
 	gboolean done_writes = TRUE;
 
@@ -827,7 +827,7 @@ linc_connection_flush_write_queue_T_R (LINCConnection *cnx)
 
 		d_printf ("Wrote queue %ld on fd %d\n", status, cnx->priv->fd);
 
-		if (status >= LINC_IO_OK) {
+		if (status >= LINK_IO_OK) {
 			cnx->priv->write_queue = g_list_delete_link
 				(cnx->priv->write_queue, cnx->priv->write_queue);
 			queued_write_free (qw);
@@ -837,9 +837,9 @@ linc_connection_flush_write_queue_T_R (LINCConnection *cnx)
 			done_writes = (cnx->priv->write_queue == NULL);
 
 		} else {
-			if (status == LINC_IO_FATAL_ERROR) {
+			if (status == LINK_IO_FATAL_ERROR) {
 				d_printf ("Fatal error on queued write");
-				linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
+				link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
 				
 			} else {
 				d_printf ("Write blocked\n");
@@ -852,70 +852,70 @@ linc_connection_flush_write_queue_T_R (LINCConnection *cnx)
 		  "flushed & empty" : "still active");
 
 	if (done_writes) /* drop G_IO_OUT */
-		linc_watch_set_condition
+		link_watch_set_condition
 			(cnx->priv->tag,
-			 LINC_ERR_CONDS | LINC_IN_CONDS);
+			 LINK_ERR_CONDS | LINK_IN_CONDS);
 	else
-		linc_watch_set_condition
+		link_watch_set_condition
 			(cnx->priv->tag,
-			 LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
+			 LINK_ERR_CONDS | LINK_IN_CONDS | G_IO_OUT);
 }
 
 void
-linc_connection_exec_set_condition (LINCCommandSetCondition *cmd)
+link_connection_exec_set_condition (LinkCommandSetCondition *cmd)
 {
 	d_printf ("Exec defered set condition on %p -> 0x%x",
 		  cmd->cnx, cmd->condition);
 
 	CNX_LOCK (cmd->cnx);
-	linc_watch_set_condition (cmd->cnx->priv->tag, cmd->condition);
+	link_watch_set_condition (cmd->cnx->priv->tag, cmd->condition);
 	CNX_UNLOCK (cmd->cnx);
-	linc_connection_unref (cmd->cnx);
+	link_connection_unref (cmd->cnx);
 	g_free (cmd);
 }
 
 /**
- * linc_connection_writev:
+ * link_connection_writev:
  * @cnx: the connection to write to
  * @vecs: a structure of iovecs to write - this is altered.
  * @nvecs: the number of populated iovecs
  * @opt_write_opts: optional write options, or NULL
  * 
  * This routine writes data to the abstract connection.
- * FIXME: it allows re-enterancy via linc_connection_iterate
+ * FIXME: it allows re-enterancy via link_connection_iterate
  *        in certain cases.
  * FIXME: on this basis, the connection can die underneath
  *        our feet.
  * 
  * Return value: 0 on success, non 0 on error.
  **/
-LINCIOStatus
-linc_connection_writev (LINCConnection       *cnx,
+LinkIOStatus
+link_connection_writev (LinkConnection       *cnx,
 			struct iovec         *vecs,
 			int                   nvecs,
-			const LINCWriteOpts  *opt_write_opts)
+			const LinkWriteOpts  *opt_write_opts)
 {
 	QueuedWrite qw;
 	int         status;
 
 	CNX_LOCK (cnx);
-	linc_connection_ref_T (cnx);
+	link_connection_ref_T (cnx);
 
-	if (linc_get_threaded ()) {
+	if (link_get_threaded ()) {
 		d_printf ("Transfer output to main thread\n");
-		if (cnx->status == LINC_CONNECTING) {
+		if (cnx->status == LINK_CONNECTING) {
 			queue_flattened_T_R (cnx, vecs, nvecs, TRUE);
 			CNX_UNLOCK (cnx);
-			linc_connection_unref (cnx);
-			return LINC_IO_QUEUED_DATA;
+			link_connection_unref (cnx);
+			return LINK_IO_QUEUED_DATA;
 		}
-	} else if (cnx->options & LINC_CONNECTION_NONBLOCKING)
-		linc_connection_wait_connected (cnx);
+	} else if (cnx->options & LINK_CONNECTION_NONBLOCKING)
+		link_connection_wait_connected (cnx);
 
-	if (cnx->status == LINC_DISCONNECTED) {
+	if (cnx->status == LINK_DISCONNECTED) {
 		CNX_UNLOCK (cnx);
-		linc_connection_unref (cnx);
-		return LINC_IO_FATAL_ERROR;
+		link_connection_unref (cnx);
+		return LINK_IO_FATAL_ERROR;
 	}
 
 	if (cnx->priv->write_queue) {
@@ -923,8 +923,8 @@ linc_connection_writev (LINCConnection       *cnx,
 		 * get a POLLOUT for this lot at some stage anyway */
 		queue_flattened_T_R (cnx, vecs, nvecs, FALSE);
 		CNX_UNLOCK (cnx);
-		linc_connection_unref (cnx);
-		return LINC_IO_QUEUED_DATA;
+		link_connection_unref (cnx);
+		return LINK_IO_QUEUED_DATA;
 	}
 
 	qw.vecs  = vecs;
@@ -933,41 +933,41 @@ linc_connection_writev (LINCConnection       *cnx,
  continue_write:
 	status = write_data_T (cnx, &qw);
 
-	if (status == LINC_IO_QUEUED_DATA) {
-		if (linc_get_threaded ()) {
+	if (status == LINK_IO_QUEUED_DATA) {
+		if (link_get_threaded ()) {
 			queue_flattened_T_R (cnx, qw.vecs, qw.nvecs, TRUE);
 			CNX_UNLOCK (cnx);
-			linc_connection_unref (cnx);
-			return LINC_IO_QUEUED_DATA;
+			link_connection_unref (cnx);
+			return LINK_IO_QUEUED_DATA;
 		}
 
 		/* Queue data & listen for buffer space */
-		linc_watch_set_condition
+		link_watch_set_condition
 			(cnx->priv->tag,
-			 LINC_ERR_CONDS | LINC_IN_CONDS | G_IO_OUT);
+			 LINK_ERR_CONDS | LINK_IN_CONDS | G_IO_OUT);
 
-		if (!linc_connection_should_block (cnx, opt_write_opts)) {
+		if (!link_connection_should_block (cnx, opt_write_opts)) {
 			queue_flattened_T_R (cnx, qw.vecs, qw.nvecs, FALSE);
 			CNX_UNLOCK (cnx);
-			linc_connection_unref (cnx);
-			return LINC_IO_QUEUED_DATA;
+			link_connection_unref (cnx);
+			return LINK_IO_QUEUED_DATA;
 
 		} else {
-			linc_main_iteration (TRUE);
+			link_main_iteration (TRUE);
 			goto continue_write;
 		}
 
-	} else if (status >= LINC_IO_OK)
-		status = LINC_IO_OK;
+	} else if (status >= LINK_IO_OK)
+		status = LINK_IO_OK;
 
 	CNX_UNLOCK (cnx);
-	linc_connection_unref (cnx);
+	link_connection_unref (cnx);
 
 	return status;
 }
 
 /**
- * linc_connection_write:
+ * link_connection_write:
  * @cnx: the connection to write to
  * @buf: a pointer to the start of an array of bytes
  * @len: the length of the array in bytes
@@ -975,7 +975,7 @@ linc_connection_writev (LINCConnection       *cnx,
  * 
  * Writes a contiguous block of data to the abstract connection.
  * 
- * FIXME: it allows re-enterancy via linc_connection_iterate
+ * FIXME: it allows re-enterancy via link_connection_iterate
  *        in certain cases.
  * FIXME: on this basis, the connection can die underneath
  *        our feet eg. between the main_iteration and the
@@ -983,39 +983,39 @@ linc_connection_writev (LINCConnection       *cnx,
  *
  * Return value: 0 on success, non 0 on error.
  **/
-LINCIOStatus
-linc_connection_write (LINCConnection       *cnx,
+LinkIOStatus
+link_connection_write (LinkConnection       *cnx,
 		       const guchar         *buf,
 		       gulong                len,
-		       const LINCWriteOpts  *opt_write_opts)
+		       const LinkWriteOpts  *opt_write_opts)
 {
 	struct iovec vec;
 
 	vec.iov_base = (guchar *) buf;
 	vec.iov_len  = len;
 
-	return linc_connection_writev (cnx, &vec, 1, opt_write_opts);
+	return link_connection_writev (cnx, &vec, 1, opt_write_opts);
 }
 
 static void
-linc_connection_dispose (GObject *obj)
+link_connection_dispose (GObject *obj)
 {
-	LINCConnection *cnx = (LINCConnection *)obj;
+	LinkConnection *cnx = (LinkConnection *)obj;
 
 	d_printf ("dispose connection %p\n", obj);
 
-	linc_source_remove (cnx);
+	link_source_remove (cnx);
 	queue_free (cnx);
 
 	parent_class->dispose (obj);
 }
 
 static void
-linc_connection_finalize (GObject *obj)
+link_connection_finalize (GObject *obj)
 {
-	LINCConnection *cnx = (LINCConnection *)obj;
+	LinkConnection *cnx = (LinkConnection *)obj;
 
-	linc_close_fd (cnx);
+	link_close_fd (cnx);
 
 	g_free (cnx->remote_host_info);
 	g_free (cnx->remote_serv_info);
@@ -1026,30 +1026,30 @@ linc_connection_finalize (GObject *obj)
 }
 
 static void
-linc_connection_init (LINCConnection *cnx)
+link_connection_init (LinkConnection *cnx)
 {
 	d_printf ("create new connection %p\n", cnx);
 
-	cnx->priv = g_new0 (LINCConnectionPrivate, 1);
+	cnx->priv = g_new0 (LinkConnectionPrivate, 1);
 	cnx->priv->fd = -1;
 }
 
 static void
-linc_connection_class_init (LINCConnectionClass *klass)
+link_connection_class_init (LinkConnectionClass *klass)
 {
 	GObjectClass *object_class = (GObjectClass *) klass;
 
-	object_class->dispose  = linc_connection_dispose;
-	object_class->finalize = linc_connection_finalize;
+	object_class->dispose  = link_connection_dispose;
+	object_class->finalize = link_connection_finalize;
 
-	klass->state_changed  = linc_connection_class_state_changed;
+	klass->state_changed  = link_connection_class_state_changed;
 	klass->broken         = NULL;
 
 	signals [BROKEN] =
 		g_signal_new ("broken",
 			      G_TYPE_FROM_CLASS (object_class),
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (LINCConnectionClass, broken),
+			      G_STRUCT_OFFSET (LinkConnectionClass, broken),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
@@ -1058,7 +1058,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 		g_signal_new ("blocking",
 			      G_TYPE_FROM_CLASS (object_class),
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (LINCConnectionClass, blocking),
+			      G_STRUCT_OFFSET (LinkConnectionClass, blocking),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__ULONG,
 			      G_TYPE_NONE, 1, G_TYPE_ULONG);
@@ -1067,25 +1067,25 @@ linc_connection_class_init (LINCConnectionClass *klass)
 }
 
 GType
-linc_connection_get_type (void)
+link_connection_get_type (void)
 {
 	static GType object_type = 0;
 
 	if (!object_type) {
 		static const GTypeInfo object_info = {
-			sizeof (LINCConnectionClass),
+			sizeof (LinkConnectionClass),
 			(GBaseInitFunc) NULL,
 			(GBaseFinalizeFunc) NULL,
-			(GClassInitFunc) linc_connection_class_init,
+			(GClassInitFunc) link_connection_class_init,
 			NULL,           /* class_finalize */
 			NULL,           /* class_data */
-			sizeof (LINCConnection),
+			sizeof (LinkConnection),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) linc_connection_init,
+			(GInstanceInitFunc) link_connection_init,
 		};
       
 		object_type = g_type_register_static (G_TYPE_OBJECT,
-						      "LINCConnection",
+						      "LinkConnection",
 						      &object_info,
 						      0);
 	}  
@@ -1094,10 +1094,10 @@ linc_connection_get_type (void)
 }
 
 
-LINCWriteOpts *
-linc_write_options_new (gboolean block_on_write)
+LinkWriteOpts *
+link_write_options_new (gboolean block_on_write)
 {
-	LINCWriteOpts *write_opts = g_new0 (LINCWriteOpts, 1);
+	LinkWriteOpts *write_opts = g_new0 (LinkWriteOpts, 1);
 
 	write_opts->block_on_write = block_on_write;
 
@@ -1105,13 +1105,13 @@ linc_write_options_new (gboolean block_on_write)
 }
 
 void
-linc_write_options_free (LINCWriteOpts *write_opts)
+link_write_options_free (LinkWriteOpts *write_opts)
 {
 	g_free (write_opts);
 }
 
 void
-linc_connection_set_max_buffer (LINCConnection *cnx,
+link_connection_set_max_buffer (LinkConnection *cnx,
 				gulong          max_buffer_bytes)
 {
 	g_return_if_fail (cnx != NULL);
@@ -1124,21 +1124,21 @@ linc_connection_set_max_buffer (LINCConnection *cnx,
 }
 
 static gboolean
-linc_connection_io_handler (GIOChannel  *gioc,
+link_connection_io_handler (GIOChannel  *gioc,
 			    GIOCondition condition,
 			    gpointer     data)
 {
-	LINCConnection      *cnx = data;
-	LINCConnectionClass *klass;
+	LinkConnection      *cnx = data;
+	LinkConnectionClass *klass;
 
 	CNX_LOCK (cnx);
-	linc_connection_ref_T (cnx);
+	link_connection_ref_T (cnx);
 
-	klass = (LINCConnectionClass *) G_TYPE_INSTANCE_GET_CLASS (
-		data, LINC_TYPE_CONNECTION, LINCConnection);
+	klass = (LinkConnectionClass *) G_TYPE_INSTANCE_GET_CLASS (
+		data, LINK_TYPE_CONNECTION, LinkConnection);
 
-	if (cnx->status == LINC_CONNECTED &&
-	    condition & LINC_IN_CONDS && klass->handle_input) {
+	if (cnx->status == LINK_CONNECTED &&
+	    condition & LINK_IN_CONDS && klass->handle_input) {
 		
 		d_printf ("Handle input on fd %d\n", cnx->priv->fd);
 
@@ -1147,42 +1147,42 @@ linc_connection_io_handler (GIOChannel  *gioc,
 		CNX_LOCK (cnx);
 	}
 
-	if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
+	if (cnx->status == LINK_CONNECTED && condition & G_IO_OUT) {
 		d_printf ("IO Out - buffer space free ...\n");
-		linc_connection_flush_write_queue_T_R (cnx);
+		link_connection_flush_write_queue_T_R (cnx);
 	}
 
-	if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
+	if (condition & (LINK_ERR_CONDS | G_IO_OUT)) {
 		int rv, n;
 		LincSockLen n_size = sizeof (n);
 
 		switch (cnx->status) {
-		case LINC_CONNECTING:
+		case LINK_CONNECTING:
 			n = 0;
 			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
 			if (!rv && !n && condition == G_IO_OUT) {
 				d_printf ("State changed to connected on %d\n", cnx->priv->fd);
 
-				linc_watch_set_condition (
+				link_watch_set_condition (
 					cnx->priv->tag,
-					LINC_ERR_CONDS | LINC_IN_CONDS);
+					LINK_ERR_CONDS | LINK_IN_CONDS);
 
-				linc_connection_state_changed_T (cnx, LINC_CONNECTED);
+				link_connection_state_changed_T (cnx, LINK_CONNECTED);
 
 				if (cnx->priv->write_queue) {
 					d_printf ("Connected, with queued writes, start flush ...\n");
-					linc_connection_flush_write_queue_T_R (cnx);
+					link_connection_flush_write_queue_T_R (cnx);
 				}
 			} else {
 				d_printf ("Error connecting %d %d %d on fd %d\n",
 					   rv, n, errno, cnx->priv->fd);
-				linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
+				link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
 			}
 			break;
-		case LINC_CONNECTED: {
-			if (condition & LINC_ERR_CONDS) {
+		case LINK_CONNECTED: {
+			if (condition & LINK_ERR_CONDS) {
 				d_printf ("Disconnect on err: %d\n", cnx->priv->fd);
-				linc_connection_state_changed_T (cnx, LINC_DISCONNECTED);
+				link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
 			}
 			break;
 		}
@@ -1192,15 +1192,15 @@ linc_connection_io_handler (GIOChannel  *gioc,
 	}
 
 	CNX_UNLOCK (cnx);
-	linc_connection_unref (cnx);
+	link_connection_unref (cnx);
 
 	return TRUE;
 }
 
-LINCConnectionStatus
-linc_connection_get_status (LINCConnection *cnx)
+LinkConnectionStatus
+link_connection_get_status (LinkConnection *cnx)
 {
-	LINCConnectionStatus status;
+	LinkConnectionStatus status;
 
 	CNX_LOCK (cnx);
 	status = cnx->status;
@@ -1212,44 +1212,44 @@ linc_connection_get_status (LINCConnection *cnx)
 }
 
 void
-linc_connection_exec_disconnect (LINCCommandDisconnect *cmd)
+link_connection_exec_disconnect (LinkCommandDisconnect *cmd)
 {
 	d_printf ("Exec defered disconnect on %p", cmd->cnx);
 
-	linc_connection_state_changed (cmd->cnx, LINC_DISCONNECTED);
+	link_connection_state_changed (cmd->cnx, LINK_DISCONNECTED);
 
-	linc_connection_unref (cmd->cnx);
+	link_connection_unref (cmd->cnx);
 	g_free (cmd);
 }
 
 void
-linc_connection_disconnect (LINCConnection *cnx)
+link_connection_disconnect (LinkConnection *cnx)
 {
-	LINCCommandDisconnect *cmd;
+	LinkCommandDisconnect *cmd;
 
-	cmd = g_new (LINCCommandDisconnect, 1);
-	cmd->cmd.type = LINC_COMMAND_DISCONNECT;
-	cmd->cnx = linc_connection_ref (cnx);
+	cmd = g_new (LinkCommandDisconnect, 1);
+	cmd->cmd.type = LINK_COMMAND_DISCONNECT;
+	cmd->cnx = link_connection_ref (cnx);
 
-	linc_exec_command ((LINCCommand *) cmd);
+	link_exec_command ((LinkCommand *) cmd);
 }
 
-LINCConnectionStatus
-linc_connection_wait_connected (LINCConnection *cnx)
+LinkConnectionStatus
+link_connection_wait_connected (LinkConnection *cnx)
 {
-	g_return_val_if_fail (!linc_get_threaded (),
-			      LINC_CONNECTED);
+	g_return_val_if_fail (!link_get_threaded (),
+			      LINK_CONNECTED);
 	
-	while (cnx && cnx->status == LINC_CONNECTING) 
-		linc_main_iteration (TRUE);
+	while (cnx && cnx->status == LINK_CONNECTING) 
+		link_main_iteration (TRUE);
 
-	return cnx ? cnx->status : LINC_DISCONNECTED;
+	return cnx ? cnx->status : LINK_DISCONNECTED;
 }
 
 void
-_linc_connection_thread_init (gboolean thread)
+_link_connection_thread_init (gboolean thread)
 {
-	cnx_lock = linc_mutex_new ();
+	cnx_lock = link_mutex_new ();
 	if (cnx_lock)
 		cnx_condition = g_cond_new();
 }

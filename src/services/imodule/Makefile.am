@@ -8,11 +8,13 @@ INCLUDES =				\
 	-DORBIT2_INTERNAL_API		\
 	$(WARN_CFLAGS)			\
 	$(ORBIT_CFLAGS)			\
+	$(LOCAL_LINC_CFLAGS)		\
 	$(ORBIT_IDL_CFLAGS)		\
 	$(NULL)
 
 LDADD = $(ORBIT_LIBS)				\
 	$(ORBIT_IDL_LIBS)			\
+	$(LOCAL_LINC_LIBS)			\
 	$(top_builddir)/src/orb/libORBit-2.la
 
 imoduleincludedir      = $(includedir)/orbit-2.0/ORBitservices

@@ -16,7 +16,7 @@
 
 static void IOP_profile_free (IOP_Profile_info *p);
 
-#ifdef LINC_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
 static IOP_Component_info *
 IOP_component_find (GSList *list, IOP_ComponentId type, GSList **pos)
 {
@@ -29,7 +29,7 @@ IOP_component_find (GSList *list, IOP_ComponentId type, GSList **pos)
 
   return NULL;
 }
-#endif /* LINC_SSL_SUPPORT */
+#endif /* LINK_SSL_SUPPORT */
 
 static gchar *
 IOP_ObjectKey_dump (ORBit_ObjectKey *objkey)
@@ -229,7 +229,7 @@ IOP_profile_get_info (CORBA_Object  obj,
       *host = iiop->host;
       *service = tmpbuf;
       g_snprintf(tmpbuf, 8, "%d", iiop->port);
-#ifdef LINC_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
       {
 	IOP_TAG_SSL_SEC_TRANS_info *ssli;
 	ssli = (IOP_TAG_SSL_SEC_TRANS_info *)
@@ -249,7 +249,7 @@ IOP_profile_get_info (CORBA_Object  obj,
       *proto = giop->proto;
       *host = giop->host;
       *service = giop->service;
-#ifdef LINC_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
       {
 	IOP_TAG_GENERIC_SSL_SEC_TRANS_info *ssli;
 	ssli = (IOP_TAG_GENERIC_SSL_SEC_TRANS_info *)
@@ -478,14 +478,14 @@ IOP_start_profiles (CORBA_ORB orb)
 	IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
 
 	for (l = orb->servers ; l != NULL ; l = l->next) {
-		LINCServer *serv = l->data;
+		LinkServer *serv = l->data;
 		gboolean   ipv4, ipv6, uds, ssl;
 
 		ipv4 = !strcmp (serv->proto->name, "IPv4");
 		ipv6 = !strcmp (serv->proto->name, "IPv6");
 		uds  = !strcmp (serv->proto->name, "UNIX");
 
-		ssl  = (serv->create_options & LINC_CONNECTION_SSL);
+		ssl  = (serv->create_options & LINK_CONNECTION_SSL);
 
 		if (!osi && uds) {
 			osi = g_new0 (IOP_TAG_ORBIT_SPECIFIC_info, 1);

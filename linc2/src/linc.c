@@ -16,40 +16,40 @@
 #include "linc-debug.h"
 #include "linc-private.h"
 
-static gboolean linc_threaded = FALSE;
-static gboolean linc_mutex_new_called = FALSE;
-GMainLoop      *linc_loop = NULL;
-GMainContext   *linc_context = NULL;
+static gboolean link_threaded = FALSE;
+static gboolean link_mutex_new_called = FALSE;
+GMainLoop      *link_loop = NULL;
+GMainContext   *link_context = NULL;
 
 /* commands for the I/O loop */
-static GMutex  *linc_cmd_queue_lock = NULL;
-static GList   *linc_cmd_queue = NULL;
+static GMutex  *link_cmd_queue_lock = NULL;
+static GList   *link_cmd_queue = NULL;
 
-static int linc_wakeup_fds[2] = { -1, -1 };
-#define LINC_WAKEUP_POLL  linc_wakeup_fds [0]
-#define LINC_WAKEUP_WRITE linc_wakeup_fds [1]
-static GSource *linc_main_source = NULL;
-static GThread *linc_io_thread = NULL;
+static int link_wakeup_fds[2] = { -1, -1 };
+#define LINK_WAKEUP_POLL  link_wakeup_fds [0]
+#define LINK_WAKEUP_WRITE link_wakeup_fds [1]
+static GSource *link_main_source = NULL;
+static GThread *link_io_thread = NULL;
 
-#ifdef LINC_SSL_SUPPORT
-SSL_METHOD *linc_ssl_method;
-SSL_CTX    *linc_ssl_ctx;
+#ifdef LINK_SSL_SUPPORT
+SSL_METHOD *link_ssl_method;
+SSL_CTX    *link_ssl_ctx;
 #endif
 
 /**
- * linc_get_threaded:
+ * link_get_threaded:
  * 
  *   This routine returns TRUE if threading is enabled for
  * the ORB.
  **/
 gboolean
-linc_get_threaded (void)
+link_get_threaded (void)
 {
-	return linc_threaded;
+	return link_threaded;
 }
 
 /**
- * linc_set_threaded:
+ * link_set_threaded:
  * @threaded: whether to do locking
  * 
  *   This routine turns threading on or off for the whole
@@ -57,26 +57,26 @@ linc_get_threaded (void)
  * before any of the ORB initialization occurs.
  **/
 void
-linc_set_threaded (gboolean threaded)
+link_set_threaded (gboolean threaded)
 {
-	g_warning ("linc_set_threaded is deprecated");
+	g_warning ("link_set_threaded is deprecated");
 
-	if (linc_mutex_new_called)
+	if (link_mutex_new_called)
 		g_error ("You need to set this before using the ORB");
 
-	linc_threaded = threaded;
+	link_threaded = threaded;
 }
 
 static void
-linc_dispatch_command (gpointer data)
+link_dispatch_command (gpointer data)
 {
-	LINCCommand *cmd = data;
+	LinkCommand *cmd = data;
 	switch (cmd->type) {
-	case LINC_COMMAND_SET_CONDITION:
-		linc_connection_exec_set_condition (data);
+	case LINK_COMMAND_SET_CONDITION:
+		link_connection_exec_set_condition (data);
 		break;
-	case LINC_COMMAND_DISCONNECT:
-		linc_connection_exec_disconnect (data);
+	case LINK_COMMAND_DISCONNECT:
+		link_connection_exec_disconnect (data);
 		break;
 	default:
 		g_error ("Unimplemented (%d)", cmd->type);
@@ -85,25 +85,25 @@ linc_dispatch_command (gpointer data)
 }
 
 static gboolean
-linc_mainloop_handle_input (GIOChannel   *source,
+link_mainloop_handle_input (GIOChannel   *source,
 			    GIOCondition  condition,
 			    gpointer      data)
 {
 	char c;
 	GList *l, *queue;
 
-	g_mutex_lock (linc_cmd_queue_lock);
+	g_mutex_lock (link_cmd_queue_lock);
 	{
 		/* FIXME: read a big, non-blocking slurp here */
-		read (LINC_WAKEUP_POLL, &c, sizeof (c));
+		read (LINK_WAKEUP_POLL, &c, sizeof (c));
 
-		queue = linc_cmd_queue;
-		linc_cmd_queue = NULL;
+		queue = link_cmd_queue;
+		link_cmd_queue = NULL;
 	}
-	g_mutex_unlock (linc_cmd_queue_lock);
+	g_mutex_unlock (link_cmd_queue_lock);
 
 	for (l = queue; l; l = l->next)
-		linc_dispatch_command (l->data);
+		link_dispatch_command (l->data);
 
 	g_list_free (queue);
 
@@ -111,40 +111,40 @@ linc_mainloop_handle_input (GIOChannel   *source,
 }
 
 void
-linc_exec_command (LINCCommand *cmd)
+link_exec_command (LinkCommand *cmd)
 {
 	char c = 'A'; /* magic */
 	int  res;
 
-	if (!linc_threaded) {
-		linc_dispatch_command (cmd);
+	if (!link_threaded) {
+		link_dispatch_command (cmd);
 		return;
 	}
 
-	LINC_MUTEX_LOCK (linc_cmd_queue_lock);
+	LINK_MUTEX_LOCK (link_cmd_queue_lock);
 
-	if (LINC_WAKEUP_WRITE == -1) { /* shutdown main loop */
-		linc_dispatch_command (cmd);
-		LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
+	if (LINK_WAKEUP_WRITE == -1) { /* shutdown main loop */
+		link_dispatch_command (cmd);
+		LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
 		return;
 	}
 
-	/* FIXME: if (linc_cmd_queue) - no need to wake mainloop */
-	linc_cmd_queue = g_list_append (linc_cmd_queue, cmd);
+	/* FIXME: if (link_cmd_queue) - no need to wake mainloop */
+	link_cmd_queue = g_list_append (link_cmd_queue, cmd);
 
-	while ((res = write (LINC_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
+	while ((res = write (LINK_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
 	       (errno == EAGAIN || errno == EINTR));
 
-	LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
+	LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
 	if (res < 0)
 		g_error ("Failed to write to linc wakeup socket %d 0x%x(%d) (%d)",
-			 res, errno, errno, LINC_WAKEUP_WRITE);
+			 res, errno, errno, LINK_WAKEUP_WRITE);
 }
 
 static gpointer
-linc_io_thread_fn (gpointer data)
+link_io_thread_fn (gpointer data)
 {
-	linc_main_loop_run ();
+	link_main_loop_run ();
 
 	/* FIXME: need to be able to quit without waiting ... */
 
@@ -155,40 +155,40 @@ linc_io_thread_fn (gpointer data)
 	 */
 
 	/* A tad of shutdown */
-	LINC_MUTEX_LOCK (linc_cmd_queue_lock);
-	if (LINC_WAKEUP_WRITE >= 0) {
-		close (LINC_WAKEUP_WRITE);
-		close (LINC_WAKEUP_POLL);
-		LINC_WAKEUP_WRITE = -1;
-		LINC_WAKEUP_POLL = -1;
+	LINK_MUTEX_LOCK (link_cmd_queue_lock);
+	if (LINK_WAKEUP_WRITE >= 0) {
+		close (LINK_WAKEUP_WRITE);
+		close (LINK_WAKEUP_POLL);
+		LINK_WAKEUP_WRITE = -1;
+		LINK_WAKEUP_POLL = -1;
 	}
-	LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
+	LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
 
-	if (linc_main_source) {
-		g_source_destroy (linc_main_source);
-		g_source_unref (linc_main_source);
-		linc_main_source = NULL;
+	if (link_main_source) {
+		g_source_destroy (link_main_source);
+		g_source_unref (link_main_source);
+		link_main_source = NULL;
 	}
 
 	return NULL;
 }
 
 /**
- * linc_init:
+ * link_init:
  * @init_threads: if we want threading enabled.
  * 
  * Initialize linc.
  **/
 void
-linc_init (gboolean init_threads)
+link_init (gboolean init_threads)
 {
-	if ((init_threads || linc_threaded) &&
+	if ((init_threads || link_threaded) &&
 	    !g_thread_supported ())
 		g_thread_init (NULL);
 
-	if (!linc_threaded && init_threads) {
-		linc_threaded = TRUE;
-		_linc_connection_thread_init (TRUE);
+	if (!link_threaded && init_threads) {
+		link_threaded = TRUE;
+		_link_connection_thread_init (TRUE);
 	}
 
 	g_type_init ();
@@ -219,106 +219,106 @@ linc_init (gboolean init_threads)
 	 *      some as a performance hit.
 	 *
 	 * Another possibility is to surround the call to writev() in
-	 * linc_connection_writev (linc-connection.c) with something like
+	 * link_connection_writev (linc-connection.c) with something like
 	 * this:
 	 *
-	 *		linc_ignore_sigpipe = 1;
+	 *		link_ignore_sigpipe = 1;
 	 *
 	 *		result = writev ( ... );
 	 *
-	 *		linc_ignore_sigpipe = 0;
+	 *		link_ignore_sigpipe = 0;
 	 *
 	 * The SIGPIPE signal handler will check the global
-	 * linc_ignore_sigpipe variable and ignore the signal if it
+	 * link_ignore_sigpipe variable and ignore the signal if it
 	 * is 1.  If it is 0, it can proxy to the user's original
 	 * signal handler.  This is a real possibility.
 	 */
 	signal (SIGPIPE, SIG_IGN);
 	
-	linc_context = g_main_context_new ();
-	linc_loop    = g_main_loop_new (linc_context, TRUE);
+	link_context = g_main_context_new ();
+	link_loop    = g_main_loop_new (link_context, TRUE);
 	
-#ifdef LINC_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
 	SSLeay_add_ssl_algorithms ();
-	linc_ssl_method = SSLv23_method ();
-	linc_ssl_ctx = SSL_CTX_new (linc_ssl_method);
+	link_ssl_method = SSLv23_method ();
+	link_ssl_ctx = SSL_CTX_new (link_ssl_method);
 #endif
 
-	linc_cmd_queue_lock  = linc_mutex_new ();
+	link_cmd_queue_lock  = link_mutex_new ();
 
 	if (init_threads) {
 		GError *error = NULL;
 
-		if (pipe (linc_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
+		if (pipe (link_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
 
-		linc_main_source = linc_source_create_watch
-			(linc_context, LINC_WAKEUP_POLL,
+		link_main_source = link_source_create_watch
+			(link_context, LINK_WAKEUP_POLL,
 			 NULL, (G_IO_IN | G_IO_PRI),
-			 linc_mainloop_handle_input, NULL);
+			 link_mainloop_handle_input, NULL);
 
-		linc_io_thread = g_thread_create_full
-			(linc_io_thread_fn, NULL, 0, TRUE, FALSE,
+		link_io_thread = g_thread_create_full
+			(link_io_thread_fn, NULL, 0, TRUE, FALSE,
 			 G_THREAD_PRIORITY_NORMAL, &error);
 
-		if (!linc_io_thread || error)
+		if (!link_io_thread || error)
 			g_error ("Failed to create linc worker thread");
 	}
 }
 
 /**
- * linc_main_iteration:
+ * link_main_iteration:
  * @block_for_reply: whether we should wait for a reply
  * 
  * This routine iterates the linc mainloop, which has
  * only the linc sources registered against it.
  **/
 void
-linc_main_iteration (gboolean block_for_reply)
+link_main_iteration (gboolean block_for_reply)
 {
 	g_main_context_iteration (
-		linc_context, block_for_reply);
+		link_context, block_for_reply);
 }
 
 /**
- * linc_main_pending:
+ * link_main_pending:
  * 
  * determines if the linc mainloop has any pending work to process.
  * 
  * Return value: TRUE if the linc mainloop has any pending work to process.
  **/
 gboolean
-linc_main_pending (void)
+link_main_pending (void)
 {
-	return g_main_context_pending (linc_context);
+	return g_main_context_pending (link_context);
 }
 
 /**
- * linc_main_loop_run:
+ * link_main_loop_run:
  * 
  * Runs the linc mainloop; blocking until the loop is exited.
  **/
 void
-linc_main_loop_run (void)
+link_main_loop_run (void)
 {
-	g_main_loop_run (linc_loop);
+	g_main_loop_run (link_loop);
 }
 
 /**
- * linc_mutex_new:
+ * link_mutex_new:
  * 
  * Creates a mutes, iff threads are supported, initialized and
- * linc_set_threaded has been called.
+ * link_set_threaded has been called.
  * 
  * Return value: a new GMutex, or NULL if one is not required.
  **/
 GMutex *
-linc_mutex_new (void)
+link_mutex_new (void)
 {
-	linc_mutex_new_called = TRUE;
+	link_mutex_new_called = TRUE;
 
 #ifdef G_THREADS_ENABLED
-	if (linc_threaded && g_thread_supported ())
+	if (link_threaded && g_thread_supported ())
 		return g_mutex_new ();
 #endif
 
@@ -326,7 +326,7 @@ linc_mutex_new (void)
 }
 
 /**
- * linc_main_idle_add:
+ * link_main_idle_add:
  * @function: method to call at idle
  * @data: user data.
  * 
@@ -335,7 +335,7 @@ linc_mutex_new (void)
  * Return value: id of handler
  **/
 guint 
-linc_main_idle_add (GSourceFunc    function,
+link_main_idle_add (GSourceFunc    function,
 		    gpointer       data)
 {
 	guint id;
@@ -346,33 +346,33 @@ linc_main_idle_add (GSourceFunc    function,
 	source = g_idle_source_new ();
 
 	g_source_set_callback (source, function, data, NULL);
-	id = g_source_attach (source, linc_context);
+	id = g_source_attach (source, link_context);
 	g_source_unref (source);
 
 	return id;
 }
 
 gboolean
-linc_in_io_thread (void)
+link_in_io_thread (void)
 {
-	return (!linc_io_thread ||
-		g_thread_self() == linc_io_thread);
+	return (!link_io_thread ||
+		g_thread_self() == link_io_thread);
 }
 
 GMainLoop *
-linc_main_get_loop (void)
+link_main_get_loop (void)
 {
-	return linc_loop;
+	return link_loop;
 }
 
 GMainContext *
-linc_main_get_context (void)
+link_main_get_context (void)
 {
-	return linc_context;
+	return link_context;
 }
 
 gboolean
-linc_mutex_is_locked (GMutex *lock)
+link_mutex_is_locked (GMutex *lock)
 {
 	gboolean result = TRUE;
 
@@ -385,35 +385,35 @@ linc_mutex_is_locked (GMutex *lock)
 }
 
 void
-linc_shutdown (void)
+link_shutdown (void)
 {
-	if (linc_loop) /* break into the linc loop */
-		g_main_loop_quit (linc_loop);
+	if (link_loop) /* break into the linc loop */
+		g_main_loop_quit (link_loop);
 
-	if (linc_io_thread) {
-		g_thread_join (linc_io_thread);
-		linc_io_thread = NULL;
+	if (link_io_thread) {
+		g_thread_join (link_io_thread);
+		link_io_thread = NULL;
 	}
 }
 
 /* deprecated symbols */
 
 GMutex *
-linc_object_get_mutex (void)
+link_object_get_mutex (void)
 {
-	g_warning ("linc_object_get_mutex: deprecated");
+	g_warning ("link_object_get_mutex: deprecated");
 	return NULL;
 }
 gpointer
-linc_object_ref (gpointer object)
+link_object_ref (gpointer object)
 {
-	g_warning ("linc_object_ref: deprecated");
+	g_warning ("link_object_ref: deprecated");
 	
 	return g_object_ref (object);
 }
 void
-linc_object_unref (gpointer object)
+link_object_unref (gpointer object)
 {
-	g_warning ("linc_object_unref: deprecated");
+	g_warning ("link_object_unref: deprecated");
 	g_object_unref (object);
 }

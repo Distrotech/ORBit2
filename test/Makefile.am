@@ -7,6 +7,7 @@ INCLUDES =                          \
 	-DORBIT2_INTERNAL_API       \
 	$(WARN_CFLAGS)              \
 	$(ORBIT_DEBUG_CFLAGS)       \
+	$(LOCAL_LINC_CFLAGS)        \
 	$(ORBIT_CFLAGS)
 
 bin_PROGRAMS=ior-decode-2 typelib-dump

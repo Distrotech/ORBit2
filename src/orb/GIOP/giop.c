@@ -114,6 +114,11 @@ giop_tmpdir_init (void)
 	char *dirname;
 	char *safe_dir = NULL;
 	long iteration = 0;
+	static gboolean inited = FALSE;
+
+	if (inited)
+		return;
+	inited = TRUE;
 
 	tmp_root = g_get_tmp_dir ();
 	dirname = g_strdup_printf ("orbit-%s",
@@ -124,7 +129,7 @@ giop_tmpdir_init (void)
 		safe_dir = scan_socket_dir (tmp_root, dirname);
 		if (safe_dir) {
 			dprintf (GIOP, "Have safe dir '%s'", safe_dir);
-			linc_set_tmpdir (safe_dir);
+			link_set_tmpdir (safe_dir);
 			break;
 		}
 
@@ -246,7 +251,7 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 	g_return_if_fail (recv_buffer != NULL);
 
 	if (recv_buffer->connection &&
-	    LINC_CONNECTION (recv_buffer->connection)->status == LINC_CONNECTED)
+	    LINK_CONNECTION (recv_buffer->connection)->status == LINK_CONNECTED)
 		status = "connected";
 	else
 		status = "not connected";
@@ -400,13 +405,13 @@ giop_request_handler_fn (gpointer data, gpointer user_data)
 		giop_thread_request_process (tdata);
 
 		g_mutex_lock (giop_pool_hash_lock);
-		LINC_MUTEX_LOCK (tdata->lock);
+		LINK_MUTEX_LOCK (tdata->lock);
 
 		if ((done = g_queue_is_empty (tdata->request_queue)) &&
 		    tdata->key)
 			giop_thread_key_release_T (tdata->key);
 
-		LINC_MUTEX_UNLOCK (tdata->lock);
+		LINK_MUTEX_UNLOCK (tdata->lock);
 		g_mutex_unlock (giop_pool_hash_lock);
 
 	} while (!done);
@@ -417,13 +422,20 @@ giop_request_handler_fn (gpointer data, gpointer user_data)
 	g_private_set (giop_tdata_private, NULL);
 }
 
+const char *
+ORBit_get_safe_tmp (void)
+{
+	giop_tmpdir_init ();
+	return link_get_tmpdir ();
+}
+
 void
 giop_init (gboolean threaded, gboolean blank_wire_data)
 {
 	if (threaded)
 		g_warning ("\n --- you're entering a whole world of pain --- ");
 	giop_is_threaded = threaded;
-	linc_init (threaded);
+	link_init (threaded);
 
 	if (threaded) {
 		GIOPThread *tdata;
@@ -437,7 +449,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 		if (pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
 
-		giop_main_source = linc_source_create_watch (
+		giop_main_source = link_source_create_watch (
 			g_main_context_default (), WAKEUP_POLL,
 			NULL, (G_IO_IN | G_IO_PRI),
 			giop_mainloop_handle_input, NULL);
@@ -447,7 +459,7 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 		/* Setup thread pool for incoming requests */
 		giop_thread_pool = g_thread_pool_new
 			(giop_request_handler_fn, NULL, -1, FALSE, NULL);
-		giop_pool_hash_lock = linc_mutex_new ();
+		giop_pool_hash_lock = link_mutex_new ();
 		giop_pool_hash = g_hash_table_new (NULL, NULL);
 	}
 
@@ -542,7 +554,7 @@ giop_main_run (void)
 		g_main_loop_unref (giop_main_loop);
 		giop_main_loop = NULL;
 	} else
-		linc_main_loop_run ();
+		link_main_loop_run ();
 }
 
 void
@@ -551,8 +563,8 @@ giop_shutdown (void)
 	if (!giop_is_threaded)
 		giop_connections_shutdown ();
 
-	if (linc_loop) /* break into the linc loop */
-		g_main_loop_quit (linc_loop);
+	if (link_loop) /* break into the linc loop */
+		g_main_loop_quit (link_loop);
 	if (giop_main_loop)
 		g_main_loop_quit (giop_main_loop);
 
@@ -585,9 +597,9 @@ giop_thread_request_process (GIOPThread *tdata)
 {
 	GIOPQueueEntry *qe = NULL;
 
-	LINC_MUTEX_LOCK (tdata->lock);
+	LINK_MUTEX_LOCK (tdata->lock);
 	qe = g_queue_pop_head (tdata->request_queue);	
-	LINC_MUTEX_UNLOCK (tdata->lock);
+	LINK_MUTEX_UNLOCK (tdata->lock);
 
 	if (qe)
 		tdata->request_handler (qe->poa_object, qe->recv_buffer, NULL);
@@ -611,12 +623,12 @@ giop_thread_request_push (GIOPThread *tdata,
 	*poa_object = NULL;
 	*recv_buffer = NULL;
 
-	LINC_MUTEX_LOCK (tdata->lock);
+	LINK_MUTEX_LOCK (tdata->lock);
 
 	g_queue_push_tail (tdata->request_queue, qe);
 	giop_incoming_signal_T (tdata);
 
-	LINC_MUTEX_UNLOCK (tdata->lock);
+	LINK_MUTEX_UNLOCK (tdata->lock);
 }
 
 GIOPThread *

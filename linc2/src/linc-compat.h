@@ -3,8 +3,8 @@
  * hacks for the mind-numbingly broken Unix like
  * things that exist out there.
  */
-#ifndef LINC_HACKS_H
-#define LINC_HACKS_H
+#ifndef LINK_HACKS_H
+#define LINK_HACKS_H
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -62,9 +62,9 @@
 
 #if !defined (UNIX_PATH_MAX)
 /* UNP: 14.2 - Posix.1g at least 100 bytes */
-#  define LINC_UNIX_PATH_MAX 100
+#  define LINK_UNIX_PATH_MAX 100
 #else
-#  define LINC_UNIX_PATH_MAX UNIX_PATH_MAX
+#  define LINK_UNIX_PATH_MAX UNIX_PATH_MAX
 #endif
 
-#endif /* LINC_HACKS_H */
+#endif /* LINK_HACKS_H */

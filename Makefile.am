@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = 1.3
 
-SUBDIRS=src include test docs
+SUBDIRS=linc2 src include test docs
 
 bin_SCRIPTS=orbit2-config
 

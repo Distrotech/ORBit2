@@ -10,8 +10,8 @@
 
 static GMutex *object_lock = NULL;
 
-#define OBJECT_LOCK(obj)   LINC_MUTEX_LOCK   (object_lock)
-#define OBJECT_UNLOCK(obj) LINC_MUTEX_UNLOCK (object_lock)
+#define OBJECT_LOCK(obj)   LINK_MUTEX_LOCK   (object_lock)
+#define OBJECT_UNLOCK(obj) LINK_MUTEX_UNLOCK (object_lock)
 
 /*
  * obj->orb -> construct time property ...
@@ -79,14 +79,14 @@ ORBit_register_objref (CORBA_Object obj)
 	g_assert (obj->object_key != NULL);
 	g_assert (obj->profile_list != NULL);
 
-	LINC_MUTEX_LOCK (orb->lock);
+	LINK_MUTEX_LOCK (orb->lock);
 
 	if (!orb->objrefs)
 		orb->objrefs = g_hash_table_new (
 			g_CORBA_Object_hash, g_CORBA_Object_equal);
 	g_hash_table_insert (orb->objrefs, obj, obj);
 
-	LINC_MUTEX_UNLOCK (orb->lock);
+	LINK_MUTEX_UNLOCK (orb->lock);
 }
 
 static CORBA_Object
@@ -97,12 +97,12 @@ ORBit_lookup_objref (CORBA_Object obj)
 
 	g_assert (orb != NULL);
 
-	LINC_MUTEX_LOCK (orb->lock);
+	LINK_MUTEX_LOCK (orb->lock);
 	if (!orb->objrefs || !obj->profile_list)
 		result = NULL;
 	else
 		result = g_hash_table_lookup (orb->objrefs, obj);
-	LINC_MUTEX_UNLOCK (orb->lock);
+	LINK_MUTEX_UNLOCK (orb->lock);
 
 	return result;
 }
@@ -116,9 +116,9 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	g_assert (orb != NULL);
 
 	if (obj->profile_list) {
-		LINC_MUTEX_LOCK (orb->lock);
+		LINK_MUTEX_LOCK (orb->lock);
 		g_hash_table_remove (orb->objrefs, obj);
-		LINC_MUTEX_UNLOCK (orb->lock);
+		LINK_MUTEX_UNLOCK (orb->lock);
 	}
 
 	ORBit_free_T (obj->object_key);
@@ -174,7 +174,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 	fakeme.profile_list = profiles;
 	fakeme.object_key = IOP_profiles_sync_objkey (profiles);
 
-	LINC_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 
 	retval = ORBit_lookup_objref (&fakeme);
 
@@ -205,7 +205,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 
 	retval = ORBit_RootObject_duplicate_T (retval);
 
-	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	return retval;
 }
@@ -256,28 +256,28 @@ ORBit_try_connection (CORBA_Object obj)
 		if (!obj->connection)
 			retval = FALSE;
 		else {
-			switch (linc_connection_get_status
-					((LINCConnection *) obj->connection)) {
-			case LINC_CONNECTING:
+			switch (link_connection_get_status
+					((LinkConnection *) obj->connection)) {
+			case LINK_CONNECTING:
 				dprintf (GIOP, "ORBit_try_connection bypassed while connecting ...");
-			case LINC_CONNECTED:
+			case LINK_CONNECTED:
 				retval = TRUE;
 				break;
-			case LINC_DISCONNECTED:
+			case LINK_DISCONNECTED:
 				disconnect = TRUE;
 				break;
 			}
 		}
 	} else {
-		switch (linc_connection_wait_connected
-				((LINCConnection *) obj->connection)) {
-		case LINC_CONNECTING:
+		switch (link_connection_wait_connected
+				((LinkConnection *) obj->connection)) {
+		case LINK_CONNECTING:
 			g_assert_not_reached();
 			break;
-		case LINC_CONNECTED:
+		case LINK_CONNECTED:
 			retval = TRUE;
 			break;
-		case LINC_DISCONNECTED:
+		case LINK_DISCONNECTED:
 			disconnect = TRUE;
 			break;
 		}
@@ -332,7 +332,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 
 			obj->connection = giop_connection_initiate (
 				obj->orb, proto, host, service,
-				is_ssl ? LINC_CONNECTION_SSL : 0, iiop_version);
+				is_ssl ? LINK_CONNECTION_SSL : 0, iiop_version);
 
 			if (ORBit_try_connection (obj)) {
 				obj->object_key = objkey;
@@ -880,5 +880,5 @@ CORBA_Object__iinterface = {
 void
 _ORBit_object_init (void)
 {
-	object_lock = linc_mutex_new();
+	object_lock = link_mutex_new();
 }

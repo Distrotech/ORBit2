@@ -1,6 +1,4 @@
-GIOPincludedir=$(includedir)/orbit-2.0/orbit/GIOP
-
-GIOPinclude_HEADERS= \
+giop_headers = \
 	giop-endian.h \
 	giop-connection.h \
 	giop-endian.h \
@@ -10,3 +8,5 @@ GIOPinclude_HEADERS= \
 	giop-types.h \
 	giop.h \
 	giop-basics.h
+
+EXTRA_DIST = $(giop_headers)

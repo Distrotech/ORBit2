@@ -5,7 +5,7 @@
 
 #include "giop-private.h"
 
-static LINCConnectionClass *parent_class = NULL;
+static LinkConnectionClass *parent_class = NULL;
 
 enum {
 	PROP_0,
@@ -14,8 +14,8 @@ enum {
 };
 
 static void
-giop_connection_real_state_changed (LINCConnection      *cnx,
-				    LINCConnectionStatus status)
+giop_connection_real_state_changed (LinkConnection      *cnx,
+				    LinkConnectionStatus status)
 {
 	GIOPConnection *gcnx = GIOP_CONNECTION (cnx);
 
@@ -23,7 +23,7 @@ giop_connection_real_state_changed (LINCConnection      *cnx,
 		parent_class->state_changed (cnx, status);
 
 	switch (status) {
-	case LINC_DISCONNECTED:
+	case LINK_DISCONNECTED:
 		if (gcnx->incoming_msg) {
 			giop_recv_buffer_unuse (gcnx->incoming_msg);
 			gcnx->incoming_msg = NULL;
@@ -38,10 +38,10 @@ giop_connection_real_state_changed (LINCConnection      *cnx,
 void
 giop_connection_close (GIOPConnection *cnx)
 {
-	if (cnx->parent.status == LINC_DISCONNECTED)
+	if (cnx->parent.status == LINK_DISCONNECTED)
 		return;
 
-	if (cnx->parent.status == LINC_CONNECTED &&
+	if (cnx->parent.status == LINK_CONNECTED &&
 	    (!cnx->parent.was_initiated ||
 	     cnx->giop_version == GIOP_1_2)) {
 		GIOPSendBuffer *buf;
@@ -52,7 +52,7 @@ giop_connection_close (GIOPConnection *cnx)
 		giop_send_buffer_unuse (buf);
 	}
 
-	linc_connection_disconnect (LINC_CONNECTION (cnx));
+	link_connection_disconnect (LINK_CONNECTION (cnx));
 }
 
 static void
@@ -157,7 +157,7 @@ giop_connection_get_type (void)
 		};
       
 		object_type = g_type_register_static (
-			linc_connection_get_type(),
+			link_connection_get_type(),
 			"GIOPConnection", &object_info, 0);
 	}  
 
@@ -174,10 +174,10 @@ giop_connection_initiate (gpointer orb_data,
 {
 	g_return_val_if_fail (remote_host_info != NULL, NULL);
 
-	options |= LINC_CONNECTION_NONBLOCKING;
+	options |= LINK_CONNECTION_NONBLOCKING;
 
 	return (GIOPConnection *)
-		linc_connection_initiate_list
+		link_connection_initiate_list
 			(giop_connection_get_type (),
 			 proto_name, remote_host_info,
 			 remote_serv_info, options,
