@@ -865,6 +865,7 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
     *(CORBA_Principal *)*newval = *(CORBA_Principal *)*val;
     ((CORBA_Principal *)*newval)->_buffer =
       CORBA_sequence_CORBA_octet_allocbuf(((CORBA_Principal *)*newval)->_length);
+    ((CORBA_Principal *)*newval)->_buffer = CORBA_TRUE;
     memcpy(((CORBA_Principal *)*newval)->_buffer,
 	   ((CORBA_Principal *)*val)->_buffer,
 	   ((CORBA_Principal *)*val)->_length);

@@ -166,7 +166,7 @@ PortableServer_POA__get_the_children(PortableServer_POA _obj,
   retval->_length = g_hash_table_size(_obj->child_poas);
   retval->_maximum = 0;
   retval->_buffer = CORBA_sequence_PortableServer_POA_allocbuf(retval->_length);
-  retval->_release = TRUE;
+  retval->_release = CORBA_TRUE;
   g_hash_table_foreach(_obj->child_poas, poalist_add_child, retval);
 
   return retval;
@@ -1365,9 +1365,11 @@ ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
   
   poa->name = CORBA_string_dup(nom);
 
-  adaptor->adaptor_key._length = sizeof(CORBA_long) + poa->poa_rand_len;
-  adaptor->adaptor_key._buffer =
-    CORBA_sequence_CORBA_octet_allocbuf(adaptor->adaptor_key._length);
+  adaptor->adaptor_key._length  = sizeof(CORBA_long) + poa->poa_rand_len;
+  adaptor->adaptor_key._buffer  =
+		CORBA_sequence_CORBA_octet_allocbuf(adaptor->adaptor_key._length);
+  adaptor->adaptor_key._release = CORBA_TRUE;
+  
   tptr = (CORBA_long *)adaptor->adaptor_key._buffer;
   *tptr = poa->poaID;
   if(poa->poa_rand_len)
@@ -1556,7 +1558,7 @@ ORBit_POA_create_object(PortableServer_POA poa,
 			  == sizeof(CORBA_unsigned_long) + poa->obj_rand_len );
 		newoid->_length = oid->_length;
 		newoid->_buffer = PortableServer_ObjectId_allocbuf(oid->_length);
-		newoid->_release = TRUE;
+		newoid->_release = CORBA_TRUE;
 		memcpy(newoid->_buffer, oid->_buffer, oid->_length);
 	      }
 	    else
@@ -1567,6 +1569,7 @@ ORBit_POA_create_object(PortableServer_POA poa,
 	    /* USER_ID */
 	    newoid->_length = oid->_length;
 	    newoid->_buffer = PortableServer_ObjectId_allocbuf(oid->_length);
+	    newoid->_release = CORBA_TRUE;
 	    memcpy(newoid->_buffer, oid->_buffer, oid->_length);
 	  }
 
