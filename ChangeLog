@@ -1,3 +1,11 @@
+2002-04-01  Murray Cumming  <murrayc@usa.net>
+ 
+ 	* Added --headerguardprefix option to orbit-idl-2. This allows the
+ 	C++ bindings to use generated C bindings which in turn #include
+ 	already-generated installed C bindings.
+	This has already been applied to the cpp branch. Applying it here
+	should simplify merging.
+	
 2002-03-30  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/orbit-idl-c-utils.c (cs_small_unflatten_ref):
