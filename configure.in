@@ -236,6 +236,7 @@ ORBit.spec
 src/Makefile
 src/idl-compiler/Makefile
 src/idl-compiler/cpp/Makefile
+src/idl-compiler/cpp/types/Makefile
 src/idl/Makefile
 src/idl/CORBA/Makefile
 src/idl/CORBA_PIDL/Makefile

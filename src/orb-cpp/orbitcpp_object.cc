@@ -61,9 +61,9 @@ CORBA::Object::~Object()
 {
 }
 
-CORBA::Object::Object* CORBA::Object::_orbitcpp_wrap(CORBA_Object cobject, bool release_c_object /* = true */)
+CORBA::Object::Object* CORBA::Object::_orbitcpp_wrap(CORBA_Object cobject, bool take_copy /* = true */)
 {
-	return new CORBA::Object::Object (cobject, !release_c_object);
+	return new CORBA::Object::Object (cobject, take_copy);
 }
 
 CORBA::Object_ptr CORBA::Object::_duplicate(Object_ptr o) {

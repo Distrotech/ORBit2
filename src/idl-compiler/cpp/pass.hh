@@ -32,11 +32,14 @@
 
 
 
-
-#include <iostream>
-#include <vector>
 #include "base.hh"
 #include "types.hh"
+#include "types/IDLInterface.hh"
+#include "types/IDLSequenceList.hh"
+#include "types/IDLArrayList.hh"
+#include <iostream>
+#include <vector>
+
 
 
 

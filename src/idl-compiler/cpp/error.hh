@@ -30,13 +30,11 @@
 #define ORBITCPP_ERROR
 
 
-
-
-#include <stdexcept>
-#include <string>
-#include <libIDL/IDL.h>
 #include "base.hh"
 #include "language.hh"
+#include <libIDL/IDL.h>
+#include <stdexcept>
+#include <string>
 
 
 

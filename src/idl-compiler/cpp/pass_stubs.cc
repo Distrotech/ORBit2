@@ -372,7 +372,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	m_header << indent << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject, bool take_copy = true); //orbitcpp-specific" << endl << endl;
 		
 	// _orbitcpp wrap method:
-	m_header << indent << "static " << iface.getCPPStub() << "* _orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool release_c_object = true);" << endl << endl;
+	m_header << indent << "static " << iface.getCPPStub() << "* _orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool take_copy = true);" << endl << endl;
 
 	// make cast operators for all mi base classes
  	IDLInterface::BaseList::const_iterator
@@ -407,9 +407,9 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	// _orbitcpp wrap method:
 	string classname = IDL_IMPL_NS_ID "::" IDL_IMPL_STUB_NS_ID + iface.getQualifiedCPPIdentifier();
 	m_module
-	    << mod_indent << classname << "* " << classname << "::_orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool release_c_object /* = true */)" << endl
+	    << mod_indent << classname << "* " << classname << "::_orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool take_copy /* = true */)" << endl
 	    << mod_indent << "{" << endl
-	    << ++mod_indent << "return new " << classname << " (cobject, !release_c_object);" << endl
+	    << ++mod_indent << "return new " << classname << " (cobject, take_copy);" << endl
 	    << --mod_indent << "}" << endl << endl;
 
 	// translate operations (same thing as above)
