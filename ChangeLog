@@ -1,5 +1,11 @@
 2001-06-26  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-context.c,
+	src/orb/poa/poa.c: kill deprecated
+	g_hash_table_(freeze|thaw) functions.
+
+2001-06-26  Mark McLoughlin <mark@skynet.ie>
+
 	* include/orbit/poa/poa-types.h,
 	  src/idl-compiler/orbit-idl-c-skels.c :
 	kill POAObject members use_count, death_callback

@@ -391,7 +391,6 @@ ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
       goto errout;
     }
 
-  g_hash_table_freeze(initme->mappings);
   for(i = 0; i < nstrings; )
     {
       buf->cur = ALIGN_ADDRESS(buf->cur, 4);
@@ -428,7 +427,6 @@ ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
       g_hash_table_insert(initme->mappings, key, value);
     }
 
-  g_hash_table_thaw(initme->mappings);
   return FALSE;
 
  errout:
