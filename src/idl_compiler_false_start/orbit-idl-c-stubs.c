@@ -2,6 +2,8 @@
 
 #include "orbit-idl-c-backend.h"
 
+static void cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci);
+
 void
 orbit_idl_output_c_stubs(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
@@ -11,4 +13,42 @@ orbit_idl_output_c_stubs(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_In
   fprintf(ci->fh, "#include <string.h>\n");
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
 
+  cs_output_stubs(tree->tree, ci);
+}
+
+static void cs_output_stub(IDL_tree tree, OIDL_C_Info *ci);
+
+static void
+cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
+{
+  if(!tree) return;
+
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_MODULE:
+    cs_output_stubs(IDL_MODULE(tree).definition_list, rinfo, ci);
+    break;
+  case IDLN_LIST:
+    {
+      IDL_tree sub;
+      for(sub = tree; sub; sub = IDL_LIST(sub).next) {
+	cs_output_stubs(IDL_LIST(sub).data, rinfo, ci);
+      }
+    }
+    break;
+  case IDLN_ATTR_DCL:
+    break;
+  case IDLN_INTERFACE:
+    cs_output_stubs(IDL_INTERFACE(tree).body, rinfo, ci);
+    break;
+  case IDLN_OP_DCL:
+    cs_output_stub(tree, ci);
+    break;
+  default:
+    break;
+  }
+}
+
+static void
+cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
+{
 }

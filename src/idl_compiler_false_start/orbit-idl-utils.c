@@ -540,3 +540,44 @@ orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
     break;
   }
 }
+
+static void
+IDL_tree_traverse_helper(IDL_tree p, GFunc f,
+			 gconstpointer func_data,
+			 GHashTable *visited_nodes)
+{
+	IDL_tree curitem;
+
+	if(g_hash_table_lookup(visited_nodes, p))
+		return;
+
+	g_hash_table_insert(visited_nodes, p, ((gpointer)1));
+
+	for(curitem = IDL_INTERFACE(p).inheritance_spec; curitem;
+	    curitem = IDL_LIST(curitem).next) {
+		IDL_tree_traverse_helper(IDL_get_parent_node(IDL_LIST(curitem).data, IDLN_INTERFACE, NULL), f, func_data, visited_nodes);
+	}
+
+	f(p, (gpointer)func_data);
+}
+
+void
+IDL_tree_traverse_parents(IDL_tree p,
+			  GFunc f,
+			  gconstpointer func_data)
+{
+	GHashTable *visited_nodes = g_hash_table_new(NULL, g_direct_equal);
+
+	if(!(p && f))
+		return;
+
+	if(IDL_NODE_TYPE(p) != IDLN_INTERFACE)
+		p = IDL_get_parent_node(p, IDLN_INTERFACE, NULL);
+
+	if(!p)
+		return;
+
+	IDL_tree_traverse_helper(p, f, func_data, visited_nodes);
+
+	g_hash_table_destroy(visited_nodes);
+}

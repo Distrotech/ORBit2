@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 typedef struct {
-  char *base_name;
+  char *base_name, *c_base_name;
   FILE *fh;
 } OIDL_C_Info;
 
@@ -19,9 +19,16 @@ void orbit_idl_output_c_skeletons(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, 
 void orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 void orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 
+void orbit_output_typecode(OIDL_C_Info *ci, IDL_tree ts);
+
+
 /* utils */
+typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
 void orbit_cbe_write_typespec(FILE *of, IDL_tree tree);
 char * orbit_cbe_get_typename(IDL_tree tree);
 void orbit_cbe_op_write_proto(FILE *of, IDL_tree op, const char *nom_prefix, gboolean for_epv);
+IDL_tree orbit_cbe_get_typespec(IDL_tree node);
+void orbit_cbe_write_const(FILE *of, IDL_tree tree);
+gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 
 #endif

@@ -135,6 +135,7 @@ void orbit_idl_print_node(IDL_tree node, int indent_level);
 IDL_tree orbit_idl_get_array_type(IDL_tree tree);
 char *orbit_idl_member_get_name(IDL_tree tree);
 void orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data);
+void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
 

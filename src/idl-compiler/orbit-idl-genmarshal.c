@@ -300,6 +300,19 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
     retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
     retval->tree = tree;
     break;
+  case IDLN_TYPE_ANY:
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval->tree = tree;
+    break;
+  case IDLN_TYPE_TYPECODE:
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval->tree = tree;
+    break;
+  case IDLN_TYPE_OBJECT:
+  case IDLN_INTERFACE:
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval->tree = tree;
+    break;
   default:
     g_warning("Not populating for %s", IDL_tree_type_names[IDL_NODE_TYPE(tree)]);
     break;
@@ -318,7 +331,7 @@ orbit_idl_marshal_populate_in(IDL_tree tree)
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
 
-  g_return_val_if_fail(IDL_OP_DCL(tree).parameter_dcls, NULL);
+  if(!IDL_OP_DCL(tree).parameter_dcls) return NULL;
 
   retval = oidl_marshal_node_new(NULL, MARSHAL_SET, NULL);
 
@@ -436,7 +449,7 @@ orbit_idl_collapse_sets(OIDL_Marshal_Node *node)
   GSList *ltmp;
   OIDL_Marshal_Node *ntmp;
 
-  g_assert(node);
+  if(!node) return;
 
 #define SET_SIZE(node) g_slist_length(((OIDL_Marshal_Node *)node)->u.set_info.subnodes)
 
