@@ -1,3 +1,11 @@
+2003-07-09  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testNonExistent): impl.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_non_existent): wait until it's connected
+	before giving a verdict.
+
 2003-07-08  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c: bin popt.h include.

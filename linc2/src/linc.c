@@ -25,9 +25,11 @@ static GMainContext   *link_context = NULL;
 static GThread        *link_io_thread = NULL;
 static GMainLoop      *link_thread_loop = NULL;
 static GMainContext   *link_thread_context = NULL;
+static gboolean        link_is_io_in_thread = FALSE;
 
 /* a big global lock for link */
 static GMutex  *link_main_lock;
+static GCond   *link_main_cond;
 /* command dispatch to the I/O loop */
 static GMutex  *link_cmd_queue_lock = NULL;
 static GCond   *link_cmd_queue_cond = NULL;
@@ -211,8 +213,10 @@ link_init (gboolean thread_safe)
 
 	link_main_lock = link_mutex_new ();
 	link_cmd_queue_lock = link_mutex_new ();
-	if (link_is_thread_safe)
+	if (link_is_thread_safe) {
+		link_main_cond = g_cond_new ();
 		link_cmd_queue_cond = g_cond_new ();
+	}
 }
 
 /**
@@ -354,8 +358,13 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 	GError *error = NULL;
 	gboolean to_io_thread = TRUE;
 
+	if (link_is_io_in_thread)
+		return;
+
 	link_lock ();
 	g_mutex_lock (link_cmd_queue_lock);
+
+	link_is_io_in_thread = TRUE;
 	
 	link_thread_context = g_main_context_new ();
 	link_thread_loop = g_main_loop_new (link_thread_context, TRUE);
@@ -387,14 +396,12 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 void
 link_set_io_thread (gboolean io_in_thread)
 {
-	static gboolean is_io_in_thread = FALSE;
 	LinkCommand *cmd = g_new0 (LinkCommand, 1);
 
 	g_warning ("FIXME: guard from double entry");
 
-	if (is_io_in_thread)
+	if (link_is_io_in_thread)
 		return;
-	is_io_in_thread = TRUE;
 
 	cmd->type = LINK_COMMAND_SET_IO_THREAD;
 
@@ -433,6 +440,29 @@ link_unlock (void)
 {
 	if (link_main_lock)
 		g_mutex_unlock (link_main_lock);
+}
+
+void
+link_signal (void)
+{
+	if (link_is_thread_safe && link_is_io_in_thread) {
+		g_assert (link_main_cond != NULL);
+		g_assert (link_is_locked ());
+		g_cond_signal (link_main_cond);
+	}
+}
+
+void
+link_wait (void)
+{
+	if (!(link_is_thread_safe && link_is_io_in_thread)) {
+		link_unlock ();
+		link_main_iteration (TRUE);
+		link_lock ();
+	} else {
+		g_assert (link_main_cond != NULL);
+		g_cond_wait (link_main_cond, link_main_lock);
+	}
 }
 
 gboolean
