@@ -1,3 +1,8 @@
+Apr 07, 1999:
+	ORBit 0.4.3 release
+		. Bug fixes
+		  (Same applies to 0.4.1 & 0.4.2).
+
 Feb 23, 1999:
 	ORBit 0.4.0 release
 		. 'CORBA::TypeCode', 'any' support.
