@@ -111,6 +111,10 @@ genrand_unix(guchar *buffer, int buf_len)
   diff = max - min;
 
   uninit = alloca(buf_len * sizeof(long)); /* Purposely not initialized */
+#ifdef ORBIT_PURIFY
+  memset (uninit, 0x1a, buf_len * sizeof (long));
+#warning Are we sufficiently random here ?
+#endif
   for(i = 0; i < buf_len; i++)
     {
       long diffval;

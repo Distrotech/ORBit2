@@ -2,8 +2,6 @@
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
-static gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
-
 void CORBA_free(gpointer mem)
 {
   ORBit_free(mem);
@@ -46,9 +44,9 @@ ORBit_alloc_core(size_t block_size,
 void
 ORBit_free(gpointer mem)
 {
-  ORBit_MemHow	how, howcode, reps;
-  gpointer		prefix, x;
-  int			idx;
+  ORBit_MemHow how, howcode, reps;
+  gpointer     prefix, x;
+  int          idx;
 
   if(!mem)
     return;
@@ -145,7 +143,9 @@ ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
 			 ORBIT_MEMHOW_TYPECODE|num_elements, sizeof(*pre), (gpointer)&pre,
 			 /*align*/0);
   ORBIT_MEM_MAGICSET(pre->magic);
+
   pre->tc = ORBit_RootObject_duplicate(tc);
+
   return mem;
 }
 
@@ -178,7 +178,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     {
       CORBA_any *pval = mem;
       if(pval->_release)
-	CORBA_free(pval->_value);
+	ORBit_free(pval->_value);
       pval->_value = 0;
       ORBit_RootObject_release(pval->_type);
       pval->_type = 0;
@@ -198,7 +198,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     {
       CORBA_Principal *pval = mem;
       if(pval->_release)
-	CORBA_free(pval->_buffer);
+	ORBit_free(pval->_buffer);
       pval->_buffer = 0;
       retval = (guchar *)(pval + 1);
     }
@@ -233,7 +233,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
   case CORBA_tk_string:
     {
       CORBA_char **pval = mem;
-      CORBA_free(*pval);
+      ORBit_free(*pval);
       *pval = 0;
       retval = (guchar *)mem + sizeof(*pval);
     }
@@ -242,7 +242,7 @@ ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem)
     {
       CORBA_sequence_CORBA_octet *pval = mem;
       if(pval->_release)
-	CORBA_free(pval->_buffer);
+	ORBit_free(pval->_buffer);
       pval->_buffer = 0;
       retval = (guchar *)mem + sizeof(*pval);
     }

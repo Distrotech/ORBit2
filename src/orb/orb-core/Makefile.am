@@ -7,14 +7,12 @@ INCLUDES=-I. -I$(srcdir) \
 	@GLIB_CFLAGS@ \
 	@LINC_CFLAGS@
 
-liborb_core_la_SOURCES= \
-	$(IOP_IDLOUT) \
-	$(IDLOUT) \
-	$(OPS_IDLOUT) \
+main_src = \
 	corba-orb.c \
 	orbhttp.c \
 	orbhttp.h \
 	orbit-object.c \
+	orbit-small.c \
 	corba-object.c \
 	corba-policy.c \
 	corba-env.c \
@@ -29,32 +27,35 @@ liborb_core_la_SOURCES= \
 	corba-nvlist.c \
 	corba-request.c
 
+liborb_core_la_SOURCES= \
+	$(IOP_IDLOUT) \
+	$(IDLOUT) \
+	$(OPS_IDLOUT) \
+	$(IFACE_IDLOUT) \
+	$(main_src)
+
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c
 IOP_IDLOUT=iop-defs-common.c
 OPS_IDLOUT=corba-ops-stubs.c corba-ops-common.c corba-ops.h corba-ops-skels.c
+IFACE_IDLOUT=orbit-interface.h orbit-interface-common.c
 
-$(top_builddir)/include/orbit/orb-core/corba-defs.h: runidl
+$(main_src) : $(BUILT_SOURCES)
 
-$(IDLOUT): runidl
-
-runidl: corba-defs.idl $(IDL)
+$(top_builddir)/include/orbit/orb-core/corba-defs.h $(IDLOUT): corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
+	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA \
 	--noskels --nodefskels --nostubs \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl
 	for I in $(IDLOUT) corba-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done; \
-	cp -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h; \
-	touch runidl
+	cp -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h;
 
-$(IOP_IDLOUT): runidl_iop
-
-runidl_iop: iop-defs.idl $(IDL)
+$(IOP_IDLOUT): iop-defs.idl $(IDL)
 	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
@@ -64,22 +65,29 @@ runidl_iop: iop-defs.idl $(IDL)
 	for I in $(IOP_IDLOUT) iop-defs.h; do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done; \
-	mv -f iop-defs.h $(top_builddir)/include/orbit/orb-core/iop-defs.h; \
-	touch runidl_iop
+	mv -f iop-defs.h $(top_builddir)/include/orbit/orb-core/iop-defs.h;
 
-$(OPS_IDLOUT): runidl_ops
-
-runidl_ops: corba-ops.idl $(IDL)
+$(OPS_IDLOUT): corba-ops.idl $(IDL)
 	-(rm -f $(OPS_IDLOUT) || true) > /dev/null
-	$(IDL) \
+	$(IDL) --oldstyle \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
 	for I in $(OPS_IDLOUT); do \
 		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I; \
 	done; \
 	sed -e "s,Z,_,g" corba-ops-skels.c > corba-ops-skels.c.out; \
-	mv corba-ops-skels.c.out corba-ops-skels.c; \
-	touch runidl_ops
+	mv corba-ops-skels.c.out corba-ops-skels.c;
 
-BUILT_SOURCES=$(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES) runidl_ops runidl_iop runidl
-EXTRA_DIST=corba-defs.idl iop-defs.idl corba-ops.idl
+# This has to be built and installed before we can compile
+# the other bits, since the generated code includes orbit-interface.h
+$(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT) : $(IFACE_IDLOUT)
+
+$(top_builddir)/include/orbit/orb-core/orbit-interface.h $(IFACE_IDLOUT) : orbit-interface.idl $(IDL)
+	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
+	$(IDL) --oldstyle \
+                --showcpperrors $(top_srcdir)/src/orb/orb-core/orbit-interface.idl
+	cp -f orbit-interface.h $(top_builddir)/include/orbit/orb-core/orbit-interface.h; \
+	rm -f orbit-interface-stubs.c orbit-interface-skels.c
+
+BUILT_SOURCES=$(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT) $(IFACE_IDLOUT)
+CLEANFILES=$(BUILT_SOURCES)
+EXTRA_DIST=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl

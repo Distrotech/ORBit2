@@ -2,7 +2,7 @@ noinst_HEADERS=runidl_poa runidl_dynamic
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 
 runidl_poa: $(top_srcdir)/src/orb/poa/poa-defs.idl $(IDL)
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/orb/orb-core \
 	-I$(top_srcdir)/src/idl/misc \
@@ -16,7 +16,7 @@ runidl_poa: $(top_srcdir)/src/orb/poa/poa-defs.idl $(IDL)
 	touch runidl_poa
 
 runidl_dynamic: $(top_srcdir)/src/orb/dynamic/dynamic-defs.idl $(IDL)
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) --oldstyle -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/orb/orb-core \
 	-I$(top_srcdir)/src/idl/misc \

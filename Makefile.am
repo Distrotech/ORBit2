@@ -4,7 +4,7 @@ SUBDIRS=libIDL src include test docs
 
 bin_SCRIPTS=orbit-config
 
-EXTRA_DIST=ORBit.spec.in ORBit2.m4 ORBit-2.0.pc ORBit-CosNaming-2.0.pc
+EXTRA_DIST=ORBit.spec.in ORBit2.m4 ORBit-2.0.pc.in ORBit-CosNaming-2.0.pc.in
 
 dist-hook: ORBit.spec
 	cp ORBit.spec $(distdir)

@@ -4,6 +4,14 @@
 
 #include <string.h>
 
+char *
+orbit_cbe_get_typecode_name (IDL_tree tree)
+{
+	if (!tree)
+		return g_strdup ("TC_FIXME");
+	else
+		return g_strconcat ("TC_", orbit_cbe_get_typespec_str (tree), NULL);
+}
 
 #if 0	/* unused!? */
 static IDL_tree
@@ -187,12 +195,12 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
         return retval;
     }
     break;
-  case IDLN_INTERFACE:
-  case IDLN_FORWARD_DCL:
-    return orbit_cbe_get_typespec_str(IDL_INTERFACE(tree).ident);
   case IDLN_NATIVE:
     retval = "gpointer";
     break;
+  case IDLN_FORWARD_DCL:
+  case IDLN_INTERFACE:
+    return orbit_cbe_get_typespec_str(IDL_INTERFACE(tree).ident);
   case IDLN_TYPE_OBJECT:
     retval = "CORBA_Object";
     break;
@@ -202,15 +210,13 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
   default:
     g_error("We were asked to get a typename for a %s",
 	    IDL_tree_type_names[IDL_NODE_TYPE(tree)]);
+    break;
   }
 
-  if(retval)
-    return g_strdup(retval);
-  else {
-    retval = tmpstr->str;
-    g_string_free(tmpstr, FALSE);
-    return retval;
-  }
+  if (retval)
+    return g_strdup (retval);
+  else
+    return g_string_free (tmpstr, FALSE);
 }
 
 void
@@ -232,26 +238,42 @@ orbit_cbe_write_typespec(FILE *of, IDL_tree tree)
     to which apps are written, while the former is what would
     be produced without the hack).
 **/
-void
-orbit_cbe_write_param_typespec_raw(FILE *of, IDL_tree ts, IDL_ParamRole role) {
-    int 		i, n;
-    gboolean		isSlice;
-    char 		*name;
+gchar *
+orbit_cbe_write_param_typespec_str(IDL_tree ts, IDL_ParamRole role)
+{
+	int      i, n;
+	gboolean isSlice;
+	char    *name;
+	GString *str = g_string_sized_new (23);
 
-    n = oidl_param_info(ts, role, &isSlice);
-    name = orbit_cbe_get_typespec_str(ts);
-    if ( role == DATA_IN ) {
-        fprintf (of, "const %s", 
-		strcmp(name,"CORBA_string")==0 ? "CORBA_char*" : name);
-    } else {
-        fprintf( of, name);
-    }
-    g_free(name);
-    if ( isSlice ) {
-    	fprintf(of, "_slice");
-    }
-    for (i = 0; i < n; i++)
-        fprintf(of, "*");
+	n = oidl_param_info (ts, role, &isSlice);
+	name = orbit_cbe_get_typespec_str (ts);
+
+	if ( role == DATA_IN )
+		g_string_sprintf (
+			str, "const %s", 
+			!strcmp (name, "CORBA_string") ? "CORBA_char*" : name);
+	else
+		g_string_sprintf (str, "%s", name);
+
+	g_free (name);
+
+	if ( isSlice )
+		g_string_append (str, "_slice");
+
+	for (i = 0; i < n; i++)
+		g_string_append_c (str, '*');
+
+	return g_string_free (str, FALSE);
+}
+
+void
+orbit_cbe_write_param_typespec_raw (FILE *of, IDL_tree ts, IDL_ParamRole role)
+{
+    char *str;
+    str = orbit_cbe_write_param_typespec_str (ts, role);
+    fprintf (of, str);
+    g_free (str);
 }
 
 void
@@ -643,3 +665,291 @@ orbit_cbe_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
   orbit_idl_node_foreach(node, (GFunc)orbit_cbe_alloc_tmpvar, ci);
 }
+
+
+char *
+orbit_cbe_op_get_interface_name (IDL_tree op)
+{
+	return IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
+		IDL_INTERFACE (IDL_get_parent_node (
+			op, IDLN_INTERFACE, NULL)).ident), "_", 0);
+}
+
+
+#define BASE_TYPES \
+	     IDLN_TYPE_INTEGER: \
+	case IDLN_TYPE_FLOAT: \
+	case IDLN_TYPE_ENUM: \
+        case IDLN_TYPE_BOOLEAN: \
+	case IDLN_TYPE_CHAR: \
+	case IDLN_TYPE_WIDE_CHAR: \
+	case IDLN_TYPE_OCTET
+
+#define STRING_TYPES \
+	     IDLN_TYPE_STRING: \
+	case IDLN_TYPE_WIDE_STRING
+
+#define OBJREF_TYPES \
+	     IDLN_TYPE_OBJECT: \
+	case IDLN_INTERFACE: \
+	case IDLN_FORWARD_DCL
+
+static const char *
+cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
+{
+	gboolean is_fixed;
+
+	is_fixed = orbit_cbe_type_is_fixed_length (typespec);
+
+	switch (role) {
+	case DATA_IN:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
+		case IDLN_NATIVE:
+			return "(gpointer)&";
+
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_SEQUENCE:
+		case IDLN_TYPE_ARRAY:
+			return "(gpointer)";
+			
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+		};
+		return NULL;
+
+	case DATA_INOUT:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ARRAY:
+		case IDLN_NATIVE:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_SEQUENCE:
+			return "";
+
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+		};
+		return NULL;
+
+	case DATA_OUT:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
+		case IDLN_NATIVE:
+			return "&";
+
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ARRAY:
+			if (is_fixed)
+				return "&";
+			else /* drop through */
+
+		case IDLN_TYPE_SEQUENCE:
+		case IDLN_TYPE_ANY:
+			return "";
+
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+		};
+		return NULL;
+
+	case DATA_RETURN:
+		g_error ("No data return handler");
+		return NULL;
+	}
+
+	return NULL;
+}
+
+void
+cbe_small_flatten_args (IDL_tree tree, FILE *of, const char *name)
+{
+	IDL_tree l;
+
+	fprintf (of, "gpointer %s[] = { \n", name);
+	
+	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
+	     l = IDL_LIST(l).next) {
+		IDL_tree decl = IDL_LIST (l).data;
+		IDL_tree tspec = orbit_cbe_get_typespec (decl);
+		IDL_ParamRole r = 0;
+
+		switch(IDL_PARAM_DCL(decl).attr) {
+		case IDL_PARAM_IN:    r = DATA_IN;    break;
+		case IDL_PARAM_INOUT: r = DATA_INOUT; break;
+		case IDL_PARAM_OUT:   r = DATA_OUT;   break;
+		default:
+			g_error("Unknown IDL_PARAM type");
+		}
+		
+		fprintf (of, "%s%s%c ", cs_small_flatten_ref (r, tspec),
+			 IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str,
+			 IDL_LIST (l).next ? ',' : ' ');
+	}
+	fprintf (of, "};");
+}
+
+static char *
+cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
+{
+	gboolean is_fixed;
+	char    *typestr;
+	char    *retval;
+
+	is_fixed = orbit_cbe_type_is_fixed_length (typespec);
+
+	typestr = orbit_cbe_write_param_typespec_str (typespec, role);
+
+	switch (role) {
+	case DATA_IN:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
+		case IDLN_NATIVE:
+			retval = g_strdup_printf ("*(%s *)", typestr);
+			break;
+
+
+		case IDLN_TYPE_ARRAY:
+                        /* Kill any unwanted array size specifiers in cast */
+			retval = g_strdup ("");
+			break;
+
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_SEQUENCE:
+			retval = g_strdup_printf ("(%s)", typestr);
+			break;
+			
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+			retval = NULL;
+			break;
+		};
+		break;
+
+	case DATA_INOUT:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case IDLN_TYPE_ARRAY:
+                        /* Kill any unwanted array size specifiers in cast */
+			retval = g_strdup ("");
+			break;
+
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+		case IDLN_NATIVE:
+		case IDLN_TYPE_ANY:
+		case IDLN_TYPE_SEQUENCE:
+			retval = g_strdup_printf ("(%s)", typestr);
+			break;
+
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+			retval = NULL;
+			break;
+		};
+		break;
+
+	case DATA_OUT:
+		switch (IDL_NODE_TYPE (typespec)) {
+		case BASE_TYPES:
+		case STRING_TYPES:
+		case OBJREF_TYPES:
+		case IDLN_TYPE_TYPECODE:
+		case IDLN_NATIVE:
+			retval = g_strdup_printf ("*(%s *)", typestr);
+			break;
+
+		case IDLN_TYPE_ARRAY:
+			if (is_fixed) {
+				retval = g_strdup_printf ("*(%s_slice **)", typestr);
+				break;
+			}
+			/* drop through */
+
+		case IDLN_TYPE_STRUCT:
+		case IDLN_TYPE_UNION:
+			if (is_fixed) {
+				retval = g_strdup_printf ("*(%s *)", typestr);
+				break;
+			}
+			/* drop through */
+
+		case IDLN_TYPE_SEQUENCE:
+		case IDLN_TYPE_ANY:
+			retval = g_strdup_printf ("(%s)", typestr);
+			break;
+
+		default:
+		case IDLN_TYPE_FIXED:
+			g_error ("Hit evil type %d", IDL_NODE_TYPE (typespec));
+			retval = NULL;
+			break;
+		};
+		break;
+
+	case DATA_RETURN:
+	default:
+		g_error ("No data return handler");
+		retval = NULL;
+		break;
+	}
+
+	g_free (typestr);
+
+	return retval;
+}
+
+void
+cbe_small_unflatten_args (IDL_tree tree, FILE *of, const char *name)
+{
+	IDL_tree l;
+	int      i = 0;
+
+	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
+	     l = IDL_LIST(l).next) {
+		IDL_tree decl = IDL_LIST (l).data;
+		IDL_tree tspec = orbit_cbe_get_typespec (decl);
+		IDL_ParamRole r = 0;
+		char *unflatten;
+
+		switch(IDL_PARAM_DCL(decl).attr) {
+		case IDL_PARAM_IN:    r = DATA_IN;    break;
+		case IDL_PARAM_INOUT: r = DATA_INOUT; break;
+		case IDL_PARAM_OUT:   r = DATA_OUT;   break;
+		default:
+			g_error("Unknown IDL_PARAM type");
+		}
+
+		unflatten = cs_small_unflatten_ref (r, tspec);
+		fprintf (of, "%s%s[%d], ", unflatten, name, i++);
+		g_free (unflatten);
+	}
+}
+

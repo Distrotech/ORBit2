@@ -58,6 +58,7 @@ void giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
 GIOPRecvBuffer *giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
 				     gboolean block_for_reply);
 
+GIOPRecvBuffer *giop_recv_buffer_use_noblock (void);
 GIOPRecvBuffer *giop_recv_buffer_use(void);
 void giop_recv_buffer_unuse(GIOPRecvBuffer *buf);
 GIOPMessageInfo giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth, GIOPConnection *cnx);
@@ -89,5 +90,4 @@ CORBA_unsigned_long giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf);
 char *giop_recv_buffer_get_opname(GIOPRecvBuffer *buf);
 CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey(GIOPRecvBuffer *buf);
 void giop_recv_list_zap(GIOPConnection *cnx);
-
 #endif

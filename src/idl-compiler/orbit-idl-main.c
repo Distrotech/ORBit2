@@ -42,6 +42,10 @@ static gboolean cl_disable_stubs = FALSE,
 static int cl_idlwarnlevel = 2;
 static int cl_debuglevel = 0;
 static int cl_is_pidl = 0;
+static int cl_enable_small = 1;
+static int cl_enable_old_style = 0;
+static int cl_enable_small_stubs = 0;
+static int cl_enable_small_skels = 0;
 static gboolean cl_disable_defs_skels = FALSE;
 static gboolean cl_showcpperrors = TRUE;
 static char *cl_output_lang = "c";
@@ -108,6 +112,8 @@ struct poptOption options[] = {
   {"lang", 'l', POPT_ARG_STRING, &cl_output_lang, 0, "Output language (default is C)", NULL},
   {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4", NULL},
   {"idlwarnlevel", '\0', POPT_ARG_INT, &cl_idlwarnlevel, 0, "IDL warning level 0 to 4, default is 2", NULL},
+  {"small", '\0', POPT_ARG_NONE, &cl_enable_small, 0, "Optimize for size instead of speed", NULL},
+  {"oldstyle", '\0', POPT_ARG_NONE, &cl_enable_old_style, 0, "Use the old style idl compiler", NULL},
   {"showcpperrors", '\0', POPT_ARG_NONE, &cl_showcpperrors, 0, "Show CPP errors", NULL},
   {"nostubs", '\0', POPT_ARG_NONE, &cl_disable_stubs, 0, "Don't output stubs", NULL},
   {"noskels", '\0', POPT_ARG_NONE, &cl_disable_skels, 0, "Don't output skels", NULL},
@@ -152,6 +158,12 @@ int main(int argc, const char *argv[])
     exit(0);
   }
 
+  if (cl_enable_old_style)
+    cl_enable_small = FALSE;
+
+  if (cl_enable_small)
+    cl_enable_small_stubs = cl_enable_small_skels = 1;
+
   /* Prep our run info for the backend */
   rinfo.cpp_args = cl_cpp_args->str;
   rinfo.debug_level = cl_debuglevel;
@@ -169,6 +181,12 @@ int main(int argc, const char *argv[])
   rinfo.output_language = cl_output_lang;
   rinfo.backend_directory = cl_backend_dir;
   rinfo.onlytop = cl_onlytop;
+  rinfo.small = cl_enable_small_stubs || cl_enable_small_skels;
+  rinfo.small_stubs = cl_enable_small_stubs;
+  rinfo.small_skels = cl_enable_small_skels;
+
+  if (rinfo.small)
+	  fprintf (stderr, "\n---\n\nIn small C mode\n\n\n---\n");
 
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {

@@ -11,9 +11,10 @@ CORBA_ORB_release_fn(ORBit_RootObject robj)
 {
   CORBA_ORB orb = (CORBA_ORB)robj;
 
-  g_ptr_array_free(orb->poas, TRUE);
+  g_ptr_array_free (orb->poas, TRUE);
+  g_hash_table_destroy (orb->initial_refs);
 
-  g_free(orb);
+  g_free (orb);
 }
 
 static void
@@ -70,13 +71,16 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 	      if(server)
 		retval->servers = g_slist_prepend(retval->servers, server);
 	    }
+          fprintf (stderr, "ORB created giop server '%s'\n", info->name);
 	}
+      else
+        fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
     }
 
   retval->poas = g_ptr_array_new();
   ORBit_init_internals(retval, ev);
 
-  return retval;
+  return (CORBA_ORB) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
 }
 
 CORBA_char *
@@ -195,6 +199,20 @@ CORBA_ORB_create_list(CORBA_ORB _obj, const CORBA_long count,
 		      CORBA_NVList * new_list,
 		      CORBA_Environment * ev)
 {
+  CORBA_NVList new;
+
+  new = g_new0 (struct CORBA_NVList_type, 1);
+  if (new==NULL)
+    goto new_alloc_failed;
+
+  new->list = g_array_new(FALSE, TRUE, sizeof(CORBA_NamedValue));
+
+  *new_list = new;
+	
+  return;
+
+ new_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
 }
 
 void
@@ -781,17 +799,18 @@ CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
 }
 
 void
-CORBA_ORB_run(CORBA_ORB _obj, CORBA_Environment * ev)
+CORBA_ORB_run (CORBA_ORB _obj, CORBA_Environment * ev)
 {
-  while(1)
+  while (1)
     {
       GIOPRecvBuffer *in_buf;
 
-      in_buf = giop_recv_buffer_use();
-      if(in_buf->msg.header.message_type == GIOP_REQUEST)
-	ORBit_handle_request(_obj, in_buf);
-      else
-	giop_recv_buffer_unuse(in_buf);
+      in_buf = giop_recv_buffer_use ();
+
+      if (in_buf->msg.header.message_type == GIOP_REQUEST)
+	ORBit_handle_request (_obj, in_buf);
+
+      giop_recv_buffer_unuse (in_buf);
     }
 }
 
@@ -887,26 +906,27 @@ CORBA_ORB_lookup_value_factory(CORBA_ORB _obj,
 
 /* ORBit extension */
 void
-CORBA_ORB_set_initial_reference(CORBA_ORB orb, CORBA_ORB_ObjectId identifier,
-				ORBit_InitialReference *val, CORBA_Environment *ev)
+CORBA_ORB_set_initial_reference (CORBA_ORB orb, CORBA_ORB_ObjectId identifier,
+				 ORBit_InitialReference *val, CORBA_Environment *ev)
 {
-  ORBit_InitialReference *findval;
-  char *findkey = NULL;
+	ORBit_InitialReference *findval;
+	char *findkey = NULL;
 
-  if(!orb->initial_refs)
-    orb->initial_refs = g_hash_table_new(g_str_hash, g_str_equal);
+	if (!orb->initial_refs)
+		orb->initial_refs = g_hash_table_new (g_str_hash, g_str_equal);
 
-  if(g_hash_table_lookup_extended(orb->initial_refs, identifier,
-				  (gpointer *)&findkey, (gpointer *)&findval))
-    {
-      if(!findval->free_name)
-	findkey = NULL;
-    }
+	if (g_hash_table_lookup_extended (
+		orb->initial_refs, identifier,
+		(gpointer *)&findkey, (gpointer *)&findval) &&
+	    findval->free_name) {
+		g_hash_table_remove (orb->initial_refs, identifier);
+		g_free (findkey);
+	}
 
-  g_hash_table_insert(orb->initial_refs,
-		      val->free_name?g_strdup(identifier):identifier,
-		      val);
-  g_free(findkey);
+	g_hash_table_insert (
+		orb->initial_refs,
+		val->free_name?g_strdup(identifier):identifier,
+		val);
 }
 
 void
@@ -914,4 +934,28 @@ ORBit_ORB_forw_bind(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
 		    CORBA_Object oref, CORBA_Environment *ev)
 {
   g_warning("ORBit_ORB_forw_bind NYI");
+}
+
+
+static guint
+idle_fn (CORBA_ORB orb)
+{
+	GIOPRecvBuffer *buf;
+	/* FIXME: this sucks */
+
+	if ((buf = giop_recv_buffer_use_noblock())) {
+
+		if (buf->msg.header.message_type == GIOP_REQUEST)
+			ORBit_handle_request (orb, buf);
+		
+		giop_recv_buffer_unuse (buf);
+	}
+	return TRUE;
+}
+
+guint
+ORBit_ORB_idle_init (CORBA_ORB orb)
+{
+	/* FIXME: this sucks */
+	return g_idle_add ((GSourceFunc)idle_fn, orb);
 }

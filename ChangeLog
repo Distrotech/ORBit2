@@ -1,3 +1,8 @@
+2001-06-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/util/genrand.c (genrand_unix): if ORBIT_PURIFY don't
+	use bits of uninitialized stack.
+
 2001-06-18  Erik Walthinsen  <omega@temple-baptist.com>
 
 	* ORBit-2.0.pc.in, ORBit-CosNaming-2.0.pc.in: brought in from
@@ -5,6 +10,417 @@
 
 	* .cvsignore, Makefile.am, configure.in: added necessary lines
 	for above .pc files to be created/installed.
+
+2001-06-19  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/include/Makefile.am: use --oldstyle
+
+	* src/orb/dynamic/Makefile.am: fix build.
+
+	* src/orb/poa/Makefile.am: fix build.
+
+	* test/Makefile.am: Fix build, kill -lefence.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/Makefile.am: simplify makefile ugliness.
+
+	* test/Makefile.am (echo_built): fix recursive build
+	issue.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_initiate):
+	only ref the connection if we didn't just destroy it.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_stub): 
+	don't do an alloca (0), just use &obj - this points to
+	the stack in a safer, quicker and cleaner way.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/dynany.c (dynany_sequence_realloc_to): only
+	copy old_len elements from the old buffer.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/dynany.c: Port from ORBit-stable.
+
+	* src/orb/orb-core/allocators.c (ORBit_free): use
+	ORBit_free internaly not CORBA_free to clean stack traces.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any__freekids): ditto
+	& accelerate.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_set_initial_reference): fix g_hash_table
+	manipulation leak / bug.
+
+2001-05-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/Makefile.am: install dynamic-defs.h
+	in the right place ...
+
+	* src/orb/orb-core/corba-typecode.c: add long_double TC def.
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_type_alloc_and_tc): fixup emmission of __allocbuf as
+	well as __alloc for sequences.
+
+	* include/orbit/orb-core/corba-typecode.h: declare.
+	TC_CORBA_long_double_struct and TC_CORBA_wstring_struct.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any__copy): constipate.
+
+	* include/orbit/dynamic/dynamic.h: upd.
+
+	* include/orbit/orbit.h: add dynamic.h
+
+	* src/orb/dynamic/Makefile.am: add dynany.c
+
+2001-05-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/Makefile.am (runidl_poa): install poa-defs into
+	the correct directory, fixup the include brokenness.
+	(POA_IDLOUT): add poa-defs.h - doh.
+
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_output_interface):
+	output TC_ #defines even for PIDL types.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(build_marshal_funcs): only output marshalers if we
+	need to.
+	(cc_output_tc_walker): Output typecode information for
+	PIDL types - why not, might help automated language bindings
+	to the PIDL.
+
+2001-05-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (dump): print in-buffer
+	offsets as well as the data.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec_tk_except):
+	decode sub_parts sub-types not length.
+	(tc_enc_tk_except): ditto for encode.
+	(tc_enc): use the buffer length in the message header
+	instead of the current_idx, since we now marshal straight
+	into a single buffer without the encaps cruft.
+	(tc_dec): fix the recursive arithmetic, make it remember
+	to duplicate the recursive typecode references.
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value):
+	duplicate the correct pointer.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_alloc): re-write
+	to memset 0 the returned memory.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any__freekids): release
+	the typecode pointer as well.
+
+	* src/idl-compiler/orbit-idl-c-common.c (cc_alloc_prep): pass
+	rinfo around.
+
+2001-05-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-context.c (CORBA_Context_set_one_value):
+	remove the hash table value, so we don't screw up the key allocation.
+
+2001-05-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_initiate): 
+	reference the connection before returning it, if it wasn't
+	looked up in the list.
+	(giop_connection_remove_by_orb): fix serious brokenness.
+	(giop_connection_close): publicise.
+	(giop_connection_shutdown): remove the connection from the
+	connection list.
+	(giop_connection_unref): remove last unref sillies.
+
+	* src/orb/orb-core/corba-object.c (g_CORBA_Object_equal): uglify,
+	we need to be able to scan for MULTIPLE_COMPONENTS profiles in
+	order to do the GIOP profile comparison (get_mci): impl helper.
+	(IOP_Profile_equal): similarly uglify.
+	(CORBA_Object_release_cb): close the connection and
+	unref it.
+
+	* src/orb/poa/poa.c (ORBit_POA_oid_to_ref): set the profile_type
+	on the iiop profile.
+
+	* src/orb/orb-core/corba-object.c (ORBit_objref_new): actualy
+	insert new object references into the objrefs hash.
+	(IOP_Profile_dump): impl.
+
+2001-05-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_release_cb):
+	only unref the connection if it is valid.
+	(IOP_Profile_equal): re-order compares to accelerate & warn
+	on unknown profile.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_list_add):
+	re-privatize.
+
+	* src/orb/GIOP/giop-server.c (giop_server_handle_new_connection):
+	remove - was broken.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_data_read):
+	kill warning.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_handle_input):
+	if we return FALSE set the source tag to 0, since on return it
+	is removed.
+	(giop_connection_real_state_changed): add some source management
+	assertions.
+	(giop_connection_destroy): rename to
+	(giop_connection_shutdown): this.
+
+2001-05-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): remove bypass_obj unref, hmm.
+
+2001-05-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_idle_init, idle_fn): FIXME these suck.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_use_noblock): impl.
+
+2001-05-19  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(orbit_idl_output_c_headers): re-order.
+
+2001-05-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POA_free_fn): free the poa's
+	name and key buffer.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_release_fn): 
+	free the initial refs hash.
+
+2001-05-18  Martin Baulig  <baulig@suse.de>
+
+	* ORBit-2.0.pc.in (Cflags): Added `-DORBIT2=1'.
+
+2001-05-18  Martin Baulig  <baulig@suse.de>
+
+	* ORBit-2.0.pc.in: Use `ORBit-2.0' as package name.
+	* ORBit-CosNaming-2.0.pc.in: Use `ORBit-CosNaming-2.0' as name.
+
+	* Makefile.am: Install the .pc files.
+
+	* src/orb/orb-core/Makefile.am: Added explicit dependency
+	`$(top_builddir)/include/orbit/orb-core/orbit-interface.h: runidl_iface'.
+
+2001-05-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value): 
+	set _release = TRUE for sequences.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_poa): fix more stupid leaks.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(IOP_TAG_ORBIT_SPECIFIC_demarshal): allocate the correct
+	buffer size for the sock_path.
+	(IOP_Profile_equal): fix bug in GIOP compare, and compare
+	on host for IOP, impl for ORBIT_SPECIFIC and re-order to
+	accelerate.
+	(IOP_ObjectKey_equal): split out.
+	(IOP_TAG_ORBIT_SPECIFIC_free): don't double free the profile
+	itself.
+
+	* src/orb/poa/poa.c (ORBit_POA_oid_to_ref): put the osi
+	profile on the profile list, and do this later, to ensure
+	that the ORBit specific profile is later than the GIOP
+	profile.
+
+	* test/everything/server.c (create_object): free the object id...
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_poa): fix misc.
+	leaks.
+
+	* src/orb/orb-core/corba-context.c (CORBA_Context_get_values): remove
+	redundant call to create_list.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-server.c (giop_server_handle_new_connection): impl.
+	(giop_server_class_init): hook it up.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_run): 
+	unuse reliably here.
+
+	* src/orb/poa/poa.c (ORBit_handle_request):
+	remove the unuse.
+
+	* src/orb/orb-core/corba-context.c (CORBA_Context_new): fix leak.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (PortableServer_POA_find_POA): bugfix.
+	(ORBit_POA_is_inuse): 
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): duplicate
+	the ORB before returning it.
+
+	* src/orb/orb-core/corba-object.c (ORBit_delete_profiles): upd.
+	(ORBit_handle_location_forward, ORBit_demarshal_IOR): upd.
+	(CORBA_Object_release_cb): finish.
+	(ORBit_objref_find): fix leak.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec): remove broken
+	ref set to 1.
+
+2001-05-17  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_profile_free): actualy free the sub-profiles.
+	(IOP_TAG_INTERNET_IOP_free, IOP_TAG_GENERIC_IOP_free),
+	(IOP_TAG_MULTIPLE_COMPONENTS_free, IOP_TAG_ORBIT_SPECIFIC_free): 
+	impl.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_IOP_ServiceContextList_free): impl.
+	(giop_recv_buffer_unuse): use it.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec): unuse
+	the encapsulated buffer after creation.
+
+2001-05-17  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-context.c (ORBit_Context_demarshal):
+	move buf->cur over the length to point at the value.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_create_list): impl.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec_tk_sequence),
+	(tc_dec_tk_alias, tc_dec_tk_array): set sub_parts to 1.
+	(tc_dec): set ref count to 1.
+
+	* src/orb/orb-core/corba-any.c (ORBit_marshal_value),
+	(ORBit_demarshal_value): Make TypeCode indirection consistant
+	with CORBA_Object indirection [ and in fact all other types ] -
+	they are both Pseudo-objects.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec): hack.
+
+	* src/orb/orb-core/corba-env.c (ORBit_send_user_exception): fixup.
+
+2001-05-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_skel): impl.
+
+2001-05-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_non_existent): 
+	reverse polarity.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_allocbuf):
+	fix silly allocbuf bug.
+
+	* test/everything/client.c: #include yet another
+	.c file - yuck.
+
+	* test/everything/server.c: kugly #ifdef hacks.
+
+2001-05-14  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_non_existent): fix.
+
+	* configure.in: add pkgconfig bits.
+
+2001-05-12  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c: impl. context code.
+
+2001-05-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value): 
+	don't try to de-marshal a _maximum that isn't there.
+
+2001-05-10  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_write_param_typespec_str): split from
+	(orbit_cbe_write_param_typespec_raw): here.
+	(cs_small_unflatten_ref, cbe_small_unflatten_args): impl.
+
+	* include/orbit/poa/poa-types.h:
+	add ORBit_small_impl_finder, add ORBitSmallSkeleton.
+
+2001-05-09  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/Makefile.am: remove ugly hack.
+
+2001-05-08  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-skels.c (ck_output_small_skel): 
+	impl.
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(cs_small_flatten_ref, cbe_small_output_args): move here
+	from orbit-idl-c-stubs.c
+
+	* src/idl-compiler/orbit-idl-c-skels.c
+	(cbe_skel_interface_print_relayers),
+	(cbe_skel_interface_print_relayer): make small variants
+	like to change sig to have const char *method, but needs
+	poa work... perhaps expand the PortableServer_ClassInfo
+	struct with a more sensible option ? / put it on the
+	object.
+	
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(orbit_cbe_param_printptrs): unused - kill.
+
+2001-05-05  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(orbit_idl_output_c_headers): upd.
+	(ch_output_itypes, ch_output_itype): impl.
+
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(orbit_idl_output_c_stubs): upd.
+	(cs_small_output_stubs, cs_small_flatten_ref),
+	(cs_small_output_args, cs_small_output_small_stub): impl.
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value),
+	(ORBit_marshal_value): publicise.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_itypes, cc_small_output_itype): add.
+
+2001-05-04  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/orb-core/allocators.h
+	(ORBit_freekids_via_TypeCode): publicize.
+
+	* src/idl-compiler/orbit-idl-c-common.c: don't dump any
+	allocs if we are in small mode.
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_get_typecode_name): add.
+
+	* include/orbit/orb-core/orb-core.h: add orbit-small.h
+
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_output_type_enum): 
+	(ch_output_interface, ch_output_type_dcl, ch_output_type_struct),
+	(ch_output_type_union, ch_prep_fixed, ch_prep_sequence): pass
+	rinfo around so we can get at the 'small' flag.
+	(ch_prep): upd.
+
+	* src/idl-compiler/orbit-idl-main.c (main): add arg '--small'
 
 2001-05-04  Michael Meeks  <michael@ximian.com>
 
@@ -37,7 +453,3 @@
 	* src/orb/orb-core/corba-any.c (CORBA_any_get_release): impl.
 
 	* test/everything/Makefile.am: update.
-	
-
-Do not touch this file. Run 'rcs2log' or use bonsai
-(http://cvs.gnome.org/)

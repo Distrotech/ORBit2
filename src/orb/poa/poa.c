@@ -64,8 +64,7 @@ PortableServer_POA_find_POA(PortableServer_POA _obj,
 			    const CORBA_boolean activate_it,
 			    CORBA_Environment * ev)
 {
-  PortableServer_POA child_poa;
-
+  PortableServer_POA child_poa = NULL;
 
   if(_obj->child_poas)
     child_poa = g_hash_table_lookup(_obj->child_poas, adapter_name);
@@ -580,6 +579,7 @@ ORBit_POACurrent_free_fn(ORBit_RootObject obj_in)
 {
   PortableServer_Current poacur = (PortableServer_Current)obj_in;
   ORBit_RootObject_release(poacur->orb);
+  poacur->orb = NULL;
   g_free(poacur);
 }
 
@@ -869,7 +869,8 @@ ORBit_POA_is_inuse(PortableServer_POA poa,
   if ( consider_children )
     {
       gboolean is_inuse = FALSE;
-      g_hash_table_foreach(poa->child_poas, check_child_poa_inuse, &is_inuse);
+      if (poa->child_poas)
+        g_hash_table_foreach(poa->child_poas, check_child_poa_inuse, &is_inuse);
       if(is_inuse)
 	return TRUE;
     }
@@ -1316,9 +1317,13 @@ ORBit_POA_handle_held_requests(PortableServer_POA poa)
 static void
 ORBit_POA_free_fn(ORBit_RootObject obj_in)
 {
-    PortableServer_POA poa = (PortableServer_POA)obj_in;
-    ORBit_RootObject_release(poa->orb);
-    g_free(poa);
+    PortableServer_POA poa = (PortableServer_POA) obj_in;
+    ORBit_RootObject_release (poa->orb);
+    g_hash_table_destroy (poa->oid_to_obj_map);
+    CORBA_free (poa->name);
+    CORBA_free (poa->poa_key._buffer);
+    poa->orb = NULL;
+    g_free (poa);
 }
 
 static const ORBit_RootObject_Interface ORBit_POA_epv = {
@@ -1809,13 +1814,15 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
   PortableServer_ServantBase *servant;
   PortableServer_ServantLocator_Cookie cookie;
   ORBit_POAObject *pobj = NULL, tmp_pobj;
-  ORBitSkeleton skel;
+  ORBitSkeleton skel = NULL;
+  ORBitSmallSkeleton small_skel = NULL;
   gpointer imp = NULL;
   CORBA_Environment env, *ev = &env;
   PortableServer_ObjectId oid;
-  PortableServer_POAManager_State	mgr_state;
+  PortableServer_POAManager_State mgr_state;
   ORBit_POAInvocation invoke_rec;
   CORBA_Identifier opname;
+  ORBit_IMethod *m_data;
 
   CORBA_exception_init(ev);
   objkey = giop_recv_buffer_get_objkey(recv_buffer);
@@ -1918,9 +1925,17 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 
   if (ev->_major == CORBA_NO_EXCEPTION)
     {
-      skel = ORBIT_SERVANT_TO_CLASSINFO(servant)->
-	relay_call(servant, recv_buffer, &imp);
-      if(!skel)
+      PortableServer_ClassInfo *klass = 
+	      ORBIT_SERVANT_TO_CLASSINFO(servant);
+
+      if (klass->relay_call)
+        skel = klass->relay_call(servant, recv_buffer, &imp);
+
+      if (!skel && klass->small_relay_call)
+        small_skel = klass->small_relay_call(
+          servant,giop_recv_buffer_get_opname (recv_buffer), (gpointer *)&m_data, &imp);
+
+      if(!skel && !small_skel)
 	{
 	  if (opname[0] == '_' && strcmp(opname + 1, "is_a") == 0)
 	    skel = (gpointer)&ORBit_impl_CORBA_Object_is_a;
@@ -1944,8 +1959,10 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 	  GIOP_MESSAGE_BUFFER(recv_buffer)->connection->is_auth = TRUE;
 	}
 #endif
-
-      skel(servant, recv_buffer, ev, imp);
+      if (skel)
+        skel(servant, recv_buffer, ev, imp);
+      else
+        ORBit_small_invoke_poa (servant, recv_buffer, m_data, small_skel, imp, ev);
       /* Currently, the skel handles sending any and all exceptions
        * that occur within the skel/implementation.
        */
@@ -1986,7 +2003,6 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
       g_assert(ev->_major == CORBA_NO_EXCEPTION);
     }
 
-  giop_recv_buffer_unuse(recv_buffer);
   CORBA_exception_free(ev);
 }
 

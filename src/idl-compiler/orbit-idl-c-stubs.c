@@ -5,6 +5,7 @@
 #include <string.h>
 
 static void cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci);
+static void cs_small_output_stubs(IDL_tree tree, OIDL_C_Info *ci, int *idx);
 
 void
 orbit_idl_output_c_stubs(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -15,12 +16,152 @@ orbit_idl_output_c_stubs(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_In
   fprintf(ci->fh, "#include <string.h>\n");
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
 
-  cs_output_stubs(tree->tree, ci);
+  if (rinfo->small_stubs)
+    cs_small_output_stubs(tree->tree, ci, NULL);
+  else
+    cs_output_stubs(tree->tree, ci);
+}
+
+static void cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx);
+
+/* Very similar to cs_output_stubs */
+static void
+cs_small_output_stubs(IDL_tree tree, OIDL_C_Info *ci, int *idx)
+{
+  if(!tree) return;
+
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_MODULE:
+    cs_small_output_stubs(IDL_MODULE(tree).definition_list, ci, idx);
+    break;
+  case IDLN_LIST:
+    {
+      IDL_tree sub;
+      for(sub = tree; sub; sub = IDL_LIST(sub).next) {
+	cs_small_output_stubs(IDL_LIST(sub).data, ci, idx);
+      }
+    }
+    break;
+  case IDLN_ATTR_DCL:
+    {
+      OIDL_Attr_Info *ai = tree->data;
+
+      IDL_tree curitem;
+      
+      for(curitem = IDL_ATTR_DCL(tree).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
+	ai = IDL_LIST(curitem).data->data;
+	
+	cs_small_output_stubs(ai->op1, ci, idx);
+	if(ai->op2)
+	  cs_small_output_stubs(ai->op2, ci, idx);
+      }
+    }
+    break;
+  case IDLN_INTERFACE: {
+    int real_idx = 0;
+    cs_small_output_stubs(IDL_INTERFACE(tree).body, ci, &real_idx);
+    break;
+  }
+  case IDLN_OP_DCL:
+    cs_small_output_stub(tree, ci, idx);
+    break;
+  default:
+    break;
+  }
+}
+
+static void
+cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
+{
+	FILE         *of = ci->fh;
+	char         *id;
+	gboolean      has_retval, has_args;
+
+	g_return_if_fail (idx != NULL);
+
+	id = orbit_cbe_op_get_interface_name (tree);
+	has_retval = IDL_OP_DCL(tree).op_type_spec != NULL;
+	has_args   = IDL_OP_DCL(tree).parameter_dcls != NULL;
+
+	orbit_cbe_op_write_proto (of, tree, "", FALSE);
+
+	fprintf (of, "{\n");
+
+	if (has_retval) {
+		orbit_cbe_write_param_typespec (of, tree);
+		fprintf (of, " " ORBIT_RETVAL_VAR_NAME ";\n");
+	}
+
+	fprintf (of, "#ifndef ORBIT_STUB_DEBUG_LOCAL\n");
+	{
+		IDL_tree curitem;
+		char *id;
+
+		curitem = IDL_get_parent_node(tree, IDLN_INTERFACE, 0);
+		g_assert(curitem);
+		id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
+					     "_", 0);
+		fprintf(ci->fh, "if(ORBIT_STUB_IsBypass (_obj, %s__classid))\n", id);
+
+		fprintf(ci->fh, "%s((POA_%s__epv *)ORBIT_STUB_GetEpv(_obj, %s__classid))->%s(\n"
+			"ORBIT_STUB_GetServant(_obj), ",
+			IDL_OP_DCL(tree).op_type_spec? ORBIT_RETVAL_VAR_NAME " = ":"",
+			id, id, IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+		g_free(id);
+		for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
+		    curitem = IDL_LIST(curitem).next) {
+			fprintf(ci->fh, "%s, ",
+				IDL_IDENT(IDL_PARAM_DCL(IDL_LIST(curitem).data).simple_declarator).str);
+		}
+		if(IDL_OP_DCL(tree).context_expr)
+			fprintf(ci->fh, "_ctx, ");
+
+		fprintf(ci->fh, "ev);\n");
+	}
+
+	fprintf (of, "else");
+	fprintf (of, "#endif ORBIT_STUB_DEBUG_LOCAL\n");
+	fprintf (of, " { /* remote marshal */\n");
+	{
+		if (has_args)
+			cbe_small_flatten_args (tree, of, "_args");
+
+		fprintf (of, "ORBit_small_invoke_stub (_obj, "
+			 "&%s__itype.methods._buffer [%d], ", id, *idx);
+
+		if (has_retval)
+			fprintf (of, "&_ORBIT_retval, ");
+		else
+			fprintf (of, "NULL, ");
+
+		if (has_args)
+			fprintf (of, "_args, ");
+		else
+			fprintf (of, "NULL, ");
+
+		if (IDL_OP_DCL(tree).context_expr)
+			fprintf(ci->fh, "_ctx, ");
+		else
+			fprintf(ci->fh, "NULL, ");
+		
+		fprintf (of, "ev);\n\n");
+
+	}
+
+	fprintf (of, "}\n");
+
+	if (has_retval)
+		fprintf (of, "return " ORBIT_RETVAL_VAR_NAME ";\n");
+
+	fprintf (of, "}\n");
+
+	(*idx)++;
 }
 
 static void cs_output_stub(IDL_tree tree, OIDL_C_Info *ci);
 static void cs_output_except(IDL_tree tree, OIDL_C_Info *ci);
 
+/* Very similar to cs_output_small_stubs */
 static void
 cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
 {
@@ -106,7 +247,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "const ORBit_ContextMarshalItem _context_items[] = {\n");
 
     for(curitem = IDL_OP_DCL(tree).context_expr; curitem; curitem = IDL_LIST(curitem).next) {
-      fprintf(ci->fh, "{%lu, \"%s\"},\n", strlen(IDL_STRING(IDL_LIST(curitem).data).value) + 1,
+      fprintf(ci->fh, "{%lu, \"%s\"},\n", (unsigned long)strlen(IDL_STRING(IDL_LIST(curitem).data).value) + 1,
 	      IDL_STRING(IDL_LIST(curitem).data).value);
     }
     fprintf(ci->fh, "};\n");
@@ -184,7 +325,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%lu]; } _ORBIT_operation_name_data = { %lu, \"%s\" };\n",
 	  /* We align it now instead of at runtime */
 	  ALIGN_VALUE(strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1, sizeof(CORBA_unsigned_long)),
-	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
+	  (unsigned long)strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
 	  IDL_IDENT(IDL_OP_DCL(tree).ident).str);
   fprintf(ci->fh, "const struct iovec _ORBIT_operation_vec = {(gpointer)&_ORBIT_operation_name_data, %lu};\n",
 	  sizeof(CORBA_unsigned_long) +
