@@ -544,13 +544,12 @@ wakeup_mainloop (void)
 	int  res;
 	while ((res = write (WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
 	       errno == EINTR );
-#ifdef G_ENABLE_DEBUG
 	if (res < 0 && errno == EAGAIN)
-		g_warning ("Looks like you have no glib mainloop running");
-#endif
+		return;
 	if (res < 0)
-		g_error ("Failed to write to GIOP wakeup socket %d 0x%x(%d) (%d)",
-			 res, errno, errno, WAKEUP_WRITE);
+		g_warning ("Failed to write to GIOP mainloop wakeup "
+			   "pipe %d 0x%x(%d) (%d)",
+			   res, errno, errno, WAKEUP_WRITE);
 }
 
 void
