@@ -15,6 +15,8 @@
 #include "config.h"
 #include <linc/linc.h>
 
+#include "linc-debug.h"
+
 #ifdef LINK_SSL_SUPPORT
 
 #include <openssl/ssl.h>

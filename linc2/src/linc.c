@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
-#include "linc-debug.h"
 #include "linc-private.h"
 
 /* whether we do locking or not */

@@ -16,7 +16,6 @@
 #include <linc/linc-connection.h>
 
 #include "linc-private.h"
-#include "linc-debug.h"
 
 #undef LOCAL_DEBUG
 

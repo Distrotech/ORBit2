@@ -21,7 +21,6 @@
 #include <openssl/ssl.h>
 #endif
 
-#include "linc-debug.h"
 #include "linc-private.h"
 #include <linc/linc-config.h>
 #include <linc/linc-connection.h>

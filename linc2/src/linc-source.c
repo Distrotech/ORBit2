@@ -17,7 +17,6 @@
 #include <fcntl.h>
 
 #include <glib.h>
-#include "linc-debug.h"
 #include "linc-private.h"
 
 static gboolean 
