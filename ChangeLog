@@ -1,3 +1,9 @@
+2005-02-07  Tor Lillqvist  <tml@novell.com>
+
+	* test/Makefile.am (check_PROGRAMS): Must use check_PROGRAMS as
+	the name for the list of test programs in order for Automake to
+	properly use EXEEXT on Windows.
+
 2005-02-02  Hans Petter Jansson  <hpj@novell.com>
 
 	* configure.in: Check for res_9_init() in -lresolv. This will pull in

@@ -20,14 +20,13 @@ bin_PROGRAMS=ior-decode-2 typelib-dump
 noinst_PROGRAMS=test1 \
 	echo-client echo-client-t echo-server \
 	empty-client empty-server \
-	test-any-client test-any-server \
-	test-dynany test-mem test-performance test-giop test-corbaloc
+	test-any-client test-any-server
 
-TESTS = test-dynany test-mem test-performance test-giop test-corbaloc
+check_PROGRAMS = test-dynany test-mem test-performance test-giop test-corbaloc
+
+TESTS = $(check_PROGRAMS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
-
-test_mem_SOURCES=test-mem.c $(IDLOUT)
 
 test_corbaloc_SOURCES = test-corbaloc.c
 
@@ -60,6 +59,8 @@ $(srcdir)/empty-client.c $(srcdir)/empty-server.c: empty.h
 IDLOUT=test1-stubs.c test1-skels.c test1-common.c test1.h
 test1_SOURCES=test1.c $(IDLOUT)
 $(srcdir)/test1.c: test1.h
+
+test_mem_SOURCES=test-mem.c $(IDLOUT)
 
 ior_decode_2_SOURCES=ior-decode.c
 
