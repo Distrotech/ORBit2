@@ -1,3 +1,7 @@
+2004-02-10  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/Makefile.am: always dist. HTTP_FILES.
+
 2004-02-06  Chris Toshok  <toshok@ximian.com>
 
 	* src/orb/poa/poa.c (push_request_idle): add an @on_context arg,
