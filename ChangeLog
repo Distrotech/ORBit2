@@ -1,3 +1,13 @@
+2001-08-23  Mark McLoughlin <mark@skynet.ie>
+	
+	* src/orb/orb-core/allocators.c
+	(ORBit_freekids_via_TypeCode_T): unref the 
+	object reference.
+
+	* src/orb/orb-core/corba-policy.c
+	(CORBA_Policy_destroy): don't unref the
+	object - that's CORBA_Object_release's job.
+
 2001-08-23  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: require linc 0.1.4

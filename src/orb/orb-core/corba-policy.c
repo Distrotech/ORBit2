@@ -68,7 +68,6 @@ void
 CORBA_Policy_destroy (CORBA_Policy       p,
 		      CORBA_Environment *ev)
 {
-	ORBit_RootObject_release (p);
 }
 
 CORBA_Policy
