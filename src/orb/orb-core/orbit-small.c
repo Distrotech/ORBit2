@@ -163,10 +163,11 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 				ev->_any._type = ORBit_RootObject_duplicate (
 					types->_buffer [i]);
 		}
-		return;
 	}
-	return;
   
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return;
+
  errout:
 	/* ignore LOCATION_FORWARD here, that gets handled in the stub */
 	CORBA_exception_set_system (ev, ex_CORBA_MARSHAL,

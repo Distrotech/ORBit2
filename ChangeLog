@@ -1,3 +1,15 @@
+2002-12-02  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-utils.c
+	(oidl_param_info): bail out if we get an exception
+	as a parameter.
+
+2002-11-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_handle_exception_array): ensure we always
+	exit with an exception set, even with odd wire data.
+
 2002-11-05  Mark McLoughlin  <mark@skynet.ie>
                                                                                                              
 	* test/everything/everything.idl: add simple

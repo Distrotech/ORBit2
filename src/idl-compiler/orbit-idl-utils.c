@@ -463,81 +463,104 @@ orbit_cbe_get_typeoffsets_table (void)
 	from the IDLN_* enums into an index into nptrrefs_required (typeoffsets)
 **/
 gint
-oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice)
+oidl_param_info(IDL_tree in_param, IDL_ParamRole role, gboolean *isSlice)
 {
-  const int * const typeoffsets = orbit_cbe_get_typeoffsets_table ();
-  const int nptrrefs_required[][4] = {
-    {0,1,1,0} /* float */,
-    {0,1,1,0} /* double */,
-    {0,1,1,0} /* long double */,
-    {1,1,1,0} /* fixed_d_s 3 */, 
-    {0,1,1,0} /* boolean */,
-    {0,1,1,0} /* char */,
-    {0,1,1,0} /* wchar */,
-    {0,1,1,0} /* octet */,
-    {0,1,1,0} /* enum */,
-    {0,1,1,0} /* objref */,
-    {1,1,1,0} /* fixed struct 10 */,
-    {1,1,1,0} /* fixed union */,
-    {0,1,1,0} /* string */,
-    {0,1,1,0} /* wstring */,
-    {1,1,2,1} /* sequence */,
-    {0,0,0,0} /* fixed array */,
-    {1,1,2,1} /* any 16 */
-  };
-  int retval = 0;
-  int typeidx;
+	IDL_tree param;
+	const int * const typeoffsets = orbit_cbe_get_typeoffsets_table ();
+	const int nptrrefs_required[][4] = {
+		{0,1,1,0} /* float */,
+		{0,1,1,0} /* double */,
+		{0,1,1,0} /* long double */,
+		{1,1,1,0} /* fixed_d_s 3 */, 
+		{0,1,1,0} /* boolean */,
+		{0,1,1,0} /* char */,
+		{0,1,1,0} /* wchar */,
+		{0,1,1,0} /* octet */,
+		{0,1,1,0} /* enum */,
+		{0,1,1,0} /* objref */,
+		{1,1,1,0} /* fixed struct 10 */,
+		{1,1,1,0} /* fixed union */,
+		{0,1,1,0} /* string */,
+		{0,1,1,0} /* wstring */,
+		{1,1,2,1} /* sequence */,
+		{0,0,0,0} /* fixed array */,
+		{1,1,2,1} /* any 16 */
+	};
+	int retval = 0;
+	int typeidx;
 
-  *isSlice = FALSE;
+	*isSlice = FALSE;
 
-  if(!param)
-    return 0; /* void */
+	if(!in_param)
+		return 0; /* void */
 
-  /* Now, how do we use this table? :) */
-  param = orbit_cbe_get_typespec(param);
+	/* Now, how do we use this table? :) */
+	param = orbit_cbe_get_typespec (in_param);
 
-  g_assert(param);
+	g_assert (param);
 
-  switch(IDL_NODE_TYPE(param)) {
-  case IDLN_TYPE_STRUCT:
-  case IDLN_TYPE_UNION:
-    if(((role == DATA_RETURN) || (role == DATA_OUT))
-       && !orbit_cbe_type_is_fixed_length(param))
-      retval++;
-    break;
-  case IDLN_TYPE_ARRAY:
-    if ( role == DATA_RETURN ) {
-      *isSlice = TRUE;
-      retval = 1;
-    } else if (role==DATA_OUT && !orbit_cbe_type_is_fixed_length(param)) {
-      *isSlice = TRUE;
-      retval = 2;
-    }
-    break;
-  case IDLN_NATIVE:
-    if ( IDL_NATIVE(param).user_type
-	 && strcmp(IDL_NATIVE(param).user_type,"IDL_variable_length_struct")==0 ) {
-      return role==DATA_OUT ? 2 : 1;
-    }
-    break;
-      
-  default:
-    break;
-  }
+	switch (IDL_NODE_TYPE (param)) {
+	case IDLN_TYPE_STRUCT:
+	case IDLN_TYPE_UNION:
+		if (((role == DATA_RETURN) || (role == DATA_OUT)) &&
+		    !orbit_cbe_type_is_fixed_length(param))
+			retval++;
+		break;
 
-  typeidx = typeoffsets[IDL_NODE_TYPE(param)];
-  g_assert(typeidx >= 0);
+	case IDLN_TYPE_ARRAY:
+		if ( role == DATA_RETURN ) {
+			*isSlice = TRUE;
+			retval = 1;
 
-  switch(role) {
-  case DATA_IN: role = 0; break;
-  case DATA_INOUT: role = 1; break;
-  case DATA_OUT: role = 2; break;
-  case DATA_RETURN: role = 3; break;
-  default: g_assert_not_reached();
-  }
+		} else if (role == DATA_OUT &&
+			   !orbit_cbe_type_is_fixed_length (param)) {
+			*isSlice = TRUE;
+			retval = 2;
+		}
+		break;
 
-  retval += nptrrefs_required[typeidx][role];
-  return retval;
+	case IDLN_NATIVE:
+		if ( IDL_NATIVE (param).user_type
+		     && strcmp (IDL_NATIVE (param).user_type,
+				"IDL_variable_length_struct") == 0 )
+			return role == DATA_OUT ? 2 : 1;
+		break;
+
+	case IDLN_EXCEPT_DCL:
+		fprintf (stderr, "Error: exception declared at '%s:%d' cannot be "
+			 "used as a method parameter\n", in_param->_file,
+			 in_param->_line);
+		exit (1);
+		break;
+	default:
+		break;
+	}
+
+	/* ERROR ! */
+	typeidx = typeoffsets [IDL_NODE_TYPE (param)];
+	g_assert (typeidx >= 0);
+
+	switch (role) {
+	case DATA_IN:
+		role = 0;
+		break;
+	case DATA_INOUT:
+		role = 1;
+		break;
+	case DATA_OUT:
+		role = 2;
+		break;
+	case DATA_RETURN:
+		role = 3;
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+
+	retval += nptrrefs_required [typeidx] [role];
+
+	return retval;
 }
 
 /**
