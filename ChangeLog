@@ -1,3 +1,8 @@
+2001-11-15  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/poa.c (ORBit_POAObject_handle_request): warn
+	if queueing a request because the POAManager is holding.
+
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-trace.c
