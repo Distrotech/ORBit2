@@ -1810,8 +1810,9 @@ IDLSequence::writeCDeepCopyCode(ostream &ostr, Indent &indent, string const &ide
 	ostr << indent << ident << "._maximum = " << target << "._maximum;" << endl;
 	
 	ostr << indent << "if(" << ident << "._release == 1) { CORBA_free(" << ident << "._buffer); }" << endl;
-	ostr << indent << ident+"._buffer = " << getNSScopedCTypeName()
-		 << "_allocbuf("<< ident <<"._length);" << endl;
+	ostr << indent << ident+"._buffer = "
+	     << "static_cast<" << m_elementType.getCTypeName () << "*> ("
+	     << getNSScopedCTypeName() << "_allocbuf("<< ident <<"._length));" << endl;
 	
 	ostr << indent << ident << "._release = 1;" << endl;
 	ostr
