@@ -92,7 +92,7 @@ ORBit_free(gpointer mem)
   if ( howcode == ORBIT_MEMHOW_FREEFNC1 ) {
     ORBit_MemPrefix_FreeFnc1	*pre = prefix;
     pre->freeblk(mem, pre);
-    // CB invokation must free any assoc. memory
+    /* CB invokation must free any assoc. memory */
     return;
   }
   g_assert_not_reached();
