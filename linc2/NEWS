@@ -1,3 +1,9 @@
+Version 0.1.16
+
+	* 'broken' signal on Solaris fix (Mark)
+	* writev queueing fixage (Michael)
+	* regression tests improvements (Mark)
+
 Version 0.1.15
 
 	* writev loop fix (Laszlo Peter)
