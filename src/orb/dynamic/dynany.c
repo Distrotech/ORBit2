@@ -1486,9 +1486,7 @@ DynamicAny_DynStruct_get_members_as_dyn_any (DynamicAny_DynStruct obj,
 	retval->_length = tc->sub_parts;
 
 	for (i = 0; i < tc->sub_parts; i++) {
-		DynamicAny_DynAny *dyn;
-		CORBA_TypeCode     subtc = tc->subtypes [i];
-		gpointer           to;
+		CORBA_TypeCode subtc = tc->subtypes [i];
 
 		retval->_buffer [i].id = CORBA_string_dup (tc->subnames [i]);
 
@@ -1527,8 +1525,6 @@ DynamicAny_DynStruct_set_members_as_dyn_any (DynamicAny_DynStruct               
 		return;
 	}
 
-	dynany_invalidate (dynany, FALSE, TRUE);
-
 	for (i = 0; i < value->_length; i++) {
 		DynamicAny_NameDynAnyPair current = value->_buffer [i];
 		DynAny *dyn = GET_DYNANY (current.value);
@@ -1554,6 +1550,8 @@ DynamicAny_DynStruct_set_members_as_dyn_any (DynamicAny_DynStruct               
 
 		ORBit_copy_value_core (&src, &dest, tc->subtypes [i]);
 	}
+
+	dynany_invalidate (dynany, FALSE, TRUE);
 }
 
 /* 9.2.7 */

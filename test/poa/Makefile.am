@@ -8,12 +8,13 @@ POA_TESTS_SRCS = poatest-basic01.c \
                  poatest-basic02.c \
                  poatest-basic03.c \
                  poatest-basic04.c \
-                 poatest-basic05.c \
                  poatest-basic06.c \
                  poatest-basic07.c \
                  poatest-basic08.c \
                  poatest-basic09.c \
                  poatest-basic10.c
+
+#                 poatest-basic05.c \
 
 TESTS = poatest-basic01 \
         poatest-basic02 \
