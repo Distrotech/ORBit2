@@ -1,3 +1,17 @@
+ORBit2-2.9.1
+
+	* bug fixes
+		+ thread handling / shutdown bugs (Justin Schoeman)
+		+ linc I/O revents race fix (Padraig O'Briain)
+		+ name service ref leak (Justin)
+		+ GIOP HUP error cleanup (Michael)
+		+ ORB shutdown from any thread (Michael)
+		+ build fixes / cleans (Justin, Michael)
+	* featurelets
+		+ (limited) re-enterancy client policy (Michael)
+		+ re-factored invocation stack (Frank Rehberger)
+		+ deactivation / return test (Michael) 
+
 ORBit2-2.9.0
 
 	* bug fixes
