@@ -5,6 +5,7 @@ INCLUDES =                         \
 	-I$(top_srcdir)/include    \
 	$(LINC_CFLAGS)             \
 	$(SSL_CFLAGS)              \
+	$(WARN_CFLAGS)             \
 	-D_GNU_SOURCE
 
 liblinc_la_SOURCES=\

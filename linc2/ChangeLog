@@ -1,3 +1,13 @@
+2001-09-26  Mark McLoughlin <mark@skynet.ie>
+
+	* configure.in: add --enable-compile-warnings option.
+
+	* src/Makefile.am: use $(WARN_CFLAGS)
+
+	* src/linc-protocols.c
+	(linc_protocol_get_sockinfo_ipv6): initialise host.
+	include linc-private.h.
+
 2001-09-25  Mark McLoughlin <mark@skynet.ie>
 
 	* Version 0.1.5.
