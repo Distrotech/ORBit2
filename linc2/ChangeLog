@@ -1,3 +1,10 @@
+2002-02-06  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c: define NI_MAXHOST to
+	MAXHOSTNAMELEN if we just can't find it, include
+	sys/param.h explicitely for that, define NI_MAXSERV
+	to 64 in case we can't get that either.
+
 2002-02-05  Sebastian Wilhelmi  <wilhelmi@ira.uka.de>
 
 	* src/linc-connection.c (write_data): Do not use

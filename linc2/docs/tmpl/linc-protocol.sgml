@@ -67,6 +67,8 @@ The protocols exposed
 @destroy: 
 @get_sockaddr: 
 @get_sockinfo: 
+@is_local: 
+@dummy: 
 
 <!-- ##### FUNCTION linc_set_tmpdir ##### -->
 <para>

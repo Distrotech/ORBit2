@@ -22,6 +22,7 @@ the base linc types and utilities
 @LINC_CONNECTION_SSL: 
 @LINC_CONNECTION_NONBLOCKING: 
 @LINC_CONNECTION_BLOCK_SIGNAL: 
+@LINC_CONNECTION_LOCAL_ONLY: 
 
 <!-- ##### STRUCT LincWatch ##### -->
 <para>
@@ -43,6 +44,8 @@ the base linc types and utilities
 @destroy: 
 @get_sockaddr: 
 @get_sockinfo: 
+@is_local: 
+@dummy: 
 
 <!-- ##### MACRO LINC_MUTEX_LOCK ##### -->
 <para>
