@@ -227,8 +227,6 @@ IDLArray::typedef_decl_write (ostream          &ostr,
 			      const IDLTypedef &target,
 			      const IDLTypedef *active_typedef = 0) const
 {
-#warning "WRITE ME"
-
 	string array_id = target.get_cpp_identifier ();
 	string slice_id = array_id + "_slice";
 	string wrapper = m_element_type.is_fixed () ?
@@ -413,6 +411,7 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 	     << " " << c_id << ';' << endl;
 
 	fill_c_array (ostr, indent, cpp_id, c_id);
+	ostr << endl;
 }
 	
 string
@@ -449,17 +448,18 @@ IDLArray::stub_impl_arg_post (ostream          &ostr,
 	if (!m_element_type.conversion_required ())
 		return;
 
-	if (direction == IDL_PARAM_IN)
-		// No need to load IN parameters back
-		return;
-	
 	// Re-load from C array
+	if (direction == IDL_PARAM_INOUT || direction == IDL_PARAM_OUT)
 	fill_cpp_array (ostr, indent, cpp_id, "_c_" + cpp_id);
-
+	
 	// Free C array
 	if (direction == IDL_PARAM_OUT)
 		ostr << indent << "CORBA_free (*_c_" << cpp_id << ");"
 		     << endl;
+	else
+		ostr << indent << active_typedef->get_c_typename () << "__freekids ("
+		     << "_c_" << cpp_id << ", 0);" << endl;
+		
 }
 
 
@@ -508,12 +508,12 @@ IDLArray::stub_impl_ret_post (ostream          &ostr,
 	
 	// Create and fill C++ array
 	ostr << indent << active_typedef->get_cpp_typename ()
-	     << " _cpp_retval;" << endl;
+	     << "_slice *_cpp_retval = "
+	     << active_typedef->get_cpp_typename () << "_alloc ();" << endl;
 
-	fill_c_array (ostr, indent, "_cpp_retval", "_retval");
+	fill_cpp_array (ostr, indent, "_cpp_retval", "_retval");
 	
-	ostr << indent << active_typedef->get_c_typename ()
-	     << "__freekids (_retval, 0);" << endl;
+	ostr << indent << "CORBA_free (_retval);" << endl;
 
 	ostr << indent << "return _cpp_retval;" << endl;
 }
@@ -569,14 +569,9 @@ IDLArray::skel_impl_arg_pre (ostream          &ostr,
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		ostr << indent << active_typedef->get_cpp_typename ()
-		     << " _cpp_" << c_id << ";" << endl;
-		fill_cpp_array (ostr, indent, "_cpp_" + c_id, c_id);
-		break;
-		
 	case IDL_PARAM_INOUT:
 		ostr << indent << active_typedef->get_cpp_typename ()
-		     << "_slice *_cpp_" << c_id << ";" << endl;
+		     << " _cpp_" << c_id << ";" << endl;
 		fill_cpp_array (ostr, indent, "_cpp_" + c_id, c_id);
 		break;
 
@@ -687,6 +682,9 @@ IDLArray::skel_impl_ret_post (ostream          &ostr,
 
 	fill_c_array (ostr, indent, "_retval", "_c_retval");
 
+	ostr << indent << active_typedef->get_cpp_typename ()
+	     << "_free (_retval);" << endl;
+	
 	ostr << indent << "return _c_retval;" << endl;
 }
 
@@ -694,28 +692,41 @@ IDLArray::skel_impl_ret_post (ostream          &ostr,
 string
 IDLArray::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+
+	return active_typedef->get_cpp_typename ();
 }
 
 string
 IDLArray::get_c_member_typename (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+
+	return active_typedef->get_c_typename ();
 }
 
 string
 IDLArray::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+	
+	return "const " + active_typedef->get_cpp_typename () + " &";
 }
 
 void
 IDLArray::member_impl_arg_copy (ostream          &ostr,
-			      Indent           &indent,
-			      const string     &cpp_id,
-			      const IDLTypedef *active_typedef) const
+				Indent           &indent,
+				const string     &cpp_id,
+				const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+
+	string copy_func = active_typedef->get_cpp_typename () + "_copy";
+	string member_id = cpp_id;
+	string param_id = "_par_" + member_id;
+	
+	ostr << indent << copy_func << " (" << member_id << ", " << param_id
+	     << ");" << endl;
 }
 
 void
@@ -743,7 +754,11 @@ IDLArray::member_pack_to_c (ostream          &ostr,
 			    const string     &c_id,
 			    const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	if (conversion_required ())
+		fill_c_array (ostr, indent, cpp_id, c_id);
+	else
+		copy_cpp_array (ostr, indent, cpp_id, c_id);
+
 }
 
 void
@@ -753,5 +768,8 @@ IDLArray::member_unpack_from_c  (ostream          &ostr,
 				 const string     &c_id,
 				 const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	if (conversion_required ())
+		fill_cpp_array (ostr, indent, cpp_id, c_id);
+	else
+		copy_cpp_array (ostr, indent, c_id, cpp_id);
 }
