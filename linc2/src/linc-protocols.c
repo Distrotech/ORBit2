@@ -109,6 +109,10 @@ linc_get_tmpdir (void)
 #define LINC_SET_SOCKADDR_LEN(saddr, len)
 #endif
 
+/*
+ * FIXME: This is a horribly hacked, utterly nasty and
+ * non-threadsafe way to go about life.
+ */
 #if defined(AF_INET6) && defined(RES_USE_INET6)
 #define LINC_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
 #define LINC_RESOLV_CLEAR_IPV6   _res.options &= ~RES_USE_INET6
@@ -138,11 +142,43 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 			      LincSockLen              saddr_len)
 {
 	int i;
+	int local_addr_len;
+	char *local_addr_data;
 	static int warned = 0;
-	static struct hostent *local_hostent = NULL;
-	
-	if (!local_hostent)
-		local_hostent = gethostbyname (get_local_hostname ());
+	struct hostent *local_hostent, **p;
+	static struct hostent *hostents[2] = { NULL, NULL };
+
+	g_assert (saddr->sa_family == proto->family);
+
+	/*
+	 * FIXME: gethostbyname2 returns a 16 byte IPv6 mapped IPv4
+	 * address, and it is not know how to compare this reliably
+	 * with an IPv4 address. So if we have IPv6 enabled we have
+	 * to talk to ourselves (and other ORBs) via that in the
+	 * local case.
+	 */
+	switch (proto->family) {
+	case AF_INET:
+		LINC_RESOLV_CLEAR_IPV6;
+		p = &hostents[0];
+		local_addr_len = 4;
+		local_addr_data = (char *) &((struct sockaddr_in *)saddr)->sin_addr.s_addr;
+		break;
+#ifdef AF_INET6
+	case AF_INET6:
+		LINC_RESOLV_SET_IPV6;
+		p = &hostents[1];
+		local_addr_len = 16;
+		local_addr_data = (char *) &((struct sockaddr_in6 *)saddr)->sin6_addr.s6_addr;
+		break;
+#endif
+	default:
+		return FALSE;
+	}
+
+	if (!*p)
+		*p = gethostbyname (get_local_hostname ());
+	local_hostent = *p;
 
 	if (!local_hostent) {
 		if (!warned++)
@@ -151,6 +187,9 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 		return FALSE;
 	}
 
+	if (!local_hostent->h_addr_list)
+		g_error ("No address for local host");
+
 	if (local_hostent->h_addrtype != saddr->sa_family) {
 		if (!warned++)
 			g_warning ("FIXME: can't compare different family "
@@ -158,12 +197,18 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 		return FALSE;
 	}
 
-	g_warning ("Compare vs %d matches len %d",
-		   local_hostent->h_length, saddr_len);
+	if (local_hostent->h_length != local_addr_len) {
+		if (!warned++)
+			g_warning ("FIXME: can't compare different length "
+				   "addresses (%d %d)", local_addr_len,
+				   local_hostent->h_length);
+		return FALSE;
+	}
 
-	for (i = 0; i < local_hostent->h_length; i++) {
+	for (i = 0; local_hostent->h_addr_list [i]; i++) {
+
 		if (!memcmp (local_hostent->h_addr_list [i],
-			     saddr->sa_data, saddr_len))
+			     local_addr_data, local_addr_len))
 			return TRUE;
 	}
 
@@ -286,58 +331,6 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 
 #ifdef AF_UNIX
 /*
- *   This is rumoured not to work at all
- * with 2.0.X kernels.
- */
-static void
-cleanup_sweep (void)
-{
-#if 0
-	int removed = 0, to_remove;
-	DIR *dirh;
-	struct dirent *dent;
-
-	dirh = opendir (linc_tmpdir);
-
-#ifdef G_ENABLE_DEBUG
-	to_remove = G_MAXINT;
-#else
-	to_remove = 4; /* We should create 1 */
-#endif
-
-	while (removed < to_remove && (dent = readdir (dirh))) {
-		int usfd, ret, saddr_len;
-		struct sockaddr_un saddr;
-
-		saddr.sun_family = AF_UNIX;
-
-		if (strncmp (dent->d_name, "linc-", 5))
-			continue;
-
-		g_snprintf (saddr.sun_path,
-			    sizeof (saddr.sun_path),
-			    "%s/%s", linc_tmpdir, dent->d_name);
-
-		usfd = socket (AF_UNIX, SOCK_STREAM, 0);
-		g_assert (usfd >= 0);
-
-		saddr_len = sizeof (struct sockaddr_un) -
-			sizeof (saddr.sun_path) + strlen (saddr.sun_path);
-
-		ret = connect (usfd, &saddr, saddr_len);
-		close (usfd);
-
-		if (ret >= 0)
-			continue;
-
-		unlink (saddr.sun_path);
-		removed++;
-	}
-	closedir (dirh);
-#endif
-}
-
-/*
  * linc_protocol_get_sockaddr_unix:
  * @proto: the #LINCProtocolInfo structure for the UNIX sockets protocol.
  * @dummy: not used.
@@ -361,14 +354,8 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 	struct sockaddr_un *saddr;
 	int                 pathlen;
 	char                buf[64], *actual_path;
-	static gboolean     done_cleanup_sweep = FALSE;
 
 	g_assert (proto->family == AF_UNIX);
-
-	if (!done_cleanup_sweep) {
-		done_cleanup_sweep = TRUE;
-		cleanup_sweep ();
-	}
 
 	if (!path) {
 		struct timeval t;
@@ -379,15 +366,10 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 
 		gettimeofday (&t, NULL);
 		g_snprintf (buf, sizeof (buf),
-/* We'd do this all the time, but the pid is not very random,
- * and this string is truncated by some unixes */
-#ifdef CONNECTION_DEBUG
-			    "%s/l-%d-%x%x", linc_tmpdir, pid,
-#else
-			    "%s/linc-%x%x", linc_tmpdir,
-#endif
-			    (guint) (rand() ^ t.tv_sec ^ pid),
-			    (guint) (idx++ ^ t.tv_usec));
+			    "%s/linc-%x-%x-%x%x", linc_tmpdir,
+			    pid, idx++,
+			    (guint) (rand() ^ t.tv_sec),
+			    (guint) (idx ^ t.tv_usec));
 #ifdef CONNECTION_DEBUG
 		if (g_file_test (buf, G_FILE_TEST_EXISTS))
 			g_warning ("'%s' already exists !", buf);
