@@ -97,11 +97,6 @@ dnl Checks for libraries.
 AM_PATH_GLIB(1.2.1,, AC_MSG_ERROR([*** GLIB 1.2.1 or better is required. The latest version of GLIB
 *** is always available from ftp://ftp.gtk.org/.]))
 
-GMODULE_CFLAGS=`$GLIB_CONFIG --cflags gmodule`
-AC_SUBST(GMODULE_CFLAGS)
-GMODULE_LIBS=`$GLIB_CONFIG --libs gmodule`
-AC_SUBST(GMODULE_LIBS)
-
 AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_AWK
