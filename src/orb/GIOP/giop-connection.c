@@ -6,11 +6,16 @@ static void giop_connection_destroy    (GObject             *obj);
 static void giop_connection_class_init (GIOPConnectionClass *klass);
 static void giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status);
 
-#if 0
 static struct {
   O_MUTEX_DEFINE(lock);
   GList *list;
 } cnx_list = {NULL};
+
+void
+giop_connection_list_init(void)
+{
+  O_MUTEX_INIT(cnx_list.lock);
+}
 
 static void
 giop_connection_list_add(GIOPConnection *cnx)
@@ -34,15 +39,10 @@ giop_connection_list_remove(GIOPConnection *cnx)
 
 static GIOPConnection *
 giop_connection_list_lookup(const char *proto_name, const char *remote_host_info,
-			    const char *remote_serv_info)
+			    const char *remote_serv_info, gboolean is_ssl)
 {
   GList *ltmp;
   GIOPConnection *retval = NULL;
-
-#ifdef ORBIT_THREADSAFE
-  if(!cnx_list.lock) /* If things haven't been initialized yet, outta here */
-    return NULL;
-#endif
 
   O_MUTEX_LOCK(cnx_list.lock);
   for(ltmp = cnx_list.list; ltmp && !retval; ltmp = ltmp->next)
@@ -52,7 +52,8 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
       if(!strcmp(remote_host_info, cnx->parent.remote_host_info)
 	 && !strcmp(remote_serv_info, cnx->parent.remote_serv_info)
 	 && !strcmp(proto_name, cnx->parent.proto->name)
-	 && cnx->parent.status != LINC_DISCONNECTED)
+	 && cnx->parent.status != LINC_DISCONNECTED
+	 && ((cnx->parent.flags & LINC_CONNECTION_SSL)==(is_ssl?LINC_CONNECTION_SSL:0)))
 	retval = cnx;
     }
   if(retval)
@@ -61,7 +62,6 @@ giop_connection_list_lookup(const char *proto_name, const char *remote_host_info
 
   return retval;
 }
-#endif
 
 GType
 giop_connection_get_type(void)
@@ -190,7 +190,11 @@ giop_connection_from_fd(int fd, const LINCProtocolInfo *proto,
 			LINCConnectionOptions options,
 			GIOPVersion giop_version)
 {
-  GIOPConnection *cnx = (GIOPConnection *)g_object_new(giop_connection_get_type(), NULL);
+  GIOPConnection *cnx;
+  
+  O_MUTEX_LOCK(cnx_list.lock);
+
+  cnx = (GIOPConnection *)g_object_new(giop_connection_get_type(), NULL);
 
   cnx->giop_version = giop_version;
   if(!linc_connection_from_fd((LINCConnection *)cnx, fd, proto, remote_host_info,
@@ -198,8 +202,22 @@ giop_connection_from_fd(int fd, const LINCProtocolInfo *proto,
     {
       g_object_unref(G_OBJECT(cnx)); cnx = NULL;
     }
+  else
+    giop_connection_list_add(cnx);
+
+  O_MUTEX_UNLOCK(cnx_list.lock);
 
   return cnx;
+}
+
+void
+giop_connection_unref(GIOPConnection *cnx)
+{
+  O_MUTEX_LOCK(cnx_list.lock);
+  if(G_OBJECT(cnx)->ref_count == 1)
+    giop_connection_list_remove(cnx);
+  g_object_unref(G_OBJECT(cnx));
+  O_MUTEX_UNLOCK(cnx_list.lock);
 }
 
 /* This will just create the fd, do the connect and all, and then call
@@ -211,13 +229,26 @@ giop_connection_initiate(const char *proto_name,
 			 GIOPConnectionOptions options,
 			 GIOPVersion giop_version)
 {
-  GIOPConnection *cnx = (GIOPConnection *)g_object_new(giop_connection_get_type(), NULL);
+  GIOPConnection *cnx;
 
-  cnx->giop_version = giop_version;
-  if(!linc_connection_initiate((LINCConnection *)cnx, proto_name, remote_host_info, remote_serv_info, options))
+  O_MUTEX_LOCK(cnx_list.lock);
+
+  cnx = giop_connection_list_lookup(proto_name, remote_serv_info,
+				    remote_serv_info, (options&LINC_CONNECTION_SSL)?is_ssl:FALSE);
+
+  if(!cnx)
     {
-      g_object_unref(G_OBJECT(cnx)); cnx = NULL;
+      cnx = (GIOPConnection *)g_object_new(giop_connection_get_type(), NULL);
+
+      cnx->giop_version = giop_version;
+      if(!linc_connection_initiate((LINCConnection *)cnx, proto_name, remote_host_info, remote_serv_info, options))
+	{
+	  g_object_unref(G_OBJECT(cnx)); cnx = NULL;
+	}
+      else
+	giop_connection_list_add(cnx);
     }
+  O_MUTEX_UNLOCK(cnx_list.lock);
 
   return cnx;
 }

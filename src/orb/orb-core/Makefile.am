@@ -10,6 +10,7 @@ liborb_core_la_SOURCES=\
 	$(IOP_IDLOUT) \
 	$(IDLOUT) \
 	$(POA_IDLOUT) \
+	$(OPS_IDLOUT) \
 	corba-orb.c \
 	orbhttp.c \
 	orbhttp.h \
@@ -19,6 +20,7 @@ IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c
 POA_IDLOUT=poa-defs-common.c
 IOP_IDLOUT=iop-defs-common.c
+OPS_IDLOUT=corba-ops-stubs.c corba-ops.h corba-ops-skels.c
 
 $(IDLOUT) runidl: corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
@@ -58,4 +60,12 @@ $(IOP_IDLOUT) runidl_iop: iop-defs.idl $(IDL)
 	mv $$I.out $$I; done
 	mv -f iop-defs.h $(top_builddir)/include/orbit/orb-core/iop-defs.h
 
-BUILT_SOURCES=$(IDLOUT) $(POA_IDLOUT) $(IOP_IDLOUT)
+$(OPS_IDLOUT) runidl_ops: corba-ops.idl $(IDL)
+	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
+	$(IDL) --nocommon \
+                --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
+	for I in $(OPS_IDLOUT); do \
+		sed -e 's,XXXis_a,_is_a,g' -e 's,XXis_a,is_a,g' -e 's,X,_,g' $$I > $$I.out; mv $$I.out $$I; \
+	done
+
+BUILT_SOURCES=$(IDLOUT) $(POA_IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)

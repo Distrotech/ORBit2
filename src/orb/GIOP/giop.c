@@ -13,6 +13,7 @@ void
 giop_init(void)
 {
   O_MUTEX_INIT(giop_queued_messages_lock);
+  giop_connection_list_init();
   giop_send_buffer_init();
   giop_recv_buffer_init();
   linc_init();
