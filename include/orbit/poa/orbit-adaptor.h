@@ -1,6 +1,10 @@
 #ifndef __ORBIT_ADAPTOR_H__
 #define __ORBIT_ADAPTOR_H__
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 void                ORBit_handle_request            (CORBA_ORB          orb, 
@@ -103,5 +107,7 @@ struct ORBit_ObjectAdaptor_type {
 int ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor, CORBA_ORB orb);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif /* __ORBIT_ADAPTOR_H__ */

@@ -1,6 +1,10 @@
 #ifndef CORBA_ENVIRONMENT_H
 #define CORBA_ENVIRONMENT_H 1
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 CORBA_Environment *CORBA_exception__alloc (void);
 CORBA_Environment *CORBA_exception__copy  (const CORBA_Environment *ev);
 
@@ -55,5 +59,7 @@ void ORBit_send_user_exception     (GIOPSendBuffer    *send_buffer,
 				    const ORBit_exception_marshal_info *user_exceptions);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif
