@@ -1,3 +1,8 @@
+2001-12-02  Laszlo Peter  <laca@ireland.sun.com>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(cbe_tc_generate): fix order to match corba-typecode.h
+
 2001-12-01  Theo van Klaveren  <t.vanklaveren@student.utwente.nl>
 
 	* src/orb/include/Makefile.am: make -> $(MAKE).
