@@ -83,25 +83,116 @@ presents a major simplification.
 
 ** What do you mean by 'type' data ?
 
+	By type data we mean not only structure layout information,
+but also full interface and method information. ie. not just value
+class types but interfaces as well.
+
 ** How do we get type data for an interface ?
+
+	There are two answers to this. Firstly, if you have a pointer
+to an Object reference and you know nothing more than that it is a
+ORBit2 handled CORBA object, you can (via. an ORBit2 extension)
+request it's type id, and from this, a full interface description.
+
+	see ORBit2/include/orb/orb-core/orbit-small.h
+	and ORBit2/include/orb/orb-core/orbit-iinterface.h (from)
+	    ORBit2/src/orb/orb-core/orbit-iinterface.idl
+
+*** Type data from an object reference ?
+
+	CORBA_char *type_id;
+	ORBit_IInterface *iface;
+
+	type_id = ORBit_small_get_type_id (obj, ev);
+	iface   = ORBit_small_get_iinterface (obj, type_id, ev);
+
+*** Type data from a type library ?
+
+	If we wish to implement an interface in our scripting language
+that is not currently registered with the ORB, then we can load it
+dynamicaly from the type library interface:
+
+	ORBit_small_load_typelib ("Bonobo");
+
+	We can then suck all the interface and TypeCode information
+out of the library, in order to construct local language bound peers:
+
+CORBA_sequence_CORBA_TypeCode   *ORBit_small_get_types ("Bonobo");
+CORBA_sequence_ORBit_IInterface *ORBit_small_get_iinterfaces (...);
+
+** What is a type library (or imodule) ?
+
+	Type libraries are essentialy the same generic interface
+information that the ORB uses to marshal and de-marshal information in
+the C stubs. It is contained in the -common.c file of a compiled set.
+
+	To install a type library correctly you need to have some
+automake a little like:
+
+orbittypelib_LTLIBRARIES = Bonobo_module.la
+orbittypelibdir = $(libdir)/orbit-2.0
+IMODULE_SOURCE =	\
+	Bonobo.h	\
+	Bonobo-common.c	\
+	Bonobo-imodule.c
+Bonobo_module_la_SOURCES = \
+	Bonobo-imodule.c
+Bonobo_module_la_LIBADD = \
+	$(LIBBONOBO_LIBS)
+Bonobo_module_la_LDFLAGS = \
+	-export-dynamic -module
+
+$(IMODULE_SOURCE): $(idl_DATA) $(ORBIT_IDL)
+	$(ORBIT_IDL) $(idl_flags) --imodule \
+		     $(top_srcdir)/idl/Bonobo.idl
+
+	Note that the library is installed into $(libdir)/orbit-2.0.
+When a typelib is loaded, an explicit path can be passed in, otherwise
+the ':' delimited path environment variables ORBIT_TYPELIB_PATH and
+GNOME_PATH are searched.
+
+** How do I find what type libraries are installed ?
+
+	There is a utility ORBit2/test/typelib-dump that will display
+a list of available libraries for your path setup:
+
+	Installed type libraries:
+
+	/opt/ngnome2/lib/orbit:
+
+		Everything
+		Accessibility
+		Bonobo
+
+	It can also rudimantarily dump the contents of a type library.
+
+** Why bother generating type information from an interface ?
+
+	With ORBit stable, language bindings had to load and parse the
+IDL definitions for the interface. This had several disadvantages.
+
+	+ Primarily performance - loading a load of IDL text, forking
+the pre-preocessor to pre-process it, resolving all the symbols as
+strings, converting to an internal representaton - took time. With a
+standard internal representation, and a simple dlopen to grab it we
+have a major performance win.
+
+	+ Include problems: many IDL files are grouped into a single
+file to build, and can cause grief when included individualy. This
+contrasts with a working bundle of interfaces, verified at package IDL
+compile time.
+
+	+ libIDL - is an unmaintained mess, and is not particularly
+pleasant to link against, or code to.
+
+	+ Finding the IDL files - there was no standard path
+structure, or method of reliably locating all the relevant IDL files.
+Now at least there is an ad-hoc shared standard.
 
 ** Why is a type based ORB better ?
 
+	
+
 ** Why is a type based ORB potentialy faster ?
 
-        An initial tentative API frozen release of ORBit2 has been
-made. Whilst it is expected that the C API will be stable - there are
-some as yet un-committed POA re-organisations that are pending.
-
-        These are unlikely to affect user code - even bonobo [ which
-grubs with ORBit2 very intimately ] should be unaffected by the
-pending patch - so, a fairly hard API freeze.
-
-        It is also possible, but unlikely, that the scripting API
-might need extending slightly.
-
-* What's new in ORBit2
-
-
-* Who do I adulate for all this ?
 
