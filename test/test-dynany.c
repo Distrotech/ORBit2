@@ -572,7 +572,7 @@ main (int argc, char *argv[])
 	free (malloc (8));
 
 	CORBA_exception_init (&ev);
-	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
+	orb = CORBA_ORB_init (NULL, NULL, "orbit-local-orb", &ev);
   
 	/*
 	 *  Since the API is entirely macro generated

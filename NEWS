@@ -1,0 +1,31 @@
+Version 2.3.98
+
+	* Features
+		* Speedups (Michael)
+			+ string marshaling
+			+ input handling
+			+ allocation
+			+ object duplicates
+		* Misc (Michael, +)
+			+ extended purify cleanliness
+			+ loads more regression tests
+			+ add flags and spare fields to TypeCode
+			+ improved giop encapuslation (+Mark)
+			+ cleaned & radicaly simplified giop code
+			+ close cnx on GIOP_CLOSECONNECTION
+
+	* Bugs
+		* POA
+			+ exception fixes (Mark)
+			+ ref counting fixes (Mark, Michael)
+			+ stale ref on object fix (Michael, Mark)
+		* ORB (Michael)
+			+ IIOP profile copy bug
+			+ is_equivalent issues
+			+ register local objrefs correctly in cache
+			+ cache connections correctly.
+			+ drop unexpected system ex's silently (Michael)
+		* Misc
+			+ build warning fixage (Mark)
+			+ print only ascii in trace mode (Michael)
+			+ Build fixage (Johan Dahlin, Abel Cheung)
