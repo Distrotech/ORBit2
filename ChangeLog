@@ -1,3 +1,11 @@
+2004-12-22  Jules Colding  <colding@omesc.com>
+
+	* src/idl-compiler/orbit-idl3-types.h: Added output_directory to OIDL_Run_Info.
+
+	* src/idl-compiler/orbit-idl-c-backend.c: Prefixed output file with output directory.
+
+	* src/idl-compiler/orbit-idl-main.c: Added 'output-dir' command line option.
+
 2004-12-17  Michael Meeks  <michael.meeks@novell.com>
 
 	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value):
