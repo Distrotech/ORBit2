@@ -1,3 +1,15 @@
+2002-12-09  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c (linc_protocol_get_sockaddr_unix): 
+	finally - scuppered by my own undefined test in gcc ;-)
+
+2002-12-09  Laurent.Vivier@bull.net <Laurent Vivier>
+
+	* src/linc-connection.c (LINC_IOV_MAX): re-order
+	mess of compatibility evilness to move glibc's
+	UIO_MAXIOV down, since this is something else on
+	AIX (which has IOV_MAX).
+
 2002-11-21  Dan Mills  <thunder@ximian.com>
 
 	* configure.in: fix two typoes:  pango -> linc, and change spaces
