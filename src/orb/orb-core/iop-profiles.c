@@ -866,46 +866,52 @@ IOP_components_marshal (CORBA_Object obj,
 }
 
 static void
-IOP_TAG_INTERNET_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
-			     IOP_Profile_info *profile)
+IOP_TAG_INTERNET_IOP_marshal (CORBA_Object      obj,
+			      GIOPSendBuffer   *buf, 
+			      IOP_Profile_info *profile)
 {
-  IOP_TAG_INTERNET_IOP_info *iiop = (IOP_TAG_INTERNET_IOP_info *)profile;
-  CORBA_unsigned_long len;
+	IOP_TAG_INTERNET_IOP_info *iiop;
+	CORBA_unsigned_long len;
 
-  giop_send_buffer_append(buf, giop_version_ids[iiop->iiop_version], 2);
-  len = strlen(iiop->host) + 1;
-  giop_send_buffer_append_aligned(buf, &len, 4);
-  giop_send_buffer_append(buf, iiop->host, len);
+	iiop = (IOP_TAG_INTERNET_IOP_info *) profile;
 
-  giop_send_buffer_align(buf, 2);
-  giop_send_buffer_append(buf, &iiop->port, 2);
+	giop_send_buffer_append (
+		buf, giop_version_ids [iiop->iiop_version], 2);
 
-  IOP_ObjectKey_marshal(obj, buf, obj->object_key);
+	len = strlen (iiop->host) + 1;
+	giop_send_buffer_append_aligned (buf, &len, 4);
+	giop_send_buffer_append (buf, iiop->host, len);
 
-  IOP_components_marshal(obj, buf, iiop->components);
+	giop_send_buffer_align (buf, 2);
+	giop_send_buffer_append (buf, &iiop->port, 2);
+
+	IOP_ObjectKey_marshal (obj, buf, obj->object_key);
+
+	IOP_components_marshal (obj, buf, iiop->components);
 }
 
 static void
-IOP_TAG_GENERIC_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
-			    IOP_Profile_info *profile)
+IOP_TAG_GENERIC_IOP_marshal (CORBA_Object     obj,
+			     GIOPSendBuffer   *buf, 
+			     IOP_Profile_info *profile)
 {
-  IOP_TAG_GENERIC_IOP_info *giop = (IOP_TAG_GENERIC_IOP_info *)profile;
-  CORBA_unsigned_long len;
+	IOP_TAG_GENERIC_IOP_info *giop = (IOP_TAG_GENERIC_IOP_info *) profile;
+	CORBA_unsigned_long       len;
 
-  giop_send_buffer_append(buf, giop_version_ids[giop->iiop_version], 2);
-  len = strlen(giop->proto) + 1;
-  giop_send_buffer_append_aligned(buf, &len, 4);
-  giop_send_buffer_append(buf, giop->proto, len);
+	giop_send_buffer_append (buf, giop_version_ids [giop->iiop_version], 2);
+	len = strlen (giop->proto) + 1;
+	giop_send_buffer_append_aligned (buf, &len, 4);
+	giop_send_buffer_append (buf, giop->proto, len);
 
-  len = strlen(giop->host) + 1;
-  giop_send_buffer_append_aligned(buf, &len, 4);
-  giop_send_buffer_append(buf, giop->host, len);
+	len = strlen (giop->host) + 1;
+	giop_send_buffer_append_aligned (buf, &len, 4);
+	giop_send_buffer_append (buf, giop->host, len);
 
-  len = strlen(giop->service) + 1;
-  giop_send_buffer_append_aligned(buf, &len, 4);
-  giop_send_buffer_append(buf, giop->service, len);
+	len = strlen (giop->service) + 1;
+	giop_send_buffer_append_aligned (buf, &len, 4);
+	giop_send_buffer_append (buf, giop->service, len);
 
-  IOP_components_marshal(obj, buf, giop->components);
+	IOP_components_marshal (obj, buf, giop->components);
 }
 
 static void
@@ -913,34 +919,44 @@ IOP_TAG_MULTIPLE_COMPONENTS_marshal (CORBA_Object      obj,
 				     GIOPSendBuffer   *buf,
 				     IOP_Profile_info *profile)
 {
-	IOP_TAG_MULTIPLE_COMPONENTS_info *mci = (IOP_TAG_MULTIPLE_COMPONENTS_info*)
-		profile;
+	IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
+
+	mci = (IOP_TAG_MULTIPLE_COMPONENTS_info*) profile;
 
 	IOP_components_marshal(obj, buf, mci->components);
 }
 
 static void
-IOP_TAG_ORBIT_SPECIFIC_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
-			       IOP_Profile_info *profile)
+IOP_TAG_ORBIT_SPECIFIC_marshal (CORBA_Object      obj,
+				GIOPSendBuffer   *buf,
+				IOP_Profile_info *profile)
 {
-  CORBA_unsigned_long len;
-  IOP_TAG_ORBIT_SPECIFIC_info *osi = (IOP_TAG_ORBIT_SPECIFIC_info*)profile;
+	CORBA_unsigned_long len;
+	IOP_TAG_ORBIT_SPECIFIC_info *osi;
+	guchar compat_version[2] = { 1, 2 }; /* for ORBit1 */
 
-  len = strlen(osi->unix_sock_path) + 1;
-  giop_send_buffer_append_aligned(buf, &len, 4);
-  giop_send_buffer_append(buf, osi->unix_sock_path, len);
-  giop_send_buffer_align(buf, 2);
-  giop_send_buffer_append(buf, &osi->ipv6_port, 2);
-  IOP_ObjectKey_marshal(obj, buf, obj->object_key);
+	osi = (IOP_TAG_ORBIT_SPECIFIC_info*) profile;
+
+	giop_send_buffer_append (buf, compat_version, 2);
+
+	len = strlen (osi->unix_sock_path) + 1;
+	giop_send_buffer_append_aligned (buf, &len, 4);
+	giop_send_buffer_append (buf, osi->unix_sock_path, len);
+
+	giop_send_buffer_align (buf, 2);
+	giop_send_buffer_append (buf, &osi->ipv6_port, 2);
+
+	IOP_ObjectKey_marshal (obj, buf, obj->object_key);
 }
 
 static void
 IOP_UnknownProfile_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
 			   IOP_Profile_info *pi)
 {
-  IOP_UnknownProfile_info *upi = (IOP_UnknownProfile_info *)pi;
+	IOP_UnknownProfile_info *upi = (IOP_UnknownProfile_info *) pi;
 
-  giop_send_buffer_append(buf, upi->data._buffer, upi->data._length);
+	giop_send_buffer_append (
+		buf, upi->data._buffer, upi->data._length);
 }
 
 void
@@ -1278,75 +1294,89 @@ IOP_UnknownProfile_demarshal(IOP_ProfileId p, GIOPRecvBuffer *buf,
 }
 
 static IOP_Profile_info *
-IOP_TAG_ORBIT_SPECIFIC_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
-				 CORBA_ORB orb)
+IOP_TAG_ORBIT_SPECIFIC_demarshal (IOP_ProfileId   p,
+				  GIOPRecvBuffer *pbuf,
+				  CORBA_ORB       orb)
 {
-  IOP_TAG_ORBIT_SPECIFIC_info *retval = NULL;
-  CORBA_unsigned_long len;
-  GIOPRecvBuffer *buf;
+	IOP_TAG_ORBIT_SPECIFIC_info *retval = NULL;
+	CORBA_unsigned_long          len;
+	GIOPRecvBuffer              *buf;
+	gboolean                     msg_conversion;
 
-  buf = giop_recv_buffer_use_encaps_buf(pbuf);
-  if(!buf)
-    goto errout;
+	buf = giop_recv_buffer_use_encaps_buf (pbuf);
+	if (!buf)
+		goto errout;
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    return NULL;
-  len = *(CORBA_unsigned_long *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    len = GUINT32_SWAP_LE_BE(len);
-  buf->cur += 4;
-  if((buf->cur + len) > buf->end
-     || (buf->cur + len) < buf->cur)
-    goto errout;
+	/* Ignore the version info */
+	if ((buf->cur + 2) > buf->end)
+		return NULL;
+	buf->cur += 2;
 
-  retval = g_new(IOP_TAG_ORBIT_SPECIFIC_info, 1);
-  retval->parent.profile_type = p;
-  retval->unix_sock_path = g_malloc(len);
-  memcpy(retval->unix_sock_path, buf->cur, len);
-  buf->cur += len;
-  buf->cur = ALIGN_ADDRESS(buf->cur, 2);
-  if((buf->cur + 2) > buf->end)
-    goto errout;
-  retval->ipv6_port = *(CORBA_unsigned_short *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    retval->ipv6_port = GUINT16_SWAP_LE_BE(retval->ipv6_port);
-  buf->cur += 2;
-  retval->object_key = IOP_ObjectKey_demarshal(buf);
-  if(!retval->object_key)
-    goto errout;
+	msg_conversion = giop_msg_conversion_needed (buf);
 
-  giop_recv_buffer_unuse(buf);
-  return (IOP_Profile_info *)retval;
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+	if ((buf->cur + 4) > buf->end)
+		return NULL;
+	len = *(CORBA_unsigned_long *) buf->cur;
+	if (msg_conversion)
+		len = GUINT32_SWAP_LE_BE (len);
+	buf->cur += 4;
+	if ((buf->cur + len) > buf->end || (buf->cur + len) < buf->cur)
+		goto errout;
+
+	retval = g_new (IOP_TAG_ORBIT_SPECIFIC_info, 1);
+	retval->parent.profile_type = p;
+	retval->unix_sock_path = g_malloc (len);
+	memcpy (retval->unix_sock_path, buf->cur, len);
+	buf->cur += len;
+
+	buf->cur = ALIGN_ADDRESS (buf->cur, 2);
+	if ((buf->cur + 2) > buf->end)
+		goto errout;
+
+	retval->ipv6_port = *(CORBA_unsigned_short *) buf->cur;
+	if (msg_conversion)
+		retval->ipv6_port = GUINT16_SWAP_LE_BE (retval->ipv6_port);
+	buf->cur += 2;
+
+	retval->object_key = IOP_ObjectKey_demarshal (buf);
+	if (!retval->object_key)
+		goto errout;
+
+	giop_recv_buffer_unuse (buf);
+
+	return (IOP_Profile_info *) retval;
 
  errout:
-  if(retval)
-    {
-      CORBA_free(retval->object_key);
-      g_free(retval->unix_sock_path);
-      g_free(retval);
-    }
-  giop_recv_buffer_unuse(buf);
-  return NULL;
+	if (retval) {
+		CORBA_free (retval->object_key);
+		g_free (retval->unix_sock_path);
+		g_free (retval);
+	}
+	giop_recv_buffer_unuse (buf);
+
+	return NULL;
 }
 
 static IOP_Profile_info *
-IOP_TAG_MULTIPLE_COMPONENTS_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
-				      CORBA_ORB orb)
+IOP_TAG_MULTIPLE_COMPONENTS_demarshal (IOP_ProfileId   p,
+				       GIOPRecvBuffer *pbuf,
+				       CORBA_ORB       orb)
 {
-  IOP_TAG_MULTIPLE_COMPONENTS_info *retval = NULL;
-  GIOPRecvBuffer *buf;
-  GSList *components;
+	IOP_TAG_MULTIPLE_COMPONENTS_info *retval = NULL;
+	GIOPRecvBuffer *buf;
+	GSList         *components;
 
-  buf = giop_recv_buffer_use_encaps_buf(pbuf);
-  if(buf && !IOP_components_demarshal(buf, &components))
-    {
-      retval = g_new(IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
-      retval->parent.profile_type = p;
-      retval->components = components;
-    }
-  giop_recv_buffer_unuse(buf);
-  return (IOP_Profile_info*)retval;
+	buf = giop_recv_buffer_use_encaps_buf (pbuf);
+
+	if (buf && !IOP_components_demarshal (buf, &components)) {
+		retval = g_new (IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
+		retval->parent.profile_type = p;
+		retval->components = components;
+	}
+	giop_recv_buffer_unuse (buf);
+
+	return (IOP_Profile_info*) retval;
 }
 
 static IOP_Profile_info *

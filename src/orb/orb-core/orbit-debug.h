@@ -5,13 +5,13 @@
  * Flip this switch to dump GIOP messages
  * as they are sent and received.
  */
-#undef DEBUG
+#define DEBUG
 
 /*
  * Flip this switch to get a nice trace
  * of method invocations.
  */
-#undef TRACE_DEBUG
+#define TRACE_DEBUG
 
 /*
  * Flip this switch if you want tyeplib
@@ -29,6 +29,8 @@ static inline void dprintf (const char *format, ...) { };
 #define do_giop_dump_recv(a)
 
 #else /* DEBUG */
+
+#include <stdio.h>
 
 #define dprintf(format...) fprintf(stderr, format)
 #define do_giop_dump_send(a) giop_dump_send(a)
@@ -53,6 +55,8 @@ static inline void tprintf (const char *format, ...) { };
 #define tprintf_trace_value(a,b)
 
 #else /* TRACE_DEBUG */
+
+#include <stdio.h>
 
 void     ORBit_trace_objref   (const CORBA_Object   obj);
 void     ORBit_trace_any      (const CORBA_any     *any);
