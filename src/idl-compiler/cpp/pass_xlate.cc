@@ -103,7 +103,8 @@ IDLPassXlate::doStruct(IDL_tree node,IDLScope &scope) {
 	IDLStruct &idlStruct = (IDLStruct &) *scope.getItem(node);
 
 	m_header
-	<< indent++ << "struct " << idlStruct.getCPPIdentifier() << " {" << endl;
+	<< indent << "struct " << idlStruct.getCPPIdentifier() << endl
+	<< indent++ << "{" << endl;
 
 	IDLStruct::const_iterator first = idlStruct.begin(),last = idlStruct.end();
 	while (first != last) {
@@ -117,14 +118,16 @@ IDLPassXlate::doStruct(IDL_tree node,IDLScope &scope) {
 	if(idlStruct.isVariableLength()) {
 		m_header
 		<< endl
-		<< indent++ << "void* operator new(size_t) {" << endl
+		<< indent << "void* operator new(size_t)" << endl
+		<< indent++ << "{" << endl
 		<< indent << "return "
 		<< IDL_IMPL_C_NS_NOTUSED
 		<< idlStruct.getQualifiedCIdentifier() << "__alloc();" << endl;
 		m_header
 		<< --indent << "};" << endl << endl;
 		m_header
-		<< indent++ << "void operator delete(void* c_struct) {" << endl
+		<< indent << "void operator delete(void* c_struct)" << endl
+		<< indent++ << "{" << endl
 		<< indent <<  "::CORBA_free(c_struct);" << endl;
 		m_header
 		<< --indent << "};" << endl << endl;
@@ -166,7 +169,8 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	IDLUnion &idlUnion = (IDLUnion &) *scope.getItem(node);
 
 	m_header
-	<< indent << "class " << idlUnion.getCPPIdentifier() << "{" << endl
+	<< indent << "class " << idlUnion.getCPPIdentifier() << endl
+	<< indent << "{" << endl
 	<< indent << "private:" << endl;
 
 	m_header
@@ -224,7 +228,8 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	
 	desc.getCPPStubDeclarator(IDL_PARAM_IN,"desc",typespec,dcl);
 	m_header
-	<< indent << "void _d(" << typespec << " " << dcl	<< "){" << endl;
+	<< indent << "void _d(" << typespec << " " << dcl	<< ")" << endl
+	<< indent << "{" << endl;
 	m_header	
 	<< ++indent << "m_target._d = "
 	<< desc.getCPPStubParameterTerm(IDL_PARAM_IN,"desc") << ";" << endl;
@@ -233,7 +238,8 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	
 	desc.getCPPStubReturnDeclarator("",typespec,dcl);
 	m_header
-	<< indent << typespec << dcl << " _d() const {" << endl;
+	<< indent << typespec << dcl << " _d() const" << endl
+	<< indent << "{" << endl;
 	m_header	
 	<< ++indent << "return " << desc.getCPPSkelParameterTerm(IDL_PARAM_IN,"m_target._d")
 	<< ";" << endl;
@@ -262,7 +268,9 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 
 	if(idlUnion.hasExplicitDefault() == false){
 		m_header
-		<< indent << "void _default() {" << endl;
+		<< indent << "void _default()" << endl
+		<< indent << "{" << endl;
+
 		m_header
 		<< ++indent << "_clear_member();" << endl
 		<< indent << "_d("<< idlUnion.getDefaultDiscriminatorValue() << ");" << endl;
@@ -273,14 +281,16 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	if(idlUnion.isVariableLength()) {
 		m_header
 		<< endl
-		<< indent++ << "void* operator new(size_t) {" << endl
+		<< indent << "void* operator new(size_t)" << endl
+		<< indent++ << "{" << endl
 		<< indent << "return "
 		<< IDL_IMPL_C_NS_NOTUSED
 		<< idlUnion.getQualifiedCIdentifier() << "__alloc();" << endl;
 		m_header
 		<< --indent << "};" << endl << endl;
 		m_header
-		<< indent++ << "void operator delete(void* c_union) {" << endl
+		<< indent << "void operator delete(void* c_union)" << endl
+		<< indent++ << "{" << endl
 		<< indent <<  "::CORBA_free(c_union);" << endl;
 		m_header
 		  << --indent << "};" << endl << endl;
@@ -319,7 +329,8 @@ IDLPassXlate::doEnum(IDL_tree node,IDLScope &scope) {
 	IDLEnum &idlEnum = (IDLEnum &) *scope.getItem(node);
 
 	m_header
-	<< indent++ << "enum " << idlEnum.getCPPIdentifier() << "{" << endl;
+	<< indent << "enum " << idlEnum.getCPPIdentifier() << endl
+	<< indent++ << "{" << endl;
 
 	IDLEnum::const_iterator first = idlEnum.begin(),last = idlEnum.end();
 	for(IDLEnum::const_iterator it=first; it != last;it++)
@@ -405,7 +416,8 @@ IDLPassXlate::doException(IDL_tree node,IDLScope &scope) {
 
 	m_header
 	<< indent << "class " << except.getCPPIdentifier()
-	<< " : public "IDL_CORBA_NS "::UserException {" << endl;
+	<< " : public "IDL_CORBA_NS "::UserException" << endl
+	<< indent << "{" << endl;
 	indent++;
 
 	m_header
@@ -448,7 +460,7 @@ IDLPassXlate::doException(IDL_tree node,IDLScope &scope) {
 			}
 		}
 		m_header << ");" << endl;
-		m_module << ") {" << endl;
+		m_module << ")" << endl << "{" << endl;
 		mod_indent++;
 
 		first = except.begin();
@@ -463,38 +475,37 @@ IDLPassXlate::doException(IDL_tree node,IDLScope &scope) {
 	}
 
 	m_header
-	<< indent << "void _raise() {" << endl;
-	indent++;
-	m_header
-	<< indent << "throw *this;" << endl
-	<< indent << '}' << endl;
-	indent--;
+	<< indent << "void _raise()" << endl
+	<< indent << "{" << endl;
 
 	m_header
-	<< indent << "void _orbitcpp_set("  "::CORBA_Environment *ev) {" << endl;
+	<< ++indent << "throw *this;" << endl
+	<< --indent << '}' << endl;
+
+	m_header
+	<< indent << "void _orbitcpp_set("  "::CORBA_Environment *ev)" << endl
+	<< indent << "{" << endl;
 	indent++;
 	m_header
 	<< indent <<  "::CORBA_exception_set(ev,"
 	<<  "::CORBA_USER_EXCEPTION,\""
 	<< except.getRepositoryId() << "\",_orbitcpp_pack());" << endl
-	<< indent << '}' << endl;
-	indent--;
+	<< --indent << '}' << endl;
 
 	m_header
 	<< indent << "static " << except.getCPPIdentifier() << " *_narrow("
-	<< IDL_CORBA_NS "::Exception *ex) {" << endl;
+	<< IDL_CORBA_NS "::Exception *ex)" << endl
+	<< indent << "{" << endl;
 	indent++;
 	m_header
 	<< indent << "return dynamic_cast<" << except.getCPPIdentifier() <<
 	"*>(ex);" << endl 
-	<< indent << '}' << endl;
-	indent--;
+	<< --indent << '}' << endl;
 
 	except.writeCPackingCode(m_header,indent,m_module,mod_indent);
 
-	indent--;
 	m_header
-	<< indent << "};" << endl << endl;
+	<< --indent << "};" << endl << endl;
 	indent--;
 	
 	m_header << indent;
@@ -514,8 +525,8 @@ void
 IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 	IDLInterface &iface = (IDLInterface &) *scope.getItem(node);
 
-	string ns_iface_begin,ns_iface_end;
-	iface.getParentScope()->getCPPNamespaceDecl(ns_iface_begin,ns_iface_end);
+	string ns_iface_begin, ns_iface_end;
+	iface.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
 
 	bool non_empty_ns = ns_iface_end.size() || ns_iface_begin.size();
 
@@ -530,18 +541,22 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 		<< --indent << ns_iface_end;
 	}
 
-	m_header << indent++ << "namespace " IDL_IMPL_NS_ID " { "
-	<< "namespace " IDL_IMPL_STUB_NS_ID " { "
-			 << ns_iface_begin << endl;
+	m_header << indent << "namespace " IDL_IMPL_NS_ID << endl
+	<< indent << "{" << endl
+	<< indent << "namespace " IDL_IMPL_STUB_NS_ID << endl
+	<< indent << "{" << endl << endl
+	<< indent << ns_iface_begin << endl;
+
 	m_header
-	<< indent << "class " << ifname << ";" << endl;
+	<< indent << "class " << ifname << ";" << endl << endl;
+
 	m_header
-	<< --indent << ns_iface_end << "}}";
+	<< indent << ns_iface_end << endl
+  << indent << "}} //namepsaces" << endl << endl;
 
 	if(non_empty_ns){
 		m_header
 		<< ns_iface_begin;
-		indent++;
 	}
 	
 	m_header << endl;
@@ -571,24 +586,23 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 
 	if(non_empty_ns){
 		m_header
-		<< --indent << ns_iface_end << endl;
+		<< indent << ns_iface_end << endl;
 	}
 	
 	// get poa namespace info
-	string ns_poa_begin,ns_poa_end;
-	iface.getCPPpoaNamespaceDecl(ns_poa_begin,ns_poa_end);
+	string ns_poa_begin, ns_poa_end;
+	iface.getCPPpoaNamespaceDecl(ns_poa_begin, ns_poa_end);
 
 	// predeclare POA type (necessary for typedef'ing)	
 	if (non_empty_ns) {
 		m_header
-		<< indent <<  ns_poa_begin << endl;
-		indent++;
+		<< indent <<  ns_poa_begin << endl << endl;
 	}
 	m_header
 	<< indent << "class " << iface.getCPPpoaIdentifier() << ';' << endl;
 	if (non_empty_ns) {
 		m_header
-		<< --indent << ns_poa_end;
+		<< indent << ns_poa_end;
 	}
 	else m_header << indent;
 	
@@ -696,14 +710,19 @@ IDLPassXlate::doInterfacePtrClass(IDLInterface &iface) {
 
 
 void 
-IDLPassXlate::doModule(IDL_tree node,IDLScope &scope) {
+IDLPassXlate::doModule(IDL_tree node,IDLScope &scope)
+{
 	IDLScope *module = (IDLScope *) scope.getItem(node);
 
-	m_header << indent << "namespace " << module->getCPPIdentifier() << " {" << endl;
+  string id = module->getCPPIdentifier();
+	m_header << indent << "namespace " << id << endl
+	<< indent << " {" << endl;
+
 	indent++;
 	Super::doModule(node,*module);
 	indent--;
-	m_header << indent << "}" << endl;
+
+	m_header << indent << "} //namespace " << id << endl << endl;
 }
 
 
@@ -719,28 +738,28 @@ void IDLWriteArrayProps::run()
 {
 	string ident = m_dest.getQualifiedCPPIdentifier(m_dest.getRootScope());
 	m_header
-	<< indent << "inline " << ident << "_slice *"
-	<< ident << "Props::alloc() {\n";
+	<< indent << "inline " << ident << "_slice *" << ident << "Props::alloc()" << endl
+	<< indent << "{" << endl;
+
 	m_header
 	<< ++indent << "return " << ident << "_alloc();\n";
 	m_header
-	<< --indent  << "}\n\n";
+	<< --indent  << "}" << endl << endl;
 	
 
 	m_header
-	<< indent << "inline void "
-	<< ident << "Props::free("
-	<< ident << "_slice * target) {\n";
+	<< indent << "inline void " << ident << "Props::free(" << ident << "_slice * target)" << endl
+	<< indent << "{" << endl;
+
 	m_header
 	<< ++indent << ident << "_free(target);\n";
 	m_header
 	<< --indent  << "}\n\n";
 
 	m_header
-	<< indent << "inline void "
-	<< ident << "Props::copy("
-	<< ident << "_slice * m_dest, "
-	<< ident << "_slice const * src) {\n";
+	<< indent << "inline void " << ident << "Props::copy(" << ident << "_slice * m_dest, " << ident << "_slice const * src)" << endl
+	<< indent << "{" << endl;
+
 	m_header
 	<< ++indent << ident << "_copy(m_dest,src);\n";
 	m_header
@@ -773,9 +792,11 @@ void IDLWriteAnyFuncs::writeInsertFunc(ostream& ostr, Indent &indent, FuncType f
 		ident += "*";
 		any_arg = "val, CORBA_FALSE";
 	}
-	ostr << indent++
-	<< "inline void operator<<=(CORBA::Any& the_any, " << ident
-	<< " val) {" << endl;
+
+	ostr
+  << indent << "inline void operator<<=(CORBA::Any& the_any, " << ident << " val)" << endl
+	<< indent++ << "{" << endl;
+
 	ostr << indent << "the_any." << any_func 
 	<< "( (CORBA::TypeCode_ptr)TC_"
 	<< ctype << ", "
@@ -797,9 +818,10 @@ void IDLWriteAnyFuncs::writeExtractFunc(ostream& ostr, Indent &indent, FuncType 
 		any_func = "extract_ptr";
 	}
 	ostr << indent
-	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " << ident
-	<< " val) {" << endl;
-	ostr << ++indent << "return the_any." << any_func 
+	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " << ident << " val)" << endl
+	<< indent << "{" << endl;
+
+	ostr << ++indent << "return the_any." << any_func
 	<< "( (CORBA::TypeCode_ptr)TC_"
 	<< ctype << ", "
 	<< any_arg << ");" ;
@@ -810,7 +832,9 @@ void
 IDLWriteExceptionAnyFuncs::run() {
 	m_header << indent
 	<< "inline void operator <<=(CORBA::Any& the_any, " 
-	<< m_element.getQualifiedCPPIdentifier() << " const & val) {" << endl;
+	<< m_element.getQualifiedCPPIdentifier() << " const & val)" << endl
+	<< indent << "{" << endl;
+
 	m_header << ++indent
 	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)TC_"
 	<< m_element.getQualifiedCIdentifier() << ", const_cast< "
@@ -820,7 +844,8 @@ IDLWriteExceptionAnyFuncs::run() {
 
 	m_header << indent
 	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " 
-	<< m_element.getQualifiedCPPIdentifier() << " & val) {" << endl;
+	<< m_element.getQualifiedCPPIdentifier() << " & val)" << endl
+	<< indent << "{" << endl;
 	m_header
 	<< ++indent << "const " << m_element.getQualifiedCIdentifier() << " *ex;" << endl;
 	m_header
@@ -837,7 +862,7 @@ IDLWriteExceptionAnyFuncs::run() {
 	m_header
 	<< --indent << "}" << endl;
 	m_header
-	<< --indent << "}" << endl;
+	<< --indent << "}" << endl << endl;
 }
 
 
@@ -846,7 +871,9 @@ IDLWriteArrayAnyFuncs::run()
 {
 	m_header << indent
 	<< "inline void operator <<=(CORBA::Any& the_any, " 
-	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr) {" << endl;
+	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr)" << endl
+	<< indent << "{" << endl;
+
 	m_header << ++indent
 	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)TC_"
 	<< m_dest.getQualifiedCIdentifier() << ", ("
@@ -855,7 +882,8 @@ IDLWriteArrayAnyFuncs::run()
 	
 	m_header << indent
 	<< "inline CORBA::Boolean operator >>=(CORBA::Any& the_any, " 
-	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr) {" << endl;
+	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr)" << endl
+	<< indent << "{" << endl;
 
 	m_header
 	<< ++indent

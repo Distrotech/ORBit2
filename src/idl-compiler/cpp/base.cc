@@ -36,15 +36,20 @@
 
 // Indent --------------------------------------------------------------------
 ostream &
-operator<<(ostream &ostr,Indent const &indent) {
-	if (indent.Position > 1000 || indent.Position < 0) {
+operator<<(ostream &ostr,Indent const &indent)
+{
+	if (indent.Position > 1000 || indent.Position < 0)
+	{
 		cerr << "Indentation screwup. This is a bug." << endl;
+    g_error("Indentation screwup\n");
 		abort();
 	}
+
 	if (IDL_INDENT_AMOUNT == 0)
 		ostr << string(indent.Position,'\t');
 	else
 		ostr << string(indent.Position * IDL_INDENT_AMOUNT,' ');
+
 	return ostr;
 }
 

@@ -380,8 +380,8 @@ IDLScope::getCPPNamespaceDecl(string &ns_begin,string &ns_end,
 		string id = scope->getCPPIdentifier();
 		if (nextscope == rootscope)
 			id.insert(0,prefix);
-		ns_begin.insert(0,"namespace "+id+" { ");
-		ns_end += "} ";
+		ns_begin.insert(0,"namespace " + id + "\n{\n");
+		ns_end += "} //namespace " + id +"\n\n";
 		scope = nextscope;
 	}
 }
