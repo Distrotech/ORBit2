@@ -169,11 +169,24 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     
     tname = orbit_cbe_get_typename(node->tree);
     tcname = orbit_cbe_get_typename(node->u.loop_info.contents->tree);
+
     if(node->flags & MN_ISSEQ) {
+      IDL_tree seq = orbit_cbe_get_typespec(node->tree);
       if(orbit_cbe_type_is_builtin(node->u.loop_info.contents->tree))
 	fprintf(cmi->ci->fh, "%s._buffer = CORBA_sequence_%s_allocbuf(%s);\n", ctmp, tcname+strlen("CORBA_"), ctmp_len);
-      else
-	fprintf(cmi->ci->fh, "%s._buffer = CORBA_sequence_%s_allocbuf(%s);\n", ctmp, tcname, ctmp_len);
+      else {
+	if(IDL_TYPE_SEQUENCE(seq).positive_int_const) {
+	  /* bounded */
+	  fprintf(cmi->ci->fh,"%s._maximum = ",ctmp);
+	  orbit_cbe_write_const(cmi->ci->fh, IDL_TYPE_SEQUENCE(seq).positive_int_const);
+	  fprintf(cmi->ci->fh,";\n");
+	  fprintf(cmi->ci->fh, "%s._buffer = CORBA_sequence_%s_allocbuf(%s._maximum);\n", ctmp, tcname, ctmp);
+	} else {
+	  /* unbounded */
+	  fprintf(cmi->ci->fh, "%s._maximum = %s._length;\n",ctmp,ctmp);
+	  fprintf(cmi->ci->fh, "%s._buffer = CORBA_sequence_%s_allocbuf(%s);\n", ctmp, tcname, ctmp_len);
+	}
+      }
       fprintf(cmi->ci->fh, "%s._release = CORBA_TRUE;\n", ctmp);
     } else if(node->flags & MN_ISSTRING)
       fprintf(cmi->ci->fh, "%s = CORBA_string_alloc(%s);\n", ctmp, ctmp_len);
