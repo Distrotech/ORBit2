@@ -223,16 +223,27 @@ orbit_cbe_write_typespec(FILE *of, IDL_tree tree)
     have some complicated rules in the C mapping for how many
     levels of pointer and the exact type involved. This function
     generates the externally visible parameter type.
+
+    Note the hack below because "const CORBA_string" is not
+    promotable to "const CORBA_char*" (the later the standard
+    to which apps are written, while the former is what would
+    be produced without the hack).
 **/
 void
 orbit_cbe_write_param_typespec_raw(FILE *of, IDL_tree ts, IDL_ParamRole role) {
     int 		i, n;
     gboolean		isSlice;
+    char 		*name;
 
     n = oidl_param_info(ts, role, &isSlice);
-    if ( role == DATA_IN )
-        fprintf (of, "const ");
-    orbit_cbe_write_typespec(of, ts);
+    name = orbit_cbe_get_typespec_str(ts);
+    if ( role == DATA_IN ) {
+        fprintf (of, "const %s", 
+		strcmp(name,"CORBA_string")==0 ? "CORBA_char*" : name);
+    } else {
+        fprintf( of, name);
+    }
+    g_free(name);
     if ( isSlice ) {
     	fprintf(of, "_slice");
     }
