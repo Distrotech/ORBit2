@@ -27,7 +27,7 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
 
   if(in_skels) {
     cmi.alloc_on_stack = TRUE;
-    cmi.orb_name = "(((ORBit_ObjectKey *) _ORBIT_servant->_private)->object->orb)";
+    cmi.orb_name = "ORBIT_SERVANT_TO_ORB(_ORBIT_servant)";
   } else {
     cmi.alloc_on_stack = FALSE;
 #if 0
