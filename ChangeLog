@@ -1,3 +1,9 @@
+2003-03-30  Richard Kinder <r_kinder@yahoo.com>
+        * src/orb/orb-core/corba-context.c: Code cleanups. Remove gboolean
+        return value from free_child since it is never used. Clean up some
+        unused user_data arguments to g_slist_foreach and
+        g_hash_table_foreach_remove. Fixes #109358.
+
 2003-03-28  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-send-buffer.c (giop_send_buffer_write): 
