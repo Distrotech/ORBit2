@@ -771,22 +771,22 @@ testFixedLengthArray (test_TestFactory   factory,
   objref = test_TestFactory_getArrayServer (factory, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	inArg[i] = constants_SEQ_LONG_IN[i];
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	inoutArg[i] = constants_SEQ_LONG_INOUT_IN[i];
 
   retn = test_ArrayServer_opLongArray (objref, inArg, inoutArg, outArg, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	g_assert (inArg[i]==constants_SEQ_LONG_IN[i]);
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	g_assert (inoutArg[i]==constants_SEQ_LONG_INOUT_OUT[i]);
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	g_assert (outArg[i]==constants_SEQ_LONG_OUT[i]);
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	g_assert (retn[i]==constants_SEQ_LONG_RETN[i]);
 
   CORBA_free (retn);
@@ -808,19 +808,19 @@ testVariableLengthArray (test_TestFactory   factory,
   objref = test_TestFactory_getArrayServer (factory, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	inArg[i] = CORBA_string_dup (constants_SEQ_STRING_IN[i]);
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	inoutArg[i] = CORBA_string_dup (constants_SEQ_STRING_INOUT_IN[i]);
 
   retn = test_ArrayServer_opStrArray (objref, inArg, inoutArg, &outArg, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
 	CORBA_free (inArg[i]); 
 
-  for (i=0;i<constants_SEQLEN;i++)
+  for (i=0;i<test_SequenceLen;i++)
         CORBA_free (inoutArg[i]);
 
   CORBA_free (outArg);

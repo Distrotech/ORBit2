@@ -1,3 +1,18 @@
+2002-04-15  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.108
+
+2002-04-15  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require linc >= 0.1.21
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): fix the same bug just
+	above Gergo's, and just below too - gack.
+
+	* test/everything/*: update the sequence tests so
+	we have longer runs.
+
 2002-04-13  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_adaptor):

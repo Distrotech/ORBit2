@@ -1,3 +1,18 @@
+Version 2.3.108
+
+	* Bug fixes
+		+ fixed array marshaling (Gergo Erdi, Michael)
+		+ configure check pruning (Michael)
+		+ shutdown ORB atexit to avoid UDS leaks (Michael)
+		+ SSL build fixes (Michael, Colin Campbell)
+		+ C++ compiler cast bits (Gergo)
+		+ linkage fixes (Mark)
+		+ IDL compiler initialization fixes (Mark)
+
+	* Featurelets
+		+ IDL compiler header guards (Murray Cumming)
+		+ more regression tests (Michael)
+
 Version 2.3.107
 
 	* Marshal and de-marshal code sets component correctly (Mark)

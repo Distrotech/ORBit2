@@ -137,10 +137,12 @@ module test {
 	  TestFactory factory;
 	};
 
-	typedef long LongArray[2];
-	typedef string StrArray[2];
-	typedef string StrArrayMultiDimensional[2][3][5];
-	typedef VariableLengthStruct VariableLengthStructArray[2];
+	const long SequenceLen = 4;
+
+	typedef long LongArray[SequenceLen];
+	typedef string StrArray[SequenceLen];
+	typedef string StrArrayMultiDimensional[SequenceLen][3][5];
+	typedef VariableLengthStruct VariableLengthStructArray[SequenceLen];
 
 	interface ArrayServer {
 		LongArray opLongArray(in LongArray inArg, inout LongArray inoutArg, out LongArray outArg);
