@@ -74,27 +74,27 @@ void idlCPPBackend(OIDL_Output_Tree *tree,OIDL_Run_Info *rinfo) {
 		if (dotpos != string::npos) basename.erase(dotpos,basename.size());
 
 		// state
-		IDLCompilerState state(basename,tree->tree);
+		IDLCompilerState state(basename, tree->tree);
 
-		ofstream header1((basename + IDL_CPP_HEADER_EXT).c_str());
-		ofstream module1((basename + IDL_CPP_MODULE_EXT).c_str());
-		idlWritePreamble(header1);
-		idlWritePreamble(module1);
+		ofstream hh_common((basename + IDL_CPP_HEADER_EXT).c_str());
+		ofstream cc_common((basename + IDL_CPP_MODULE_EXT).c_str());
+		idlWritePreamble(hh_common);
+		idlWritePreamble(cc_common);
 
-		ofstream header2((basename + IDL_CPP_STUB_HEADER_EXT).c_str());
-		ofstream module2((basename + IDL_CPP_STUB_MODULE_EXT).c_str());
-		idlWritePreamble(header2);
-		idlWritePreamble(module2);
+		ofstream hh_stubs((basename + IDL_CPP_STUB_HEADER_EXT).c_str());
+		ofstream cc_stubs((basename + IDL_CPP_STUB_MODULE_EXT).c_str());
+		idlWritePreamble(hh_stubs);
+		idlWritePreamble(cc_stubs);
 
-		ofstream header3((basename + IDL_CPP_SKEL_HEADER_EXT).c_str());
-		ofstream module3((basename + IDL_CPP_SKEL_MODULE_EXT).c_str());
-		idlWritePreamble(header3);
-		idlWritePreamble(module3);
+		ofstream hh_skels((basename + IDL_CPP_SKEL_HEADER_EXT).c_str());
+		ofstream cc_skels((basename + IDL_CPP_SKEL_MODULE_EXT).c_str());
+		idlWritePreamble(hh_skels);
+		idlWritePreamble(cc_skels);
 
 		IDLPassGather pass0(state);
-		IDLPassXlate pass1(state,header1,module1);
-		IDLPassStubs pass2(state,header2,module2);
-		IDLPassSkels pass3(state,header3,module3);
+		IDLPassXlate pass1(state, hh_common, cc_common);
+		IDLPassStubs pass2(state, hh_stubs, cc_stubs);
+		IDLPassSkels pass3(state, hh_skels, cc_skels);
 
 		pass0.runPass();
 		pass1.runPass();
@@ -111,6 +111,7 @@ void idlCPPBackend(OIDL_Output_Tree *tree,OIDL_Run_Info *rinfo) {
 			<< "#include \"" << basename << IDL_CPP_HEADER_EXT << "\"" << endl
 			<< "#include \"" << basename << IDL_CPP_STUB_HEADER_EXT << "\"" << endl
 			<< "#include \"" << basename << IDL_CPP_SKEL_HEADER_EXT << "\"" << endl;
+
 			module
 			<< "#include \"" << basename << IDL_CPP_MODULE_EXT << "\"" << endl
 			<< "#include \"" << basename << IDL_CPP_STUB_MODULE_EXT << "\"" << endl

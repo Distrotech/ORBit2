@@ -810,9 +810,8 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	<< indent << iface.getCPP_POA() << "();" << endl;
 
 	m_module
-	<< mod_indent << iface.getQualifiedCPP_POA() 
-	<< "::" << iface.getCPP_POA() << "() {" << endl;
-	m_module
+	<< mod_indent << iface.getQualifiedCPP_POA()  << "::" << iface.getCPP_POA() << "()" << endl
+	<< mod_indent << "{" << endl
   << ++mod_indent << "//C Servant:" << endl
 	<< mod_indent << "m_target.m_cservant._private = NULL;" << endl
 	<< mod_indent << "m_target.m_cservant.vepv = &_vepv;" << endl
@@ -825,8 +824,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	<< mod_indent << IDL_IMPL_NS "::CEnvironment ev;" << endl
 	<< mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.getQualifiedC_POA()
 	<< "__init( &m_target, ev._orbitcpp_get_c_object() );" << endl
-	<< mod_indent << "ev.propagate_sysex();" << endl;
-	m_module
+	<< mod_indent << "ev.propagate_sysex();" << endl
 	<< --mod_indent << '}' << endl << endl;
 
 	// destructor
@@ -845,23 +843,23 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	m_header
 	<< --indent << '}' << endl << endl;
 
-	// _this() method
+	// _this() method declaration:
 	m_header
-		<< indent << iface.getQualifiedCPP_ptr() << " _this()" << endl
-		<< indent << "{" << endl;
+	<< indent << iface.getQualifiedCPP_ptr() << " _this();" << endl << endl;
 
+	// _this() method implementation:
   string stub_name = iface.getQualifiedCPPStub();
-	m_header
-	  << ++indent << "PortableServer::POA_var rootPOA = _default_POA();" << endl
-	  << indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object(this);" << endl
-	  << indent << "CORBA::Object_ptr object = rootPOA->id_to_reference(oid);" << endl
-		<< indent << stub_name << "* pDerived = new " << stub_name << "(object->_orbitcpp_get_c_object());" << endl
-    << indent << "CORBA::release(object);" << endl
-		<< indent << "object = 0;" << endl
-	  << indent << "return pDerived;" << endl;
-	m_header
-	  << --indent << "}" << endl << endl;
-
+	m_module
+	<< mod_indent << iface.getQualifiedCPP_ptr() << " " << iface.getQualifiedCPP_POA() << "::" << " _this()" << endl
+	<< mod_indent << "{" << endl
+	<< ++mod_indent << "PortableServer::POA_var rootPOA = _default_POA();" << endl
+  << mod_indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object(this);" << endl
+	<< mod_indent << "CORBA::Object_ptr object = rootPOA->id_to_reference(oid);" << endl
+	<< mod_indent << stub_name << "* pDerived = new " << stub_name << "(object->_orbitcpp_get_c_object());" << endl
+  << mod_indent << "CORBA::release(object);" << endl
+	<< mod_indent << "object = 0;" << endl
+	<< mod_indent << "return pDerived;" << endl
+	<< --mod_indent << "}" << endl << endl;
 
 	
 	doInterfacePrototypes(iface);
