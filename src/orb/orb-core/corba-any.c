@@ -578,6 +578,8 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		if ((buf->cur + sizeof (CORBA_long)) > buf->end)
 			return TRUE;
 		i = *(CORBA_unsigned_long *)buf->cur;
+		if (giop_msg_conversion_needed (buf))
+			i = GUINT32_SWAP_LE_BE (i);
 		buf->cur += sizeof (CORBA_unsigned_long);
 		if ((buf->cur + i) > buf->end
 		    || (buf->cur + i) < buf->cur)
