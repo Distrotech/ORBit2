@@ -1,3 +1,11 @@
+2003-01-21  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_setup):
+	setup the listening socket as non-blocking [!]
+	(linc_server_handle_io): quite why we emit
+	a signal in this case is rather beyond me,
+	hopefully that code-path is somewhat tested.
+
 2003-01-09  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: bump version to 1.1.0
