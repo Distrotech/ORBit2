@@ -1,5 +1,20 @@
 2001-11-09  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-recv-buffer.c
+	(handle_reply): split out of
+	(giop_recv_list_push): here, kill and fold into
+	(giop_connection_handle_input): here & simplify.
+	(giop_recv_buffer_use): kill, confused & unused.
+	(giop_recv_list_pop_T, giop_recv_list_pop): kill;
+	unused
+	(recv_list_push_or_handle): don't do silly things
+	with lists.
+	(giop_recv_buffer_init): kill lock init.
+	(giop_connection_handle_input): don't pile up
+	GIOP_CLOSECONECTION requests in the bit bucket.
+
+2001-11-09  Michael Meeks  <michael@ximian.com>
+
 	* include/orbit/GIOP/giop-recv-buffer.h: kill
 	GIOPMessageInfo, not neccessary.
 	remove giop_recv_buffer_data_read prototype.
