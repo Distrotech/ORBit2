@@ -45,6 +45,11 @@ struct ORBit_POAObject_type {
 #define ORBit_LifeF_Destroying          (1<<9)
 #define ORBit_LifeF_Destroyed           (1<<10)
 
+#define ORBIT_SERVANT_TO_CLASSINFO(servant) (                          \
+  (PortableServer_ClassInfo*)                                          \
+  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )     \
+)
+
 #endif /* ORBIT2_INTERNAL_API */
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
@@ -64,10 +69,6 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 #define ORBIT_VEPV_OFFSET(vepv_type,epv_member) \
        ((CORBA_unsigned_long) (G_STRUCT_OFFSET (vepv_type, epv_member)) / sizeof (GFunc))
 
-
-#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) {              \
--  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci); \
--}
 
 /*
  * These macros are deprecated, they remain on the off-chance that

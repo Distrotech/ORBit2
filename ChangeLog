@@ -1,5 +1,7 @@
 2003-06-11  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c: bin dupped set_classinfo macro.
+
 	* include/orbit/poa/poa.h
 	(ORBIT_SERVANT_SET_CLASSINFO): add back to please
 	old/stale stubs.
