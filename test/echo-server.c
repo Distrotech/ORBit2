@@ -30,7 +30,6 @@ main (int argc, char *argv[])
     fprintf(stdout, "%s\n", retval); fflush(stdout);
     CORBA_free(retval);
 
-    ORBit_ORB_idle_init (orb);
     g_main_loop_run (g_main_loop_new (NULL, TRUE));
 
     echo_srv_finish_object(&ev);

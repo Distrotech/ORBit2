@@ -1342,8 +1342,48 @@ DynamicAny_NameValuePairSeq *
 DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 				  CORBA_Environment   *ev)
 {
-	g_assert (!"Not yet implemented");
-	return NULL;
+	DynAny *dynany;
+	int i;
+	gconstpointer src;
+	DynamicAny_NameValuePairSeq *retval;
+	CORBA_TypeCode tc;
+
+	o_return_val_if_fail (obj != NULL, NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_val_if_fail (dynany != NULL &&
+			      dynany->any != NULL &&
+			      dynany->any->_type != NULL, NULL);
+
+	if (dynany_kind_mismatch (dynany, CORBA_tk_struct, ev))
+		return NULL;
+
+	tc = dynany->any->_type;
+
+	src = dynany->any->_value;
+	if (!src)
+		return NULL;
+
+	retval = CORBA_sequence_DynamicAny_NameValuePair__alloc ();
+	retval->_buffer = CORBA_sequence_DynamicAny_NameValuePair_allocbuf (tc->sub_parts);
+	retval->_length = tc->sub_parts;
+
+	for (i = 0; i < tc->sub_parts; i++) {
+		CORBA_any      *any;
+		CORBA_TypeCode  subtc = tc->subtypes [i];
+		gpointer        to;
+
+		retval->_buffer [i].id = CORBA_string_dup (tc->subnames [i]);
+		any = &retval->_buffer [i].value;
+
+		any->_type = (CORBA_TypeCode) CORBA_Object_duplicate (
+			(CORBA_Object) subtc, ev);
+		to = any->_value = ORBit_alloc_tcval (subtc, 1);
+		
+		ORBit_copy_value_core (&src, &to, subtc);
+	}
+
+	return retval;
 }
 
 void
@@ -1351,7 +1391,55 @@ DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
 				  const DynamicAny_NameValuePairSeq *value,
 				  CORBA_Environment                 *ev)
 {
-	g_assert (!"Not yet implemented");
+	DynAny *dynany;
+	int i;
+	gpointer dest;
+	CORBA_TypeCode tc;
+
+	o_return_if_fail (obj != NULL);
+	o_return_if_fail (value != NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_if_fail (dynany != NULL &&
+			  dynany->any != NULL &&
+			  dynany->any->_type != NULL);
+
+	if (dynany_kind_mismatch (dynany, CORBA_tk_struct, ev))
+		return;
+
+	tc = dynany->any->_type;
+
+	if (value->_length != tc->sub_parts) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_DynamicAny_DynAny_TypeMismatch, NULL);
+		return;
+	}
+
+	dynany_invalidate (dynany, FALSE);
+
+	for (i = 0; i < value->_length; i++) {
+		DynamicAny_NameValuePair current = value->_buffer [i];
+
+		if (strcmp (current.id, tc->subnames [i])) {
+			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+					     ex_DynamicAny_DynAny_TypeMismatch, NULL);
+			return;
+		}
+
+		if (!CORBA_TypeCode_equal (current.value._type, tc->subtypes [i], ev)) {
+			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+					     ex_DynamicAny_DynAny_InvalidValue, NULL);
+			return;
+		}
+	}
+
+	dest = dynany->any->_value;
+	for (i = 0; i < value->_length; i++) {
+		DynamicAny_NameValuePair current = value->_buffer [i];
+		gconstpointer src = current.value._value;
+
+		ORBit_copy_value_core (&src, &dest, tc->subtypes [i]);
+	}
 }
 
 /* 9.2.7 */
@@ -1697,3 +1785,16 @@ DynamicAny_DynArray_set_elements (DynamicAny_DynArray      obj,
 	g_assert (!"Not yet implemented");
 }
 
+CORBA_sequence_DynamicAny_NameValuePair *
+CORBA_sequence_DynamicAny_NameValuePair__alloc (void)
+{
+	return ORBit_small_alloc (
+		TC_CORBA_sequence_DynamicAny_NameValuePair);
+}
+
+DynamicAny_NameValuePair *
+CORBA_sequence_DynamicAny_NameValuePair_allocbuf (CORBA_unsigned_long len)
+{
+	return ORBit_small_allocbuf (
+		TC_CORBA_sequence_DynamicAny_NameValuePair, len);
+}
