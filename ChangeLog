@@ -1,3 +1,11 @@
+2001-07-31  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.92
+
+2001-07-31  Michael Meeks  <michael@ximian.com>
+
+	* test/poa/Makefile.am: fixup.
+
 2001-07-31  Martin Baulig  <baulig@suse.de>
 
 	* src/orb/dynany.c
