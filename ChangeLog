@@ -1,3 +1,9 @@
+2003-10-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_shutdown): allow
+	shutdown from any thread - this looks safe enough,
+	at least here.
+
 2003-10-23  Mark McLoughlin  <mark@skynet.ie>
 
 	* test/everything/lifeCycle.c: add this from the
