@@ -761,59 +761,58 @@ IOP_UnknownComponent_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 }
 
 static void
-IOP_components_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
-		       GSList *components)
+IOP_components_marshal (CORBA_Object obj, 
+			GIOPSendBuffer *buf,
+			GSList *components)
 {
-  CORBA_unsigned_long len, *lenptr;
-  GSList *cur;
+	CORBA_unsigned_long  len, lenptr;
+	GSList              *cur;
+	guchar              *marker;
 
-  len = g_slist_length(components);
-  giop_send_buffer_append_aligned(buf, &len, 4);
+	len = g_slist_length (components);
+	giop_send_buffer_append_aligned (buf, &len, 4);
 
-  for(cur = components; cur; cur = cur->next)
-    {
-      IOP_Component_info *ci = cur->data;
+	for (cur = components; cur; cur = cur->next) {
+		IOP_Component_info *ci = cur->data;
 
-      giop_send_buffer_align(buf, 4);
-      giop_send_buffer_append(buf, &ci->component_type, 4);
+		giop_send_buffer_align (buf, 4);
+		giop_send_buffer_append (buf, &ci->component_type, 4);
 
-      switch(ci->component_type)
-	{
-	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
-	case IOP_TAG_SSL_SEC_TRANS:
-	  /* Help out with putting an encaps thing on the wire */
-	  lenptr = (CORBA_unsigned_long *)
-	    giop_send_buffer_append_aligned(buf, &len, 4);
-	  len = buf->msg.header.message_size;
-	  giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-	  break;
-	default:
-	  lenptr = NULL;
-	  break;
+		switch (ci->component_type) {
+		case IOP_TAG_GENERIC_SSL_SEC_TRANS:
+		case IOP_TAG_SSL_SEC_TRANS:
+			marker = giop_send_buffer_append_aligned (buf, &len, 4);
+			len = buf->msg.header.message_size;
+			giop_send_buffer_append (buf, &buf->msg.header.flags, 1);
+			break;
+		default:
+			marker = NULL;
+			break;
+		}
+
+		switch (ci->component_type) {
+		case IOP_TAG_GENERIC_SSL_SEC_TRANS:
+			IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal (obj, buf, ci);
+			break;
+		case IOP_TAG_SSL_SEC_TRANS:
+			IOP_TAG_SSL_SEC_TRANS_marshal (obj, buf, ci);
+			break;
+		case IOP_TAG_COMPLETE_OBJECT_KEY:
+			IOP_TAG_COMPLETE_OBJECT_KEY_marshal (obj, buf, ci);
+			break;
+		case IOP_TAG_CODE_SETS:
+			IOP_TAG_CODE_SETS_marshal (obj, buf, ci);
+			break;
+		default:
+			IOP_UnknownComponent_marshal (obj, buf, ci);
+			break;
+		}
+
+		if (marker) {
+			len = buf->msg.header.message_size - len;
+			memcpy (marker, &len, 4);
+		}
 	}
-
-      switch(ci->component_type)
-	{
-	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
-	  IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(obj, buf, ci);
-	  break;
-	case IOP_TAG_SSL_SEC_TRANS:
-	  IOP_TAG_SSL_SEC_TRANS_marshal(obj, buf, ci);
-	  break;
-	case IOP_TAG_COMPLETE_OBJECT_KEY:
-	  IOP_TAG_COMPLETE_OBJECT_KEY_marshal(obj, buf, ci);
-	  break;
-	case IOP_TAG_CODE_SETS:
-          IOP_TAG_CODE_SETS_marshal (obj, buf, ci);
-	  break;
-	default:
-	  IOP_UnknownComponent_marshal(obj, buf, ci);
-	  break;
-	}
-
-      if(lenptr)
-	*lenptr = buf->msg.header.message_size - len;
-    }
 }
 
 static void
