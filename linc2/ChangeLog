@@ -1,3 +1,28 @@
+2005-03-24  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-source.c (link_source_check): One more iteration of the
+	Win32 code. The code passes zero as the hEventObject parameter to
+	WSAEnumNetworkEvents(). This meant that the event never got reset,
+	and kept firing. Problem noticed with gconfd-2 and
+	bonobo-activation-server, which kept busy-looping and consuming
+	lots of CPU.
+
+	Now we reset the event if it is set but WSAEnumNetworkEvents() has
+	returned an empty network event mask. We then also
+	WSAEventSelect() an empty network event mask, so that the next
+	call to the prepare method will reselect for the appropriate
+	network events.
+
+	No need to handle FD_ACCEPT events specially any longer, the above
+	takes care of it.
+
+	* src/linc-debug.h (d_printf): Do a fflush(), too.
+
+	* src/linc.c (link_init): Improve debug output facilities: If
+	CONNECTION_DEBUG and CONNECTION_DEBUG_FLAG are #defined, check for
+	environment variable LINK_PER_PROCESS_STDERR, and if set, redirect
+	stderr to a per-process log file.
+
 2005-03-11  Arvind Samptur  <arvind.samptur@wipro.com>
 
 	* src/linc-server.c (link_server_setup): Fill the LinkServer proto

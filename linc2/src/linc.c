@@ -17,6 +17,7 @@
 #  include <unistd.h>
 #endif
 #include <signal.h>
+#include <fcntl.h>
 #include "linc-private.h"
 #include "linc-compat.h"
 
@@ -172,6 +173,23 @@ link_init (gboolean thread_safe)
 #if defined (CONNECTION_DEBUG) && defined (CONNECTION_DEBUG_FLAG)
 	if (getenv ("LINK_CONNECTION_DEBUG"))
 		link_connection_debug_flag = TRUE;
+	if (link_connection_debug_flag &&
+	    getenv ("LINK_PER_PROCESS_STDERR") &&
+	    fileno (stderr) >= 0) {
+		char *stderr_file = g_build_filename (g_get_tmp_dir (),
+						      g_strdup_printf ("link_debug.%d", getpid ()),
+						      NULL);
+		int fd;
+		fd = open (stderr_file, O_WRONLY|O_CREAT);
+		if (fd >= 0) {
+			char *prgname = g_get_prgname ();
+			d_printf ("Redirecting stderr of %s to %s\n",
+				  (prgname ? prgname : "this process"), stderr_file);
+			dup2 (fd, fileno (stderr));
+			close (fd);
+		}
+	        d_printf ("stderr redirected here\n");
+	}
 #endif
 
 	if (thread_safe && !g_thread_supported ())
