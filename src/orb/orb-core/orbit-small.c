@@ -1221,6 +1221,7 @@ load_module (const char *fname, const char *libname)
 		iinterfaces = CORBA_sequence_ORBit_IInterface__alloc ();
 		iinterfaces->_length = iinterfaces->_maximum = length;
 		iinterfaces->_buffer = CORBA_sequence_ORBit_IInterface_allocbuf (length);
+		iinterfaces->_release = TRUE;
 
 		for (i = 0; i < length; i++) {
 			ORBit_IInterface *src, *dest;

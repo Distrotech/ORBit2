@@ -262,6 +262,7 @@ testIInterface (test_TestFactory   factory,
 		objref, "IDL:orbit/test/StructServer:1.0", ev);
 	g_assert(ev->_major == CORBA_NO_EXCEPTION);
 	g_assert(iinterface != NULL);
+	CORBA_free (iinterface);
 
 	tcs = ORBit_small_get_types (TYPELIB_NAME);
 	g_assert (find_tc (tcs, "IDL:orbit/test/Colour:1.0"));
