@@ -306,6 +306,11 @@ ORBit_realloc_tcval (gpointer       old,
 	if (!num_elements)
 		return NULL;
 
+	/* case seq. allocated with ORBit_alloc_tcval(tc,0) */ 
+	if (old_num_elements==0 && !old) {
+		return ORBit_alloc_tcval (tc, num_elements);
+	}
+
 	if (!(element_size = ORBit_gather_alloc_info (tc)))
 		return NULL;
 
