@@ -312,9 +312,10 @@ irda_getaddrinfo(const char *nodename, const char *servname, const struct addrin
     g_snprintf(sai.sir_name, sizeof(sai.sir_name), "%s", servname);
   else
     {
-      srand(time(NULL));
+      struct timeval t;
+      gettimeofday (&t, NULL);
       g_snprintf(sai.sir_name, sizeof(sai.sir_name), "IIOP%x%x",
-		 rand(), rand());
+		 rand(), (guint)(t.tv_sec^t.tv_usec));
     }
 
   if(nodename)
