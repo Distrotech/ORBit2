@@ -43,7 +43,7 @@ test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
 
 
 IDL_FLAGS =  --showcpperrors
-IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idk
+IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl
 include $(top_srcdir)/Makefile.shared
 
 

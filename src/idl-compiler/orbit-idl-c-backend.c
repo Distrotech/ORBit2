@@ -5,6 +5,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 static FILE *out_for_pass(const char *input_filename, int pass, 
 			  OIDL_Run_Info *rinfo);
@@ -123,6 +125,13 @@ out_for_pass (const char    *input_filename,
 	char *cmdline;
 
 	if (pass == OUTPUT_DEPS) {
+		if (!g_file_test (".deps", G_FILE_TEST_IS_DIR)) {
+			if (mkdir (".deps", 0775) < 0) {
+				g_warning ("failed to create '.deps' directory '%s'",
+					   strerror (errno));
+				return NULL;
+			}
+		}
 		
 		if (rinfo->deps_file)
 			fp =  fopen (rinfo->deps_file, "w");
@@ -130,7 +139,8 @@ out_for_pass (const char    *input_filename,
 			fp = NULL;
 
 		if (fp == NULL) 
-			g_error ("failed to open '%s': %s\n", input_filename, strerror(errno));
+			g_warning ("failed to open '%s': %s\n",
+				   rinfo->deps_file, strerror (errno));
 		
 	} else {
 		output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
