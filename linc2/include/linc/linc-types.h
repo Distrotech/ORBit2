@@ -21,7 +21,8 @@ G_BEGIN_DECLS
 typedef enum {
 	LINC_CONNECTION_SSL          = 1 << 0,
 	LINC_CONNECTION_NONBLOCKING  = 1 << 1,
-	LINC_CONNECTION_BLOCK_SIGNAL = 1 << 2
+	LINC_CONNECTION_BLOCK_SIGNAL = 1 << 2,
+	LINC_CONNECTION_LOCAL_ONLY   = 1 << 3
 } LINCConnectionOptions;
 
 typedef struct _LincWatch        LincWatch;

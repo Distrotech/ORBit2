@@ -41,6 +41,10 @@ typedef gboolean (*LINCProtocolGetSockInfoFunc) (const LINCProtocolInfo *proto,
 						 gchar                 **hostname,
 						 gchar                 **service);
 
+typedef gboolean (*LINCProtocolIsLocal)         (const LINCProtocolInfo *proto,
+						 const struct sockaddr  *sockaddr,
+						 socklen_t               saddr_len);
+
 struct _LINCProtocolInfo {
 	const char                 *name;
 	int                         family;
@@ -52,6 +56,9 @@ struct _LINCProtocolInfo {
 	LINCProtocolDestroyFunc     destroy;
 	LINCProtocolGetSockAddrFunc get_sockaddr;
 	LINCProtocolGetSockInfoFunc get_sockinfo;
+	LINCProtocolIsLocal         is_local;
+	/* This structure is private and may be extended in future */
+	gpointer                    dummy[8];
 };
 
 LINCProtocolInfo * const linc_protocol_find     (const char *name);

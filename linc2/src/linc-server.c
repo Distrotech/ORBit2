@@ -151,6 +151,12 @@ linc_server_accept_connection (LINCServer      *server,
 		return FALSE; /* error */
 	}
 
+	if (server->create_options & LINC_CONNECTION_LOCAL_ONLY &&
+	    !linc_protocol_is_local (server->proto, saddr, addrlen)) {
+		close (fd);
+		return FALSE;
+	}
+
 	if (server->create_options & LINC_CONNECTION_NONBLOCKING)
 		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0) {
 			d_printf ("failed to set O_NONBLOCK on %d", fd);

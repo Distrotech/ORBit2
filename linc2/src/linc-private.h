@@ -76,8 +76,11 @@ struct sockaddr *linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 gboolean         linc_protocol_get_sockinfo (const LINCProtocolInfo *proto,
 					     const struct sockaddr  *saddr,
 					     gchar                 **hostname,
-
 					     gchar                 **service);
+
+gboolean         linc_protocol_is_local     (const LINCProtocolInfo  *proto,
+					     const struct sockaddr   *saddr,
+					     socklen_t                saddr_len);
 
 LincWatch       *linc_io_add_watch_fd       (int                     fd,
 					     GIOCondition            condition,

@@ -197,6 +197,64 @@ linc_set_tmpdir (const char *dir)
 #define LINC_RESOLV_CLEAR_IPV6
 #endif
 
+#if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
+static const char *
+get_local_hostname (void)
+{
+	static char local_host[NI_MAXHOST] = { 0 };
+
+	if (local_host [0])
+		return local_host;
+
+	if (gethostname (local_host, NI_MAXHOST) == -1) {
+		g_warning ("No local host name");
+		return NULL;
+	}
+
+	g_warning ("local host name '%s'", local_host);
+	return local_host;
+}
+
+static gboolean
+linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
+			      const struct sockaddr   *saddr,
+			      socklen_t                saddr_len)
+{
+	int i;
+	static int warned = 0;
+	static struct hostent *local_hostent = NULL;
+	
+	if (!local_hostent)
+		local_hostent = gethostbyname (get_local_hostname ());
+
+	if (!local_hostent) {
+		if (!warned++)
+			g_warning ("can't gethostbyname on '%s'",
+				   get_local_hostname ());
+		return FALSE;
+	}
+
+	if (local_hostent->h_addrtype != saddr->sa_family) {
+		if (!warned++)
+			g_warning ("FIXME: can't compare different family "
+				   "address types for locality");
+		return FALSE;
+	}
+
+	g_warning ("Compare vs %d matches len %d",
+		   local_hostent->h_length, saddr_len);
+
+	for (i = 0; i < local_hostent->h_length; i++) {
+		if (!memcmp (local_hostent->h_addr_list [i],
+			     saddr->sa_data, saddr_len))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+#endif
+
 /*
  * linc_protocol_get_sockaddr_ipv4:
  * @proto: the #LINCProtocolInfo structure for the IPv4 protocol.
@@ -458,11 +516,10 @@ linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
 				  gchar          **hostname,
 				  char           **portnum)
 {
-
 	if (!host) {
-		char local_host[MAXHOSTNAMELEN];
+		const char *local_host;
 
-		if (gethostname (local_host, MAXHOSTNAMELEN) == -1)
+		if (!(local_host = get_local_hostname ()))
 			return FALSE;
 
 		host = gethostbyname (local_host);
@@ -598,12 +655,12 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
 	g_assert (proto && saddr && saddr->sa_family == AF_UNIX);
 
 	if (hostname) {
-		gchar hname [NI_MAXHOST];
+		const char *local_host;
 
-		if (gethostname (hname, NI_MAXHOST) == -1)
+		if (!(local_host = get_local_hostname ()))
 			return FALSE;
 
-		*hostname = g_strdup (hname);
+		*hostname = g_strdup (local_host);
 	}
 
 	if (sock_path)
@@ -665,6 +722,27 @@ linc_protocol_get_sockinfo (const LINCProtocolInfo  *proto,
 	return FALSE;
 }
 
+/**
+ * linc_protocol_is_local:
+ * @proto: the protocol
+ * @saddr: the socket address of a connecting client.
+ * 
+ *   This method determines if the client is from the same
+ * machine or not - per protocol.
+ * 
+ * Return value: TRUE if the connection is local, else FALSE
+ **/
+gboolean
+linc_protocol_is_local (const LINCProtocolInfo  *proto,
+			const struct sockaddr   *saddr,
+			socklen_t                saddr_len)
+{
+	if (proto && proto->is_local)
+		return proto->is_local (proto, saddr, saddr_len);
+
+	return FALSE;
+}
+
 /*
  * af_unix_destroy:
  * @fd: file descriptor of the socket.
@@ -680,6 +758,14 @@ linc_protocol_unix_destroy (int         fd,
 			    const char *pathname)
 {
 	unlink (pathname);
+}
+
+static gboolean
+linc_protocol_unix_is_local (const LINCProtocolInfo *proto,
+			     const struct sockaddr   *saddr,
+			     socklen_t                saddr_len)
+{
+	return TRUE;
 }
 #endif /* AF_UNIX */
 
@@ -724,7 +810,8 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	linc_protocol_tcp_setup, 	/* setup */
 	NULL, 				/* destroy */
 	linc_protocol_get_sockaddr_ipv4,/* get_sockaddr */
-	linc_protocol_get_sockinfo_ipv4 /* get_sockinfo */
+	linc_protocol_get_sockinfo_ipv4,/* get_sockinfo */
+	linc_protocol_is_local_ipv46    /* is_local */
 	},
 #endif
 #if defined(AF_INET6)
@@ -737,7 +824,8 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	linc_protocol_tcp_setup, 	/* setup */
 	NULL, 				/* destroy */
 	linc_protocol_get_sockaddr_ipv6,/* get_sockaddr */
-	linc_protocol_get_sockinfo_ipv6	/* get_sockinfo */
+	linc_protocol_get_sockinfo_ipv6,/* get_sockinfo */
+	linc_protocol_is_local_ipv46    /* is_local */
 	},
 #endif
 #ifdef AF_UNIX
@@ -750,7 +838,8 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	NULL,  						/* setup */
 	linc_protocol_unix_destroy,  			/* destroy */
 	linc_protocol_get_sockaddr_unix, 		/* get_sockaddr */
-	linc_protocol_get_sockinfo_unix 		/* get_sockinfo */
+	linc_protocol_get_sockinfo_unix, 		/* get_sockinfo */
+	linc_protocol_unix_is_local                     /* is_local */
 	},
 #endif
 #ifdef AF_IRDA
@@ -763,7 +852,8 @@ static LINCProtocolInfo static_linc_protocols[] = {
 	NULL, 					/* setup */
 	NULL, 					/* destroy */
 	linc_protocol_get_sockaddr_irda, 	/* get_sockaddr */
-	linc_protocol_get_sockinfo_irda 	/* get_sockinfo */
+	linc_protocol_get_sockinfo_irda, 	/* get_sockinfo */
+	NULL                                    /* is_local */
 	},
 #endif
 	{ NULL /* name */ }
