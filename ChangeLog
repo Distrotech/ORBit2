@@ -1,3 +1,16 @@
+2005-02-21  Tor Lillqvist  <tml@novell.com>
+
+	* configure.in: Use -DPOPT_STATIC on Win32 when building the IDL
+	compiler and name server, so that we avoid the problems
+	with referring to variables imported from a DLL in static
+	initializers. In newer libpopt distributions the headers have
+	dllimport decorations for the variables exported from libpopt
+	unless one defines POPT_STATIC.
+
+	To actually then link with the static libpopt.a you might also
+	have to move the import library libpopt.dll.a away so that the
+	linker won't find it, and perhaps edit libpopt.la.
+
 2005-02-14  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: New autoconf variable LIBM, set to -lm on Unix,

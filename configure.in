@@ -40,10 +40,16 @@ case "$host" in
   *-*-mingw*)
     os_win32=yes
     LIBM=
+    # We must use a static libpopt so that the usage of POPT_AUTOHELP
+    # won't cause problems. You might to manually have to move the
+    # import library away so that the linker finds only the static
+    # library. You might also have to edit the libpopt.la file.
+    POPT_CFLAGS=-DPOPT_STATIC
     ;;
   *)
     os_win32=no
     LIBM=-lm
+    POPT_CFLAGS=
     ;;
 esac
 
@@ -147,10 +153,12 @@ PKG_CHECK_MODULES(ORBIT_IDL, \
 	gobject-2.0 >= $GLIB_REQUIRED \
 	gmodule-2.0 >= $GLIB_REQUIRED)
 AC_SUBST(ORBIT_IDL_LIBS)
+ORBIT_IDL_CFLAGS="$ORBIT_IDL_CFLAGS $POPT_CFLAGS"
 AC_SUBST(ORBIT_IDL_CFLAGS)
 
 PKG_CHECK_MODULES(ORBIT_NAME, glib-2.0 >= $GLIB_REQUIRED)
 AC_SUBST(ORBIT_NAME_LIBS)
+ORBIT_NAME_CFLAGS="$ORBIT_NAME_CFLAGS $POPT_CFLAGS"
 AC_SUBST(ORBIT_NAME_CFLAGS)
 
 dnl Checks for header files.
