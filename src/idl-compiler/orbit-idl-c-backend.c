@@ -5,9 +5,8 @@
 #include <string.h>
 #include <ctype.h>
 
-static FILE *out_for_pass(const char *input_filename, int pass);
-
-static char *c_output_formatter = "indent -npro -bad -bap -bc -sob -br -ce -cli2 -npcs -di1 -psl -i3 -lp -st";
+static FILE *out_for_pass(const char *input_filename, int pass, 
+			  OIDL_Run_Info *rinfo);
 
 void
 orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
@@ -29,32 +28,33 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
   }
 
   for(i = 0; i < 5; i++) {
-    ci.fh = out_for_pass(rinfo->input_filename, 1 << i);
-
-    switch(1 << i) {
-    case OUTPUT_STUBS:
-      orbit_idl_output_c_stubs(tree, rinfo, &ci);
-      break;
-    case OUTPUT_SKELS:
-      orbit_idl_output_c_skeletons(tree, rinfo, &ci);
-      break;
-    case OUTPUT_COMMON:
-      orbit_idl_output_c_common(tree, rinfo, &ci);
-      break;
-    case OUTPUT_HEADERS:
-      orbit_idl_output_c_headers(tree, rinfo, &ci);
-      break;
-    case OUTPUT_SKELIMPL:
-      orbit_idl_output_c_skelimpl(tree, rinfo, &ci);
-      break;
+    if( (1 << i) & rinfo->enabled_passes) {
+      ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
+      
+      switch(1 << i) {
+      case OUTPUT_STUBS:
+	orbit_idl_output_c_stubs(tree, rinfo, &ci);
+	break;
+      case OUTPUT_SKELS:
+	orbit_idl_output_c_skeletons(tree, rinfo, &ci);
+	break;
+      case OUTPUT_COMMON:
+	orbit_idl_output_c_common(tree, rinfo, &ci);
+	break;
+      case OUTPUT_HEADERS:
+	orbit_idl_output_c_headers(tree, rinfo, &ci);
+	break;
+      case OUTPUT_SKELIMPL:
+	orbit_idl_output_c_skelimpl(tree, rinfo, &ci);
+	break;
+      }
+      pclose(ci.fh);
     }
-
-    pclose(ci.fh);
   }
 }
 
 static FILE *
-out_for_pass(const char *input_filename, int pass)
+out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
 {
   char *tack_on;
   char *basein;
@@ -93,7 +93,8 @@ out_for_pass(const char *input_filename, int pass)
 
   strcat(basein, tack_on);
 
-  cmdline = alloca(strlen(c_output_formatter) + strlen(basein) + sizeof(" > "));
-  sprintf(cmdline, "%s > %s", c_output_formatter, basein);
+  cmdline = alloca(strlen(rinfo->output_formatter) + strlen(basein) 
+		   + sizeof(" > "));
+  sprintf(cmdline, "%s > %s", rinfo->output_formatter, basein);
   return popen(cmdline, "w");
 }
