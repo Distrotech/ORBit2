@@ -1,5 +1,24 @@
 2002-09-04  Mark McLoughlin  <mark@skynet.ie>
 
+	Merged some stuff from orbit-cpp-cactus.
+
+	* include/orbit/orb-core/corba-typecode.h: include giop-basics.h
+	if we're using the headers internally.
+
+	* src/idl-compiler/Makefile.am: don't define -DDEBUG.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_TypeCode_allocate),
+	(CORBA_ORB_create_struct_tc), (CORBA_ORB_create_union_tc),
+	(CORBA_ORB_create_enum_tc), (CORBA_ORB_create_alias_tc),
+	(CORBA_ORB_create_exception_tc), (CORBA_ORB_create_interface_tc),
+	(CORBA_ORB_create_string_tc), (CORBA_ORB_create_wstring_tc),
+	(CORBA_ORB_create_fixed_tc), (CORBA_ORB_create_sequence_tc),
+	(CORBA_ORB_create_recursive_sequence_tc),
+	(CORBA_ORB_create_array_tc):
+	s/CORBA_TypeCode_allocate/ORBit_TypeCode_allocate/g
+
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/idl-compiler/*: chop, chop - take 2: a year on,
 	remove all the non-small code again, except this time
 	a lot more cleanly. That's 6,000 lines of code we don't

@@ -8,7 +8,6 @@ INCLUDES =                                    \
 	 -I$(top_srcdir)                      \
 	-I$(top_srcdir)/include               \
 	-DORBITLIBDIR="\"$(orbitlibdir)\""    \
-	-DDEBUG                               \
 	-DVERSION=\"$(ORBIT_VERSION)\"        \
 	-DORBIT2_INTERNAL_API                 \
 	$(WARN_CFLAGS)                        \
