@@ -144,12 +144,6 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   hints.ai_protocol = proto->stream_proto_num;
   if(linc_getaddrinfo(local_host_info, local_serv_info, &hints, &ai))
     return FALSE;
-  if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
-		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-    {
-      freeaddrinfo(ai);
-      return FALSE;
-    }
 
   fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
   if(fd < 0)
@@ -161,11 +155,19 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     static const int oneval = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof(oneval));
   }
-
+    
   n = 0;
   if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
      || local_serv_info)
     n = bind(fd, ai->ai_addr, ai->ai_addrlen);
+  if(!n)
+    n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
+  if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
+		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
+    {
+      freeaddrinfo(ai);
+      return FALSE;
+    }
   freeaddrinfo(ai);
 
   if(!n)
