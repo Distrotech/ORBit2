@@ -4,6 +4,7 @@
 #ifndef CORBA_SMALL_H
 #define CORBA_SMALL_H 1
 
+#include <libIDL/IDL.h>
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orbit-interface.h>
 
@@ -36,5 +37,13 @@ void           ORBit_small_invoke_poa  (PortableServer_ServantBase *servant,
 					ORBitSmallSkeleton          small_skel,
 					gpointer                    impl,
 					CORBA_Environment          *ev);
+
+/* As yet unimplemented */
+ORBit_IInterface *ORBit_iinterface_from_idl       (IDL_tree           idl);
+CORBA_char       *ORBit_small_get_type_id         (CORBA_Object       object,
+						   CORBA_Environment *ev);
+ORBit_IInterface *ORBit_small_get_iinterface      (CORBA_Object       opt_object,
+					           const CORBA_char  *repo_id,
+						   CORBA_Environment *ev);
 
 #endif /* CORBA_SMALL_H */

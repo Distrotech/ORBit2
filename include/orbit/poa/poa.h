@@ -83,6 +83,7 @@ void PortableServer_ServantBase__init(PortableServer_Servant p_servant,
 void PortableServer_ServantBase__fini(PortableServer_Servant p_servant,
 				      CORBA_Environment *ev);
 void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
+PortableServer_ClassInfo *ORBit_classinfo_lookup(const char *type_id);
 void ORBit_POAObject_post_invoke(ORBit_POAObject obj);
 
 

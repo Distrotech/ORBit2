@@ -719,12 +719,26 @@ PortableServer_wstring_to_ObjectId(CORBA_wchar *str, CORBA_Environment *env)
 CORBA_unsigned_long
 ORBit_classinfo_lookup_id(const char *type_id)
 {
-  PortableServer_ClassInfo *ci;
-  ci = g_hash_table_lookup(ORBit_class_assignments, type_id);
-  if(!ci)
-    return 0;
+	PortableServer_ClassInfo *ci;
 
-  return *ci->class_id;
+	if (!ORBit_class_assignments)
+		return NULL;
+
+	ci = g_hash_table_lookup (ORBit_class_assignments, type_id);
+
+	if (!ci)
+		return 0;
+
+	return *ci->class_id;
+}
+
+PortableServer_ClassInfo *
+ORBit_classinfo_lookup(const char *type_id)
+{
+	if (!ORBit_class_assignments)
+		return NULL;
+
+	return g_hash_table_lookup (ORBit_class_assignments, type_id);
 }
 
 void

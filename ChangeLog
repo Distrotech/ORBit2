@@ -1,3 +1,25 @@
+2001-07-17  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testIInterface): 
+	ORBit_small_get_type_id regression test.
+	(run_tests): hook it up.
+
+	* src/orb/poa/poa.c (ORBit_classinfo_lookup): impl.
+
+	* src/orb/poa/clean-poa.c (ORBit_classinfo_lookup): impl.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_impl_ORBit_get_iinterface): impl.
+	(ORBit_impl_ORBit_get_type_id): impl.
+	(get_small_skel_CORBA_Object): extend.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_iinterface): impl.
+	(ORBit_small_get_type_id): impl.
+
+	* src/orb/orb-core/corba-object.c: add
+	ORBit_get_iinterface / ORBit_get_type_id methods.
+
 2001-07-13  Peter Williams  <peterw@ximian.com>
 
 	* configure.in (ACLOCAL): Preserve ACLOCAL_FLAGS in
