@@ -1,5 +1,6 @@
 #include <config.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <orbit/orbit.h>
 #include <gmodule.h>
@@ -7,14 +8,6 @@
 
 #include "orb-core-private.h"
 #include "orbit-debug.h"
-
-ORBit_IInterface *
-ORBit_iinterface_from_idl (IDL_tree idl)
-{
-	g_warning ("Implement me");
-
-	return NULL;
-}
 
 CORBA_char *
 ORBit_small_get_type_id (CORBA_Object       object,

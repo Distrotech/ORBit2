@@ -4,7 +4,6 @@
 #ifndef CORBA_SMALL_H
 #define CORBA_SMALL_H 1
 
-#include <libIDL/IDL.h>
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orbit-interface.h>
 

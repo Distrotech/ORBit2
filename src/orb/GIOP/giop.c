@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "giop-private.h"
 
 const char giop_version_ids [GIOP_NUM_VERSIONS][2] = {
