@@ -269,7 +269,4 @@ echo "ORBit configuration:
 	Compiler:		${CC} 
 
 	Purify cleanliness:	${enable_purify}
-
-	This is the Development branch of ORBit2, if
-you want something more stable checkout -r gnome-2-0.
 "
