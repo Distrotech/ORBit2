@@ -367,9 +367,9 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
     tmpstr = g_string_new(NULL);
     tmpstr2 = g_string_new(NULL);
-    g_string_sprintf(tmpstr, "sizeof(%s) * %s", ctmp_contents, ctmp_len);
+    g_string_printf(tmpstr, "sizeof(%s) * %s", ctmp_contents, ctmp_len);
     /* XXX badhack - what if 'node' is a pointer thingie? Need to find out whether to append '._buffer' or '->_buffer' */
-    g_string_sprintf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
+    g_string_printf(tmpstr2, "%s%s", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"");
 
     if(cmi->alloc_on_stack && (node->u.loop_info.contents->where & MW_Msg))
       {

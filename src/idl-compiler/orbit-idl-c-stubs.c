@@ -511,7 +511,7 @@ cbe_stub_op_param_alloc(FILE *of, IDL_tree node, GString *tmpstr)
   for(i = 0; i < n - 1; i++)
     g_string_append_c(tmpstr, '*');
 
-  g_string_sprintfa(tmpstr, "%s",
+  g_string_append_printf(tmpstr, "%s",
 		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
 
   id = orbit_cbe_get_typespec_str(IDL_PARAM_DCL(node).param_type_spec);
@@ -594,7 +594,7 @@ cbe_stub_op_param_free(FILE *of, IDL_tree node, GString *tmpstr)
   for(i = 0; i < n; i++)
     g_string_append_c(tmpstr, '*');
   
-  g_string_sprintfa(tmpstr, "%s",
+  g_string_append_printf(tmpstr, "%s",
 		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
   switch(IDL_NODE_TYPE(ts)) {
   case IDLN_TYPE_ANY:

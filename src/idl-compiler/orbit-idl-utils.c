@@ -43,7 +43,7 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 
     attr_name = IDL_LIST(curnode).data;
 
-    g_string_sprintf(attrname, "_get_%s",
+    g_string_printf(attrname, "_get_%s",
 		     IDL_IDENT(attr_name).str);
     ident = IDL_ident_new(g_strdup(attrname->str));
     IDL_IDENT_TO_NS(ident) = IDL_IDENT_TO_NS(attr_name);
@@ -54,7 +54,7 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
     IDL_ns_place_new(ns, ident);
 
     if(!IDL_ATTR_DCL(attr).f_readonly) {
-      g_string_sprintf(attrname, "_set_%s",
+      g_string_printf(attrname, "_set_%s",
 		       IDL_IDENT(attr_name).str);
       ident = IDL_ident_new(g_strdup(attrname->str));
       IDL_IDENT_TO_NS(ident) = IDL_IDENT_TO_NS(attr_name);
