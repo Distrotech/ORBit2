@@ -11,7 +11,7 @@
 static FILE *out_for_pass(const char *input_filename, int pass, 
 			  OIDL_Run_Info *rinfo);
 
-void
+gboolean
 orbit_idl_output_c (IDL_tree       tree,
 		    OIDL_Run_Info *rinfo)
 {
@@ -69,6 +69,8 @@ orbit_idl_output_c (IDL_tree       tree,
     }
   }
   g_string_free(ci.ext_dcls,TRUE);
+
+  return TRUE;
 }
 
 char *

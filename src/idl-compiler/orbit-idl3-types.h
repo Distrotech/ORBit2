@@ -47,9 +47,4 @@ typedef struct {
   IDL_tree op2;
 } OIDL_Attr_Info;
 
-typedef struct {
-  const char *name;
-  void (*op_output) (IDL_tree tree, OIDL_Run_Info *rinfo);
-} OIDL_Backend_Info;
-
 #endif

@@ -50,7 +50,7 @@ static gboolean cl_disable_defs_skels = FALSE;
 static gboolean cl_showcpperrors = TRUE;
 static char *cl_output_lang = "c";
 static char *cl_header_guard_prefix = "";
-static char *cl_backend_dir = ORBITLIBDIR;
+static char *cl_backend_dir = NULL;
 static gboolean cl_onlytop = FALSE;
 static char *cl_deps_file = NULL;
 

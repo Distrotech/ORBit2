@@ -16,7 +16,7 @@ typedef struct {
 	gboolean  do_skel_defs;
 } OIDL_C_Info;
 
-void  orbit_idl_output_c           (IDL_tree       tree,
+gboolean  orbit_idl_output_c       (IDL_tree       tree,
 			            OIDL_Run_Info *rinfo);
 void  orbit_idl_output_c_headers   (IDL_tree       tree,
 				    OIDL_Run_Info *rinfo,
