@@ -1,4 +1,3 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -26,12 +25,3 @@
  */
 
 #include "IDLString.hh"
-
-void
-IDLString::writeForwarder (ostream &header_ostr,
-			   Indent  &header_indent,
-			   ostream &impl_ostr,
-			   Indent  &impl_indent) const
-{
-	// FIXME: Write me
-}

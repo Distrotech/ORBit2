@@ -1,3 +1,11 @@
+2002-03-27  Murray Cumming  <murrayc@usa.net>
+
+	* Removed Gergo's recent "forwarder" work, because it breaks 
+	compilation of Bonobo.idl and he's working on a completely
+	different approach to the same problem in his own branch.
+	This involved some cvs trickery, so I might have accdientally
+	removed some useful stuff too.
+
 2002-03-24  Murray Cumming  <murrayc@usa.net>
 
 	* Added --headerguardprefix option to orbit-idl-2. This allows the

@@ -63,13 +63,6 @@ public:
 		m_alias.getCPPConstantDeclarator(id,typespec,dcl);
 	}
 
-	// Container accessors
-        string getQualifiedForwarder () const;
-	void writeForwarder (ostream &header_ostr,
-			     Indent  &header_indent,
-			     ostream &impl_ostr,
-			     Indent  &impl_indent) const;
-    
 	// struct / exception stuff
 	void getCPPStructCtorDeclarator(string const &id,string &typespec,string &dcl,
 									IDLTypedef const *activeTypedef = NULL) const {

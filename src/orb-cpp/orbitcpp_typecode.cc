@@ -83,7 +83,7 @@ CORBA::TypeCode::equal(TypeCode_ptr tc) const
 	CORBA::Boolean retval = false;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_equal(const_cast <CORBA_TypeCode>(&m_target),
+	retval = CORBA_TypeCode_equal(const_cast <CORBA_TypeCode>(m_target),
 		reinterpret_cast <CORBA_TypeCode>(tc), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
@@ -110,7 +110,7 @@ CORBA::TypeCode::kind() const
 
 	/* compiler warnings force me to use a C-style cast. Bad. */
 	retval = (CORBA::TCKind)
-		(CORBA_TypeCode_kind(const_cast <CORBA_TypeCode>(&m_target), ev._orbitcpp_get_c_object()));
+		(CORBA_TypeCode_kind(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object()));
 	ev.propagate_sysex();
 
 	return(retval);
@@ -135,7 +135,7 @@ CORBA::TypeCode::id() const
 	const char *retval = NULL;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_id(const_cast <CORBA_TypeCode>(&m_target), ev._orbitcpp_get_c_object());
+	retval = CORBA_TypeCode_id(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -148,7 +148,7 @@ CORBA::TypeCode::name() const
 	const char *retval = NULL;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_name(const_cast <CORBA_TypeCode>(&m_target), ev._orbitcpp_get_c_object());
+	retval = CORBA_TypeCode_name(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -162,7 +162,7 @@ CORBA::TypeCode::member_count() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_member_count(const_cast <CORBA_TypeCode>
-											(&m_target), ev._orbitcpp_get_c_object());
+											(m_target), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -174,7 +174,7 @@ CORBA::TypeCode::member_name(ULong index) const
 	const char *retval = NULL;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_member_name(const_cast <CORBA_TypeCode>(&m_target),
+	retval = CORBA_TypeCode_member_name(const_cast <CORBA_TypeCode>(m_target),
 		index, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
@@ -189,7 +189,7 @@ CORBA::TypeCode::member_type(CORBA::ULong index) const
 	CEnvironment ev;
 
 	retval = reinterpret_cast <CORBA::TypeCode_ptr>
-		(CORBA_TypeCode_member_type(const_cast <CORBA_TypeCode>(&m_target),
+		(CORBA_TypeCode_member_type(const_cast <CORBA_TypeCode>(m_target),
 			index, ev._orbitcpp_get_c_object()));
 	ev.propagate_sysex();
 
@@ -206,7 +206,7 @@ CORBA::TypeCode::discriminator_type() const
 
 	retval = reinterpret_cast <CORBA::TypeCode_ptr>
 		(CORBA_TypeCode_discriminator_type(const_cast <CORBA_TypeCode>
-											(&m_target), ev._orbitcpp_get_c_object()));
+											(m_target), ev._orbitcpp_get_c_object()));
 	ev.propagate_sysex();
 
 	return(retval);
@@ -219,7 +219,7 @@ CORBA::TypeCode::default_index() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_default_index(const_cast <CORBA_TypeCode>
-											(&m_target), ev._orbitcpp_get_c_object());
+											(m_target), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -232,7 +232,7 @@ CORBA::TypeCode::length() const
 	CORBA::ULong retval = 0;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_length(const_cast <CORBA_TypeCode>(&m_target), ev._orbitcpp_get_c_object());
+	retval = CORBA_TypeCode_length(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -246,7 +246,7 @@ CORBA::TypeCode::content_type() const
 	CEnvironment ev;
 
 	retval = reinterpret_cast <CORBA::TypeCode_ptr>
-		(CORBA_TypeCode_content_type(const_cast <CORBA_TypeCode>(&m_target),
+		(CORBA_TypeCode_content_type(const_cast <CORBA_TypeCode>(m_target),
 			ev._orbitcpp_get_c_object()));
 	ev.propagate_sysex();
 
@@ -261,7 +261,7 @@ CORBA::TypeCode::fixed_digits() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_fixed_digits(const_cast <CORBA_TypeCode>
-										(&m_target), ev._orbitcpp_get_c_object());
+										(m_target), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -273,7 +273,7 @@ CORBA::TypeCode::fixed_scale() const
 	CORBA::Short retval = 0;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_fixed_scale(const_cast <CORBA_TypeCode>(&m_target),
+	retval = CORBA_TypeCode_fixed_scale(const_cast <CORBA_TypeCode>(m_target),
 		ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
@@ -315,4 +315,21 @@ CORBA::TypeCode::concrete_base_type() const
 	/* not implemented by ORBit */
 	ev.propagate_sysex();
 	return(retval);
+}
+
+CORBA_TypeCode CORBA::TypeCode::_orbitcpp_get_c_object()
+{
+	return m_target;
+}
+
+CORBA::TypeCode::TypeCode(CORBA_TypeCode cobject, bool take_copy = true)
+{
+	//TODO: take_copy?
+
+	m_target = cobject;
+}
+
+CORBA::TypeCode* CORBA::TypeCode::_orbitcpp_wrap(CORBA_TypeCode cobject, bool take_copy /* = false */)
+{
+	return new CORBA::TypeCode::TypeCode (cobject, take_copy);
 }

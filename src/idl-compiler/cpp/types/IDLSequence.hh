@@ -1,4 +1,3 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -75,12 +74,6 @@ public:
 					  IDLTypedef const *activeTypedef = NULL) const;
 	void writeCPPSpecCode(ostream &ostr, Indent &indent, IDLCompilerState &state) const;
 
-	// Container accessors
-	void writeForwarder (ostream &header_ostr,
-			     Indent  &header_indent,
-			     ostream &impl_ostr,
-			     Indent  &impl_indent) const;
-	
 	// struct / exception stuff
 	void getCPPStructCtorDeclarator(string const &id,string &typespec,string &dcl,
 									IDLTypedef const *activeTypedef = NULL) const;

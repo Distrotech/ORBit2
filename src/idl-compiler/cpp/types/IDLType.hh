@@ -1,4 +1,3 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -41,7 +40,7 @@ class IDLType
 {
 public:
 	virtual ~IDLType() {}
-	
+
 	// misc stuff
 	virtual bool isVariableLength() const = 0;
 	virtual void getCPPMemberDeclarator(string const &id, string &typespec, string &dcl, IDLTypedef const *activeTypedef = NULL) const = 0;
@@ -52,15 +51,6 @@ public:
 		throw IDLExNoConstantOfThisType(getCTypeName()); // hack
 	}
 
-	// Container accessors
-	// Get forwarder type's name
-	virtual string getQualifiedForwarder () const;
-	// Create typename_forward type
-	virtual void writeForwarder (ostream &header_ostr,
-				     Indent  &header_indent,
-				     ostream &impl_ostr,
-				     Indent  &impl_indent) const = 0;
-	
 	// struct / exception stuff
 	virtual void getCPPStructCtorDeclarator(string const &id, string &typespec, string &dcl,
 											IDLTypedef const *activeTypedef = NULL) const = 0;

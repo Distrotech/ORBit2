@@ -67,14 +67,7 @@ public:
 	void writeTypedef(ostream &ostr,Indent &indent,IDLCompilerState &state,
 					  IDLElement &dest,IDLScope const &scope,
 					  IDLTypedef const *activeTypedef = NULL) const;
-	
-	// Container accessors
-	void writeForwarder (ostream &header_ostr,
-			     Indent  &header_indent,
-			     ostream &impl_ostr,
-			     Indent  &impl_indent) const;
 
-	
 	// struct / exception stuff
 	void getCPPStructCtorDeclarator(string const &id,string &typespec,string &dcl,
 									IDLTypedef const *activeTypedef = NULL) const;

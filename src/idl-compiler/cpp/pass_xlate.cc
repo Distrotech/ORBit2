@@ -105,39 +105,38 @@ IDLPassXlate::doTypedef(IDL_tree node, IDLScope &scope) {
 
 
 void 
-IDLPassXlate::doStruct (IDL_tree  node,
-			IDLScope &scope)
-{
+IDLPassXlate::doStruct(IDL_tree node,IDLScope &scope) {
 	IDLStruct &idlStruct = (IDLStruct &) *scope.getItem(node);
 
-	m_header << indent << "class " << idlStruct.getCPPIdentifier() << endl
-		 << indent++ << "{" << endl;
+	m_header
+	<< indent << "struct " << idlStruct.getCPPIdentifier() << endl
+	<< indent++ << "{" << endl;
 
-	m_header << indent << idlStruct.getCTypeName () << " c_struct;" << endl;
-	
-	m_header << endl << --indent << "public:" << endl;
-	indent++;
-
-	// Method to access the underlying C object
-	struct_create_wrapper (idlStruct);
-	struct_create_unwrapper (idlStruct);
-	
-	// Member accessors
-	struct_create_accessors (idlStruct);
-	struct_create_constructor (idlStruct);
+	IDLStruct::const_iterator first = idlStruct.begin(),last = idlStruct.end();
+	while (first != last) {
+		IDLMember &member = (IDLMember &) **first++;
+		string typespec,dcl;
+		member.getType()->getCPPMemberDeclarator(member.getCPPIdentifier(),typespec,dcl);
+		m_header << indent << typespec << ' ' << dcl << ';' << endl;
+		ORBITCPP_MEMCHECK( new IDLWriteCPPSpecCode(*member.getType(), m_state, *this) );
+	}
 	
 	if(idlStruct.isVariableLength()) {
-		m_header << endl
-			 << indent << "void* operator new(size_t)" << endl
-			 << indent++ << "{" << endl
-			 << indent << "return "
-			 << IDL_IMPL_C_NS_NOTUSED
-			 << idlStruct.getQualifiedCIdentifier() << "__alloc();" << endl;
-		m_header << --indent << "};" << endl << endl;
-		m_header << indent << "void operator delete(void* c_struct)" << endl
-			 << indent++ << "{" << endl
-			 << indent <<  "::CORBA_free(c_struct);" << endl;
-		m_header << --indent << "};" << endl << endl;
+		m_header
+		<< endl
+		<< indent << "void* operator new(size_t)" << endl
+		<< indent++ << "{" << endl
+		<< indent << "return "
+		<< IDL_IMPL_C_NS_NOTUSED
+		<< idlStruct.getQualifiedCIdentifier() << "__alloc();" << endl;
+		m_header
+		<< --indent << "};" << endl << endl;
+		m_header
+		<< indent << "void operator delete(void* c_struct)" << endl
+		<< indent++ << "{" << endl
+		<< indent <<  "::CORBA_free(c_struct);" << endl;
+		m_header
+		<< --indent << "};" << endl << endl;
 			
 	}
 	
@@ -169,98 +168,6 @@ IDLPassXlate::doStruct (IDL_tree  node,
 	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(idlStruct, m_state, *this) );
 }
 
-void
-IDLPassXlate::struct_create_accessors (IDLStruct &idlStruct)
-{
-	for (IDLStruct::const_iterator i = idlStruct.begin ();
-	     i != idlStruct.end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		
-		m_header << indent << member.getType ()->getQualifiedForwarder () << " "
-			 << member.getCPPIdentifier () << ";" << endl;
-	}
-}
-
-void
-IDLPassXlate::struct_create_constructor (IDLStruct &idlStruct)
-{
-	// Constructor (to set up forwarders)
-	m_header << indent << idlStruct.getCPPIdentifier () << " ();" << endl;
-	
-	m_module << mod_indent << idlStruct.getNSScopedCPPTypeName () <<
-		"::" << idlStruct.getCPPIdentifier () << " () :" << endl;
-	mod_indent++;
-	
-	struct_create_accessor_constructors (idlStruct);
-	
-	m_module << --mod_indent << "{}" << endl << endl;
-}
-
-void
-IDLPassXlate::struct_create_accessor_constructors (IDLStruct
-						   &idlStruct)
-{		
-	// Iterate members
-	for (IDLStruct::const_iterator i = idlStruct.begin ();
-	     i != idlStruct.end (); i++)
-	{
-		IDLMember &member = (IDLMember &) **i;
-		
-		// Initialize accessors in constructor
-		m_module << mod_indent << member.getCPPIdentifier ()
-			 << " (c_struct." << member.getCIdentifier () << ")";
-
-    IDLStruct::const_iterator iterBeforeEnd = idlStruct.end();
-		iterBeforeEnd--;
-		if (i != iterBeforeEnd)
-			m_module << ",";
-
-		m_module << endl;
-	}
-}
-
-void
-IDLPassXlate::struct_create_wrapper (IDLStruct &idlStruct)
-{
-	// Create private constructor that wraps an existing C struct
-	m_header << --indent << "private:" << endl;
-	indent++;
-	
-	m_header << indent << idlStruct.getCPPIdentifier () << " ("
-		 << idlStruct.getCTypeName () << " c_struct_to_wrap);"
-		 << endl;
-
-	m_module << mod_indent << idlStruct.getNSScopedCPPTypeName ()
-		 << "::" << idlStruct.getCPPIdentifier ()
-		 << " (" << idlStruct.getCTypeName () << " c_struct_to_wrap)"
-		 << " :" << endl
-		 << ++mod_indent << "c_struct (c_struct_to_wrap)," << endl;
-
-	struct_create_accessor_constructors (idlStruct);
-	
-	m_module << --mod_indent << "{}" << endl << endl;
-
-	// Create static wrapper method
-	m_header << --indent << "public:" << endl;
-	indent++;
-	m_header << indent << "static " << idlStruct.getCPPIdentifier ()
-		 << " _orbitcpp_wrap ("
-		 << idlStruct.getCTypeName () << " c_struct)" << endl
-		 << indent << "{" << endl
-		 << ++indent << "return " << idlStruct.getCPPIdentifier ()
-		 << " (c_struct);" << endl
-		 << --indent << "}" << endl << endl;
-}
-
-void
-IDLPassXlate::struct_create_unwrapper (IDLStruct &idlStruct)
-{
-	m_header << indent << "const " << idlStruct.getCTypeName ()
-		 << " * _orbitcpp_get_c_struct () const {" << endl
-		 << ++indent << "return &c_struct;" << endl
-		 << --indent << "}" << endl << endl;
-}
 
 
 void 
@@ -725,8 +632,8 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 		m_header
 		<< ", public " << (*first++)->getQualifiedCPPIdentifier();
 	}
-	m_header << endl
-		 << indent <<" {" << endl
+	m_header
+	<< " {" << endl
 	<< indent << "public:" << endl;
 	indent++;
 	
@@ -743,11 +650,7 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
 
-	// *********************
-	// Forwarder class
-	iface.writeForwarder (m_header, indent, m_module, mod_indent);
-	    
-	// _duplicate() and _narrow implementations:
+  // _duplicate() and _narrow implementations:
 	// write the static method definitions
 	doInterfaceStaticMethodDefinitions(iface);
 }

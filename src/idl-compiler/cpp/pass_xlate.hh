@@ -80,15 +80,8 @@ protected:
 	void doInterfacePtrClass(IDLInterface &iface);
  
 	void doInterfaceStaticMethodDeclarations(IDLInterface &iface);
-	void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
+  void doInterfaceStaticMethodDefinitions(IDLInterface &iface);
 	void enumHook(IDL_tree list,IDLScope &scope);
-
-private:
-	void struct_create_accessors (IDLStruct &idlStruct);
-	void struct_create_constructor (IDLStruct &idlStruct);
-	void struct_create_accessor_constructors (IDLStruct &idlStruct);
-	void struct_create_wrapper (IDLStruct &idlStruct);
-	void struct_create_unwrapper (IDLStruct &idlStruct);
 };
 
 class IDLWriteCPPSpecCode : public IDLOutputPass::IDLOutputJob {

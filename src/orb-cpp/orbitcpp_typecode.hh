@@ -187,7 +187,7 @@ namespace CORBA {
 		// so that this pseudo object can be used by the object_var templates...
 		static TypeCode_ptr _duplicate(TypeCode_ptr o) {
 			return reinterpret_cast<CORBA::TypeCode_ptr>(
-				_orbitcpp::duplicate_guarded(*o)
+				_orbitcpp::duplicate_guarded(o->_orbitcpp_get_c_object())
 			);
 		}
 		static TypeCode_ptr _narrow(TypeCode_ptr o) {
@@ -196,14 +196,13 @@ namespace CORBA {
 		static TypeCode_ptr _nil() {
 			return CORBA_OBJECT_NIL;
 		}
-		
-	private:
-		CORBA_TypeCode_struct m_target;
+	
+		TypeCode(CORBA_TypeCode cobject, bool take_copy = true);
+		CORBA_TypeCode _orbitcpp_get_c_object();
+		static TypeCode* _orbitcpp_wrap(CORBA_TypeCode cobject, bool take_copy = true);
 
-	public:
-		operator CORBA_TypeCode_struct *() {
-			return(&m_target);
-		}
+	private:
+		CORBA_TypeCode m_target;
 	};
 
 	inline void release(TypeCode_ptr o) {
