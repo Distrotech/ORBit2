@@ -22,8 +22,11 @@
 
 ***************************************************************************/
 
+#include "config.h"
 #include "orbit-idl2.h"
 #include <string.h>
+
+static void orbit_idl_tree_populate(IDL_tree tree);
 
 /****************
   orbit_idl_to_backend:
@@ -64,9 +67,54 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   if(ctmp) *ctmp = '\0';
 
   otree.tree = tree;
-  otree.pass_info = NULL;
+
+  orbit_idl_tree_populate(otree.tree);
+  orbit_idl_do_passes(otree.tree);
 
   binfo->op_output(&otree, rinfo);
 
   return 1;
+}
+
+static void orbit_idl_op_populate(IDL_tree tree)
+{
+  OIDL_Op_Info *setme;
+
+  setme = g_new0(OIDL_Op_Info, 1);
+
+  setme->in = orbit_idl_marshal_populate_in(tree);
+  setme->out = orbit_idl_marshal_populate_out(tree);
+
+  tree->data = setme;
+}
+
+static void
+orbit_idl_tree_populate(IDL_tree tree)
+{
+  IDL_tree node;
+
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_LIST:
+    for(node = tree; node; node = IDL_LIST(node).next) {
+      orbit_idl_tree_populate(IDL_LIST(node).data);
+    }
+    break;
+  case IDLN_MODULE:
+    orbit_idl_tree_populate(IDL_MODULE(tree).definition_list);
+    break;
+  case IDLN_INTERFACE:
+    orbit_idl_tree_populate(IDL_INTERFACE(tree).body);
+    break;
+  case IDLN_OP_DCL:
+    orbit_idl_op_populate(tree);
+    break;
+  case IDLN_ATTR_DCL:
+    orbit_idl_attr_fake_ops(tree);
+    orbit_idl_tree_populate(((OIDL_Attr_Info *)tree->data)->op1);
+    if(((OIDL_Attr_Info *)tree->data)->op2)
+      orbit_idl_tree_populate(((OIDL_Attr_Info *)tree->data)->op2);
+    break;
+  default:
+    break;
+  }
 }

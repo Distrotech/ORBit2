@@ -44,7 +44,7 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
       return &orbit_idl_builtin_backends[i];
   }
 
-  g_return_if_fail(!g_module_supported());
+  g_return_val_if_fail(!g_module_supported(), NULL);
 
   ctmp = alloca(sizeof("orbit-idl--backend") + strlen(lang));
   sprintf(ctmp, "orbit-idl-%s-backend", lang);
