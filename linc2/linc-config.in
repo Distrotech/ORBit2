@@ -3,7 +3,7 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 exec_prefix_set=no
-includedir=@includedir@
+includedir=@includedir@/linc-1.0
 libdir=@libdir@
 
 usage()

@@ -69,11 +69,14 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/lib*.so
 %{_libdir}/*a
 %{_libdir}/pkgconfig/*.pc
-%{_includedir}/linc
+%{_includedir}/linc-1.0
 %{_datadir}/aclocal/*
 %{_bindir}/*
 
 %changelog
+* Wed Oct 10 2001 Abel Cheung <maddog@linux.org.hk>
+- Move header to subdir
+
 * Mon Sep 24 2001 Mark McLoughlin <mark@skynet.ie>
 - use LINC_VERSION instead of VERSION
 
