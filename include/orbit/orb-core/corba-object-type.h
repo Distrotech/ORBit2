@@ -14,15 +14,17 @@ G_BEGIN_DECLS
 typedef CORBA_sequence_CORBA_octet ORBit_ObjectKey;
 
 struct CORBA_Object_type {
+	/* None of these fields are used by the stubs */
 	struct ORBit_RootObject_struct parent;
 
-	CORBA_ORB                      orb;
 	GIOPConnection                *connection;
 	GQuark                         type_qid;
 	GSList                        *profile_list;
 	GSList                        *forward_locations;
 	ORBit_ObjectKey               *object_key;
-	ORBit_OAObject                 adaptor_obj;
+
+	CORBA_ORB                      orb;         /* possibly used by stubs */
+	ORBit_OAObject                 adaptor_obj; /* used by stubs */
 };
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */

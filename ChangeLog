@@ -1,3 +1,9 @@
+2002-05-21  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/orb-core/corba-object-type.h:
+	move 'orb' down the structure, so that the only bits
+	the stubs could possibly use are at the end.
+
 2002-05-20  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.3.110
