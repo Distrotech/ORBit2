@@ -22,8 +22,6 @@ orbit_idl_2_LDADD =                          \
 orbit_idl_2_SOURCES=orbit-idl-main.c \
 		   orbit-idl-driver.c \
 		   orbit-idl-backends.c \
-		   orbit-idl-passes.c \
-		   orbit-idl-genmarshal.c \
 		   orbit-idl-utils.c \
 		   orbit-idl2.h \
 		   orbit-idl3-types.h \
@@ -37,9 +35,5 @@ orbit_idl_2_SOURCES=orbit-idl-main.c \
         orbit-idl-c-skelimpl.c \
         orbit-idl-c-utils.c \
         orbit-idl-c-typecode.c \
-        orbit-idl-c-marshal.c \
-        orbit-idl-c-demarshal.c \
         orbit-idl-c-deps.c \
-	orbit-idl-marshal.c \
-	orbit-idl-marshal.h	\
 	orbit-idl2.h

@@ -45,9 +45,9 @@ output_deps (IDL_tree tree,
 }
 
 void
-orbit_idl_output_c_deps (OIDL_Output_Tree *tree,
+orbit_idl_output_c_deps (IDL_tree       tree,
 			 OIDL_Run_Info *rinfo, 
-			 OIDL_C_Info *ci)
+			 OIDL_C_Info   *ci)
 {
 	int i;
 
@@ -61,10 +61,7 @@ orbit_idl_output_c_deps (OIDL_Output_Tree *tree,
 
 	fprintf (ci->fh, ": ");
   
-	output_deps (tree->tree, rinfo, ci);
+	output_deps (tree, rinfo, ci);
 
 	fprintf (ci->fh, "\n");
 }
-
-
-
