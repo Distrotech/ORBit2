@@ -518,94 +518,100 @@ giop_recv_buffer_demarshal(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-static void
+static GIOPMessageInfo
 giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
 				    GIOPConnection *cnx)
 {
-	/* Drop fragmented packets on the floor for now */
+	/* FIXME: Drop fragmented packets on the floor for now */
 	g_warning ("Dropping a fragmented packed on the floor !");
 	buf->connection = cnx;
 	buf->end = buf->message_body + buf->msg.header.message_size;
 	giop_recv_buffer_unuse (buf);
+
+	return GIOP_MSG_INVALID;
 }
 
 GIOPMessageInfo
-giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth, GIOPConnection *cnx)
+giop_recv_buffer_state_change (GIOPRecvBuffer        *buf,
+			       GIOPMessageBufferState state,
+			       gboolean               is_auth,
+			       GIOPConnection        *cnx)
 {
-  GIOPMessageInfo retval = GIOP_MSG_UNDERWAY;
+	GIOPMessageInfo retval = GIOP_MSG_UNDERWAY;
 
-  buf->state = state;
+	buf->state = state;
 
-  switch(state)
-    {
-    case GIOP_MSG_READING_HEADER:
-      buf->cur = (guchar *)&buf->msg.header;
-      buf->left_to_read = 12;
-      break;
-    case GIOP_MSG_READING_BODY:
-      /* Check the header */
-      if(memcmp(buf->msg.header.magic, "GIOP", 4))
-	goto msg_error;
-      if(buf->msg.header.message_type
-	 >= GIOP_NUM_MSG_TYPES)
-	goto msg_error;
-      switch(buf->msg.header.version[0])
-	{
-	case 1:
-	  switch(buf->msg.header.version[1])
-	    {
-	    case 0:
-	      buf->giop_version = GIOP_1_0;
-	      break;
-	    case 1:
-	      buf->giop_version = GIOP_1_1;
-	      break;
-	    case 2:
-	      buf->giop_version = GIOP_1_2;
-	      break;
-	    default:
-	      goto msg_error;
-	      break;
-	    }
-	  break;
-	default:
-	  goto msg_error;
-	  break;
+	switch (state) {
+	case GIOP_MSG_READING_HEADER:
+		buf->cur = (guchar *)&buf->msg.header;
+		buf->left_to_read = 12;
+		break;
+
+	case GIOP_MSG_READING_BODY:
+		/* Check the header */
+		if (memcmp (buf->msg.header.magic, "GIOP", 4))
+			goto msg_error;
+		if (buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
+			goto msg_error;
+		switch (buf->msg.header.version [0]) {
+		case 1:
+			switch(buf->msg.header.version [1]) {
+			case 0:
+				buf->giop_version = GIOP_1_0;
+				break;
+			case 1:
+				buf->giop_version = GIOP_1_1;
+				break;
+			case 2:
+				buf->giop_version = GIOP_1_2;
+				break;
+			default:
+				goto msg_error;
+				break;
+			}
+			break;
+		default:
+			goto msg_error;
+			break;
+		}
+		if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) !=
+		    GIOP_FLAG_ENDIANNESS)
+			buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
+		if ((buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
+		    && !is_auth)
+			goto msg_error;
+
+		buf->message_body = g_malloc (buf->msg.header.message_size + 12);
+		buf->free_body = TRUE;
+		buf->cur = buf->message_body + 12;
+		buf->end = buf->cur + buf->msg.header.message_size;
+		buf->left_to_read = buf->msg.header.message_size;
+		break;
+
+	case GIOP_MSG_READY:
+		retval = GIOP_MSG_COMPLETE;
+		buf->cur = buf->message_body + 12;
+		if (giop_recv_buffer_demarshal (buf))
+			goto msg_error;
+		if (buf->msg.header.message_type == GIOP_FRAGMENT)
+			retval = giop_recv_buffer_handle_fragmented (buf, cnx);
+		else
+			giop_recv_list_push (buf, cnx);
+		break;
+
+	case GIOP_MSG_AWAITING_FRAGMENTS:
+		retval = GIOP_MSG_COMPLETE;
+		giop_recv_buffer_handle_fragmented (buf, cnx);
+		break;
 	}
-      if((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) != GIOP_FLAG_ENDIANNESS)
-	buf->msg.header.message_size = GUINT32_SWAP_LE_BE(buf->msg.header.message_size);
-      if((buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
-	 && !is_auth)
-	goto msg_error;
 
-      buf->message_body = g_malloc(buf->msg.header.message_size+12);
-      buf->free_body = TRUE;
-      buf->cur = buf->message_body + 12;
-      buf->end = buf->cur + buf->msg.header.message_size;
-      buf->left_to_read = buf->msg.header.message_size;
-      break;
-    case GIOP_MSG_READY:
-      retval = GIOP_MSG_COMPLETE;
-      buf->cur = buf->message_body + 12;
-      if(giop_recv_buffer_demarshal(buf))
-	goto msg_error;
-      if(buf->msg.header.message_type == GIOP_FRAGMENT)
-	giop_recv_buffer_handle_fragmented (buf, cnx);
-      else
-	giop_recv_list_push(buf, cnx);
-      break;
-    case GIOP_MSG_AWAITING_FRAGMENTS:
-      retval = GIOP_MSG_COMPLETE;
-      giop_recv_buffer_handle_fragmented (buf, cnx);
-      break;
-    }
-
-  return retval;
+	return retval;
 
  msg_error:
-  buf->msg.header.message_type = GIOP_MESSAGEERROR;
-  buf->msg.header.message_size = 0;
-  return GIOP_MSG_INVALID;
+	buf->msg.header.message_type = GIOP_MESSAGEERROR;
+	buf->msg.header.message_size = 0;
+
+	return GIOP_MSG_INVALID;
 }
 
 GIOPRecvBuffer *
