@@ -1,3 +1,14 @@
+2002-01-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c
+	(ORBit_TypeCode_free_fn): kill bogus typecode free.
+
+	* src/orb/util/genrand.c (ORBit_genuid_init): seed
+	the random number generator but once.
+	(genuid_glib_pseudo): use rand more sensibly, use
+	genuid_simple first.
+	(genuid_simple): make inc a gulong.
+
 2002-01-22  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-typecode.c
