@@ -451,7 +451,8 @@ link_connection_from_fd_T (LinkConnection         *cnx,
 	g_assert (CNX_IS_LOCKED (0));
 	link_connection_state_changed_T_R (cnx, status);
 
-	cnx_list = g_list_prepend (cnx_list, cnx);
+	if (!g_list_find (cnx_list, cnx))
+		cnx_list = g_list_prepend (cnx_list, cnx);
 }
 
 /*
@@ -1134,6 +1135,10 @@ link_connection_finalize (GObject *obj)
 
 	g_free (cnx->priv);
 
+#ifdef G_ENABLE_DEBUG
+	g_assert (g_list_find(cnx_list, cnx) == NULL);
+#endif
+
 	parent_class->finalize (obj);
 }
 
@@ -1429,15 +1434,14 @@ link_connections_close (void)
 	cnx_list = NULL;
 	CNX_LIST_UNLOCK();
 
-	if (!cnx_list)
+	if (!cnx)
 		return;
 
 #ifdef G_ENABLE_DEBUG
 	g_warning ("FIXME: Need to shutdown linc connections ...");
 #endif
-	for (l = cnx; l; l = l->next) {
+	for (l = cnx; l; l = l->next)
 		g_object_run_dispose (l->data);
-		link_connection_unref (l->data);
-	}
+
 	g_list_free (cnx);
 }

@@ -148,7 +148,7 @@ test_spoofing (void)
 			break;
 		}
 	}
-	g_object_unref (misc);
+	link_connection_unref (misc);
 	giop_debug_hook_spoofed_reply = NULL;
 }
 
@@ -204,7 +204,7 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 	g_object_unref (server);
 	server_cnx = NULL;
 	server = NULL;
-	g_object_unref (cnx);
+	link_connection_unref (cnx);
 	cnx = NULL;
 }
 
