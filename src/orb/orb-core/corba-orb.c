@@ -801,17 +801,7 @@ CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
 void
 CORBA_ORB_run (CORBA_ORB _obj, CORBA_Environment * ev)
 {
-  while (1)
-    {
-      GIOPRecvBuffer *in_buf;
-
-      in_buf = giop_recv_buffer_use ();
-
-      if (in_buf->msg.header.message_type == GIOP_REQUEST)
-	ORBit_handle_request (_obj, in_buf);
-
-      giop_recv_buffer_unuse (in_buf);
-    }
+    g_main_loop_run (g_main_loop_new (NULL, TRUE));
 }
 
 void

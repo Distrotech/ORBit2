@@ -635,6 +635,10 @@ cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
     IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(intf).ident),
 			    "_", 0);
 
+#warning The IDX calc here is out of step with everything else - particularly
+#warning the method ordering on dump ... so that we get broken offsets
+#warning see Bonobo-skels.c PropertyBag_epv->getKeys vs. the m_data offset.
+
   for(curitem = IDL_INTERFACE(intf).body; curitem;
       curitem = IDL_LIST(curitem).next) {
     curdcl = IDL_LIST(curitem).data;
