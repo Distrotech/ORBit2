@@ -116,7 +116,10 @@ CORBA_exception_set (CORBA_Environment   *ev,
 	ev->_major = major;
 	if (major != CORBA_NO_EXCEPTION) {
 		ev->_id = CORBA_string_dup (except_repos_id);
-		
+
+                if (ev->_any._release)
+                        CORBA_free (ev->_any._value);
+
 		/* FIXME: we can get this from the typelib */
 		ev->_any._type = NULL; /* CORBA sucks */
 		ev->_any._value = param;

@@ -1,3 +1,9 @@
+2004-10-02  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* src/orb/orb-core/corba-env.c (CORBA_exception_set): Before
+	overwriting an exception, free any previous value contained by it.
+	Patch by Michael Meeks.  Fixes #153299.
+
 2004-09-13  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: Version 2.12.0.
