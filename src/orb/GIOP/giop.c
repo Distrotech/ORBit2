@@ -84,7 +84,9 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 
 	fprintf (stderr, "Incoming IIOP data: %s\n", status);
 
+	giop_dump (stderr, (guint8 *)recv_buffer, sizeof (GIOPMsgHeader), 0);
+
 	giop_dump (stderr, recv_buffer->message_body,
-		   recv_buffer->msg.header.message_size +
-		   sizeof (GIOPMsgHeader), 0);
+		   recv_buffer->msg.header.message_size -
+		   sizeof (GIOPMsgHeader), sizeof (GIOPMsgHeader));
 }
