@@ -164,7 +164,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 		   GSList     *profiles)
 {
 	CORBA_Object retval = CORBA_OBJECT_NIL;
-	struct CORBA_Object_type fakeme = {{0}};
+	struct CORBA_Object_type fakeme = {{NULL}};
 
 	fakeme.orb = orb;
 	fakeme.type_qid = g_quark_from_string (type_id);

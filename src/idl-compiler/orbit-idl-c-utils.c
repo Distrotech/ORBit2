@@ -113,7 +113,7 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
 		     IDL_INTEGER(IDL_TYPE_FIXED(tree).integer_lit).value);
     break;
   case IDLN_TYPE_INTEGER:
-    tmpstr = g_string_new(0);
+    tmpstr = g_string_new(NULL);
     g_string_append(tmpstr, "CORBA_");
     if(!IDL_TYPE_INTEGER(tree).f_signed)
 	g_string_append(tmpstr, "unsigned_");

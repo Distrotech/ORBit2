@@ -102,7 +102,7 @@ static void
 cc_output_typecodes (IDL_tree     tree,
 		     OIDL_C_Info *ci)
 {
-	IDL_tree_walk2 (tree, 0, IDL_WalkF_TypespecOnly,
+	IDL_tree_walk2 (tree, NULL, IDL_WalkF_TypespecOnly,
 			(IDL_tree_func) cc_output_tc_walker,
 			(IDL_tree_func) cc_output_tc_walker,
 			ci);

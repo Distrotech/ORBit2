@@ -1,3 +1,21 @@
+2004-08-11  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl-compiler/orbit-idl-c-backend.c: (orbit_idl_output_c):
+	0 vs NULL.
+	* src/idl-compiler/orbit-idl-c-common.c: (cc_output_typecodes):i
+	Same here.
+	* src/idl-compiler/orbit-idl-c-utils.c:
+	(orbit_cbe_get_typespec_str): Same here too.
+	* src/orb/dynamic/dynany.c: (DynamicAny_DynUnion_member_name):
+	0 vs NULL and add some casts.
+	* src/orb/orb-core/allocators.c: (ORBit_freekids_via_TypeCode_T):
+	0 vs NULL fixes.
+	* src/orb/orb-core/corba-object.c: (ORBit_objref_find):
+	Same again.
+	* src/services/name/boot.c: (main): And again.
+	* test/echo-srv.c: (echo_srv_finish_object), (echo_srv_finish_poa):
+	And again.
+
 2004-08-10  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/iop-profiles.c: (IOP_start_profiles),

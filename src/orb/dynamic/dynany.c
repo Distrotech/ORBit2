@@ -926,16 +926,16 @@ DynamicAny_DynAny_get_##apiname (DynamicAny_DynAny  obj,			\
 	DynAny       *dynany;							\
 	CORBA_##ctype value;							\
 										\
-	o_return_val_if_fail (obj != NULL, 0);				       	\
+	o_return_val_if_fail (obj != NULL, (CORBA_##ctype)0);				       	\
 										\
 	dynany = GET_DYNANY (obj);						\
 										\
 	/* FIXME: assumes NULL == CORBA_OBJECT_NIL for simplicity */		\
 	b_return_val_if_fail (dynany != NULL &&					\
-			      dynany->any != NULL, 0);				\
+			      dynany->any != NULL, (CORBA_##ctype)0);				\
 										\
 	if (dynany_type_mismatch (dynany, tc, ev))				\
-		return 0;	       						\
+		return (CORBA_##ctype)0;	       						\
 										\
 	dynany_get (dynany, &value, tc, ev);					\
 										\
@@ -1671,12 +1671,12 @@ DynamicAny_DynUnion_member_name (DynamicAny_DynUnion obj,
 	DynAny *dynany;
 	CORBA_TypeCode tc;
 	
-	o_return_val_if_fail (obj != NULL, 0);
+	o_return_val_if_fail (obj != NULL, NULL);
 	
 	dynany = GET_DYNANY (obj);
 	b_return_val_if_fail (dynany != NULL &&
 			      dynany->any != NULL &&
-			      dynany->any->_type != NULL, 0);
+			      dynany->any->_type != NULL, NULL);
 
 	tc = dynany->any->_type;
 
