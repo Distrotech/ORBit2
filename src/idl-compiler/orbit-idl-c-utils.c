@@ -329,6 +329,9 @@ orbit_cbe_op_write_proto(FILE *of,
 
     parm = IDL_LIST(sub).data;
 
+    if (IDL_PARAM_DCL(parm).attr == IDL_PARAM_IN)
+      fprintf (of, "const ");
+
     orbit_cbe_write_typespec(of, IDL_PARAM_DCL(parm).param_type_spec);
 
     ttmp = IDL_NODE_UP(IDL_PARAM_DCL(parm).param_type_spec);
