@@ -45,7 +45,6 @@ static int cl_is_pidl = 0;
 static gboolean cl_disable_defs_skels = 0;
 static gboolean cl_showcpperrors;
 static char *cl_output_lang = "c";
-static char *cl_backend_dir = ORBITLIBDIR;
 static gboolean cl_onlytop = FALSE;
 
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
@@ -153,19 +152,18 @@ int main(int argc, const char *argv[])
   rinfo.cpp_args = cl_cpp_args->str;
   rinfo.debug_level = cl_debuglevel;
   rinfo.idl_warn_level = cl_idlwarnlevel;
-  rinfo.show_cpp_errors = cl_showcpperrors;
-  rinfo.is_pidl = cl_is_pidl;
+  rinfo.show_cpp_errors = cl_showcpperrors?TRUE:FALSE;
+  rinfo.is_pidl = cl_is_pidl?TRUE:FALSE;
   rinfo.do_skel_defs = !cl_disable_defs_skels;
   rinfo.enabled_passes =
-    (cl_disable_stubs?0:OUTPUT_STUBS)
-    |(cl_disable_skels?0:OUTPUT_SKELS)
-    |(cl_disable_common?0:OUTPUT_COMMON)
-    |(cl_disable_headers?0:OUTPUT_HEADERS)
-    |(cl_enable_skeleton_impl?OUTPUT_SKELIMPL:0);
+    (cl_disable_stubs?0:OIDL_OUTPUT_STUBS)
+    |(cl_disable_skels?0:OIDL_OUTPUT_SKELS)
+    |(cl_disable_common?0:OIDL_OUTPUT_COMMON)
+    |(cl_disable_headers?0:OIDL_OUTPUT_HEADERS)
+    |(cl_enable_skeleton_impl?OIDL_OUTPUT_SKELIMPL:0);
   rinfo.output_formatter = c_output_formatter;
   rinfo.output_language = cl_output_lang;
-  rinfo.backend_directory = cl_backend_dir;
-  rinfo.onlytop = cl_onlytop;
+  rinfo.onlytop = cl_onlytop?TRUE:FALSE;
 
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {

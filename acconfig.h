@@ -1,5 +1,3 @@
-#undef HAVE_LIMITED_WRITEV
-
 /* C code to execute to determine the maximum iovec array size */
 #undef GET_MAX_IOVS
 
@@ -27,8 +25,3 @@
 #undef  ALIGNOF_CORBA_UNSIGNED_SHORT
 #undef  ALIGNOF_CORBA_WCHAR
 #undef  ALIGNOF_CORBA_POINTER
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
