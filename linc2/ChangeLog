@@ -1,3 +1,9 @@
+2004-09-27  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c
+	(link_connection_try_reconnect): actually
+	unset inhibit reconnect having emitted callbacks.
+
 2004-09-16  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.10.5

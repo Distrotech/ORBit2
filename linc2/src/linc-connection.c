@@ -590,6 +590,7 @@ link_connection_try_reconnect (LinkConnection *cnx)
 	while (cnx->inhibit_reconnect) {
 		if (g_main_context_acquire (NULL)) {
 			d_printf ("Dispatch callbacks in 'main' (mainloop owning) thread\n");
+			cnx->inhibit_reconnect = FALSE;
 			dispatch_callbacks_drop_lock (cnx);
 			g_main_context_release (NULL);
 		} else 
