@@ -763,18 +763,6 @@ CORBA_any__alloc(void)
 }
 
 void
-CORBA_any_set_release(CORBA_any *val, CORBA_boolean setme)
-{
-  val->_release = setme;
-}
-
-CORBA_boolean
-CORBA_any_get_release(CORBA_any *val)
-{
-  return val->_release;
-}
-
-void
 ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
 {
   CORBA_long i;
