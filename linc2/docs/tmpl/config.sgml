@@ -1,0 +1,184 @@
+<!-- ##### SECTION Title ##### -->
+config
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### MACRO WRITEV_IOVEC_LIMIT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_BASENAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_DLFCN_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_ENDIAN_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_FCNTL_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_INTTYPES_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_LINUX_IRDA_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_MEMORY_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_NETINET_IN_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_NETINET_TCP_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_POLL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STDDEF_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STDINT_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STDLIB_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STRINGS_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STRING_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_SYS_POLL_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_SYS_STAT_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_SYS_TYPES_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_SYS_UN_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_UNISTD_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_WCHAR_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_WCTYPE_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO STDC_HEADERS ##### -->
+<para>
+
+</para>
+
+
+

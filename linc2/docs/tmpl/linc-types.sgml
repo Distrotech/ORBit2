@@ -1,0 +1,69 @@
+<!-- ##### SECTION Title ##### -->
+linc-types
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### ENUM LINCConnectionOptions ##### -->
+<para>
+
+</para>
+
+@LINC_CONNECTION_SSL: 
+@LINC_CONNECTION_NONBLOCKING: 
+
+<!-- ##### STRUCT LincWatch ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT LINCProtocolInfo ##### -->
+<para>
+
+</para>
+
+@name: 
+@family: 
+@addr_len: 
+@stream_proto_num: 
+@flags: 
+@setup: 
+@destroy: 
+@get_sockaddr: 
+@get_sockinfo: 
+
+<!-- ##### MACRO LINC_MUTEX_LOCK ##### -->
+<para>
+
+</para>
+
+@x: 
+
+
+<!-- ##### MACRO LINC_MUTEX_UNLOCK ##### -->
+<para>
+
+</para>
+
+@x: 
+
+
+<!-- ##### FUNCTION linc_mutex_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

@@ -1,3 +1,15 @@
+2001-11-12 John Fleck <jfleck@inkstain.net>
+
+	* added docs/Makefile.am
+	        docs/linc-docs.sgml
+		docs/tmpl/acconfig.sgml, linc-connection.sgml,
+	        linc-server.sgml, linc-unused.sgml, config.sgml,
+	        linc-private.sgml, linc.sgml, linc-config.sgml,
+	        linc-protocol.sgml, linc-types.sgml
+        modified ./Makefile.am, configure.in
+        add gtk-doc build system
+
+
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-server.c (linc_server_accept_connection): 
