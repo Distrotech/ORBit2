@@ -5,18 +5,18 @@
 #include "helloworld-cpp-skels.hh"
 
 
-namespace hellomodule {
+namespace hellomodule
+{
 
-	class Hello_impl : public POA_hellomodule::Hello {
-	public:
+class Hello_impl : public POA_hellomodule::Hello
+{
+public:
 
-		char* helloWorld(const char* greeting);
+	char* helloWorld(const char* greeting) throw(CORBA::SystemException);
 
-	};
-
+};
 
 }; // namespace hellomodule
-
 
 
 #endif //_ORBIT_CPP_IDL_helloworld_IMPL_HH

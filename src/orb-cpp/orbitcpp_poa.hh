@@ -160,12 +160,16 @@ namespace PortableServer {
 	};
 
 	
-	class POA : public CORBA::Object {
+	class POA : public CORBA::Object
+	{
 		friend void release(POA_ptr poa);
 		friend CORBA::Object_ptr
 		CORBA::ORB::resolve_initial_references(const char* str);
 	
 	public:
+    explicit POA(PortableServer_POA cobject);
+		~POA() {}
+
 		static void destroy( bool etherealize_objects,
 							 bool wait_for_completion );
 		POAManager_ptr the_POAManager();
@@ -184,10 +188,11 @@ namespace PortableServer {
 		static POA_ptr _duplicate(POA_ptr obj);
 		static POA_ptr _narrow(CORBA::Object_ptr obj);
 		static POA_ptr _nil();
-	
-	~POA() {}
-	
-	protected:
+
+		PortableServer_POA _orbitcpp_get_c_object()
+		{
+			return reinterpret_cast<PortableServer_POA>(m_target);
+		}
 	
 	private:
 		//PortableServer_POA_type m_target;
@@ -196,14 +201,11 @@ namespace PortableServer {
 		POA();
 		POA(const POA &);
 		void operator=(const POA &);
-	
-		PortableServer_POA get_c_poa() {
-			return reinterpret_cast<PortableServer_POA>(&m_target);
-		}
 	};
 	
 	
-	class POAManager : public CORBA::Object {
+	class POAManager : public CORBA::Object
+	{
 		friend class POA;
 	public:
 		static POAManager_ptr _duplicate( POAManager_ptr obj );
@@ -216,12 +218,13 @@ namespace PortableServer {
 						CORBA::Boolean wait_for_completion);
 	
 	protected:
-		POAManager(PortableServer_POAManager o);
-		~POAManager();
+		POAManager(PortableServer_POAManager cobject);
+		virtual ~POAManager()
+		{}
 	
 	private:
-		PortableServer_POAManager get_c_poamgr() {
-			return reinterpret_cast<PortableServer_POAManager>(&m_target);
+		PortableServer_POAManager _orbitcpp_get_c_object() {
+			return reinterpret_cast<PortableServer_POAManager>(m_target);
 		}
 	};
 	

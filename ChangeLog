@@ -1,5 +1,13 @@
 2002-03-06  Murray Cumming  <murrayc@usa.net>
 
+	* test/cpp/helloworld: Added throw() declaration to server 
+	implementation method. This example now builds, but segfaults.
+	* Replaced some reinterpret_cast<>s in the POA code with use of new.
+	* Added exception handling to helloworld example - it now works until
+	the client calls Hello::helloworld().
+
+2002-03-06  Murray Cumming  <murrayc@usa.net>
+
 	* Fixed link problem in test/cpp. Of course, the cpp orb code is in an
 	additional library.
 

@@ -48,7 +48,7 @@ namespace CORBA {
 									   const char* orb_identifier);
 
 	public:
-		ORB(CORBA_ORB cobject);
+		explicit ORB(CORBA_ORB cobject);
 
 		void operator delete(void* cpp_orb) {
 			Object* pObject = static_cast<Object*>(cpp_orb);
