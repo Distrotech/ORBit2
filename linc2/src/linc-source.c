@@ -57,7 +57,7 @@ fd_mask (int mask)
   return buf;
 }
 
-#endif					   
+#endif
 
 static gboolean 
 link_source_prepare (GSource *source,
@@ -75,7 +75,7 @@ link_source_prepare (GSource *source,
 		event_mask |= FD_CLOSE;
 
 	if (watch->event_mask != event_mask) {
-		d_printf ("WSAEventSelect(%d, %#x, {%s})\n",
+		d_printf ("prepare: WSAEventSelect(%d, %#x, {%s})\n",
 			  watch->socket, watch->pollfd.fd, fd_mask (event_mask));
 		if (WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd,
 				    event_mask) == SOCKET_ERROR)
@@ -96,6 +96,33 @@ link_source_check (GSource *source)
 {
 	LinkUnixWatch *watch = (LinkUnixWatch *)source;
 
+#ifdef G_OS_WIN32
+	WSANETWORKEVENTS events;
+
+	d_printf ("check: sock=%d handle=%#x revents=%x condition=%x ",
+		  watch->socket, watch->pollfd.fd,
+		  watch->pollfd.revents, watch->condition);
+
+	if (WSAEnumNetworkEvents (watch->socket,
+				  /* (HANDLE) watch->pollfd.fd, */ 0,
+				  &events) == SOCKET_ERROR)
+		d_printf ("\nWSAEnumNetworkEvents failed: %s\n",
+			  link_strerror (WSAGetLastError ()));
+	else {
+		d_printf ("events={%s}\n", fd_mask (events.lNetworkEvents));
+		watch->pollfd.revents = 0;
+		if (events.lNetworkEvents & (FD_READ | FD_ACCEPT | FD_CLOSE))
+			watch->pollfd.revents |= G_IO_IN;
+		if (events.lNetworkEvents & (FD_WRITE | FD_CONNECT))
+			watch->pollfd.revents |= G_IO_OUT;
+		if (events.lNetworkEvents & (FD_CLOSE))
+			watch->pollfd.revents |= G_IO_HUP;
+	}
+
+	if (!watch->write_would_have_blocked && (watch->event_mask & FD_WRITE))
+		watch->pollfd.revents |= G_IO_OUT; /* This sucks but... */
+#endif
+
 	return watch->pollfd.revents & watch->condition;
 }
 
@@ -111,44 +138,6 @@ link_source_dispatch (GSource    *source,
 	if (!callback)
 		g_error ("No callback");
   
-#ifdef G_OS_WIN32
-	if (watch->pollfd.revents & watch->condition) {
-		WSANETWORKEVENTS events;
-
-		d_printf ("WSAEnumNetworkEvents (%d, %#x)\n",
-			  watch->socket, watch->pollfd.fd);
-		if (WSAEnumNetworkEvents (watch->socket,
-					  (HANDLE) watch->pollfd.fd,
-					  &events) == SOCKET_ERROR)
-			d_printf ("WSAEnumNetworkEvents failed: %s\n",
-				  link_strerror (WSAGetLastError ()));
-		else {
-			d_printf ("WSAEnumNetworkEvents: lNetworkEvents={%s}\n",
-				  fd_mask (events.lNetworkEvents));
-			watch->pollfd.revents = 0;
-			if (events.lNetworkEvents & (FD_READ | FD_ACCEPT | FD_CLOSE))
-				watch->pollfd.revents |= G_IO_IN;
-			if (events.lNetworkEvents & (FD_WRITE | FD_CONNECT))
-				watch->pollfd.revents |= G_IO_OUT;
-			if (events.lNetworkEvents & (FD_CLOSE))
-				watch->pollfd.revents |= G_IO_HUP;
-		}
-	}
-
-	/* XXX For some reason we get hangs eventually, for instance
-	 * in test/everything, unless we reset the selected event mask
-	 * here, set event_mask to zero, and thus have to call
-	 * WSAEventSelect() anew in link_source_prepare()).
-	 */
-	d_printf ("WSAEventSelect (%d, %#x, {})\n",
-		  watch->socket, watch->pollfd.fd);
-	if (WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd,
-			    0) == SOCKET_ERROR)
-		d_printf ("WSAEventSelect() failed: %s\n",
-			  link_strerror (WSAGetLastError ()));
-	watch->event_mask = 0;
-#endif
-
 	func = (GIOFunc) callback;
 
 	return (*func) (watch->channel,
@@ -219,9 +208,10 @@ link_source_create_watch (GMainContext *context,
 
 #ifdef G_OS_WIN32
 	watch->pollfd.fd = (int) WSACreateEvent ();
-	d_printf ("WSACreateEvent(): %#x\n", watch->pollfd.fd);
+	d_printf ("WSACreateEvent(): for socket %d: %#x\n", fd, watch->pollfd.fd);
 	watch->socket = fd;
 	watch->event_mask = 0;
+	watch->write_would_have_blocked = FALSE;
 #else
 	watch->pollfd.fd = fd;
 #endif
@@ -241,6 +231,20 @@ link_source_create_watch (GMainContext *context,
 
 	return source;
 }
+
+#ifdef G_OS_WIN32
+
+void
+link_win32_watch_set_write_wouldblock (LinkWatch *w,
+				       gboolean   flag)
+{
+	if (w->link_source)
+		((LinkUnixWatch *)w->link_source)->write_would_have_blocked = flag;
+	if (w->main_source)
+		((LinkUnixWatch *)w->main_source)->write_would_have_blocked = flag;
+}
+
+#endif
 
 LinkWatch *
 link_io_add_watch_fd (int          fd,
@@ -299,7 +303,7 @@ link_watch_unlisten (LinkWatch *w)
 			d_printf ("CloseHandle failed: %ld\n", GetLastError ());
 #endif
 		g_source_destroy (w->link_source);
-		g_source_unref   (w->link_source);	
+		g_source_unref   (w->link_source);
 		w->link_source = NULL;
 	}
 }

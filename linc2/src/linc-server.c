@@ -368,7 +368,7 @@ link_server_setup (LinkServer            *srv,
 		u_long yes = 1;
 		if (ioctlsocket (fd, FIONBIO, &yes) == SOCKET_ERROR) {
 			n = -1;
-			 link_map_winsock_error_to_errno ();
+			link_map_winsock_error_to_errno ();
 		}
 #else
 		n = fcntl (fd, F_SETFL, O_NONBLOCK);
@@ -385,12 +385,10 @@ link_server_setup (LinkServer            *srv,
 			d_printf ("failed to set cloexec on %d: %s",
 				  fd, link_strerror (errno));
 	}
-
 #endif
 
 	if (!n) {
 		n = getsockname (fd, saddr, &saddr_len);
-
 #ifdef HAVE_WINSOCK2_H
 		if (n == SOCKET_ERROR) {
 			n = -1;

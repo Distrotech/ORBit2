@@ -793,7 +793,7 @@ link_connection_read (LinkConnection *cnx,
 		else
 #endif
 #ifdef HAVE_WINSOCK2_H
-			if ((n = recv (cnx->priv->fd, buf, len, 0)) == SOCKET_ERROR){
+			if ((n = recv (cnx->priv->fd, buf, len, 0)) == SOCKET_ERROR) {
 				n = -1;
 				link_map_winsock_error_to_errno ();
 				d_printf ("recv failed: %s\n",
@@ -845,10 +845,14 @@ link_connection_read (LinkConnection *cnx,
 			buf += n;
 			len -= n;
 			bytes_read += n;
+#ifdef CONNECTION_DEBUG
+			cnx->priv->total_read_bytes += n;
+#endif
 		}
 	} while (len > 0 && block_for_full_read);
 
-	d_printf ("we read %d bytes\n", bytes_read);
+	d_printf ("we read %d bytes (total %"G_GUINT64_FORMAT")\n",
+		  bytes_read, cnx->priv->total_read_bytes);
 
  out:
 	CNX_UNLOCK (cnx);
@@ -931,19 +935,25 @@ write_data_T (LinkConnection *cnx, QueuedWrite *qw)
 				if (WSASend (cnx->priv->fd, qw->vecs,
 					     MIN (qw->nvecs, LINK_IOV_MAX),
 					     (LPDWORD) &n, 0, NULL, NULL) == SOCKET_ERROR) {
+					if (WSAGetLastError () == WSAEWOULDBLOCK)
+						link_win32_watch_set_write_wouldblock (cnx->priv->tag, TRUE);
 					n = -1;
 					link_map_winsock_error_to_errno ();
 					d_printf ("WSASend failed: %s\n",
 						  link_strerror (errno));
+				} else {
+					link_win32_watch_set_write_wouldblock (cnx->priv->tag, FALSE);
 				}
 			}
-		  
 #else
 			LINK_TEMP_FAILURE_RETRY_SOCKET (writev (cnx->priv->fd,
 								qw->vecs,
 								MIN (qw->nvecs, LINK_IOV_MAX)), n);
 #endif
-		d_printf ("wrote %d bytes\n", n);
+		d_printf ("wrote %d bytes (total %"G_GUINT64_FORMAT")\n",
+			  n,
+			  (cnx->priv->total_written_bytes += ((n > 0) ? n : 0),
+			   cnx->priv->total_written_bytes));
 
 		if (n < 0) {
 #ifdef LINK_SSL_SUPPORT
@@ -1239,6 +1249,10 @@ link_connection_init (LinkConnection *cnx)
 	cnx->priv = g_new0 (LinkConnectionPrivate, 1);
 	cnx->priv->fd = -1;
 	cnx->priv->was_disconnected = FALSE;
+#ifdef CONNECTION_DEBUG
+	cnx->priv->total_read_bytes = 0;
+	cnx->priv->total_written_bytes = 0;
+#endif
 }
 
 static void

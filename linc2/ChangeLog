@@ -1,3 +1,50 @@
+2005-02-18  Tor Lillqvist  <tml@novell.com>
+
+	More hacking on linc2 for Windows. After the below changes,
+	test_blocking() in test-linc finally works also on Windows. More
+	importantly, the test programs in libbonobo also work.
+
+	The semantics of the socket event functionality (WSAEventSelect(),
+	WSAEnumNetworkEvents()) were less intuitive than I had
+	thought. The event fires for writeability only once after
+	connect() or accept(), and after that only once each time the
+	socket becomes writeable again, after having been in the
+	WSAEWOULDBLOCK state. The documentation for WSAEventSelect() does
+	explain this, but it's very easy to miss.
+
+	* src/linc-private.h (LinkUnixWatch): Add new flag for Win32:
+	write_would_have_blocked, to be set to TRUE for watches when
+	writing to the socket has errored with WSAEWOULDBLOCK.
+
+	(LinkConnectionPrivate): Add counters of total number of bytes
+	read and written if CONNECTION_DEBUG defined.
+
+	* src/linc-source.c (link_source_check, link_source_dispatch):
+	Move the call to WSAEnumNetworkEvents() to the check method from
+	the dispatch method. Call WSAEnumNetworkEvents() always, as the
+	WaitForMultipleObjects() in g_poll() fires just for one event at a
+	time. If writes to the socket are not currently known to cause
+	blocking, always set G_IO_OUT in revents.
+
+	Don't reset the selected event mask each time. Reselect a new mask
+	(in the prepare method) only if the condition has changed, as
+	originally was the idea. The tests in ../test/everything still
+	work.
+
+	(link_win32_watch_set_write_wouldblock): New function, to set the
+	write_would_have_blocked flag.
+
+	* src/linc-connection.c: Initialize, increment and print the total
+	counters if CONNECTION_DEBUG.
+
+	(write_data_T): Call link_win32_watch_set_write_wouldblock().
+
+	* src/linc-debug.h: Enable making the debugging printout
+	selectable at run-time through an environment variable. By default
+	debugging printout code not compiled in, though.
+
+	* test/test-linc.c: Do run test_blocking() also on Windows.
+
 2005-02-13  Arvind Samptur  <arvind.samptur@wipro.com>
 
 	* include/linc/linc-protocol.h: Add link_use_local_hostname ()

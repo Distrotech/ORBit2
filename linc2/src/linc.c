@@ -156,6 +156,10 @@ link_exec_command (LinkCommand *cmd)
 			 res, errno, errno, LINK_WAKEUP_WRITE);
 }
 
+#if defined (CONNECTION_DEBUG) && defined (CONNECTION_DEBUG_FLAG)
+gboolean link_connection_debug_flag = FALSE;
+#endif
+
 /**
  * link_init:
  * @thread_safe: if we want thread safety enabled.
@@ -165,6 +169,11 @@ link_exec_command (LinkCommand *cmd)
 void
 link_init (gboolean thread_safe)
 {
+#if defined (CONNECTION_DEBUG) && defined (CONNECTION_DEBUG_FLAG)
+	if (getenv ("LINC_CONNECTION_DEBUG"))
+		link_connection_debug_flag = TRUE;
+#endif
+
 	if (thread_safe && !g_thread_supported ())
 		g_thread_init (NULL);
 
