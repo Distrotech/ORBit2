@@ -81,7 +81,7 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 
 #define ORBIT_STUB_IsBypass(obj, classid)								\
 		(classid && (obj) && ((CORBA_Object)obj)->adaptor_obj &&				\
-		((CORBA_Object)obj)->adaptor_obj->interface->adaptor_type == ORBIT_ADAPTOR_POA &&	\
+		((CORBA_Object)obj)->adaptor_obj->interface->adaptor_type & ORBIT_ADAPTOR_POA &&	\
 		((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant)
 
 #define ORBIT_STUB_GetEpv(obj, clsid) \

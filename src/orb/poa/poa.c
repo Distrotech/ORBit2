@@ -174,6 +174,7 @@ ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
 	if (!ci->vepvmap) {
 		CORBA_unsigned_long offset;
 
+		/* FIXME: we could propagate the size nicely here */
 		ci->vepvmap = g_new0 (ORBit_VepvIdx, 
 				      *(ci->class_id) + 1);
 
@@ -873,7 +874,6 @@ ORBit_POA_activate_object_T (PortableServer_POA          poa,
 	g_assert (pobj->use_cnt == 0);
 
 	class_info = ORBIT_SERVANT_TO_CLASSINFO (servant);
-	g_assert (class_info->vepvmap);
 	pobj->vepvmap_cache = class_info->vepvmap;
 
 	pobj->servant = servant;
@@ -2373,17 +2373,17 @@ ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj)
 }
 
 static gpointer
-get_c_method (CORBA_Object obj,
-	      glong        class_id,
-	      gpointer    *servant,
-	      glong        method_offset)
+get_c_method (CORBA_Object                 obj,
+	      glong                        class_id,
+	      PortableServer_ServantBase **servant,
+	      glong                        method_offset)
 {
 	guchar *epv_start;
 	ORBit_POAObject pobj;
 
 	if (!obj ||
 	    !(pobj = (ORBit_POAObject) obj->adaptor_obj) ||
-	    !(*servant = pobj->servant))
+	    !(*servant = (PortableServer_ServantBase *) pobj->servant))
 		return NULL;
 
 	if (method_offset <= 0 || class_id <= 0)
@@ -2392,14 +2392,19 @@ get_c_method (CORBA_Object obj,
 	if (!ORBit_poa_allow_cross_thread_call (pobj))
 		return NULL;
 
-	/* FIXME: we should use a different flag */
-	if (!(ORBit_small_flags & ORBIT_SMALL_FAST_LOCALS))
+	if (ORBit_small_flags & ORBIT_SMALL_FORCE_GENERIC_MARSHAL)
 		return NULL;
 
-	if (!ORBIT_STUB_IsBypass (obj, class_id))
+	/*
+	 * FIXME: we could propagate the size of the vepvmap_cache
+	 * to here, and check it to avoid some really bogus stuff.
+	 */
+	if (!class_id || !(pobj->base.interface->adaptor_type & ORBIT_ADAPTOR_POA) ||
+	    !pobj->vepvmap_cache)
 		return NULL;
 
-	epv_start = (guchar *)ORBIT_POAOBJECT_TO_EPVPTR (pobj, class_id);
+	epv_start = (guchar *) (*servant)->vepv [ pobj->vepvmap_cache [class_id] ];
+
 	if (!epv_start)
 		return NULL;
 
@@ -2419,7 +2424,8 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 		     glong               method_offset,
 		     ORBitSmallSkeleton  skel_impl)
 {
-	gpointer method_impl, servant;
+	gpointer method_impl;
+	PortableServer_ServantBase *servant;
 
 	if (skel_impl &&
 	    (method_impl = get_c_method (obj, class_id,

@@ -1,3 +1,14 @@
+2003-06-05  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (test_time_noop):
+	upd for FORCE_GENERIC_MARSHAL etc.
+
+	* src/orb/poa/poa.c (get_c_method):
+	in-line ORBIT_STUB_IsBypass (and the epv lookups)
+	add ORBIT_SMALL_FORCE_GENERIC_MARSHAL
+	(ORBit_POA_activate_object_T): tolerate a NULL
+	vepvmap.
+
 2003-06-04  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/Makefile.am: add dep on linc lib.

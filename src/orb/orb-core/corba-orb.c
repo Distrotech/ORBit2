@@ -224,7 +224,7 @@ ORBit_setup_debug_flags (void)
 					      G_N_ELEMENTS (debug_keys));
 
 	if (_orbit_debug_flags & ORBIT_DEBUG_INPROC_TRACES)
-		ORBit_small_flags &= ~ ORBIT_SMALL_FAST_LOCALS;
+		ORBit_small_flags |= ORBIT_SMALL_FORCE_GENERIC_MARSHAL;
 }
 #endif /* G_ENABLE_DEBUG */
 
