@@ -1,3 +1,8 @@
+2001-11-13  Michael Meeks  <michael@ximian.com>
+
+	* docs/linc-sections.txt: remove config, acconfig,
+	linc-config, linc-private sections.
+
 2001-11-12 John Fleck <jfleck@inkstain.net>
 
 	* added docs/Makefile.am
@@ -8,7 +13,6 @@
 	        linc-protocol.sgml, linc-types.sgml
         modified ./Makefile.am, configure.in
         add gtk-doc build system
-
 
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
