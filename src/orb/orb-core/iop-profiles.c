@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "iop-profiles.h"
+#include "orb-core-private.h"
 #include "../poa/orbit-poa-export.h"
 
 #undef DEBUG

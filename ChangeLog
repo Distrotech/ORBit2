@@ -1,3 +1,19 @@
+2001-08-23  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-context.c,
+	  src/orb/orb-core/corba-nvlist.c,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/orb-core/corba-orb.c,
+	  src/orb/orb-core/corba-request.c,
+	  src/orb/poa/poa.c: The implications of Maciej's 
+	patch. Match up API defs with IDL generated defs.
+
+	 * src/orb/orb-core/iop-profiles.c:
+	include orb-core-private.h.
+
+	* src/orb/poa/poa.c(ORBit_POA_okey_to_poa): killed
+	unused.
+
 2001-08-22  Maciej Stachowiak  <mjs@noisehavoc.org>
 
 	* src/idl-compiler/orbit-idl-c-utils.c

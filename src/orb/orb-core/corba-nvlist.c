@@ -2,13 +2,13 @@
 #include <orbit/orbit.h>
 
 void
-CORBA_NVList_add_item(CORBA_NVList list,
-		      const CORBA_Identifier item_name,
-		      const CORBA_TypeCode item_type,
-		      const CORBA_OpaqueValue value,
-		      const CORBA_long value_len,
-		      const CORBA_Flags item_flags,
-		      CORBA_Environment * ev)
+CORBA_NVList_add_item (CORBA_NVList             list,
+		       const CORBA_char        *item_name,
+		       const CORBA_TypeCode     item_type,
+		       const CORBA_OpaqueValue  value,
+		       const CORBA_long         value_len,
+		       const CORBA_Flags        item_flags,
+		       CORBA_Environment       *ev)
 {
   CORBA_NamedValue newval;
 
