@@ -25,17 +25,17 @@ DIE=0
 	echo "You must have at minimum libtool version 1.2 installed"
 	echo "to compile ORBit. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
-	echo "ftp://alpha.gnu.org/gnu/libtool-1.0h.tar.gz"
+	echo "ftp://alpha.gnu.org/gnu/libtool-1.2d.tar.gz"
 	DIE=1
 }
 
 # Check for automake
 (automake --version | grep -q "1.3") ||{
 	echo
-	echo "You must have at minimum libtool version 1.3 installed"
+	echo "You must have at minimum automake version 1.3 installed"
 	echo "to compile ORBit. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
-	echo "ftp://ftp.cygnus.com/pub/home/tromey/automake-1.3.tar.gz"
+	echo "ftp://ftp.cygnus.com/pub/home/tromey/automake-1.3b.tar.gz"
 	DIE=1
 }
 
