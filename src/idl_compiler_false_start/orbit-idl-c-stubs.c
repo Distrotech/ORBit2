@@ -71,6 +71,7 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
 static void cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
 static void cs_stub_alloc_params(IDL_tree tree, OIDL_C_Info *ci);
 static void cs_free_inout_params(IDL_tree tree, OIDL_C_Info *ci);
+static void cs_stub_print_return(IDL_tree tree, OIDL_C_Info *ci);
 
 static void
 cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
@@ -178,10 +179,10 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     if(oi->out_stubs) {
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-      
+
       cs_stub_alloc_tmpvars(oi->out_stubs, ci);
     }
-
+	
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
@@ -194,12 +195,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     c_demarshalling_generate(oi->out_stubs, ci, FALSE);
 
     fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
-    if(IDL_OP_DCL(tree).op_type_spec)
-      fprintf(ci->fh, "return _ORBIT_retval;\n");
-    else
-      fprintf(ci->fh, "return;\n");
+    cs_stub_print_return (tree, ci);
 
-    fprintf(ci->fh, "}\n");
   } else
     fprintf(ci->fh, "return;\n");
 
@@ -211,7 +208,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 #else
   fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
 #endif
-  fprintf(ci->fh, "return;\n");
+  cs_stub_print_return (tree, ci);
 
   if(!IDL_OP_DCL(tree).f_oneway) {
     fprintf(ci->fh, "_ORBIT_msg_exception:\n");
@@ -231,10 +228,19 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "ORBit_handle_exception(_ORBIT_recv_buffer, ev, %s, _obj->orb);\n",
 	    IDL_OP_DCL(tree).raises_expr?"_ORBIT_user_exceptions":"NULL");
     fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
-    fprintf(ci->fh, "return;\n  }\n");
+    cs_stub_print_return (tree, ci);
+    fprintf(ci->fh, "}\n}\n");
   }
 
   fprintf(ci->fh, "}\n");
+}
+    
+static void cs_stub_print_return(IDL_tree tree, OIDL_C_Info *ci)
+{
+  if(IDL_OP_DCL(tree).op_type_spec)
+    fprintf(ci->fh, "return %s;\n", ORBIT_RETVAL_VAR_NAME);
+  else
+    fprintf(ci->fh, "return;\n");
 }
 
 static void
@@ -295,7 +301,7 @@ cbe_stub_op_retval_alloc(FILE *of, IDL_tree node, GString *tmpstr)
      && (IDL_NODE_TYPE(ts) != IDLN_TYPE_ARRAY))
     return;
 
-  g_string_assign(tmpstr, "_ORBIT_retval");
+  g_string_assign(tmpstr, ORBIT_RETVAL_VAR_NAME );
 
   switch(IDL_NODE_TYPE(ts)) {
   case IDLN_TYPE_UNION:
