@@ -131,7 +131,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "if(_obj->servant && _obj->vepv && %s__classid)\n{\n",
 	    id);
     fprintf(ci->fh, "int *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
-    fprintf(ci->fh, "_pobj = ORBIT_OBJECT_KEY(_obj->servant)->object;\n");
+    fprintf(ci->fh, "_pobj = ORBIT_OBJECT_KEY(((PortableServer_ServantBase *)_obj->servant)->_private)->object;\n");
     fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
     fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
     fprintf(ci->fh, "%s((POA_%s__epv *)_obj->vepv[%s__classid])->%s(_obj->servant, ",
