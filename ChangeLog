@@ -1,5 +1,10 @@
 2001-12-06  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/idl-compiler/orbit-idl-c-common.c:
+	(cc_small_output_method): don't add 1 to name_len.
+
+2001-12-06  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/orb/GIOP/giop.c (giop_dump_recv): start dumping
 	the message body at message_body + 12. Why do we allocate
 	this space?

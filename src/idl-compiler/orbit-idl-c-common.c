@@ -867,7 +867,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 
 	/* string name, long name_len */
 	method = IDL_IDENT (IDL_OP_DCL (tree).ident).str;
-	fprintf (of, "\"%s\", %d,\n", method, strlen (method) + 1);
+	fprintf (of, "\"%s\", %d,\n", method, strlen (method));
 
 	/* IMethodFlags flags */
 	fprintf (of, "\t\t0");
