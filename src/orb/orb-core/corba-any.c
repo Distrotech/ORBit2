@@ -255,9 +255,7 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
     case CORBA_tk_wstring:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
 	ulval = CORBA_wstring_len(*(CORBA_wchar **)*val) + 1;
-	giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-	giop_send_buffer_append_indirect(buf,
-					 &ulval,
+	giop_send_buffer_append_aligned (buf, &ulval,
 					 sizeof(CORBA_unsigned_long));
 	giop_send_buffer_append(buf, *(char **)*val, ulval);
 	*val = ((guchar *)*val) + sizeof(char *);
@@ -265,9 +263,7 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
     case CORBA_tk_string:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
 	ulval = strlen(*(char **)*val) + 1;
-	giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-	giop_send_buffer_append_indirect(buf,
-					 &ulval,
+	giop_send_buffer_append_aligned (buf, &ulval,
 					 sizeof(CORBA_unsigned_long));
 	giop_send_buffer_append(buf, *(char **)*val, ulval);
 	

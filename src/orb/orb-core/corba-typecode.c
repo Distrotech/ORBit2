@@ -25,8 +25,7 @@ CDR_put_string(GIOPSendBuffer *c, const char *str)
 {
   CORBA_unsigned_long len;
   len = strlen(str) + 1;
-  giop_send_buffer_align(c, sizeof(len));
-  giop_send_buffer_append_indirect(c, &len, sizeof(len));
+  giop_send_buffer_append_aligned(c, &len, sizeof(len));
   giop_send_buffer_append(c, str, len);
 }
 
@@ -240,11 +239,11 @@ tc_enc (CORBA_TypeCode   tc,
       if(node->tc==tc)
 	{
 	  num = CORBA_tk_recursive;
-	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
+	  giop_send_buffer_append_aligned(c, &num, sizeof(num));
 	  num = node->index - c->msg.header.message_size - 4;
 /*	  g_warning ("Offset = '%d' - '%d' = %d",
 	  node->index, c->msg.header.message_size, num); */
-	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
+	  giop_send_buffer_append_aligned(c, &num, sizeof(num));
 	  return;
 	}
     }
@@ -264,12 +263,11 @@ tc_enc (CORBA_TypeCode   tc,
       break;
 
     case TK_COMPLEX:
-      giop_send_buffer_align(c, sizeof(num));
       num = 0;
-      tmpi = (guint32*)giop_send_buffer_append_indirect(c, &num, sizeof(num));
+      tmpi = (guint32*)giop_send_buffer_append_aligned(c, &num, sizeof(num));
       *tmpi = c->msg.header.message_size;
       end = GIOP_FLAG_ENDIANNESS;
-      giop_send_buffer_append_indirect(c, &end, 1);
+      giop_send_buffer_append(c, &end, 1);
       (info->encoder)(tc, c, ctx);
       *tmpi = c->msg.header.message_size - *tmpi;
       break;

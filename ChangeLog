@@ -1,3 +1,30 @@
+2001-07-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_append_indirect): rename to
+	(giop_send_buffer_append_aligned): this, to make not only
+	more efficient, but clean and sane.
+	(giop_send_buffer_align): re-write to be actualy fast,
+	remove the 'register' keyword - it doesn't speed things up.
+	(get_next_indirect): split out of _append & re-write.
+	(giop_send_buffer_append_aligned): here & re-write.
+	(giop_send_buffer_append_copy): impl simple version for
+	(giop_send_buffer_append): to use & upd.
+
+	* src/orb/orb-core/iop-profiles.c: upd.
+
+	* src/orb/orb-core/corba-context.c: upd.
+
+	* src/orb/orb-core/corba-any.c: upd.
+
+	* src/orb/orb-core/corba-typecode.c: upd.
+
+	* src/orb/orb-core/corba-env.c: upd.
+
+	* src/orb/orb-core/corba-object.c: upd.
+
+	* src/orb/orb-core/orbit-small.c: upd.
+	
 2001-07-19  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POAObject_release_cb): try

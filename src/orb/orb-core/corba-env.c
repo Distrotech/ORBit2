@@ -197,13 +197,11 @@ ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev)
   g_assert(ev->_major == CORBA_SYSTEM_EXCEPTION);
 
   len = strlen(ev->_id) + 1;
-  giop_send_buffer_align(buf, sizeof(len));
-  giop_send_buffer_append_indirect(buf, &len, sizeof(len));
+  giop_send_buffer_append_aligned (buf, &len, 4);
   giop_send_buffer_append(buf, ev->_id, len);
   
-  giop_send_buffer_align(buf, sizeof(se->minor));
-  giop_send_buffer_append(buf, &se->minor, sizeof(se->minor));
-  giop_send_buffer_append_indirect(buf, &se->completed, sizeof(se->completed));
+  giop_send_buffer_append_aligned(buf, &se->minor, 4);
+  giop_send_buffer_append_aligned(buf, &se->completed, 4);
 }
 
 void
@@ -232,8 +230,7 @@ ORBit_send_user_exception(GIOPSendBuffer *send_buffer,
     {
       CORBA_unsigned_long len;
       len = strlen(ev->_id) + 1;
-      giop_send_buffer_align(send_buffer, sizeof(len));
-      giop_send_buffer_append_indirect(send_buffer, &len, sizeof(len));
+      giop_send_buffer_append_aligned(send_buffer, &len, 4);
       giop_send_buffer_append(send_buffer, ev->_id, len);
 
       if(user_exceptions[i].marshal && ev->_any._value)
