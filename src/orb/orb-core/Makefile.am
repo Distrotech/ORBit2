@@ -11,6 +11,7 @@ INCLUDES =						\
 	-DORBIT_TYPELIB_DIR=\""$(TYPELIB_DIR)"\"	\
 	-DORBIT2_INTERNAL_API				\
 	$(WARN_CFLAGS)					\
+	$(ORBIT_DEBUG_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
 main_src = \

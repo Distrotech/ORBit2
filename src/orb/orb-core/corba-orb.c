@@ -12,8 +12,13 @@
 #include "iop-profiles.h"
 #include "orb-core-private.h"
 #include "orbhttp.h"
+#include "orbit-debug.h"
 
 extern ORBit_option orbit_supported_options[];
+
+#ifdef G_ENABLE_DEBUG
+OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
+#endif
 
 /*
  * Command line option handling.
@@ -26,6 +31,7 @@ static gboolean     orbit_use_ssl           = FALSE;
 static gboolean     orbit_use_genuid_simple = FALSE;
 static char        *orbit_ipsock            = NULL;
 static char        *orbit_ipname            = NULL;
+static char        *orbit_debug_options     = NULL;
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -122,6 +128,37 @@ ORBit_locks_initialize (void)
 	ORBit_RootObject_lifecycle_lock = linc_mutex_new ();
 }
 
+#ifdef G_ENABLE_DEBUG
+static void
+ORBit_setup_debug_flags (void)
+{
+	const char *env_string;
+
+	env_string = g_getenv ("ORBIT2_DEBUG");
+
+	if (env_string) {
+		static GDebugKey debug_keys[] = {
+			{ "traces",   ORBIT_DEBUG_TRACES },
+			{ "timings",  ORBIT_DEBUG_TIMINGS },
+			{ "types",    ORBIT_DEBUG_TYPES },
+			{ "messages", ORBIT_DEBUG_MESSAGES },
+			{ "objects",  ORBIT_DEBUG_OBJECTS },
+		};
+
+		_orbit_debug_flags |=
+			g_parse_debug_string (env_string,
+					      debug_keys,
+					      G_N_ELEMENTS (debug_keys));
+
+		if (orbit_debug_options)
+			_orbit_debug_flags |=
+				g_parse_debug_string (orbit_debug_options,
+						      debug_keys,
+						      G_N_ELEMENTS (debug_keys));
+	}
+}
+#endif /* G_ENABLE_DEBUG */
+
 static CORBA_ORB _ORBit_orb = NULL;
 
 CORBA_ORB
@@ -142,6 +179,10 @@ CORBA_ORB_init (int *argc, char **argv,
 	g_assert (ORBIT_ALIGNOF_CORBA_DOUBLE > 2);
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
+
+#ifdef G_ENABLE_DEBUG
+	ORBit_setup_debug_flags ();
+#endif /* G_ENABLE_DEBUG */
 
 	giop_init ();
 
@@ -1082,6 +1123,7 @@ static ORBit_option orbit_supported_options[] = {
 	{"ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda},
 	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
 	{"ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple},
+	{"ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options},
 	{NULL,              0,                    NULL},
 };
 

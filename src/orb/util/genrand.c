@@ -15,6 +15,7 @@
 static ORBitGenUidType  genuid_type = ORBIT_GENUID_STRONG;
 static int              dev_urandom_fd = -1;
 static GRand           *glib_prng = NULL;
+static pid_t            genuid_pid;
 
 void
 ORBit_genuid_init (ORBitGenUidType type)
@@ -28,6 +29,7 @@ ORBit_genuid_init (ORBitGenUidType type)
 		glib_prng = g_rand_new ();
 		break;
 	case ORBIT_GENUID_SIMPLE:
+		genuid_pid = getpid ();
 		break;
 	default:
 		g_assert_not_reached ();
@@ -102,15 +104,20 @@ genuid_glib_pseudo (guchar *buffer, int length)
 static void
 genuid_simple (guchar *buffer, int length)
 {
-	static glong s = 0x6b842128;
-	glong        i, t;
-	GTimeVal     time;
+	static glong   s = 0x6b842128;
+	static guint16 inc = 0;
+	glong          i, t;
+	GTimeVal       time;
 
 	g_get_current_time (&time);
 
 	t = time.tv_sec ^ time.tv_usec;
+	inc++;
 
-	for (i = 0; i < length; i++)
+	memcpy (buffer, &inc, sizeof (inc));
+	memcpy (buffer + sizeof (inc), &genuid_pid, sizeof (genuid_pid));
+
+	for (i = sizeof (inc) + sizeof (genuid_pid); i < length; i++)
 		buffer [i] = (guchar) (s ^ (t << i));
 
 	s ^= t;
