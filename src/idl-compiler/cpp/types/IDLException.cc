@@ -30,10 +30,10 @@ void
 IDLException::stub_check_and_propagate (ostream &ostr,
 					Indent  &indent) const
 {
-	ostr << indent << "if (!strcmp (repo_id, ex_" << get_c_typename () << ")" << endl
+	ostr << indent << "if (!strcmp (repo_id, ex_" << get_c_typename () << "))" << endl
 	     << indent++ << "{" << endl;
 
-	ostr << indent << get_cpp_typename () << " ex";
+	ostr << indent << get_cpp_typename () << " ex;" << endl;
 	ostr << indent << "ex._orbitcpp_unpack ("
 	     << "*((" << get_c_typename () << "*) value));" << endl;
 	ostr << indent << "throw ex;" << endl;

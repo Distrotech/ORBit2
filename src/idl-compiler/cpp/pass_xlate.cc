@@ -420,6 +420,14 @@ IDLPassXlate::doException(IDL_tree  node,
 {
 	IDLException &except = (IDLException &) *scope.getItem(node);
 
+	string ns_iface_begin, ns_iface_end;
+	except.getParentScope()->getCPPNamespaceDecl(ns_iface_begin, ns_iface_end);
+
+	bool non_empty_ns = ns_iface_end.size () || ns_iface_begin.size ();
+
+	if (non_empty_ns)
+		m_header << indent << ns_iface_begin;
+	
 #if 0 //!!!
 	// spec code must be generated before the exception because the exception "uses" its
 	// members
@@ -499,10 +507,18 @@ IDLPassXlate::doException(IDL_tree  node,
 
 	m_header << indent << "void _orbitcpp_set (::CORBA_Environment *ev)" << endl
 		 << indent++ << "{" << endl;
-	m_header << indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
-		 << '"' << except.getRepositoryId() << '"'
-		 << ", _orbitcpp_pack ())"
-		 << ';' << endl;
+	if (except.size ())
+	{
+		m_header << indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
+			 << '"' << except.getRepositoryId() << '"'
+			 << ", _orbitcpp_pack ())"
+			 << ';' << endl;
+	} else {
+		m_header << indent <<  "::CORBA_exception_set (ev, ::CORBA_USER_EXCEPTION, "
+			 << '"' << except.getRepositoryId() << '"'
+			 << ", 0)"
+			 << ';' << endl;
+	}
 	m_header << --indent << '}' << endl << endl;
 
 	m_header << indent << "static " << except.get_cpp_identifier () << " *_narrow "
@@ -525,6 +541,9 @@ IDLPassXlate::doException(IDL_tree  node,
 	m_header << "const CORBA::TypeCode_ptr _tc_" << except.get_cpp_identifier () << " = " 
 		 << "(CORBA::TypeCode_ptr)TC_" + except.get_c_typename ()
 		 << ';' << endl;
+
+	if (non_empty_ns)
+		m_header << ns_iface_end;
 
 #if 0 //!!!
 	ORBITCPP_MEMCHECK( new IDLWriteExceptionAnyFuncs(except, m_state, *this) );
@@ -627,7 +646,8 @@ IDLPassXlate::doInterface (IDL_tree  node,
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
 #endif
 
-	m_header << ns_iface_end << endl;
+	if (non_empty_ns)
+		m_header << ns_iface_end << endl;
 	
 	// _duplicate() and _narrow implementations:
 	// write the static method definitions
