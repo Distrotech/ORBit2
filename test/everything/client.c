@@ -187,64 +187,91 @@ void testException(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
-void testIInterface(test_TestFactory factory, 
-		    CORBA_Environment *ev)
+gboolean
+find_tc (CORBA_sequence_CORBA_TypeCode *tcs,
+	 const char                    *repo_id)
 {
-  test_StructServer objref;
-  CORBA_char *type_id;
-  ORBit_IInterface *iinterface;
+	int i;
 
-  d_print("Testing IInterface code...\n");
-  objref = test_TestFactory_getStructServer(factory,ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	for (i = 0; i < tcs->_length; i++)
+		if (!strcmp (tcs->_buffer [i]->repo_id, repo_id))
+			return TRUE;
 
-  /* Check nil check is working ! */
-  g_assert (CORBA_Object_is_nil  (CORBA_OBJECT_NIL, ev));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert (!CORBA_Object_is_nil (objref, ev));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-
-  /* Check non_existant is working ! */
-  g_assert (!CORBA_Object_non_existent (objref, ev));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-
-  /* Ensure that we go over the wire at least once */
-  g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/StructServer:1.0", ev));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-
-  /* Scripting stuff */
-
-  /* Get real type id */
-  g_assert((type_id = ORBit_small_get_type_id (objref, ev)));
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(!strcmp (type_id, "IDL:orbit/test/StructServer:1.0"));
-  CORBA_free (type_id);
-
-  /* Get interface data */
-  iinterface = ORBit_small_get_iinterface (
-	  objref, "foo_bar_jelly", ev);
-  g_assert(ev->_major != CORBA_NO_EXCEPTION);
-  g_assert(iinterface == NULL);
-  g_assert(!strcmp(ev->_id, ex_ORBit_NoIInterface));
-  CORBA_exception_free (ev);
-
-  iinterface = ORBit_small_get_iinterface (
-	  objref, "IDL:orbit/test/StructServer:1.0", ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  g_assert(iinterface != NULL);
-  g_assert(!strcmp(iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
-
-  CORBA_Object_release (objref, ev);
-  g_assert(ev->_major == CORBA_NO_EXCEPTION);
-
-  if (!ORBit_small_load_typelib ("Everything"))
-	  g_warning ("Failed to load Everything");
+	return FALSE;
 }
 
-void testFixedLengthStruct(test_TestFactory factory, 
-			   CORBA_Environment *ev)
+void
+testIInterface (test_TestFactory   factory, 
+		CORBA_Environment *ev)
+{
+	test_StructServer objref;
+	CORBA_char       *type_id;
+	ORBit_IInterface *iinterface;
+	CORBA_sequence_CORBA_TypeCode *tcs;
+
+	d_print("Testing IInterface code...\n");
+	objref = test_TestFactory_getStructServer (factory,ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* Check nil check is working ! */
+	g_assert (CORBA_Object_is_nil  (CORBA_OBJECT_NIL, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (!CORBA_Object_is_nil (objref, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* Check non_existant is working ! */
+	g_assert (!CORBA_Object_non_existent (objref, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* Ensure that we go over the wire at least once */
+	g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/StructServer:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* Scripting stuff */
+
+	/* Get real type id */
+	g_assert ((type_id = ORBit_small_get_type_id (objref, ev)));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (!strcmp (type_id, "IDL:orbit/test/StructServer:1.0"));
+	CORBA_free (type_id);
+
+	/* Get interface data */
+	iinterface = ORBit_small_get_iinterface (
+		objref, "foo_bar_jelly", ev);
+	g_assert (ev->_major != CORBA_NO_EXCEPTION);
+	g_assert (iinterface == NULL);
+	g_assert (!strcmp(ev->_id, ex_ORBit_NoIInterface));
+	CORBA_exception_free (ev);
+
+	iinterface = ORBit_small_get_iinterface (
+		objref, "IDL:orbit/test/StructServer:1.0", ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (iinterface != NULL);
+	g_assert (!strcmp(iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
+
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+#define TYPELIB_NAME "./Everything_module"
+
+	if (!ORBit_small_load_typelib (TYPELIB_NAME))
+		g_warning ("Failed to load '" TYPELIB_NAME "'");
+	iinterface = ORBit_small_get_iinterface ( 
+		objref, "IDL:orbit/test/StructServer:1.0", ev);
+	g_assert(ev->_major == CORBA_NO_EXCEPTION);
+	g_assert(iinterface != NULL);
+
+	tcs = ORBit_small_get_types (TYPELIB_NAME);
+	g_assert (find_tc (tcs, "IDL:orbit/test/Colour:1.0"));
+	g_assert (find_tc (tcs, "IDL:orbit/test/ArrayUnion:1.0"));
+	CORBA_free (tcs);
+}
+
+void
+testFixedLengthStruct (test_TestFactory   factory, 
+		       CORBA_Environment *ev)
 {
   test_StructServer objref;
   test_FixedLengthStruct inArg,inoutArg,outArg,retn;

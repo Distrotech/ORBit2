@@ -1,3 +1,39 @@
+2001-07-31  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (find_tc): impl.
+	(testIInterface): beef up, and test new methods.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_get_types): impl.
+	(ORBit_small_load_typelib): fixup local lib names.
+
+	* src/idl-compiler/orbit-idl-c-imodule.c (cc_small_build_exceptions):
+	prune.
+	(cc_small_build_types): merge exceptions to here.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_iinterface_from_idl):
+	kill cruft.
+	(add_iinterface, lookup_iinterface, get_type_db): impl.
+	(ORBit_small_get_iinterface): lookup in the local db first
+	then classinfo, then remote.
+	(shallow_copy_iinterface): rename to
+	(copy_iinterface): & add 'shallow' arg.
+	(load_module): actualy close the handle and register the types.
+	(get_types, add_types): impl.
+	(ORBit_small_load_typelib): upd.
+	(load_module): upd.
+	(get_types, add_types): impl.
+
+	* test/everything/Makefile.am (included_src): add
+	context-server
+
+2001-07-31  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require linc-0.1.1
+	bump version to 2.3.92
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_types): stub for API freeze.
+
 2001-07-30  Martin Baulig  <baulig@suse.de>
 
 	* src/orb/dynamic.c (dynamic_sequence_realloc_to): Initialize

@@ -9,10 +9,9 @@
 #include <orbit/orb-core/orbit-interface.h>
 
 typedef struct {
-	CORBA_unsigned_long version;
-	ORBit_IInterface **interfaces;
-	CORBA_TypeCode *exceptions;
-	CORBA_TypeCode *types;
+	CORBA_unsigned_long           version;
+	ORBit_IInterface            **interfaces;
+	CORBA_sequence_CORBA_TypeCode types;
 } ORBit_IModule;
 
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);
@@ -49,5 +48,7 @@ ORBit_IInterface *ORBit_small_get_iinterface      (CORBA_Object       opt_object
 					           const CORBA_char  *repo_id,
 						   CORBA_Environment *ev);
 gboolean          ORBit_small_load_typelib        (const char        *libname);
+CORBA_sequence_CORBA_TypeCode *
+                  ORBit_small_get_types           (const char        *name);
 
 #endif /* CORBA_SMALL_H */
