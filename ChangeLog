@@ -1,3 +1,17 @@
+2003-09-08  Padraig O'Briain <padraig.obriain@sun.com>
+
+	* linc2/src/linc-private.h: Add field was_disconnected  in order to
+	deal with the case where connecting after disconnection returns 
+	EINPROGRESS.
+	* linc2/src/linc-connection.c:
+	(linc_connection_state_changed_T_R): Do not emit "broken" signal if
+	disconnected field is set.
+	(linc_connection_try_disconnect): Set was_disconnected field before
+	calling link_connection_wait_connected_T.
+	(link_connection_init): Initialize was_disconnected to FALSE. 
+
+	This fixes bug #121246.
+
 2003-09-05  Frank Rehberger  <Frank.Rehberger@xtradyne.de>
 
 	* test/test-mem.c: autmatic memory verification based on 'ps' command,

@@ -76,6 +76,13 @@ struct _LinkConnectionPrivate {
 	gulong       max_buffer_bytes;
 	gulong       write_queue_bytes;
 	GList       *write_queue;
+	/*
+	 * This flag is used after a LincConnection is disconnected when
+	 * an attempt to made to retry the connection. If the attempt returns
+	 * EINPROGRESS and subsequently is reported as disconnected we want
+	 * to avoid emitting another "broken" signal.
+	 */
+	gboolean     was_disconnected;
 };
 
 typedef struct {

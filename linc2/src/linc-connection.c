@@ -263,10 +263,12 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 		/* don't free pending queue - we could get re-connected */
 		if (changed) {
 
-			d_printf ("Emitting the broken signal on %p\n", cnx);
-			CNX_UNLOCK (cnx);
-			g_signal_emit (cnx, signals [BROKEN], 0);
-			CNX_LOCK (cnx);
+			if (!cnx->priv->was_disconnected) {
+				d_printf ("Emitting the broken signal on %p\n", cnx);
+				CNX_UNLOCK (cnx);
+				g_signal_emit (cnx, signals [BROKEN], 0);
+				CNX_LOCK (cnx);
+			}
 
 			if (cnx->idle_broken_callbacks) {
 				if (!link_thread_io ()) {
@@ -570,7 +572,9 @@ link_connection_try_reconnect (LinkConnection *cnx)
 			(cnx, cnx->proto->name, cnx->remote_host_info,
 			 cnx->remote_serv_info, cnx->options);
 
+	cnx->priv->was_disconnected = TRUE;
 	status = link_connection_wait_connected_T (cnx);
+	cnx->priv->was_disconnected = FALSE;
 
 	CNX_UNLOCK (cnx);
 
@@ -1122,6 +1126,7 @@ link_connection_init (LinkConnection *cnx)
 
 	cnx->priv = g_new0 (LinkConnectionPrivate, 1);
 	cnx->priv->fd = -1;
+	cnx->priv->was_disconnected = FALSE;
 }
 
 static void
