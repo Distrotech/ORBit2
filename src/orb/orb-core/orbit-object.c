@@ -1,13 +1,18 @@
 #include <orbit/orbit.h>
 
 static glong alive_root_objects = 0;
+static glong total_refs = 0;
 
 void
 ORBit_RootObject_shutdown (void)
 {
 	if (alive_root_objects)
-		g_warning ("ORB leaked %ld RootObjects",
-			   alive_root_objects);
+		g_warning ("ORB: a total of %ld refs to %ld ORB "
+			   "objects were leaked",
+			   total_refs, alive_root_objects);
+	else if (total_refs)
+		g_warning ("ORB: a total of %ld refs to ORB "
+			   "objects were leaked", total_refs);
 }
 
 void
@@ -29,6 +34,7 @@ ORBit_RootObject_duplicate (gpointer obj)
 	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC) {
 		LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 		robj->refs++;
+		total_refs++;
 		LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 	}
 
@@ -40,8 +46,10 @@ ORBit_RootObject_duplicate_T (gpointer obj)
 {
 	ORBit_RootObject robj = obj;
 
-	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC)
+	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC) {
 		robj->refs++;
+		total_refs++;
+	}
 
 	return obj;
 }
@@ -52,6 +60,7 @@ do_unref (ORBit_RootObject robj)
 	g_assert (robj->refs < ORBIT_REFCOUNT_MAX && robj->refs > 0);
 
 	robj->refs--;
+	total_refs--;
 
 	if (robj->refs == 0) {
 		if (!ORBit_RootObject_lifecycle_lock) /* No locking */

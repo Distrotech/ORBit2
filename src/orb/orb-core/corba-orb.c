@@ -27,6 +27,8 @@ CORBA_ORB_release_fn (ORBit_RootObject robj)
 
 	g_ptr_array_free (orb->adaptors, TRUE);
 
+	ORBit_RootObject_release_T (orb->default_ctx);
+
 	g_hash_table_destroy (orb->initial_refs);
 
 	ORBit_RootObject_shutdown ();

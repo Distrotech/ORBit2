@@ -75,14 +75,18 @@ CORBA_Context_new(CORBA_Context parent, const char *name, CORBA_Environment *ev)
 }
 
 void
-CORBA_ORB_get_default_context(CORBA_ORB orb, CORBA_Context *ctx, CORBA_Environment *ev)
+CORBA_ORB_get_default_context (CORBA_ORB          orb,
+			       CORBA_Context     *ctx,
+			       CORBA_Environment *ev)
 {
-  g_return_if_fail(ev != NULL);
+	g_return_if_fail (ev != NULL);
 
-  if(!orb->default_ctx)
-    orb->default_ctx = CORBA_Context_new(CORBA_OBJECT_NIL, NULL, ev);
+	if (!orb->default_ctx)
+		orb->default_ctx = CORBA_Context_new (
+			CORBA_OBJECT_NIL, NULL, ev);
 
-  *ctx = (CORBA_Context)CORBA_Object_duplicate((CORBA_Object)orb->default_ctx, ev);
+	*ctx = (CORBA_Context) CORBA_Object_duplicate (
+		(CORBA_Object) orb->default_ctx, ev);
 }
 
 void

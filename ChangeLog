@@ -1,5 +1,33 @@
 2001-10-27  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-typecode.c: re-order to kill
+	redundant forward prototypes.
+	(ORBit_decode_CORBA_TypeCode): return a typecode with a
+	single reference - not no reference.
+	(tc_dec): ditto duplicate here.
+	(tc_dec_tk_sequence, tc_dec_tk_struct, tc_dec_tk_union),
+	(tc_dec_tk_alias, tc_dec_tk_except, tc_dec_tk_array): update
+	all callers to not do their own duplicates.
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_demarshal_value, ORBit_demarshal_any): push back
+	the refs into ORBit_decode_CORBA_TypeCode.
+
+	* test/everything/client.c (testMisc): fix reference leak.
+
+	* src/orb/orb-core/orbit-object.c (ORBit_RootObject_shutdown):
+	add a total ref count, always taken regardless of locking.
+	(ORBit_RootObject_duplicate, do_unref),
+	(ORBit_RootObject_duplicate_T),
+	(ORBit_RootObject_duplicate): upd.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_release_fn):
+	release the default context.
+
+	* test/everything/client.c (testMisc): regression test.
+
+2001-10-27  Michael Meeks  <michael@ximian.com>
+
 	* test/test-dynany.c (main): shutdown the ORB correctly.
 
 	* test/everything/server.c (TestFactory_segv): use exit

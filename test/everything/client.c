@@ -26,15 +26,9 @@
 #include "everything.h"
 #include "constants.h"
 
-#undef PROFILING
 #undef TIMING_RUN
 #undef BIG_STUBS
 #define NUM_RUNS 1000
-
-
-#ifdef PROFILING
-#  define TIMING_RUN
-#endif
 
 #ifdef TIMING_RUN
 #  define d_print(a)
@@ -847,56 +841,56 @@ void testSequenceOfAny (test_TestFactory factory,
   CORBA_free (anyseq._buffer);
 }
 
-/**
-   This test tests memory management of exceptions in anys
- */
-void testAnyException (test_TestFactory factory, 
-		      CORBA_Environment *ev)
-{
-  CORBA_any *inArg; 
-  test_TestException * testex;
-
-  inArg = CORBA_any__alloc ();
-  testex = test_TestException__alloc ();  
-  inArg->_type = (CORBA_TypeCode) TC_test_TestException;
-  inArg->_value = testex;
-  CORBA_any_set_release (inArg, CORBA_TRUE);
-
-  CORBA_free (inArg);
-}
-
-void testTypeCode (test_TestFactory factory, 
+void
+testAnyException (test_TestFactory   factory, 
 		  CORBA_Environment *ev)
 {
-  test_AnyServer objref;
-  CORBA_TypeCode inArg, inoutArg, outArg, retn;
+	CORBA_any *inArg; 
+	test_TestException *testex;
 
-  d_print ("Testing TypeCodes...\n");
-  objref = test_TestFactory_getAnyServer (factory, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	inArg = CORBA_any__alloc ();
+	testex = test_TestException__alloc ();  
+	inArg->_type = (CORBA_TypeCode) TC_test_TestException;
+	inArg->_value = testex;
+	CORBA_any_set_release (inArg, CORBA_TRUE);
 
-  inArg = TC_test_ArrayUnion;
-  inoutArg = TC_test_AnyServer;
-  
-  retn = test_AnyServer_opTypeCode (objref, inArg, &inoutArg, &outArg, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
-
-  g_assert (CORBA_TypeCode_equal (inArg, TC_test_ArrayUnion, ev) );
-  g_assert (CORBA_TypeCode_equal (inoutArg, TC_test_TestException, ev) );  
-  g_assert (CORBA_TypeCode_equal (outArg, TC_test_AnEnum, ev) );  
-  g_assert (CORBA_TypeCode_equal (retn, TC_test_VariableLengthStruct, ev) );
-
-  CORBA_Object_release ((CORBA_Object)inArg, ev);
-  CORBA_Object_release ((CORBA_Object)inoutArg, ev);
-  CORBA_Object_release ((CORBA_Object)outArg, ev);
-  CORBA_Object_release ((CORBA_Object)retn, ev);
-
-  CORBA_Object_release (objref, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_free (inArg);
 }
 
-void testContext (test_TestFactory factory, 
-		 CORBA_Environment *ev)
+void
+testTypeCode (test_TestFactory   factory, 
+	      CORBA_Environment *ev)
+{
+	test_AnyServer objref;
+	CORBA_TypeCode inArg, inoutArg, outArg, retn;
+
+	d_print ("Testing TypeCodes...\n");
+	objref = test_TestFactory_getAnyServer (factory, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	inArg = TC_test_ArrayUnion;
+	inoutArg = TC_test_AnyServer;
+  
+	retn = test_AnyServer_opTypeCode (objref, inArg, &inoutArg, &outArg, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	g_assert (CORBA_TypeCode_equal (inArg, TC_test_ArrayUnion, ev));
+	g_assert (CORBA_TypeCode_equal (inoutArg, TC_test_TestException, ev));
+	g_assert (CORBA_TypeCode_equal (outArg, TC_test_AnEnum, ev));  
+	g_assert (CORBA_TypeCode_equal (retn, TC_test_VariableLengthStruct, ev));
+
+	CORBA_Object_release ((CORBA_Object)inArg, ev);
+	CORBA_Object_release ((CORBA_Object)inoutArg, ev);
+	CORBA_Object_release ((CORBA_Object)outArg, ev);
+	CORBA_Object_release ((CORBA_Object)retn, ev);
+
+	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+void
+testContext (test_TestFactory   factory, 
+	     CORBA_Environment *ev)
 {
   test_ContextServer objref;
   CORBA_Object inArg, inoutArg, outArg, retn;
@@ -943,7 +937,10 @@ void
 testMisc (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
-	CORBA_char *foo;
+	CORBA_char   *foo;
+	CORBA_Context ctx;
+
+	d_print ("Testing Misc bits...\n");
 
 	/* Non existant method invoke - only for remote */
 	/* FIXME: should not work in local case either ! */
@@ -1013,9 +1010,19 @@ testMisc (test_TestFactory   factory,
 		g_assert (obj != CORBA_OBJECT_NIL);
 
 		test_DeadReferenceObj_test (obj, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
+		CORBA_Object_release (obj, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	}
+
+	/* Check the ORB cleans up contexts properly */
+	CORBA_ORB_get_default_context (
+		global_orb, &ctx, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (ctx != CORBA_OBJECT_NIL);
+	CORBA_Object_release ((CORBA_Object) ctx, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
 
 static int done = 0;
@@ -1288,7 +1295,6 @@ main (int argc, char *argv [])
 	fprintf (stderr, "\n\n --- Out of proc ---\n\n\n");
 #endif
 
-	/* Out of Proc */
 	in_proc = FALSE;
 
 	{ /* read the ior from iorfile, and swizzle to an objref*/
@@ -1313,10 +1319,6 @@ main (int argc, char *argv [])
 
 	run_tests (factory, &ev);
 
-#ifdef PROFILING
-	sleep (1000);
-#endif
-  
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	
@@ -1332,4 +1334,3 @@ main (int argc, char *argv [])
 
 	return 0;
 }
-
