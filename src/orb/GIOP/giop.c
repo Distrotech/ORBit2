@@ -31,6 +31,7 @@ test_safe_socket_dir (const char *dirname)
 		return FALSE;
 	}
 	
+#ifndef __CYGWIN__
 	if (statbuf.st_uid != getuid ()) {
 		S_PRINT (("Owner of %s is not the current user\n", dirname));
 		return FALSE;
@@ -41,6 +42,7 @@ test_safe_socket_dir (const char *dirname)
 		S_PRINT (("Wrong permissions for %s\n", dirname));
 		return FALSE;
 	}
+#endif
 
 	return TRUE;
 }

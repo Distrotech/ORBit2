@@ -17,6 +17,7 @@ libORBit_2_la_SOURCES=orbit-init.c orbit-init.h
 
 libORBit_2_la_LDFLAGS =               \
 	-version-info $(LT_VERSION)   \
+	-no-undefined		      \
 	$(ORBIT_LIBS)                 \
 	-lpopt
 
