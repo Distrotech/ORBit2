@@ -151,5 +151,4 @@ src/Makefile
 include/Makefile
 include/linc/Makefile
 include/linc/linc-config.h
-linc.pc
 ])
