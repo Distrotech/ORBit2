@@ -443,12 +443,33 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
   case MARSHAL_ALLOCATE:
     break;
   case MARSHAL_SWITCH:
-    do_indent(indent_level + INDENT_INCREMENT_1);
-    g_print("discrim:\n");
-    oidl_marshal_node_dump(tree->u.switch_info.discrim, indent_level + INDENT_INCREMENT_2);
-    do_indent(indent_level + INDENT_INCREMENT_1);
-    g_print("contents:\n");
-    oidl_marshal_node_dump(tree->u.switch_info.contents, indent_level + INDENT_INCREMENT_2);
+    {
+      GSList *ltmp;
+
+      do_indent(indent_level + INDENT_INCREMENT_1);
+      g_print("discrim:\n");
+      oidl_marshal_node_dump(tree->u.switch_info.discrim, indent_level + INDENT_INCREMENT_2);
+      do_indent(indent_level + INDENT_INCREMENT_1);
+      g_print("cases:\n");
+      for(ltmp = tree->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp)) {
+	oidl_marshal_node_dump(ltmp->data, indent_level + INDENT_INCREMENT_2);
+	g_print("\n");
+      }
+    }
+    break;
+  case MARSHAL_CASE:
+    {
+      GSList *ltmp;
+
+      do_indent(indent_level + INDENT_INCREMENT_1);
+      g_print("labels:\n");
+      for(ltmp = tree->u.case_info.labels; ltmp; ltmp = g_slist_next(ltmp)) {
+	oidl_marshal_node_dump(ltmp->data, indent_level + INDENT_INCREMENT_2);
+	g_print("\n");
+      }
+      g_print("contents:\n");
+      oidl_marshal_node_dump(tree->u.case_info.contents, indent_level + INDENT_INCREMENT_2);
+    }
     break;
   case MARSHAL_COMPLEX:
     break;
@@ -522,8 +543,24 @@ orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data)
     orbit_idl_node_foreach(node->u.loop_info.contents, func, user_data);
     break;
   case MARSHAL_SWITCH:
-    orbit_idl_node_foreach(node->u.switch_info.discrim, func, user_data);
-    orbit_idl_node_foreach(node->u.switch_info.contents, func, user_data);
+    {
+      GSList *ltmp;
+
+      orbit_idl_node_foreach(node->u.switch_info.discrim, func, user_data);
+
+      for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp))
+	orbit_idl_node_foreach((OIDL_Marshal_Node *)ltmp->data, func, user_data);
+    }
+    break;
+  case MARSHAL_CASE:
+    {
+      GSList *ltmp;
+
+      for(ltmp = node->u.case_info.labels; ltmp; ltmp = g_slist_next(ltmp))
+	orbit_idl_node_foreach((OIDL_Marshal_Node *)ltmp->data, func, user_data);
+
+      orbit_idl_node_foreach(node->u.case_info.contents, func, user_data);
+    }
     break;
   case MARSHAL_UPDATE:
     orbit_idl_node_foreach(node->u.update_info.amount, func, user_data);

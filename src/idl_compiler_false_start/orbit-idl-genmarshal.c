@@ -256,7 +256,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
   case IDLN_TYPE_STRING:
   case IDLN_TYPE_WIDE_STRING:
     retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL);
-    retval->flags |= MN_ISSTRING|MN_LOOPED;
+    retval->flags |= MN_ISSTRING;
     retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
     retval->u.loop_info.length_var->u.datum_info.datum_size = sizeof(CORBA_long);
     retval->u.loop_info.length_var->flags |= MN_NEED_TMPVAR;
@@ -354,8 +354,28 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
     retval->tree = tree;
     break;
   case IDLN_TYPE_UNION:
-    retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
-    retval->tree = tree;
+    {
+      IDL_tree ntmp;
+      retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
+      retval->tree = tree;
+      retval->u.switch_info.discrim = marshal_populate_in(IDL_TYPE_UNION(tree).switch_type_spec, retval);
+      retval->u.switch_info.discrim->name = "_d";
+      for(ntmp = IDL_TYPE_UNION(tree).switch_body; ntmp; ntmp = IDL_LIST(ntmp).next) {
+	retval->u.switch_info.cases = g_slist_append(retval->u.switch_info.cases,
+						     marshal_populate_in(IDL_LIST(ntmp).data, retval));
+      }
+    }
+    break;
+  case IDLN_CASE_STMT:
+    {
+      IDL_tree ntmp;
+      retval = oidl_marshal_node_new(parent, MARSHAL_CASE, "_u");
+      retval->u.case_info.contents = marshal_populate_in(IDL_CASE_STMT(tree).element_spec, retval);
+      for(ntmp = IDL_CASE_STMT(tree).labels; ntmp; ntmp = IDL_LIST(ntmp).next) {
+	retval->u.case_info.labels = g_slist_append(retval->u.case_info.labels,
+						    marshal_populate_in(IDL_LIST(ntmp).data, retval));
+      }
+    }
     break;
   case IDLN_IDENT:
   case IDLN_LIST:
@@ -481,6 +501,7 @@ orbit_idl_tmpvars_assign(OIDL_Marshal_Node *top, int *counter)
   orbit_idl_node_foreach(top, (GFunc)orbit_idl_assign_tmpvar_names, counter);
 }
 
+/* XXX todo - fix this with a pass to assign MN_ENDIAN_DEPENDANT flag */
 gboolean
 orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node)
 {
@@ -506,9 +527,16 @@ orbit_idl_marshal_endian_dependant_p(OIDL_Marshal_Node *node)
       || orbit_idl_marshal_endian_dependant_p(node->u.loop_info.contents);
     break;
   case MARSHAL_SWITCH:
-    btmp =
-      orbit_idl_marshal_endian_dependant_p(node->u.switch_info.discrim)
-      || orbit_idl_marshal_endian_dependant_p(node->u.switch_info.contents);
+    {
+      GSList *ltmp;
+      btmp = orbit_idl_marshal_endian_dependant_p(node->u.switch_info.discrim);
+
+      for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp))
+	btmp = btmp && orbit_idl_marshal_endian_dependant_p(ltmp->data);
+    }    
+    break;
+  case MARSHAL_CASE:
+    btmp = orbit_idl_marshal_endian_dependant_p(node->u.case_info.contents);
     break;
   default:
     btmp = FALSE;
@@ -560,8 +588,11 @@ if(!(anode)->name \
   case MARSHAL_SWITCH:
     orbit_idl_collapse_sets(node->u.switch_info.discrim);
     COLLAPSE_NODE(node->u.switch_info.discrim);
-    orbit_idl_collapse_sets(node->u.switch_info.contents);
-    COLLAPSE_NODE(node->u.switch_info.contents);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)orbit_idl_collapse_sets, NULL);
+    break;
+  case MARSHAL_CASE:
+    orbit_idl_collapse_sets(node->u.case_info.contents);
+    COLLAPSE_NODE(node->u.case_info.contents);
     break;
   case MARSHAL_UPDATE:
     orbit_idl_collapse_sets(node->u.update_info.amount);

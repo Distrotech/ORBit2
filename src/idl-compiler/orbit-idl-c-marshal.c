@@ -112,7 +112,37 @@ c_marshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 static void
 c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  g_error("Can't do unions yet.");
+  char *ctmp;
+  GSList *ltmp;
+  guint8 last_tail_align;
+
+  c_marshal_generate(node->u.switch_info.discrim, cmi);
+
+  last_tail_align = cmi->last_tail_align;
+
+  ctmp = oidl_marshal_node_fqn(node->u.switch_info.discrim);
+  fprintf(cmi->ci->fh, "switch(%s) {\n", ctmp);
+  g_free(ctmp);
+
+  for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp)) {
+    GSList *ltmp2;
+    OIDL_Marshal_Node *sub;
+
+    cmi->last_tail_align = last_tail_align;
+
+    sub = ltmp->data;
+    g_assert(sub->type == MARSHAL_CASE);
+    for(ltmp2 = sub->u.case_info.labels; ltmp2; ltmp2 = g_slist_next(ltmp2)) {
+      fprintf(cmi->ci->fh, "case ");
+      orbit_cbe_write_const_node(cmi->ci->fh, ltmp2->data);
+      fprintf(cmi->ci->fh, ":\n");
+    }
+    c_marshal_generate(sub->u.case_info.contents, cmi);
+    fprintf(cmi->ci->fh, "break;\n");
+  }
+  fprintf(cmi->ci->fh, "}\n");
+
+  cmi->last_tail_align = node->iiop_tail_align;
 }
 
 static void

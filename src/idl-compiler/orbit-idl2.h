@@ -52,11 +52,12 @@ typedef struct _OIDL_Marshal_Node OIDL_Marshal_Node;
 typedef enum { MARSHAL_DATUM = 0,
 	       MARSHAL_LOOP = 1,
 	       MARSHAL_SWITCH = 2,
-	       MARSHAL_COMPLEX = 3,
-	       MARSHAL_UPDATE = 4,
-	       MARSHAL_CONST = 5,
-	       MARSHAL_SET = 6,
-	       MARSHAL_ALLOCATE = 7
+	       MARSHAL_CASE = 3,
+	       MARSHAL_COMPLEX = 4,
+	       MARSHAL_UPDATE = 5,
+	       MARSHAL_CONST = 6,
+	       MARSHAL_SET = 7,
+	       MARSHAL_ALLOCATE = 8,
 } OIDL_Marshal_Node_Type;
 
 typedef enum {
@@ -84,8 +85,13 @@ struct _OIDL_Marshal_Node {
       OIDL_Marshal_Node *contents;
     } loop_info;
     struct {
-      OIDL_Marshal_Node *discrim, *contents;
+      OIDL_Marshal_Node *discrim;
+      GSList *cases;
     } switch_info;
+    struct {
+      GSList *labels;
+      OIDL_Marshal_Node *contents;
+    } case_info;
     struct {
       guint32 datum_size;
     } datum_info;
