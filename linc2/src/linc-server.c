@@ -24,13 +24,6 @@
 #include "linc-debug.h"
 #include "linc-private.h"
 
-struct _LINCServerPrivate {
-	int        fd;
-	GMutex    *mutex;
-	LincWatch *tag;
-	GSList    *connections;
-};
-
 enum {
 	NEW_CONNECTION,
 	LAST_SIGNAL

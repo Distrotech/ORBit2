@@ -19,14 +19,6 @@
 #include <glib.h>
 #include "linc-private.h"
 
-typedef struct {
-	GSource       source;
-
-	GPollFD       pollfd;
-	GIOCondition  condition;
-	GIOFunc       callback;
-} LincUnixWatch;
-
 static gboolean 
 linc_source_prepare (GSource *source,
 		     gint    *timeout)
@@ -111,11 +103,6 @@ linc_source_create_watch (GMainContext *context,
 /*
  * Wrappers to make listening on two mainloops simpler
  */
-
-struct _LincWatch {
-	GSource *main_source;
-	GSource *linc_source;
-};
 
 LincWatch *
 linc_io_add_watch_fd (int          fd,
