@@ -36,6 +36,7 @@ char * orbit_cbe_get_typename(IDL_tree tree);
 void orbit_cbe_op_write_proto(FILE *of, IDL_tree op, const char *nom_prefix, gboolean for_epv);
 IDL_tree orbit_cbe_get_typespec(IDL_tree node);
 void orbit_cbe_write_const(FILE *of, IDL_tree tree);
+void orbit_cbe_write_const_node(FILE *of, OIDL_Marshal_Node *node);
 gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 
 #endif

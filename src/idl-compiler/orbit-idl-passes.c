@@ -249,9 +249,30 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
     }
     break;
   case MARSHAL_SWITCH:
-    oidl_pass_set_alignment(node->u.switch_info.discrim);
-    oidl_pass_set_alignment(node->u.switch_info.contents);
-    g_error("Union alignment sucketh currently. Fix unions.");
+    {
+      GSList *ltmp;
+      oidl_pass_set_alignment(node->u.switch_info.discrim);
+      g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_alignment, NULL);
+      node->arch_head_align = MAX(node->u.switch_info.discrim->arch_head_align, ALIGNOF_CORBA_STRUCT);
+      node->arch_tail_align = MAX(node->u.switch_info.discrim->arch_tail_align, ALIGNOF_CORBA_STRUCT);
+      for(ltmp = node->u.switch_info.cases, node->iiop_tail_align = ((OIDL_Marshal_Node *)ltmp->data)->iiop_tail_align;
+	  ltmp; ltmp = g_slist_next(ltmp)) {
+	OIDL_Marshal_Node *sub;
+
+	sub = ltmp->data;
+	node->arch_head_align = MAX(node->arch_head_align, sub->arch_head_align);
+	node->arch_tail_align = MAX(node->arch_tail_align, sub->arch_tail_align);
+	node->iiop_tail_align = MIN(node->iiop_tail_align, sub->iiop_tail_align);
+      }
+      node->iiop_head_align = node->u.switch_info.discrim->iiop_head_align;
+    }
+    break;
+  case MARSHAL_CASE:
+    oidl_pass_set_alignment(node->u.case_info.contents);
+    node->arch_head_align = node->u.case_info.contents->arch_head_align;
+    node->arch_tail_align = node->u.case_info.contents->arch_tail_align;
+    node->iiop_head_align = node->u.case_info.contents->iiop_head_align;
+    node->iiop_tail_align = node->u.case_info.contents->iiop_tail_align;
     break;
   case MARSHAL_UPDATE:
     oidl_pass_set_alignment(node->u.update_info.amount);
@@ -335,8 +356,19 @@ oidl_pass_set_coalescibility(OIDL_Marshal_Node *node)
     break;
   case MARSHAL_SWITCH:
     oidl_pass_set_coalescibility(node->u.switch_info.discrim);
-    oidl_pass_set_coalescibility(node->u.switch_info.contents);
-    /* Not coalescible, even if children are. */
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_coalescibility, NULL);
+    /* Not usually coalescible, even if children are. */
+    if(g_slist_length(node->u.switch_info.cases) < 2) { /* Further improvement possible - this should also kick in if
+							   all the cases use types of the same size. */
+      OIDL_Marshal_Node *sub;
+
+      sub = node->u.switch_info.cases->data;
+      if((sub->flags & MN_COALESCABLE)
+	 && (node->u.switch_info.discrim->flags & MN_COALESCABLE)
+	 && (node->u.switch_info.discrim->iiop_tail_align == node->u.switch_info.discrim->arch_tail_align)
+	 && (sub->iiop_head_align == sub->arch_head_align))
+	node->flags |= MN_COALESCABLE;
+    }
     break;
   case MARSHAL_UPDATE:
     oidl_pass_set_coalescibility(node->u.update_info.amount);

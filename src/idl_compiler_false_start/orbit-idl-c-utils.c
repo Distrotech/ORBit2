@@ -671,3 +671,12 @@ orbit_cbe_write_const(FILE *of, IDL_tree tree)
     g_error("We were asked to print a constant for %s", IDL_tree_type_names[tree->_type]);
   }
 }
+
+void
+orbit_cbe_write_const_node(FILE *of, OIDL_Marshal_Node *node)
+{
+  if(node->tree)
+    orbit_cbe_write_const(of, node->tree);
+  else
+    fprintf(of, "%d", node->u.const_info.amount);
+}
