@@ -40,6 +40,7 @@ IDLVoid::const_decl_write (ostream          &ostr,
 void
 IDLVoid::typedef_decl_write (ostream          &ostr,
 			     Indent           &indent,
+			     IDLCompilerState &state,
 			     const IDLTypedef &target,
 			     const IDLTypedef *active_typedef = 0) const
 {

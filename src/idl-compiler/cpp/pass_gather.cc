@@ -74,10 +74,11 @@ IDLPassGather::doStruct(IDL_tree node,IDLScope &scope) {
 
 	Super::doStruct(node,*idlStruct);
 }
+#endif
 
 
 
-
+#if 0 //!!!
 
 void 
 IDLPassGather::doUnion(IDL_tree node,IDLScope &scope) {

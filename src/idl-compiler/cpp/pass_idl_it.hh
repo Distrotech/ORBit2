@@ -43,8 +43,6 @@ class IDLIteratingPass {
 protected:
 	virtual void doTypedef(IDL_tree node,IDLScope &scope) {
 	}
-	virtual void doEnum(IDL_tree node,IDLScope &scope) {
-	}
 	virtual void doConstant(IDL_tree node,IDLScope &scope) {
 	}
 #if 0 //!!!
@@ -59,22 +57,22 @@ protected:
 	}
 	virtual void doCaseStmt(IDL_tree node,IDLScope &scope) {
 	}
-#if 0 //!!!
-	virtual void doSequence(IDL_tree node, IDLScope &scope){
-	}
-#endif
 	virtual void doForwardDcl(IDL_tree node, IDLScope &scope){
 	}
 
+	virtual void doEnum(IDL_tree node,IDLScope &scope) {
+	}
 #if 0 //!!!
 	virtual void doStruct(IDL_tree node,IDLScope &scope);
-#endif
-	virtual void doException(IDL_tree node,IDLScope &scope);
-	virtual void doInterface(IDL_tree node,IDLScope &scope);
-	virtual void doModule(IDL_tree node,IDLScope &scope);
-#if 0 //!!!
+	virtual void doSequence(IDL_tree node, IDLScope &scope){
+	}
 	virtual void doUnion(IDL_tree node,IDLScope &scope);
 #endif
+	virtual void doException(IDL_tree node,IDLScope &scope);
+
+	virtual void doInterface(IDL_tree node,IDLScope &scope);
+
+	virtual void doModule(IDL_tree node,IDLScope &scope);
 
 	virtual void doSwitchBody(IDL_tree list,IDLScope &scope);
 	virtual void doMemberList(IDL_tree list,IDLScope &scope);

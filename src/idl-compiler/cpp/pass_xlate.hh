@@ -62,6 +62,7 @@ public:
 
 protected:
 	void doTypedef(IDL_tree node,IDLScope &scope);
+	
 #if 0 //!!!
 	void doStruct(IDL_tree node,IDLScope &scope);
 	void doUnion(IDL_tree node,IDLScope &scope);
@@ -85,6 +86,10 @@ protected:
 #if 0 //!!!
 	void enumHook(IDL_tree list,IDLScope &scope);
 #endif
+
+#if 0
+	void struct_create_members (const IDLStruct &strct);
+#endif
 };
 
 #if 0 //!!!
@@ -100,7 +105,6 @@ public:
 };
 #endif
 
-#if 0 //!!!
 class IDLWriteArrayProps : public IDLOutputPass::IDLOutputJob {
 	IDLArray const	&m_array;
 	IDLElement const &m_dest;
@@ -128,6 +132,7 @@ public:
 	void run() = 0;
 };
 
+#if 0 //!!!
 class IDLWriteEnumAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLEnum const& m_enum;
@@ -158,6 +163,7 @@ public:
 
 
 typedef IDLWriteUnionAnyFuncs IDLWriteStructAnyFuncs;
+#endif
 
 class IDLWriteExceptionAnyFuncs : public IDLWriteAnyFuncs
 {
@@ -169,7 +175,7 @@ public:
 	void run();
 };
 
-
+#if 0 //!!!
 class IDLWriteIfaceAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLInterface const &m_iface;
@@ -183,6 +189,7 @@ public:
 		writeAnyFuncs(true, cpptype, ctype );
 	}
 };
+#endif
 
 class IDLWriteArrayAnyFuncs : public IDLWriteAnyFuncs
 {
@@ -194,6 +201,5 @@ public:
 		: IDLWriteAnyFuncs(state, pass), m_array(_array), m_dest(_dest) {}
 	void run();
 };
-#endif
 
 #endif

@@ -28,6 +28,8 @@
 #include "IDLArray.hh"
 
 #include "IDLTypedef.hh"
+#include "pass.hh"
+#include "pass_xlate.hh"
 
 IDLArray::IDLArray (IDLType const &element_type,
 		    string const  &id,
@@ -41,6 +43,45 @@ IDLArray::IDLArray (IDLType const &element_type,
 	{
 		m_dims.push_back (IDL_INTEGER (IDL_LIST (curdim).data).value);
 	}
+}
+
+bool
+IDLArray::conversion_required () const
+{
+	return m_element_type.conversion_required ();
+}
+
+void
+IDLArray::copy_cpp_array (ostream      &ostr,
+			  Indent       &indent,
+			  const string &src_id,
+			  const string &dest_id) const
+{
+	unsigned int depth = 0;
+	string array_pos;
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
+		array_pos += "[";
+		array_pos += iterator_name;
+		array_pos += "]";
+
+		ostr << indent
+		     << "for (CORBA::ULong " << iterator_name << " = 0; "
+		     << iterator_name << " < " << *i << "; "
+		     << iterator_name << "++)" << endl;
+		ostr << indent++ << "{" << endl;
+
+		g_free (iterator_name);
+	}
+
+	ostr << indent << dest_id + array_pos << " = "
+	     << src_id + array_pos << ";" << endl;
+
+	for (; depth; depth--)
+	{
+		ostr << --indent << "}" << endl;
+	}	
 }
 
 void
@@ -114,14 +155,26 @@ IDLArray::fill_cpp_array (ostream      &ostr,
 void
 IDLArray::typedef_decl_write (ostream          &ostr,
 			      Indent           &indent,
+			      IDLCompilerState &state,
 			      const IDLTypedef &target,
 			      const IDLTypedef *active_typedef = 0) const
 {
 #warning "WRITE ME"
+	string array_id = target.get_cpp_identifier ();
+	string slice_id = array_id + "_slice";
+	string wrapper = conversion_required () ?
+		IDL_IMPL_NS "::ArrayVariable" : IDL_IMPL_NS "::ArrayFixed";
+	
+	int length = 1;
+	for (const_iterator i = begin (); i != end (); i++)
+		length *= *i;
+
+	//////////////////////
+	// Array types
+
 	// Create array typedef
 	ostr << indent << "typedef "
-	     << m_element_type.get_cpp_member_typename ()
-	     << ' ' << target.get_cpp_identifier ();
+	     << m_element_type.get_cpp_member_typename () << " " << array_id;
 
 	// Write dimensions
 	for (const_iterator i = begin (); i != end (); i++)
@@ -131,38 +184,109 @@ IDLArray::typedef_decl_write (ostream          &ostr,
 
 	// Create slice typedef
 	ostr << indent << "typedef "
-	     << m_element_type.get_cpp_member_typename ()
-	     << ' ' << target.get_cpp_identifier () << "_slice";
+	     << m_element_type.get_cpp_member_typename () << " " << slice_id;
 
 	// An array slice is all the dims except the first one
 	for (const_iterator i = ++begin (); i != end (); i++)
 		ostr << '[' << *i << ']';
 	ostr << ';' << endl;
 
-	// Create _out typedef
-	if (!m_element_type.conversion_required ())
+	// Var
+	ostr << indent << "typedef " << wrapper + "_var< " << slice_id << ", " << length << " > "
+	     << array_id + "_var;" << endl;
+	
+	// Out
+	if (conversion_required ())
 	{
-		// _out
-		ostr << indent << "typedef " << target.get_cpp_identifier ()
-		     << " " << target.get_cpp_identifier () << "_out;"
-		     << endl << endl;
-
-		// Allocator
-		ostr << indent << "inline " << target.get_cpp_identifier () << "_slice * " 
-		     << target.get_cpp_identifier () << "_alloc ()" << endl
-		     << indent++ << "{" << endl;
-		ostr << indent << "return " << target.get_c_typename () << "__alloc ();" << endl;
-		ostr << --indent << "}" << endl << endl;
-			
-		return;
+		ostr << indent << "typedef "
+		     << IDL_IMPL_NS "::ArrayVariable_out< " << slice_id << ", " << length << " > "
+		     << array_id + "_out;" << endl;
+	} else {
+		ostr << indent << "typedef " << array_id << " "
+		     << array_id + "_out;" << endl;
 	}
 
-	ostr << indent << "typedef " << IDL_IMPL_NS "::ArrayVariable_out< "
-	     << target.get_cpp_identifier () << "_slice, " << *(begin ()) << " > "
-	     << target.get_cpp_identifier () << "_out;" << endl;
-	ostr << indent << "typedef " << IDL_IMPL_NS "::ArrayVariable_var< "
-	     << target.get_cpp_identifier () << "_slice, " << *(begin ()) << " > "
-	     << target.get_cpp_identifier () << "_var;" << endl;
+	// For_any
+	ostr << indent << "typedef " << wrapper + "_forany< " << slice_id << ", " << length << " > "
+	     << array_id + "_forany;" << endl;
+
+	// Props
+	ostr << indent << "typedef " << IDL_IMPL_NS "::ArrayProperties< "
+	     << slice_id << ", " << length << " > " << array_id + "Props;" << endl;
+		
+	ostr << endl;
+	
+	//////////////////////
+	// Array methods
+
+	string static_prefix = target.getTopLevelInterface () ? "static " : "";
+	
+	// Allocator
+	ostr << indent << static_prefix << "inline "
+	     << slice_id << " * " << array_id << "_alloc ()" << endl
+	     << indent++ << "{" << endl;
+	if (conversion_required ())
+	{
+#warning "WRITE ME"
+		ostr << indent << "// WRITE ME" << endl;
+	} else {
+		ostr << indent << "return " << target.get_c_typename () << "__alloc ();" << endl;
+	}
+	ostr << --indent << "}" << endl << endl;
+	
+	// Copy
+	ostr << indent << static_prefix << "inline "
+	     << "void " << array_id << "_copy ("
+	     << slice_id << " *dest, " << "const " << slice_id << " *source)" << endl
+	     << indent++ << "{" << endl;
+	if (conversion_required ())
+	{
+#warning "WRITE ME"
+		ostr << indent << "// WRITE ME" << endl;
+	} else {
+		copy_cpp_array (ostr, indent, "source", "dest");
+	}
+	ostr << --indent << "}" << endl << endl;
+	
+	// Dup
+	ostr << indent << static_prefix << "inline "
+	     << slice_id << " * " << array_id << "_dup ("
+	     << "const " << slice_id << " *source)" << endl
+	     << indent++ << "{" << endl;
+	if (conversion_required ())
+	{
+#warning "WRITE ME"
+		ostr << indent << "// WRITE ME" << endl;
+	} else {	
+		ostr << indent << slice_id << " *ret = "
+		     << array_id << "_alloc ();" << endl;
+		ostr << indent << array_id << "_copy (ret, source);" << endl;
+		ostr << indent << "return ret;" << endl;
+	}
+	ostr << --indent << "}" << endl << endl;
+	
+	// Free
+	ostr << indent << static_prefix << "inline "
+	     << "void " << array_id << "_free (" << slice_id << " *val)" << endl
+	     << indent++ << "{" << endl;
+	if (conversion_required ())
+	{
+#warning "WRITE ME"
+		ostr << indent << "// WRITE ME" << endl;
+	} else {
+		ostr << indent << "CORBA_free (val);" << endl;
+	}
+	ostr << --indent << "}" << endl << endl;
+
+	ostr << endl;
+	
+	//////////////////////
+	// Implementation specializations
+	if (!state.m_arrays.array_exists (*this))
+	{
+                ORBITCPP_MEMCHECK (new IDLWriteArrayProps (*this, target, state, *state.m_pass_xlate));
+                ORBITCPP_MEMCHECK (new IDLWriteArrayAnyFuncs (*this, target, state, *state.m_pass_xlate));
+	}
 }
 
 string

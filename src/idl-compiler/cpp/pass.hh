@@ -36,7 +36,7 @@
 #include "types.hh"
 #include "types/IDLInterface.hh"
 //#include "types/IDLSequenceList.hh"
-//#include "types/IDLArrayList.hh"
+#include "types/IDLArrayList.hh"
 #include <iostream>
 #include <vector>
 
@@ -55,17 +55,17 @@ class IDLOutputPass;
 
 class IDLCompilerState {
 public:
-	string						m_basename;
-	IDLScope					m_rootscope;
-	vector<IDLInterface *>		m_interfaces;
-	IDLTypeParser				m_typeparser;
-//	IDLSequenceList				m_seq_list;
-//	IDLArrayList				m_array_list;
+	string                  m_basename;
+	IDLScope                m_rootscope;
+	vector<IDLInterface *>  m_interfaces;
+	IDLTypeParser           m_typeparser;
+//	IDLSequenceList         m_seqs;
+	IDLArrayList            m_arrays;
 
-	IDLPass						*m_pass_gather;
-	IDLOutputPass				*m_pass_xlate;
-	IDLOutputPass				*m_pass_stubs;
-	IDLOutputPass				*m_pass_skels;
+	IDLPass                *m_pass_gather;
+	IDLOutputPass          *m_pass_xlate;
+	IDLOutputPass          *m_pass_stubs;
+	IDLOutputPass          *m_pass_skels;
 
 	IDLCompilerState(string const &basename,IDL_tree list)
 		: m_basename(basename),m_rootscope("",list),m_typeparser(*this) {

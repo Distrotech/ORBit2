@@ -60,6 +60,7 @@ public:
 
 	virtual void typedef_decl_write (ostream          &ostr,
 					 Indent           &indent,
+					 IDLCompilerState &state,
 					 const IDLTypedef &target,
 					 const IDLTypedef *active_typedef = 0) const = 0;
 	
