@@ -443,9 +443,9 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of,
 	    "static PortableServer_ServantBase__epv impl_%s_base_epv = {\n",
 	    id);
-    fprintf(ski->of, "NULL, /* _private data */\n");
-    fprintf(ski->of, "NULL, /* finalize routine */\n");
-    fprintf(ski->of, "NULL, /* default_POA routine */\n");
+    fprintf(ski->of, "NULL,             /* _private data */\n");
+    fprintf(ski->of, "(gpointer) & impl_%s__destroy, /* finalize routine */\n", id);
+    fprintf(ski->of, "NULL,             /* default_POA routine */\n");
     fprintf(ski->of, "};\n");
     fprintf(ski->of, "static POA_%s__epv impl_%s_epv = {\nNULL, /* _private */\n", id, id);
     subski.tree = IDL_INTERFACE(ski->tree).body;
