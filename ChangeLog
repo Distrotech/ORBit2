@@ -1,3 +1,6 @@
+2002-05-24  Richard Kinder <r_kinder@yahoo.com>
+	* src/orb/orb-core/orbhttp.c: cleanup magic numbers, closes #78938
+
 2002-05-22  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c
