@@ -907,50 +907,79 @@ void testContext(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
+void
+testMisc (test_TestFactory   factory, 
+	  CORBA_Environment *ev)
+{
+	/* Check a daft one seen in CORBA_exception_free */
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			     ex_test_SimpleException, NULL);
+	CORBA_exception_free (ev);
+	g_assert (ev->_id == NULL);
+	g_assert (ev->_any._value == NULL);
+
+	/* TypeCode equal */
+	g_assert (CORBA_TypeCode_equal (
+		TC_CORBA_string, TC_CORBA_string, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (!CORBA_TypeCode_equal (
+		TC_test_StrSeq, TC_test_AnotherStrSeq, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/* TypeCode equivalent */
+	g_assert (CORBA_TypeCode_equivalent (
+		TC_CORBA_string, TC_CORBA_string, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_TypeCode_equivalent (
+		TC_test_StrSeq, TC_test_AnotherStrSeq, ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
 static void
 run_tests (test_TestFactory   factory,
 	   CORBA_Environment *ev,
 	   gboolean           in_proc)
 {
-  int i;
+	int i;
 
 #ifdef TIMING_RUN
-  for(i=0;i<100;i++){
+	for (i = 0; i < 100; i++) {
 #else
-  for(i=0;i<1;i++){
+	for (i = 0; i < 1; i++) {
 #endif
-    testConst();
-    testAttribute(factory,ev);
-    testString(factory,ev);
-    testLong(factory,ev);
-    testEnum(factory,ev);
+		testConst ();
+		testAttribute (factory, ev);
+		testString (factory, ev);
+		testLong (factory, ev);
+		testEnum (factory, ev);
 #ifndef BIG_STUBS
-    testException(factory,ev);
+		testException (factory, ev);
 #endif
-    testFixedLengthStruct(factory,ev);
-    testVariableLengthStruct(factory,ev);
-    testCompoundStruct(factory,ev);
-    testStructAny(factory,ev);
-    testUnboundedSequence(factory,ev);
-    testBoundedSequence(factory,ev);
-    testFixedLengthUnion(factory,ev);
-    testVariableLengthUnion(factory,ev);
+		testFixedLengthStruct (factory, ev);
+		testVariableLengthStruct (factory, ev);
+		testCompoundStruct (factory, ev);
+		testStructAny (factory, ev);
+		testUnboundedSequence (factory, ev);
+		testBoundedSequence (factory, ev);
+		testFixedLengthUnion (factory, ev);
+		testVariableLengthUnion (factory, ev);
 #ifndef BIG_STUBS
-    testFixedLengthArray(factory,ev);
-    testVariableLengthArray(factory,ev);
-    testAnyLong(factory,ev);
-    testAnyString(factory,ev);
-    testAnyStruct(factory,ev);
-    testAnyException(factory,ev);
-    testSequenceOfAny(factory,ev);
-    testTypeCode(factory,ev);
-    testContext(factory,ev);
-    testIInterface(factory,ev);
+		testFixedLengthArray (factory, ev);
+		testVariableLengthArray (factory, ev);
+		testAnyLong (factory, ev);
+		testAnyString (factory, ev);
+		testAnyStruct (factory, ev);
+		testAnyException (factory, ev);
+		testSequenceOfAny (factory, ev);
+		testTypeCode (factory, ev);
+		testContext (factory, ev);
+		testIInterface (factory, ev);
+		testMisc (factory, ev);
 #endif
-  }
-
+	}
+	
 #ifdef TIMING_RUN
-  g_warning ("Did '%d' iterations", i);
+	g_warning ("Did '%d' iterations", i);
 #endif
 }
 

@@ -1,5 +1,11 @@
 2001-08-07  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c: call testMisc.
+	(testMisc): impl CORBA_TypeCode_equal / equivalent
+	regression tests.
+
+2001-08-07  Michael Meeks  <michael@ximian.com>
+
 	* Version 2.3.93
 
 	* src/orb/orb-core/corba-typecode.c
