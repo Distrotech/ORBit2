@@ -32,10 +32,10 @@ DIE=0
 # Check for automake, the required version is set in Makefile.am
 (automake --version) < /dev/null > /dev/null 2>&1 ||{
 	echo
-	echo "You must have at minimum automake version 1.3 installed"
+	echo "You must have at minimum automake version 1.4 installed"
 	echo "to compile ORBit. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
-	echo "ftp://ftp.cygnus.com/pub/home/tromey/automake-1.3b.tar.gz"
+	echo "ftp://ftp.cygnus.com/pub/home/tromey/automake-1.4.tar.gz"
 	DIE=1
 }
 
