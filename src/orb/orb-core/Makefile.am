@@ -17,5 +17,8 @@ IDLOUT = corba-defs-common.c corba-defs-stubs.c
 
 $(IDLOUT) runidl: corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA --noskels --nodefskels --noheaders \
+	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA --noskels --nodefskels \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl
+	[ -f $(top_builddir)/include/orbit/orb-core/corba-defs.h ] \
+	&& rm -f corba-defs.h \
+	|| mv -f corba-defs.h $(top_builddir)/include/orbit/orb-core/corba-defs.h
