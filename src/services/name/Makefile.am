@@ -65,7 +65,7 @@ orbit_name_server_2_LDFLAGS = $(FLAGS)
 orbit_name_server_2_DEPENDENCIES = $(DEPS) CosNaming.h
 orbit_name_server_2_LDADD = libname-server-2.a $(LDADDS)
 
-$(name_client_2_SOURCES) $(orbit_name_server_2_SOURCES) : CosNaming.h
+$(libname_server_2_a_SOURCES) $(name_client_2_SOURCES) $(orbit_name_server_2_SOURCES) : CosNaming.h
 
 EXTRA_DIST = $(idl_DATA)
 
