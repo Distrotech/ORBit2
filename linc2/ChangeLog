@@ -1,3 +1,7 @@
+2003-04-30  Michael Meeks  <michael@ximian.com>
+
+	* autogen.sh: tolerate libtool 1.5
+
 2003-04-13  Masahiro Sakai  <sakai@tom.sfc.keio.ac.jp>
 
 	* src/linc-protocols.c (linc_protocol_get_sockaddr_unix): fix to
