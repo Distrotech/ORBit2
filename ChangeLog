@@ -1,5 +1,8 @@
 2003-01-09  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: bump version to 2.7.0,
+	require linc >= 1.1.0
+
 	* Branch for gnome-2-2
 
 2003-01-06  Michael Meeks  <michael@ximian.com>
