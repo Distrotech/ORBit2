@@ -542,9 +542,10 @@ giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 	g_warning ("Remove XX:%p:(%p) - %d", ent, ent->async_cb,
 		   g_list_length (giop_queued_messages));
 #endif
-	giop_recv_destroy_queue_entry_T (ent);
 	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
 	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+	giop_recv_destroy_queue_entry_T (ent);
 }
 
 void
