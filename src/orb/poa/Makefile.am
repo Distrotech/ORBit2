@@ -14,8 +14,6 @@ INCLUDES=-I$(top_srcdir)/include \
 
 POA_IDLOUT=poa-defs-common.c
 
-$(main_src) : $(BUILT_SOURCE)
-
 main_src = \
 	poa.c \
 	orbit-poa-export.h \

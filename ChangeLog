@@ -1,5 +1,15 @@
 2001-09-17  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/poa/Makefile.am: remove bogus BUILT_SOURCE
+	dependancy.
+
+	* src/orb/poa/poa.c: clean up includes. Don't include
+	corba-ops.h.
+
+	* test/inhibit/test-inhibit.c: include stdio.h.
+
+2001-09-17  Mark McLoughlin <mark@skynet.ie>
+
 	* include/orbit/orb-core/orbit-small.h: don't include
 	IDL.h.
 
