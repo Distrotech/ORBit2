@@ -1,5 +1,5 @@
 #include "genrand.h"
-#include "ORBitutil/util.h"
+#include <orbit/util/orbit-util.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -55,6 +55,18 @@ hashlong(long val)
 
   return retval;
 }
+
+#if ORBIT_SSL_SUPPORT
+#include <openssl/rand.h>
+
+static gboolean
+genrand_openssl(guchar *buffer, int buf_len)
+{
+  static RAND_METHOD *rm = NULL;
+  if(!rm) rm = RAND_get_rand_method();
+  RAND_bytes(buffer, buf_len);
+}
+#endif
 
 static gboolean
 genrand_unix(guchar *buffer, int buf_len)
@@ -112,6 +124,8 @@ ORBit_genrand_buf(ORBit_genrand *gr, guchar *buffer, int buf_len)
   g_return_if_fail(buf_len);
 
   if(gr && gr->fd >=0 && genrand_dev(gr, buffer, buf_len))
+    return;
+  else if(genrand_openssl(buffer, buf_len))
     return;
   else if(genrand_unix(buffer, buf_len))
     return;
