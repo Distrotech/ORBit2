@@ -24,7 +24,7 @@ ORBit_alloc_core(size_t block_size,
       align = 4;
     psz = (psz+(align-1)) & ~(align-1);
   } else {
-    psz = (psz+(ALIGNOF_CORBA_TCVAL-1)) & ~(ALIGNOF_CORBA_TCVAL-1);
+    psz = (psz+(ORBIT_ALIGNOF_CORBA_TCVAL-1)) & ~(ORBIT_ALIGNOF_CORBA_TCVAL-1);
   }
   pre = g_malloc(psz + block_size);
   /* NOTE: we assume g_malloc returns memory that meets the alignment

@@ -1,3 +1,15 @@
+2001-08-30 Mark McLoughlin <mark@skynet.ie>
+
+	* acconfig.h, configure.in, 
+	  include/orbit/orbit-config.h.in:
+	move ALIGNOF defines out of config.h
+	and into public view. Rename to ORBIT_ALIGNOF*.
+
+	* include/orbit/orb-core/orb-types.h,
+	  src/idl-compiler/orbit-idl-passes.c,
+	  src/orb/orb-core/allocators.c,
+	  src/orb/orb-core/corba-any.c: update.
+	
 2001-08-29 Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-any.c: minor cleanups.
