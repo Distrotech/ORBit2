@@ -44,5 +44,6 @@ char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node);
 gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 void orbit_cbe_write_node_typespec(FILE *of, OIDL_Marshal_Node *node);
 gboolean orbit_cbe_type_is_builtin(IDL_tree);
+void orbit_cbe_param_printptrs(FILE *of, IDL_tree param, IDL_ParamRole role);
 
 #endif
