@@ -478,18 +478,19 @@ linc_connection_read (LINCConnection *cnx,
 	return bytes_read;
 }
 
-static LINCIOStatus
-write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
+static glong
+write_data (LINCConnection *cnx, QueuedWrite *qw)
 {
+	glong bytes_written = 0;
+
 	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
 			      LINC_IO_FATAL_ERROR);
 
 	while ((qw->nvecs > 0) && (qw->vecs->iov_len > 0)) {
 		int n;
 
-		d_printf ("write_data %ld bytes to fd %d : %s\n",
-			  calc_size (qw->vecs, qw->nvecs),
-			  cnx->priv->fd, queue_write ? "from queue" : "direct");
+		d_printf ("write_data %ld bytes to fd %d - ",
+			  calc_size (qw->vecs, qw->nvecs), cnx->priv->fd);
 
 #ifdef LINC_SSL_SUPPORT
 		if (cnx->options & LINC_CONNECTION_SSL)
@@ -499,6 +500,8 @@ write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
 #endif
 			n = writev (cnx->priv->fd, qw->vecs,
 				    MIN (qw->nvecs, WRITEV_IOVEC_LIMIT));
+
+		d_printf ("wrote %d bytes\n", n);
 
 		if (n < 0) {
 #ifdef LINC_SSL_SUPPORT
@@ -533,9 +536,9 @@ write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
 			return LINC_IO_FATAL_ERROR;
 
 		else {
-			glong size = n;
+			bytes_written += n;
 
-			while (n >= qw->vecs->iov_len) {
+			while (qw->nvecs > 0 && n >= qw->vecs->iov_len) {
 				n -= qw->vecs->iov_len;
 				qw->nvecs--;
 				qw->vecs++;
@@ -545,13 +548,10 @@ write_data (LINCConnection *cnx, QueuedWrite *qw, gboolean queue_write)
 				qw->vecs->iov_len  -= n;
 				qw->vecs->iov_base += n;
 			}
-
-			if (queue_write)
-				queue_signal (cnx, -size);
 		}
 	}
 
-	return LINC_IO_OK;
+	return bytes_written;
 }
 
 /**
@@ -575,8 +575,8 @@ linc_connection_writev (LINCConnection       *cnx,
 			int                   nvecs,
 			const LINCWriteOpts  *opt_write_opts)
 {
-	QueuedWrite     qw;
-	LINCIOStatus status;
+	QueuedWrite qw;
+	glong       status;
 
 	/* FIXME: need an option to turn this off ? */
 	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
@@ -598,7 +598,7 @@ linc_connection_writev (LINCConnection       *cnx,
 	qw.nvecs = nvecs;
 
  continue_write:
-	status = write_data (cnx, &qw, FALSE);
+	status = write_data (cnx, &qw);
 
 	if (status == LINC_IO_QUEUED_DATA) {
 		/* Queue data & listen for buffer space */
@@ -612,7 +612,9 @@ linc_connection_writev (LINCConnection       *cnx,
 			linc_main_iteration (TRUE);
 			goto continue_write;
 		}
-	}
+
+	} else if (status >= LINC_IO_OK)
+		status = LINC_IO_OK;
 
 	return status;
 }
@@ -799,17 +801,19 @@ linc_connection_io_handler (GIOChannel  *gioc,
 		d_printf ("IO Out - buffer space free ...\n");
 
 		if (cnx->priv->write_queue) {
+			glong        status;
 			QueuedWrite *qw = cnx->priv->write_queue->data;
-			LINCIOStatus status;
 
-			status = write_data (cnx, qw, TRUE);
+			status = write_data (cnx, qw);
 
-			d_printf ("Wrote queue %d on fd %d\n", status, cnx->priv->fd);
+			d_printf ("Wrote queue %ld on fd %d\n", status, cnx->priv->fd);
 
-			if (status == LINC_IO_OK) {
+			if (status >= LINC_IO_OK) {
 				cnx->priv->write_queue = g_list_delete_link (
 					cnx->priv->write_queue, cnx->priv->write_queue);
 				queued_write_free (qw);
+
+				queue_signal (cnx, -status);
 
 				done_writes = (cnx->priv->write_queue == NULL);
 
