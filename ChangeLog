@@ -1,5 +1,9 @@
 2003-03-27  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_init): always enable wire data
+	wiping if ORBIT_PURIFY.
+
 	* src/orb/GIOP/giop.c (giop_tmpdir_init):
 	use g_get_tmp_dir instead of hard-coding "/tmp".
 
