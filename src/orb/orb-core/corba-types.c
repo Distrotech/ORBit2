@@ -27,14 +27,3 @@ ORBit_sequence_CORBA_octet_dup(const CORBA_sequence_CORBA_octet *in)
 
   return retval;
 }
-
-CORBA_sequence_PortableServer_POA*
-CORBA_sequence_PortableServer_POA__alloc(void)
-{
-  return NULL;
-}
-PortableServer_POA*
-CORBA_sequence_PortableServer_POA_allocbuf(CORBA_unsigned_long len)
-{
-  return NULL;
-}

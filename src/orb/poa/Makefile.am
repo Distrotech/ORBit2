@@ -4,6 +4,8 @@ IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-I$(top_builddir)/include/orbit/poa \
+	-I$(top_srcdir)/src/orb/orb-core \
+	-I$(top_builddir)/src/orb/orb-core \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
 
@@ -18,8 +20,11 @@ liborb_poa_la_SOURCES=\
 	poa-servants.c
 
 BUILT_SOURCES=$(POA_IDLOUT)
+CLEANFILES=runidl_poa $(BUILT_SOURCES)
 
-$(POA_IDLOUT) runidl_poa: poa-defs.idl $(IDL)
+$(POA_IDLOUT): runidl_poa
+
+runidl_poa: poa-defs.idl $(IDL)
 	-(rm -f $(POA_IDLOUT) || true) > /dev/null
 	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
@@ -32,3 +37,4 @@ $(POA_IDLOUT) runidl_poa: poa-defs.idl $(IDL)
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done
 	mv -f poa-defs.h $(top_builddir)/include/orbit/orb-core/poa-defs.h
+	touch runidl_poa

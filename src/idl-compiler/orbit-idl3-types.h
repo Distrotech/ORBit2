@@ -150,6 +150,7 @@ struct _OIDL_Marshal_Node {
     } case_info;
     struct {
       guint32 datum_size;
+      gboolean needs_bswap;
     } datum_info;
     struct {
       OIDL_Marshal_Node *amount;

@@ -25,7 +25,8 @@ typedef struct {
   int *use_count;
   GFunc death_callback;
   gpointer user_data;
-  guint life_flags;
+  guint16 life_flags;
+  guint16 use_cnt; /* method invokations */
 } ORBit_POAObject;
 
 #define ORBIT_SERVANT_TO_POAOBJECT(s) \

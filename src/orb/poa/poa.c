@@ -1,7 +1,8 @@
 #include <orbit/orbit.h>
 #include "orbit-poa.h"
 #include <string.h>
-#include "../orb-core/orb-core-export.h"
+#include "orb-core-export.h"
+#include "corba-ops.h"
 
 static PortableServer_Servant
 ORBit_POA_ServantManager_use_servant
@@ -122,8 +123,7 @@ poalist_add_child(gpointer key, gpointer value, gpointer data)
 {
   PortableServer_POAList *retval = data;
 
-  retval->_buffer[retval->_maximum++] =
-    (PortableServer_POA)CORBA_Object_duplicate(value, NULL);
+  retval->_buffer[retval->_maximum++] = CORBA_Object_duplicate(value, NULL);
 }
 
 PortableServer_POAList *
@@ -847,11 +847,9 @@ static void
 traverse_cb(PortableServer_ObjectId *oid, ORBit_POAObject *pobj, 
   TraverseInfo *info)
 {
-#if 0
     if ( pobj->use_cnt > 0 ) {
 	++(info->num_in_use);
     }
-#endif
     if ( info->do_deact ) {
         ORBit_POA_deactivate_object(info->poa, pobj,
 			     info->do_etherealize,
@@ -864,11 +862,8 @@ ORBit_POA_is_inuse(PortableServer_POA poa,
 		   CORBA_boolean consider_children,
 		   CORBA_Environment *ev)
 {
-#if 0
-  GSList *child;
   if ( poa->use_cnt > 0 ) 
     return CORBA_TRUE;
-#endif
   if ( consider_children )
     {
       gboolean is_inuse = FALSE;
@@ -1506,9 +1501,7 @@ ORBit_POA_activate_object(PortableServer_POA poa,
 {
     g_assert( pobj->servant == 0 );	/* must not be already active */
     g_assert( (poa->life_flags & ORBit_LifeF_DeactivateDo) == 0 );
-#if 0
     g_assert( pobj->use_cnt == 0 );
-#endif
     /* XXX: above should be an exception? */
     g_assert( servant->_private == 0 );	/* its POAObject */
     {
@@ -1558,22 +1551,18 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
     	pobj->life_flags |= ORBit_LifeF_DoEtherealize;
     if ( is_cleanup )
     	pobj->life_flags |= ORBit_LifeF_IsCleanup;
-#if 0
     if ( pobj->use_cnt > 0 ) {
         pobj->life_flags |= ORBit_LifeF_DeactivateDo;
 	pobj->life_flags |= ORBit_LifeF_NeedPostInvoke;
 	return;
     }
-#endif
     pobj->servant = 0;
     serv->_private = 0;
 
     if ( (pobj->life_flags & ORBit_LifeF_DoEtherealize)!=0 ) {
 	CORBA_Environment env, *ev = &env;
 	CORBA_exception_init(ev);
-#if 0
 	++(pobj->use_cnt);	/* prevent re-activation */
-#endif
         if ( poa->p_request_processing == PortableServer_USE_SERVANT_MANAGER) {
 	    POA_PortableServer_ServantActivator__epv *epv;
 	    POA_PortableServer_ServantActivator *sm;
@@ -1597,9 +1586,7 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 	        (*(epv->finalize))(serv, ev);
 	    }
 	}
-#if 0
 	--(pobj->use_cnt);	/* allow re-activation */
-#endif
 	g_assert( ev->_major == 0 );
     }
 
@@ -1748,9 +1735,7 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 	  pobj->object_id = &oid;
 	  pobj->servant = 0;
 	  pobj->poa = poa;
-#if 0
 	  pobj->use_cnt = 0;
-#endif
 	  pobj->life_flags = 0;
 	  break;
 	}
@@ -1761,10 +1746,8 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
      * postinvoke() is called (if appropriate) 
      * and we decrement the counters.
     */
-#if 0
   ++(poa->use_cnt);
   ++(pobj->use_cnt);
-#endif
   invoke_rec.pobj = pobj;
   invoke_rec.doUnuse = 0;
 #if 0
@@ -1832,10 +1815,8 @@ ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 
   g_assert( poa->orb->poa_current_invocations == &invoke_rec );
   poa->orb->poa_current_invocations = invoke_rec.prev;
-#if 0
   --(pobj->use_cnt);
   --(poa->use_cnt);
-#endif
   if ( pobj->life_flags & ORBit_LifeF_NeedPostInvoke )
     ORBit_POAObject_post_invoke(pobj);
   /* WATCHOUT: dont touch pobj beyond here -- it may be gone! */
@@ -1986,10 +1967,8 @@ ORBit_POA_okey_to_oid(	/*in*/PortableServer_POA poa,
 void
 ORBit_POAObject_post_invoke(ORBit_POAObject *pobj)
 {
-#if 0
     if ( pobj->use_cnt > 0 )
     	return;
-#endif
     if ( pobj->life_flags & ORBit_LifeF_DeactivateDo )
       {
 	/* NOTE that the "desired" values of etherealize and cleanup

@@ -3,6 +3,10 @@
 #include <string.h>
 #include "corba-ops.h"
 
+static gboolean
+ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
+		    char **ret_type_id, GSList **ret_profiles);
+
 static void ORBit_profile_free(IOP_Profile_info *p);
 static guint g_CORBA_Object_hash(gconstpointer key);
 static gboolean g_CORBA_Object_equal(gconstpointer a, gconstpointer b);
@@ -284,6 +288,35 @@ _ORBit_object_get_connection(CORBA_Object obj)
     }
 
   return NULL;
+}
+
+static void
+ORBit_delete_profiles(GSList *profiles)
+{
+  g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
+}
+
+GIOPConnection *
+ORBit_handle_location_forward(GIOPRecvBuffer *buf,
+			      CORBA_Object obj)
+{
+  GIOPConnection *retval = NULL;
+  GSList *profiles;
+
+  if(ORBit_demarshal_IOR(obj->orb, buf, NULL, &profiles))
+    goto out;
+
+  if(obj->forward_locations)
+    ORBit_delete_profiles(obj->forward_locations);
+
+  obj->forward_locations = profiles;
+
+  retval = _ORBit_object_get_connection(obj);
+
+ out:
+  giop_recv_buffer_unuse(buf);
+
+  return retval;
 }
 
 CORBA_InterfaceDef
@@ -1296,9 +1329,9 @@ ORBit_demarshal_profile(GIOPRecvBuffer *buf, CORBA_ORB orb)
   return retval;
 }
 
-gboolean
-ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
-		       CORBA_ORB orb)
+static gboolean
+ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
+		    char **ret_type_id, GSList **ret_profiles)
 {
   GSList *profiles = NULL;
   char *type_id;
@@ -1306,7 +1339,6 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
   int i;
 
   gbuf = buf;
-  *obj = CORBA_OBJECT_NIL;
   
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
   if((buf->cur + 4) > buf->end)
@@ -1328,10 +1360,8 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
     num_profiles = GUINT32_SWAP_LE_BE(num_profiles);
   buf->cur += 4;
   if(!strcmp(type_id, "Null") && num_profiles == 0)
-    {
-      *obj = CORBA_OBJECT_NIL;
-      return FALSE;
-    }
+    type_id = NULL;
+
   for(i = 0; i < num_profiles; i++)
     {
       IOP_Profile_info *profile;
@@ -1342,13 +1372,33 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
 	  goto errout;
     }
 
-  *obj = ORBit_objref_find(orb, type_id, profiles);
-
+  *ret_profiles = profiles;
+  if(ret_type_id)
+    *ret_type_id = type_id;
   return FALSE;
 
  errout:
-  g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
+  ORBit_delete_profiles(profiles);
   return TRUE;
+}
+
+gboolean
+ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
+		       CORBA_ORB orb)
+{
+  GSList *profiles;
+  char *type_id;
+
+  if(ORBit_demarshal_IOR(orb, buf, &type_id, &profiles))
+    return TRUE;
+
+  if(type_id)
+    *obj = ORBit_objref_find(orb, type_id, profiles);
+  else
+    *obj = CORBA_OBJECT_NIL;
+
+  return FALSE;
+
 }
 
 gpointer
