@@ -1,3 +1,9 @@
+2003-11-13  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.9.1
+
+	* src/orb/orb-core/Makefile.am: fix include.
+
 2003-11-10  Justin Schoeman <justin@expertron.co.za>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_use_buf,
