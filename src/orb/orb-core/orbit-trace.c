@@ -21,6 +21,7 @@
 
 
 #ifdef TRACE_DEBUG
+#define NOT_NULL(str) ((str) == NULL ? "(null)" : (str))
 
 void
 ORBit_trace_objref (const CORBA_Object obj)
@@ -35,7 +36,7 @@ void
 ORBit_trace_typecode (const CORBA_TypeCode tc)
 {
 	g_return_if_fail (tc != NULL);
-	tprintf ("tc:%s", TC_CORBA_TCKind->subnames [tc->kind]);
+	tprintf ("tc:%s", NOT_NULL (TC_CORBA_TCKind->subnames [tc->kind]));
 }
 
 void
@@ -61,7 +62,7 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 
 #ifdef DEBUG_TRACE
 	fprintf (stderr, "\ntrace '%s' %p align %d, (size %d)\n",
-		 TC_CORBA_TCKind->subnames [tc->kind], *val,
+		 NOT_NULL (TC_CORBA_TCKind->subnames [tc->kind]), *val,
 		 tc->c_align,
 		 ORBit_gather_alloc_info (tc));
 #endif
@@ -154,7 +155,7 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 			if (!isascii ((int)*p))
 				*p = '#';
 		}
-		tprintf ("'%s'", str);
+		tprintf ("'%s'", NOT_NULL (str));
 
 		g_free (str);
 		break;
@@ -231,7 +232,7 @@ ORBit_trace_header (CORBA_Object   object,
 	tprintf_timestamp ();
 	tprintf (": (");
 	ORBit_trace_objref (object);
-	tprintf (")->%s (", m_data->name);
+	tprintf (")->%s (", NOT_NULL (m_data->name));
 }
 
 void

@@ -36,7 +36,7 @@ static inline void dprintf (const char *format, ...) { };
 
 #include <stdio.h>
 
-#define dprintf(format...) fprintf(stderr, format)
+#define dprintf(...) fprintf(stderr, __VA_ARGS__)
 
 static inline void
 dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
@@ -72,7 +72,7 @@ void     ORBit_trace_header     (CORBA_Object         object,
 				 ORBit_IMethod       *m_data);
 void     ORBit_trace_end_method (void);
 
-#define tprintf(format...) fprintf(stderr, format)
+#define tprintf(...) fprintf(stderr, __VA_ARGS__)
 #define tprintf_header(obj,md) ORBit_trace_header(obj,md)
 #define tprintf_trace_value(a,b) \
 		ORBit_trace_value ((gconstpointer *)(a), (b))
