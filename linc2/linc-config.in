@@ -60,7 +60,7 @@ while test $# -gt 0; do
 	;;
 
     --version)
-	echo @PACKAGE@ @ORBIT_VERSION@
+	echo @PACKAGE@ @LINC_VERSION@
 	exit 0
 	;;
 
