@@ -1,3 +1,7 @@
+2002-04-18  Michael Meeks  <michael@ximian.com>
+
+	* src/Makefile.am: add G_DISABLE_DEPRECATED
+
 2002-04-15  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.21

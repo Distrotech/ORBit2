@@ -6,6 +6,7 @@ INCLUDES =                         \
 	$(LINC_CFLAGS)             \
 	$(SSL_CFLAGS)              \
 	$(WARN_CFLAGS)             \
+	-DG_DISABLE_DEPRECATED	   \
 	-D_GNU_SOURCE
 
 liblinc_la_SOURCES =		\
