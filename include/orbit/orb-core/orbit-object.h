@@ -21,7 +21,7 @@ typedef enum {
 	ORBIT_ROT_POACURRENT
 } ORBit_RootObject_Type;
 
-typedef struct _ORBit_RootObject *ORBit_RootObject;
+typedef struct ORBit_RootObject_struct *ORBit_RootObject;
 
 typedef void (* ORBit_RootObject_DestroyFunc)(ORBit_RootObject obj);
 
@@ -32,7 +32,7 @@ struct _ORBit_RootObject_Interface {
   ORBit_RootObject_DestroyFunc destroy;
 };
 
-struct _ORBit_RootObject {
+struct ORBit_RootObject_struct {
   const ORBit_RootObject_Interface * interface;
   int refs;
 };

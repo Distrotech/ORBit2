@@ -1,6 +1,8 @@
 #ifndef GIOP_RECV_BUFFER_H
 #define GIOP_RECV_BUFFER_H 1
 
+#include <orbit/GIOP/giop-types.h>
+
 typedef enum {
   GIOP_MSG_READING_HEADER,
   GIOP_MSG_READING_BODY,
@@ -20,6 +22,7 @@ struct _GIOPRecvBuffer {
   guchar *message_body;
   guchar *cur;
   guchar *end;
+  GIOPConnection *connection;
 
   GIOPMessageBufferState state;
   GIOPVersion giop_version;

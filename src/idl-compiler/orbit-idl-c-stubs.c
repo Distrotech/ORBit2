@@ -212,6 +212,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
+    fprintf(ci->fh, "_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
     fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_YES;\n");
 
     fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status != GIOP_NO_EXCEPTION) goto _ORBIT_msg_exception;\n");
@@ -497,7 +498,7 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
     fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-    fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
+    fprintf(ci->fh, "register guchar *_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
     orbit_cbe_alloc_tmpvars(ei->demarshal, ci);
     fprintf(ci->fh, "%s *_ORBIT_exdata;\n", id);
     c_demarshalling_generate(ei->demarshal, ci, FALSE, FALSE);

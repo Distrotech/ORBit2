@@ -80,10 +80,10 @@ c_marshal_append(OIDL_C_Marshal_Info *cmi, OIDL_Marshal_Node *node, char *itemst
 	     itemstr, sizestr);
 
   if(indirect && !cmi->alloc_on_stack) {
-    fprintf(cmi->ci->fh, "giop_send_buffer_append_mem_indirect(GIOP_SEND_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
+    fprintf(cmi->ci->fh, "giop_send_buffer_append_indirect(_ORBIT_send_buffer, %s(%s), %s);\n",
 	    addrof?"&":"", itemstr, sizestr);
   } else {
-    fprintf(cmi->ci->fh, "giop_message_buffer_append_mem(GIOP_MESSAGE_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
+    fprintf(cmi->ci->fh, "giop_send_buffer_append(_ORBIT_send_buffer, %s(%s), %s);\n",
 	    (addrof && !indirect)?"&":"",
 	    indirect?"_ORBIT_t":itemstr, sizestr);
   }
@@ -105,7 +105,7 @@ c_marshal_alignfor(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   /* do we need to generate an alignment space? */
   if(node->iiop_head_align > cmi->last_tail_align) {
-    fprintf(cmi->ci->fh, "giop_message_buffer_do_alignment(GIOP_MESSAGE_BUFFER(_ORBIT_send_buffer), %d);\n",
+    fprintf(cmi->ci->fh, "giop_send_buffer_align(_ORBIT_send_buffer, %d);\n",
 	    node->iiop_head_align);
   }
   cmi->last_tail_align = node->iiop_tail_align;
@@ -266,7 +266,7 @@ c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 	  fprintf(cmi->ci->fh, "%s_marshal(_ORBIT_send_buffer, &(%s), ev);\n", ctmp2, ctmp);
 	  break;
 	case MARSHAL_ANY:
-	  fprintf(cmi->ci->fh, "ORBit_marshal_arg(_ORBIT_send_buffer, &(%s), TC_%s, ev);\n",
+	  fprintf(cmi->ci->fh, "ORBit_marshal_arg(_ORBIT_send_buffer, &(%s), TC_%s);\n",
 		  ctmp, ctmp2);
 	  break;
 	default:

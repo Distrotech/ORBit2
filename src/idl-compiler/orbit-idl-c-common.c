@@ -522,7 +522,7 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
       orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
       fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev)\n{\n");
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-      fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
+      fprintf(ci->fh, "register guchar *_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
       orbit_cbe_alloc_tmpvars(node, ci);
       c_demarshalling_generate(node, ci, FALSE, TRUE);
       fprintf(ci->fh, "return FALSE;");

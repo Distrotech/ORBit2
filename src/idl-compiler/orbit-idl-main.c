@@ -42,8 +42,8 @@ static gboolean cl_disable_stubs = FALSE,
 static int cl_idlwarnlevel = 2;
 static int cl_debuglevel = 0;
 static int cl_is_pidl = 0;
-static gboolean cl_disable_defs_skels = 0;
-static gboolean cl_showcpperrors;
+static gboolean cl_disable_defs_skels = FALSE;
+static gboolean cl_showcpperrors = TRUE;
 static char *cl_output_lang = "c";
 static char *cl_backend_dir = ORBITLIBDIR;
 static gboolean cl_onlytop = FALSE;

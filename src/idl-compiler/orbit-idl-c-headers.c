@@ -34,13 +34,12 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "\n/** typedefs **/\n");
   ch_output_types(tree->tree, rinfo, ci);
 
-  {
+  
+  if ( ci->do_skel_defs ) {
   	/* Do all the POA structures, etc. */
   	fprintf(ci->fh, "\n/** POA structures **/\n");
   	ch_output_poa(tree->tree, rinfo, ci);
-  }
 
-  if ( ci->do_skel_defs ) {
   	fprintf(ci->fh, "\n/** skel prototypes **/\n");
   	ch_output_skel_protos(tree->tree, rinfo, ci);
   }
@@ -277,6 +276,12 @@ ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     case IDLN_IDENT:
       {
 	fprintf(ci->fh, " %s;\n", ctmp);
+	fprintf(ci->fh, " #define %s_marshal(x,y,z) ", ctmp);
+	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
+	fprintf(ci->fh, "_marshal((x),(y),(z))\n");
+	fprintf(ci->fh, " #define %s_demarshal(x,y,z,i) ", ctmp);
+	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
+	fprintf(ci->fh, "_demarshal((x),(y),(z),(i))\n");
       }
       break;
     case IDLN_TYPE_ARRAY:

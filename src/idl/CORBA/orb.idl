@@ -56,7 +56,9 @@ module CORBA {
     interface SequenceDef;
     interface StringDef;
     interface StructDef;
-    interface TTypeCode;
+#pragma pidl push
+    interface TypeCode;
+#pragma pidl pop
     interface TypedefDef;
     interface UnionDef;
     interface ValueDef;

@@ -180,7 +180,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
   orbit_cbe_op_write_proto(ci->fh, tree, "_impl_", TRUE);
   fprintf(ci->fh, ")\n");
   fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
+  fprintf(ci->fh, "register guchar *_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
 
   oi = tree->data;
 
