@@ -1,0 +1,10 @@
+config.guess
+config.sub
+ltconfig
+ltmain.sh
+aclocal.m4
+stamp-h.in
+Makefile
+Makefile.in
+configure
+config.h.in
