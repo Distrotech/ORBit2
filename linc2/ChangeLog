@@ -1,3 +1,10 @@
+2003-04-29  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_io_thread_fn): hold lock over
+	wake fd shutdown.
+	(linc_exec_command): if the pipe is shut, then just
+	exec the command in-line (server shutdown condition).
+
 2003-04-28  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Added --enable-gtk-doc.

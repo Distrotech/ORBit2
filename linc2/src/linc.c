@@ -122,12 +122,20 @@ linc_exec_command (LINCCommand *cmd)
 		return;
 	}
 
-	LINC_MUTEX_LOCK   (linc_cmd_queue_lock);
+	LINC_MUTEX_LOCK (linc_cmd_queue_lock);
+
+	if (LINC_WAKEUP_WRITE == -1) {/* shutdown main loop */
+		linc_dispatch_command (cmd);
+		LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
+		return;
+	}
+
 	linc_cmd_queue = g_list_append (linc_cmd_queue, cmd);
-	LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
 
 	while ((res = write (LINC_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
 	       (errno == EAGAIN || errno == EINTR));
+
+	LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
 	if (res < 0)
 		g_error ("Failed to write to linc wakeup socket %d 0x%x(%d) (%d)",
 			 res, errno, errno, LINC_WAKEUP_WRITE);
@@ -147,12 +155,14 @@ linc_io_thread_fn (gpointer data)
 	 */
 
 	/* A tad of shutdown */
+	LINC_MUTEX_LOCK (linc_cmd_queue_lock);
 	if (LINC_WAKEUP_WRITE >= 0) {
 		close (LINC_WAKEUP_WRITE);
 		close (LINC_WAKEUP_POLL);
 		LINC_WAKEUP_WRITE = -1;
 		LINC_WAKEUP_POLL = -1;
 	}
+	LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
 
 	if (linc_main_source) {
 		g_source_destroy (linc_main_source);
