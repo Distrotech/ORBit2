@@ -23,7 +23,7 @@ typedef struct {
   CORBA_boolean _release : 1;
 } CORBA_sequence_octet;
 
-typedef struct CORBA_Object_type *CORBA_Object;
+typedef struct _CORBA_Object *CORBA_Object;
 
 #ifdef G_HAVE_GINT64
 #define HAVE_CORBA_LONG_LONG
