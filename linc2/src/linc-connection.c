@@ -28,14 +28,12 @@ enum {
 static guint linc_connection_signals [LAST_SIGNAL];
 
 static void
-linc_source_remove (LINCConnection *cnx, gboolean unref)
+linc_source_remove (LINCConnection *cnx)
 {
 	if (cnx->tag) {
 		LincWatch *thewatch = cnx->tag;
 		cnx->tag = NULL;
 		linc_io_remove_watch (thewatch);
-		if (unref) 
-			g_object_unref (G_OBJECT (cnx));
 	}
 }
 
@@ -52,7 +50,7 @@ linc_connection_dispose (GObject *obj)
 {
 	LINCConnection *cnx = (LINCConnection *)obj;
 
-	linc_source_remove (cnx, FALSE);
+	linc_source_remove (cnx);
 
 	g_free (cnx->remote_host_info);
 	cnx->remote_host_info = NULL;
@@ -90,7 +88,7 @@ linc_connection_connected (GIOChannel  *gioc,
 
 	if (cnx->status == LINC_CONNECTED &&
 	    (condition & IN_CONDS) &&
-	    klass->handle_input)
+	    klass->handle_input) 
 
 		klass->handle_input (cnx);
 
@@ -164,7 +162,7 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		break;
 
 	case LINC_CONNECTING:
-		linc_source_remove (cnx, FALSE);
+		linc_source_remove (cnx);
 		/* FIXME: this looks bogus (?) */
 		g_assert (cnx->tag == NULL);
 		cnx->tag = linc_io_add_watch (
@@ -173,7 +171,7 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		break;
 
 	case LINC_DISCONNECTED:
-		linc_source_remove (cnx, TRUE);
+		linc_source_remove (cnx);
 		linc_close_fd (cnx);
 
 		g_signal_emit (G_OBJECT (cnx),
@@ -213,7 +211,8 @@ linc_connection_from_fd (LINCConnection         *cnx,
 	cnx->fd               = fd;
 	cnx->gioc             = g_io_channel_unix_new (fd);
 	cnx->was_initiated    = was_initiated;
-	cnx->is_auth          = (proto->flags & LINC_PROTOCOL_SECURE) ? TRUE : FALSE;
+	cnx->is_auth          = (proto->flags & LINC_PROTOCOL_SECURE);
+	cnx->proto            = proto;
 	cnx->remote_host_info = host;
 	cnx->remote_serv_info = service;
 	cnx->options          = options;

@@ -1,3 +1,28 @@
+2001-11-16  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump ver to 0.1.9
+
+	* src/linc-server.c (linc_server_accept_connection):
+	keep track of the connections we accept - hopefully if
+	we re-use them, there won't be many.
+	(linc_server_dispose): protect vs. double dispose &
+	unref. connections.
+	(linc_server_finalize): impl.
+	(linc_server_class_init): hook up.
+
+	* src/linc-connection.c (linc_source_remove): remove
+	bogus self unref.
+	(linc_connection_dispose),
+	(linc_connection_class_state_changed): upd.
+
+2001-11-15  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_from_fd): assign
+	the protocol.
+
+	* src/linc-server.c (linc_server_dispose): protect vs.
+	double dispose's
+
 2001-11-13  jacob berkman  <jacob@ximian.com>
 
 	* docs/Makefile.am (dist-hook): depend on docs being built
