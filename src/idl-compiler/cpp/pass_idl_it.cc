@@ -40,11 +40,11 @@ void IDLIteratingPass::doException(IDL_tree node,IDLScope &scope) {
 
 
 
-#if 0 //!!!
 void IDLIteratingPass::doStruct(IDL_tree node, IDLScope &scope) {
 	doMemberList(IDL_TYPE_STRUCT(node).member_list,scope);
 }
 
+#if 0 //!!!
 void IDLIteratingPass::doUnion(IDL_tree node, IDLScope &scope) {
 	doSwitchBody(IDL_TYPE_UNION(node).switch_body,scope);
 }
@@ -65,18 +65,26 @@ void IDLIteratingPass::doModule(IDL_tree node,IDLScope &scope) {
 
 
 
-void IDLIteratingPass::doMemberList(IDL_tree list,IDLScope &scope) {
-	while (list) {
-		enumHook(list,scope);
-		switch (IDL_NODE_TYPE(IDL_LIST(list).data)) {
+void IDLIteratingPass::doMemberList(IDL_tree  member_list,
+				    IDLScope &scope)
+{
+	while (member_list) {
+		enumHook (member_list, scope);
+
+		IDL_tree      member = IDL_LIST (member_list).data;
+		IDL_tree_type member_type = IDL_NODE_TYPE (member);
+		
+		switch (member_type) {
 		case IDLN_MEMBER:
-			doMember(IDL_LIST(list).data,scope);
+			doMember (member, scope);
 			break;
-			ORBITCPP_DEFAULT_CASE(IDL_LIST(list).data)
+		ORBITCPP_DEFAULT_CASE (member)
 		}
-		list = IDL_LIST(list).next;
+		
+		member_list = IDL_LIST (member_list).next;
 	}
-	enumHook(list,scope);
+
+	enumHook(member_list, scope);
 }
 
 void IDLIteratingPass::doSwitchBody(IDL_tree list,IDLScope &scope) {
@@ -105,10 +113,10 @@ void IDLIteratingPass::doExportList(IDL_tree list,IDLScope &scope) {
 		case IDLN_CONST_DCL:
 			doConstant(IDL_LIST(list).data,scope);
 			break;
-#if 0 //!!!
 		case IDLN_TYPE_STRUCT:
 			doStruct(IDL_LIST(list).data,scope);
 			break;
+#if 0 //!!!
 		case IDLN_TYPE_UNION:
 			doUnion(IDL_LIST(list).data,scope);
 			break;
@@ -150,10 +158,10 @@ void IDLIteratingPass::doDefinitionList(IDL_tree list,IDLScope &scope) {
 		case IDLN_TYPE_ENUM:
 			doEnum(IDL_LIST(list).data,scope);
 			break;
-#if 0 //!!!
 		case IDLN_TYPE_STRUCT:
 			doStruct(IDL_LIST(list).data,scope);
 			break;
+#if 0 //!!!
 		case IDLN_TYPE_UNION:
 			doUnion(IDL_LIST(list).data,scope);
 			break;

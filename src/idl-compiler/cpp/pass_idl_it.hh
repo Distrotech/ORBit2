@@ -62,8 +62,8 @@ protected:
 
 	virtual void doEnum(IDL_tree node,IDLScope &scope) {
 	}
-#if 0 //!!!
 	virtual void doStruct(IDL_tree node,IDLScope &scope);
+#if 0 //!!!
 	virtual void doSequence(IDL_tree node, IDLScope &scope){
 	}
 	virtual void doUnion(IDL_tree node,IDLScope &scope);

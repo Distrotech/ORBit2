@@ -51,45 +51,115 @@ IDLStruct::conversion_required () const
 	return have_nonsimple_member;
 }
 
+bool
+IDLStruct::is_fixed () const
+{
+	bool fixed = true;
+	for (const_iterator i = begin ();
+	     i != end () && fixed;
+	     i++)
+	{
+		IDLMember &member = (IDLMember &) **i;
+		fixed = member.getType ()->is_fixed ();
+	}
+
+	return fixed;
+}
+
 void
 IDLStruct::typedef_decl_write (ostream          &ostr,
-			    Indent           &indent,
-			    const IDLTypedef &target,
-			    const IDLTypedef *active_typedef = 0) const
+			       Indent           &indent,
+			       IDLCompilerState &state,
+			       const IDLTypedef &target,
+			       const IDLTypedef *active_typedef = 0) const
 {
-#warning "write me"
+#warning "WRITE ME"
 }
 
 string
 IDLStruct::stub_decl_arg_get (const string     &cpp_id,
-			   IDL_param_attr    direction,
-			   const IDLTypedef *active_typedef) const
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+
+	string retval;
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		retval = "const " + cpp_typename + " &" + cpp_id;
+		break;
+	case IDL_PARAM_INOUT:
+		retval = cpp_typename + " &" + cpp_id;
+		break;
+	case IDL_PARAM_OUT:
+		retval = cpp_typename + "_out " + cpp_id;
+		break;
+	}
+
+	return retval;
 }
 
 void
 IDLStruct::stub_impl_arg_pre (ostream          &ostr,
-			   Indent           &indent,
-			   const string     &cpp_id,
-			   IDL_param_attr    direction,
-			   const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+
+	if (!conversion_required ())
+		// Do nothing
+		return;
 }
 	
 string
 IDLStruct::stub_impl_arg_call (const string     &cpp_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			       IDL_param_attr    direction,
+			       const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+
+	string c_type = active_typedef ?
+		active_typedef->get_c_typename () : get_c_typename ();
+	string retval;
+	
+	if (!conversion_required ())
+	{
+		string cast;
+		
+		switch (direction)
+		{
+		case IDL_PARAM_IN:
+			cast = "(const " + c_type + "*)";
+			break;
+		case IDL_PARAM_INOUT:
+		case IDL_PARAM_OUT:
+			cast = "(" + c_type + "*)";
+			break;
+		}
+
+		retval = cast + "&" + cpp_id;
+	}
+
+	return retval;
 }
 	
 void
 IDLStruct::stub_impl_arg_post (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &cpp_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			       Indent           &indent,
+			       const string     &cpp_id,
+			       IDL_param_attr    direction,
+			       const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+	if (!conversion_required ())
+		// Do nothing
+		return;
 }
 
 
@@ -102,23 +172,23 @@ IDLStruct::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 	
 void
 IDLStruct::stub_impl_ret_pre (ostream &ostr,
-			   Indent  &indent,
-			   const IDLTypedef *active_typedef) const
+			      Indent  &indent,
+			      const IDLTypedef *active_typedef) const
 {
 }
 
 void
 IDLStruct::stub_impl_ret_call (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &c_call_expression,
-			    const IDLTypedef *active_typedef) const
+			       Indent           &indent,
+			       const string     &c_call_expression,
+			       const IDLTypedef *active_typedef) const
 {
 }
 
 void
 IDLStruct::stub_impl_ret_post (ostream          &ostr,
-			    Indent           &indent,
-			    const IDLTypedef *active_typedef) const
+			       Indent           &indent,
+			       const IDLTypedef *active_typedef) const
 {
 }
 	
@@ -127,34 +197,86 @@ IDLStruct::stub_impl_ret_post (ostream          &ostr,
 
 string
 IDLStruct::skel_decl_arg_get (const string     &c_id,
-			   IDL_param_attr    direction,
-			   const IDLTypedef *active_typedef) const
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+
+	string c_typename = active_typedef ?
+		active_typedef->get_c_typename () : get_c_typename ();
+	string retval;
+
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		retval = "const " + c_typename + " *" + c_id;
+		break;
+	case IDL_PARAM_INOUT:
+	case IDL_PARAM_OUT:
+		retval = c_typename + " *" + c_id;
+		break;		
+	}
+
+	return retval;
 }
 
 void
 IDLStruct::skel_impl_arg_pre (ostream          &ostr,
-			   Indent           &indent,
-			   const string     &c_id,
-			   IDL_param_attr    direction,
-			   const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const string     &c_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+
+	if (!conversion_required ())
+		// Do nothing
+		return;
 }
 	
 string
 IDLStruct::skel_impl_arg_call (const string     &c_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			       IDL_param_attr    direction,
+			       const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+	string retval;
+	
+	if (!conversion_required ())
+	{
+		string cast;
+		
+		switch (direction)
+		{
+		case IDL_PARAM_IN:
+			cast = "(const " + cpp_typename + "*)";
+			break;
+		case IDL_PARAM_INOUT:
+		case IDL_PARAM_OUT:
+			cast = "(" + cpp_typename + "*)";
+			break;
+		}
+
+		retval = "*" + cast + c_id;
+	}
+
+	return retval;
 }
 	
 void
 IDLStruct::skel_impl_arg_post (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &c_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			       Indent           &indent,
+			       const string     &c_id,
+			       IDL_param_attr    direction,
+			       const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
+
+	if (!conversion_required ())
+		// Do nothing
+		return;
 }
 
 
@@ -163,6 +285,7 @@ IDLStruct::skel_impl_arg_post (ostream          &ostr,
 string
 IDLStruct::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
+#warning "WRITE ME"
 }
 
 void
@@ -212,11 +335,27 @@ IDLStruct::member_impl_arg_copy (ostream          &ostr,
 }
 
 void
-IDLStruct::member_pack_to_c (ostream          &ostr,
+IDLStruct::member_init_cpp (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &cpp_id,
+			    const IDLTypedef *active_typedef) const
+{
+}
+
+void
+IDLStruct::member_init_c (ostream          &ostr,
 			  Indent           &indent,
 			  const string     &cpp_id,
-			  const string     &c_id,
 			  const IDLTypedef *active_typedef) const
+{
+}
+
+void
+IDLStruct::member_pack_to_c (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &cpp_id,
+			     const string     &c_id,
+			     const IDLTypedef *active_typedef) const
 {
 }
 

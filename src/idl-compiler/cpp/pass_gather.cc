@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -36,7 +37,8 @@
 
 // IDLPassGather -------------------------------------------------------------
 void 
-IDLPassGather::runPass() {
+IDLPassGather::runPass ()
+{
 	doDefinitionList(m_state.m_rootscope.getNode(),m_state.m_rootscope);
 	runJobs();
 }
@@ -45,7 +47,9 @@ IDLPassGather::runPass() {
 
 
 void 
-IDLPassGather::doTypedef(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doTypedef (IDL_tree  node,
+			  IDLScope &scope)
+{
 	string id;
 
 	IDL_tree dcl_list = IDL_TYPE_DCL(node).dcls;
@@ -64,17 +68,17 @@ IDLPassGather::doTypedef(IDL_tree node,IDLScope &scope) {
 
 
 
-#if 0 //!!!
 void 
-IDLPassGather::doStruct(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doStruct (IDL_tree  node,
+			 IDLScope &scope)
+{
 	IDLStruct *idlStruct = new IDLStruct(
 		IDL_IDENT(IDL_TYPE_STRUCT(node).ident).str,node,&scope
-	);
+		);
 	ORBITCPP_MEMCHECK(idlStruct);
-
-	Super::doStruct(node,*idlStruct);
+	
+	Super::doStruct (node, *idlStruct);
 }
-#endif
 
 
 
@@ -112,7 +116,9 @@ IDLPassGather::doNative(IDL_tree node,IDLScope &scope) {
 
 
 void 
-IDLPassGather::doAttribute(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doAttribute (IDL_tree  node,
+			    IDLScope &scope)
+{
 	string id;
 
 	IDLType *type = m_state.m_typeparser.parseTypeSpec(scope,IDL_ATTR_DCL(node).param_type_spec);
@@ -128,25 +134,29 @@ IDLPassGather::doAttribute(IDL_tree node,IDLScope &scope) {
 }
 
 void 
-IDLPassGather::doConstant(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doConstant(IDL_tree  node,
+			  IDLScope &scope)
+{
 	string id;
 	IDLType *type = m_state.m_typeparser.parseTypeSpec(scope,
 		IDL_CONST_DCL(node).const_type);
 	type = m_state.m_typeparser.parseDcl(IDL_CONST_DCL(node).ident,type,id);
 	
-	ORBITCPP_MEMCHECK(
-	 	new IDLConstant(type,id,node,&scope)
-		);
+	ORBITCPP_MEMCHECK(new IDLConstant(type,id,node,&scope));
 }
 
 void 
-IDLPassGather::doEnum(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doEnum (IDL_tree  node,
+		       IDLScope &scope)
+{
 	IDLEnum *enm = new IDLEnum(IDL_IDENT(IDL_TYPE_ENUM(node).ident).str,node,&scope);
 	ORBITCPP_MEMCHECK(enm)
 }
 
 void 
-IDLPassGather::doOperation(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doOperation (IDL_tree  node,
+			    IDLScope &scope)
+{
 	string id;
 	IDLType *ret_type = m_state.m_typeparser.parseTypeSpec(scope,IDL_OP_DCL(node).op_type_spec);
 	ret_type = m_state.m_typeparser.parseDcl(IDL_OP_DCL(node).ident,ret_type,id);
@@ -190,7 +200,9 @@ IDLPassGather::doOperation(IDL_tree node,IDLScope &scope) {
 
 
 void 
-IDLPassGather::doMember(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doMember (IDL_tree  node,
+			 IDLScope &scope)
+{
 	string id;
 
 	IDLType *type_spec = m_state.m_typeparser.parseTypeSpec(scope,
@@ -208,7 +220,9 @@ IDLPassGather::doMember(IDL_tree node,IDLScope &scope) {
 }
 
 void 
-IDLPassGather::doCaseStmt(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doCaseStmt (IDL_tree  node,
+			   IDLScope &scope)
+{
 	string id;
 
 	// member
@@ -226,20 +240,23 @@ IDLPassGather::doCaseStmt(IDL_tree node,IDLScope &scope) {
 
 
 void 
-IDLPassGather::doException(IDL_tree node,IDLScope &scope) {
-	IDLException *except = new IDLException(
-	                            IDL_IDENT(IDL_EXCEPT_DCL(node).ident).str,node,&scope
-	                        );
+IDLPassGather::doException (IDL_tree node,
+			    IDLScope &scope)
+{
+	IDLException *except = new IDLException (
+		IDL_IDENT(IDL_EXCEPT_DCL(node).ident).str, node, &scope);
 	ORBITCPP_MEMCHECK(except);
 
-	Super::doException(node,*except);
+	Super::doException (node, *except);
 }
 
 
 
 
 void 
-IDLPassGather::doInterface(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doInterface (IDL_tree  node,
+			    IDLScope &scope)
+{
 	string ident = IDL_IDENT(IDL_INTERFACE(node).ident).str;
 	IDLInterface *iface = new IDLInterface(ident,node,&scope);
 	ORBITCPP_MEMCHECK(iface)
@@ -258,7 +275,9 @@ IDLPassGather::doInterface(IDL_tree node,IDLScope &scope) {
 
 
 void
-IDLPassGather::doForwardDcl(IDL_tree node,IDLScope &scope) {
+IDLPassGather::doForwardDcl (IDL_tree  node,
+			     IDLScope &scope)
+{
 	string ident = IDL_IDENT(IDL_INTERFACE(node).ident).str;
 	IDLInterface *iface = new IDLInterface(ident,node,&scope);
 	ORBITCPP_MEMCHECK(iface)
@@ -271,10 +290,12 @@ IDLPassGather::doForwardDcl(IDL_tree node,IDLScope &scope) {
 
 
 void 
-IDLPassGather::doModule(IDL_tree node,IDLScope &scope) {
-	IDLScope *module = new IDLScope(
-	                        IDL_IDENT(IDL_MODULE(node).ident).str,node,&scope
-	                    );
+IDLPassGather::doModule (IDL_tree  node,
+			 IDLScope &scope)
+{
+	IDLScope *module = new IDLScope (
+		IDL_IDENT(IDL_MODULE(node).ident).str, node, &scope
+		);
 	ORBITCPP_MEMCHECK(module)
 
 	Super::doModule(node,*module);
@@ -284,8 +305,11 @@ IDLPassGather::doModule(IDL_tree node,IDLScope &scope) {
 
 
 void 
-IDLPassGather::enumerateBases(IDLInterface &iface,bool recurse,IDLInterface *omit_with_bases,
-                                    vector<IDLInterface *> &dest) {
+IDLPassGather::enumerateBases (IDLInterface           &iface,
+			       bool                    recurse,
+			       IDLInterface           *omit_with_bases,
+			       vector<IDLInterface *> &dest)
+{
 	IDL_tree inh_list = IDL_INTERFACE(iface.getNode()).inheritance_spec;
 	if (!inh_list) return;
 
