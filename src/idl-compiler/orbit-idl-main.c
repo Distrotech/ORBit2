@@ -48,7 +48,7 @@ static int cl_enable_old_style = 0;
 static int cl_enable_small_stubs = 0;
 static int cl_enable_small_skels = 0;
 static int cl_disable_idata = 0;
-static int cl_disable_imodule = 0;
+static int cl_enable_imodule = 0;
 static gboolean cl_disable_defs_skels = FALSE;
 static gboolean cl_showcpperrors = TRUE;
 static char *cl_output_lang = "c";
@@ -124,7 +124,7 @@ struct poptOption options[] = {
   {"nocommon", '\0', POPT_ARG_NONE, &cl_disable_common, 0, "Don't output common", NULL},
   {"noheaders", '\0', POPT_ARG_NONE, &cl_disable_headers, 0, "Don't output headers", NULL},
   {"noidata", '\0', POPT_ARG_NONE, &cl_disable_idata, 0, "Don't generate Interface type data", NULL},
-  {"noimodule", '\0', POPT_ARG_NONE, &cl_disable_imodule, 0, "Don't output imodule file", NULL},
+  {"imodule", 'i', POPT_ARG_NONE, &cl_enable_imodule, 0, "Output only an imodule file", NULL},
   {"skeleton-impl", '\0', POPT_ARG_NONE, &cl_enable_skeleton_impl, 0, "Don't output headers", NULL},
   {"backenddir", '\0', POPT_ARG_STRING, &cl_backend_dir, 0, "Override IDL backend library directory", "DIR"},
   {"c-output-formatter", '\0', POPT_ARG_STRING, &c_output_formatter, 0, "Program to use to format output (normally, indent)", "PROGRAM"},
@@ -184,12 +184,16 @@ int main(int argc, const char *argv[])
   rinfo.is_pidl = cl_is_pidl;
   rinfo.do_skel_defs = !cl_disable_defs_skels;
   rinfo.enabled_passes =
-    (cl_disable_stubs?0:OUTPUT_STUBS)
+     (cl_disable_stubs?0:OUTPUT_STUBS)
     |(cl_disable_skels?0:OUTPUT_SKELS)
     |(cl_disable_common?0:OUTPUT_COMMON)
     |(cl_disable_headers?0:OUTPUT_HEADERS)
-    |(cl_enable_skeleton_impl?OUTPUT_SKELIMPL:0)
-    |(cl_disable_imodule?0:OUTPUT_IMODULE);
+    |(cl_enable_skeleton_impl?OUTPUT_SKELIMPL:0);
+
+  if (cl_enable_imodule) /* clobber */
+    rinfo.enabled_passes =
+      OUTPUT_COMMON | OUTPUT_HEADERS | OUTPUT_IMODULE;
+
   rinfo.output_formatter = c_output_formatter;
   rinfo.output_language = cl_output_lang;
   rinfo.backend_directory = cl_backend_dir;
@@ -208,7 +212,7 @@ int main(int argc, const char *argv[])
 	   cl_disable_common ? "" : "common ",
 	   cl_disable_headers ? "" : "headers ",
 	   cl_enable_skeleton_impl ? "" : "skel_impl ",
-	   cl_disable_imodule ? "" : "imodule");
+	   cl_enable_imodule ? "" : "imodule");
 	   
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {
@@ -221,3 +225,4 @@ int main(int argc, const char *argv[])
 
   return 0;
 }
+

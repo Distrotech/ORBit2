@@ -8,6 +8,11 @@
 #include <orbit/GIOP/giop.h>
 #include <orbit/orb-core/orbit-interface.h>
 
+typedef struct {
+	CORBA_unsigned_long version;
+	ORBit_IInterface  **interfaces;
+} ORBit_IModule;
+
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);
 gpointer       ORBit_small_allocbuf    (CORBA_TypeCode      tc,
 					CORBA_unsigned_long length);

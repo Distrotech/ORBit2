@@ -1,3 +1,46 @@
+2001-07-26  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-main.c (main): only
+	output imodule information if explicitely asked,
+	and then only output the neccessary.
+
+2001-07-25  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(cbe_tc_generate): make TC's static in typelibs.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_itypes): make the __itype data static if
+	for a type library, also for __imethods.
+	(cc_output_alloc_interface): only output __classids
+	in certain cases.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_load_typelib),
+	(get_typelib_paths, add_if_unique): impl.
+
+	* test/everything/Makefile.am: build an _module typelib.
+
+	* test/everything/client.c (testIInterface): load it.
+
+	* configure.in: we need gmodule.
+
+	* ORBit-2.0.pc.in (Requires): add @THREAD_LIBS@ and gmodule.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(orbit_idl_output_c_common): inhibit GIOP include for small.
+
+	* src/idl-compiler/orbit-idl-c-imodule.c
+	(cc_small_output_imodule): kill.
+	(cc_small_output_base_itypes): ditto.
+	(cc_small_build_interfaces): upd.
+	(orbit_idl_output_c_imodule): upd.
+
+	* include/orbit/orb-core/orbit-small.h: define the
+	ORBit_IModule interface in standard C - not IDL, so we can
+	have nicer dereferencing.
+
+	* src/orb/orb-core/orbit-interface.idl: kill IModule bits.
+
 2001-07-25  Maciej Stachowiak  <mjs@noisehavoc.org>
 
 	* src/idl-compiler/orbit-idl-c-headers.c: (ch_output_codefrag):

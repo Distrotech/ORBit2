@@ -238,6 +238,8 @@ void testIInterface(test_TestFactory factory,
 
   CORBA_Object_release (objref, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  ORBit_small_load_typelib ("./.libs/libEverything_module.a");
 }
 
 void testFixedLengthStruct(test_TestFactory factory, 
