@@ -207,5 +207,10 @@ module test {
 		any opAnyStruct(in any inArg, inout any inoutArg, out any outArg);
 		TypeCode opTypeCode(in TypeCode inArg, inout TypeCode inoutArg, out TypeCode outArg);
 	};
+
+	interface ContextServer {
+		Object opWithContext(in Object inArg, inout Object inoutArg, out Object outArg)
+                        context ("foo", "bar");
+	};
 };
 

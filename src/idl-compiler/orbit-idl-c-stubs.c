@@ -137,6 +137,11 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 		else
 			fprintf (of, "NULL, ");
 
+		if (IDL_OP_DCL(tree).context_expr)
+			fprintf(ci->fh, "_ctx, ");
+		else
+			fprintf(ci->fh, "NULL, ");
+		
 		fprintf (of, "ev);\n\n");
 
 	}

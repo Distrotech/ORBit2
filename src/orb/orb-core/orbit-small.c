@@ -8,6 +8,9 @@
  * to marshal direct to the wire ?
  * Could we manage offsets and deal with the wierd
  * indirection ?
+ *
+ * FIXME: We need some global I/F -> m_data lookup action
+ * FIXME: We need to deal with CORBA_Contexts
  */
 
 #include "config.h"
@@ -222,6 +225,31 @@ ORBit_handle_exception_array (GIOPRecvBuffer *rb, CORBA_Environment *ev,
 			     CORBA_COMPLETED_MAYBE);
 }
 
+static void
+ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
+			     ORBit_IMethod  *m_data,
+			     CORBA_Context   ctx)
+{
+	if (m_data->contexts._length > 0) {
+		int i;
+		/* Horrible inefficiency to get round the 'lete
+		   efficiency of the current impl */
+		ORBit_ContextMarshalItem *mlist;
+
+		mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
+				m_data->contexts._length);
+
+		for (i = 0; i < m_data->contexts._length; i++) {
+			mlist [i].str = m_data->contexts._buffer [i];
+			mlist [i].len = strlen (mlist [i].str) + 1;
+		}
+		/* Assumption, this doesn't whack mlist pointers into
+		   the send_buffer: verified */
+		ORBit_Context_marshal (
+			ctx, mlist, m_data->contexts._length, send_buffer);
+	}
+}
+
 /* CORBA_tk_, CORBA_ type, C-stack type, wire size in bits, wire size in bytes, print format */
 #define _ORBIT_BASE_TYPES							\
 	_ORBIT_HANDLE_TYPE (short, short, int, 16, 2, "%d");			\
@@ -253,7 +281,8 @@ _ORBit_generic_marshal (CORBA_Object           obj,
 			GIOPMessageQueueEntry *mqe,
 			CORBA_unsigned_long    request_id,
 			ORBit_IMethod         *m_data,
-			gpointer              *args)
+			gpointer              *args,
+			CORBA_Context          ctx)
 {
 	GIOPSendBuffer          *send_buffer;
 	struct iovec             op_vec;
@@ -316,6 +345,8 @@ _ORBit_generic_marshal (CORBA_Object           obj,
 
 		dprintf ("\n");
 	}
+
+	ORBit_small_marshal_context (send_buffer, m_data, ctx);
 
 	giop_dump_send (send_buffer);
 
@@ -405,7 +436,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 		case CORBA_tk_union:
 		case CORBA_tk_sequence:
 		case CORBA_tk_except:
-			if (m_data->flags & ORBit_I_METHOD_RET_FIXED_SIZE) {
+			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 				do_demarshal_value (recv_buffer, &ret, tc, TRUE, obj->orb);
 				dprintf ("fixed");
 			} else {
@@ -483,7 +514,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 					return _ORBIT_MARSHAL_SYS_EXCEPTION_COMPLETE;
 				
 				if (a->flags & ORBit_I_ARG_INOUT &&
-				    !(a->flags & ORBit_I_ARG_FIXED_SIZE))
+				    !(a->flags & ORBit_I_COMMON_FIXED_SIZE))
 					CORBA_free (*arg);
 				
 				*arg = *((gpointer *) data);
@@ -499,7 +530,7 @@ _ORBit_generic_demarshal (CORBA_Object           obj,
 			case CORBA_tk_any: {
 				gpointer p;
 
-				if (a->flags & ORBit_I_ARG_FIXED_SIZE) {
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					p = *(gpointer *)args [i];
 					do_demarshal_value (recv_buffer, &p, tc, TRUE, obj->orb);
 				} else if (a->flags & ORBit_I_ARG_INOUT) {
@@ -558,6 +589,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 			 gpointer           marshal_fn,
 			 gpointer           ret,
 			 gpointer          *args,
+			 CORBA_Context      ctx,
 			 CORBA_Environment *ev)
 {
 	CORBA_unsigned_long     request_id;
@@ -566,6 +598,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPMessageQueueEntry   mqe;
 
 	g_return_if_fail (marshal_fn == NULL);
+	g_return_if_fail (ctx == NULL);
 
 	cnx = ORBit_object_get_connection (obj);
 
@@ -580,7 +613,7 @@ retry_request:
 	completion_status = CORBA_COMPLETED_NO;
 
 	if (!_ORBit_generic_marshal (obj, cnx, &mqe, request_id,
-				     m_data, args))
+				     m_data, args, ctx))
 		goto system_exception;
 
 	completion_status = CORBA_COMPLETED_MAYBE;
@@ -622,6 +655,7 @@ ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 			 gpointer                    marshal_fn,
 			 gpointer                    ret,
 			 gpointer                   *args,
+			 CORBA_Context               ctx,
 			 CORBA_Environment          *ev)
 {
 	g_warning ("Stubbed - fill in for scripting");
@@ -635,13 +669,15 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			gpointer                    impl,
 			CORBA_Environment          *ev)
 {
-	int             i, size;
+	int             i;
 	gpointer       *args = NULL;
 	gpointer       *scratch = NULL;
 	gpointer        retval = NULL;
 	GIOPSendBuffer *send_buffer;
 	CORBA_ORB       orb;
 	CORBA_TypeCode  tc;
+	gboolean        has_context;
+	struct CORBA_Context_type ctx;
 
 	dprintf ("Method '%s' on '%p'\n", m_data->name, servant);
 
@@ -649,13 +685,16 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 	orb = ORBIT_SERVANT_TO_ORB (servant);
 
+	has_context = (m_data->contexts._length > 0);
+
 	if (m_data->ret)
 		retval = ORBit_alloc_tcval (m_data->ret, 1);
 /* FIXME: alloca ? alloca (ORBit_gather_alloc_info ( 
    m_data->ret)); */
 
 	if (m_data->arguments._length > 0) {
-		int len = m_data->arguments._length * sizeof (gpointer);
+		int len = m_data->arguments._length *
+			sizeof (gpointer);
 
 		args = alloca (len);
 		scratch = alloca (len);
@@ -693,7 +732,15 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		}
 	}
 
-	small_skel (servant, retval, args, ev, impl);
+	if (has_context) {
+		if (!ORBit_Context_demarshal (NULL, &ctx, recv_buffer))
+			g_warning ("FIXME: handle context demarshaling failure");
+	}
+
+	small_skel (servant, retval, args, &ctx, ev, impl);
+
+	if (has_context)
+		ORBit_Context_server_free (&ctx);
 
 	send_buffer = giop_send_buffer_use_reply (
 		recv_buffer->connection->giop_version,
@@ -743,7 +790,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			case CORBA_tk_union:
 			case CORBA_tk_sequence:
 			case CORBA_tk_except:
-				if (m_data->flags & ORBit_I_METHOD_RET_FIXED_SIZE) {
+				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					ORBit_marshal_arg (send_buffer, retval, m_data->ret); /* T1? */
 					dprintf ("fixed");
 				} else {

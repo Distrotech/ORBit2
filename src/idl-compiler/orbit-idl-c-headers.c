@@ -988,6 +988,7 @@ doskel(IDL_tree cur, OIDL_Run_Info *rinfo, char *ifid, OIDL_C_Info *ci)
 	    "POA_%s *_ORBIT_servant, "
 	    "gpointer _ORBIT_retval, "
 	    "gpointer *_ORBIT_args, "
+	    "CORBA_Context ctx,"
 	    "CORBA_Environment *ev, ", id, ifid);
   else
     fprintf(ci->fh, "void _ORBIT_skel_%s("

@@ -3,10 +3,13 @@
 
 module ORBit {
 	typedef long IArgFlag;
-	const long I_ARG_IN         = 1;
-	const long I_ARG_OUT        = 2;
-	const long I_ARG_INOUT      = 4;
-	const long I_ARG_FIXED_SIZE = 8;
+
+	/* Reserved common Arg / Retval flags -> 16 */
+	const long I_COMMON_FIXED_SIZE    = 1;
+
+	const long I_ARG_IN               = 32;
+	const long I_ARG_OUT              = 64;
+	const long I_ARG_INOUT            = 128;
 
 	struct IArg {
 		TypeCode tc;
@@ -16,17 +19,18 @@ module ORBit {
 
 	typedef sequence<IArg>     IArgs;
 	typedef sequence<TypeCode> ITypes;
+	typedef sequence<string>   IContexts;
 
 	typedef long IMethodFlag;
 
-	const long I_METHOD_NORMAL         = 0;
-	const long I_METHOD_1_WAY          = 1;
-	const long I_METHOD_ALL_BASE       = 2;
-	const long I_METHOD_NO_OUT         = 4;
-	const long I_METHOD_RET_FIXED_SIZE = 8;
+	const long I_METHOD_1_WAY          = 32;
+	const long I_METHOD_ALL_BASE       = 64;
+	const long I_METHOD_NO_OUT         = 128;
+	const long I_METHOD_HAS_CONTEXT    = 256;
 
 	struct IMethod {
 		IArgs       arguments;
+		IContexts   contexts;
 		ITypes      exceptions;
 		TypeCode    ret;
 		string      name;

@@ -642,9 +642,7 @@ cc_output_marshallers(OIDL_C_Info *ci)
 
 /************************************************/
 
-
-
-static int
+static void
 cc_small_output_iargs (FILE *of, const char *method, IDL_tree tree)
 {
 	IDL_tree sub;
@@ -687,7 +685,7 @@ cc_small_output_iargs (FILE *of, const char *method, IDL_tree tree)
 
 		if (orbit_cbe_type_is_fixed_length (
 			IDL_PARAM_DCL (parm).param_type_spec))
-			fprintf (of, "| ORBit_I_ARG_FIXED_SIZE");
+			fprintf (of, "| ORBit_I_COMMON_FIXED_SIZE");
 
 		else if (IDL_PARAM_DCL(parm).attr == IDL_PARAM_OUT) {
 
@@ -721,15 +719,33 @@ cc_small_output_iargs (FILE *of, const char *method, IDL_tree tree)
 		fprintf (of, "\t{ NULL, 0, NULL }\n");
 		fprintf (of, "};\n");
 	}
-
-	return arg_count;
 }
 
-static int
+static void
+cc_small_output_contexts (FILE *of, const char *method, IDL_tree tree)
+{
+	/* Build a list of contest names */
+	if (IDL_OP_DCL (tree).context_expr) {
+		IDL_tree curitem;
+
+		fprintf (of, "/* Exceptions */\n");
+		fprintf (of, "static CORBA_string %s__contextinfo [] = {\n",
+			 method);
+
+		for (curitem = IDL_OP_DCL (tree).context_expr; curitem;
+		     curitem = IDL_LIST (curitem).next) {
+			fprintf (of, "\"%s\"%c", 
+				 IDL_STRING (IDL_LIST (curitem).data).value,
+				 IDL_LIST (curitem).next ? ',' : ' ');
+		}
+
+		fprintf (of, "};\n");
+	}
+}
+
+static void
 cc_small_output_exceptinfo (FILE *of, const char *method, IDL_tree tree)
 {
-	int except_count = 0;
-
 	/* Build a list of exception typecodes */
 	if (IDL_OP_DCL (tree).raises_expr) {
 		IDL_tree curitem;
@@ -746,12 +762,9 @@ cc_small_output_exceptinfo (FILE *of, const char *method, IDL_tree tree)
 			type_id = orbit_cbe_get_typecode_name (curnode);
 			fprintf (of, "\t%s,\n", type_id);
 			g_free (type_id);
-			except_count++;
 		}
 		fprintf (of, "\tNULL\n};\n");
 	}
-
-	return except_count;
 }
 
 static void
@@ -769,6 +782,8 @@ cc_small_output_method_bits (IDL_tree tree, const char *id, OIDL_C_Info *ci)
 
 	cc_small_output_iargs (of, fullname, tree);
 
+	cc_small_output_contexts (of, fullname, tree);
+
 	cc_small_output_exceptinfo (of, fullname, tree);
 
 	g_free (fullname);
@@ -779,6 +794,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 {
 	int arg_count;
 	int except_count;
+	int context_count;
 	const char *method;
 	char       *fullname;
 
@@ -787,6 +803,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 
 	arg_count = IDL_list_length (IDL_OP_DCL (tree).parameter_dcls);
 	except_count = IDL_list_length (IDL_OP_DCL (tree).raises_expr);
+	context_count = IDL_list_length (IDL_OP_DCL (tree).context_expr);
 	
 	fprintf (of, "\t{\n");
 
@@ -797,6 +814,13 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 	else
 		fprintf (of, "\t\t{ 0, 0, NULL, FALSE },\n");
 
+	/* IContexts contexts */
+	if (context_count)
+		fprintf (of, "\t\t{ %d, %d, %s__contextinfo, FALSE },\n",
+			 context_count, context_count, fullname);
+	else
+		fprintf (of, "\t\t{ 0, 0, NULL, FALSE },\n");
+		
 	/* ITypes exceptions */
 	if (IDL_OP_DCL (tree).raises_expr)
 		fprintf (of, "\t\t{ %d, %d, %s__exceptinfo, FALSE },\n",
@@ -820,7 +844,7 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 	fprintf (of, "\"%s\", %d,\n", method, strlen (method) + 1);
 
 	/* IMethodFlags flags */
-	fprintf (of, "\t\tORBit_I_METHOD_NORMAL");
+	fprintf (of, "\t\t0");
 
 	if (IDL_OP_DCL(tree).f_oneway)
 		fprintf (of, " | ORBit_I_METHOD_1_WAY");
@@ -832,7 +856,10 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 	if (IDL_OP_DCL (tree).op_type_spec &&
 	    orbit_cbe_type_is_fixed_length (
 		    IDL_OP_DCL (tree).op_type_spec))
-		fprintf (of, "| ORBit_I_METHOD_RET_FIXED_SIZE");
+		fprintf (of, "| ORBit_I_COMMON_FIXED_SIZE");
+
+	if (IDL_OP_DCL(tree).context_expr)
+		fprintf (of, "| ORBit_I_METHOD_HAS_CONTEXT");
 
 	fprintf (of, "\n},\n");
 

@@ -292,8 +292,6 @@ ck_output_small_skel(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 
   g_return_if_fail (idx != NULL);
 
-  g_assert (! IDL_OP_DCL(tree).context_expr);
-
   intf = IDL_get_parent_node(tree, IDLN_INTERFACE, NULL);
   has_args   = IDL_OP_DCL(tree).parameter_dcls != NULL;
   has_retval = IDL_OP_DCL(tree).op_type_spec != NULL;
@@ -301,10 +299,12 @@ ck_output_small_skel(IDL_tree tree, OIDL_C_Info *ci, int *idx)
   opname = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(tree).ident), "_", 0);
   ifname = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(intf).ident), "_", 0);
 
-  fprintf(ci->fh, "void _ORBIT_skel_small_%s(POA_%s * _ORBIT_servant, "
-	  "gpointer            _ORBIT_retval,"
-	  "gpointer           *_ORBIT_args,"
-	  "CORBA_Environment  *ev,\n", opname, ifname);
+  fprintf(ci->fh, "void _ORBIT_skel_small_%s("
+	  "POA_%s             *_o_servant, "
+	  "gpointer            _o_retval,"
+	  "gpointer           *_o_args,"
+	  "CORBA_Context       _o_ctx,"
+	  "CORBA_Environment  *_o_ev,\n", opname, ifname);
   orbit_cbe_op_write_proto(ci->fh, tree, "_impl_", TRUE);
   fprintf(ci->fh, ")\n");
   fprintf(ci->fh, "{\n");
@@ -312,17 +312,17 @@ ck_output_small_skel(IDL_tree tree, OIDL_C_Info *ci, int *idx)
   if(has_retval) {
     fprintf(ci->fh, "*(");
     orbit_cbe_write_param_typespec(ci->fh, tree);
-    fprintf(ci->fh, " *)_ORBIT_retval = ");
+    fprintf(ci->fh, " *)_o_retval = ");
   }
 
-  fprintf(ci->fh, "_impl_%s(_ORBIT_servant, ", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+  fprintf(ci->fh, "_impl_%s(_o_servant, ", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
   
-  cbe_small_unflatten_args (tree, ci->fh, "_ORBIT_args");
+  cbe_small_unflatten_args (tree, ci->fh, "_o_args");
 
   if(IDL_OP_DCL(tree).context_expr)
-    fprintf(ci->fh, "&_ctx, ");
+    fprintf(ci->fh, "_o_ctx, ");
 
-  fprintf(ci->fh, "ev);\n");
+  fprintf(ci->fh, "_o_ev);\n");
 
   fprintf (ci->fh, "}\n");
 

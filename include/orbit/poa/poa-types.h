@@ -79,7 +79,7 @@ typedef void (*ORBitSkeleton)(PortableServer_ServantBase *_ORBIT_servant,
 
 typedef void (*ORBitSmallSkeleton) (PortableServer_ServantBase *_ORBIT_servant,
 				    gpointer ret, gpointer *args,
-				    CORBA_Environment *ev,
+				    gpointer ctx, CORBA_Environment *ev,
 				    gpointer implementation);
 
 typedef ORBitSkeleton (*ORBit_impl_finder)(PortableServer_ServantBase *servant,

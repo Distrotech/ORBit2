@@ -19,6 +19,7 @@ void           ORBit_small_invoke_stub (CORBA_Object        object,
 					gpointer            marshal_fn,
 					gpointer            ret,
 					gpointer           *args,
+					CORBA_Context       ctx,
 					CORBA_Environment  *ev);
 
 
@@ -27,6 +28,7 @@ void           ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 					gpointer            marshal_fn,
 					gpointer            ret,
 					gpointer           *args,
+					CORBA_Context       ctx,
 					CORBA_Environment  *ev);
 
 
