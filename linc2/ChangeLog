@@ -1,3 +1,20 @@
+2001-07-03  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c (linc_getaddrinfo): don't re-seed the
+	random number generator with the time in seconds !
+	don't use "%d%d", rand (), rand () - it gains us nothing,
+	add gettimeofday ^ instead.
+
+	* src/linc-connection.c (linc_connection_dispose):
+	s/shutdown/dispose.
+
+	* src/linc.c (linc_init): fix g_type_init.
+
+2001-07-02  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_setup): regenerate the
+	UDS' name on EINVAL from bind.
+
 2001-06-21  Martin Baulig  <baulig@suse.de>
 
 	* configure.in: Make this work if SSL is not installed.

@@ -11,7 +11,7 @@
 
 static void linc_connection_init       (LINCConnection      *cnx);
 static void linc_connection_real_state_changed (LINCConnection  *cnx, LINCConnectionStatus status);
-static void linc_connection_shutdown    (GObject             *obj);
+static void linc_connection_dispose    (GObject             *obj);
 static void linc_connection_class_init (LINCConnectionClass *klass);
 
 GType
@@ -50,7 +50,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *)klass;
 
-  object_class->shutdown = linc_connection_shutdown;
+  object_class->dispose = linc_connection_dispose;
   klass->state_changed = linc_connection_real_state_changed;
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(klass)));
 }
@@ -73,7 +73,7 @@ linc_source_remove (LINCConnection *cnx, gboolean unref)
 }
 
 static void
-linc_connection_shutdown (GObject *obj)
+linc_connection_dispose (GObject *obj)
 {
   LINCConnection *cnx = (LINCConnection *)obj;
 
@@ -88,8 +88,8 @@ linc_connection_shutdown (GObject *obj)
   if(cnx->fd >= 0)
     close(cnx->fd);
   cnx->fd = -1;
-  if(parent_class->shutdown)
-    parent_class->shutdown(obj);
+  if(parent_class->dispose)
+    parent_class->dispose(obj);
 }
 
 static gboolean

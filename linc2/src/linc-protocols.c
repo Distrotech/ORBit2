@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <time.h>
+#include <errno.h>
+
+#undef DEBUG
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -133,12 +136,19 @@ linc_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 		fakeserv = TRUE;
 		break;
 #if defined(AF_UNIX)
-	      case AF_UNIX:
-		srand(time(NULL));
+	      case AF_UNIX: {
+                struct timeval t;
+		gettimeofday (&t, NULL);
 		g_snprintf(srvbuf, sizeof(srvbuf),
-			   "%s/linc-%x%x", linc_tmpdir, rand(), rand());
+			   "%s/linc-%x%x", linc_tmpdir,
+			   rand(), (guint)(t.tv_sec^t.tv_usec));
+#ifdef DEBUG
+		if (g_file_test (srvbuf, G_FILE_TEST_EXISTS))
+			g_warning ("'%s' already exists !", srvbuf);
+#endif
 		fakeserv = TRUE;
 		break;
+	      }
 #endif
 	      default:
 		break;
@@ -361,7 +371,12 @@ sys_getaddrinfo(const char *nodename, const char *servname,
 
   if(!nodename && !servname && hints)
     servname = "0";
+  errno = 0;
   retval = getaddrinfo(nodename, servname, hints, res);
+#ifdef DEBUG
+  if (errno)
+	  perror ("In getaddrinfo ");
+#endif
 #if 0
   gettimeofday(&tvend, NULL);
 
