@@ -34,6 +34,22 @@ extern ORBit_IMethod    CORBA_Object__imethods[];
 
 #define CORBA_Object_IMETHODS_LEN 12
 
+typedef struct _ORBitPolicy ORBitPolicy;
+
+/* An extended policy - blocks re-enterancy by default */
+#define ORBIT_TYPE_POLICY_EX (ORBit_policy_ex_get_type ())
+
+GType        ORBit_policy_ex_get_type (void) G_GNUC_CONST;
+ORBitPolicy *ORBit_policy_new         (GType        type,
+				       const char  *first_prop,
+				       ...);
+ORBitPolicy *ORBit_policy_ref         (ORBitPolicy *p);
+void         ORBit_policy_unref       (ORBitPolicy *p);
+void         ORBit_object_set_policy  (CORBA_Object obj,
+				       ORBitPolicy *p);
+void         ORBit_policy_push        (ORBitPolicy *p);
+void         ORBit_policy_pop         (void);
+
 G_END_DECLS
 
 #endif /* CORBA_OBJECT_H */
