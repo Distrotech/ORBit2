@@ -1201,7 +1201,9 @@ load_module (const char *fname, const char *libname)
 	else if (!g_module_symbol (handle, "orbit_imodule_data",
 				     (gpointer *)&module)) {
 		g_warning ("type library '%s' has no stored types", fname);
-			
+
+		g_module_close (handle);
+
 		return FALSE;
 
 	} else {

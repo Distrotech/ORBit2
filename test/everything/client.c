@@ -101,6 +101,7 @@ void testString(test_TestFactory factory,
   objref = CORBA_ORB_string_to_object (orb, ior, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
   g_assert(objref != CORBA_OBJECT_NIL);
+  CORBA_free(ior);
 
   in = constants_STRING_IN;
   inout = CORBA_string_dup(constants_STRING_INOUT_IN);
