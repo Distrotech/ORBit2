@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES=liborb-core.la
 
-TYPELIB_DIR=$(libdir)/orbit
+TYPELIB_DIR=$(libdir)/orbit-2.0
 
 INCLUDES =						\
 	-I.						\

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <orbit/orbit.h>
 
 static glong alive_root_objects = 0;
