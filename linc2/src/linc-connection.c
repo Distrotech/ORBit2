@@ -495,6 +495,11 @@ linc_connection_read (LINCConnection *cnx,
 # define LINC_IOV_MAX (IOV_MAX)
 #elif defined (_SC_IOV_MAX) /* SGI */
 # define LINC_IOV_MAX_INIT (sysconf (_SC_IOV_MAX))
+#elif defined (__APPLE__)
+/* Even though the write(2) man page mentions it, UIO_MAXIOV is only
+ * available if KERNEL is defined on MacOS X 10.1
+ */
+#  define LINC_IOV_MAX 1024
 #else /* Safe Guess */
 # define LINC_IOV_MAX 16
 #endif
