@@ -21,7 +21,7 @@ TESTS = test-dynany test-mem test-performance test-giop test-corbaloc
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
-test_mem_SOURCES=test-mem.c
+test_mem_SOURCES=test-mem.c $(IDLOUT)
 
 test_corbaloc_SOURCES = test-corbaloc.c
 
