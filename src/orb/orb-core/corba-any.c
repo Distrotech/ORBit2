@@ -829,8 +829,8 @@ ORBit_copy_value_core (gconstpointer *val,
 
 		/* need to advance val,newval by size of union, not just
 		 * current tagged field within it */
-		pval1 = *val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_STRUCT);
-		pval2 = *newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_STRUCT);
+		pval1 = *val = ALIGN_ADDRESS (*val, union_align);
+		pval2 = *newval = ALIGN_ADDRESS (*newval, union_align);
 		ORBit_copy_value_core (&pval1, &pval2, tc->discriminator);
 		pval1 = ALIGN_ADDRESS (pval1, union_align);
 		pval2 = ALIGN_ADDRESS (pval2, union_align);
@@ -908,10 +908,6 @@ CORBA_any__copy (CORBA_any *out, const CORBA_any *in)
 		*a = ((guchar *) *a) + sizeof (CORBA_##type);		\
 		*b = ((guchar *) *b) + sizeof (CORBA_##type);		\
 		return ret
-
-#define ORBIT_ALIGNOF_CORBA_UNION	(MAX (MAX (ORBIT_ALIGNOF_CORBA_LONG,		\
-					   ORBIT_ALIGNOF_CORBA_STRUCT),	\
-				      ORBIT_ALIGNOF_CORBA_POINTER))
 
 CORBA_boolean
 ORBit_value_equivalent (gpointer *a, gpointer *b,
@@ -1005,8 +1001,8 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		CORBA_Principal *ap, *bp;
 		gpointer a_val, b_val;
 
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_UNION);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_UNION);
+		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_SEQ);
+		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_SEQ);
 			
 		ap = (CORBA_Principal *) *a;
 		bp = (CORBA_Principal *) *b;
@@ -1038,8 +1034,8 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		if (!CORBA_TypeCode_equal (utc_a, utc_b, ev))
 			return FALSE;
 
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_STRUCT);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_STRUCT);
+		*a = ALIGN_ADDRESS (*a, union_align);
+		*b = ALIGN_ADDRESS (*b, union_align);
 
 		if (!ORBit_value_equivalent (a, b, tc->discriminator, ev))
 			return FALSE;
