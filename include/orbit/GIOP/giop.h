@@ -30,6 +30,10 @@ void        giop_thread_set_main_handler (gpointer    request_handler);
 void        giop_thread_request_push     (GIOPThread *tdata,
 					  gpointer   *poa_object,
 					  gpointer   *recv_buffer);
+void        giop_thread_request_push_key (gpointer    key,
+					  gpointer   *poa_object,
+					  gpointer   *recv_buffer);
+void        giop_thread_key_release      (gpointer    key);
 void        giop_thread_request_process  (GIOPThread *tdata);
 
 #endif /* ORBIT2_INTERNAL_API */

@@ -1597,6 +1597,13 @@ testPingPong (test_TestFactory   factory,
 	CORBA_unsigned_long before_remote_hash;
 	CORBA_unsigned_long after_remote_hash;
 
+#if NUM_THREADS > 0
+	if (threaded) {
+		g_warning ("No thread available to handle incoming requests");
+		return;
+	}
+#endif
+
 	d_print ("Testing ping pong invocations ...\n");
 	r_objref = test_TestFactory_createPingPongServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);

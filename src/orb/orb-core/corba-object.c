@@ -550,6 +550,8 @@ ORBit_demarshal_object (CORBA_Object   *obj,
 	gchar  *type_id = NULL;
 	GSList *profiles = NULL;
 
+	g_return_val_if_fail (orb != CORBA_OBJECT_NIL, TRUE);
+
 	if (ORBit_demarshal_IOR (orb, buf, &type_id, &profiles))
 		return TRUE;
 

@@ -463,6 +463,8 @@ ORBit_POA_free_fn (ORBit_RootObject obj)
 	ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) obj;
 	PortableServer_POA  poa = (PortableServer_POA) obj;
 
+	giop_thread_key_release (obj);
+
 	if (adaptor->adaptor_key._buffer)
 		ORBit_free_T (adaptor->adaptor_key._buffer);
 
@@ -707,6 +709,8 @@ ORBit_POAObject_release_cb (ORBit_RootObject robj)
  
 	/* object *must* be deactivated */
 	g_assert (pobj->servant == NULL);
+
+	giop_thread_key_release (robj);
 
 	object_id = pobj->object_id;
 	pobj->object_id = NULL;
@@ -1235,6 +1239,16 @@ push_request_T (GIOPThread       *thread,
 		(thread, (gpointer *)pobj, (gpointer *)recv_buffer);
 }
 
+static void
+pool_push_request_for_T (gpointer          key_object,
+			 ORBit_POAObject  *pobj,
+			 GIOPRecvBuffer  **recv_buffer)
+{
+	g_assert (giop_threaded ());
+	giop_thread_request_push_key
+		(key_object, (gpointer *)pobj, (gpointer *)recv_buffer);
+}			 
+
 typedef struct {
 	ORBit_POAObject  pobj;
 	GIOPRecvBuffer  *recv_buffer;
@@ -1344,6 +1358,23 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 				ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
 				
 				switch (adaptor->thread_hint) {
+				case ORBIT_THREAD_HINT_PER_OBJECT:
+					pool_push_request_for_T (pobj, &pobj, &recv_buffer);
+					break;
+
+				case ORBIT_THREAD_HINT_PER_POA:
+					pool_push_request_for_T (poa, &pobj, &recv_buffer);
+					break;
+
+				case ORBIT_THREAD_HINT_PER_CONNECTION:
+					pool_push_request_for_T (recv_buffer->connection,
+								 &pobj, &recv_buffer);
+					break;
+
+				case ORBIT_THREAD_HINT_PER_REQUEST:
+					pool_push_request_for_T (NULL, &pobj, &recv_buffer);
+					break;
+
 				case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
 					if (!poa_recv_is_oneway (pobj, recv_buffer))
 						push_request_T (giop_thread_get_main (),
@@ -1352,6 +1383,7 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 				case ORBIT_THREAD_HINT_ALL_AT_IDLE:
 					push_request_idle (&pobj, &recv_buffer);
 					break;
+
 				case ORBIT_THREAD_HINT_NONE:
 					if (giop_threaded ())
 						push_request_T (giop_thread_get_main (),
