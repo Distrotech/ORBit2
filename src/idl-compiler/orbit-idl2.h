@@ -67,7 +67,9 @@ typedef enum {
   MN_NOMARSHAL = 1<<4, /* This is used by other vars, but not actually marshalled */
   MN_ISSEQ = 1<<5, /* for MARSHAL_LOOP only - we need to do foo._buffer before tacking on [v1] */
   MN_ISSTRING = 1<<6, /* for MARSHAL_LOOP only */
-  MN_LOOPED = 1<<7 /* This variable is looped over */
+  MN_LOOPED = 1<<7, /* This variable is looped over */
+  MN_COALESCABLE = 1<<8, /* You can coalesce multiple sequential instances of this type into one encode/decode operation */
+  MN_ENDIAN_DEPENDANT = 1<<9
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {
@@ -102,6 +104,8 @@ struct _OIDL_Marshal_Node {
     } allocate_info;
   } u;
   OIDL_Marshal_Node_Flags flags;
+  guint8 arch_head_align, arch_tail_align;
+  guint8 iiop_head_align, iiop_tail_align;
 };
 
 /* Handling an IDLN_ATTR_DCL:
