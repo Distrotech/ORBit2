@@ -1,5 +1,12 @@
 2003-06-06  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-connection.c
+	(giop_connections_shutdown): warn hackers only,
+	an old problem.
+
+	* test/poa/test-poa.c: make the test effective &
+	pass.
+
 	* src/orb/Makefile.am: fix deps again (?)
 
 	* src/orb/orb-core/orbit-small.c

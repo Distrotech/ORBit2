@@ -18,13 +18,25 @@ main (int argc, char **argv)
 		CORBA_ORB_resolve_initial_references (orb, "RootPOA", ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	poa = ORBit_POA_new_from (orb, rootpoa, "Foo", NULL, ev);
+	{
+		poa = ORBit_POA_new_from (orb, rootpoa, "Foo", NULL, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+		PortableServer_POA_destroy (poa, FALSE, FALSE, ev);
+		CORBA_Object_release ((CORBA_Object) poa, ev);
+	}
+
+	CORBA_Object_release ((CORBA_Object) rootpoa, ev);
+
+	CORBA_ORB_destroy (orb, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-	PortableServer_POA_destroy (poa, FALSE, FALSE, ev);
-	CORBA_Object_release ((CORBA_Object) poa, ev);
+	CORBA_Object_release ((CORBA_Object) orb, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	CORBA_exception_free (ev);
+
+	fprintf (stderr, "PASS: test-poa\n");
 
 	return 0;
 }
