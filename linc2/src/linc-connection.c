@@ -136,6 +136,31 @@ link_connection_broken_idle (gpointer data)
 	return FALSE;
 }
 
+static void
+link_source_remove (LinkConnection *cnx)
+{
+	if (cnx->priv->tag) {
+		LinkWatch *thewatch = cnx->priv->tag;
+		cnx->priv->tag = NULL;
+		link_io_remove_watch (thewatch);
+		d_printf ("Removed watch on %d\n", cnx->priv->fd);
+	}
+}
+
+static void
+link_source_add (LinkConnection *cnx,
+		 GIOCondition    condition)
+{
+	g_assert (cnx->priv->tag == NULL);
+
+	cnx->priv->tag = link_io_add_watch_fd (
+		cnx->priv->fd, condition,
+		link_connection_io_handler, cnx);
+
+	d_printf ("Added watch on %d (0x%x)\n",
+		 cnx->priv->fd, condition);
+}
+
 /*
  * link_connection_class_state_changed:
  * @cnx: a #LinkConnection
@@ -332,31 +357,6 @@ queue_free (LinkConnection *cnx)
 
 	g_list_free (cnx->priv->write_queue);
 	cnx->priv->write_queue = NULL;
-}
-
-static void
-link_source_remove (LinkConnection *cnx)
-{
-	if (cnx->priv->tag) {
-		LinkWatch *thewatch = cnx->priv->tag;
-		cnx->priv->tag = NULL;
-		link_io_remove_watch (thewatch);
-		d_printf ("Removed watch on %d\n", cnx->priv->fd);
-	}
-}
-
-static void
-link_source_add (LinkConnection *cnx,
-		 GIOCondition    condition)
-{
-	g_assert (cnx->priv->tag == NULL);
-
-	cnx->priv->tag = link_io_add_watch_fd (
-		cnx->priv->fd, condition,
-		link_connection_io_handler, cnx);
-
-	d_printf ("Added watch on %d (0x%x)\n",
-		 cnx->priv->fd, condition);
 }
 
 static void
