@@ -1,3 +1,6 @@
+Aug 5, 1998:
+	ORBit 0.2 release
+
 July 22, 1998:
 	ORBit 0.1 release
 
