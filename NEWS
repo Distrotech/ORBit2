@@ -1,3 +1,10 @@
+Version 2.3.107
+
+	* Marshal and de-marshal code sets component correctly (Mark)
+	* TypeCode portability fix (Laca)
+	* spec file re-write (Greg Leblanc)
+	* Check recv buffer is correctly aligned (Dou Wen)
+
 Version 2.3.106
 
 	* Support enum declaration within a union decl (Mark)
