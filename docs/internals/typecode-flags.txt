@@ -21,3 +21,7 @@ interesting - particularly:
 	  to that of the GIOP data representation.
 
 	NB. all optimizations must pre-align.
+
+	Also it would be lovely to have a size field for a flat
+structure, so that we can use straight memcpys instead of recursive
+copies when manipulating the structures.
