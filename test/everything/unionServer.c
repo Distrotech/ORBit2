@@ -115,6 +115,60 @@ UnionServer_opMisc (PortableServer_Servant    servant,
 	return retval;
 }
 
+static test_FixedLengthUnionArray_slice *
+UnionServer_opFixedLengthUnionArray(PortableServer_Servant _servant,
+				    const test_FixedLengthUnionArray inArg,
+				    test_FixedLengthUnionArray inoutArg,
+				    test_FixedLengthUnionArray outArg,
+				    CORBA_Environment *ev)
+{
+  test_FixedLengthUnionArray_slice *retn;
+
+  g_assert (inArg[0]._d == 'a');
+  g_assert (inArg[0]._u.x == constants_LONG_IN);
+  g_assert (inArg[1]._d == 'b');
+  g_assert (inArg[1]._u.y == constants_CHAR_IN);
+  g_assert (inArg[2]._d == 'c');
+  g_assert (inArg[3]._d == 'e');
+  g_assert (inArg[3]._u.v.a == constants_SHORT_IN);
+
+  g_assert (inoutArg[0]._d == 'a');
+  g_assert (inoutArg[0]._u.x == constants_LONG_INOUT_IN);
+  g_assert (inoutArg[1]._d == 'b');
+  g_assert (inoutArg[1]._u.y == constants_CHAR_INOUT_IN);
+  g_assert (inoutArg[2]._d == 'c');
+  g_assert (inoutArg[3]._d == 'e');
+  g_assert (inoutArg[3]._u.v.a == constants_SHORT_INOUT_IN);
+
+  inoutArg[0]._d = 'a';
+  inoutArg[0]._u.x = constants_LONG_INOUT_OUT;
+  inoutArg[1]._d = 'b';
+  inoutArg[1]._u.y = constants_CHAR_INOUT_OUT;
+  inoutArg[2]._d = 'c';
+  inoutArg[3]._d = 'e';
+  inoutArg[3]._u.v.a = constants_SHORT_INOUT_OUT;
+
+  outArg[0]._d = 'a';
+  outArg[0]._u.x = constants_LONG_OUT;
+  outArg[1]._d = 'b';
+  outArg[1]._u.y = constants_CHAR_OUT;
+  outArg[2]._d = 'c';
+  outArg[3]._d = 'e';
+  outArg[3]._u.v.a = constants_SHORT_OUT;
+
+  retn = test_FixedLengthUnionArray__alloc();
+
+  retn[0]._d = 'a';
+  retn[0]._u.x = constants_LONG_RETN;
+  retn[1]._d = 'b';
+  retn[1]._u.y = constants_CHAR_RETN;
+  retn[2]._d = 'c';
+  retn[3]._d = 'e';
+  retn[3]._u.v.a = constants_SHORT_RETN;
+
+  return retn;
+}
+
 PortableServer_ServantBase__epv UnionServer_base_epv = {NULL, simple_finalize, NULL};
 
 POA_test_UnionServer__epv UnionServer_epv = {
@@ -122,6 +176,7 @@ POA_test_UnionServer__epv UnionServer_epv = {
 	UnionServer_opFixed,
 	UnionServer_opVariable,
 	UnionServer_opMisc,
+	UnionServer_opFixedLengthUnionArray,
 };
 
 POA_test_UnionServer__vepv UnionServer_vepv = {&UnionServer_base_epv, &UnionServer_epv};

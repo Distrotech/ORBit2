@@ -40,10 +40,10 @@ ORBit_gather_alloc_info (CORBA_TypeCode tc)
 		int i, sum;
 
 		for (sum = i = 0; i < tc->sub_parts; i++) {
-			sum = GPOINTER_TO_INT (ALIGN_ADDRESS (sum, tc->subtypes[i]->c_align));
+			sum = ALIGN_VALUE (sum, tc->subtypes[i]->c_align);
 			sum += ORBit_gather_alloc_info (tc->subtypes[i]);
 		}
-		sum = GPOINTER_TO_INT (ALIGN_ADDRESS (sum, tc->c_align));
+		sum = ALIGN_VALUE (sum, tc->c_align);
 
 		return sum;
 	}
@@ -61,9 +61,9 @@ ORBit_gather_alloc_info (CORBA_TypeCode tc)
 			prev = MAX (prev, ORBit_gather_alloc_info (tc->subtypes[i]));
 		}
 		if (n >= 0)
-			sum = GPOINTER_TO_INT (ALIGN_ADDRESS (sum, tc->subtypes[n]->c_align));
+		  sum = ALIGN_VALUE (sum, tc->subtypes[n]->c_align);
 		sum += prev;
-		sum = GPOINTER_TO_INT (ALIGN_ADDRESS (sum, tc->c_align));
+		sum = ALIGN_VALUE (sum, tc->c_align);
 		return sum;
 	}
 	case CORBA_tk_wstring:
@@ -112,24 +112,20 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 	case CORBA_tk_wchar:
 	case CORBA_tk_ushort:
 	case CORBA_tk_short:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_SHORT);
 		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_short));
 		*val = ((guchar *)*val) + sizeof (CORBA_short);
 		break;
 	case CORBA_tk_enum:
 	case CORBA_tk_long:
 	case CORBA_tk_ulong:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG);
 		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_long));
 		*val = ((guchar *)*val) + sizeof (CORBA_long);
 		break;
 	case CORBA_tk_float:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_FLOAT);
 		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_float));
 		*val = ((guchar *)*val) + sizeof (CORBA_float);
 		break;
 	case CORBA_tk_double:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_DOUBLE);
 		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_double));
 		*val = ((guchar *)*val) + sizeof (CORBA_double);
 		break;
@@ -140,15 +136,10 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		*val = ((guchar *)*val) + sizeof (CORBA_octet);
 		break;
 	case CORBA_tk_any:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_ANY);
 		ORBit_marshal_any (buf, *val);
 		*val = ((guchar *)*val) + sizeof (CORBA_any);
 		break;
 	case CORBA_tk_Principal:
-		*val = ALIGN_ADDRESS (*val, MAX (MAX (ORBIT_ALIGNOF_CORBA_LONG,
-						    ORBIT_ALIGNOF_CORBA_STRUCT),
-						    ORBIT_ALIGNOF_CORBA_POINTER));
-
 		ulval = *(CORBA_unsigned_long *) (*val);
 		giop_send_buffer_append (buf, *val, sizeof (CORBA_unsigned_long));
 
@@ -158,46 +149,53 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		*val = ((guchar *)*val) + sizeof (CORBA_Principal);
 		break;
 	case CORBA_tk_objref:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		ORBit_marshal_object (buf, *(CORBA_Object *)*val);
 		*val = ((guchar *)*val) + sizeof (CORBA_Object);
 		break;
 	case CORBA_tk_TypeCode:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		ORBit_encode_CORBA_TypeCode (*(CORBA_TypeCode *)*val, buf);
 		*val = ((guchar *)*val) + sizeof (CORBA_TypeCode);
 		break;
 	case CORBA_tk_except:
-	case CORBA_tk_struct:
-		*val = ALIGN_ADDRESS (*val, tc->c_align);
-		for (i = 0; i < tc->sub_parts; i++)
+	case CORBA_tk_struct: {
+		gconstpointer val0 = *val;
+		int offset;
+		for (i = offset = 0; i < tc->sub_parts; i++) {
+			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
+			*val = val0 + offset;
 			ORBit_marshal_value (buf, val, tc->subtypes[i]);
-		*val = ALIGN_ADDRESS (*val, tc->c_align);
+			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
+		}
+		offset = ALIGN_VALUE (offset, tc->c_align);
+		*val = val0 + offset;
 		break;
+	}
 	case CORBA_tk_union: {
+		gconstpointer   val0 = *val;
 		gconstpointer	discrim, body;
 		CORBA_TypeCode 	subtc;
 		int             sz = 0;
 
-		discrim = *val = ALIGN_ADDRESS (*val, MAX (tc->discriminator->c_align, tc->c_align));
+		discrim = *val;
 		ORBit_marshal_value (buf, val, tc->discriminator);
 
 		subtc = ORBit_get_union_tag (tc, &discrim, FALSE);
 		for (i = 0; i < tc->sub_parts; i++)
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 
-		body = *val = ALIGN_ADDRESS (*val, tc->c_align);
+		*val = val0 + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+					   tc->c_align);
+		body = *val;
 		ORBit_marshal_value (buf, &body, subtc);
 		/* FIXME:
 		 * WATCHOUT: end of subtc may not be end of union
 		 */
-		*val = ((guchar *)*val) + sz;
+		*val = *val + ALIGN_VALUE (sz, tc->c_align);
 		break;
 	}
 	case CORBA_tk_wstring: {
 		CORBA_wchar endian_marker = 0xfeff;
 
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		ulval = (CORBA_wstring_len (*(CORBA_wchar **)*val) + 1) * 2;
 		giop_send_buffer_append_aligned (buf, &ulval,
 						 sizeof (CORBA_unsigned_long));
@@ -207,13 +205,11 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		break;
 	}
 	case CORBA_tk_string:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		giop_send_buffer_append_string (buf, *(char **)*val);
 		*val = ((guchar *)*val) + sizeof (char *);
 		break;
 	case CORBA_tk_sequence: {
 		const CORBA_sequence_CORBA_octet *sval;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_SEQ);
 		sval = *val;
 		giop_send_buffer_align (buf, sizeof (CORBA_unsigned_long));
 		giop_send_buffer_append (buf, &sval->_length,
@@ -257,12 +253,10 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		break;
 	case CORBA_tk_longlong:
 	case CORBA_tk_ulonglong:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG_LONG);
 		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_long_long));
 		*val = ((guchar *)*val) + sizeof (CORBA_long_long);
 		break;
 	case CORBA_tk_longdouble:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG_DOUBLE);
 		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_long_double));
 		*val = ((guchar *)*val) + sizeof (CORBA_long_double);
 		break;
@@ -403,7 +397,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	case CORBA_tk_ushort:
 	case CORBA_tk_wchar: {
 		CORBA_unsigned_short *ptr;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_SHORT);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_short));
 		if ((buf->cur + sizeof (CORBA_short)) > buf->end)
 			return TRUE;
@@ -419,7 +412,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	case CORBA_tk_ulong:
 	case CORBA_tk_enum: {
 		CORBA_unsigned_long *ptr;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
 		if ((buf->cur + sizeof (CORBA_long)) > buf->end)
 			return TRUE;
@@ -434,7 +426,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	case CORBA_tk_longlong:
 	case CORBA_tk_ulonglong: {
 		CORBA_unsigned_long_long *ptr;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG_LONG);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long_long));
 		if ((buf->cur + sizeof (CORBA_long_long)) > buf->end)
 			return TRUE;
@@ -448,7 +439,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	}
 	case CORBA_tk_longdouble: {
 		CORBA_long_double *ptr;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG_DOUBLE);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long_double));
 		if ((buf->cur + sizeof (CORBA_long_double)) > buf->end)
 			return TRUE;
@@ -463,7 +453,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	}
 	case CORBA_tk_float: {
 		CORBA_float *ptr;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_FLOAT);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_float));
 		if ((buf->cur + sizeof (CORBA_float)) > buf->end)
 			return TRUE;
@@ -479,7 +468,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	}
 	case CORBA_tk_double: {
 		CORBA_double *ptr;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_DOUBLE);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_double));
 		if ((buf->cur + sizeof (CORBA_double)) > buf->end)
 			return TRUE;
@@ -509,7 +497,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	case CORBA_tk_any: {
 		CORBA_any *decoded;
 
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_ANY);
 		decoded = *val;
 		decoded->_release = CORBA_FALSE;
 		if (ORBit_demarshal_any (buf, decoded, orb))
@@ -519,9 +506,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	}
 	case CORBA_tk_Principal: {
 		CORBA_Principal *p;
-
-		*val = ALIGN_ADDRESS (*val, MAX (ORBIT_ALIGNOF_CORBA_STRUCT,
-						 MAX (ORBIT_ALIGNOF_CORBA_LONG, ORBIT_ALIGNOF_CORBA_POINTER)));
 
 		p = *val;
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
@@ -543,33 +527,38 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		break;
 	}
 	case CORBA_tk_objref:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		if (ORBit_demarshal_object ((CORBA_Object *)*val, buf, orb))
 			return TRUE;
 		*val = ((guchar *)*val) + sizeof (CORBA_Object);
 		break;
 	case CORBA_tk_TypeCode:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		if (ORBit_decode_CORBA_TypeCode (*val, buf))
 			return TRUE;
 		*val = ((guchar *)*val) + sizeof (CORBA_TypeCode);
 		break;
 	case CORBA_tk_except:
-	case CORBA_tk_struct:
-		*val = ALIGN_ADDRESS (*val, tc->c_align);
-		for (i = 0; i < tc->sub_parts; i++) {
+	case CORBA_tk_struct: {
+		int offset;
+		gpointer val0 = *val;
+		for (i = offset = 0; i < tc->sub_parts; i++) {
+			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
+			*val = val0 + offset;
 			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, orb))
 				return TRUE;
+			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
 		}
-		*val = ALIGN_ADDRESS (*val, tc->c_align);
+		offset = ALIGN_VALUE (offset, tc->c_align);
+		*val = val0 + offset;
 		break;
+	}
 	case CORBA_tk_union: {
+		gconstpointer   val0 = *val;
 		CORBA_TypeCode  subtc;
 		gpointer        discrim;
 		gpointer        body;
 		int	        sz = 0;
 
-		discrim = *val = ALIGN_ADDRESS (*val, MAX (tc->discriminator->c_align, tc->c_align));
+		discrim = *val;
 		if (ORBit_demarshal_value (tc->discriminator, val, buf, orb))
 			return TRUE;
 
@@ -577,16 +566,17 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		for (i = 0; i < tc->sub_parts; i++)
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 
-		body = *val = ALIGN_ADDRESS (*val, tc->c_align);
+		*val = val0 + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+					   tc->c_align);
+		body = *val;
 		if (ORBit_demarshal_value (subtc, &body, buf, orb))
 			return TRUE;
 
 		/* WATCHOUT: end subtc body may not be end of union */
-		*val = ((guchar *)*val) + sz;
+		*val = *val + ALIGN_VALUE (sz, tc->c_align);
 		break;
 	}
 	case CORBA_tk_string:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
 		if ((buf->cur + sizeof (CORBA_long)) > buf->end)
 			return TRUE;
@@ -604,7 +594,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 	case CORBA_tk_wstring: {
 		CORBA_wchar endian_marker = 0, *ptr;
 
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
 		if ((buf->cur + sizeof (CORBA_long)) > buf->end)
 			return TRUE;
@@ -653,7 +642,6 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		CORBA_sequence_CORBA_octet *p;
 		gpointer subval;
 
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_SEQ);
 		p = *val;
 		p->_release = TRUE;
 		buf->cur = ALIGN_ADDRESS (buf->cur, sizeof (CORBA_long));
@@ -797,8 +785,6 @@ ORBit_copy_value_core (gconstpointer *val,
 	case CORBA_tk_wchar:
 	case CORBA_tk_short:
 	case CORBA_tk_ushort:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_SHORT);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_SHORT);
 		*(CORBA_short *)*newval = *(CORBA_short *)*val;
 		*val = ((guchar *)*val) + sizeof (CORBA_short);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_short);
@@ -806,37 +792,27 @@ ORBit_copy_value_core (gconstpointer *val,
 	case CORBA_tk_enum:
 	case CORBA_tk_long:
 	case CORBA_tk_ulong:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_LONG);
 		*(CORBA_long *)*newval = *(CORBA_long *)*val;
 		*val = ((guchar *)*val) + sizeof (CORBA_long);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_long);
 		break;
 	case CORBA_tk_longlong:
 	case CORBA_tk_ulonglong:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG_LONG);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_LONG_LONG);
 		*(CORBA_long_long *)*newval = *(CORBA_long_long *)*val;
 		*val = ((guchar *)*val) + sizeof (CORBA_long_long);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_long_long);
 		break;
 	case CORBA_tk_longdouble:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_LONG_DOUBLE);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_LONG_DOUBLE);
 		*(CORBA_long_double *)*newval = *(CORBA_long_double *)*val;
 		*val = ((guchar *)*val) + sizeof (CORBA_long_double);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_long_double);
 		break;
 	case CORBA_tk_float:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_FLOAT);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_FLOAT);
 		*(CORBA_long *)*newval = *(CORBA_long *)*val;
 		*val = ((guchar *)*val) + sizeof (CORBA_float);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_float);
 		break;
 	case CORBA_tk_double:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_DOUBLE);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_DOUBLE);
 		*(CORBA_double *)*newval = *(CORBA_double *)*val;
 		*val = ((guchar *)*val) + sizeof (CORBA_double);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_double);
@@ -851,8 +827,6 @@ ORBit_copy_value_core (gconstpointer *val,
 	case CORBA_tk_any: {
 		const CORBA_any *oldany;
 		CORBA_any *newany;
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_ANY);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_ANY);
 		oldany = *val;
 		newany = *newval;
 		newany->_type = ORBit_RootObject_duplicate (oldany->_type);
@@ -863,14 +837,6 @@ ORBit_copy_value_core (gconstpointer *val,
 		break;
 	}
 	case CORBA_tk_Principal:
-		*val = ALIGN_ADDRESS (*val,
-				     MAX (MAX (ORBIT_ALIGNOF_CORBA_LONG,
-					     ORBIT_ALIGNOF_CORBA_STRUCT),
-					 ORBIT_ALIGNOF_CORBA_POINTER));
-		*newval = ALIGN_ADDRESS (*newval,
-					MAX (MAX (ORBIT_ALIGNOF_CORBA_LONG,
-						ORBIT_ALIGNOF_CORBA_STRUCT),
-					    ORBIT_ALIGNOF_CORBA_POINTER));
 		*(CORBA_Principal *)*newval = *(CORBA_Principal *)*val;
 		((CORBA_Principal *)*newval)->_buffer =
 			CORBA_sequence_CORBA_octet_allocbuf (((CORBA_Principal *)*newval)->_length);
@@ -883,36 +849,45 @@ ORBit_copy_value_core (gconstpointer *val,
 		break;
 	case CORBA_tk_TypeCode:
 	case CORBA_tk_objref:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_POINTER);
 		*(CORBA_Object *)*newval = ORBit_RootObject_duplicate (*(CORBA_Object *)*val);
 		*val = ((guchar *)*val) + sizeof (CORBA_Object);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_Object);
 		break;
 	case CORBA_tk_struct:
-	case CORBA_tk_except:
-		*val = ALIGN_ADDRESS (*val, tc->c_align);
-		*newval = ALIGN_ADDRESS (*newval, tc->c_align);
-		for (i = 0; i < tc->sub_parts; i++)
+	case CORBA_tk_except: {
+		int offset;
+		gconstpointer val0 = *val;
+		gpointer newval0 = *newval;
+
+		for (i = offset = 0; i < tc->sub_parts; i++) {
+			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
+			*val = val0 + offset;
+			*newval = ((guchar *)newval0 + offset);
 			ORBit_copy_value_core (val, newval, tc->subtypes[i]);
-		*val = ALIGN_ADDRESS (*val, tc->c_align);
-		*newval = ALIGN_ADDRESS (*newval, tc->c_align);
+			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
+		}
+		offset = ALIGN_VALUE (offset, tc->c_align);
+		*val = val0 + offset;
+		*newval = newval0 + offset;
 		break;
+	}
 	case CORBA_tk_union: {
+		gconstpointer val0 = *val;
+		gpointer newval0 = *newval;
 		CORBA_TypeCode utc;
 		gint	       union_align = tc->c_align;
-		gint	       discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
 		size_t	       union_size = ORBit_gather_alloc_info (tc);
 
-		pval1 = *val = ALIGN_ADDRESS (*val, discrim_align);
-		pval2 = *newval = ALIGN_ADDRESS (*newval, discrim_align);
+		pval1 = *val;
+		pval2 = *newval;
 
 		utc = ORBit_get_union_tag (tc, (gconstpointer *)val, FALSE);
 
 		ORBit_copy_value_core (&pval1, &pval2, tc->discriminator);
 
-		pval1 = ALIGN_ADDRESS (pval1, union_align);
-		pval2 = ALIGN_ADDRESS (pval2, union_align);
+		pval1 = val0 + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+					    union_align);
+		pval2 = newval0 + (pval1 - val0);
 
 		ORBit_copy_value_core (&pval1, &pval2, utc);
 
@@ -922,16 +897,11 @@ ORBit_copy_value_core (gconstpointer *val,
 	}
 	case CORBA_tk_wstring:
 	case CORBA_tk_string:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_POINTER);
-	
 		*(CORBA_char **)*newval = CORBA_string_dup (*(CORBA_char **)*val);
 		*val = ((guchar *)*val) + sizeof (CORBA_char *);
 		*newval = ((guchar *)*newval) + sizeof (CORBA_char *);
 		break;
 	case CORBA_tk_sequence:
-		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_SEQ);
-		*newval = ALIGN_ADDRESS (*newval, ORBIT_ALIGNOF_CORBA_SEQ);
 		((CORBA_Principal *)*newval)->_release = CORBA_TRUE;
 		((CORBA_Principal *)*newval)->_length =
 			((CORBA_Principal *)*newval)->_maximum =
@@ -985,8 +955,6 @@ CORBA_any__copy (CORBA_any *out, const CORBA_any *in)
 
 #define ALIGN_COMPARE(a,b,tk,type,align)	\
 	case CORBA_tk_##tk:			\
-		*a = ALIGN_ADDRESS (*a, align);	\
-		*b = ALIGN_ADDRESS (*b, align);	\
 		ret = *(CORBA_##type *) *a == *(CORBA_##type *) *b;	\
 		*a = ((guchar *) *a) + sizeof (CORBA_##type);		\
 		*b = ((guchar *) *b) + sizeof (CORBA_##type);		\
@@ -1029,8 +997,6 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	case CORBA_tk_boolean: {
 		gboolean ba, bb;
 
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_OCTET);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_OCTET);
 		ba = *(CORBA_octet *) *a;
 		bb = *(CORBA_octet *) *b;
 		*a = ((guchar *) *a) + sizeof (CORBA_octet);
@@ -1040,8 +1006,6 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	}
 
 	case CORBA_tk_string:
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_POINTER);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_POINTER);
 		ret = !strcmp (*(char **)*a, *(char **)*b);
 		*a = ((guchar *) *a) + sizeof (CORBA_char *);
 		*b = ((guchar *) *b) + sizeof (CORBA_char *);
@@ -1053,8 +1017,6 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 
 	case CORBA_tk_TypeCode:
 	case CORBA_tk_objref:
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_POINTER);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_POINTER);
 		ret = CORBA_Object_is_equivalent (*a, *b, ev);
 		*a = ((guchar *) *a) + sizeof (CORBA_Object);
 		*b = ((guchar *) *b) + sizeof (CORBA_Object);
@@ -1062,9 +1024,6 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 
 	case CORBA_tk_any: {
 		CORBA_any *any_a, *any_b;
-
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_POINTER);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_POINTER);
 
 		any_a = *((CORBA_any **) *a);
 		any_b = *((CORBA_any **) *b);
@@ -1079,17 +1038,23 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 
 	case CORBA_tk_struct:
 	case CORBA_tk_except: {
+		int offset;
+		gpointer a0 = *a;
+		gpointer b0 = *b;
 		int i;
 
-		*a = ALIGN_ADDRESS (*a, tc->c_align);
-		*b = ALIGN_ADDRESS (*b, tc->c_align);
-
-		for (i = 0; i < tc->sub_parts; i++)
+		for (i = offset = 0; i < tc->sub_parts; i++) {
+			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
+			*a = a0 + offset;
+			*b = b0 + offset;
 			if (!ORBit_value_equivalent (a, b, tc->subtypes [i], ev))
 				return FALSE;
+			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
+		}
 
-		*a = ALIGN_ADDRESS (*a, tc->c_align);
-		*b = ALIGN_ADDRESS (*b, tc->c_align);
+		offset = ALIGN_VALUE (offset, tc->c_align);
+		*a = a0 + offset;
+		*b = b0 + offset;
 		return TRUE;
 	}
 
@@ -1097,9 +1062,6 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		CORBA_Principal *ap, *bp;
 		gpointer a_val, b_val;
 
-		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_SEQ);
-		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_SEQ);
-			
 		ap = (CORBA_Principal *) *a;
 		bp = (CORBA_Principal *) *b;
 
@@ -1121,12 +1083,11 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	case CORBA_tk_union: {
 		CORBA_TypeCode utc_a, utc_b;
 		gint           union_align = tc->c_align;
-		gint           discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
 		size_t         union_size = ORBit_gather_alloc_info (tc);
 		gpointer       a_orig, b_orig;
 
-		a_orig = *a = ALIGN_ADDRESS (*a, discrim_align);
-		b_orig = *b = ALIGN_ADDRESS (*b, discrim_align);
+		a_orig = *a;
+		b_orig = *b;
 
 		utc_a = ORBit_get_union_tag (tc, (gconstpointer *)a, FALSE);
 		utc_b = ORBit_get_union_tag (tc, (gconstpointer *)b, FALSE);
@@ -1137,14 +1098,14 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		if (!ORBit_value_equivalent (a, b, tc->discriminator, ev))
 			return FALSE;
 
-		*a = ALIGN_ADDRESS (*a, union_align);
-		*b = ALIGN_ADDRESS (*b, union_align);
-
+		*a = a_orig + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+					   union_align);
+		*b = b_orig + (*a - a_orig);
 		if (!ORBit_value_equivalent (a, b, utc_a, ev))
 			return FALSE;
 
-		*a = ((guchar *) a_orig) + union_size;
-		*b = ((guchar *) b_orig) + union_size;
+		*a = ((guchar *) a_orig) + ALIGN_VALUE (union_size, union_align);
+		*b = ((guchar *) b_orig) + ALIGN_VALUE (union_size, union_align);
 		return TRUE;
 	}
 

@@ -73,13 +73,42 @@ ArrayServer_opOctetArray (PortableServer_Servant _servant,
   return retn; 
 }
 
+static test_FixedLengthStructArray_slice *
+ArrayServer_opFixedLengthStructArray(PortableServer_Servant _servant,
+				     const test_FixedLengthStructArray inArg,
+				     test_FixedLengthStructArray inoutArg,
+				     test_FixedLengthStructArray outArg,
+				     CORBA_Environment *ev){
+  int i;
+  test_FixedLengthStructArray_slice *retn;
+
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inArg[i].a==constants_SEQ_OCTET_IN[i]);
+
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inoutArg[i].a==constants_SEQ_OCTET_INOUT_IN[i]);
+
+  for(i=0;i<test_SequenceLen;i++)
+	inoutArg[i].a = constants_SEQ_OCTET_INOUT_OUT[i];
+  
+  for(i=0;i<test_SequenceLen;i++)
+	outArg[i].a = constants_SEQ_OCTET_OUT[i];
+	
+  retn = test_FixedLengthStructArray__alloc();
+
+  for(i=0;i<test_SequenceLen;i++)
+	retn[i].a = constants_SEQ_OCTET_RETN[i];
+      
+  return retn; 
+}
 
 static test_StrArray_slice *
 ArrayServer_opStrArray(PortableServer_Servant _servant,
 					   const test_StrArray inArg,
 					   test_StrArray inoutArg,
 					   test_StrArray_slice ** outArg,
-					   CORBA_Environment * ev){
+					   CORBA_Environment * ev)
+{
   int i;
   test_StrArray_slice *retn;
   for(i=0;i<test_SequenceLen;i++)
@@ -104,11 +133,62 @@ ArrayServer_opStrArray(PortableServer_Servant _servant,
   return retn;  
 }
 
+static test_AlignHoleStructArray_slice *
+ArrayServer_opAlignHoleStructArray(PortableServer_Servant _servant,
+				   const test_AlignHoleStructArray inArg,
+				   test_AlignHoleStructArray inoutArg,
+				   test_AlignHoleStructArray outArg,
+				   CORBA_Environment * ev)
+{
+  int i;
+  test_AlignHoleStructArray_slice *retn;
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inArg[i].a.a==constants_SEQ_OCTET_IN[i]);
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inArg[i].a.b==constants_SEQ_OCTET_IN[i]);
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inArg[i].b==constants_SEQ_OCTET_IN[i]);
+
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inoutArg[i].a.a==constants_SEQ_OCTET_INOUT_IN[i]);
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inoutArg[i].a.b==constants_SEQ_OCTET_INOUT_IN[i]);
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inoutArg[i].b==constants_SEQ_OCTET_INOUT_IN[i]);
+
+  for(i=0;i<test_SequenceLen;i++)
+	inoutArg[i].a.a = constants_SEQ_OCTET_INOUT_OUT[i];
+  for(i=0;i<test_SequenceLen;i++)
+	inoutArg[i].a.b = constants_SEQ_OCTET_INOUT_OUT[i];
+  for(i=0;i<test_SequenceLen;i++)
+	inoutArg[i].b = constants_SEQ_OCTET_INOUT_OUT[i];
+  
+  for(i=0;i<test_SequenceLen;i++)
+	outArg[i].a.a = constants_SEQ_OCTET_OUT[i];
+  for(i=0;i<test_SequenceLen;i++)
+	outArg[i].a.b = constants_SEQ_OCTET_OUT[i];
+  for(i=0;i<test_SequenceLen;i++)
+	outArg[i].b = constants_SEQ_OCTET_OUT[i];
+	
+  retn = test_AlignHoleStructArray__alloc();
+
+  for(i=0;i<test_SequenceLen;i++)
+	retn[i].a.a = constants_SEQ_OCTET_RETN[i];
+  for(i=0;i<test_SequenceLen;i++)
+	retn[i].a.b = constants_SEQ_OCTET_RETN[i];
+  for(i=0;i<test_SequenceLen;i++)
+	retn[i].b = constants_SEQ_OCTET_RETN[i];
+      
+  return retn;
+}
+
 POA_test_ArrayServer__epv ArrayServer_epv = {
   NULL,
   ArrayServer_opLongArray,
   ArrayServer_opOctetArray,
+  ArrayServer_opFixedLengthStructArray,
   ArrayServer_opStrArray,
+  ArrayServer_opAlignHoleStructArray,
 };
 
 PortableServer_ServantBase__epv ArrayServer_base_epv = {NULL, simple_finalize, NULL};

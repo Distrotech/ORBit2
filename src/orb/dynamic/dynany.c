@@ -1383,6 +1383,7 @@ DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 {
 	DynAny *dynany;
 	int i;
+	guint offset = 0;
 	gconstpointer src;
 	DynamicAny_NameValuePairSeq *retval;
 	CORBA_TypeCode tc;
@@ -1412,6 +1413,7 @@ DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 		CORBA_any      *any;
 		CORBA_TypeCode  subtc = tc->subtypes [i];
 		gpointer        to;
+		gconstpointer   tmpsrc;
 
 		retval->_buffer [i].id = CORBA_string_dup (tc->subnames [i]);
 		any = &retval->_buffer [i].value;
@@ -1419,8 +1421,10 @@ DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 		any->_type = (CORBA_TypeCode) CORBA_Object_duplicate (
 			(CORBA_Object) subtc, ev);
 		to = any->_value = ORBit_alloc_by_tc (subtc);
-		
-		ORBit_copy_value_core (&src, &to, subtc);
+		offset = ALIGN_VALUE (offset, subtc->c_align);
+		tmpsrc = src + offset;
+		ORBit_copy_value_core (&tmpsrc, &to, subtc);
+		offset += ORBit_gather_alloc_info (subtc);
 	}
 
 	return retval;
@@ -1433,6 +1437,7 @@ DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
 {
 	DynAny *dynany;
 	int i;
+	guint offset = 0;
 	gpointer dest;
 	CORBA_TypeCode tc;
 
@@ -1477,8 +1482,13 @@ DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
 	for (i = 0; i < value->_length; i++) {
 		DynamicAny_NameValuePair current = value->_buffer [i];
 		gconstpointer src = current.value._value;
+		CORBA_TypeCode subtc = tc->subtypes [i];
+		gpointer tmpdest;
 
-		ORBit_copy_value_core (&src, &dest, tc->subtypes [i]);
+		offset = ALIGN_VALUE (offset, subtc->c_align);
+		tmpdest = dest + offset;
+		ORBit_copy_value_core (&src, &tmpdest, subtc);
+		offset += ORBit_gather_alloc_info (subtc);
 	}
 }
 
@@ -1518,6 +1528,7 @@ DynamicAny_DynStruct_get_members_as_dyn_any (DynamicAny_DynStruct obj,
 
 		retval->_buffer [i].id = CORBA_string_dup (tc->subnames [i]);
 
+		/* FIXME: this looks broken to me - why does src not advance ? */
 		retval->_buffer [i].value = dynany_create (subtc, src, dynany, ev);
 	}
 

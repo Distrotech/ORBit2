@@ -379,5 +379,5 @@ echo "ORBit configuration:
 	Purify cleanliness:	${enable_purify}
 
 	This is the Development branch of ORBit2, if
-you want something more stable checkout -r gnome-2-6.
+you want something more stable checkout -r gnome-2-10.
 "

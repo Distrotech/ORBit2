@@ -162,12 +162,16 @@ module test {
 	typedef long LongArray[SequenceLen];
 	typedef string StrArray[SequenceLen];
 	typedef string StrArrayMultiDimensional[SequenceLen][3][5];
+	typedef FixedLengthStruct FixedLengthStructArray[SequenceLen];
 	typedef VariableLengthStruct VariableLengthStructArray[SequenceLen];
+	typedef AlignHoleStruct AlignHoleStructArray[SequenceLen];
 
 	interface ArrayServer {
 		LongArray opLongArray(in LongArray inArg, inout LongArray inoutArg, out LongArray outArg);
 		OctetArray opOctetArray(in OctetArray inArg, inout OctetArray inoutArg, out OctetArray outArg);
+		FixedLengthStructArray opFixedLengthStructArray(in FixedLengthStructArray inArg, inout FixedLengthStructArray inoutArg, out FixedLengthStructArray outArg);
 		StrArray opStrArray(in StrArray inArg, inout StrArray inoutArg, out StrArray outArg);
+		AlignHoleStructArray opAlignHoleStructArray(in AlignHoleStructArray inArg, inout AlignHoleStructArray inoutArg, out AlignHoleStructArray outArg);
 	};
   
 	interface BasicServer {
@@ -257,6 +261,7 @@ module test {
 	};
 
 	typedef sequence <VariableLengthUnion> unionSeq;
+	typedef FixedLengthUnion FixedLengthUnionArray[SequenceLen];
 
 	interface UnionServer {
 		FixedLengthUnion opFixed (in FixedLengthUnion    inArg, 
@@ -270,6 +275,10 @@ module test {
 		EnumUnion opMisc (in unionSeq     inSeq,
 				  in BooleanUnion inArg,
 				  out ArrayUnion  outArg);
+
+		FixedLengthUnionArray opFixedLengthUnionArray (in FixedLengthUnionArray inArg,
+							       inout FixedLengthUnionArray inoutArg,
+							       out FixedLengthUnionArray outArg);
 	};
 
 	interface AnyServer {
