@@ -2,7 +2,7 @@
  * linc-compat.c: This file is part of the linc library.
  *
  * Authors:
- *    Tor Lillqvist  (tml@iki.fi)
+ *    Tor Lillqvist  (tml@novell.com)
  *
  * Copyright 2005, Novell, Inc.
  */
