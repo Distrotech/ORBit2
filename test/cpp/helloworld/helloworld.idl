@@ -1,0 +1,11 @@
+// This gets prepended to all the repoids:
+#pragma prefix "PhilDawes"
+
+
+module hellomodule {
+
+  interface Hello {
+	string helloWorld(in string greeting);
+  };
+};
+

@@ -1,5 +1,12 @@
 2002-03-05  Murray Cumming  <murrayc@usa.net>
 
+	* Added helloworld example from the external orbit-cpp-examples 
+	package to tests/cpp. But there's something wrong with the link stage,
+	and you'll have to edit one of the generated #include lines manually
+	for this local test.
+
+2002-03-05  Murray Cumming  <murrayc@usa.net>
+
 	* Commented-out all use of the _orbitcpp::c namespace. The 
 	IDL_IMPL_C_NS_NOTUSED macros are still in place so someone can restore 
 	this if they figure out why it didn't work.
