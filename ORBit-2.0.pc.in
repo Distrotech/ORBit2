@@ -2,6 +2,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
+orbit_idl=@bindir@/orbit-idl
 
 
 Name: ORBit-2.0
