@@ -56,6 +56,9 @@ main (int argc, char *argv[])
   	act.sa_handler = SIG_IGN;
   	sigaction(SIGPIPE, &act, 0);
   }
+
+  CORBA_exception_init (&ev);
+  orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
   
   {
   	poptContext	pcxt;
@@ -75,8 +78,6 @@ main (int argc, char *argv[])
       }
       poptFreeContext(pcxt);
   }
-  CORBA_exception_init (&ev);
-  orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
 
   {
   	PortableServer_POA root_poa;
