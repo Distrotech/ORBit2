@@ -1599,25 +1599,12 @@ testPingPong (test_TestFactory   factory,
 	/* Test blocking bits - try to blow the remote guy's stack */
 	if (!in_proc) {
 		int i;
-		test_PingPongServer     local_obj;
-		POA_test_PingPongServer servant= {
-			NULL, &PingPongServer_vepv
-		};
-
-		local_obj = create_object (
-			global_poa, POA_test_PingPongServer__init,
-			&servant, ev);
-		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 		d_print ("Testing client limiting of stack smash on remote server\n");
-
 		for (i = 0; i < 10000; i++) {
-			test_PingPongServer_opOneWayCallback (r_objref, local_obj, ev);
+			test_PingPongServer_opOneWayCallback (r_objref, l_objref, ev);
 			g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		}
-
-		CORBA_Object_release (local_obj, ev);
-		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	}
 
 	if (!in_proc) {
