@@ -6,8 +6,10 @@
 
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
+#include "../util/orbit-options.h"
 #include "orbhttp.h"
 
+extern ORBit_option orbit_supported_options[];
 static void
 CORBA_ORB_release_fn (ORBit_RootObject robj)
 {
@@ -41,6 +43,8 @@ CORBA_ORB_init (int *argc, char **argv,
 	if (retval)
 		return (CORBA_ORB) CORBA_Object_duplicate (
 			(CORBA_Object) retval, ev);
+
+	ORBit_option_parse (argc, argv, orbit_supported_options);
 
 	giop_init ();
 
@@ -896,3 +900,43 @@ ORBit_ORB_forw_bind(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
 {
   g_warning("ORBit_ORB_forw_bind NYI");
 }
+
+/*
+ * Command line option handling.
+ */
+static gboolean     orbit_use_ipv4   = FALSE;
+static gboolean     orbit_use_ipv6   = FALSE; 
+static gboolean     orbit_use_usocks = TRUE;
+static gboolean     orbit_use_irda   = FALSE;
+static gboolean     orbit_use_ssl    = FALSE;
+
+gboolean
+ORBit_proto_use (const char *name)
+{
+
+	if ((orbit_use_ipv4   && !strcmp ("IPv4", name)) ||
+	    (orbit_use_ipv6   && !strcmp ("IPv4", name)) || 
+	    (orbit_use_usocks && !strcmp ("UNIX", name)) || 
+	    (orbit_use_irda   && !strcmp ("IrDA", name)) || 
+	    (orbit_use_ipv6   && !strcmp ("SSL",  name)))
+		return TRUE;
+
+	return FALSE;
+}
+
+static ORBit_option orbit_supported_options[] = {
+	{"ORBNoSystemRC",   ORBIT_OPTION_NONE,    NULL}, /* FIXME: unimplemented */
+	{"ORBNoUserRC",     ORBIT_OPTION_NONE,    NULL}, /* FIXME: unimplemented */
+	{"ORBid",           ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
+	{"ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
+	{"ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
+	{"ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL}, /* FIXME: unimplemented */
+	{"ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL}, /* FIXME: huh?          */
+	{"ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4},
+	{"ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6},
+	{"ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
+	{"ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
+	{"ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda},
+	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
+	{NULL,              0,                    NULL},
+};

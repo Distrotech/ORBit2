@@ -1,5 +1,25 @@
 2001-09-18  Mark McLoughlin <mark@skynet.ie>
 
+	Port command line option handling from ORBit-0.5.x.
+
+	* src/orb/util/orbit-options.[ch]: two new files with two 
+	new functions - ORBit_option_set and ORBit_option_parse
+	courtesy of Dick I think.
+
+	* src/orb/util/Makefile.am: update.
+
+	* src/orb/orb-core/corba-orb.c,
+	  src/orb/orb-core/orb-core-private.h
+	(ORBit_proto_use): impl.
+	Added all of the sensible options from ORBit-0.5.x. Only
+	the IIOP protocol options are implemented as yet.
+
+	* src/orb/orb-core/corba-object.c(ORBit_start_servers):
+	check to see if we should use the protocol before starting
+	a server using that protocol.
+
+2001-09-18  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/Makefile.am: depend on $(IDL_COMPILER)
 	not on $(IDL). hmmm.
 	
