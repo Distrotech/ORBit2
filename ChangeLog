@@ -1,5 +1,9 @@
 2003-06-09  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_ObjectAdaptor_set_thread_hintv): split
+	(ORBit_ObjectAdaptor_set_thread_hint): impl.
+
 	* src/idl-compiler/orbit-idl-c-common.c
 	(orbit_idl_output_c_common): guard the skel
 	marshallers so they arn't built in the imodule.
