@@ -5,13 +5,13 @@
  * Flip this switch to dump GIOP messages
  * as they are sent and received.
  */
-#define DEBUG
+#undef DEBUG
 
 /*
  * Flip this switch to get a nice trace
  * of method invocations.
  */
-#define TRACE_DEBUG
+#undef TRACE_DEBUG
 
 /*
  * Flip this switch if you want tyeplib
