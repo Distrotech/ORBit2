@@ -1,5 +1,27 @@
 2001-07-17  Michael Meeks  <michael@ximian.com>
 
+	* src/idl-compiler/orbit-idl-main.c (main): make
+	the runtime message more pleasant.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_IInterface_is_a): upd. to sequence<String>
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_itypes): output sequence<string> for
+	base types & get the length right.
+	(cc_small_output_base_itypes): upd.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_skel): kill.
+	(ORBit_small_invoke): impl.
+
+	* configure.in (ORBIT_SERIAL): bump.
+
+	* src/orb/orb-core/orbit-interface.idl: switch
+	to sequence<string> for base_interfaces.
+
+2001-07-17  Michael Meeks  <michael@ximian.com>
+
 	* test/everything/client.c (testIInterface): 
 	ORBit_small_get_type_id regression test.
 	(run_tests): hook it up.

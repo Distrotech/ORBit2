@@ -463,15 +463,15 @@ CORBA_Object_is_a (CORBA_Object       obj,
 }
 
 static gboolean
-ORBit_IInterface_is_a( ORBit_IInterface *idata, const char *type_id )
+ORBit_IInterface_is_a (ORBit_IInterface *idata, const char *type_id)
 {
-	int idx;
+	int i;
 
-	if ( strcmp(idata->tc->repo_id, type_id) == 0 )
+	if (!strcmp (idata->tc->repo_id, type_id))
 		return TRUE;
 
-	for ( idx = 0 ; idx < idata->base_interfaces._length ; idx++ )
-		if ( strcmp(idata->base_interfaces._buffer[idx].tc->repo_id, type_id) == 0 )
+	for (i = 0; i < idata->base_interfaces._length; i++ )
+		if (!strcmp (idata->base_interfaces._buffer [i], type_id))
 			return TRUE;
 
 	return FALSE;

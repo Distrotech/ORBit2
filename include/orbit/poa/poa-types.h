@@ -35,11 +35,11 @@ struct ORBit_POAObject_type {
 typedef void (*ORBit_vepvmap_init)(ORBit_VepvIdx *map);
 
 typedef struct {
-  ORBit_impl_finder relay_call;
+  ORBit_impl_finder       relay_call;
   ORBit_small_impl_finder small_relay_call;
-  const char *class_name;
-  CORBA_unsigned_long *class_id;
-  ORBit_vepvmap_init init_vepvmap;
+  const char             *class_name;
+  CORBA_unsigned_long    *class_id;
+  ORBit_vepvmap_init      init_vepvmap;
   ORBit_VepvIdx*          vepvmap;
   int                     vepvlen;
   ORBit_IInterface       *idata;
