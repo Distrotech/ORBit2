@@ -66,17 +66,16 @@ testConst (void)
 static void
 testSequenceHelpers (void)
 {
-	CORBA_long                  l    = 0;
-	test_BoundedLongSeq        *lseq = NULL;
-	
+	CORBA_long           l    = 0;
+	test_BoundedLongSeq *lseq = NULL;
 
 	lseq = ORBit_sequence_alloc (TC_test_BoundedLongSeq, 2);
 	g_assert (lseq != NULL);
 	g_assert (lseq->_length ==  2);
 	g_assert (lseq->_maximum >= 2);
 
-	ORBit_sequence_index (lseq,0) = 0;
-	ORBit_sequence_index (lseq,1) = 0;
+	ORBit_sequence_index (lseq, 0) = 0;
+	ORBit_sequence_index (lseq, 1) = 0;
 	
 	l = 1;
 	ORBit_sequence_append (lseq, &l);
@@ -128,8 +127,6 @@ testSequenceHelpers (void)
 		
 		CORBA_free (oseq);
 	}
-
-	g_warning ("FIXME, check ORBit_sequence* family for memory leaks");
 }
 
 static void
@@ -583,7 +580,7 @@ testUnboundedSequence (test_TestFactory   factory,
 {
   test_SequenceServer objref;
   test_StrSeq *outArg = NULL, inArg, inoutArg, *retn;
-  test_LongSeq *long_retn;
+  /*  test_LongSeq *long_retn; */
   guint i;
   d_print ("Testing unbounded sequences...\n");
   objref = test_TestFactory_getSequenceServer (factory, ev);
@@ -1646,7 +1643,9 @@ testPingPong (test_TestFactory   factory,
 
 #if NUM_THREADS > 0
 	if (thread_tests) {
-		g_warning ("No thread available to handle incoming requests");
+		static volatile int warned = 0;
+		if (!warned++)
+			g_warning ("No thread available to handle incoming requests");
 		return;
 	}
 #endif
@@ -1782,41 +1781,43 @@ static void
 testSegv (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
+	if (in_proc) 
+		return;
+
 	d_print ("Testing Fatal invocations ...\n");
-	if (!in_proc) {
-		gboolean broken = FALSE;
-		gboolean invoked = FALSE;
+	gboolean broken = FALSE;
+	gboolean invoked = FALSE;
 
-		g_assert (ORBit_small_listen_for_broken (
-			factory, G_CALLBACK (broken_cb), &broken) ==
-			  ORBIT_CONNECTION_CONNECTED);
+	g_assert (ORBit_small_listen_for_broken (
+						 factory, G_CALLBACK (broken_cb), &broken) ==
+		  ORBIT_CONNECTION_CONNECTED);
 
-		g_assert (ORBit_small_listen_for_broken (
-			factory, G_CALLBACK (dummy_cb), &invoked) ==
-			  ORBIT_CONNECTION_CONNECTED);
+	g_assert (ORBit_small_listen_for_broken (
+						 factory, G_CALLBACK (dummy_cb), &invoked) ==
+		  ORBIT_CONNECTION_CONNECTED);
 
-		g_assert (ORBit_small_unlisten_for_broken (
-			factory, G_CALLBACK (dummy_cb)) ==
-			  ORBIT_CONNECTION_CONNECTED);
+	g_assert (ORBit_small_unlisten_for_broken (
+						   factory, G_CALLBACK (dummy_cb)) ==
+		  ORBIT_CONNECTION_CONNECTED);
+	g_assert (!CORBA_Object_non_existent (factory, ev));
 
-		test_TestFactory_segv (factory, "do it!", ev); 
-#ifdef DO_HARDER_SEGV
-		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-		g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/COMM_FAILURE:1.0"));
-		CORBA_exception_free (ev);
+	test_TestFactory_segv (factory, "do it!", ev); 
 
-		g_assert (ORBit_small_get_connection_status (factory) ==
-			  ORBIT_CONNECTION_DISCONNECTED);
-		g_assert (broken);
-		g_assert (!invoked);
+#ifdef DO_HARDER_SEGV // unusual
+	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+	g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/COMM_FAILURE:1.0"));
+	CORBA_exception_free (ev);
+
+	g_assert (ORBit_small_get_connection_status (factory) ==
+		  ORBIT_CONNECTION_DISCONNECTED);
+	g_assert (broken);
+	g_assert (!invoked);
 #else
-		if (ORBit_small_unlisten_for_broken (
-			factory, G_CALLBACK (broken_cb)) !=
-		    ORBIT_CONNECTION_CONNECTED)
-			g_warning ("Unusual race in unlisten");
-		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	if (ORBit_small_unlisten_for_broken (factory, G_CALLBACK (broken_cb)) !=
+	    ORBIT_CONNECTION_CONNECTED)
+		g_warning ("Unusual race in unlisten");
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 #endif
-	}
 }
 
 static void
@@ -1952,6 +1953,34 @@ testDerivedServer (test_TestFactory   factory,
 }
 
 static void
+testNonExistent (test_TestFactory factory, CORBA_Environment *ev)
+{
+	CORBA_Object non_existent;
+	const char *non_existent_ior =
+		"IOR:010000001f00000049444c3a6f726269742f746573742f54657"
+		"374466163746f72793a312e300000030000000054424f6400000001"
+		"01020005000000554e495800000000160000006c6f63616c686f737"
+		"42e6c6f63616c646f6d61696e0000002d0000002f746d702f6f7262"
+		"69742d6d69636861656c2f6c696e632d363733322d302d373362323"
+		"966373333316662390000000000000000caaedfba58000000010102"
+		"002d0000002f746d702f6f726269742d6d69636861656c2f6c696e6"
+		"32d363733322d302d37336232396637333331666239000000001c00"
+		"000000000000331c40f8ba0fa828dc2928282828282808000000db7"
+		"e269601000000480000000100000002000000050000001c00000000"
+		"000000331c40f8ba0fa828dc2928282828282808000000db7e26960"
+		"1000000140000000100000001000105000000000901010000000000";
+
+	if (!in_proc)
+		return;
+	d_print ("Testing CORBA_Object_non_existent ...\n");
+
+	non_existent = CORBA_ORB_string_to_object
+		(global_orb, non_existent_ior, ev);
+	g_assert (CORBA_Object_non_existent (non_existent, ev));
+	CORBA_Object_release (non_existent, NULL);
+}
+
+static void
 run_tests (test_TestFactory   factory, 
 	   gboolean           thread_tests,
 	   CORBA_Environment *ev)
@@ -1986,6 +2015,7 @@ run_tests (test_TestFactory   factory,
 		testContext (factory, ev);
 		testIInterface (factory, ev);
 		testDerivedServer (factory, ev);
+		testNonExistent (factory, ev);
 #ifndef TIMING_RUN
 		if (!thread_tests)
 			testAsync (factory, ev);
