@@ -55,7 +55,7 @@ orbittypelibdir = $(libdir)/orbit-2.0
 orbittypelib_LTLIBRARIES = Everything_module.la
 
 Everything_module_la_LDFLAGS = \
-	-export-dynamic -module -no-undefined
+	-export-dynamic -module -no-undefined -avoid-version
 Everything_module_la_SOURCES = \
 	everything-imodule.c
 Everything_module_la_LIBADD = \
