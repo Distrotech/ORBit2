@@ -1,5 +1,10 @@
 2001-08-28 Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-any.c(ORBit_marhsal_value):
+	cleanup and document.
+
+2001-08-28 Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/GIOP/giop-send-buffer.c
 	(giop_send_buffer_append_aligned): kill 
 	unused indirect_left.

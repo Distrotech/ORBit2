@@ -154,185 +154,192 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
   }
 }
 
+/*
+ * ORBit_marshal_value:
+ * @buf: the send buffer.
+ * @val: a pointer to the location of the value.
+ * @tc:  the TypeCode indicating the type of the value.
+ *
+ * Marshals the value onto the buffer and changes @val to point 
+ * to the location after the value.
+ */
 void
-ORBit_marshal_value(GIOPSendBuffer *buf,
-		    gconstpointer *val,
-		    CORBA_TypeCode tc)
+ORBit_marshal_value (GIOPSendBuffer *buf,
+		     gconstpointer  *val,
+		     CORBA_TypeCode  tc)
 {
-    CORBA_unsigned_long i, ulval;
-    gconstpointer subval;
+	CORBA_unsigned_long i, ulval;
+	gconstpointer       subval;
 
-    switch(tc->kind) {
-    case CORBA_tk_wchar:
-    case CORBA_tk_ushort:
-    case CORBA_tk_short:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_SHORT);
-	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_short));
-	*val = ((guchar *)*val) + sizeof(CORBA_short);
-	break;
-    case CORBA_tk_enum:
-    case CORBA_tk_long:
-    case CORBA_tk_ulong:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_LONG);
-	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_long));
-	*val = ((guchar *)*val) + sizeof(CORBA_long);
-	break;
-    case CORBA_tk_float:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_FLOAT);
-	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_float));
-	*val = ((guchar *)*val) + sizeof(CORBA_float);
-	break;
-    case CORBA_tk_double:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_DOUBLE);
-	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_double));
-	*val = ((guchar *)*val) + sizeof(CORBA_double);
-	break;
-    case CORBA_tk_boolean:
-    case CORBA_tk_char:
-    case CORBA_tk_octet:
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_octet));
-	*val = ((guchar *)*val) + sizeof(CORBA_octet);
-	break;
-    case CORBA_tk_any:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_ANY);
-	ORBit_marshal_any(buf, *val);
-	*val = ((guchar *)*val) + sizeof(CORBA_any);
-	break;
-    case CORBA_tk_Principal:
-	*val = ALIGN_ADDRESS(*val,
-			     MAX(MAX(ALIGNOF_CORBA_LONG, ALIGNOF_CORBA_STRUCT),
-				 ALIGNOF_CORBA_POINTER));
-
-	ulval = *(CORBA_unsigned_long *)(*val);
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_unsigned_long));
-
-	giop_send_buffer_append(buf,
-				*(char**)((char *)*val+sizeof(CORBA_unsigned_long)),
-				ulval);
-	*val = ((guchar *)*val) + sizeof(CORBA_Principal);
-	break;
-    case CORBA_tk_objref:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-	ORBit_marshal_object(buf, *(CORBA_Object*)*val);
-	*val = ((guchar *)*val) + sizeof(CORBA_Object);
-	break;
-    case CORBA_tk_TypeCode:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-	ORBit_encode_CORBA_TypeCode(*(CORBA_TypeCode *)*val, buf);
-	*val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
-	break;
-    case CORBA_tk_except:
-    case CORBA_tk_struct:
-	*val = ALIGN_ADDRESS(*val, ORBit_find_alignment(tc));
-	for(i = 0; i < tc->sub_parts; i++)
-	    ORBit_marshal_value(buf, val, tc->subtypes[i]);
-	break;
-    case CORBA_tk_union:
-	{
-	    gconstpointer	discrim, body;
-	    CORBA_TypeCode 	subtc;
-	    int			al = 1, sz = 0;
-
-	    discrim = *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_STRUCT);
-	    ORBit_marshal_value(buf, val, tc->discriminator);
-	    subtc = ORBit_get_union_tag(tc, &discrim, FALSE);
-	    for (i=0; i < tc->sub_parts; i++) {
-	    	al = MAX(al, ORBit_find_alignment(tc->subtypes[i]));
-	    	sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
-	    }
-	    body = *val = ALIGN_ADDRESS(*val, al);
-	    ORBit_marshal_value(buf, &body, subtc);
-	    /* WATCHOUT: end of subtc may not be end of union */
-	    *val = ((guchar*)*val) + sz;
-	}
-	break;
-    case CORBA_tk_wstring:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-	ulval = CORBA_wstring_len(*(CORBA_wchar **)*val) + 1;
-	giop_send_buffer_append_aligned (buf, &ulval,
-					 sizeof(CORBA_unsigned_long));
-	giop_send_buffer_append(buf, *(char **)*val, ulval);
-	*val = ((guchar *)*val) + sizeof(char *);
-	break;
-    case CORBA_tk_string:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
-	ulval = strlen(*(char **)*val) + 1;
-	giop_send_buffer_append_aligned (buf, &ulval,
-					 sizeof(CORBA_unsigned_long));
-	giop_send_buffer_append(buf, *(char **)*val, ulval);
-	
-	*val = ((guchar *)*val) + sizeof(char *);
-	break;
-    case CORBA_tk_sequence:
-	{
-	    const CORBA_sequence_CORBA_octet *sval;
-	    *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_SEQ);
-	    sval = *val;
-	    giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-	    giop_send_buffer_append(buf, &sval->_length,
-				    sizeof(CORBA_unsigned_long));
-
-	    subval = sval->_buffer;
-
-	    switch (tc->subtypes[0]->kind) {
-	    case CORBA_tk_boolean:
-	    case CORBA_tk_char:
-	    case CORBA_tk_octet:
-	      giop_send_buffer_append (buf, subval, sval->_length);
-	      break;
-	    default:
-	      for(i = 0; i < sval->_length; i++)
-		ORBit_marshal_value (buf, &subval, tc->subtypes[0]);
-	      break;
-	    }
-	    
-	    *val = ((guchar *)*val) + sizeof(CORBA_sequence_CORBA_octet);
-	}
-	break;
-    case CORBA_tk_array:
-        switch (tc->subtypes[0]->kind) {
+	switch(tc->kind) {
+	case CORBA_tk_wchar:
+	case CORBA_tk_ushort:
+	case CORBA_tk_short:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_SHORT);
+		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_short));
+		*val = ((guchar *)*val) + sizeof (CORBA_short);
+		break;
+	case CORBA_tk_enum:
+	case CORBA_tk_long:
+	case CORBA_tk_ulong:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_LONG);
+		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_long));
+		*val = ((guchar *)*val) + sizeof (CORBA_long);
+		break;
+	case CORBA_tk_float:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_FLOAT);
+		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_float));
+		*val = ((guchar *)*val) + sizeof (CORBA_float);
+		break;
+	case CORBA_tk_double:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_DOUBLE);
+		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_double));
+		*val = ((guchar *)*val) + sizeof (CORBA_double);
+		break;
 	case CORBA_tk_boolean:
 	case CORBA_tk_char:
 	case CORBA_tk_octet:
-	  giop_send_buffer_append (buf, val, tc->length);
-	  break;
-	default: {
-          int align = ORBit_find_alignment (tc->subtypes[0]);
+		giop_send_buffer_append (buf, *val, sizeof (CORBA_octet));
+		*val = ((guchar *)*val) + sizeof (CORBA_octet);
+		break;
+	case CORBA_tk_any:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_ANY);
+		ORBit_marshal_any (buf, *val);
+		*val = ((guchar *)*val) + sizeof (CORBA_any);
+		break;
+	case CORBA_tk_Principal:
+		*val = ALIGN_ADDRESS (*val, MAX(MAX(ALIGNOF_CORBA_LONG,
+						    ALIGNOF_CORBA_STRUCT),
+						    ALIGNOF_CORBA_POINTER));
 
-	  for(i = 0; i < tc->length; i++) {
-	    ORBit_marshal_value (buf, val, tc->subtypes[0]);
+		ulval = *(CORBA_unsigned_long *)(*val);
+		giop_send_buffer_append (buf, *val, sizeof (CORBA_unsigned_long));
+
+		giop_send_buffer_append (buf,
+					*(char **)((char *)*val + sizeof (CORBA_unsigned_long)),
+					ulval);
+		*val = ((guchar *)*val) + sizeof (CORBA_Principal);
+		break;
+	case CORBA_tk_objref:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_POINTER);
+		ORBit_marshal_object (buf, *(CORBA_Object *)*val);
+		*val = ((guchar *)*val) + sizeof (CORBA_Object);
+		break;
+	case CORBA_tk_TypeCode:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_POINTER);
+		ORBit_encode_CORBA_TypeCode (*(CORBA_TypeCode *)*val, buf);
+		*val = ((guchar *)*val) + sizeof (CORBA_TypeCode);
+		break;
+	case CORBA_tk_except:
+	case CORBA_tk_struct:
+		*val = ALIGN_ADDRESS (*val, ORBit_find_alignment(tc));
+		for(i = 0; i < tc->sub_parts; i++)
+			ORBit_marshal_value (buf, val, tc->subtypes[i]);
+		break;
+	case CORBA_tk_union: {
+		gconstpointer	discrim, body;
+		CORBA_TypeCode 	subtc;
+		int             al = 1, sz = 0;
+
+		discrim = *val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_STRUCT);
+		ORBit_marshal_value (buf, val, tc->discriminator);
+		subtc = ORBit_get_union_tag (tc, &discrim, FALSE);
+		for (i=0; i < tc->sub_parts; i++) {
+			al = MAX (al, ORBit_find_alignment (tc->subtypes[i]));
+			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
+		}
+		body = *val = ALIGN_ADDRESS (*val, al);
+		ORBit_marshal_value (buf, &body, subtc);
+		/* FIXME:
+		 * WATCHOUT: end of subtc may not be end of union
+		 */
+		*val = ((guchar *)*val) + sz;
+		break;
+		}
+	case CORBA_tk_wstring:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_POINTER);
+		ulval = CORBA_wstring_len (*(CORBA_wchar **)*val) + 1;
+		giop_send_buffer_append_aligned (buf, &ulval,
+						 sizeof (CORBA_unsigned_long));
+		giop_send_buffer_append (buf, *(char **)*val, ulval);
+		*val = ((guchar *)*val) + sizeof (char *);
+		break;
+	case CORBA_tk_string:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_POINTER);
+		ulval = strlen (*(char **)*val) + 1;
+		giop_send_buffer_append_aligned (buf, &ulval,
+						 sizeof (CORBA_unsigned_long));
+		giop_send_buffer_append (buf, *(char **)*val, ulval);
 	
-	    *val = ALIGN_ADDRESS (*val, align);
-	    }
-	  break;
-	  }
+		*val = ((guchar *)*val) + sizeof (char *);
+		break;
+	case CORBA_tk_sequence: {
+		const CORBA_sequence_CORBA_octet *sval;
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_SEQ);
+		sval = *val;
+		giop_send_buffer_align (buf, sizeof (CORBA_unsigned_long));
+		giop_send_buffer_append (buf, &sval->_length,
+					 sizeof (CORBA_unsigned_long));
+
+		subval = sval->_buffer;
+
+		switch (tc->subtypes[0]->kind) {
+		case CORBA_tk_boolean:
+		case CORBA_tk_char:
+		case CORBA_tk_octet:
+			giop_send_buffer_append (buf, subval, sval->_length);
+			break;
+		default:
+			for(i = 0; i < sval->_length; i++)
+				ORBit_marshal_value (buf, &subval, tc->subtypes[0]);
+			break;
+		}
+		*val = ((guchar *)*val) + sizeof (CORBA_sequence_CORBA_octet);
+		break;
+		}
+	case CORBA_tk_array:
+		switch (tc->subtypes[0]->kind) {
+		case CORBA_tk_boolean:
+		case CORBA_tk_char:
+		case CORBA_tk_octet:
+			giop_send_buffer_append (buf, val, tc->length);
+			break;
+		default: {
+			int align = ORBit_find_alignment (tc->subtypes[0]);
+	  		for(i = 0; i < tc->length; i++) {
+				ORBit_marshal_value (buf, val, tc->subtypes[0]);
+	
+				*val = ALIGN_ADDRESS (*val, align);
+			}
+			break;
+			}
+		break;
+		}
+	case CORBA_tk_alias:
+		ORBit_marshal_value (buf, val, tc->subtypes[0]);
+		break;
+	case CORBA_tk_longlong:
+	case CORBA_tk_ulonglong:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_LONG_LONG);
+		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_long_long));
+		*val = ((guchar *)*val) + sizeof (CORBA_long_long);
+		break;
+	case CORBA_tk_longdouble:
+		*val = ALIGN_ADDRESS (*val, ALIGNOF_CORBA_LONG_DOUBLE);
+		giop_send_buffer_append_aligned (buf, *val, sizeof (CORBA_long_double));
+		*val = ((guchar *)*val) + sizeof (CORBA_long_double);
+		break;
+	case CORBA_tk_fixed:
+		/* XXX todo */
+		g_error("CORBA_fixed NYI");
+		break;
+	case CORBA_tk_null:
+	case CORBA_tk_void:
+		break;
+	default:
+		g_error("Can't encode unknown type %d", tc->kind);
+		break;
 	}
-	break;
-    case CORBA_tk_alias:
-	ORBit_marshal_value(buf, val, tc->subtypes[0]);
-	break;
-    case CORBA_tk_longlong:
-    case CORBA_tk_ulonglong:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_LONG_LONG);
-	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_long_long));
-	*val = ((guchar *)*val) + sizeof (CORBA_long_long);
-	break;
-    case CORBA_tk_longdouble:
-	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_LONG_DOUBLE);
-	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_long_double));
-	*val = ((guchar *)*val) + sizeof (CORBA_long_double);
-	break;
-    case CORBA_tk_fixed:
-	/* XXX todo */
-	g_error("CORBA_fixed NYI");
-	
-	break;
-    case CORBA_tk_null:
-    case CORBA_tk_void:
-	break;
-    default:
-	g_error("Can't encode unknown type %d", tc->kind);
-    }
 }
 
 static glong
