@@ -1,3 +1,9 @@
+Version 0.1.15
+
+	* writev loop fix (Laszlo Peter)
+	* IO channel watch fixes (Roland Juelich)
+	* local only connection feature (Michael)
+
 Version 0.1.13
 
 	* Bug fixes
