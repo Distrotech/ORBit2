@@ -3,8 +3,8 @@
 
 #include "echo.h"
 
-int niters = 1000;
-int nthreads = 4;
+int niters = 10000;
+int nthreads = 8;
 char *server_ior;
 CORBA_ORB orb;
 
@@ -23,6 +23,9 @@ echo_client_thread (gpointer data)
 			 g_thread_self (), server_ior);
 		return NULL;
 	}
+	
+	for (i = 0; i < 4; i++) /* let others get started */
+		g_thread_yield ();
 
 	for (i = 0; i < niters; i++) {
 		char *str;
@@ -30,19 +33,18 @@ echo_client_thread (gpointer data)
 		Echo retval;
 		str = g_strdup_printf ("[%p]: Hello, world [%d]",
 				       g_thread_self (), i);
+
+		Echo_doOneWay (echo_client, str, ev);
 		
 		retval = Echo_echoString (echo_client, str, &tmp, ev);
-		g_free (str);
 
-		g_thread_yield ();
+		g_free (str);
 
 		if (ev->_major != CORBA_NO_EXCEPTION) {
 			g_error ("[%p]: we got exception %s from echoString!\n",
 				 g_thread_self (), ev->_id);
 			return NULL;
 		}
-
-		g_thread_yield ();
 
 		CORBA_Object_release (retval, ev);
 	}

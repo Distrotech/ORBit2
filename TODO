@@ -11,6 +11,11 @@ TODO:
 		b) not expanding the lookup of the vepv offset at all.
 
 * Thread safety
+	+ For independent clients, we need some way to
+	  arbitrate the giop_recv_buffer_get method - so
+	  that either: a single thread does the poll and the
+	  rest block, or we all poll.
+
 	+ apparently g_object_ref / unref are not thread safe
 	  we need linc_object_ref / unref instead that does
 	  a LINC_MUTEX_LOCK on the global object lifecycle lock
