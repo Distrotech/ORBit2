@@ -1492,6 +1492,8 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
       if(IOP_components_demarshal(buf, &retval->components))
 	goto errout;
     }
+  else
+    retval->components = NULL;
 
   giop_recv_buffer_unuse(buf);
   return (IOP_Profile_info *)retval;

@@ -2,7 +2,7 @@
 #define BASIC_TYPES_H 1
 
 #include <glib.h>
-#include <gunicode.h>
+#include <glib/gunicode.h>
 
 enum { CORBA_FALSE=FALSE, CORBA_TRUE=TRUE };
 typedef gint16 CORBA_short;
@@ -18,6 +18,7 @@ typedef guchar CORBA_octet;
 typedef gdouble CORBA_long_double;
 /* Bad hack, oh well */
 typedef CORBA_char *CORBA_string;
+typedef CORBA_wchar *CORBA_wstring;
 
 #if !defined(ORBIT_DECL_CORBA_Object) && !defined(_CORBA_Object_defined)
 #define ORBIT_DECL_CORBA_Object 1

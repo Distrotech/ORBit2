@@ -157,7 +157,7 @@ orbit_cbe_get_typespec_str(IDL_tree tree)
     retval = "CORBA_octet";
     break;
   case IDLN_TYPE_WIDE_STRING:
-    retval = "CORBA_wchar*";	/* this is non-standard! */
+    retval = "CORBA_wstring";	/* this is non-standard! */
     break;
   case IDLN_TYPE_CHAR:
     retval = "CORBA_char";
