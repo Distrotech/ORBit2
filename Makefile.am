@@ -18,4 +18,7 @@ m4datadir=$(datadir)/aclocal
 m4data_DATA=ORBit2.m4
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ORBit-2.0.pc ORBit-CosNaming-2.0.pc
+pkgconfig_DATA = \
+	ORBit-2.0.pc \
+	ORBit-CosNaming-2.0.pc \
+	ORBit-imodule-2.0.pc

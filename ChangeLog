@@ -1,3 +1,12 @@
+2003-02-11  Mark McLoughlin  <mark@skynet.ie>
+
+	* Makefile.am, ORBit-imodule-2.0.pc.in,
+	  configure.in: build and install a pkg-config
+	  file for the imodule service.
+
+	* src/services/imodule/Makefile.am: actually
+	install the damn thing. Doh.
+
 2003-02-10  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (wakeup_mainloop): spew
