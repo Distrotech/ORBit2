@@ -521,7 +521,7 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 	gboolean           gen_imodule = FALSE;
 	gboolean           thread_safe = FALSE;
 	gboolean           thread_tests = FALSE;
-	const char        *orb_name;
+	char              *orb_name;
 	int                i;
 
 /*	g_mem_set_vtable (glib_mem_profiler_table); */

@@ -25,9 +25,17 @@ OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
 /*
  * Command line option handling.
  */
+#ifdef G_OS_WIN32
+static gboolean     orbit_use_ipv4           = TRUE;
+#else
 static gboolean     orbit_use_ipv4           = FALSE;
+#endif
 static gboolean     orbit_use_ipv6           = FALSE; 
+#ifdef G_OS_WIN32
+static gboolean     orbit_use_usocks         = FALSE;
+#else
 static gboolean     orbit_use_usocks         = TRUE;
+#endif
 static gint         orbit_initial_recv_limit = -1;
 static gboolean     orbit_use_irda           = FALSE;
 static gboolean     orbit_use_ssl            = FALSE;

@@ -1,3 +1,57 @@
+2005-01-28  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orbit-init.c
+	* src/orb/orb-core/orbit-trace.c: Use g_get_current_time() instead
+	of gettimeofday().
+
+	* src/orb/GIOP/giop.c
+	* src/orb/GIOP/giop-send-buffer.c
+	* src/orb/orb-core/orbhttp.c: Conditionalize includes as
+	necessary.
+
+	* src/orb/GIOP/giop.c: Don't check owner on Win32 either. Add
+	newline to dprintf() calls. Use socket API for wakeup pipe on
+	Win32. Create it using link_pipe().
+
+	* src/orb/orb-core/corba-orb.c: Use IPv4 and not Unix domain
+	sockets on Win32.
+
+	* src/orb/orb-core/corba-typecode.c: Drop the const from the
+	typecode struct definitions, for Win32 DLL import/export reasons
+	(see yesterday's ChangeLog entries).
+
+	* src/orb/orb-core/orbhttp.c (orbHTTPConnectAttempt): Drop an
+	unused variable in the WinSock part.
+
+	* src/orb/orb-core/orbit-typelib.c: Use G_SEARCHPATH_SEPARATOR_S.
+
+	* src/orb/util/genrand.c: No getuid() on Win32.
+
+	* src/services/name/Makefile.am: No -lm on Win32.
+
+	* src/services/name/boot.c: Conditionalize use of syslog and
+	sigaction.
+
+	* src/services/name/orbit-name-server.c: Remove a couple of
+	unneeded includes.
+
+	* test/echo-client.c: Make debugging easier: If argv[1] starts
+	with a dollar, fetch it with getenv().
+
+	* test/echo-server.c
+	* test/empty-server.c
+	* test/any-server.c: Output the IOR: string to a file, too, to
+	avoid having to copy-paste long strings when runnning these tests.
+
+	* test/typelib-dump.c: Small workaround for Win32 DLL variable
+	import restriction.
+
+	* test/everything/test.sh: Don't run the Unix domain socket tests
+	on Windows. Don't exit after a failed test if $DONT_EXIT is set.
+
+	* test/everything/client.c (main)
+	* test/everything/server.c (main): Small const correctness fix.
+
 2005-01-27  Tor Lillqvist  <tml@novell.com>
 
 	* src/idl-compiler/Makefile.am

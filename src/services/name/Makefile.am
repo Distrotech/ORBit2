@@ -1,3 +1,9 @@
+if OS_WIN32
+libm=
+else
+libm=-lm
+endif
+
 libORBitservicesincludedir = $(includedir)/orbit-2.0/ORBitservices
 
 lib_LTLIBRARIES=libORBitCosNaming-2.la
@@ -48,7 +54,7 @@ DEPS = 	$(top_builddir)/src/orb/libORBit-2.la			\
 LDADDS =                                                        \
 	$(top_builddir)/src/orb/libORBit-2.la			\
 	libORBitCosNaming-2.la					\
-	-lm                                                     \
+	$(libm)							\
 	$(ORBIT_NAME_LIBS)
 
 name_client_2_SOURCES = name-client.c name-support.c name-support.h

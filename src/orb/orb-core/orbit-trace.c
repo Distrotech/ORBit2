@@ -226,9 +226,9 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 void
 ORBit_trace_timestamp (void)
 {
-	struct timeval t;
+	GTimeVal t;
 
-	gettimeofday (&t, NULL);
+	g_get_current_time (&t);
 	tprintf ("%lu.%06lu ", t.tv_sec, t.tv_usec);
 }
 

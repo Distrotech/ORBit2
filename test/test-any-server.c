@@ -23,6 +23,7 @@ POA_TestAny poa_TestAny_servant = { NULL, &poa_TestAny_vepv };
 int
 main (int argc, char *argv[])
 {
+	FILE *iorfile;
 	PortableServer_ObjectId *objid;
 	PortableServer_POA poa;
 
@@ -54,6 +55,10 @@ main (int argc, char *argv[])
 	}
     
 	retval = CORBA_ORB_object_to_string(orb, client, &ev);
+
+	iorfile = fopen ("test-any-server.iorfile", "w");
+	fprintf(iorfile, "%s\n", retval);
+	fclose(iorfile);
 
 	g_print("%s\n", retval); fflush(stdout);
     

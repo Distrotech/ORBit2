@@ -12,13 +12,14 @@ static void
 dump_tc (CORBA_TypeCode tc, int ident)
 {
 	char *id_str;
+	CORBA_TypeCode kind = TC_CORBA_TCKind;
 
 	id_str = g_new (char, ident + 1);
 	memset (id_str, ' ', ident);
 	id_str [ident] = '\0';
 
 	printf ("%sType %12s: '%s'\n",
-		id_str, TC_CORBA_TCKind->subnames [tc->kind],
+		id_str, kind->subnames [tc->kind],
 		tc->repo_id);
 }
 

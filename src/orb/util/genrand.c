@@ -17,7 +17,11 @@ static ORBitGenUidType  genuid_type = ORBIT_GENUID_STRONG;
 static int              random_fd = -1;
 static GRand           *glib_prng = NULL;
 static pid_t            genuid_pid;
+#ifndef G_OS_WIN32
 static uid_t            genuid_uid;
+#else
+static int		genuid_uid = 0;
+#endif
 
 /* This is quite possibly a complete waste of cycles */
 static GMutex          *inc_lock = NULL;
@@ -39,7 +43,9 @@ ORBit_genuid_init (ORBitGenUidType type)
 	gboolean hit_strength;
 	
 	genuid_pid = getpid ();
+#ifndef G_OS_WIN32
 	genuid_uid = getuid ();
+#endif
 	inc_lock = link_mutex_new();
 
 	glib_prng = g_rand_new ();
