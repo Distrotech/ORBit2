@@ -27,6 +27,8 @@
 
 #include "IDLScope.hh"
 
+#include <algorithm>
+
 IDLElement::IDLElement(string const &id,IDL_tree node,IDLScope *parentscope)
 	: m_identifier(id),m_node(node),m_parentscope(parentscope) {
 

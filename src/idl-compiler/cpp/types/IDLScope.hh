@@ -29,6 +29,8 @@
 
 #include "IDLElement.hh"
 
+#include <vector>
+
 class IDLScope : public IDLElement {
 protected:
 	typedef IDLElement            Super;
