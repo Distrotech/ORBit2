@@ -1,3 +1,8 @@
+2001-12-07  Laszlo Peter  <laca@ireland.sun.com>
+
+	* src/orb/orb-core/orbit-debug.h:
+	  src/orb/orb-core/orbit-trace.c: get the trace code work on Solaris
+
 2001-12-07  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-typecode.c: (CDR_get):
