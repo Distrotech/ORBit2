@@ -174,16 +174,16 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 	case CORBA_tk_union: {
 		gconstpointer	discrim, body;
 		CORBA_TypeCode 	subtc;
-		int             al = 1, sz = 0;
+		int             sz = 0;
 
-		discrim = *val = ALIGN_ADDRESS (*val, tc->c_align);
+		discrim = *val = ALIGN_ADDRESS (*val, MAX (tc->discriminator->c_align, tc->c_align));
 		ORBit_marshal_value (buf, val, tc->discriminator);
+
 		subtc = ORBit_get_union_tag (tc, &discrim, FALSE);
-		for (i=0; i < tc->sub_parts; i++) {
-			al = MAX (al, tc->subtypes[i]->c_align);
+		for (i = 0; i < tc->sub_parts; i++)
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
-		}
-		body = *val = ALIGN_ADDRESS (*val, al);
+
+		body = *val = ALIGN_ADDRESS (*val, tc->c_align);
 		ORBit_marshal_value (buf, &body, subtc);
 		/* FIXME:
 		 * WATCHOUT: end of subtc may not be end of union
@@ -550,20 +550,23 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		}
 		break;
 	case CORBA_tk_union: {
-		gpointer		discrim, body;
-		CORBA_TypeCode	subtc;
-		int			sz = 0, al = 1;
-		discrim = *val = ALIGN_ADDRESS (*val, tc->c_align);
+		CORBA_TypeCode  subtc;
+		gpointer        discrim;
+		gpointer        body;
+		int	        sz = 0;
+
+		discrim = *val = ALIGN_ADDRESS (*val, MAX (tc->discriminator->c_align, tc->c_align));
 		if (ORBit_demarshal_value (tc->discriminator, val, buf, dup_strings, orb))
 			return TRUE;
+
 		subtc = ORBit_get_union_tag (tc, (gconstpointer*)&discrim, FALSE);
-		for (i = 0; i < tc->sub_parts; i++) {
-			al = MAX (al, tc->subtypes[i]->c_align);
+		for (i = 0; i < tc->sub_parts; i++)
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
-		}
-		body = *val = ALIGN_ADDRESS (*val, al);
+
+		body = *val = ALIGN_ADDRESS (*val, tc->c_align);
 		if (ORBit_demarshal_value (subtc, &body, buf, dup_strings, orb))
 			return TRUE;
+
 		/* WATCHOUT: end subtc body may not be end of union */
 		*val = ((guchar *)*val) + sz;
 	}
@@ -824,17 +827,20 @@ ORBit_copy_value_core (gconstpointer *val,
 	case CORBA_tk_union:
 	{
 		CORBA_TypeCode utc = ORBit_get_union_tag (tc, (gconstpointer *)val, FALSE);
-		gint	union_align = tc->c_align;
-		size_t	union_size = ORBit_gather_alloc_info (tc);
+		gint	       union_align = tc->c_align;
+		gint	       discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
+		size_t	       union_size = ORBit_gather_alloc_info (tc);
 
-		/* need to advance val,newval by size of union, not just
-		 * current tagged field within it */
-		pval1 = *val = ALIGN_ADDRESS (*val, union_align);
-		pval2 = *newval = ALIGN_ADDRESS (*newval, union_align);
+		pval1 = *val = ALIGN_ADDRESS (*val, discrim_align);
+		pval2 = *newval = ALIGN_ADDRESS (*newval, discrim_align);
+
 		ORBit_copy_value_core (&pval1, &pval2, tc->discriminator);
+
 		pval1 = ALIGN_ADDRESS (pval1, union_align);
 		pval2 = ALIGN_ADDRESS (pval2, union_align);
+
 		ORBit_copy_value_core (&pval1, &pval2, utc);
+
 		*val = ((guchar *)*val) + union_size;
 		*newval = ((guchar *)*newval) + union_size;
 	}
@@ -1024,6 +1030,7 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 
 	case CORBA_tk_union: {
 		gint   union_align = tc->c_align;
+		gint   discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
 		size_t union_size = ORBit_gather_alloc_info (tc);
 
 		CORBA_TypeCode utc_a = ORBit_get_union_tag (
@@ -1034,8 +1041,8 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		if (!CORBA_TypeCode_equal (utc_a, utc_b, ev))
 			return FALSE;
 
-		*a = ALIGN_ADDRESS (*a, union_align);
-		*b = ALIGN_ADDRESS (*b, union_align);
+		*a = ALIGN_ADDRESS (*a, discrim_align);
+		*b = ALIGN_ADDRESS (*b, discrim_align);
 
 		if (!ORBit_value_equivalent (a, b, tc->discriminator, ev))
 			return FALSE;

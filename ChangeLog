@@ -1,3 +1,13 @@
+2001-12-07  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	(orbit_find_c_align):  only calculate the alignment of
+	the union.
+
+	* src/orb/orb-core/corba-any.c: (ORBit_marshal_value),
+	(ORBit_demarshal_value), (ORBit_copy_value_core),
+	(ORBit_value_equivalent): upd.
+
 2001-12-06  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-any.c:
