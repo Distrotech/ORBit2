@@ -6,7 +6,7 @@ static gboolean cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data)
 static void cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 
 static void cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-
+static void cc_output_marshallers(OIDL_C_Info *ci);
 
 void
 orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -21,6 +21,7 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
     /*pre*/ cc_output_tc_walker, /*post*/ cc_output_tc_walker, ci);
 
   cc_output_allocs(tree->tree, rinfo, ci);
+  cc_output_marshallers(ci);
 }
 
 static gboolean
@@ -473,4 +474,66 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   g_free(ctmp);
   g_free(ctmp2);
+}
+
+static void
+build_marshal_funcs(gpointer key, gpointer value, gpointer data)
+{
+  OIDL_C_Info *ci = data;
+  IDL_tree tree = key;
+  OIDL_Type_Marshal_Info *tmi = value;
+  OIDL_Marshal_Node *node;
+  OIDL_Populate_Info pi;
+  char *ctmp;
+
+  pi.ctxt = ci->ctxt;
+
+  ctmp = orbit_cbe_get_typespec_str(tree);
+
+  if(tmi->mtype & MARSHAL_FUNC)
+    {
+      pi.flags = PI_BUILD_FUNC;
+      node = marshal_populate(tree, NULL, &pi);
+      orbit_idl_do_node_passes(node, FALSE);
+
+      node->name = "_ORBIT_val";
+      node->nptrs = oidl_param_numptrs(tree, DATA_IN);
+
+      fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
+      fprintf(ci->fh, " _ORBIT_val)\n{\n");
+      orbit_cbe_alloc_tmpvars(node, ci);
+      c_marshalling_generate(node, ci, TRUE);
+      fprintf(ci->fh, "}\n");
+    }
+
+  if(tmi->dmtype & MARSHAL_FUNC)
+    {
+      GString *tmpstr;
+      pi.flags = PI_BUILD_FUNC;
+      node = marshal_populate(tree, NULL, &pi);
+      orbit_idl_do_node_passes(node, TRUE);
+
+      node->name = "_ORBIT_retval";
+      node->nptrs = oidl_param_numptrs(tree, DATA_OUT);
+
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_RETURN);
+      fprintf(ci->fh, " %s_demarshal(GIOPSendBuffer *_ORBIT_recv_buffer)\n{\n", ctmp);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_RETURN);
+      fprintf(ci->fh, " _ORBIT_retval;\n");
+      fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+      tmpstr = g_string_new(NULL);
+      cbe_stub_op_retval_alloc(ci->fh, tree, tmpstr);
+      g_string_free(tmpstr, TRUE);
+      orbit_cbe_alloc_tmpvars(node, ci);
+      c_demarshalling_generate(node, ci, FALSE);
+      fprintf(ci->fh, "}\n");
+    }
+  g_free(ctmp);
+}
+
+static void
+cc_output_marshallers(OIDL_C_Info *ci)
+{
+  g_hash_table_foreach(ci->ctxt->type_marshal_info, build_marshal_funcs, ci);
 }

@@ -23,6 +23,7 @@ char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node);
 
 /* passes */
 void orbit_idl_do_passes(IDL_tree tree, OIDL_Run_Info *rinfo);
+void orbit_idl_do_node_passes(OIDL_Marshal_Node *node, gboolean is_out);
 
 /* Utils */
 void orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns);

@@ -39,6 +39,7 @@ void c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean o
 void c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels);
 
 /* utils */
+void cbe_stub_op_retval_alloc(FILE *of, IDL_tree node, GString *tmpstr);
 char * orbit_cbe_get_typespec_str(IDL_tree tree);
 void orbit_cbe_write_typespec(FILE *of, IDL_tree tree);
 void orbit_cbe_write_param_typespec_raw(FILE *of, IDL_tree ts, IDL_ParamRole role);

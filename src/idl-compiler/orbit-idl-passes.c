@@ -2,6 +2,7 @@
 #include "orbit-idl2.h"
 
 typedef void (*OIDL_Pass_Func)(IDL_tree tree, gpointer data, gboolean is_out);
+typedef void (*OIDL_Node_Pass_Func)(OIDL_Marshal_Node *node);
 
 static void oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out);
 
@@ -14,10 +15,12 @@ static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
 static void oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node);
 static void oidl_pass_del_tail_update(OIDL_Marshal_Node *node); /* Must run after coalescibility */
 
+static void oidl_node_pass_tmpvars(OIDL_Marshal_Node *top);
+
 static struct {
   const char *name;
   OIDL_Pass_Func func;
-  gpointer data;
+  OIDL_Node_Pass_Func data;
   enum { FOR_IN=1, FOR_OUT=2 } dirs;
 } idl_passes[] = {
   {"Position updates", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_make_updates, FOR_OUT},
@@ -26,13 +29,27 @@ static struct {
   {"Set collapsing", (OIDL_Pass_Func)oidl_pass_run_for_ops, orbit_idl_collapse_sets, FOR_IN|FOR_OUT},
 #endif
   {"Alignment calculation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_alignment, FOR_IN|FOR_OUT},
-  {"Endian dependancy", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_endian_dependant, FOR_IN|FOR_OUT},
+  {"Endian dependancy", (OIDL_Pass_Func)oidl_pass_run_for_ops, (OIDL_Node_Pass_Func)oidl_pass_set_endian_dependant,
+   FOR_IN|FOR_OUT},
   {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility, FOR_IN|FOR_OUT},
   {"Extra update removal", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_del_tail_update, FOR_OUT},
-  {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, NULL, FOR_IN|FOR_OUT},
+  {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, oidl_node_pass_tmpvars, FOR_IN|FOR_OUT},
   {"Variable allocation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_corba_alloc, FOR_OUT},
   {NULL, NULL}
 };
+
+void
+orbit_idl_do_node_passes(OIDL_Marshal_Node *node, gboolean is_out)
+{
+  gint flag = is_out?FOR_OUT:FOR_IN;
+  int i;
+
+  for(i = 0; idl_passes[i].name; i++)
+    {
+      if(idl_passes[i].dirs & flag)
+	idl_passes[i].data(node);
+    }
+}
 
 void
 orbit_idl_do_passes(IDL_tree tree, OIDL_Run_Info *rinfo)
@@ -74,6 +91,13 @@ static void
 orbit_idl_tmpvars_assign(OIDL_Marshal_Node *top, int *counter)
 {
   orbit_idl_node_foreach(top, (GFunc)orbit_idl_assign_tmpvar_names, counter);
+}
+
+static void
+oidl_node_pass_tmpvars(OIDL_Marshal_Node *top)
+{
+  int ctr = 0;
+  orbit_idl_tmpvars_assign(top, &ctr);
 }
 
 static void
