@@ -8,7 +8,7 @@ struct CORBA_Object_type {
 
 	CORBA_ORB                      orb;
 	GIOPConnection                *connection;
-	CORBA_char                    *type_id;
+	GQuark                         type_qid;
 	GSList                        *profile_list;
 	GSList                        *forward_locations;
 	ORBit_ObjectKey               *object_key;

@@ -16,11 +16,11 @@ static GHashTable *objrefs = NULL;
 static guint
 g_CORBA_Object_hash (gconstpointer key)
 {
-	guint retval;
-	CORBA_Object _obj = (gpointer) key;
+	guint        retval;
+	CORBA_Object obj = (gpointer) key;
 
-	retval = g_str_hash (_obj->type_id);
-	g_slist_foreach (_obj->profile_list, IOP_profile_hash, &retval);
+	retval = obj->type_qid;
+	g_slist_foreach (obj->profile_list, IOP_profile_hash, &retval);
 
 	return retval;
 }
@@ -102,7 +102,6 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 		g_object_unref (G_OBJECT (obj->connection));
 	}
 
-	g_free (obj->type_id);
 	ORBit_free_T (obj->object_key);
 
 	IOP_delete_profiles (&obj->profile_list);
@@ -120,7 +119,7 @@ static ORBit_RootObject_Interface objref_if = {
 };
 
 CORBA_Object
-ORBit_objref_new (CORBA_ORB orb, const char *type_id)
+ORBit_objref_new (CORBA_ORB orb, GQuark type_id)
 {
 	CORBA_Object retval;
 
@@ -128,7 +127,7 @@ ORBit_objref_new (CORBA_ORB orb, const char *type_id)
 
 	ORBit_RootObject_init ((ORBit_RootObject) retval, &objref_if);
 
-	retval->type_id = g_strdup (type_id);
+	retval->type_qid = type_id;
 	retval->orb = orb;
 
 	return retval;
@@ -142,7 +141,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 	CORBA_Object retval = CORBA_OBJECT_NIL;
 	struct CORBA_Object_type fakeme = {{0}};
 
-	fakeme.type_id = (char *)type_id;
+	fakeme.type_qid = g_quark_from_string (type_id);
 	fakeme.profile_list = profiles;
 	fakeme.object_key = IOP_profiles_sync_objkey (profiles);
 
@@ -151,7 +150,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 	retval = ORBit_lookup_objref (&fakeme);
 
 	if (!retval) {
-		retval               = ORBit_objref_new (orb, type_id);
+		retval = ORBit_objref_new (orb, fakeme.type_qid);
 		retval->profile_list = profiles;
 		retval->object_key   = fakeme.object_key;
 		ORBit_register_objref (retval);
@@ -187,7 +186,7 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 		IOP_generate_profiles (obj);
 
 	/* We need a pseudo-remote reference */
-	iobj = ORBit_objref_new (obj->orb, obj->type_id);
+	iobj = ORBit_objref_new (obj->orb, obj->type_qid);
 	iobj->profile_list = IOP_profiles_copy (obj->profile_list);
 	iobj->object_key = IOP_ObjectKey_copy (obj->object_key);
 
@@ -441,13 +440,13 @@ CORBA_Object_set_policy_overrides (CORBA_Object                obj,
 void
 ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 {
-	GSList *cur;
-	char *typeid;
+	GSList             *cur;
+	const char         *typeid;
 	CORBA_unsigned_long type_len;
 	CORBA_unsigned_long num_profiles;
 
 	if (obj)
-		typeid = obj->type_id;
+		typeid = g_quark_to_string (obj->type_qid);
 	else
 		typeid = "";
 
@@ -506,16 +505,24 @@ CORBA_Object_is_a (CORBA_Object       obj,
 		   const CORBA_char  *logical_type_id,
 		   CORBA_Environment *ev)
 {
+	static GQuark  corba_object_quark = 0;
 	CORBA_boolean  retval;
 	gpointer       args[] = { (gpointer *)&logical_type_id };
+	GQuark         logical_type_quark;
 
-	if (strcmp (logical_type_id, "IDL:CORBA/Object:1.0") == 0)
+	if (!corba_object_quark)
+		corba_object_quark = g_quark_from_static_string (
+			"IDL:CORBA/Object:1.0");
+
+	logical_type_quark = g_quark_from_string (logical_type_id);
+
+	if (logical_type_quark == corba_object_quark)
 		return CORBA_TRUE;
 
 	if (!obj)
 		return CORBA_FALSE;
 
-	if (strcmp (logical_type_id, obj->type_id) == 0)
+	if (logical_type_quark == obj->type_qid)
 		return CORBA_TRUE;
 
 	ORBit_small_invoke_stub (
