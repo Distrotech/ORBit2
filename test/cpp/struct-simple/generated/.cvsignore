@@ -5,3 +5,5 @@ Makefile.in
 *.hh
 *.c
 *.h
+Makefile
+Makefile.in
