@@ -235,7 +235,7 @@ IDLSimpleType::skel_impl_ret_pre (ostream &ostr,
 				  Indent  &indent,
 				  const IDLTypedef *active_typedef) const
 {
-	ostr << indent << get_fixed_c_typename () << " _retval"
+	ostr << indent << get_fixed_c_typename () << " _retval = 0"
 	     << ';' << endl;
 }
 
@@ -285,63 +285,21 @@ IDLSimpleType::member_impl_arg_copy (ostream      &ostr,
 }
 
 void
-IDLSimpleType::member_pack_to_c_pre  (ostream      &ostr,
-				      Indent       &indent,
-				      const string &cpp_id,
-				      const string &c_id,
-				      const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-
-void
-IDLSimpleType::member_pack_to_c_pack (ostream      &ostr,
-				      Indent       &indent,
-				      const string &cpp_id,
-				      const string &c_id,
-				      const IDLTypedef *active_typedef) const
+IDLSimpleType::member_pack_to_c (ostream      &ostr,
+				 Indent       &indent,
+				 const string &cpp_id,
+				 const string &c_id,
+				 const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_id << " = " << cpp_id << ';' << endl;
 }
 
 void
-IDLSimpleType::member_pack_to_c_post (ostream      &ostr,
-				      Indent       &indent,
-				      const string &cpp_id,
-				      const string &c_id,
-				      const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLSimpleType::member_unpack_from_c_pre  (ostream      &ostr,
-					  Indent       &indent,
-					  const string &cpp_id,
-					  const string &c_id,
-					  const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLSimpleType::member_unpack_from_c_pack (ostream      &ostr,
-					  Indent       &indent,
-					  const string &cpp_id,
-					  const string &c_id,
-					  const IDLTypedef *active_typedef) const
+IDLSimpleType::member_unpack_from_c (ostream      &ostr,
+				     Indent       &indent,
+				     const string &cpp_id,
+				     const string &c_id,
+				     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << cpp_id << " = " << c_id << ';' << endl;
 }
-
-void
-IDLSimpleType::member_unpack_from_c_post  (ostream      &ostr,
-					   Indent       &indent,
-					   const string &cpp_id,
-					   const string &c_id,
-					   const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-

@@ -284,21 +284,11 @@ IDLString::member_impl_arg_copy (ostream      &ostr,
 }
 
 void
-IDLString::member_pack_to_c_pre  (ostream      &ostr,
-				  Indent       &indent,
-				  const string &cpp_id,
-				  const string &c_id,
-				  const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLString::member_pack_to_c_pack (ostream      &ostr,
-				  Indent       &indent,
-				  const string &cpp_id,
-				  const string &c_id,
-				  const IDLTypedef *active_typedef) const
+IDLString::member_pack_to_c (ostream      &ostr,
+			     Indent       &indent,
+			     const string &cpp_id,
+			     const string &c_id,
+			     const IDLTypedef *active_typedef) const
 {
 	ostr << indent << c_id << " = "
 	     << "CORBA::string_dup (" << cpp_id << ")"
@@ -306,42 +296,12 @@ IDLString::member_pack_to_c_pack (ostream      &ostr,
 }
 
 void
-IDLString::member_pack_to_c_post (ostream      &ostr,
-				  Indent       &indent,
-				  const string &cpp_id,
-				  const string &c_id,
-				  const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLString::member_unpack_from_c_pre  (ostream      &ostr,
-				      Indent       &indent,
-				      const string &cpp_id,
-				      const string &c_id,
-				      const IDLTypedef *active_typedef) const
-{
-	// Do nothing
-}
-
-void
-IDLString::member_unpack_from_c_pack (ostream      &ostr,
-				      Indent       &indent,
-				      const string &cpp_id,
-				      const string &c_id,
-				      const IDLTypedef *active_typedef) const
+IDLString::member_unpack_from_c (ostream      &ostr,
+				 Indent       &indent,
+				 const string &cpp_id,
+				 const string &c_id,
+				 const IDLTypedef *active_typedef) const
 {
 	ostr << cpp_id << " = CORBA::string_dup (" << c_id << ")"
 	     << ';' << endl;
-}
-
-void
-IDLString::member_unpack_from_c_post (ostream      &ostr,
-				      Indent       &indent,
-				      const string &cpp_id,
-				      const string &c_id,
-				      const IDLTypedef *active_typedef) const
-{
-	// Do nothing
 }

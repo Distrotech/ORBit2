@@ -71,7 +71,11 @@ IDLArray::typedef_decl_write (ostream          &ostr,
 	for (const_iterator i = ++begin (); i != end (); i++)
 		ostr << '[' << *i << ']';
 	ostr << ';' << endl;
-	
+
+	// Create _out typedef
+	if (!m_element_type.conversion_required ())
+		ostr << indent << "typedef " << target.get_cpp_identifier ()
+		     << " " << target.get_cpp_identifier () << "_out;" << endl;
 }
 
 string
@@ -121,6 +125,10 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 		ostr << '[' << *i << ']';
 	ostr << ';' << endl;
 
+	if (direction == IDL_PARAM_OUT)
+		// No need to pre-fill out parameters
+		return;
+		
 	// Fill C array
 	int depth = 0;
 	string array_pos;
@@ -131,10 +139,8 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 		array_pos += iterator_name;
 		array_pos += "]";
 
-		// FIXME: What iterator type should we use to be safe
-		// with big dimensions? gsize?
 		ostr << indent
-		     << "for (int " << iterator_name << " = 0; "
+		     << "for (CORBA::ULong " << iterator_name << " = 0; "
 		     << iterator_name << " < " << *i << "; "
 		     << iterator_name << "++)" << endl;
 		ostr << indent++ << "{" << endl;
@@ -144,16 +150,12 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 
 	string c_member = "_c_" + cpp_id + array_pos;
 	string cpp_member = cpp_id + array_pos;
-	m_element_type.member_pack_to_c_pre  (ostr, indent, cpp_member, c_member);
-	m_element_type.member_pack_to_c_pack (ostr, indent, cpp_member, c_member);
-	m_element_type.member_pack_to_c_post (ostr, indent, cpp_member, c_member);
+	m_element_type.member_pack_to_c (ostr, indent, cpp_member, c_member);
 
 	for (const_iterator i = begin (); i != end (); i++, depth++)
 	{
 		ostr << --indent << "}" << endl;
 	}
-	
-#warning "WRITE ME"
 }
 	
 string
@@ -162,9 +164,23 @@ IDLArray::stub_impl_arg_call (const string   &cpp_id,
 			      const IDLTypedef *active_typedef = 0) const
 {
 #warning "WRITE ME"
-
 	if (!m_element_type.conversion_required ())
-		return cpp_id;	
+		return cpp_id;
+
+	string retval;
+
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+	case IDL_PARAM_INOUT:
+		retval = "_c_" + cpp_id;
+		break;
+	case IDL_PARAM_OUT:
+		retval = "&_c_" + cpp_id;
+		break;
+	}
+
+	return "_c_" + cpp_id;
 }
 	
 void
@@ -177,6 +193,38 @@ IDLArray::stub_impl_arg_post (ostream          &ostr,
 #warning "WRITE ME"
 	if (!m_element_type.conversion_required ())
 		return;
+
+	if (direction == IDL_PARAM_IN)
+		// No need to load IN parameters back
+		return;
+	
+	// Re-load C array
+	int depth = 0;
+	string array_pos;
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
+		array_pos += "[";
+		array_pos += iterator_name;
+		array_pos += "]";
+
+		ostr << indent
+		     << "for (CORBA::ULong " << iterator_name << " = 0; "
+		     << iterator_name << " < " << *i << "; "
+		     << iterator_name << "++)" << endl;
+		ostr << indent++ << "{" << endl;
+
+		g_free (iterator_name);
+	}
+
+	string c_member = "_c_" + cpp_id + array_pos;
+	string cpp_member = cpp_id + array_pos;
+	m_element_type.member_unpack_from_c (ostr, indent, cpp_member, c_member);
+
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		ostr << --indent << "}" << endl;
+	}
 }
 
 
@@ -246,8 +294,12 @@ IDLArray::skel_decl_arg_get (const string     &c_id,
 			" " + c_id;	
 		break;
 	case IDL_PARAM_OUT:
-		retval = active_typedef->get_c_typename () + "_slice" +
-			" **" + c_id;	
+		if (m_element_type.conversion_required ())
+			retval = active_typedef->get_c_typename () + "_slice" +
+				" **" + c_id;	
+		else
+			retval = active_typedef->get_c_typename () +
+				" " + c_id;
 		break;
 	}
 
@@ -261,17 +313,61 @@ IDLArray::skel_impl_arg_pre (ostream          &ostr,
 			     IDL_param_attr    direction,
 			     const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	if (!m_element_type.conversion_required ())
+		return;
+	
+	// Create C++ array
+	ostr << indent << m_element_type.get_cpp_member_typename ()
+	     << " _cpp_" << c_id;
+
+	// Write dimensions
+	for (const_iterator i = begin (); i != end (); i++)
+		ostr << '[' << *i << ']';
+	ostr << ';' << endl;
+
+	if (direction == IDL_PARAM_OUT)
+		// No need to pre-fill out parameters
+		return;
+		
+	// Fill C++ array
+	int depth = 0;
+	string array_pos;
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
+		array_pos += "[";
+		array_pos += iterator_name;
+		array_pos += "]";
+
+		ostr << indent
+		     << "for (CORBA::ULong " << iterator_name << " = 0; "
+		     << iterator_name << " < " << *i << "; "
+		     << iterator_name << "++)" << endl;
+		ostr << indent++ << "{" << endl;
+
+		g_free (iterator_name);
+	}
+
+	string c_member = c_id + array_pos;
+	string cpp_member = "_cpp_" + c_id + array_pos;
+	m_element_type.member_unpack_from_c (ostr, indent, cpp_member, c_member);
+
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		ostr << --indent << "}" << endl;
+	}
 }
 	
 string
 IDLArray::skel_impl_arg_call (const string     &c_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 	if (!m_element_type.conversion_required ())
 		return c_id;
+	else
+		return "_cpp_" + c_id;
 }
 	
 void
@@ -298,7 +394,8 @@ IDLArray::skel_impl_ret_pre (ostream          &ostr,
 			     Indent           &indent,
 			     const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	ostr << indent << active_typedef->get_c_typename ()
+	     << "_slice *_retval;" << endl;
 }
 
 void
@@ -307,13 +404,13 @@ IDLArray::skel_impl_ret_call (ostream          &ostr,
 			      const string     &cpp_call_expression,
 			      const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	ostr << indent << "_retval = " << cpp_call_expression << ";" << endl;
 }
 
 void
 IDLArray::skel_impl_ret_post (ostream          &ostr,
-			    Indent           &indent,
-			    const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -347,62 +444,21 @@ IDLArray::member_impl_arg_copy (ostream          &ostr,
 }
 
 void
-IDLArray::member_pack_to_c_pre  (ostream          &ostr,
-			       Indent           &indent,
-			       const string     &cpp_id,
-			       const string     &c_id,
-			       const IDLTypedef *active_typedef) const
+IDLArray::member_pack_to_c (ostream          &ostr,
+			    Indent           &indent,
+			    const string     &cpp_id,
+			    const string     &c_id,
+			    const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
 
 void
-IDLArray::member_pack_to_c_pack (ostream          &ostr,
-			       Indent           &indent,
-			       const string     &cpp_id,
-			       const string     &c_id,
-			       const IDLTypedef *active_typedef) const
+IDLArray::member_unpack_from_c  (ostream          &ostr,
+				 Indent           &indent,
+				 const string     &cpp_id,
+				 const string     &c_id,
+				 const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
-
-void
-IDLArray::member_pack_to_c_post (ostream          &ostr,
-			       Indent           &indent,
-			       const string     &cpp_id,
-			       const string     &c_id,
-			       const IDLTypedef *active_typedef) const
-{
-#warning "WRITE ME"
-}
-
-void
-IDLArray::member_unpack_from_c_pre  (ostream          &ostr,
-				   Indent           &indent,
-				   const string     &cpp_id,
-				   const string     &c_id,
-				   const IDLTypedef *active_typedef) const
-{
-#warning "WRITE ME"
-}
-
-void
-IDLArray::member_unpack_from_c_pack (ostream          &ostr,
-				   Indent           &indent,
-				   const string     &cpp_id,
-				   const string     &c_id,
-				   const IDLTypedef *active_typedef) const
-{
-#warning "WRITE ME"
-}
-
-void
-IDLArray::member_unpack_from_c_post  (ostream          &ostr,
-				      Indent           &indent,
-				      const string     &cpp_id,
-				      const string     &c_id,
-				      const IDLTypedef *active_typedef) const
-{
-#warning "WRITE ME"
-}
-
