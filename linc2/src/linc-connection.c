@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef LINC_SSL_SUPPORT
 #include <openssl/ssl.h>
@@ -733,8 +734,11 @@ linc_connection_writev (LINCConnection       *cnx,
 			linc_main_iteration (TRUE);
 	}
 
-	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
-			      LINC_IO_FATAL_ERROR);
+	if (cnx->status != LINC_CONNECTED) {
+		g_warning ("Fatal error - not connected connection");
+		LINC_MUTEX_UNLOCK (cnx->priv->write_lock);
+		return LINC_IO_FATAL_ERROR;
+	}
 
 	if (cnx->priv->write_queue) {
 		/* FIXME: we should really retry the write here, but we'll
