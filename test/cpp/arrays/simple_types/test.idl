@@ -1,0 +1,16 @@
+module Test
+{
+    typedef long LongArray[10];
+    typedef string StringArray[10];
+
+    interface IFace
+    {
+	void array_method (out LongArray   long_results,
+			   out StringArray string_results);
+
+	void strings_method (in    StringArray array_in,
+			     inout StringArray array_inout);
+
+	StringArray strings_ret ();
+    };
+};
