@@ -10,9 +10,12 @@
 
 #undef DEBUG
 
+#ifdef G_ENABLE_DEBUG
 void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer        *buf) = NULL;
 void (*giop_debug_hook_spoofed_reply)    (GIOPRecvBuffer        *buf,
 					  GIOPMessageQueueEntry *ent) = NULL;
+void (*giop_debug_hook_incoming_mangler) (GIOPRecvBuffer        *buf) = NULL;
+#endif
 
 
 #define MORE_FRAGMENTS_FOLLOW(buf) ((buf)->msg.header.flags & GIOP_FLAG_FRAGMENTED)
@@ -61,11 +64,11 @@ giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value
 		buf->cur += buf->msg.u.request_1_2.target._u.object_key._length;
 		break;
 	case GIOP_ProfileAddr:
-		g_warning("XXX FIXME GIOP_ProfileAddr not handled");
+		g_warning ("XXX FIXME GIOP_ProfileAddr not handled");
 		return TRUE;
 		break;
 	case GIOP_ReferenceAddr:
-		g_warning("XXX FIXME GIOP_ReferenceAddr not handled");
+		g_warning ("XXX FIXME GIOP_ReferenceAddr not handled");
 		return TRUE;
 		break;
 	}
@@ -761,14 +764,25 @@ giop_connection_get_frag (GIOPConnection     *cnx,
 static void
 giop_connection_remove_frag (GIOPConnection *cnx, GList *frags)
 {
+	GList *l;
+
+	g_return_if_fail (frags != NULL);
+
+	for (l = frags->next; l; l = l->next)
+		giop_recv_buffer_unuse (l->data);
+
 	cnx->incoming_frags = g_list_remove (cnx->incoming_frags, frags);
 	g_list_free (frags);
 }
 
-static void
+static gboolean
 alloc_buffer (GIOPRecvBuffer *buf, gpointer old_alloc, gulong body_size)
 {
-	buf->message_body = g_realloc (old_alloc, body_size + 12);
+	buf->message_body = g_try_realloc (old_alloc, body_size + 12);
+
+	if (!buf->message_body)
+		return TRUE;
+
 	/*
 	 *   We assume that this is 8 byte aligned, for efficiency -
 	 * so we can align to the memory address rather than the offset
@@ -779,9 +793,11 @@ alloc_buffer (GIOPRecvBuffer *buf, gpointer old_alloc, gulong body_size)
 	buf->cur = buf->message_body + 12;
 	buf->end = buf->cur + body_size;
 	buf->left_to_read = body_size;
+
+	return FALSE;
 }
 
-static void
+static gboolean
 concat_frags (GList *list)
 {
 	GList *l;
@@ -793,21 +809,17 @@ concat_frags (GList *list)
 
 	head = list->data;
 
-	for (l = list; l; l = l->next) {
-		GIOPRecvBuffer *buf = l->data;
-
-		/* to account for fragment (msg id) header */
-		length += buf->end - buf->cur;
-	}
-
+	length = head->msg.header.message_size;
 	initial_offset = (head->cur - head->message_body);
 	initial_length = (head->end - head->cur);
 
 	length += initial_offset - 12; /* include what we read of the header */
 
 	g_assert (head->free_body);
-	alloc_buffer (head, head->message_body, length);
-	head->msg.header.message_size = length;
+
+	if (alloc_buffer (head, head->message_body, length))
+		return TRUE;
+
 	head->left_to_read = 0;
 	head->cur = head->message_body + initial_offset;
 
@@ -820,9 +832,11 @@ concat_frags (GList *list)
 		len = buf->end - buf->cur;
 		memcpy (ptr, buf->cur, len);
 		ptr+= len;
-
-		giop_recv_buffer_unuse (buf);
 	}
+
+	head->end = ptr;
+
+	return FALSE;
 }
 
 /**
@@ -842,6 +856,7 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 {
 	GList *list;
 	gboolean giop_1_1;
+	gboolean error = FALSE;
 	CORBA_long message_id;
 	GIOPRecvBuffer *buf = *ret_buf;
 
@@ -878,22 +893,34 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 		giop_connection_add_frag (cnx, buf);
 
 	else {
-		*ret_buf = list->data;
-		g_assert ((*ret_buf)->msg.header.message_type != GIOP_FRAGMENT);
+		GIOPRecvBuffer *head = list->data;
+
+		*ret_buf = head;
+		g_assert (head->msg.header.message_type != GIOP_FRAGMENT);
+
+		/* track total length on head node */
+		/* (end - cur) to account for fragment (msg id) header */
+		head->msg.header.message_size += (buf->end - buf->cur);
 
 		g_list_append (list, buf);
+
+		if (!cnx->parent.is_auth &&
+		    buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT) {
+			error = TRUE;
+			giop_connection_remove_frag (cnx, list);
+		}
 			
 		if (!MORE_FRAGMENTS_FOLLOW (buf)) {
 			g_assert (buf->msg.header.message_type == GIOP_FRAGMENT);
 
 			/* concat all fragments - re-write & continue */
-			concat_frags (list);
+			error = concat_frags (list);
 
 			giop_connection_remove_frag (cnx, list);
 		}
 	}
 
-	return FALSE;
+	return error;
 }
 
 static gboolean
@@ -985,7 +1012,7 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 {
 	dprintf (GIOP, "Incoming IIOP header:\n");
 
-	do_giop_dump (stderr, (guint8 *)buf, 12, 0);
+	do_giop_dump (stderr, (guint8 *) &buf->msg.header, 12, 0);
 
 	/* Check the header */
 	if (memcmp (buf->msg.header.magic, "GIOP", 4))
@@ -1015,13 +1042,15 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 		return TRUE;
 		break;
 	}
+
 	if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) != GIOP_FLAG_ENDIANNESS)
 		buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
 
-	if (!is_auth && (buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT))
+	if (!is_auth && buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
 		return TRUE;
 
-	alloc_buffer (buf, NULL, buf->msg.header.message_size);
+	if (alloc_buffer (buf, NULL, buf->msg.header.message_size))
+		return TRUE;
 
 	return FALSE;
 }
@@ -1077,6 +1106,11 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		buf->cur += n;
 
 		if (buf->left_to_read == 0) {
+
+#ifdef G_ENABLE_DEBUG
+			if (giop_debug_hook_incoming_mangler)
+				giop_debug_hook_incoming_mangler (buf);
+#endif
 
 			switch (buf->state) {
 
@@ -1163,7 +1197,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		if (!warned++)
 			g_warning ("dropping an out of bound input buffer "
 				   "on the floor 0x%x", buf->msg.header.message_type);
-		giop_recv_buffer_unuse (buf);
+		goto msg_error;
 		break;
 	}
 
@@ -1181,12 +1215,11 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 	giop_recv_buffer_unuse (buf);
 
-	g_warning ("Hyper unusual code path of little testing");
-
 	/* Zap it for badness.
 	 * XXX We should probably handle oversized
 	 * messages more graciously XXX */
-	giop_connection_close (cnx);
+	linc_connection_state_changed (LINC_CONNECTION (cnx),
+				       LINC_DISCONNECTED);
 	g_object_unref ((GObject *) cnx);
 
 	return TRUE;
