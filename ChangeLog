@@ -1,3 +1,26 @@
+2002-10-02  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-typecode.c:
+	(CORBA_TypeCode_get_compact_typecode),
+	(CORBA_TypeCode_type_modifier),
+	(CORBA_TypeCode_concrete_base_type): add stubs for these
+	that just through a NO_IMPLEMENT exception.
+	(CORBA_TypeCode_kind), (CORBA_TypeCode_id), (CORBA_TypeCode_name),
+	(CORBA_TypeCode_member_count), (CORBA_TypeCode_member_name),
+	(CORBA_TypeCode_member_type), (CORBA_TypeCode_member_label),
+	(CORBA_TypeCode_discriminator_type),
+	(CORBA_TypeCode_default_index), (CORBA_TypeCode_length),
+	(CORBA_TypeCode_content_type), (CORBA_TypeCode_fixed_digits),
+	(CORBA_TypeCode_fixed_scale), (CORBA_TypeCode_member_visibility):
+	Add implementations for these. Based on original implementation
+	by Tom Tromey which was merged into the cpp branch by Sam Couter.
+
+2002-10-02  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-backend.c:
+	(load_language_backend): kill bogus g_module_close.
+	Thanks to Gergo for pointing it out.
+
 2002-09-30  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/orbit-idl-c-stubs.c (cs_output_stub): Cast EPV
@@ -27,7 +50,6 @@
 	silly things with the argument list length,
 	fixes #93928
 
->>>>>>> 1.421
 2002-09-24  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: require linc >= 0.7.0

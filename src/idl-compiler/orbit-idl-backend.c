@@ -73,7 +73,6 @@ load_language_backend (const char *path,
 		g_warning ("backend %s has no \"orbit_idl_backend_func\" defined", modpath);
 
 	g_free (modpath);
-	g_module_close (module);
 
 	return retval;
 }
