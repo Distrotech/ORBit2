@@ -1,8 +1,10 @@
 TODO:
 
+* linc/ORBit2 tmpdir issue for Unix sockets, test.sh must not
+  rm -Rf /tmp/foo
+
 * GIOP fragments
 	+ need to handle a cancel request in the middle of a fragment stream
-
 
 * It seems the local case optimization can go wrong when
   invoking bogus methods from a different interface on an Object ref.
