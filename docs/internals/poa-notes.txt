@@ -132,7 +132,7 @@ obtaining the POAObject associated with the servant in the UNIQUE_ID
 case. This needs to fixed to check that it actually belongs to the POA
 in question.
 
-Implementing Anpther Object Adaptor
+Implementing Another Object Adaptor
 ==================================
 
 	ORBit2's POA is virtualised. This means that, in theory, it
