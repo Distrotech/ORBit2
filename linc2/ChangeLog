@@ -1,3 +1,9 @@
+2003-05-21  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_in_io_thread): fix horrors.
+	(linc_object_unref): use it instead of the same hack;
+	thanks to Alex L.
+
 2003-05-12  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* MAINTAINERS: Declare myself as documentation maintainer.
