@@ -135,6 +135,7 @@ dnl Checks for libraries.
 PKG_CHECK_MODULES(ORBIT, \
 	glib-2.0 >= $GLIB_REQUIRED \
 	gobject-2.0 >= $GLIB_REQUIRED \
+	gthread-2.0 >= $GLIB_REQUIRED \
 	gmodule-2.0 >= $GLIB_REQUIRED)
 AC_SUBST(ORBIT_LIBS)
 AC_SUBST(ORBIT_CFLAGS)
