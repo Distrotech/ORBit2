@@ -1,3 +1,21 @@
+2001-12-19  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_setup): upd.
+
+	* src/linc-connection.c: kill wasteful GIOChannel.
+	(linc_source_add): upd.
+	(linc_connection_dispose): upd.
+	(linc_connection_from_fd): upd.
+	(linc_source_unwatch_out): kill.
+	(linc_connection_connected): upd.
+	(linc_connection_class_state_changed): upd.
+
+	* src/linc-source.c: add.
+	(linc_io_add_watch_fd): impl.
+	(linc_watch_set_condition): impl.
+
+	* src/linc.c (linc_io_add_watch): move this
+
 2001-12-14  Roland Juelich <rj@atecom.com>
 
 	* src/linc-server.c (linc_server_setup): if we are

@@ -38,7 +38,14 @@ gboolean         linc_protocol_get_sockinfo (const LINCProtocolInfo *proto,
 
 					     gchar                 **service);
 
-/* Redundant - to go. */
-void     linc_server_handle   (LINCServer *cnx);
+LincWatch       *linc_io_add_watch_fd       (int                     fd,
+					     GIOCondition            condition,
+					     GIOFunc                 func,
+					     gpointer                user_data);
+
+void             linc_watch_set_condition   (LincWatch              *w,
+					     GIOCondition            condition);
+
+GMainContext    *linc_main_get_context      (void);
 
 #endif /* _LINC_PRIVATE_H */
