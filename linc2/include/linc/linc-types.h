@@ -1,6 +1,8 @@
 #ifndef LINC_TYPES_H
 #define LINC_TYPES_H 1
 
+#include <sys/types.h>
+
 /* For recursive mutexes */
 #ifndef _REENTRANT
 #define _REENTRANT 1

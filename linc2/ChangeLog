@@ -1,3 +1,11 @@
+2001-07-16  Laszlo Peter  <laca@ireland.sun.com>
+
+	* src/linc-protocols.c: set fakelen to 0 when fakehost is NULL
+        to avoid core dump on Solaris.
+
+	* include/linc/linc-types.h: include <sys/types.h> to
+	keep Solaris happy.
+
 2001-07-13  Darin Adler  <darin@bentspoon.com>
 
 	* configure.in: Remove duplicate macros, and fix one of
