@@ -1,6 +1,7 @@
 
 
-* regression tests
+* take a ref around invocations. Similar to what was intended
+  with RefCountServantBase
 
 * idl compiler work
 
