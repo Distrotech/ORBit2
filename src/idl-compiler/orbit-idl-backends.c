@@ -22,6 +22,7 @@
 
 ***************************************************************************/
 
+#include "config.h"
 #include "orbit-idl2.h"
 #include "backends/c/orbit-idl-c-backend.h"
 #include <dirent.h>
