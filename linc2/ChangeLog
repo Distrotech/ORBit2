@@ -1,3 +1,14 @@
+2005-02-23  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-private.h
+	* src/linc.c: Use consistent spelling, with a 'k', for the
+	optional LINK_CONNECTION_DEBUG environment variable.
+
+	* src/linc-source.c (link_source_check): If we get a FD_ACCEPT
+	event on a socket, reset the selected event mask to zero, and
+	reset the event. Otherwise the event keeps firing. Problem noticed
+	in test-giop.
+
 2005-02-18  Tor Lillqvist  <tml@novell.com>
 
 	More hacking on linc2 for Windows. After the below changes,

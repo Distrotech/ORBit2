@@ -5,7 +5,7 @@
 #undef CONNECTION_DEBUG
 
 /* If CONNECTION_DEBUG is defined, define this to make it selectable
- * at runtime by setting the LINC_CONNECTION_DEBUG env var.
+ * at runtime by setting the LINK_CONNECTION_DEBUG env var.
  */
 #define CONNECTION_DEBUG_FLAG
 

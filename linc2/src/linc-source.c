@@ -68,7 +68,7 @@ link_source_prepare (GSource *source,
 	int event_mask = 0;
 
 	if (watch->condition & G_IO_IN)
-		event_mask |= (FD_READ | FD_ACCEPT | FD_CLOSE);
+		event_mask |= (FD_READ | FD_ACCEPT);
 	if (watch->condition & G_IO_OUT)
 		event_mask |= (FD_WRITE | FD_CONNECT);
 	if (watch->condition & G_IO_HUP)
@@ -111,7 +111,14 @@ link_source_check (GSource *source)
 	else {
 		d_printf ("events={%s}\n", fd_mask (events.lNetworkEvents));
 		watch->pollfd.revents = 0;
-		if (events.lNetworkEvents & (FD_READ | FD_ACCEPT | FD_CLOSE))
+		if (events.lNetworkEvents & FD_ACCEPT) {
+			watch->event_mask = 0;
+			d_printf ("check: WSAEventSelect(%d, %#x, {})\n",
+				  watch->socket, watch->pollfd.fd);
+			WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd, 0);
+			ResetEvent ((HANDLE) watch->pollfd.fd);
+		}
+		if (events.lNetworkEvents & (FD_READ | FD_ACCEPT))
 			watch->pollfd.revents |= G_IO_IN;
 		if (events.lNetworkEvents & (FD_WRITE | FD_CONNECT))
 			watch->pollfd.revents |= G_IO_OUT;

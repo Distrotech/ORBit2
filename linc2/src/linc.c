@@ -170,7 +170,7 @@ void
 link_init (gboolean thread_safe)
 {
 #if defined (CONNECTION_DEBUG) && defined (CONNECTION_DEBUG_FLAG)
-	if (getenv ("LINC_CONNECTION_DEBUG"))
+	if (getenv ("LINK_CONNECTION_DEBUG"))
 		link_connection_debug_flag = TRUE;
 #endif
 
