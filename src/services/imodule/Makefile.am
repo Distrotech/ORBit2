@@ -25,3 +25,10 @@ libORBit_imodule_2_la_SOURCES =		\
 	orbit-imodule-libidl-utils.h	\
 	orbit-imodule.c			\
 	$(NULL)
+
+libORBit_imodule_2_la_LIBADD = \
+	$(top_builddir)/src/orb/libORBit-2.la \
+	$(ORBIT_IDL_LIBS) \
+	$(ORBIT_LIBS)
+
+libORBit_imodule_2_la_LDFLAGS = -no-undefined

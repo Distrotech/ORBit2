@@ -1,3 +1,9 @@
+2003-05-28  Sebastian Rittau  <srittau@jroger.in-berlin.de>
+
+	* src/services/imodule/Makefile.am: From HEAD: add -no-undefined to
+	libORBit_imodule_2_la_LDFLAGS and write dependency libraries in
+	libORBit_imodule_2_la_LIBADD explicitly.
+
 2003-05-19  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.6.2
