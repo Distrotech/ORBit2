@@ -2,7 +2,7 @@
 # type alignment test #
 #######################
 
-AC_DEFUN(AC_CHECK_ALIGNOF,
+AC_DEFUN([AC_CHECK_ALIGNOF],
 	[changequote(<<, >>)dnl
 	dnl The name to #define.
 	define(<<AC_TYPE_NAME>>,
