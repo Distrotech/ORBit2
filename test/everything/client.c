@@ -1924,13 +1924,13 @@ main (int argc, char *argv [])
 		CORBA_sequence_CORBA_TypeCode *typecodes = NULL;
 
 		interfaces = ORBit_iinterfaces_from_file (
-				"everything.idl", NULL, &typecodes);
+				TEST_SRCDIR "/everything.idl", NULL, &typecodes);
 		g_assert (interfaces != NULL);
 		g_assert (typecodes != NULL);
 
 		CORBA_free (typecodes);
 
-		init_iinterfaces (interfaces);
+		init_iinterfaces (interfaces, &ev);
 	}
 
 	test_init (&ev);
