@@ -540,6 +540,7 @@ testUnboundedSequence (test_TestFactory   factory,
 {
   test_SequenceServer objref;
   test_StrSeq *outArg = NULL, inArg, inoutArg, *retn;
+  test_LongSeq *long_retn;
   guint i;
   d_print ("Testing unbounded sequences...\n");
   objref = test_TestFactory_getSequenceServer (factory, ev);
@@ -576,6 +577,11 @@ testUnboundedSequence (test_TestFactory   factory,
   for (i=0;i<retn->_length;i++)
 	g_assert (strcmp (retn->_buffer[i], constants_SEQ_STRING_RETN[i]) == 0);
 
+  g_warning ("FIXME: opMassiveSeq fails - due to max. size check");
+  /*  long_retn = test_SequenceServer_opMassiveSeq(objref, ev);
+      g_assert (ev->_major == CORBA_NO_EXCEPTION); */
+
+  CORBA_free (long_retn);
   CORBA_free (inArg._buffer);
   CORBA_free (inoutArg._buffer);
   CORBA_free (outArg);

@@ -1,3 +1,11 @@
+2003-06-19  Bowie Owens  <bowie.owens@csiro.au>
+
+	* test/everything/sequenceServer.c
+	(SequenceServer_opMassiveSeq): impl. & hook it up.
+
+	* test/everything/client.c (testUnboundedSequence):
+	invoke opMassiveSeq.
+
 2003-06-18  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/util/orbit-options.c: enable parsing of command line options 
