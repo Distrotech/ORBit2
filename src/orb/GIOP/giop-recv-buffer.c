@@ -1089,7 +1089,8 @@ handle_reply (GIOPRecvBuffer *buf)
 		ent->buffer = buf;
 
 		if (giop_thread_io () && !ent->async_cb)
-			giop_thread_push_recv (ent);
+			giop_incoming_signal_T (ent->src_thread,
+						GIOP_REPLY);
 
 		else if (ent->async_cb)
 			async = TRUE;
