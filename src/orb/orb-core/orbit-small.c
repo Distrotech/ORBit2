@@ -275,15 +275,25 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 		   efficiency of the current impl */
 		ORBit_ContextMarshalItem *mlist;
 
-		tprintf (" context { [impl. me] } ");
-
 		mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
 				m_data->contexts._length);
 
+		tprintf (" context { ");
+
 		for (i = 0; i < m_data->contexts._length; i++) {
+			char *val;
+
 			mlist [i].str = m_data->contexts._buffer [i];
+
+			val = g_hash_table_lookup (ctx->mappings, mlist [i].str);
+			tprintf ("( %s: '%s' )%s", mlist [i].str, val,
+				 i < m_data->contexts._length - 1 ? ", ": "");
+
 			mlist [i].len = strlen (mlist [i].str) + 1;
 		}
+
+		tprintf (" }");
+
 		/* Assumption, this doesn't whack mlist pointers into
 		   the send_buffer: verified */
 		ORBit_Context_marshal (

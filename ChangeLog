@@ -1,3 +1,17 @@
+2001-08-15  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-deps.c: update.
+	(orbit_idl_output_c_deps): if we didn't open the fh;
+	return.
+
+	* src/idl-compiler/orbit-idl-c-backend.c
+	(out_for_pass): only fopen non NULL deps files.
+
+2001-08-14  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_marshal_context): trace CORBA contexts nicely.
+
 2001-08-15  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-any.h,
