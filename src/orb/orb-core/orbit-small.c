@@ -717,7 +717,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
-				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					p = args [i] = alloca (ORBit_gather_alloc_info (tc));
 					do_demarshal_value (recv_buffer, &p, tc, orb);
 					p = args [i];
@@ -932,7 +932,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
-				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					ORBit_freekids_via_TypeCode (tc, args [i]);
 					break;
 				}
