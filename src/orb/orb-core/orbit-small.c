@@ -39,25 +39,7 @@
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
 {
-	size_t			element_size;
-	ORBit_MemPrefix_TypeCode	*pre;
-	gpointer 			mem;
-
-	if ((element_size = ORBit_gather_alloc_info(tc)) == 0)
-		return NULL;
-	
-	mem = ORBit_alloc_core (element_size,
-				ORBIT_MEMHOW_TYPECODE | 1,
-				sizeof(*pre), (gpointer)&pre,
-				/*align*/0);
-
-	memset (mem, 0, element_size);
-
-	ORBIT_MEM_MAGICSET(pre->magic);
-
-	pre->tc = ORBit_RootObject_duplicate(tc);
-	
-	return mem;
+	return ORBit_alloc_tcval (tc, 1);
 }
 
 gpointer

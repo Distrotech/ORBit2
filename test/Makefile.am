@@ -12,11 +12,13 @@ noinst_PROGRAMS=test1 \
 	echo-client echo-server \
 	empty-client empty-server \
 	test-any-client test-any-server \
-	test-dynany
+	test-dynany test-mem
 
-TESTS = test-dynany
+TESTS = test-dynany test-mem
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la
+
+test_mem_SOURCES=test-mem.c
 
 TEST_ANY_IDLOUT=test-any.h test-any-common.c test-any-stubs.c test-any-skels.c
 test_any_client_SOURCES=test-any-client.c $(TEST_ANY_IDLOUT)

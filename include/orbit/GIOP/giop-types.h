@@ -17,30 +17,30 @@
 #define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
 
 typedef enum {
-  GIOP_CONNECTION_SSL
+	GIOP_CONNECTION_SSL
 } GIOPConnectionOptions;
 
 extern const char giop_version_ids[GIOP_NUM_VERSIONS][2];
 
 typedef struct {
-  CORBA_char magic[4];
-  CORBA_char version[2];
-  CORBA_octet flags;
-  CORBA_octet message_type;
-  CORBA_unsigned_long message_size;
+	CORBA_char magic[4];
+	CORBA_char version[2];
+	CORBA_octet flags;
+	CORBA_octet message_type;
+	CORBA_unsigned_long message_size;
 } GIOPMsgHeader;
 
 typedef enum 
 {
-  GIOP_REQUEST,
-  GIOP_REPLY,
-  GIOP_CANCELREQUEST,
-  GIOP_LOCATEREQUEST,
-  GIOP_LOCATEREPLY,
-  GIOP_CLOSECONNECTION,
-  GIOP_MESSAGEERROR,
-  GIOP_FRAGMENT,
-  GIOP_NUM_MSG_TYPES
+	GIOP_REQUEST,
+	GIOP_REPLY,
+	GIOP_CANCELREQUEST,
+	GIOP_LOCATEREQUEST,
+	GIOP_LOCATEREPLY,
+	GIOP_CLOSECONNECTION,
+	GIOP_MESSAGEERROR,
+	GIOP_FRAGMENT,
+	GIOP_NUM_MSG_TYPES
 } GIOPMsgType;
 
 #if 0

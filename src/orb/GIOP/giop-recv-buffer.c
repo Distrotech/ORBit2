@@ -9,113 +9,76 @@
 
 #undef DEBUG
 
+/*
+ * FIXME: pretty much this whole module,
+ * and all the giop-types headers should be
+ * auto-generated and generic ...
+ */
+
 /* A list of GIOPMessageQueueEntrys */
 static GList  *giop_queued_messages;
 static GMutex *giop_queued_messages_lock = NULL;
 
+/* Don't do this genericaly, union's suck genericaly */
 static gboolean
 giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value)
 {
-  gboolean do_bswap = giop_msg_conversion_needed(buf);
+	gboolean do_bswap = giop_msg_conversion_needed (buf);
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 2);
-  if((buf->cur + 2) > buf->end)
-    return TRUE;
-  if(do_bswap)
-    buf->msg.u.request_1_2.target._d = GUINT16_SWAP_LE_BE(*(guint16 *)buf->cur);
-  else
-    buf->msg.u.request_1_2.target._d = *(guint16 *)buf->cur;
-  buf->cur += 2;
+	buf->cur = ALIGN_ADDRESS(buf->cur, 2);
+	if ((buf->cur + 2) > buf->end)
+		return TRUE;
+	if (do_bswap)
+		buf->msg.u.request_1_2.target._d = GUINT16_SWAP_LE_BE (
+			*(guint16 *) buf->cur);
+	else
+		buf->msg.u.request_1_2.target._d = *(guint16 *) buf->cur;
+	buf->cur += 2;
 
-  switch(buf->msg.u.request_1_2.target._d)
-    {
-    case GIOP_KeyAddr:
-      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 4) > buf->end)
-	return TRUE;
-      buf->msg.u.request_1_2.target._u.object_key._release = CORBA_FALSE;
-      if(do_bswap)
-	buf->msg.u.request_1_2.target._u.object_key._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-      else
-	buf->msg.u.request_1_2.target._u.object_key._length = *((guint32 *)buf->cur);
-      buf->cur += 4;
-      if((buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) > buf->end
-	 || (buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) < buf->cur)
-	return TRUE;
-      buf->msg.u.request_1_2.target._u.object_key._buffer = buf->cur;
-      buf->cur += buf->msg.u.request_1_2.target._u.object_key._length;
-      break;
-    case GIOP_ProfileAddr:
-      g_warning("XXX FIXME GIOP_ProfileAddr not handled");
-      return TRUE;
-      break;
-    case GIOP_ReferenceAddr:
-      g_warning("XXX FIXME GIOP_ReferenceAddr not handled");
-      return TRUE;
-      break;
-    }
+	switch (buf->msg.u.request_1_2.target._d) {
+	case GIOP_KeyAddr:
+		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+		if ((buf->cur + 4) > buf->end)
+			return TRUE;
+		buf->msg.u.request_1_2.target._u.object_key._release = CORBA_FALSE;
+		if (do_bswap)
+			buf->msg.u.request_1_2.target._u.object_key._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
+		else
+			buf->msg.u.request_1_2.target._u.object_key._length = *((guint32 *)buf->cur);
+		buf->cur += 4;
+		if ((buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) > buf->end ||
+		    (buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) < buf->cur)
+			return TRUE;
+		buf->msg.u.request_1_2.target._u.object_key._buffer = buf->cur;
+		buf->cur += buf->msg.u.request_1_2.target._u.object_key._length;
+		break;
+	case GIOP_ProfileAddr:
+		g_warning("XXX FIXME GIOP_ProfileAddr not handled");
+		return TRUE;
+		break;
+	case GIOP_ReferenceAddr:
+		g_warning("XXX FIXME GIOP_ReferenceAddr not handled");
+		return TRUE;
+		break;
+	}
 
-  return FALSE;
+	return FALSE;
 }
 
 static gboolean
-giop_IOP_ServiceContextList_demarshal (GIOPRecvBuffer *buf,
+giop_IOP_ServiceContextList_demarshal (GIOPRecvBuffer         *buf,
 				       IOP_ServiceContextList *value)
 {
-  gboolean do_bswap = giop_msg_conversion_needed(buf);
-  int i;
-
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-
-  if((buf->cur + 4) > buf->end)
-    return TRUE;
-
-  value->_release = CORBA_TRUE;
-  if(do_bswap)
-    value->_length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-  else
-    value->_length = *((guint32 *)buf->cur);
-
-  if((buf->cur + (value->_length*8)) > buf->end)
-    return TRUE;
-
-  buf->cur += 4;
-  value->_buffer = g_new(IOP_ServiceContext, value->_length);
-  for(i = 0; i < value->_length; i++)
-    {
-      buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 8) > buf->end)
-	return TRUE;
-
-      if(do_bswap)
-	{
-	  value->_buffer[i].context_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-	  buf->cur += 4;
-	  value->_buffer[i].context_data._length = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
-	}
-      else
-	{
-	  value->_buffer[i].context_id = *((guint32 *)buf->cur);
-	  buf->cur += 4;
-	  value->_buffer[i].context_data._length = *((guint32 *)buf->cur);
-	}
-      buf->cur += 4;
-      if((buf->cur + value->_buffer[i].context_data._length) > buf->end
-	 || (buf->cur + value->_buffer[i].context_data._length) < buf->cur)
-	return TRUE;
-      value->_buffer[i].context_data._buffer = buf->cur;
-      buf->cur += value->_buffer[i].context_data._length;
-      value->_buffer[i].context_data._release = CORBA_FALSE;
-    }
-
-  return FALSE;
+	return ORBit_demarshal_value (
+		TC_IOP_ServiceContextList,
+		(gconstpointer *)&value, buf, TRUE, NULL);
 }
 
 static void
 giop_IOP_ServiceContextList_free (IOP_ServiceContextList *value)
 {
 	if (value)
-		g_free (value->_buffer);
+		CORBA_free (value->_buffer);
 }
 
 static gboolean

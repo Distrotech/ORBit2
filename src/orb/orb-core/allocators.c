@@ -2,167 +2,6 @@
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
-void
-CORBA_free (gpointer mem)
-{
-	ORBit_free (mem);
-}
-
-gpointer
-ORBit_alloc_core(size_t block_size,
-		 ORBit_MemHow how_in,
-		 size_t prefix_size,
-		 gpointer *prefix_ref,
-		 guint8 align)
-{
-  size_t		psz;
-  char		*pre, *mem;
-  ORBit_MemHow	how;
-
-  psz = prefix_size + sizeof(ORBit_MemHow);
-  if ( align > 0 ) {
-    if ( align < 4 )	/* MEMHOW must be aligned to 4 bytes */
-      align = 4;
-    psz = (psz+(align-1)) & ~(align-1);
-  } else {
-    psz = (psz+(ORBIT_ALIGNOF_CORBA_TCVAL-1)) & ~(ORBIT_ALIGNOF_CORBA_TCVAL-1);
-  }
-  pre = g_malloc(psz + block_size);
-  /* NOTE: we assume g_malloc returns memory that meets the alignment
-   * requirement. We're hosed if not!
-   */
-#ifdef ORBIT_DEBUG
-  g_assert( (psz&3) == 0 );
-#endif
-  mem = pre + psz;
-  how = how_in | ((psz>>2)<<28);
-  *(ORBit_MemHow*)(mem - sizeof(ORBit_MemHow)) = how;
-  *prefix_ref = pre;
-  return mem;
-}
-
-void
-ORBit_free_T(gpointer mem)
-{
-  ORBit_MemHow how, howcode, reps;
-  gpointer     prefix, x;
-  int          idx;
-
-  if(!mem)
-    return;
-
-  how = * (ORBit_MemHow*) ( ((gchar*)(mem)) - sizeof(gulong) );
-  if ( how==ORBIT_MEMHOW_NONE )
-    return;
-
-  prefix = ((gchar*)(mem)) - ((how>>28)<<2);
-  howcode = how & ORBIT_MEMHOW_CODE_MASK;
-  if ( howcode == ORBIT_MEMHOW_SIMPLE )
-    {
-      g_free(prefix);
-      return;
-    }
-
-  reps = how & ORBIT_MEMHOW_NUMELS_MASK;
-#ifdef ORBIT_DEBUG
-  g_assert(*((gulong*)prefix) == ORBIT_MAGIC_MEMPREFIX);
-  g_assert( reps != 0 );
-#endif
-  if ( howcode == ORBIT_MEMHOW_TYPECODE )
-    {
-      ORBit_MemPrefix_TypeCode	*pre = prefix;
-      CORBA_TypeCode			tc = pre->tc;
-      for (idx = 0, x = mem; idx < reps; idx++)
-	x = ORBit_freekids_via_TypeCode_T(tc, x);
-      ORBit_RootObject_release_T(tc);
-      g_free(prefix);
-      return;
-    }
-
-  if ( howcode == ORBIT_MEMHOW_KIDFNC1 )
-    {
-      ORBit_MemPrefix_KidFnc1		*pre = prefix;
-      for (idx = 0, x = mem; idx < reps; idx++)
-	x = pre->freekids(x, NULL);
-
-      g_free(prefix);
-      return;
-    }
-
-  if ( howcode == ORBIT_MEMHOW_FREEFNC1 ) {
-    ORBit_MemPrefix_FreeFnc1	*pre = prefix;
-    pre->freeblk(mem, pre);
-    /* CB invokation must free any assoc. memory */
-    return;
-  }
-  g_error ("couldn't free memory at %p; not initialized?\n", mem);
-}
-
-void
-ORBit_free (gpointer mem)
-{
-	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
-
-	ORBit_free_T (mem);
-
-	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
-}
-
-gpointer
-ORBit_alloc_simple (size_t block_size)
-{
-	gpointer mem, pre;
-
-	if (!block_size)
-		return 0;
-
-	mem = ORBit_alloc_core (
-		block_size, ORBIT_MEMHOW_SIMPLE, 0, &pre, /*align*/0);
-
-	return mem;
-}
-
-gpointer
-ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
-		   ORBit_free_kidvals free_fnc)
-{
-  gpointer			mem;
-  ORBit_MemPrefix_KidFnc1	*pre;
-  if ( !free_fnc)
-    return ORBit_alloc_simple(element_size*num_elements);
-  if ( !element_size || !num_elements )
-    return 0;
-  mem = ORBit_alloc_core(element_size*num_elements, 
-			 ORBIT_MEMHOW_KIDFNC1|num_elements, sizeof(*pre), (gpointer)&pre,
-			 /*align*/0);
-  ORBIT_MEM_MAGICSET(pre->magic);
-  pre->freekids = free_fnc;
-  return mem;
-}
-
-gpointer
-ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
-{
-  size_t			element_size;
-  ORBit_MemPrefix_TypeCode	*pre;
-  gpointer 			mem;
-
-  if ( num_elements==0
-       || (element_size = ORBit_gather_alloc_info(tc)) == 0 ) {
-    return 0;
-  }
-  mem = ORBit_alloc_core(element_size*num_elements,
-			 ORBIT_MEMHOW_TYPECODE|num_elements, sizeof(*pre), (gpointer)&pre,
-			 /*align*/0);
-  ORBIT_MEM_MAGICSET(pre->magic);
-
-  pre->tc = ORBit_RootObject_duplicate(tc);
-
-  return mem;
-}
-
-/******************************************************************/
-
 /**
     The argument {mem} is a chuck of memory described by {tc}, and its
     contents is freed, but {mem} itself is not freed. That is, if {mem}
@@ -178,109 +17,105 @@ ORBit_alloc_tcval(CORBA_TypeCode tc, guint num_elements)
     to a lot of pointless dups, and also failed miserably when
     arrays of things were allocated.
 **/
-gpointer
-ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
-			       gpointer       mem)
+static gpointer
+ORBit_freekids_via_TypeCode_T (gpointer       mem,
+			       CORBA_TypeCode tc)
 {
-  int i;
-  guchar *retval = NULL;
-  CORBA_TypeCode	subtc;
+	int i;
+	guchar *retval = NULL;
+	CORBA_TypeCode subtc;
 
 /*  g_warning ("Freeing via tc '%s' at %p",
     ORBit_tk_to_name (tc->kind), mem);*/
 
-  switch(tc->kind) {
-  case CORBA_tk_any:
-    {
-      CORBA_any *pval = mem;
-      if(pval->_release)
-	ORBit_free_T(pval->_value);
-      pval->_value = 0;
-      ORBit_RootObject_release_T(pval->_type);
-      pval->_type = 0;
-      retval = (guchar *)(pval + 1);
-    }
-    break;
-  case CORBA_tk_TypeCode:
-  case CORBA_tk_objref:
-    {
-      CORBA_Object	*pval = mem;
-      ORBit_RootObject_release_T(*pval);
-      *pval = 0;
-      retval = ((guchar *)mem) + sizeof(*pval);
-    }
-    break;
-  case CORBA_tk_Principal:
-    {
-      CORBA_Principal *pval = mem;
-      if(pval->_release)
-	ORBit_free_T(pval->_buffer);
-      pval->_buffer = 0;
-      retval = (guchar *)(pval + 1);
-    }
-    break;
-  case CORBA_tk_except:
-  case CORBA_tk_struct:
-    for(i = 0; i < tc->sub_parts; i++) {
-      subtc = tc->subtypes[i];
-      mem = ALIGN_ADDRESS(mem, subtc->c_align);
-      mem = ORBit_freekids_via_TypeCode_T(subtc, mem);
-    }
-    retval = mem;
-    break;
-  case CORBA_tk_union:
-    {
-      int sz = 0;
-      int al = 1;
-      gconstpointer cmem = mem;
-      subtc = ORBit_get_union_tag(tc, &cmem, TRUE);
-      for(i = 0; i < tc->sub_parts; i++) {
-	al = MAX(al, tc->subtypes[i]->c_align);
-	sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
-      }
-      mem = ALIGN_ADDRESS(cmem, al);
-      ORBit_freekids_via_TypeCode_T(subtc, mem);
-      /* the end of the body (subtc) may not be the
-       * same as the end of the union */
-      retval = ((guchar *)mem) + sz;
-    }
-    break;
-  case CORBA_tk_wstring:
-  case CORBA_tk_string:
-    {
-      CORBA_char **pval = mem;
-      ORBit_free_T(*pval);
-      *pval = 0;
-      retval = (guchar *)mem + sizeof(*pval);
-    }
-    break;
-  case CORBA_tk_sequence:
-    {
-      CORBA_sequence_CORBA_octet *pval = mem;
-      if(pval->_release)
-	ORBit_free_T(pval->_buffer);
-      pval->_buffer = 0;
-      retval = (guchar *)mem + sizeof(*pval);
-    }
-    break;
-  case CORBA_tk_array:
-    for(i = 0; i < tc->length; i++) {
-      mem = ORBit_freekids_via_TypeCode_T(tc->subtypes[0], mem);
-    }
-    retval = mem;
-    break;
-  case CORBA_tk_alias:
-    retval = ORBit_freekids_via_TypeCode_T(tc->subtypes[0], mem);
-    break;
-  default:
-    {
-      gulong length;
-      length = ORBit_gather_alloc_info (tc);
-      retval = ALIGN_ADDRESS(mem, tc->c_align) + length;
-    }
-    break;
-  }
-  return (gpointer)retval;
+	switch (tc->kind) {
+	case CORBA_tk_any: {
+		CORBA_any *pval = mem;
+		if (pval->_release)
+			ORBit_free_T (pval->_value);
+		pval->_value = 0;
+		ORBit_RootObject_release_T (pval->_type);
+		pval->_type = 0;
+		retval = (guchar *) (pval + 1);
+		break;
+	}
+	case CORBA_tk_TypeCode:
+	case CORBA_tk_objref: {
+		CORBA_Object *pval = mem;
+
+		ORBit_RootObject_release_T (*pval);
+		*pval = 0;
+		retval = ((guchar *)mem) + sizeof (*pval);
+		break;
+	}
+	case CORBA_tk_Principal: {
+		CORBA_Principal *pval = mem;
+		if (pval->_release)
+			ORBit_free_T (pval->_buffer);
+		pval->_buffer = 0;
+		retval = (guchar *)(pval + 1);
+		break;
+	}
+	case CORBA_tk_except:
+	case CORBA_tk_struct:
+		for (i = 0; i < tc->sub_parts; i++) {
+			subtc = tc->subtypes [i];
+			mem = ALIGN_ADDRESS (mem, subtc->c_align);
+			mem = ORBit_freekids_via_TypeCode_T (mem, subtc);
+		}
+		retval = mem;
+		break;
+	case CORBA_tk_union: {
+		int sz = 0;
+		int al = 1;
+		gconstpointer cmem = mem;
+		subtc = ORBit_get_union_tag(tc, &cmem, TRUE);
+		for(i = 0; i < tc->sub_parts; i++) {
+			al = MAX(al, tc->subtypes[i]->c_align);
+			sz = MAX(sz, ORBit_gather_alloc_info(tc->subtypes[i]));
+		}
+		mem = ALIGN_ADDRESS(cmem, al);
+		ORBit_freekids_via_TypeCode_T(mem, subtc);
+		/* the end of the body (subtc) may not be the
+		 * same as the end of the union */
+		retval = ((guchar *)mem) + sz;
+		break;
+	}
+	case CORBA_tk_wstring:
+	case CORBA_tk_string: {
+		CORBA_char **pval = mem;
+		ORBit_free_T (*pval);
+		*pval = 0;
+		retval = (guchar *)mem + sizeof (*pval);
+		break;
+	}
+	case CORBA_tk_sequence: {
+		CORBA_sequence_CORBA_octet *pval = mem;
+		if (pval->_release)
+			ORBit_free_T (pval->_buffer);
+		pval->_buffer = 0;
+		retval = (guchar *)mem + sizeof(*pval);
+		break;
+	}
+	case CORBA_tk_array:
+		for (i = 0; i < tc->length; i++)
+			mem = ORBit_freekids_via_TypeCode_T(
+				mem, tc->subtypes[0]);
+		retval = mem;
+		break;
+	case CORBA_tk_alias:
+		retval = ORBit_freekids_via_TypeCode_T (
+			mem, tc->subtypes[0]);
+		break;
+	default:
+	{
+		gulong length;
+		length = ORBit_gather_alloc_info (tc);
+		retval = ALIGN_ADDRESS(mem, tc->c_align) + length;
+	}
+		break;
+	}
+	return retval;
 }
 
 gpointer
@@ -290,9 +125,169 @@ ORBit_freekids_via_TypeCode (CORBA_TypeCode tc, gpointer mem)
 
 	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
-	ret = ORBit_freekids_via_TypeCode_T (tc, mem);
+	ret = ORBit_freekids_via_TypeCode_T (mem, tc);
 
 	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	return ret;
+}
+
+void
+CORBA_free (gpointer mem)
+{
+	ORBit_free (mem);
+}
+
+#define SHORT_PREFIX_LEN (MAX (sizeof (ORBitMemHow), \
+			       ORBIT_ALIGNOF_CORBA_LONG_DOUBLE))
+#define LONG_PREFIX_LEN  (sizeof (CORBA_long_double) > sizeof (ORBit_MemPrefix) ? \
+			  ORBIT_ALIGNOF_CORBA_LONG_DOUBLE : \
+			  MAX (sizeof (ORBit_MemPrefix), \
+			       sizeof (CORBA_long_double) + \
+			       ORBIT_ALIGNOF_CORBA_LONG_DOUBLE))
+
+void
+ORBit_free_T (gpointer mem)
+{
+	int                   i;
+	guchar               *x;
+	CORBA_TypeCode        tc;
+	ORBitMemHow           how;
+	ORBit_MemPrefix      *prefix;
+	ORBit_free_kidvals    free_fn;
+
+	if (!mem)
+		return;
+
+	if ((gulong)mem & 0x1) {
+		g_free ((guchar *)mem - 1);
+		return;
+	}
+
+	how = *(((ORBitMemHow *) mem) - 1);
+
+	switch (ORBIT_MEMHOW_HOW (how)) {
+	case ORBIT_MEMHOW_TYPECODE:
+		prefix = (ORBit_MemPrefix *) 
+			((guchar *) mem - LONG_PREFIX_LEN);
+
+		free_fn = (ORBit_free_kidvals)
+			ORBit_freekids_via_TypeCode_T;
+		tc      = prefix->u.tc;
+		break;
+
+	case ORBIT_MEMHOW_FREEFNC:
+		prefix = (ORBit_MemPrefix *) 
+			((guchar *) mem - LONG_PREFIX_LEN);
+
+		free_fn = prefix->u.free_fn;
+		tc      = NULL;
+		break;
+	case ORBIT_MEMHOW_SIMPLE:
+		g_free ((guchar *)mem - SHORT_PREFIX_LEN);
+		return;
+	case ORBIT_MEMHOW_NONE:
+	default:
+		return;
+	}
+
+	how = ORBIT_MEMHOW_ELEMENTS (how);
+
+	for (i = 0, x = mem; i < how; i++)
+		x = free_fn (x, tc);
+	
+	g_free (prefix);
+
+	if (tc)
+		ORBit_RootObject_release_T (tc);
+}
+
+void
+ORBit_free (gpointer mem)
+{
+	if (!mem)
+		return;
+
+	LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+
+	ORBit_free_T (mem);
+
+	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+}
+
+CORBA_char *
+ORBit_alloc_string (size_t string_length)
+{
+	guchar *mem;
+
+	mem = g_malloc (string_length + 1);
+
+	return (CORBA_char *)(mem + 1);
+}
+
+gpointer
+ORBit_alloc_simple (size_t block_size)
+{
+	guchar *mem, *prefix;
+
+	if (!block_size)
+		return NULL;
+
+	prefix = g_malloc (SHORT_PREFIX_LEN + block_size);
+
+	mem = (guchar *) prefix + SHORT_PREFIX_LEN;
+
+	*((ORBitMemHow *)mem - 1) = ORBIT_MEMHOW_SIMPLE;
+
+	return mem;
+}
+
+gpointer
+ORBit_alloc_kidfnc (size_t             element_size,
+		    guint              num_elements,
+		    ORBit_free_kidvals free_fn)
+{
+	guchar *mem;
+	ORBit_MemPrefix *prefix;
+
+	if (!num_elements)
+		return NULL;
+
+	prefix = g_malloc (LONG_PREFIX_LEN +
+			   element_size * num_elements);
+	prefix->u.free_fn = free_fn;
+
+	mem = (guchar *) prefix + LONG_PREFIX_LEN;
+
+	*((ORBitMemHow *)mem - 1) = ORBIT_MEMHOW_MAKE (
+		ORBIT_MEMHOW_FREEFNC, num_elements);
+
+	return mem;
+}
+
+gpointer
+ORBit_alloc_tcval (CORBA_TypeCode tc,
+		   guint          num_elements)
+{
+	guchar *mem;
+	guint   element_size;
+	ORBit_MemPrefix *prefix;
+
+	if (!num_elements)
+		return NULL;
+
+	if (!(element_size = ORBit_gather_alloc_info (tc)))
+		return NULL;
+
+	prefix = g_malloc0 (LONG_PREFIX_LEN +
+			    element_size * num_elements);
+
+	prefix->u.tc = ORBit_RootObject_duplicate (tc);
+
+	mem = (guchar *)prefix + LONG_PREFIX_LEN;
+
+	*((ORBitMemHow *)mem - 1) = ORBIT_MEMHOW_MAKE (
+		ORBIT_MEMHOW_TYPECODE, num_elements);
+
+	return mem;
 }
