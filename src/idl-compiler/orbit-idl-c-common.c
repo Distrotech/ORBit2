@@ -169,7 +169,7 @@ cc_output_alloc_interface (IDL_tree       tree,
 	id = IDL_ns_ident_to_qstring (
 		IDL_IDENT_TO_NS (IDL_INTERFACE (tree).ident), "_", 0);
 
-	fprintf (ci->fh, "\n#ifndef ORBIT_IDL_C_IMODULE\n");
+	fprintf (ci->fh, "\n#ifndef ORBIT_IDL_C_IMODULE_%s\n",ci->c_base_name);
 	fprintf (ci->fh, "CORBA_unsigned_long %s__classid = 0;\n", id);
 	fprintf (ci->fh, "#endif\n");
 
@@ -921,7 +921,8 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 			cc_small_output_method_bits (m->data, id, ci);
 
 		if (i->methods) {
-			fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE\n");
+			fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE_%s\n",
+				 ci->c_base_name);
 			fprintf (of, "static\n");
 			fprintf (of, "#endif\n");
 
@@ -949,7 +950,8 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 
 		fprintf (of, "\"IDL:omg.org/CORBA/Object:1.0\"\n};");
 
-		fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE\n");
+		fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE_%s\n",
+			 ci->c_base_name);
 		fprintf (of, "static\n");
 		fprintf (of, "#endif\n");
 		fprintf (of, "ORBit_IInterface %s__iinterface = {\n", id);

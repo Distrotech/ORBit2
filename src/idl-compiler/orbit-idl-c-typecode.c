@@ -917,7 +917,8 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 	if (!strncmp (tci->structname, "anon", 4))
 		fprintf (ci->fh, "static ");
 	else {
-		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE_%s\n",
+			 ci->c_base_name);
 		fprintf (ci->fh, "static\n");
 		fprintf (ci->fh, "#endif\n");
 	}

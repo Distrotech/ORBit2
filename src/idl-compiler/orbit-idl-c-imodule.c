@@ -127,8 +127,7 @@ orbit_idl_output_c_imodule (OIDL_Output_Tree *tree,
 
 	fprintf (ci->fh, OIDL_C_WARNING);
 	fprintf (ci->fh, "#include <string.h>\n");
-	fprintf (ci->fh, "#define ORBIT_IDL_C_IMODULE\n");
-	fprintf (ci->fh, "#define %s_IMODLE\n\n", ci->c_base_name);
+	fprintf (ci->fh, "#define ORBIT_IDL_C_IMODULE_%s\n\n",ci->c_base_name);
 
 	fprintf (ci->fh, "#include \"%s-common.c\"\n\n", ci->base_name);
 
