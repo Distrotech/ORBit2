@@ -1,3 +1,17 @@
+2001-10-31  Mark McLoughlin  <mark@skynet.ie>
+	
+	I feel violated. What's bonobo-config doing poking 
+	around with this stuff?
+
+	* include/orbit/orb-core/allocators.h: expose
+	ORBit_alloc_tcval.
+
+	* include/orbit/orb-core/corba-typecode.h: expose
+	ORBit_TypeCode_epv.
+
+	* include/orbit/orb-core/orbit-object.h: expose
+	ORBit_RootObject_init.
+
 2001-11-01  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c
