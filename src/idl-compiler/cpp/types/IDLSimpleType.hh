@@ -38,6 +38,7 @@ protected:
 	virtual string get_fixed_c_typename () const = 0;
 public:
 	bool conversion_required () const { return false; };
+	bool is_fixed () const { return true; };
 	
 	////////////////////////////////////////////
 	// Constants
@@ -153,6 +154,17 @@ public:
 				   const string     &cpp_id,
 				   const IDLTypedef *active_typedef = 0) const;
 	
+	// Initialization
+	void member_init_cpp (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const IDLTypedef *active_typedef = 0) const;
+	
+	void member_init_c   (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_id,
+			      const IDLTypedef *active_typedef = 0) const;
+
 	// Compound conversion: C++ -> C
 	void member_pack_to_c (ostream          &ostr,
 			       Indent           &indent,

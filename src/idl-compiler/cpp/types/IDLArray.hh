@@ -57,6 +57,7 @@ public:
 public:
 
 	bool conversion_required () const;
+	bool is_fixed () const;
 
 	////////////////////////////////////////////
 	// Creating typedefs
@@ -170,6 +171,17 @@ public:
 			       const string     &c_id,
 			       const IDLTypedef *active_typedef = 0) const;
 
+	// Initialization
+	void member_init_cpp (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const IDLTypedef *active_typedef = 0) const;
+	
+	void member_init_c   (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_id,
+			      const IDLTypedef *active_typedef = 0) const;
+
 	// Compound conversion: C -> C++
 	void member_unpack_from_c  (ostream          &ostr,
 				    Indent           &indent,
@@ -177,6 +189,14 @@ public:
 				    const string     &c_id,
 				    const IDLTypedef *active_typedef = 0) const;
 private:
+	void init_c_array (ostream      &ostr,
+			   Indent       &indent,
+			   const string &c_id) const;
+
+	void init_cpp_array (ostream      &ostr,
+			     Indent       &indent,
+			     const string &cpp_id) const;
+	
 	void fill_c_array (ostream      &ostr,
 			   Indent       &indent,
 			   const string &cpp_id,

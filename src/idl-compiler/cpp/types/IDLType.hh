@@ -45,6 +45,7 @@ public:
 	IDLType const &getResolvedType() const;
 
 	virtual bool conversion_required () const { return true; };
+	virtual bool is_fixed () const = 0;
 
 	////////////////////////////////////////////
 	// Constants
@@ -159,6 +160,17 @@ public:
 					   Indent           &indent,
 					   const string     &cpp_id,
 					   const IDLTypedef *active_typedef = 0) const = 0;
+
+	// Initialization
+	virtual void member_init_cpp (ostream          &ostr,
+				      Indent           &indent,
+				      const string     &cpp_id,
+				      const IDLTypedef *active_typedef = 0) const = 0;
+
+	virtual void member_init_c   (ostream          &ostr,
+				      Indent           &indent,
+				      const string     &c_id,
+				      const IDLTypedef *active_typedef = 0) const = 0;
 	
 	// Compound conversion: C++ -> C
 	virtual void member_pack_to_c (ostream          &ostr,
