@@ -1,3 +1,8 @@
+2001-12-14  David Haverkamp  <dahaverk@rockwellcollins.com>
+
+	* src/linc-protocols.c: include arpa/nameser.h before
+	resolv.h for Solaris systems.
+
 2001-12-11  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.11
