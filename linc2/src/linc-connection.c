@@ -165,6 +165,8 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 
 	case LINC_CONNECTING:
 		linc_source_remove (cnx, FALSE);
+		/* FIXME: this looks bogus (?) */
+		g_assert (cnx->tag == NULL);
 		cnx->tag = linc_io_add_watch (
 			cnx->gioc, G_IO_OUT|ERR_CONDS,
 			linc_connection_connected, cnx);
