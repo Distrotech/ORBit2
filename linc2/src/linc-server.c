@@ -195,8 +195,10 @@ link_server_handle_io (GIOChannel  *gioc,
 	LinkServer     *server = data;
 	LinkConnection *connection = NULL;
 
-	if (!(condition & LINK_IN_CONDS))
-		g_error ("error condition on server fd is %#x", condition);
+	if (!(condition & LINK_IN_CONDS)) {
+		g_warning ("error condition on server fd is %#x", condition);
+		return TRUE;
+	}	
 
 	accepted = link_server_accept_connection (server, &connection);
 
