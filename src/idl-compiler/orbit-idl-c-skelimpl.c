@@ -492,7 +492,9 @@ cbe_ski_do_interface(CBESkelImplInfo *ski)
     fprintf(ski->of, "   /* ------ free private attributes here ------ */\n");
     fprintf(ski->of, "   /* ------ ---------- end ------------- ------ */\n");
     fprintf(ski->of, "\nPOA_%s__fini((PortableServer_Servant)servant, ev);\n", id);
+    fprintf(ski->of, "\ng_free (servant);\n");
     fprintf(ski->of, "}\n\n");
+
     subski.tree = IDL_INTERFACE(ski->tree).body;
     cbe_ski_do_list(&subski);
     IDL_tree_traverse_parents(ski->tree, (GFunc)&cbe_ski_do_inherited_methods,
