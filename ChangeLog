@@ -2,6 +2,9 @@
 
 	* Version 2.3.93
 
+	* src/orb/orb-core/corba-typecode.c
+	(typecode_equiv_internal): fixup.
+
 2001-08-07  Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 
 	* src/orb/orb-core/allocators.c
