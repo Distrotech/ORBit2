@@ -1,3 +1,11 @@
+2003-04-23  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_msg_reading_body): add comment on 0 length
+	message for CLOSECONNECTION.
+	(giop_connection_handle_input): handle 0 length bodies
+	properly.
+
 2003-03-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (scan_socket_dir): handle

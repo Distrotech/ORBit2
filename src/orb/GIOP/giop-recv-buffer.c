@@ -1066,6 +1066,8 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 	if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) != GIOP_FLAG_ENDIANNESS)
 		buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
 
+	/* NB. at least CLOSECONNECTION has 0 length message_size */
+
 	if (!is_auth && buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
 		return TRUE;
 
@@ -1184,7 +1186,9 @@ giop_connection_handle_input (LINCConnection *lcnx)
 			}
 		}
 
-	} while (cnx->incoming_msg && buf->state != GIOP_MSG_READY);
+	} while (cnx->incoming_msg &&
+		 buf->left_to_read > 0 &&
+		 buf->state != GIOP_MSG_READY);
 
 	cnx->incoming_msg = NULL;
 	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
