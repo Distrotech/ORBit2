@@ -1,3 +1,5 @@
+SUBDIRS = everything
+
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \

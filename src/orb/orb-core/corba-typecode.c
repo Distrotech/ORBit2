@@ -755,3 +755,91 @@ tc_dec_tk_fixed(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     return TRUE;
   return FALSE;
 }
+
+/* FIXME: Right now this function doesn't record whether or not it has
+   already visited a given TypeCode.  I'm not sure if every recursive
+   type will have a tk_recursive node in it; if not, then this will
+   need to be reworked a bit.  */
+CORBA_boolean
+CORBA_TypeCode_equal (CORBA_TypeCode obj,
+		      CORBA_TypeCode tc,
+		      CORBA_Environment *ev)
+{
+	int i;
+
+	g_return_val_if_fail (tc != NULL, CORBA_FALSE);
+	g_return_val_if_fail (obj != NULL, CORBA_FALSE);
+
+	if (obj->kind != tc->kind)
+		return CORBA_FALSE;
+
+	switch (obj->kind) {
+	case CORBA_tk_wstring:
+	case CORBA_tk_string:
+		return obj->length == tc->length;
+	case CORBA_tk_objref:
+		return ! strcmp (obj->repo_id, tc->repo_id);
+	case CORBA_tk_except:
+	case CORBA_tk_struct:
+		if (strcmp (obj->repo_id, tc->repo_id)
+		    || obj->sub_parts != tc->sub_parts)
+			return CORBA_FALSE;
+		for (i = 0; i < obj->sub_parts; ++i)
+			if (! CORBA_TypeCode_equal (obj->subtypes[i],
+						    tc->subtypes[i], ev))
+				return CORBA_FALSE;
+		break;
+	case CORBA_tk_union:
+		if (strcmp (obj->repo_id, tc->repo_id)
+		    || obj->sub_parts != tc->sub_parts
+		    || ! CORBA_TypeCode_equal (obj->discriminator,
+					       tc->discriminator, ev)
+		    || obj->default_index != tc->default_index)
+			return CORBA_FALSE;
+		for (i = 0; i < obj->sub_parts; ++i)
+
+			if (! CORBA_TypeCode_equal (obj->subtypes[i],
+						    tc->subtypes[i], ev)
+			    || ! ORBit_any_equivalent (&obj->sublabels[i],
+						       &tc->sublabels[i], ev))
+				return CORBA_FALSE;
+
+		break;
+	case CORBA_tk_enum:
+		if (obj->sub_parts != tc->sub_parts
+		    || strcmp (obj->repo_id, tc->repo_id))
+			return CORBA_FALSE;
+		for (i = 0; i < obj->sub_parts; ++i)
+			if (strcmp (obj->subnames[i], tc->subnames[i]))
+				return CORBA_FALSE;
+		break;
+	case CORBA_tk_sequence:
+	case CORBA_tk_array:
+		if (obj->length != tc->length)
+			return CORBA_FALSE;
+		g_assert (obj->sub_parts == 1);
+		g_assert (tc->sub_parts == 1);
+		return CORBA_TypeCode_equal (obj->subtypes[0], tc->subtypes[0],
+					     ev);
+	case CORBA_tk_alias:
+		if (strcmp (obj->repo_id, tc->repo_id))
+			return CORBA_FALSE;
+		
+		g_assert (obj->sub_parts == 1);
+		g_assert (tc->sub_parts == 1);
+
+		return CORBA_TypeCode_equal (obj->subtypes[0], tc->subtypes[0],
+					       ev);
+		break;
+	case CORBA_tk_recursive:
+		return obj->recurse_depth == tc->recurse_depth;
+	case CORBA_tk_fixed:
+		return obj->digits == tc->digits && obj->scale == tc->scale;
+
+	default:
+		/* Everything else is primitive.  */
+		break;
+	}
+
+	return CORBA_TRUE;
+}

@@ -19,6 +19,7 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
   fprintf(ci->fh, "#define %s_COMMON\n", ci->c_base_name);
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
   fprintf(ci->fh, "#include <orbit/GIOP/giop.h>\n");
+  fprintf(ci->fh, "static const CORBA_unsigned_long ORBit_zero_int = 0;\n");
 
   IDL_tree_walk2( tree->tree, /*tfd*/0, IDL_WalkF_TypespecOnly,
     /*pre*/ cc_output_tc_walker, /*post*/ cc_output_tc_walker, ci);

@@ -371,8 +371,9 @@ ORBit_get_union_switch(CORBA_TypeCode tc, gconstpointer *val,
    Hairy stuff.
 */
 CORBA_TypeCode
-ORBit_get_union_tag(CORBA_TypeCode union_tc, gconstpointer *val, 
-		    gboolean update)
+ORBit_get_union_tag(CORBA_TypeCode union_tc,
+		    gconstpointer *val, 
+		    gboolean       update)
 {
   glong discrim_val, case_val;
   int i;
@@ -766,6 +767,12 @@ CORBA_any_set_release(CORBA_any *val, CORBA_boolean setme)
   val->_release = setme;
 }
 
+CORBA_boolean
+CORBA_any_get_release(CORBA_any *val)
+{
+  return val->_release;
+}
+
 void
 ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
 {
@@ -882,7 +889,7 @@ ORBit_copy_value_core(gconstpointer *val, gpointer *newval, CORBA_TypeCode tc)
     break;
   case CORBA_tk_union:
     {
-      CORBA_TypeCode utc = ORBit_get_union_tag(tc, val, FALSE);
+      CORBA_TypeCode utc = ORBit_get_union_tag(tc, (gconstpointer *)val, FALSE);
       gint	union_align = ORBit_find_alignment(tc);
       size_t	union_size = ORBit_gather_alloc_info(tc);
 
@@ -962,4 +969,203 @@ CORBA_any__copy(CORBA_any *out, CORBA_any *in)
   out->_type = ORBit_RootObject_duplicate(in->_type);
   out->_value = ORBit_copy_value(in->_value, in->_type);
   out->_release = CORBA_TRUE;
+}
+
+#define ALIGN_COMPARE(a,b,tk,type,align)	\
+	case CORBA_tk_##tk:			\
+		*a = ALIGN_ADDRESS (*a, align);	\
+		*b = ALIGN_ADDRESS (*b, align);	\
+		ret = *(CORBA_##type *) *a == *(CORBA_##type *) *b;	\
+		*a = ((guchar *) *a) + sizeof (CORBA_##type);		\
+		*b = ((guchar *) *b) + sizeof (CORBA_##type);		\
+		return ret
+
+#define ALIGNOF_CORBA_UNION	(MAX (MAX (ALIGNOF_CORBA_LONG,		\
+					   ALIGNOF_CORBA_STRUCT),	\
+				      ALIGNOF_CORBA_POINTER))
+
+CORBA_boolean
+ORBit_value_equivalent (gpointer *a, gpointer *b,
+			CORBA_TypeCode tc,
+			CORBA_Environment *ev)
+{
+	gboolean ret;
+	int i;
+
+	switch (tc->kind) {
+	case CORBA_tk_null:
+	case CORBA_tk_void:
+		return TRUE;
+
+		ALIGN_COMPARE(a, b, short,  short, ALIGNOF_CORBA_SHORT);
+		ALIGN_COMPARE(a, b, ushort, short, ALIGNOF_CORBA_SHORT);
+		ALIGN_COMPARE(a, b, wchar,  short, ALIGNOF_CORBA_SHORT);
+
+		ALIGN_COMPARE(a, b, enum, long,  ALIGNOF_CORBA_LONG);
+		ALIGN_COMPARE(a, b, long, long,  ALIGNOF_CORBA_LONG);
+		ALIGN_COMPARE(a, b, ulong, long, ALIGNOF_CORBA_LONG);
+
+		ALIGN_COMPARE(a, b, longlong, long_long,  ALIGNOF_CORBA_LONG_LONG);
+		ALIGN_COMPARE(a, b, ulonglong, long_long, ALIGNOF_CORBA_LONG_LONG);
+
+		ALIGN_COMPARE(a, b, longdouble, long_double, ALIGNOF_CORBA_LONG_DOUBLE);
+
+		ALIGN_COMPARE(a, b, float, float,   ALIGNOF_CORBA_FLOAT);
+		ALIGN_COMPARE(a, b, double, double, ALIGNOF_CORBA_DOUBLE);
+
+		ALIGN_COMPARE(a, b, boolean, octet, ALIGNOF_CORBA_OCTET);
+		ALIGN_COMPARE(a, b, char,    octet, ALIGNOF_CORBA_OCTET);
+		ALIGN_COMPARE(a, b, octet,   octet, ALIGNOF_CORBA_OCTET);
+
+	case CORBA_tk_string:
+		*a = ALIGN_ADDRESS (*a, ALIGNOF_CORBA_POINTER);
+		*b = ALIGN_ADDRESS (*b, ALIGNOF_CORBA_POINTER);
+		ret = !strcmp (*(char **)*a, *(char **)*b);
+		*a = ((guchar *) *a) + sizeof (CORBA_char *);
+		*b = ((guchar *) *b) + sizeof (CORBA_char *);
+		return ret;
+
+	case CORBA_tk_wstring:
+		g_warning ("wstring totaly broken");
+  		return FALSE;
+
+	case CORBA_tk_TypeCode:
+	case CORBA_tk_objref:
+		*a = ALIGN_ADDRESS (*a, ALIGNOF_CORBA_POINTER);
+		*b = ALIGN_ADDRESS (*b, ALIGNOF_CORBA_POINTER);
+		ret = CORBA_Object_is_equivalent (*a, *b, ev);
+		*a = ((guchar *) *a) + sizeof (CORBA_Object);
+		*b = ((guchar *) *b) + sizeof (CORBA_Object);
+		return ret;
+
+	case CORBA_tk_any: {
+		CORBA_any *any_a, *any_b;
+
+		*a = ALIGN_ADDRESS (*a, ALIGNOF_CORBA_POINTER);
+		*b = ALIGN_ADDRESS (*b, ALIGNOF_CORBA_POINTER);
+
+		any_a = *((CORBA_any **) *a);
+		any_b = *((CORBA_any **) *b);
+
+		ret = ORBit_any_equivalent (any_a, any_b, ev);
+
+		*a = ((guchar *) *a) + sizeof (CORBA_any *);
+		*b = ((guchar *) *b) + sizeof (CORBA_any *);
+
+		return ret;
+	}
+
+	case CORBA_tk_struct:
+	case CORBA_tk_except: {
+		int i;
+
+		*a = ALIGN_ADDRESS (*a, ORBit_find_alignment (tc));
+		*b = ALIGN_ADDRESS (*b, ORBit_find_alignment (tc));
+
+		for (i = 0; i < tc->sub_parts; i++)
+			if (!ORBit_value_equivalent (a, b, tc->subtypes [i], ev))
+				return FALSE;
+
+		return TRUE;
+	}
+
+	case CORBA_tk_sequence: {
+		CORBA_Principal *ap, *bp;
+		gpointer a_val, b_val;
+
+		*a = ALIGN_ADDRESS (*a, ALIGNOF_CORBA_UNION);
+		*b = ALIGN_ADDRESS (*b, ALIGNOF_CORBA_UNION);
+			
+		ap = (CORBA_Principal *) *a;
+		bp = (CORBA_Principal *) *b;
+
+		if (ap->_length != bp->_length)
+			return FALSE;
+
+		a_val = ap->_buffer;
+		b_val = bp->_buffer;
+
+		for (i = 0; i < ap->_length; i++) {
+			if (!ORBit_value_equivalent (&a_val, &b_val, tc->subtypes [0], ev))
+				return FALSE;
+		}
+		*a = ((guchar *) *a) + sizeof (CORBA_sequence_CORBA_octet);
+		*b = ((guchar *) *b) + sizeof (CORBA_sequence_CORBA_octet);
+		return TRUE;
+	}
+
+	case CORBA_tk_union: {
+		gint   union_align = ORBit_find_alignment (tc);
+		size_t union_size = ORBit_gather_alloc_info (tc);
+
+		CORBA_TypeCode utc_a = ORBit_get_union_tag (
+			tc, (gconstpointer *)a, FALSE);
+		CORBA_TypeCode utc_b = ORBit_get_union_tag (
+			tc, (gconstpointer *)b, FALSE);
+
+		if (!CORBA_TypeCode_equal (utc_a, utc_b, ev))
+			return FALSE;
+
+		*a = ALIGN_ADDRESS (*a, ALIGNOF_CORBA_STRUCT);
+		*b = ALIGN_ADDRESS (*b, ALIGNOF_CORBA_STRUCT);
+
+		if (!ORBit_value_equivalent (a, b, tc->discriminator, ev))
+			return FALSE;
+
+		*a = ALIGN_ADDRESS (*a, union_align);
+		*b = ALIGN_ADDRESS (*b, union_align);
+
+		if (!ORBit_value_equivalent (a, b, utc_a, ev))
+			return FALSE;
+
+		*a = ((guchar *) *a) + union_size;
+		*b = ((guchar *) *b) + union_size;
+		return TRUE;
+	}
+
+	case CORBA_tk_array:
+		for (i = 0; i < tc->length; i++) {
+			if (!ORBit_value_equivalent (a, b, tc->subtypes [0], ev))
+				return FALSE;
+		}
+		return TRUE;
+
+	case CORBA_tk_alias:
+		return ORBit_value_equivalent (a, b, tc->subtypes [0], ev);
+
+	default:
+		g_warning ("ORBit_value_equivalent unimplemented");
+		return FALSE;
+	};
+}
+
+/*
+ * Compares the typecodes of each any
+ */
+CORBA_boolean
+ORBit_any_equivalent(CORBA_any *obj, CORBA_any *any, CORBA_Environment *ev)
+{
+	gpointer a, b;
+
+	/* Is this correct ? */
+	if (obj == NULL &&
+	    any == NULL)
+		return TRUE;
+
+	if (!obj->_type || !any->_type) {
+		CORBA_exception_set_system (
+			ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO);
+		return FALSE;
+	}
+
+	if (!CORBA_TypeCode_equal (obj->_type, any->_type, ev))
+		return FALSE;
+
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return FALSE;
+	
+	a = obj->_value;
+	b = any->_value;
+
+	return ORBit_value_equivalent (&a, &b, any->_type, ev);
 }

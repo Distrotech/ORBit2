@@ -38,10 +38,10 @@ AnyServer_opAnyLong(PortableServer_Servant _servant,
 					CORBA_Environment * ev){
   CORBA_any *retn;  
 
-  g_assert(CORBA_TypeCode_equal(inArg->_type,TC_long,ev));
+  g_assert(CORBA_TypeCode_equal(inArg->_type,TC_CORBA_long,ev));
   g_assert(*(CORBA_long*)inArg->_value == constants_LONG_IN);
 
-  g_assert(CORBA_TypeCode_equal(inoutArg->_type,TC_long,ev));
+  g_assert(CORBA_TypeCode_equal(inoutArg->_type,TC_CORBA_long,ev));
   g_assert(*(CORBA_long*)inoutArg->_value == constants_LONG_INOUT_IN);
 
   if(CORBA_any_get_release(inoutArg)){
@@ -50,17 +50,17 @@ AnyServer_opAnyLong(PortableServer_Servant _servant,
   }
 
 
-  inoutArg->_type = (CORBA_TypeCode)TC_long;
+  inoutArg->_type = (CORBA_TypeCode)TC_CORBA_long;
   inoutArg->_value = &opAnyLong_inout; 
   CORBA_any_set_release(inoutArg, CORBA_FALSE);
 
   *outArg = CORBA_any_alloc();
-  (*outArg)->_type = (CORBA_TypeCode)TC_long;
+  (*outArg)->_type = (CORBA_TypeCode)TC_CORBA_long;
   (*outArg)->_value = &opAnyLong_out;
   CORBA_any_set_release(*outArg, CORBA_FALSE);
 
   retn = CORBA_any_alloc();
-  retn->_type = (CORBA_TypeCode)TC_long;
+  retn->_type = (CORBA_TypeCode)TC_CORBA_long;
   retn->_value = &opAnyLong_retn;
   CORBA_any_set_release(retn, CORBA_FALSE);
 
@@ -77,10 +77,10 @@ AnyServer_opAnyString(PortableServer_Servant _servant,
 					  CORBA_Environment * ev){
   CORBA_any *retn;  
 
-  g_assert(CORBA_TypeCode_equal(inArg->_type,TC_string,ev));
+  g_assert(CORBA_TypeCode_equal(inArg->_type,TC_CORBA_string,ev));
   g_assert(strcmp(*(CORBA_char **)inArg->_value,constants_STRING_IN) == 0);
 
-  g_assert(CORBA_TypeCode_equal(inoutArg->_type,TC_string,ev) );
+  g_assert(CORBA_TypeCode_equal(inoutArg->_type,TC_CORBA_string,ev) );
   g_assert(strcmp(*(CORBA_char **)inoutArg->_value,constants_STRING_INOUT_IN) == 0);
 
   if(CORBA_any_get_release(inoutArg)){
@@ -88,17 +88,17 @@ AnyServer_opAnyString(PortableServer_Servant _servant,
 	CORBA_Object_release((CORBA_Object)inoutArg->_type, ev);
   }
 
-  inoutArg->_type = (CORBA_TypeCode)TC_string;
+  inoutArg->_type = (CORBA_TypeCode)TC_CORBA_string;
   inoutArg->_value = &constants_STRING_INOUT_OUT; 
   CORBA_any_set_release(inoutArg, CORBA_FALSE);
 
   *outArg = CORBA_any_alloc();
-  (*outArg)->_type = (CORBA_TypeCode)TC_string;
+  (*outArg)->_type = (CORBA_TypeCode)TC_CORBA_string;
   (*outArg)->_value = &constants_STRING_OUT;
   CORBA_any_set_release(*outArg, CORBA_FALSE);
 
   retn = CORBA_any_alloc();
-  retn->_type = (CORBA_TypeCode)TC_string;
+  retn->_type = (CORBA_TypeCode)TC_CORBA_string;
   retn->_value = &constants_STRING_RETN;
   CORBA_any_set_release(retn, CORBA_FALSE);
 
@@ -160,8 +160,6 @@ AnyServer_opTypeCode(PortableServer_Servant _servant,
 					 CORBA_TypeCode * inoutArg,
 					 CORBA_TypeCode * outArg,
 					 CORBA_Environment * ev){
-  CORBA_TypeCode retn;  
-
   g_assert(CORBA_TypeCode_equal(inArg,TC_test_ArrayUnion,ev) );
   g_assert(CORBA_TypeCode_equal(*inoutArg,TC_test_AnyServer,ev) );
   

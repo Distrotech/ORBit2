@@ -180,7 +180,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
   orbit_cbe_op_write_proto(ci->fh, tree, "_impl_", TRUE);
   fprintf(ci->fh, ")\n");
   fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "register guchar *_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
+  fprintf(ci->fh, "register guchar *_ORBIT_buf_end G_GNUC_UNUSED = _ORBIT_recv_buffer->end;\n");
 
   oi = tree->data;
 
@@ -196,7 +196,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
 
   if(oi->in_skels) {
     fprintf(ci->fh, "{ /* demarshalling */\n");
-    fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+    fprintf(ci->fh, "register guchar *_ORBIT_curptr G_GNUC_UNUSED;\n");
     
     orbit_cbe_alloc_tmpvars(oi->in_skels, ci);
     c_demarshalling_generate(oi->in_skels, ci, TRUE, FALSE);
