@@ -1,0 +1,65 @@
+#include "config.h"
+#include <orbit/orbit.h>
+
+const ORBit_RootObject_Interface ORBit_TypeCode_epv = {
+  ORBIT_ROT_TYPECODE,
+  NULL
+};
+
+#define DEF_TC_BASIC(nom) \
+struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = { \
+  {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC}, \
+  CORBA_tk_##nom, \
+  #nom, \
+  "IDL:CORBA/" #nom ":1.0", \
+  0, 0, NULL, NULL, NULL, CORBA_OBJECT_NIL, -1, 0, 0, 0 \
+}
+
+#define CORBA_tk_Object CORBA_tk_objref
+#define CORBA_tk_unsigned_long CORBA_tk_ulong
+#define CORBA_tk_long_long CORBA_tk_longlong
+#define CORBA_tk_unsigned_long_long CORBA_tk_ulonglong
+#define CORBA_tk_unsigned_short CORBA_tk_ushort
+
+DEF_TC_BASIC(char);
+DEF_TC_BASIC(wchar);
+DEF_TC_BASIC(string);
+DEF_TC_BASIC(long);
+DEF_TC_BASIC(unsigned_long);
+DEF_TC_BASIC(float);
+DEF_TC_BASIC(double);
+DEF_TC_BASIC(short);
+DEF_TC_BASIC(unsigned_short);
+DEF_TC_BASIC(boolean);
+DEF_TC_BASIC(octet);
+DEF_TC_BASIC(any);
+DEF_TC_BASIC(TypeCode);
+DEF_TC_BASIC(Principal);
+DEF_TC_BASIC(Object);
+DEF_TC_BASIC(wstring);
+DEF_TC_BASIC(long_long);
+DEF_TC_BASIC(unsigned_long_long);
+
+gboolean
+ORBit_TypeCode_demarshal_value(CORBA_TypeCode tc,
+			       gpointer *val,
+			       GIOPRecvBuffer *buf,
+			       gboolean dup_strings,
+			       CORBA_ORB orb)
+{
+}
+
+gpointer
+CORBA_TypeCode__freekids(gpointer mem, gpointer dat)
+{
+}
+
+void
+ORBit_encode_CORBA_TypeCode(CORBA_TypeCode tc, GIOPSendBuffer* buf)
+{
+}
+
+gboolean
+ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf)
+{
+}

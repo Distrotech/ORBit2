@@ -1,11 +1,15 @@
 noinst_LTLIBRARIES=liborb-poa.la
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-INCLUDES=-I$(top_srcdir)/include -I$(top_builddir)/include \
+INCLUDES=-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
+	-I$(top_builddir)/include/orbit/poa \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
-liborb_poa_la_SOURCES=poa.c $(POA_IDLOUT)
+
 POA_IDLOUT=poa-defs-common.c
+liborb_poa_la_SOURCES=poa.c $(POA_IDLOUT)
+
 BUILT_SOURCES=$(POA_IDLOUT)
 
 $(POA_IDLOUT) runidl_poa: poa-defs.idl $(IDL)

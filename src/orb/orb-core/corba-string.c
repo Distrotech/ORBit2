@@ -1,6 +1,6 @@
 #include "config.h"
 #include <string.h>
-#include <orbit/orb-core/corba-string.h>
+#include <orbit/orbit.h>
 
 CORBA_char *
 CORBA_string_alloc(CORBA_unsigned_long len)

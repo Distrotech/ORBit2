@@ -10,9 +10,13 @@ static IOP_Profile_info *IOP_profile_find(GSList *list, IOP_ProfileId type,
 					  GSList **pos);
 static IOP_Component_info *IOP_component_find(GSList *list, IOP_ComponentId type,
 					      GSList **pos);
-extern void IOP_components_free(GSList *components);
+static void IOP_components_free(GSList *components);
 
 static GHashTable *objrefs = NULL;
+
+static void IOP_components_free(GSList *components)
+{
+}
 
 static CORBA_unsigned_long
 ORBit_classinfo_lookup_id(const char *type_id)
@@ -1250,4 +1254,9 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
  errout:
   g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
   return TRUE;
+}
+
+gpointer
+CORBA_Object__freekids(gpointer mem, gpointer dat)
+{
 }

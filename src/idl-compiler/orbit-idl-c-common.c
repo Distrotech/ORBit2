@@ -429,13 +429,16 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
 static void
 cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  char *ctmp, *ctmp2;
+  char *ctmp, *ctmp2, *ctmp3;
   gboolean elements_are_fixed;
+  IDL_tree tts;
 
+  tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   cc_output_allocs(IDL_TYPE_SEQUENCE(tree).simple_type_spec, rinfo, ci);
 
   ctmp = orbit_cbe_get_typespec_str(tree);
   ctmp2 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+  ctmp3 = orbit_cbe_get_typespec_str(tts);
 
   fprintf(ci->fh, "#if ");
   orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);
