@@ -176,7 +176,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		CORBA_TypeCode 	subtc;
 		int             al = 1, sz = 0;
 
-		discrim = *val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_STRUCT);
+		discrim = *val = ALIGN_ADDRESS (*val, tc->c_align);
 		ORBit_marshal_value (buf, val, tc->discriminator);
 		subtc = ORBit_get_union_tag (tc, &discrim, FALSE);
 		for (i=0; i < tc->sub_parts; i++) {
