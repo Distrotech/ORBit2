@@ -20,7 +20,7 @@
 
 #undef LOCAL_DEBUG
 
-static char linc_tmpdir [PATH_MAX] = "";
+static char *linc_tmpdir = NULL;
 
 /*
  * make_local_tmpdir:
@@ -82,9 +82,8 @@ make_local_tmpdir (const char *dirname)
 void
 linc_set_tmpdir (const char *dir)
 {
-	strncpy (linc_tmpdir, dir, PATH_MAX);
-
-	linc_tmpdir [PATH_MAX - 1] = '\0';
+	g_free (linc_tmpdir);
+	linc_tmpdir = g_strdup (dir);
 
 	make_local_tmpdir (linc_tmpdir);
 }
@@ -101,7 +100,7 @@ linc_set_tmpdir (const char *dir)
 char *
 linc_get_tmpdir (void)
 {
-	return g_strdup (linc_tmpdir);
+	return g_strdup (linc_tmpdir ? linc_tmpdir : "");
 }
 
 #ifdef HAVE_SOCKADDR_SA_LEN
@@ -413,7 +412,8 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 
 		gettimeofday (&t, NULL);
 		g_snprintf (buf, sizeof (buf),
-			    "%s/linc-%x-%x-%x%x", linc_tmpdir,
+			    "%s/linc-%x-%x-%x%x",
+			    linc_tmpdir ? linc_tmpdir : "",
 			    pid, idx++,
 			    (guint) (rand() ^ t.tv_sec),
 			    (guint) (idx ^ t.tv_usec));
