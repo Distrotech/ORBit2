@@ -483,6 +483,7 @@ CORBA_Object_is_a (CORBA_Object       obj,
 		   CORBA_Environment *ev)
 {
 	static GQuark  corba_object_quark = 0;
+	static GQuark  omg_corba_object_quark = 0;
 	CORBA_boolean  retval;
 	gpointer       args[] = { (gpointer *)&logical_type_id };
 	GQuark         logical_type_quark;
@@ -491,9 +492,16 @@ CORBA_Object_is_a (CORBA_Object       obj,
 		corba_object_quark = g_quark_from_static_string (
 			"IDL:CORBA/Object:1.0");
 
+	if (!omg_corba_object_quark)
+		omg_corba_object_quark = g_quark_from_static_string (
+			"IDL:omg.org/CORBA/Object:1.0");
+
 	logical_type_quark = g_quark_from_string (logical_type_id);
 
 	if (logical_type_quark == corba_object_quark)
+		return CORBA_TRUE;
+
+	if (logical_type_quark == omg_corba_object_quark)
 		return CORBA_TRUE;
 
 	if (!obj)

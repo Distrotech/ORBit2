@@ -67,7 +67,7 @@ typedef struct {
 		0, 0, c_align,						\
 		0, 0, NULL, NULL,					\
 		#nom,                                                   \
-		"IDL:CORBA/" #nom ":1.0",                               \
+		"IDL:omg.org/CORBA/" #nom ":1.0",			\
 		NULL, CORBA_OBJECT_NIL, -1				\
 }
 
@@ -87,7 +87,7 @@ const struct CORBA_TypeCode_struct TC_null_struct = {
 const struct CORBA_TypeCode_struct TC_void_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
 	CORBA_tk_null, 0, 0, -1, 0, 0, NULL,
-	CORBA_OBJECT_NIL, "void", "IDL:CORBA/void:1.0"
+	CORBA_OBJECT_NIL, "void", "IDL:omg.org/CORBA/void:1.0"
 };
 
 DEF_TC_BASIC(char, ORBIT_ALIGNOF_CORBA_CHAR);

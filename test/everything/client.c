@@ -393,6 +393,16 @@ testIInterface (test_TestFactory   factory,
 }
 
 static void
+testIsA (test_TestFactory   factory, 
+	 CORBA_Environment *ev)
+{
+	g_assert (CORBA_Object_is_a (factory, "IDL:CORBA/Object:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (factory, "IDL:omg.org/CORBA/Object:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
 testFixedLengthStruct (test_TestFactory   factory, 
 		       CORBA_Environment *ev)
 {
@@ -1251,7 +1261,7 @@ testMisc (test_TestFactory   factory,
 		/* Invoke a BasicServer method on a TestFactory */
 		foo = test_BasicServer__get_foo (factory, ev);
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-		g_assert (!strcmp (ev->_id, "IDL:CORBA/BAD_OPERATION:1.0"));
+		g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/BAD_OPERATION:1.0"));
 		CORBA_exception_free (ev);
 	}
 
@@ -1281,7 +1291,7 @@ testMisc (test_TestFactory   factory,
 	
 	test_BasicServer_noImplement (objref, ev);
 	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-	g_assert (!strcmp (ev->_id, "IDL:CORBA/NO_IMPLEMENT:1.0"));
+	g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/NO_IMPLEMENT:1.0"));
 	CORBA_exception_free (ev);
 
 	if (!in_proc) {
@@ -1673,7 +1683,7 @@ testSegv (test_TestFactory   factory,
 		test_TestFactory_segv (factory, "do it!", ev); 
 #ifdef DO_HARDER_SEGV
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-		g_assert (!strcmp (ev->_id, "IDL:CORBA/COMM_FAILURE:1.0"));
+		g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/COMM_FAILURE:1.0"));
 		CORBA_exception_free (ev);
 
 		g_assert (ORBit_small_get_connection_status (factory) ==
@@ -1774,6 +1784,7 @@ run_tests (test_TestFactory   factory,
 		testLongDouble (factory, ev);
 		testEnum (factory, ev);
 		testException (factory, ev);
+		testIsA (factory, ev);
 		testFixedLengthStruct (factory, ev);
 		testVariableLengthStruct (factory, ev);
 		testCompoundStruct (factory, ev);
@@ -1901,6 +1912,7 @@ main (int argc, char *argv [])
 			g_error  ("Start the server before running the client");
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 	}
+	run_tests (factory, &ev);
 
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);

@@ -942,7 +942,7 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 		iti.parents = 0;
 		IDL_tree_traverse_parents(i->tree, (GFunc)cc_small_output_base_itypes, &iti);
 
-		fprintf (of, "\"IDL:CORBA/Object:1.0\"\n};");
+		fprintf (of, "\"IDL:omg.org/CORBA/Object:1.0\"\n};");
 
 		fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE\n");
 		fprintf (of, "static\n");
