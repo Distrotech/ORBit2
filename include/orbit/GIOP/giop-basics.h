@@ -5,6 +5,7 @@
 
 #ifdef LINC_THREADSAFE
 #define ORBIT_THREADSAFE 1
+#define ORBIT_THREADED 1
 #endif
 
 typedef struct _GIOPRecvBuffer GIOPRecvBuffer;

@@ -28,7 +28,7 @@ giop_server_get_type(void)
       object_type = g_type_register_static (linc_server_get_type(),
                                             "GIOPServer",
                                             &object_info,
-					    G_TYPE_FLAG_INSTANTIATABLE);
+					    0);
     }  
 
   return object_type;
@@ -42,10 +42,6 @@ giop_server_init       (GIOPServer      *server)
 static void
 giop_server_class_init (GIOPServerClass *klass)
 {
-#if 0
-  GObjectClass *object_class = (GObjectClass *)klass;
-#endif
-
   klass->parent_class.create_connection = giop_server_handle_create_connection;
 }
 

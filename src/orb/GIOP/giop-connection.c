@@ -10,12 +10,13 @@ static void giop_connection_real_state_changed(LINCConnection *cnx, LINCConnecti
 static struct {
   O_MUTEX_DEFINE(lock);
   GList *list;
-} cnx_list = {NULL};
+} cnx_list;
 
 void
 giop_connection_list_init(void)
 {
   O_MUTEX_INIT(cnx_list.lock);
+  cnx_list.list = NULL;
 }
 
 static void
@@ -77,7 +78,7 @@ giop_connection_get_type(void)
       object_type = g_type_register_static (linc_connection_get_type(),
                                             "GIOPConnection",
                                             &object_info,
-					    G_TYPE_FLAG_INSTANTIATABLE);
+					    0);
     }  
 
   return object_type;

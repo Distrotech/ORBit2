@@ -12,8 +12,9 @@
 static GSList *send_buffer_list;
 O_MUTEX_DEFINE_STATIC(send_buffer_list_lock);
 O_MUTEX_DEFINE_STATIC(request_id_lock);
-
 static const char giop_zero_buf[GIOP_CHUNK_ALIGN] = {0};
+
+static void giop_send_buffer_append_real(GIOPSendBuffer *buf, gconstpointer mem, gulong len);
 
 void
 giop_send_buffer_init(void)
@@ -67,7 +68,7 @@ giop_send_buffer_use(GIOPVersion giop_version)
   memcpy(retval->msg.header.version, giop_version_ids[giop_version], 2);
   retval->giop_version = giop_version;
   g_assert(sizeof(retval->msg.header) == 12);
-  giop_send_buffer_append(retval, (guchar *)&retval->msg.header, 12);
+  giop_send_buffer_append_real(retval, (guchar *)&retval->msg.header, 12);
   retval->msg.header.message_size = 0;
   retval->header_size = 12;
 
@@ -278,8 +279,8 @@ giop_send_buffer_unuse(GIOPSendBuffer *buf)
   O_MUTEX_UNLOCK(send_buffer_list_lock);
 }
 
-void
-giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
+static void
+giop_send_buffer_append_real(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
 {
   register gulong num_used;
   register const guchar *lastptr;
@@ -308,6 +309,15 @@ giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
   buf->msg.header.message_size += len;
 
   buf->lastptr = ((const guchar *)mem) + len;
+}
+
+void
+giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
+{
+  if(len <= 32)
+    giop_send_buffer_append_indirect(buf, mem, len);
+  else
+    giop_send_buffer_append_real(buf, mem, len);
 }
 
 guchar *
@@ -345,7 +355,7 @@ giop_send_buffer_append_indirect(GIOPSendBuffer *buf, gconstpointer mem, gulong 
   retval = indirect;
   if(mem)
     memcpy(indirect, mem, len);
-  giop_send_buffer_append(buf, indirect, len);
+  giop_send_buffer_append_real(buf, indirect, len);
 
   buf->indirect = indirect + len;
   buf->indirect_left = indirect_left - len;

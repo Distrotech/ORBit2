@@ -20,8 +20,8 @@
 
 typedef struct {
   LINCServer parent;
-  GIOPVersion giop_version;
   gpointer orb_data;
+  GIOPVersion giop_version;
 } GIOPServer;
 
 typedef struct {
