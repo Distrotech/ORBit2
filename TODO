@@ -16,14 +16,9 @@ remains to be written).
 
 . CORBA_USER_EXCEPTION support.
 
-. IDL compiler cleanup
-	. Complete & test complex type handling.
-
 . Improve error handling.
 
 . Comment & document the source code.
-
-. Naming service (Samuel Ziegler says he's working on this)
 
 . Make it threadable (low priority).
 

@@ -1,3 +1,18 @@
+Sep 21, 1998:
+	ORBit 0.3.0 release
+		. Transparent same-address-space object calls.
+		. UNIX socket connection support.
+		. More POA policies supported.
+		. IDL compiler can now output a sample server to
+		  save you typing.
+		. Naming service now included.
+		. Includes libIDL 0.5.0, supporting the full CORBA 2.2
+		  IDL grammar.
+		. Many bug fixes, and improvements in portability,
+		  memory usage, & stability.
+		Maybe it'd be more appropriate to just say "it's a lot
+		cooler than it already was" :)
+
 Aug 13, 1998:
 	ORBit 0.2.1 release
 		. Object (de)marshalling
