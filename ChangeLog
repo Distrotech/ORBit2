@@ -1,3 +1,9 @@
+2002-06-24  Gustavo Giráldez <gustavo.giraldez@gmx.net>
+
+	* src/orb/util/orbit-options.c
+	(ORBit_option_command_line_parse): fix '\0'
+	termination regression.
+
 2002-06-21  Michael Meeks  <michael@ximian.com>
 
 	* test/test-giop.c (run_test): add symmetry test.
