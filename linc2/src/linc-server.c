@@ -153,20 +153,20 @@ linc_server_accept_connection (LINCServer      *server,
 
 	if (server->create_options & LINC_CONNECTION_LOCAL_ONLY &&
 	    !linc_protocol_is_local (server->proto, saddr, addrlen)) {
-		close (fd);
+		LINC_CLOSE (fd);
 		return FALSE;
 	}
 
 	if (server->create_options & LINC_CONNECTION_NONBLOCKING)
 		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0) {
 			d_printf ("failed to set O_NONBLOCK on %d", fd);
-			close (fd);
+			LINC_CLOSE (fd);
 			return FALSE;
 		}
 
 	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0) {
 		d_printf ("failed to set cloexec on %d", fd);
-		close (fd);
+		LINC_CLOSE (fd);
 		return FALSE;
 	}
 
@@ -186,7 +186,7 @@ linc_server_accept_connection (LINCServer      *server,
 		
 		g_object_unref (G_OBJECT (*connection));
 		*connection = NULL;
-		close (fd);
+		LINC_CLOSE (fd);
 		return FALSE;
 	}
 
@@ -203,7 +203,7 @@ linc_server_handle_io (GIOChannel  *gioc,
 {
 	gboolean        accepted;
 	LINCServer     *server = data;
-	LINCConnection *connection;
+	LINCConnection *connection = NULL;
 
 	if (!(condition & LINC_IN_CONDS))
 		g_error ("error condition on server fd is %#x", condition);
@@ -261,7 +261,6 @@ linc_server_setup (LINCServer            *cnx,
 	int                     fd, n;
 	struct sockaddr        *saddr;
 	LincSockLen             saddr_len;
-	char                    hnbuf[NI_MAXHOST];
 	const char             *local_host;
 	char                   *service, *hostname;
 
@@ -278,13 +277,8 @@ linc_server_setup (LINCServer            *cnx,
 
 	if (local_host_info)
 		local_host = local_host_info;
-	else {
-		local_host = hnbuf;
-		if (gethostname (hnbuf, sizeof (hnbuf))) {
-			hnbuf[0] = '\0';
-			perror ("gethostname failed!");
-		}
-	}
+	else
+		local_host = linc_get_local_hostname ();
 
  address_in_use:
 

@@ -118,8 +118,8 @@ linc_get_tmpdir (void)
 #endif
 
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
-static const char *
-get_local_hostname (void)
+const char *
+linc_get_local_hostname (void)
 {
 	static char local_host[NI_MAXHOST] = { 0 };
 
@@ -179,13 +179,13 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 
 	if (!local_hostent) {
 		LINC_RESOLV_SET_IPV6;
-		local_hostent = gethostbyname (get_local_hostname ());
+		local_hostent = gethostbyname (linc_get_local_hostname ());
 	}
 
 	if (!local_hostent) {
 		if (!warned++)
 			g_warning ("can't gethostbyname on '%s'",
-				   get_local_hostname ());
+				   linc_get_local_hostname ());
 		return FALSE;
 	}
 
@@ -501,7 +501,7 @@ linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
 	if (!host) {
 		const char *local_host;
 
-		if (!(local_host = get_local_hostname ()))
+		if (!(local_host = linc_get_local_hostname ()))
 			return FALSE;
 
 		LINC_RESOLV_SET_IPV6;
@@ -517,7 +517,7 @@ linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
 	if (portnum) {
 		gchar tmpport[NI_MAXSERV];
 
-		g_snprintf (tmpport, NI_MAXSERV, "%d", ntohs (port));
+		g_snprintf (tmpport, sizeof (tmpport), "%d", ntohs (port));
 
 		*portnum = g_strdup (tmpport);
 	}
@@ -647,7 +647,7 @@ linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
 	if (hostname) {
 		const char *local_host;
 
-		if (!(local_host = get_local_hostname ()))
+		if (!(local_host = linc_get_local_hostname ()))
 			return FALSE;
 
 		*hostname = g_strdup (local_host);
@@ -907,7 +907,7 @@ irda_find_device (guint32  *addr,
 	}
 
  out:
-	close(fd);
+	LINC_CLOSE (fd);
 
 	return retval;
 }
@@ -954,7 +954,7 @@ irda_getaddrinfo (const char             *nodename,
 				return EAI_NONAME;
 
 			/* It's a numeric address - we need to find the hostname */
-			strcpy (hnbuf, IRDA_PREFIX);
+			g_strncpy (hnbuf, IRDA_PREFIX, IRDA_NICKNAME_MAX + IRDA_PREFIX_LEN);
 			if (irda_find_device (&sai.sir_addr, 
 					      hnbuf + IRDA_PREFIX_LEN,
 					      FALSE))
@@ -988,7 +988,7 @@ irda_getaddrinfo (const char             *nodename,
 	retval->ai_addr = (struct sockaddr *)tptr;
 	memcpy (retval->ai_addr, &sai, sizeof (struct sockaddr_irda));
 	tptr += sizeof (struct sockaddr_irda);
-	strcpy (tptr, hnbuf);
+	g_strncpy (tptr, hnbuf, IRDA_NICKNAME_MAX + IRDA_PREFIX_LEN);
 	retval->ai_family = AF_IRDA;
 	retval->ai_socktype = SOCK_STREAM;
 	retval->ai_protocol = 0;
@@ -1053,7 +1053,7 @@ linc_protocol_destroy_cnx (const LINCProtocolInfo *proto,
 		if (proto->destroy)
 			proto->destroy (fd, host, service);
 		
-		close (fd);
+		LINC_CLOSE (fd);
 	}
 }
 
@@ -1074,7 +1074,7 @@ linc_protocol_destroy_addr (const LINCProtocolInfo *proto,
 			proto->destroy (fd, NULL, addr_un->sun_path);
 		}
 #endif
-		close (fd);
+		LINC_CLOSE (fd);
 		g_free (saddr);
 	}
 
