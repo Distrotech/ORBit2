@@ -228,8 +228,12 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 {
 	CORBA_Object iobj;
 
-	if (!obj->profile_list)
+	OBJECT_LOCK (obj);
+	if (!obj->profile_list) {
 		IOP_generate_profiles (obj);
+		ORBit_register_objref (obj);
+	}
+	OBJECT_UNLOCK (obj);
 
 	/* We need a pseudo-remote reference */
 	iobj = ORBit_objref_new (obj->orb, obj->type_qid);
@@ -297,13 +301,13 @@ ORBit_object_get_connection (CORBA_Object obj)
 	char *proto = NULL, *host, *service;
 	gboolean is_ssl = FALSE;
 	GIOPVersion iiop_version = GIOP_1_2;
-	GIOPConnection *cnx= NULL;
+	GIOPConnection *cnx = NULL;
 
 	OBJECT_LOCK (obj);
 	if (ORBit_try_connection (obj)) {
 		cnx = obj->connection;
+		linc_object_ref (cnx);
 		OBJECT_UNLOCK (obj);
-#warning FIXME: we need a thread-safe method that returns a reference [!]
 		return cnx;
 	}
   
@@ -335,7 +339,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 					 proto, host, service);
 
 				cnx = obj->connection;
-#warning FIXME: we need a thread-safe method that returns a reference [!]
+				linc_object_ref (cnx);
 				break;
 			}
 		}
@@ -355,9 +359,10 @@ ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 	if (ORBit_demarshal_IOR (obj->orb, buf, NULL, &profiles))
 		goto out;
 
+	OBJECT_LOCK (obj);
 	IOP_delete_profiles (obj->orb, &obj->forward_locations);
-
 	obj->forward_locations = profiles;
+	OBJECT_UNLOCK (obj);
 
 	retval = ORBit_object_get_connection (obj);
 
@@ -400,7 +405,9 @@ CORBA_boolean
 CORBA_Object_non_existent (CORBA_Object       obj,
 			   CORBA_Environment *ev)
 {
-	ORBit_OAObject adaptor_obj;
+	gboolean        retval;
+	GIOPConnection *cnx;
+	ORBit_OAObject  adaptor_obj;
 
 	if (obj == CORBA_OBJECT_NIL)
 		return TRUE;
@@ -409,7 +416,12 @@ CORBA_Object_non_existent (CORBA_Object       obj,
 	if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
 		return FALSE;
 
-	return ORBit_object_get_connection (obj) ? CORBA_FALSE : CORBA_TRUE;
+	cnx = ORBit_object_get_connection (obj);
+	retval = cnx ? CORBA_FALSE : CORBA_TRUE;
+	if (cnx)
+		linc_object_unref (cnx);
+
+	return retval;
 }
 
 /*
@@ -483,41 +495,48 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 {
 	GSList             *cur;
 	const char         *typeid;
-	CORBA_unsigned_long num_profiles;
+	CORBA_unsigned_long num_profiles = 0;
 
-	if (obj) {
-		typeid = g_quark_to_string (obj->type_qid);
-		if (!typeid)
-			g_error ("Attempted to marshal a bogus / "
-				 "dead object %p type", obj);
-	} else
-		typeid = "";
+	if (!obj) {
+		dprintf (OBJECTS, "Marshal NIL object\n");
+		giop_send_buffer_append_string (buf, "");
+		giop_send_buffer_append_aligned (buf, &num_profiles, 4);
+		return;
+	}
+
+	typeid = g_quark_to_string (obj->type_qid);
+	if (!typeid)
+		g_error ("Attempted to marshal a bogus / "
+			 "dead object %p type", obj);
 
 	giop_send_buffer_append_string (buf, typeid);
 
-	if (obj) {
-		if (!obj->profile_list)
-			IOP_generate_profiles (obj);
-		num_profiles = g_slist_length (obj->profile_list);
-		g_assert (num_profiles > 0);
-	} else
-		num_profiles = 0;
+	OBJECT_LOCK (obj);
+
+	if (!obj->profile_list) {
+		IOP_generate_profiles (obj);
+		ORBit_register_objref (obj);
+	}
+	num_profiles = g_slist_length (obj->profile_list);
+	g_assert (num_profiles > 0);
+
 	giop_send_buffer_append_aligned (buf, &num_profiles, 4);
 
 	dprintf (OBJECTS, "Marshal object '%p'\n", obj);
 
-	if (obj)
-		for (cur = obj->profile_list; cur; cur = cur->next) {
+	for (cur = obj->profile_list; cur; cur = cur->next) {
 #ifdef G_ENABLE_DEBUG
-			if (_orbit_debug_flags & ORBIT_DEBUG_OBJECTS) {
-				char *str;
-				fprintf (stderr, "%s\n",
-					 (str = IOP_profile_dump (obj, cur->data)));
-				g_free (str);
-			}
-#endif /* G_ENABLE_DEBUG */
-			IOP_profile_marshal (obj, buf, cur->data);
+		if (_orbit_debug_flags & ORBIT_DEBUG_OBJECTS) {
+			char *str;
+			fprintf (stderr, "%s\n",
+				 (str = IOP_profile_dump (obj, cur->data)));
+			g_free (str);
 		}
+#endif /* G_ENABLE_DEBUG */
+		IOP_profile_marshal (obj, buf, cur->data);
+	}
+
+	OBJECT_UNLOCK (obj);
 }
 
 gboolean

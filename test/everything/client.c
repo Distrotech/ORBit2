@@ -1700,8 +1700,9 @@ testPingPong (test_TestFactory   factory,
 
 		/* If this blows - perhaps you just have a strange
 		 * system scheduler */
-//		g_assert (broken);
+/*		g_assert (broken); */
 		CORBA_exception_free (ev);
+		ORBit_small_connection_unref (cnx);
 	}
 
 	CORBA_Object_release (objref, ev);
