@@ -64,6 +64,7 @@ namespace CORBA {
 		// begin ORBit-C++ extension
 		Object(CORBA_Object cobject);
 		CORBA_Object _orbitcpp_get_c_object();
+    Object* _orbitcpp_wrap(CORBA_Object cobject, bool release_c_object = true);
 		// end ORBit-C++ extension
 
 	protected:

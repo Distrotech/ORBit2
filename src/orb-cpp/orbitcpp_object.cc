@@ -55,6 +55,20 @@ CORBA::Object::~Object()
 {
 }
 
+CORBA::Object::Object* CORBA::Object::_orbitcpp_wrap(CORBA_Object cobject, bool release_c_object /* = true */)
+{
+	CORBA::Object::Object* cppObject = new CORBA::Object::Object(cobject);
+
+	if(release_c_object)
+	{
+		::_orbitcpp::CEnvironment ev;
+		CORBA_Object_release(cobject, ev._orbitcpp_get_c_object());
+		ev.propagate_sysex();
+	}
+
+	return cppObject;
+}
+
 CORBA::Object_ptr CORBA::Object::_duplicate(Object_ptr o) {
 	return new CORBA::Object( _orbitcpp::duplicate_guarded(o->_orbitcpp_get_c_object()) );
 }
