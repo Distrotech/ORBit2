@@ -10,8 +10,9 @@
 #include "../GIOP/giop-debug.h"
 
 void
-ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
-				     ORBitThreadHint     thread_hint)
+ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adaptor,
+				      ORBitThreadHint     thread_hint,
+				      va_list             args)
 {
 	g_return_if_fail (adaptor != NULL);
 	g_return_if_fail (thread_hint >= ORBIT_THREAD_HINT_NONE &&
@@ -32,6 +33,19 @@ ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
 		break;
 	}
 }
+
+void
+ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
+				     ORBitThreadHint     thread_hint,
+				     ...)
+{
+	va_list args;
+
+	va_start (args, thread_hint);
+	ORBit_ObjectAdaptor_set_thread_hint (adaptor, thread_hint, args);
+	va_end (args);
+}
+
 
 ORBitThreadHint
 ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor)

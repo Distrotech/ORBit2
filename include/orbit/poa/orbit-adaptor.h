@@ -2,6 +2,7 @@
 #define __ORBIT_ADAPTOR_H__
 
 #include <glib.h>
+#include <stdarg.h>
 
 G_BEGIN_DECLS
 
@@ -17,9 +18,13 @@ typedef enum {
 
 typedef struct ORBit_ObjectAdaptor_type *ORBit_ObjectAdaptor;
 
-void            ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
-						     ORBitThreadHint     thread_hint);
-ORBitThreadHint ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor);
+void            ORBit_ObjectAdaptor_set_thread_hint  (ORBit_ObjectAdaptor adaptor,
+						      ORBitThreadHint     thread_hint,
+						      ...);
+void            ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adaptor,
+						      ORBitThreadHint     thread_hint,
+						      va_list             args);
+ORBitThreadHint ORBit_ObjectAdaptor_get_thread_hint  (ORBit_ObjectAdaptor adaptor);
 
 #ifdef ORBIT2_INTERNAL_API
 
