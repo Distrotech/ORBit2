@@ -1289,7 +1289,7 @@ testPingPong (test_TestFactory   factory,
 	g_assert (ORBit_small_get_servant (objref) != NULL);
 	g_assert (l_objref == objref);
 
-	d_print ("Testing equivalence");
+	d_print ("Testing equivalence\n");
 	g_assert (CORBA_Object_is_equivalent (
 		l_objref, objref, ev));
 	g_assert (CORBA_Object_is_equivalent (

@@ -178,6 +178,9 @@ ORBit_objref_find (CORBA_ORB   orb,
  * doesn't register in the global object / profile hash.
  *
  *  You almost certainly don't want to use this routine.
+ *
+ * FIXME: we should have an ORB wide 'socketpair' profile
+ * that is private for purely in-proc local loopback support.
  * 
  * Return value: a proxy object
  **/

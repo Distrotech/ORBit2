@@ -1748,6 +1748,7 @@ IOP_TAG_INTERNET_IOP_copy (IOP_TAG_INTERNET_IOP_info       *dest,
 			   const IOP_TAG_INTERNET_IOP_info *src)
 {
 	dest->iiop_version = src->iiop_version;
+	dest->host = g_strdup (src->host);
 	dest->port = src->port;
 	dest->object_key = IOP_ObjectKey_copy (src->object_key);
 	dest->components = IOP_components_copy (src->components);

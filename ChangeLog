@@ -1,3 +1,14 @@
+2001-11-22  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (run_tests): disable
+	the async tests - need more thought.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_TAG_INTERNET_IOP_copy): copy the host too.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): add pre-condition.
+
 2001-11-21  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testPingPong): add a
