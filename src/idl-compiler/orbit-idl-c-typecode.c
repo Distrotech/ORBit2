@@ -151,7 +151,8 @@ orbit_output_tcstruct_anon_subnames_array (FILE *fh, IDL_tree node, int subnames
 		fprintf (fh, "static const char * anon_subnames_array%d[] = {", subnames_id);
 
 		for (l = IDL_TYPE_UNION (node).switch_body; l; l = IDL_LIST (l).next) {
-			IDL_tree dcl;
+			IDL_tree dcl, label;
+			const char *subname;
 
 			g_assert (IDL_NODE_TYPE (IDL_LIST (l).data) == IDLN_CASE_STMT);
 
@@ -162,10 +163,17 @@ orbit_output_tcstruct_anon_subnames_array (FILE *fh, IDL_tree node, int subnames
 				  IDL_NODE_TYPE (dcl) == IDLN_TYPE_ARRAY);
 
 			if (IDL_NODE_TYPE (dcl) == IDLN_IDENT)
-				fprintf (fh, "\"%s\"", IDL_IDENT (dcl).str);
-
+				subname = IDL_IDENT (dcl).str;
 			else /* IDLN_TYPE_ARRAY */
-				fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_ARRAY (dcl).ident).str);
+				subname = IDL_IDENT (IDL_TYPE_ARRAY (dcl).ident).str;
+
+			/* output the name once for each label */
+			for (label = IDL_CASE_STMT (IDL_LIST (l).data).labels;
+			     label != NULL; label = IDL_LIST (label).next) {
+				fprintf (fh, "\"%s\"", subname);
+				if (IDL_LIST (label).next)
+					fprintf (fh, ", ");
+			}
 
 			if (IDL_LIST (l).next)
 				fprintf (fh, ", ");
