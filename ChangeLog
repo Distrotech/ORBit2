@@ -1,3 +1,10 @@
+2005-04-06  Anders Carlsson  <andersca@imendio.com>
+
+	* src/orb/orb-core/corba-object.c: 
+	(ORBit_handle_location_forward):
+	Reset the connection since the forwarded object has a new 
+	connection.
+	
 2005-03-29  Brian Cameron  <Brian.Cameron@Sun.Com>
 
 	* docs/internals/orbitrc.txt:  Docs file explaining how to
@@ -121,6 +128,7 @@
 	make it work on Win32.)
 
 2005-02-13  Arvind Samptur  <arvind.samptur@wipro.com
+>>>>>>> 1.702
 
 	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers): if we
 	are using LocalOnly option or only UNIX sockets then set
