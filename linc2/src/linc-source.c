@@ -62,7 +62,7 @@ link_source_finalize (GSource *source)
 	d_printf ("Finalize source %p\n", source);
 }
 
-GSourceFuncs link_source_watch_funcs = {
+static GSourceFuncs link_source_watch_funcs = {
 	link_source_prepare,
 	link_source_check,
 	link_source_dispatch,
