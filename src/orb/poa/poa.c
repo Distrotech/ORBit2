@@ -187,9 +187,7 @@ ORBit_POA_new_system_objid (PortableServer_POA poa)
 
 	*(guint32 *)(objid->_buffer) = ++(poa->next_sysid);
 
-	ORBit_genrand_buf (&poa->orb->genrand,
-			   objid->_buffer + sizeof (CORBA_unsigned_long),
-			   ORBIT_RAND_DATA_LEN);
+	ORBit_genuid_buffer (objid->_buffer + sizeof (CORBA_unsigned_long), ORBIT_RAND_DATA_LEN);
 
 	return objid;
 }

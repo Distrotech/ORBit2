@@ -27,9 +27,8 @@ ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
 
 	tptr = (CORBA_long *) adaptor->adaptor_key._buffer;
 	*tptr = adaptor_id;
-	ORBit_genrand_buf (&orb->genrand, 
-			   adaptor->adaptor_key._buffer + sizeof (CORBA_long),
-			   ORBIT_RAND_DATA_LEN);
+	ORBit_genuid_buffer (adaptor->adaptor_key._buffer + sizeof (CORBA_long),
+			     ORBIT_RAND_DATA_LEN);
 
 	return adaptor_id;
 }

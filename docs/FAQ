@@ -348,6 +348,31 @@ add 'return bonobo_debug_shutdown ()' at the end of your program. This
 will also flag bonobo object references and other bonbo internal
 resouce managment problems.
 
+** what's all this about random numbers ?
+
+	Every object created by the POA contains two pieces of random
+data in its object reference. This is primarily a defence against a
+malicous attack on your application by someone who may try to
+construct an object reference and invoke methods on it.
+
+	By default the ORB reads this random data from /dev/urandom
+which is a good non-blocking source of entropy on Linux and Solaris 9.
+
+	However, on previous version of Solaris and other platforms,
+/dev/urandom is not available. On these platforms, /dev/random often
+has poor levels of entropy and may cause the application to block. In
+this case the ORB will first try to use the OpenSSL RAND_bytes()
+method if ORBit has been compiled with SSL support and, finally, use
+the glib psuedo random number generator.
+
+	If the only transport enabled in the ORB are unix domain
+sockets, a very simple hashing algorithm based on gettimeofday() is
+used to generate unique ids. The rationale behind this is that UDS
+sockets are created with the default file permissions of the of the
+process. These default permissions can be modified using the usual
+umask() system call. These file permissions should provide sufficient
+defense.
+
 ** my skels leak memory - why ?
 
 	Sometimes people post to the list saying I'm doing:

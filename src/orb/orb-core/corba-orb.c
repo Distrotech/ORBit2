@@ -18,13 +18,14 @@ extern ORBit_option orbit_supported_options[];
 /*
  * Command line option handling.
  */
-static gboolean     orbit_use_ipv4   = FALSE;
-static gboolean     orbit_use_ipv6   = FALSE; 
-static gboolean     orbit_use_usocks = TRUE;
-static gboolean     orbit_use_irda   = FALSE;
-static gboolean     orbit_use_ssl    = FALSE;
-static char        *orbit_ipsock     = NULL;
-static char        *orbit_ipname     = NULL;
+static gboolean     orbit_use_ipv4          = FALSE;
+static gboolean     orbit_use_ipv6          = FALSE; 
+static gboolean     orbit_use_usocks        = TRUE;
+static gboolean     orbit_use_irda          = FALSE;
+static gboolean     orbit_use_ssl           = FALSE;
+static gboolean     orbit_use_genuid_simple = FALSE;
+static char        *orbit_ipsock            = NULL;
+static char        *orbit_ipname            = NULL;
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -76,6 +77,21 @@ ORBit_ORB_shutdown_servers (CORBA_ORB orb)
 	g_slist_foreach (orb->servers, (GFunc) g_object_unref, NULL);
 	g_slist_free (orb->servers); 
 	orb->servers = NULL;
+}
+
+static ORBitGenUidType
+ORBit_genuid_type (void)
+{
+	ORBitGenUidType retval = ORBIT_GENUID_STRONG;;
+
+	if (orbit_use_genuid_simple)
+		retval = ORBIT_GENUID_SIMPLE;
+
+	else if (orbit_use_usocks && !orbit_use_ipv4 &&
+		 !orbit_use_ipv6 && !orbit_use_irda)
+		retval = ORBIT_GENUID_SIMPLE;
+
+	return retval;
 }
 
 static void
@@ -137,7 +153,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	/* released by CORBA_ORB_destroy */
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 
-	ORBit_genrand_init (&retval->genrand);
+	ORBit_genuid_init (ORBit_genuid_type ());
 	retval->default_giop_version = GIOP_LATEST;
 
 	retval->adaptors = g_ptr_array_new ();
@@ -1045,7 +1061,7 @@ ORBit_proto_use (const char *name)
 	    (orbit_use_ipv6   && !strcmp ("IPv6", name)) || 
 	    (orbit_use_usocks && !strcmp ("UNIX", name)) || 
 	    (orbit_use_irda   && !strcmp ("IrDA", name)) || 
-	    (orbit_use_ipv6   && !strcmp ("SSL",  name)))
+	    (orbit_use_ssl    && !strcmp ("SSL",  name)))
 		return TRUE;
 
 	return FALSE;
@@ -1065,6 +1081,7 @@ static ORBit_option orbit_supported_options[] = {
 	{"ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks},
 	{"ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda},
 	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
+	{"ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple},
 	{NULL,              0,                    NULL},
 };
 

@@ -1,3 +1,33 @@
+2002-01-16  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-orb-type.h: kill genrand
+	ORB member.
+
+	* include/orbit/util/orbit-genrand.h: rename to genuid, we're
+	not allways taking about randomness.
+
+	* src/orb/orb-core/corba-orb.c:
+	(ORBit_genuid_type): impl to figure what genuid type we'll use.
+	(CORBA_ORB_init): upd.
+	(ORBit_proto_use): fix silly.
+	Also add a --ORBSimpleUIDs option.
+
+	* src/orb/poa/orbit-adaptor.c: (ORBit_adaptor_setup): upd.
+
+	* src/orb/poa/poa.c: (ORBit_POA_new_system_objid): upd.
+
+	* src/orb/util/genrand.c:
+	(ORBit_genuid_init), (ORBit_genuid_fini): impl.
+	(genuid_glib_pseudo): impl id generator using glib's prng.
+	(genrand_unix): kill.
+	(genuid_simple): impl non-random id generator.
+	(ORBit_genuid_buffer): upd.
+
+	* test/test-performance.c: (main): pass argc and argv to
+	ORB_init.
+
+	* docs/FAQ, docs/internals/poa-notes.txt: upd.
+
 2002-01-16  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c: update to free

@@ -171,7 +171,7 @@ main (int argc, char *argv[])
 	g_timer_start (timer);
 
 	g_timer_reset (timer);
-	orb = CORBA_ORB_init (NULL, NULL, "orbit-local-orb", &ev);
+	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	fprintf (stderr, "ORB: init took %g(ms)\n",
 		 (elapsed_time = g_timer_elapsed (timer, NULL)) * 1000.0);
