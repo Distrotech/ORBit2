@@ -174,12 +174,79 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 			      const struct sockaddr   *saddr,
 			      LincSockLen              saddr_len)
 {
-	int i;
 	static int warned = 0;
+#if defined (AF_INET6) && defined (HAVE_GETADDRINFO)
+	struct addrinfo hints, *result = NULL;
+	static struct addrinfo *local_addr = NULL;
+#else
+	int i;
 	static struct hostent *local_hostent;
+#endif
 
 	g_assert (saddr->sa_family == proto->family);
 
+#if defined (AF_INET6) && defined (HAVE_GETADDRINFO) 
+	if (!local_addr) {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_CANONNAME;
+
+		if (getaddrinfo(linc_get_local_hostname(), NULL, &hints, &local_addr) != 0) {
+			if (!warned++)
+				g_warning ("can't getaddrinfo on '%s'",
+					   linc_get_local_hostname ());
+			return FALSE;
+		}
+	}
+
+	if (!local_addr->ai_addr) 
+		g_error ("No address for local host");
+
+	if (proto->family != AF_INET) {
+		if (proto->family == AF_INET6 &&
+		    local_addr->ai_family != AF_INET6)
+			return FALSE; /* can connect via IPv4 */
+		
+		if (proto->family == AF_INET6)
+			return FALSE;
+	}
+
+	for (result = local_addr; result; result = result->ai_next) {
+		int af = result->ai_family;
+
+		if ((af != AF_INET6) && (af != AF_INET))
+			continue;
+
+		if (proto->family == AF_INET) {
+			if (af == AF_INET) {
+				if (!memcmp ((struct sockaddr_in *)result->ai_addr,
+					     (struct sockaddr_in *)saddr,
+					     result->ai_addrlen)) {
+#ifdef LOCAL_DEBUG
+					g_warning ("local ipv4 address");
+#endif
+					return TRUE;
+				}
+			}
+		}
+		else {
+			if (af == AF_INET6) {
+				if (!memcmp ((struct sockaddr_in6 *)result->ai_addr,
+					     (struct sockaddr_in6 *)saddr,
+					     result->ai_addrlen)) {
+#ifdef LOCAL_DEBUG
+					g_warning ("local ipv6 address");
+#endif
+					return TRUE;
+				}
+			}
+		}
+	}
+#ifdef LOCAL_DEBUG
+	g_warning ("No match over all");
+#endif
+	return FALSE;
+#else   /*HAVE_GETADDRINFO*/	
 	if (!local_hostent) {
 		LINC_RESOLV_SET_IPV6;
 		local_hostent = gethostbyname (linc_get_local_hostname ());
@@ -244,6 +311,7 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 #endif
 
 	return FALSE;
+#endif /*HAVE_GETADDRINFO*/
 }
 
 #endif
@@ -338,8 +406,12 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 				 LincSockLen            *saddr_len)
 {
 	struct sockaddr_in6 *saddr;
-	struct hostent      *host;
+#ifdef HAVE_GETADDRINFO
+	struct addrinfo     *host, hints, *result = NULL;
+#else
+	struct hostent	    *host;
 
+#endif
 	g_assert (proto->family == AF_INET6);
 	g_assert (hostname);
 
@@ -358,6 +430,27 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 	if (inet_pton (AF_INET6, hostname, &saddr->sin6_addr) > 0)
 		return (struct sockaddr *)saddr;
 #endif
+#ifdef HAVE_GETADDRINFO
+	memset (&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+
+	if (getaddrinfo (hostname, NULL, &hints, &result))
+		return NULL;
+
+	for (host = result; host; host = host->ai_next) {
+		if (host->ai_family == AF_INET6) 
+			break;
+	}
+	if (!host) {
+		g_free (saddr);
+		freeaddrinfo (result);
+		return NULL;
+	}
+	memcpy (&saddr->sin6_addr, &((struct sockaddr_in6 *)host->ai_addr)->sin6_addr, sizeof (struct in6_addr));
+	freeaddrinfo (result);
+	
+	return (struct sockaddr *)saddr;
+#else
 
 	if (!(_res.options & RES_INIT))
 		res_init();
@@ -372,6 +465,7 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 	memcpy (&saddr->sin6_addr, host->h_addr_list[0], sizeof (struct in6_addr));
 
 	return (struct sockaddr *)saddr;
+#endif /* HAVE_GETADDRINFO */
 }
 #endif /* AF_INET6 */
 
@@ -497,7 +591,7 @@ linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 
 /*
  * linc_protocol_get_sockinfo_ipv46:
- * @host: a #hostent structure describing the host.
+ * @host: char pointer describing the hostname.
  * @port: the portnumber.
  * @hostname: pointer by which the hostname string is returned.
  * @portnum: pointer by which the port number string is returned.
@@ -514,26 +608,17 @@ linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
 static gboolean
-linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
+linc_protocol_get_sockinfo_ipv46 (const char      *host,
 				  guint            port,
 				  gchar          **hostname,
 				  char           **portnum)
 {
-	if (!host) {
-		const char *local_host;
-
-		if (!(local_host = linc_get_local_hostname ()))
+	if (!host)  
+		if (!(host = linc_get_local_hostname ()))
 			return FALSE;
-
-		LINC_RESOLV_SET_IPV6;
-		host = gethostbyname (local_host);
-	}
-
-	if (!host)
-		return FALSE;
-
+	
 	if (hostname)
-		*hostname = g_strdup (host->h_name);
+		*hostname = g_strdup (host);
 
 	if (portnum) {
 		gchar tmpport[NI_MAXSERV];
@@ -572,6 +657,7 @@ linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
 {
 	struct sockaddr_in *sa_in = (struct sockaddr_in  *)saddr;
 	struct hostent     *host = NULL;
+	char *hname = NULL;
 
 	g_assert (proto && saddr && saddr->sa_family == AF_INET);
 
@@ -580,9 +666,11 @@ linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
                                       sizeof (struct in_addr), AF_INET);
 		if (!host)
 			return FALSE;
+		else
+			hname = host->h_name;
 	}
 
-	return linc_protocol_get_sockinfo_ipv46 (host, sa_in->sin_port, 
+	return linc_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
 						 hostname, portnum);
 }
 #endif /* AF_INET */
@@ -619,19 +707,34 @@ linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
 				 gchar                  **portnum)
 {
 	struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)saddr;
+#ifdef HAVE_GETADDRINFO
+	char hbuf[NI_MAXHOST];
+#else
 	struct hostent      *host = NULL;
+#endif
+	char *hname = NULL;
 
 	g_assert (proto && saddr && saddr->sa_family == AF_INET6);
 
-	if (!memcmp (&sa_in6->sin6_addr, &in6addr_any, sizeof (struct in6_addr))) {
+	if (memcmp (&sa_in6->sin6_addr, &in6addr_any, sizeof (struct in6_addr))) {
 
-		host = gethostbyaddr ((char *)&sa_in6->sin6_addr, 
+#ifdef HAVE_GETNAMEINFO
+                if (getnameinfo((struct sockaddr *)sa_in6, sizeof(*sa_in6), hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD))
+			return FALSE;
+		else
+			hname = hbuf;
+	}
+#else
+		host = gethostbyaddr ((char *)&sa_in6->sin6_addr,
 				      sizeof (struct in6_addr), AF_INET6);
 		if (!host)
 			return FALSE;
+		if (host)
+			hname = host->h_name;
 	}
+#endif /* HAVE_GETNAMEINFO */
 
-	return linc_protocol_get_sockinfo_ipv46 (host, sa_in6->sin6_port, 
+	return linc_protocol_get_sockinfo_ipv46 (hname, sa_in6->sin6_port, 
 						 hostname, portnum);
 }
 

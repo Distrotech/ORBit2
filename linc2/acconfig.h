@@ -12,3 +12,5 @@
 #undef socklen_t
 #undef HAVE_SOCKADDR_SA_LEN
 #undef HAVE_INET_PTON
+#undef HAVE_GETADDRINFO
+#undef HAVE_GETNAMEINFO
