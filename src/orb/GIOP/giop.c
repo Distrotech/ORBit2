@@ -436,8 +436,6 @@ ORBit_get_safe_tmp (void)
 void
 giop_init (gboolean threaded, gboolean blank_wire_data)
 {
-	if (threaded)
-		g_warning ("\n --- you're entering a whole world of pain --- ");
 	link_init (threaded);
 
 	if (threaded) {
