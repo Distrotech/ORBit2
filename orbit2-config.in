@@ -29,8 +29,8 @@ Known values for SRVC are:
 
 Known values for TARGET are:
 
-    client		(calls glib-config)
-    server		(calls glib-config)
+    client		(calls pkg-config)
+    server		(calls pkg-config)
 EOF
 
     exit $1
@@ -42,8 +42,8 @@ fi
 
 cflags=false
 libs=false
-the_libs="$the_libs -L$libdir -lORBit `${PKG_CONFIG} --libs glib-2.0` @LIBS@ -lm"
-the_flags="$the_flags `${PKG_CONFIG} --cflags glib-2.0` -I$includedir -DORBIT2=1"
+the_libs="$the_libs `${PKG_CONFIG} --libs ORBit-2.0` @LIBS@ -lm"
+the_flags="$the_flags `${PKG_CONFIG} --cflags ORBit-2.0`"
 
 while test $# -gt 0; do
     case "$1" in
