@@ -1,36 +1,38 @@
 #include <config.h>
 
 #include <stdio.h>
-#include <dirent.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <glib.h>
 
 /*
  * Two timeouts - waiting while there are other
- *                handles to be checked.
+ *  ( in ms )     handles to be checked.
  *              - waiting after all other handles have
  *                been checked.
  */
+#define SHORT_TIMEOUT  10
+#define LONG_TIMEOUT 1000
+
 static int total_count = 0;
 static int cleaned_count = 0;
 
 #include <linc-compat.h>
 
-#ifdef FINISHED
-
 #ifdef AF_UNIX
 
 typedef struct {
-	char              *name;
-	int                fd;
+	char *name;
+	int   fd;
 } SocketEntry;
 
 static SocketEntry *
-new_socket_entry (const char *fname)
+new_socket_entry (const char *dir, const char *fname)
 {
 	SocketEntry *se = g_new0 (SocketEntry, 1);
 
-	se->name = g_strdup (fname);
+	se->name = g_build_filename (dir, fname, NULL);
 	se->fd = -1;
 
 	return se;
@@ -52,19 +54,15 @@ read_sockets (const char *dir)
 	GList *files = NULL;
 	struct dirent *dent;
 
-	dirh = opendir (linc_tmpdir);
+	dirh = opendir (dir);
 
 	while ((dent = readdir (dirh))) {
-		int usfd, ret, saddr_len;
-		struct sockaddr_un saddr;
-
-		saddr.sun_family = AF_UNIX;
-
 		if (strncmp (dent->d_name, "linc-", 5))
 			continue;
 
 		files = g_list_prepend (
-			files, new_socket_entry (dent->d_name));
+			files, new_socket_entry (
+				dir, dent->d_name));
 	}
 	closedir (dirh);
 
@@ -90,7 +88,8 @@ open_socket (SocketEntry *se)
 
 	saddr.sun_family = AF_UNIX;
 
-	g_snprintf (saddr.sun_path, sizeof (saddr.sun_path), se->name);
+	g_snprintf (saddr.sun_path, sizeof (saddr.sun_path),
+		    "%s", se->name);
 
 	se->fd = socket (AF_UNIX, SOCK_STREAM, 0);
 	g_assert (se->fd >= 0);
@@ -102,7 +101,7 @@ open_socket (SocketEntry *se)
 		sizeof (saddr.sun_path) + strlen (saddr.sun_path);
 
 	do {
-		ret = connect (usfd, &saddr, saddr_len);
+		ret = connect (se->fd, &saddr, saddr_len);
 	} while (ret < 0 && errno == EINTR);
 
 	if (ret >= 0)
@@ -121,9 +120,11 @@ open_socket (SocketEntry *se)
 		default:
 			g_warning ("Error '%s' on socket %d",
 				   g_strerror (errno), se->fd);
-			return SOCKET_DEAD_NOW;
+			break;
 		}
 	}
+
+	return SOCKET_DEAD_NOW;
 }
 
 static GList *
@@ -132,7 +133,19 @@ poll_open (GList *files, int *pending, int timeout)
 	if (!files)
 		return NULL;
 
-	/* do a poll */
+	g_print ("FIXME: should poll unknown descriptors for a bit");
+
+	/* FIXME: we should really do something clever here,
+	 * poll for a while, wait for nice connected / bad
+	 * signals on the sockets, etc - but what we have
+	 * works well for now */
+	while (files && *pending > 0) {
+		free_socket_entry (files->data);
+		files = g_list_delete_link (files, files);
+		(*pending)--;
+	}
+
+	return files;
 }
 
 static void
@@ -145,7 +158,7 @@ clean_dir (const char *dir)
 
 	open_max = sysconf (_SC_OPEN_MAX);
 
-	files = read_files (dir);
+	files = read_sockets (dir);
 
 	dirty_files = g_list_length (files);
 
@@ -188,15 +201,10 @@ clean_dir (const char *dir)
 
 #endif /* AF_UNIX */
 
-#endif
-
 int
 main (int argc, char **argv)
 {
-#ifdef FINISHED
 	char *dir;
-
-	fprintf (stderr, "Do some cleanup then !\n");
 
 	dir = g_strdup_printf ("/tmp/orbit-%s", g_get_user_name ());
 
@@ -209,6 +217,6 @@ main (int argc, char **argv)
 	printf ("Cleaned %d files %d still live\n",
 		cleaned_count,
 		total_count - cleaned_count);
-#endif
+
 	return 0;
 }
