@@ -94,6 +94,12 @@ AC_DEFINE_UNQUOTED(INDENT_COMMAND,"$INDENT_COMMAND")
 
 dnl Checks for libraries.
 
+[ -z "$LINC_CONFIG" ] && LINC_CONFIG=linc-config
+LINC_CFLAGS="`$LINC_CONFIG --cflags`"
+LINC_LIBS="`$LINC_CONFIG --libs`"
+AC_SUBST(LINC_CFLAGS)
+AC_SUBST(LINC_LIBS)
+
 AM_PATH_GLIB_2_0(1.3.1,, AC_MSG_ERROR([*** GLIB 1.3.1 or better is required. The latest version of GLIB
 *** is always available from ftp://ftp.gtk.org/.]))
 
@@ -119,13 +125,6 @@ AC_TYPE_SIZE_T
 
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
-AC_FUNC_ALLOCA
-if test $ac_cv_header_alloca_h = yes; then
-	ORBIT_HAVE_ALLOCA_H=1
-else
-	ORBIT_HAVE_ALLOCA_H=0
-fi
-AC_SUBST(ORBIT_HAVE_ALLOCA_H)
 
 AC_CHECK_FUNCS(poll basename)
 AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])

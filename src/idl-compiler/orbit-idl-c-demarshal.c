@@ -101,7 +101,7 @@ c_demarshal_generate_alloca_alloc(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *
       node->nptrs--;
       ctmp = oidl_marshal_node_valuestr(node);
       node->nptrs++;
-      fprintf(cmi->ci->fh, "%s = orbit_alloca(sizeof(%s));\n", ctmp, ctmp2);
+      fprintf(cmi->ci->fh, "%s = g_alloca(sizeof(%s));\n", ctmp, ctmp2);
     }
 }
 
@@ -305,7 +305,7 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   c_demarshal_generate(node->u.loop_info.length_var, cmi);
 
   if(cmi->alloc_on_stack && (node->u.loop_info.contents->where == MW_Alloca)) {
-    fprintf(cmi->ci->fh, "%s%s = orbit_alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
+    fprintf(cmi->ci->fh, "%s%s = g_alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
 	    ctmp_contents, ctmp_len);
     if(node->flags & MN_ISSEQ)
       fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
