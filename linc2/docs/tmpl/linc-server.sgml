@@ -2,7 +2,7 @@
 LINCServer
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A listening server object
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -14,12 +14,10 @@ LINCServer
 
 </para>
 
-<!-- ##### MACRO LINC_IS_SERVER ##### -->
+<!-- ##### TYPEDEF LINCServer ##### -->
 <para>
 
 </para>
-
-@object: 
 
 
 <!-- ##### FUNCTION linc_server_setup ##### -->
@@ -33,13 +31,5 @@ LINCServer
 @local_serv_info: 
 @create_options: 
 @Returns: 
-
-
-<!-- ##### FUNCTION linc_server_handle ##### -->
-<para>
-
-</para>
-
-@cnx: 
 
 

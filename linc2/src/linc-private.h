@@ -32,6 +32,10 @@ struct sockaddr *linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 gboolean         linc_protocol_get_sockinfo (const LINCProtocolInfo *proto,
 					     const struct sockaddr  *saddr,
 					     gchar                 **hostname,
+
 					     gchar                 **service);
+
+/* Redundant - to go. */
+void     linc_server_handle   (LINCServer *cnx);
 
 #endif /* _LINC_PRIVATE_H */

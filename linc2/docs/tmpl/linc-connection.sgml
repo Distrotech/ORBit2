@@ -2,7 +2,7 @@
 LINCConnection
 
 <!-- ##### SECTION Short_Description ##### -->
-
+the basic connection object
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -14,12 +14,10 @@ LINCConnection
 
 </para>
 
-<!-- ##### MACRO LINC_IS_CONNECTION ##### -->
+<!-- ##### TYPEDEF LINCConnection ##### -->
 <para>
 
 </para>
-
-@object: 
 
 
 <!-- ##### ENUM LINCConnectionStatus ##### -->

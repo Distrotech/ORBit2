@@ -31,17 +31,15 @@ typedef void (*LINCProtocolSetupFunc)       (int                     fd,
 typedef void (*LINCProtocolDestroyFunc)     (int                     fd,
 					     const char             *host_info,
 					     const char             *serv_info);
-typedef struct sockaddr *
-	     (*LINCProtocolGetSockAddrFunc) (const LINCProtocolInfo *proto,
-					     const char             *hostname,
-					     const char             *service,
-					     socklen_t              *saddr_len);
+typedef struct sockaddr *(*LINCProtocolGetSockAddrFunc) (const LINCProtocolInfo *proto,
+							 const char             *hostname,
+							 const char             *service,
+							 socklen_t              *saddr_len);
 
-typedef gboolean
-	     (*LINCProtocolGetSockInfoFunc) (const LINCProtocolInfo *proto,
-					     const struct sockaddr  *sockaddr,
-					     gchar                 **hostname,
-					     gchar                 **service);
+typedef gboolean (*LINCProtocolGetSockInfoFunc) (const LINCProtocolInfo *proto,
+						 const struct sockaddr  *sockaddr,
+						 gchar                 **hostname,
+						 gchar                 **service);
 
 struct _LINCProtocolInfo {
 	const char                 *name;

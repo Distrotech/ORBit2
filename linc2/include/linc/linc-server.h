@@ -57,7 +57,6 @@ gboolean linc_server_setup    (LINCServer *cnx,
 			       const char *local_host_info,
 			       const char *local_serv_info,
 			       LINCConnectionOptions create_options);
-void     linc_server_handle   (LINCServer *cnx);
 
 G_END_DECLS
 
