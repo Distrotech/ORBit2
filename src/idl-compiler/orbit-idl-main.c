@@ -49,11 +49,13 @@ static int cl_enable_small_stubs = 0;
 static int cl_enable_small_skels = 0;
 static int cl_disable_idata = 0;
 static int cl_enable_imodule = 0;
+static int cl_add_imodule = 0;
 static gboolean cl_disable_defs_skels = FALSE;
 static gboolean cl_showcpperrors = TRUE;
 static char *cl_output_lang = "c";
 static char *cl_backend_dir = ORBITLIBDIR;
 static gboolean cl_onlytop = FALSE;
+static char *cl_deps_file = NULL;
 
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
 static GString *cl_cpp_args;
@@ -125,12 +127,14 @@ struct poptOption options[] = {
   {"noheaders", '\0', POPT_ARG_NONE, &cl_disable_headers, 0, "Don't output headers", NULL},
   {"noidata", '\0', POPT_ARG_NONE, &cl_disable_idata, 0, "Don't generate Interface type data", NULL},
   {"imodule", 'i', POPT_ARG_NONE, &cl_enable_imodule, 0, "Output only an imodule file", NULL},
-  {"skeleton-impl", '\0', POPT_ARG_NONE, &cl_enable_skeleton_impl, 0, "Don't output headers", NULL},
+  {"add-imodule", '\0', POPT_ARG_NONE, &cl_add_imodule, 0, "Output an imodule file", NULL},
+  {"skeleton-impl", '\0', POPT_ARG_NONE, &cl_enable_skeleton_impl, 0, "Output skeleton implementation", NULL},
   {"backenddir", '\0', POPT_ARG_STRING, &cl_backend_dir, 0, "Override IDL backend library directory", "DIR"},
   {"c-output-formatter", '\0', POPT_ARG_STRING, &c_output_formatter, 0, "Program to use to format output (normally, indent)", "PROGRAM"},
   {"onlytop", '\0', POPT_ARG_NONE, &cl_onlytop, 0, "Inhibit includes", NULL},
   {"pidl", '\0', POPT_ARG_NONE, &cl_is_pidl, 0, "Treat as Pseudo IDL", NULL},
   {"nodefskels", '\0', POPT_ARG_NONE, &cl_disable_defs_skels, 0, "Don't output defs for skels in header", NULL},
+  {"deps", '\0', POPT_ARG_STRING, &cl_deps_file, 0, "Generate dependency info suitable for inclusion in Makefile", "FILENAME"},
   POPT_AUTOHELP
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
@@ -188,7 +192,11 @@ int main(int argc, const char *argv[])
     |(cl_disable_skels?0:OUTPUT_SKELS)
     |(cl_disable_common?0:OUTPUT_COMMON)
     |(cl_disable_headers?0:OUTPUT_HEADERS)
-    |(cl_enable_skeleton_impl?OUTPUT_SKELIMPL:0);
+    |(cl_enable_skeleton_impl?OUTPUT_SKELIMPL:0)
+    |(cl_add_imodule?OUTPUT_IMODULE:0)
+    |(cl_deps_file != NULL?OUTPUT_DEPS:0);
+
+  rinfo.deps_file = cl_deps_file;
 
   if (cl_enable_imodule) /* clobber */
     rinfo.enabled_passes =

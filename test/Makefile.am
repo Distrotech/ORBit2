@@ -1,6 +1,5 @@
 SUBDIRS = everything inhibit poa
 
-IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	$(LINC_CFLAGS) \
@@ -42,36 +41,13 @@ typelib_dump_SOURCES=typelib-dump.c
 DYNANY_IDLOUT=dynany.h dynany-common.c
 test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
 
-$(ECHO_IDLOUT): echo_built
 
-echo_built: echo.idl $(IDL)
-	$(IDL) --showcpperrors $(srcdir)/echo.idl
-	touch echo_built
+IDL_FLAGS =  --showcpperrors
+IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idk
+include $(top_srcdir)/Makefile.shared
 
-$(DYNANY_IDLOUT): dynany_built
-
-dynany_built: dynany.idl $(IDL)
-	$(IDL) --noskels --nostubs --showcpperrors $(srcdir)/dynany.idl
-	touch dynany_built
-
-$(EMPTY_IDLOUT): empty_built
-empty_built: empty.idl $(IDL)
-	$(IDL) --showcpperrors $(srcdir)/empty.idl
-	touch empty_built
-
-$(IDLOUT): test1_built
-test1_built: test1.idl $(IDL)
-	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) --showcpperrors $(srcdir)/test1.idl
-	touch test1_built
-
-$(TEST_ANY_IDLOUT): test_any_built
-test_any_built: test-any.idl $(IDL)
-	-(rm -f $(TEST_ANY_IDLOUT) || true) > /dev/null
-	$(IDL) --showcpperrors $(srcdir)/test-any.idl
-	touch test_any_built
 
 BUILT_SOURCES=$(EMPTY_IDLOUT) $(ECHO_IDLOUT) $(IDLOUT) $(TEST_ANY_IDLOUT) $(DYNANY_IDLOUT)
-CLEANFILES=dynany_built echo_built empty_built test1_built test_any_built $(BUILT_SOURCES)
+CLEANFILES=$(BUILT_SOURCES)
 
-EXTRA_DIST=echo.idl empty.idl test-any.idl test1.idl dynany.idl
+EXTRA_DIST=$(IDL_FILES)

@@ -24,22 +24,17 @@ INCLUDES = -I. \
 	 $(GLIB_CFLAGS) \
 	$(LINC_CFLAGS)
 
-IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-
 CosNaming_built = 							\
 	CosNaming.h 							\
 	CosNaming-common.c 						\
 	CosNaming-stubs.c 						\
 	CosNaming-skels.c
 
-$(CosNaming_built): my_cosnaming_built
-	@:
+IDL_FLAGS=--showcpperrors
+IDL_FILES=CosNaming.idl
+include $(top_srcdir)/Makefile.shared
 
-my_cosnaming_built: CosNaming.idl $(IDL)
-	$(IDL) $(srcdir)/CosNaming.idl
-	touch my_cosnaming_built
-
-CLEANFILES=my_cosnaming_built
+CLEANFILES=my_cosnaming_built $(BUILT_SOURCES)
 
 DEPS = 	$(top_builddir)/src/orb/libORBit-2.la			\
 	libORBitCosNaming-2.la

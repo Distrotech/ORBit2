@@ -148,21 +148,23 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     break;
   case IDLN_SRCFILE:
     {
+      if (rinfo->onlytop) {
 	char *idlfn = IDL_SRCFILE(tree).filename;
 	if ( IDL_SRCFILE(tree).seenCnt==0 
-	  && !IDL_SRCFILE(tree).isTop 
+	     && !IDL_SRCFILE(tree).isTop 
 	  && !IDL_SRCFILE(tree).wasInhibit ) {
-	    char *hfn = g_path_get_basename(idlfn), *htail;
-	    htail = strrchr(hfn,'.');
-	    g_assert( htail && strlen(htail)>=2 );
-	    htail[1] = 'h';
-	    htail[2] = 0;
-	    fprintf(ci->fh, "#include \"%s\"\n", hfn);
+	  char *hfn = g_path_get_basename(idlfn), *htail;
+	  htail = strrchr(hfn,'.');
+	  g_assert( htail && strlen(htail)>=2 );
+	  htail[1] = 'h';
+	  htail[2] = 0;
+	  fprintf(ci->fh, "#include \"%s\"\n", hfn);
             g_free(hfn);
 	}
         fprintf(ci->fh, "/* from IDL source file \"%s\" (seen %d, isTop %d, wasInhibit %d) */ \n", 
-	  idlfn, IDL_SRCFILE(tree).seenCnt, IDL_SRCFILE(tree).isTop,
-	  IDL_SRCFILE(tree).wasInhibit);
+		idlfn, IDL_SRCFILE(tree).seenCnt, IDL_SRCFILE(tree).isTop,
+		IDL_SRCFILE(tree).wasInhibit);
+      }
     }
     break;
   case IDLN_CONST_DCL:

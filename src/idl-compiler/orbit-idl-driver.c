@@ -53,9 +53,10 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 			       &tree, &namespace,
 			       (rinfo->show_cpp_errors?IDLF_SHOW_CPP_ERRORS:0)
 			       |IDLF_TYPECODES
+			       |IDLF_SRCFILES
 			       |(rinfo->is_pidl?IDLF_XPIDL:0)
 			       |(rinfo->onlytop
-			         ?(IDLF_SRCFILES|IDLF_INHIBIT_INCLUDES):0)
+			         ?(IDLF_INHIBIT_INCLUDES):0)
 			       |IDLF_CODEFRAGS,
 			       rinfo->idl_warn_level);
   rinfo->namespace = namespace;

@@ -29,12 +29,14 @@ typedef struct {
 void orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo);
 
 /* Used internally */
+char *orbit_idl_c_filename_for_pass (const char *input_filename, int pass);
 void orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 void orbit_idl_output_c_stubs(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 void orbit_idl_output_c_skeletons(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 void orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 void orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 void orbit_idl_output_c_imodule(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+void orbit_idl_output_c_deps(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 
 void orbit_output_typecode(OIDL_C_Info *ci, IDL_tree ts);
 

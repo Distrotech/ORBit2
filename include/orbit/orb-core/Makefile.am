@@ -29,10 +29,25 @@ orbcoreinclude_HEADERS= \
 	corba-any-type.h		\
 	orbit-interface.h
 
-IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-IDLOUT = corba-defs.h iop-defs.h
+BUILT_SOURCES = corba-defs.h iop-defs.h orbit-interface.h
 
-$(IDLOUT) runidl: $(top_srcdir)/src/orb/orb-core/corba-defs.idl $(IDL)
-	-(rm -f $(IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL -I$(top_srcdir)/src/idl/CORBA --noskels --nodefskels --nostubs --nocommon --noidata \
-                --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-defs.idl
+IDL_FLAGS_NO_DEFS = -I$(top_srcdir)/src/idl/CORBA_PIDL	\
+	-I$(top_srcdir)/src/idl/CORBA			\
+	-I$(top_srcdir)/src/idl/interop			\
+	--noskels --nodefskels --nostubs --noidata	\
+	--nocommon					\
+        --showcpperrors
+IDL_FLAGS = $(IDL_FLAGS_NO_DEFS)		\
+	 --define=Object=OObject		\
+	--define=TypeCode=TTypeCode
+IDL_FILES=corba-defs.idl iop-defs.idl orbit-interface.idl
+IDL_DIR=$(top_srcdir)/src/orb/orb-core/
+
+include $(top_srcdir)/Makefile.shared
+
+orbit-interface.h: $(top_srcdir)/src/orb/orb-core/orbit-interface.idl $(IDL_COMPILER)
+	-(rm -f orbit-interface.h || true ) > /dev/null
+	$(IDL_COMPILER) $(IDL_FLAGS_NO_DEFS) --deps .deps/orbit-interface.idl.P $<
+
+
+CLEANFILES=$(BUILT_SOURCES)

@@ -10,6 +10,8 @@
 
 typedef struct _OIDL_Marshal_Context OIDL_Marshal_Context;
 
+#define OUTPUT_NUM_PASSES 7
+
 typedef struct {
   char *cpp_args;
   int debug_level;
@@ -23,13 +25,16 @@ typedef struct {
 	 OUTPUT_COMMON=1<<2,
 	 OUTPUT_HEADERS=1<<3,
 	 OUTPUT_SKELIMPL=1<<4,
-	 OUTPUT_IMODULE=1<<5 } enabled_passes;
+	 OUTPUT_IMODULE=1<<5,
+	 OUTPUT_DEPS=1<<6, /* Make sure this is always the last pass or dep output will break. */
+  } enabled_passes;
 
   char *output_formatter;
 
   char *output_language;
   char *input_filename;
   char *backend_directory;
+  char *deps_file;
   gboolean onlytop;
   gboolean small;
   gboolean small_stubs;

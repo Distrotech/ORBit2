@@ -33,15 +33,12 @@ EXTRA_DIST=poa-defs.idl
 BUILT_SOURCES=$(POA_IDLOUT)
 CLEANFILES=$(BUILT_SOURCES)
 
-$(POA_IDLOUT): poa-defs.idl $(IDL)
-	-(rm -f $(POA_IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
-	-I$(top_srcdir)/src/idl/CORBA \
-	-I$(top_srcdir)/src/idl/misc \
-	-I$(top_srcdir)/src/orb/orb-core \
-	--noskels --nodefskels --nostubs --noidata \
-	--define=Object=OObject --define=TypeCode=TTypeCode \
-                --showcpperrors $(top_srcdir)/src/orb/poa/poa-defs.idl
-	for I in $(POA_IDLOUT) poa-defs.h; do \
-	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
-	mv $$I.out $$I; done
+IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
+	-I$(top_srcdir)/src/idl/CORBA				\
+	-I$(top_srcdir)/src/idl/misc				\
+	-I$(top_srcdir)/src/orb/orb-core			\
+	--noskels --nodefskels --nostubs --noidata		\
+	--define=Object=OObject --define=TypeCode=TTypeCode	\
+        --showcpperrors
+IDL_FILES=poa-defs.idl
+include $(top_srcdir)/Makefile.shared
