@@ -43,8 +43,8 @@ GIOPConnection *giop_connection_initiate      (gpointer              orb_data,
 					       const char           *remote_serv_info,
 					       GIOPConnectionOptions options,
 					       GIOPVersion           giop_version);
-					       
 void            giop_connections_shutdown     (void);
+void            giop_connection_try_reconnect (GIOPConnection       *cnx);
 void            giop_connection_close         (GIOPConnection       *cnx);
 
 #define         giop_connection_ref(cnx)      link_connection_ref(cnx)

@@ -187,6 +187,12 @@ giop_connection_initiate (gpointer orb_data,
 }
 
 void
+giop_connection_try_reconnect (GIOPConnection *cnx)
+{
+	link_connection_try_reconnect (LINK_CONNECTION (cnx));
+}
+
+void
 giop_connections_shutdown (void)
 {
 #warning FIXME: Need to shutdown linc connections ...

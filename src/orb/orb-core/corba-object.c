@@ -250,48 +250,33 @@ static gboolean
 ORBit_try_connection (CORBA_Object obj)
 {
 	gboolean retval = FALSE;
-	gboolean disconnect = FALSE;
+	gboolean try = FALSE;
+	LinkConnectionStatus status;
 
-	if (giop_thread_safe ()) {
-		if (!obj->connection)
-			retval = FALSE;
-		else {
-			switch (link_connection_get_status
-					((LinkConnection *) obj->connection)) {
-			case LINK_CONNECTING:
-				dprintf (GIOP, "ORBit_try_connection bypassed while connecting ...");
-			case LINK_CONNECTED:
-				retval = TRUE;
-				break;
-			case LINK_DISCONNECTED:
-				disconnect = TRUE;
-				break;
-			}
-		}
-	} else {
-		switch (link_connection_wait_connected
-				((LinkConnection *) obj->connection)) {
-		case LINK_CONNECTING:
-			g_assert_not_reached();
-			break;
-		case LINK_CONNECTED:
-			retval = TRUE;
-			break;
-		case LINK_DISCONNECTED:
-			disconnect = TRUE;
-			break;
-		}
+	if (!obj->connection)
+		return FALSE;
+
+	status = link_connection_wait_connected
+		((LinkConnection *) obj->connection);
+
+	switch (status) {
+	case LINK_CONNECTING:
+		g_assert_not_reached();
+		break;
+	case LINK_CONNECTED:
+		retval = TRUE;
+		break;
+	case LINK_DISCONNECTED:
+
+		g_warning ("TESTME: Re-connecting %p", obj->connection);
+
+		/* Have a go at reviving it */
+		dprintf (MESSAGES, "re-connecting dropped cnx %p", obj->connection);
+		giop_connection_try_reconnect (obj->connection);
+		break;
 	}
 
-	if (disconnect) {
-		if (obj->connection) {
-			giop_connection_unref (obj->connection);
-			obj->connection = NULL;
-		}
-		retval = FALSE;
-	}
-
-	return retval;
+	return TRUE;
 }
 
 GIOPConnection *

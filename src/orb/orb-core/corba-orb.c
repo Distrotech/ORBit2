@@ -259,7 +259,7 @@ ORBit_initial_references_by_user (CORBA_ORB          orb,
 				  GSList            *initref_list,
 				  CORBA_Environment *ev)
 {
-	GList *l;
+	GSList *l;
 	CORBA_Object objref;
 
 	if (ev->_major != CORBA_NO_EXCEPTION)

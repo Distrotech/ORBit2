@@ -1,3 +1,17 @@
+2003-07-14  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (link_connection_state_changed_T_R):
+	free the write queue on disconnect.
+
+2003-07-11  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (link_connection_wait_connected_T): split
+	(link_connection_wait_connected): from here.
+	(link_connection_try_reconnect): impl.
+	(link_connection_from_fd_T): free previous values.
+	(link_connection_broken_idle): unset inhibit_reconnect.
+	(link_connection_state_changed_T_R): set inhibit_reconnect.
+
 2003-07-10  George Lebl <jirka@5z.com>
 
 	* src/linc-connection.c
