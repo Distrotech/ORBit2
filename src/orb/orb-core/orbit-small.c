@@ -1311,9 +1311,22 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 }
 
 ORBitConnection *
-ORBit_small_get_connection (CORBA_Object obj)
+ORBit_small_get_connection_ref (CORBA_Object obj)
 {
 	return (ORBitConnection *) ORBit_object_get_connection (obj);
+}
+
+ORBitConnection *
+ORBit_small_get_connection (CORBA_Object obj)
+{
+	ORBitConnection *cnx;
+
+	cnx = ORBit_small_get_connection_ref (obj);
+
+	/* This sucks but compatibily */
+	ORBit_small_connection_unref (cnx);
+	
+	return cnx;
 }
 
 void

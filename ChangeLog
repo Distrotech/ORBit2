@@ -1,3 +1,31 @@
+2003-04-29  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (main, run_tests): pull
+	out testSegv.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection): bin some type-checked casts.
+
+	* test/everything/client.c (run_threaded_tests),
+	(test_thread): impl.
+
+	* src/orb/util/genrand.c (genuid_rand_openssl),
+	(genuid_glib_pseudo, genuid_simple): take lock for
+	static incrementing foo.
+	(ORBit_genuid_fini, ORBit_genuid_init): setup lock.
+
+	* src/orb/orb-core/corba-object.c (ORBit_objref_new):
+	setup the adaptor_obj explicitely at construct time.
+
+	* src/orb/poa/poa.c (ORBit_POA_obj_to_ref): upd.
+
+	* test/everything/client.c (testAsync): upd.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_connection): don't take a ref, for b/w
+	compatibility.
+	(ORBit_small_get_connection_ref): add separate method.
+
 2003-04-25  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c

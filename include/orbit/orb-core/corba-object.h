@@ -16,6 +16,7 @@ gboolean        ORBit_demarshal_object      (CORBA_Object   *obj,
 					     CORBA_ORB       orb);
 
 CORBA_Object    ORBit_objref_new            (CORBA_ORB       orb,
+					     ORBit_OAObject  adaptor_obj,
 					     GQuark          type_id);
 
 #endif /* ORBIT2_INTERNAL_API */
