@@ -7,14 +7,14 @@ INCLUDES=-I. -I$(srcdir) \
 	@GLIB_CFLAGS@ \
 	@LINC_CFLAGS@
 
-liborb_core_la_SOURCES= \
-	$(IOP_IDLOUT) \
-	$(IDLOUT) \
-	$(OPS_IDLOUT) \
+$(main_src) : runidl_iface runidl_ops runidl_iop runidl
+
+main_src = \
 	corba-orb.c \
 	orbhttp.c \
 	orbhttp.h \
 	orbit-object.c \
+	orbit-small.c \
 	corba-object.c \
 	corba-policy.c \
 	corba-env.c \
@@ -29,10 +29,18 @@ liborb_core_la_SOURCES= \
 	corba-nvlist.c \
 	corba-request.c
 
+liborb_core_la_SOURCES= \
+	$(IOP_IDLOUT) \
+	$(IDLOUT) \
+	$(OPS_IDLOUT) \
+	$(IFACE_IDLOUT) \
+	$(main_src)
+
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c
 IOP_IDLOUT=iop-defs-common.c
 OPS_IDLOUT=corba-ops-stubs.c corba-ops-common.c corba-ops.h corba-ops-skels.c
+IFACE_IDLOUT=orbit-interface.h orbit-interface-common.c
 
 $(top_builddir)/include/orbit/orb-core/corba-defs.h: runidl
 
@@ -80,6 +88,16 @@ runidl_ops: corba-ops.idl $(IDL)
 	mv corba-ops-skels.c.out corba-ops-skels.c; \
 	touch runidl_ops
 
+$(IFACE_IDLOUT) : runidl_iface
+
+runidl_iface: orbit-interface.idl $(IDL)
+	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
+	$(IDL) \
+                --showcpperrors $(top_srcdir)/src/orb/orb-core/orbit-interface.idl
+	cp -f orbit-interface.h $(top_builddir)/include/orbit/orb-core/orbit-interface.h; \
+	rm -f orbit-interface-stubs.c orbit-interface-skels.c
+	touch runidl_iface
+
 BUILT_SOURCES=$(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)
-CLEANFILES=$(BUILT_SOURCES) runidl_ops runidl_iop runidl
-EXTRA_DIST=corba-defs.idl iop-defs.idl corba-ops.idl
+CLEANFILES=$(BUILT_SOURCES) runidl_ops runidl_iop runidl runidl_iface
+EXTRA_DIST=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl

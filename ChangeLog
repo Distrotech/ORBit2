@@ -1,3 +1,41 @@
+2001-05-05  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(orbit_idl_output_c_headers): upd.
+	(ch_output_itypes, ch_output_itype): impl.
+
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(orbit_idl_output_c_stubs): upd.
+	(cs_small_output_stubs, cs_small_flatten_ref),
+	(cs_small_output_args, cs_small_output_small_stub): impl.
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value),
+	(ORBit_marshal_value): publicise.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_small_output_itypes, cc_small_output_itype): add.
+
+2001-05-04  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/orb-core/allocators.h
+	(ORBit_freekids_via_TypeCode): publicize.
+
+	* src/idl-compiler/orbit-idl-c-common.c: don't dump any
+	allocs if we are in small mode.
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_get_typecode_name): add.
+
+	* include/orbit/orb-core/orb-core.h: add orbit-small.h
+
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_output_type_enum): 
+	(ch_output_interface, ch_output_type_dcl, ch_output_type_struct),
+	(ch_output_type_union, ch_prep_fixed, ch_prep_sequence): pass
+	rinfo around so we can get at the 'small' flag.
+	(ch_prep): upd.
+
+	* src/idl-compiler/orbit-idl-main.c (main): add arg '--small'
+
 2001-05-04  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/*: import & port.

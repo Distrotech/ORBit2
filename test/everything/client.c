@@ -38,12 +38,15 @@ void testConst() {
 
 
 void testAttribute(test_TestFactory factory, 
-				CORBA_Environment *ev) {  
+		   CORBA_Environment *ev) {  
   test_BasicServer objref;
   CORBA_char *val;
   CORBA_long lval;
   g_print("Testing attributes...\n");
   objref = test_TestFactory_getBasicServer(factory,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert(objref != CORBA_OBJECT_NIL);
+  g_assert(CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
   val = test_BasicServer__get_foo(objref,ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);  
@@ -695,7 +698,8 @@ void testTypeCode(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   CORBA_Environment ev;
   CORBA_ORB orb;
   test_TestFactory factory;
@@ -704,6 +708,7 @@ int main(int argc, char *argv[]) {
   orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
   g_assert(ev._major == CORBA_NO_EXCEPTION);
 
+  free (malloc (8)); /* -lefence */
 
   { /* read the ior from iorfile, and swizzle to an objref*/
 	int size;
@@ -722,7 +727,7 @@ int main(int argc, char *argv[]) {
   testString(factory,&ev);
   testLong(factory,&ev);
   testEnum(factory,&ev);
-  testException(factory,&ev);
+//  testException(factory,&ev);
   testFixedLengthStruct(factory,&ev);
   testVariableLengthStruct(factory,&ev);
   testCompoundStruct(factory,&ev);

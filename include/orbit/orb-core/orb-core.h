@@ -16,4 +16,6 @@
 #include <orbit/orb-core/corba-policy-type.h>
 #include <orbit/orb-core/corba-context.h>
 
+#include <orbit/orb-core/orbit-small.h>
+
 #endif

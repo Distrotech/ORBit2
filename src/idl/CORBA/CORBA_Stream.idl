@@ -14,4 +14,3 @@
     typedef sequence<unsigned long long> ULongLongSeq;
     typedef sequence<float>              FloatSeq;
     typedef sequence<double>             DoubleSeq;
-

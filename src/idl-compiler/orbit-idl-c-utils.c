@@ -4,6 +4,14 @@
 
 #include <string.h>
 
+char *
+orbit_cbe_get_typecode_name (IDL_tree tree)
+{
+	if (!tree)
+		return g_strdup ("TC_FIXME");
+	else
+		return g_strconcat ("TC_", orbit_cbe_get_typespec_str (tree), NULL);
+}
 
 #if 0	/* unused!? */
 static IDL_tree

@@ -154,7 +154,7 @@ ORBit_gather_alloc_info(CORBA_TypeCode tc)
   }
 }
 
-static void
+void
 ORBit_marshal_value(GIOPSendBuffer *buf,
 		    gconstpointer *val,
 		    CORBA_TypeCode tc,

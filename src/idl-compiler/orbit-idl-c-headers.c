@@ -7,6 +7,7 @@
 /* ch = C header */
 static void ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci);
 static void ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_marshallers(OIDL_C_Info *ci);
@@ -25,6 +26,9 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "#define ORBIT_IDL_SERIAL %d\n", ORBIT_CONFIG_SERIAL);
   fprintf(ci->fh, "#include <orbit/orbit-types.h>\n\n");
 
+  if (rinfo->small) /* hackish ? */
+    fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
+
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "extern \"C\" {\n");
   fprintf(ci->fh, "#endif /* __cplusplus */\n\n");
@@ -32,7 +36,6 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   /* Do all the typedefs, etc. */
   fprintf(ci->fh, "\n/** typedefs **/\n");
   ch_output_types(tree->tree, rinfo, ci);
-
   
   if ( ci->do_skel_defs ) {
   	/* Do all the POA structures, etc. */
@@ -50,6 +53,9 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
 
   fprintf(ci->fh, "\n/** more internals **/\n");
   ch_output_marshallers(ci);
+
+  if (rinfo->small)
+    ch_output_itypes(tree->tree, ci);
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");
@@ -100,7 +106,7 @@ static void ch_output_type_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Inf
 static void ch_output_codefrag(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-static void ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc);
+static void ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci, gboolean do_alloc);
 
 static void
 ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -205,7 +211,7 @@ ch_output_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     	fprintf(ci->fh, "#define %s__freekids CORBA_Object__freekids\n", fullname);
     	fprintf(ci->fh, "typedef CORBA_Object %s;\n", fullname);
     	fprintf(ci->fh, "extern CORBA_unsigned_long %s__classid;\n", fullname);
-        ch_type_alloc_and_tc(tree, ci, FALSE);
+        ch_type_alloc_and_tc(tree, rinfo, ci, FALSE);
     }
 
     fprintf(ci->fh, "#endif\n");
@@ -242,7 +248,7 @@ ch_output_type_enum(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fprintf(ci->fh, "} %s;\n", enumid);
 
-  ch_type_alloc_and_tc(tree, ci, FALSE);
+  ch_type_alloc_and_tc(tree, rinfo, ci, FALSE);
 
   fprintf(ci->fh, "#endif\n");
 
@@ -307,7 +313,7 @@ ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       break;
     }
 
-    ch_type_alloc_and_tc(ent, ci, TRUE);
+    ch_type_alloc_and_tc(ent, rinfo, ci, TRUE);
     fprintf(ci->fh, "#endif\n");
     g_free(ctmp);
   }
@@ -356,7 +362,7 @@ ch_output_type_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     fprintf(ci->fh, "int dummy;\n");
   fprintf(ci->fh, "};\n\n");
 
-  ch_type_alloc_and_tc(tree, ci, TRUE);
+  ch_type_alloc_and_tc(tree, rinfo, ci, TRUE);
 
   fprintf(ci->fh, "#endif\n");
 
@@ -396,7 +402,7 @@ ch_output_type_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fprintf(ci->fh, "} _u;\n};\n");
 
-  ch_type_alloc_and_tc(tree, ci, TRUE);
+  ch_type_alloc_and_tc(tree, rinfo, ci, TRUE);
 
   fprintf(ci->fh, "#endif\n");
 
@@ -442,8 +448,8 @@ ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   g_free(id);
 }
 
-static void ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci);
-static void ch_prep_fixed(IDL_tree tree, OIDL_C_Info *ci);
+static void ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void ch_prep_fixed(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 
 /**
    ch_prep(), unlike ch_output_types(), assumes that the decl
@@ -455,10 +461,10 @@ void ch_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_TYPE_SEQUENCE:
-    ch_prep_sequence(tree, ci);
+    ch_prep_sequence(tree, rinfo, ci);
     break;
   case IDLN_TYPE_FIXED:
-    ch_prep_fixed(tree, ci);
+    ch_prep_fixed(tree, rinfo, ci);
     break;
   case IDLN_TYPE_STRUCT:
     ch_output_type_struct(tree, rinfo, ci);
@@ -469,7 +475,7 @@ void ch_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 }
 
 static void
-ch_prep_fixed(IDL_tree tree, OIDL_C_Info *ci)
+ch_prep_fixed(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   char *ctmp;
 
@@ -480,11 +486,11 @@ ch_prep_fixed(IDL_tree tree, OIDL_C_Info *ci)
 	  ctmp);
   g_free(ctmp);
 
-  ch_type_alloc_and_tc(tree, ci, TRUE);
+  ch_type_alloc_and_tc(tree, rinfo, ci, TRUE);
 }
 
 static void
-ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
+ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   char *ctmp, *fullname, *fullname_def, *ctmp2;
   IDL_tree tts;
@@ -511,7 +517,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 	tts = IDL_type_object_new();
       fake_seq = IDL_type_sequence_new(tts, NULL);
       IDL_NODE_UP(fake_seq) = IDL_NODE_UP(tree);
-      ch_prep_sequence(fake_seq, ci);
+      ch_prep_sequence(fake_seq, rinfo, ci);
       fullname_def = g_strdup_printf("CORBA_sequence_%s", ctmp2);
       if(!fake_if)
 	IDL_TYPE_SEQUENCE(fake_seq).simple_type_spec = NULL;
@@ -522,7 +528,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 
   if(IDL_NODE_TYPE(IDL_TYPE_SEQUENCE(tree).simple_type_spec)
      == IDLN_TYPE_SEQUENCE)
-    ch_prep_sequence(IDL_TYPE_SEQUENCE(tree).simple_type_spec, ci);
+    ch_prep_sequence(IDL_TYPE_SEQUENCE(tree).simple_type_spec, rinfo, ci);
 
   /* NOTE: ORBIT_DECL_%s protects redef of everything (struct,TC,externs)
    * while _%s_defined protects only the struct */
@@ -540,7 +546,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 	fprintf(ci->fh, "/* CRACKHEADS */\n");
       fprintf(ci->fh, "typedef %s %s;\n", fullname_def, fullname);
       fprintf(ci->fh, "#endif\n");
-      ch_type_alloc_and_tc(tree, ci, FALSE);
+      ch_type_alloc_and_tc(tree, rinfo, ci, FALSE);
       fprintf(ci->fh, "#define %s__alloc %s__alloc\n",
 	      fullname, fullname_def);
       fprintf(ci->fh, "#define %s__freekids %s__freekids\n",
@@ -560,11 +566,26 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
       fprintf(ci->fh, "* _buffer; CORBA_boolean _release; } ");
       orbit_cbe_write_typespec(ci->fh, tree);
       fprintf(ci->fh, ";\n#endif\n");
-      ch_type_alloc_and_tc(tree, ci, TRUE);
+      ch_type_alloc_and_tc(tree, rinfo, ci, TRUE);
 
-      orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-      fprintf(ci->fh, " *CORBA_sequence_%s_allocbuf(CORBA_unsigned_long len);\n",
-	      orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp);
+      if (rinfo->small)
+        {
+	  char *tc;
+	  
+	  tc = orbit_cbe_get_typecode_name (
+		  orbit_cbe_get_typespec (tree));
+
+	  fprintf (ci->fh, "#define CORBA_sequence_%s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n",
+		   orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp, tc);
+
+	  g_free (tc);
+       }
+      else
+        {
+          orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+          fprintf(ci->fh, " *CORBA_sequence_%s_allocbuf(CORBA_unsigned_long len);\n",
+          orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp);
+        }
     }
 
   fprintf(ci->fh, "#endif\n");
@@ -576,7 +597,8 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 }
 
 static void
-ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
+ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
+		     OIDL_C_Info *ci, gboolean do_alloc)
 {
   char *ctmp;
   IDL_tree tts;
@@ -592,7 +614,22 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
   if ( ci->do_impl_hack )
       fprintf(ci->fh, "#endif\n");
 
-  if(do_alloc) {
+
+  if(do_alloc && rinfo->small) {
+	  char *tc;
+	  
+	  tc = orbit_cbe_get_typecode_name (
+		  orbit_cbe_get_typespec (tree));
+
+	  fprintf (ci->fh, "#define %s__alloc() ((%s%s *)ORBit_small_alloc (%s))\n",
+		   ctmp, ctmp, (IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"", tc);
+
+	  fprintf (ci->fh, "#define %s__freekids(m,d) ORBit_small_freekids (%s,(m),(d))\n", ctmp, tc);
+
+	  /* FIXME - we need _allocbuf */
+
+	  g_free (tc);
+  } else if(do_alloc) {
     gboolean extern_alloc = FALSE;
     gboolean extern_freekids = FALSE;
     char *ctmp2, *ctmp3;
@@ -1069,4 +1106,54 @@ static void
 ch_output_marshallers(OIDL_C_Info *ci)
 {
   g_hash_table_foreach(ci->ctxt->type_marshal_info, print_marshal_funcs, ci);
+}
+
+static void
+ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
+{
+	if (!tree)
+		return;
+
+	switch(IDL_NODE_TYPE(tree)) {
+	case IDLN_MODULE:
+		ch_output_itypes (IDL_MODULE(tree).definition_list, ci);
+		break;
+	case IDLN_LIST: {
+		IDL_tree sub;
+		for (sub = tree; sub; sub = IDL_LIST(sub).next)
+			ch_output_itypes (IDL_LIST(sub).data, ci);
+	}
+	break;
+	case IDLN_ATTR_DCL: {
+		OIDL_Attr_Info *ai = tree->data;
+
+		IDL_tree curitem;
+      
+		for(curitem = IDL_ATTR_DCL(tree).simple_declarations; curitem;
+		    curitem = IDL_LIST(curitem).next) {
+			ai = IDL_LIST(curitem).data->data;
+	
+			ch_output_itypes (ai->op1, ci);
+			if(ai->op2)
+				ch_output_itypes (ai->op2, ci);
+		}
+	}
+	break;
+
+	case IDLN_INTERFACE: {
+		char  *id;
+
+		id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
+			IDL_INTERFACE (tree).ident), "_", 0);
+
+		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
+      
+		fprintf (ci->fh, "extern ORBit_IInterface %s__itype;\n", id);
+		break;
+	}
+
+	case IDLN_OP_DCL:
+	default:
+		break;
+	}
 }

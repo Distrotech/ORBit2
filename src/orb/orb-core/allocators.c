@@ -2,8 +2,6 @@
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
-static gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
-
 void CORBA_free(gpointer mem)
 {
   ORBit_free(mem);

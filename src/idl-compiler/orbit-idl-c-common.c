@@ -7,7 +7,14 @@ static void cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *c
 
 static void cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void cc_output_marshallers(OIDL_C_Info *ci);
+static GSList *cc_small_build_interfaces (GSList *, IDL_tree tree);
+static void cc_small_output_itypes (GSList *interfaces, OIDL_C_Info *ci);
 
+typedef struct {
+	IDL_tree tree;
+	GSList  *methods; /* IDLN_OP_DCLs */
+} Interface;
+ 
 void
 orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
@@ -26,6 +33,14 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
 
   cc_output_allocs(tree->tree, rinfo, ci);
   cc_output_marshallers(ci);
+
+  if (rinfo->small) {
+    GSList *list;
+
+    fprintf(ci->fh, "\n/* Interface type data */\n\n");
+    list = cc_small_build_interfaces (NULL, tree->tree);
+    cc_small_output_itypes (list, ci);
+  }
 }
 
 static gboolean
@@ -92,16 +107,20 @@ cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     break;
   case IDLN_EXCEPT_DCL:
   case IDLN_TYPE_STRUCT:
-    cc_output_alloc_struct(tree, rinfo, ci);
+    if (!rinfo->small)
+      cc_output_alloc_struct(tree, rinfo, ci);
     break;
   case IDLN_TYPE_UNION:
-    cc_output_alloc_union(tree, rinfo, ci);
+    if (!rinfo->small)
+      cc_output_alloc_union(tree, rinfo, ci);
     break;
   case IDLN_TYPE_DCL:
-    cc_output_alloc_type_dcl(tree, rinfo, ci);
+    if (!rinfo->small)
+      cc_output_alloc_type_dcl(tree, rinfo, ci);
     break;
   case IDLN_TYPE_SEQUENCE:
-    cc_alloc_prep_sequence(tree, rinfo, ci);
+    if (!rinfo->small)
+      cc_alloc_prep_sequence(tree, rinfo, ci);
     break;
   case IDLN_CASE_STMT:
     cc_output_allocs(IDL_CASE_STMT(tree).element_spec, rinfo, ci);
@@ -563,4 +582,303 @@ static void
 cc_output_marshallers(OIDL_C_Info *ci)
 {
   g_hash_table_foreach(ci->ctxt->type_marshal_info, build_marshal_funcs, ci);
+}
+
+/************************************************/
+
+
+
+static int
+cc_small_output_iargs (FILE *of, const char *method, IDL_tree tree)
+{
+	IDL_tree sub;
+	int      arg_count = 0;
+
+	/* Build a list of IArgs */
+	for (sub = IDL_OP_DCL (tree).parameter_dcls; sub;
+	     sub = IDL_LIST (sub).next) {
+		IDL_tree parm;
+		char    *tc;
+
+		if (!arg_count)
+			fprintf (of, "static ORBit_IArg %s__arginfo [] = {\n", method);
+
+		parm = IDL_LIST(sub).data;
+
+		fprintf (of, "\t{ ");
+
+		/* TypeCode tc */
+		tc = orbit_cbe_get_typecode_name (
+			IDL_PARAM_DCL (parm).param_type_spec);
+		if (!tc) {
+			g_warning ("Can't get typecode");
+			tc = g_strdup ("NULL /* no typecode */");
+		}
+		fprintf (of, "%s, ", tc);
+
+		/* IArgFlag flags */
+		switch (IDL_PARAM_DCL (parm).attr) {
+		case IDL_PARAM_IN:
+			fprintf (of, " ORBit_I_ARG_IN ");
+			break;
+		case IDL_PARAM_OUT:
+			fprintf (of, " ORBit_I_ARG_OUT ");
+			break;
+		case IDL_PARAM_INOUT:
+			fprintf (of, " ORBit_I_ARG_INOUT ");
+			break;
+		}
+
+		if (orbit_cbe_type_is_fixed_length (
+			IDL_PARAM_DCL (parm).param_type_spec))
+			fprintf (of, "| ORBit_I_ARG_FIXED_SIZE");
+
+		else if (IDL_PARAM_DCL(parm).attr == IDL_PARAM_OUT) {
+
+			IDL_tree ts = orbit_cbe_get_typespec (
+				IDL_PARAM_DCL (parm).param_type_spec);
+
+			switch(IDL_NODE_TYPE (ts)) {
+			case IDLN_TYPE_STRUCT:
+			case IDLN_TYPE_UNION:
+			case IDLN_TYPE_ARRAY:
+/*				fprintf (of, "| ORBIT_I_ARG_FIXED");*/
+				break;
+			default:
+				break;
+			};
+		}
+
+		fprintf (of, ", ");
+
+		/* string name */
+		fprintf (of, "\"%s\"", IDL_IDENT (IDL_PARAM_DCL (
+			IDL_LIST (sub).data).simple_declarator).str);
+
+		fprintf (of, " },\n");
+
+		g_free (tc);
+		arg_count++;
+	}
+
+	if (arg_count) {
+		fprintf (of, "\t{ NULL, 0, NULL }\n");
+		fprintf (of, "};\n");
+	}
+
+	return arg_count;
+}
+
+static int
+cc_small_output_exceptinfo (FILE *of, const char *method, IDL_tree tree)
+{
+	int except_count = 0;
+
+	/* Build a list of exception typecodes */
+	if (IDL_OP_DCL (tree).raises_expr) {
+		IDL_tree curitem;
+
+		fprintf (of, "/* Exceptions */\n");
+		fprintf (of, "static CORBA_TypeCode %s__exceptinfo [] = {\n",
+			 method);
+		
+		for (curitem = IDL_OP_DCL (tree).raises_expr; curitem;
+		     curitem = IDL_LIST(curitem).next) {
+			char *type_id;
+			IDL_tree curnode = IDL_LIST(curitem).data;
+			
+			type_id = orbit_cbe_get_typecode_name (curnode);
+			fprintf (of, "\t%s,\n", type_id);
+			g_free (type_id);
+			except_count++;
+		}
+		fprintf (of, "\tNULL\n};\n");
+	}
+
+	return except_count;
+}
+
+static void
+cc_small_output_method_bits (IDL_tree tree, const char *id, OIDL_C_Info *ci)
+{
+	OIDL_Op_Info *oi;
+	FILE         *of = ci->fh;
+	char         *fullname;
+
+	fullname = g_strconcat (id, "_", IDL_IDENT (
+		IDL_OP_DCL (tree).ident).str, NULL);
+
+	oi = tree->data;
+	g_assert (oi);
+
+	cc_small_output_iargs (of, fullname, tree);
+
+	cc_small_output_exceptinfo (of, fullname, tree);
+
+	g_free (fullname);
+}
+
+static void
+cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
+{
+	int arg_count;
+	int except_count;
+	const char *method;
+	char       *fullname;
+
+	fullname = g_strconcat (id, "_", IDL_IDENT (
+		IDL_OP_DCL (tree).ident).str, NULL);
+
+	arg_count = IDL_list_length (IDL_OP_DCL (tree).parameter_dcls);
+	except_count = IDL_list_length (IDL_OP_DCL (tree).raises_expr);
+	
+	fprintf (of, "\t{\n");
+
+	/* IArgs arguments */
+	if (arg_count)
+		fprintf (of, "\t\t{ %d, %d, %s__arginfo, FALSE },\n",
+			 arg_count, arg_count, fullname);
+	else
+		fprintf (of, "\t\t{ 0, 0, NULL, FALSE },\n");
+
+	/* ITypes exceptions */
+	if (IDL_OP_DCL (tree).raises_expr)
+		fprintf (of, "\t\t{ %d, %d, %s__exceptinfo, FALSE },\n",
+			 except_count, except_count, fullname);
+	else
+		fprintf (of, "\t\t{ 0, 0, NULL, FALSE },\n");
+
+	/* TypeCode ret */
+	if (IDL_OP_DCL (tree).op_type_spec) {
+		char *type_id;
+
+		type_id = orbit_cbe_get_typespec_str (
+			IDL_OP_DCL (tree).op_type_spec);
+		fprintf (of, "\t\tTC_%s, ", type_id);
+		g_free (type_id);
+	} else
+		fprintf (of, "CORBA_OBJECT_NIL, ");
+
+	/* string name, long name_len */
+	method = IDL_IDENT (IDL_OP_DCL (tree).ident).str;
+	fprintf (of, "\"%s\", %d,\n", method, strlen (method) + 1);
+
+	/* IMethodFlags flags */
+	fprintf (of, "\t\tORBit_I_METHOD_NORMAL");
+
+	if (IDL_OP_DCL(tree).f_oneway)
+		fprintf (of, " | ORBit_I_METHOD_1_WAY");
+
+/* FIXME: re-scan for no_out */
+/*	if (no_out)
+	fprintf (of, " | ORBit_I_METHOD_NO_OUT");*/
+
+	if (IDL_OP_DCL (tree).op_type_spec &&
+	    orbit_cbe_type_is_fixed_length (
+		    IDL_OP_DCL (tree).op_type_spec))
+		fprintf (of, "| ORBit_I_METHOD_RET_FIXED_SIZE");
+
+	fprintf (of, "\n},\n");
+
+	g_free (fullname);
+}
+
+static void
+cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
+{
+	GSList *l;
+	FILE   *of = ci->fh;
+
+	for (l = list; l; l = l->next) {
+		Interface *i = l->data;
+		char      *id;
+		GSList    *m;
+
+		id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
+			IDL_INTERFACE (i->tree).ident), "_", 0);
+
+		for (m = i->methods; m; m = m->next)
+			cc_small_output_method_bits (m->data, id, ci);
+
+		fprintf (of, "static ORBit_IMethod %s__imethods [] = {\n", id);
+
+		for (m = i->methods; m; m = m->next)
+			cc_small_output_method (of, m->data, id);
+
+		fprintf (of, "};\n");
+
+		fprintf (of, "ORBit_IInterface %s__itype = {\n", id);
+		fprintf (of, "\"%s\",", id);
+		fprintf (of, "{%d, %d, %s__imethods, FALSE}\n",
+			 g_slist_length (i->methods),
+			 g_slist_length (i->methods), id);
+		fprintf (of, "};\n\n");
+
+		g_free (id);
+
+		g_slist_free (i->methods);
+		g_free (i);
+	}
+	g_slist_free (list);
+}
+
+static GSList *
+cc_small_build_interfaces (GSList *list, IDL_tree tree)
+{
+	if (!tree)
+		return list;
+
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_MODULE:
+		list = cc_small_build_interfaces (
+			list, IDL_MODULE (tree).definition_list);
+		break;
+	case IDLN_LIST: {
+		IDL_tree sub;
+		for (sub = tree; sub; sub = IDL_LIST (sub).next)
+			list = cc_small_build_interfaces (
+				list, IDL_LIST (sub).data);
+		break;
+	}
+	case IDLN_ATTR_DCL: {
+		OIDL_Attr_Info *ai = tree->data;
+		IDL_tree curitem;
+      
+		for (curitem = IDL_ATTR_DCL (tree).simple_declarations;
+		     curitem; curitem = IDL_LIST (curitem).next) {
+			ai = IDL_LIST (curitem).data->data;
+	
+			list = cc_small_build_interfaces (list, ai->op1);
+			if (ai->op2)
+				list = cc_small_build_interfaces (list, ai->op2);
+		}
+		break;
+	}
+	case IDLN_INTERFACE: {
+		Interface *i = g_new0 (Interface, 1);
+
+		i->tree = tree;
+
+		list = g_slist_prepend (list, i);
+
+		list = cc_small_build_interfaces (list, IDL_INTERFACE(tree).body);
+
+		break;
+	}
+	case IDLN_OP_DCL: {
+		Interface *i;
+
+		g_return_val_if_fail (list != NULL, NULL);
+
+		i = list->data;
+		i->methods = g_slist_append (i->methods, tree);
+		break;
+	}
+	case IDLN_EXCEPT_DCL:
+		break;
+	default:
+		break;
+	}
+
+	return list;
 }
