@@ -1,3 +1,8 @@
+2002-04-02  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(shutdown_orb): impl. we need it to close floating UDS.
+
 2002-04-01  Murray Cumming  <murrayc@usa.net>
  
  	* Added --headerguardprefix option to orbit-idl-2. This allows the
