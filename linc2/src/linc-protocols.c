@@ -18,6 +18,8 @@
 #include "linc-private.h"
 #include "linc-debug.h"
 
+#undef LOCAL_DEBUG
+
 static char linc_tmpdir [PATH_MAX] = "";
 
 /*
@@ -109,16 +111,10 @@ linc_get_tmpdir (void)
 #define LINC_SET_SOCKADDR_LEN(saddr, len)
 #endif
 
-/*
- * FIXME: This is a horribly hacked, utterly nasty and
- * non-threadsafe way to go about life.
- */
 #if defined(AF_INET6) && defined(RES_USE_INET6)
 #define LINC_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
-#define LINC_RESOLV_CLEAR_IPV6   _res.options &= ~RES_USE_INET6
 #else
 #define LINC_RESOLV_SET_IPV6
-#define LINC_RESOLV_CLEAR_IPV6
 #endif
 
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
@@ -136,49 +132,55 @@ get_local_hostname (void)
 	return local_host;
 }
 
+/*
+ * True if succeeded in mapping, else false.
+ */
+static gboolean
+ipv4_addr_from_addr (struct in_addr *dest_addr,
+		     guint8         *src_addr,
+		     int             src_length)
+{
+	if (src_length == 4)
+		memcpy (dest_addr, src_addr, 4);
+
+	else if (src_length == 16) {
+		int i;
+
+#ifdef LOCAL_DEBUG
+		g_warning ("Doing conversion ...");
+#endif
+
+		/* An ipv6 address, might be an IPv4 mapped though */
+		for (i = 0; i < 10; i++)
+			if (src_addr [i] != 0)
+				return FALSE;
+
+		if (src_addr [10] != 0xff ||
+		    src_addr [11] != 0xff)
+			return FALSE;
+
+		memcpy (dest_addr, &src_addr[12], 4);
+	} else
+		return FALSE;
+
+	return TRUE;
+}
+
 static gboolean
 linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 			      const struct sockaddr   *saddr,
 			      LincSockLen              saddr_len)
 {
 	int i;
-	int local_addr_len;
-	char *local_addr_data;
 	static int warned = 0;
-	struct hostent *local_hostent, **p;
-	static struct hostent *hostents[2] = { NULL, NULL };
+	static struct hostent *local_hostent;
 
 	g_assert (saddr->sa_family == proto->family);
 
-	/*
-	 * FIXME: gethostbyname2 returns a 16 byte IPv6 mapped IPv4
-	 * address, and it is not know how to compare this reliably
-	 * with an IPv4 address. So if we have IPv6 enabled we have
-	 * to talk to ourselves (and other ORBs) via that in the
-	 * local case.
-	 */
-	switch (proto->family) {
-	case AF_INET:
-		LINC_RESOLV_CLEAR_IPV6;
-		p = &hostents[0];
-		local_addr_len = 4;
-		local_addr_data = (char *) &((struct sockaddr_in *)saddr)->sin_addr.s_addr;
-		break;
-#ifdef AF_INET6
-	case AF_INET6:
+	if (!local_hostent) {
 		LINC_RESOLV_SET_IPV6;
-		p = &hostents[1];
-		local_addr_len = 16;
-		local_addr_data = (char *) &((struct sockaddr_in6 *)saddr)->sin6_addr.s6_addr;
-		break;
-#endif
-	default:
-		return FALSE;
+		local_hostent = gethostbyname (get_local_hostname ());
 	}
-
-	if (!*p)
-		*p = gethostbyname (get_local_hostname ());
-	local_hostent = *p;
 
 	if (!local_hostent) {
 		if (!warned++)
@@ -190,27 +192,53 @@ linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 	if (!local_hostent->h_addr_list)
 		g_error ("No address for local host");
 
-	if (local_hostent->h_addrtype != saddr->sa_family) {
-		if (!warned++)
-			g_warning ("FIXME: can't compare different family "
-				   "address types for locality");
-		return FALSE;
-	}
+	if (proto->family != AF_INET) {
+#ifdef AF_INET6
+		if (proto->family == AF_INET6 &&
+		    local_hostent->h_addrtype != AF_INET6)
+			return FALSE; /* can connect via IPv4 */
 
-	if (local_hostent->h_length != local_addr_len) {
-		if (!warned++)
-			g_warning ("FIXME: can't compare different length "
-				   "addresses (%d %d)", local_addr_len,
-				   local_hostent->h_length);
+		if (proto->family != AF_INET6)
+			return FALSE;
+#else
 		return FALSE;
+#endif
 	}
 
 	for (i = 0; local_hostent->h_addr_list [i]; i++) {
 
-		if (!memcmp (local_hostent->h_addr_list [i],
-			     local_addr_data, local_addr_len))
+		if (proto->family == AF_INET) {
+			struct in_addr ipv4_addr;
+			
+			if (!ipv4_addr_from_addr (&ipv4_addr,
+						  local_hostent->h_addr_list [i],
+						  local_hostent->h_length))
+				continue;
+
+			if (!memcmp (&ipv4_addr, 
+				     &((struct sockaddr_in *)saddr)->sin_addr.s_addr, 4)) {
+#ifdef LOCAL_DEBUG
+				g_warning ("local ipv4 address");
+#endif
+				return TRUE;
+			}
+
+		}
+#ifdef AF_INET6
+		else if (!memcmp (local_hostent->h_addr_list [i],
+				  &((struct sockaddr_in6 *)saddr)->sin6_addr.s6_addr,
+				  local_hostent->h_length)) {
+#ifdef LOCAL_DEBUG
+			g_warning ("local ipv6 address");
+#endif
 			return TRUE;
+		}
+#endif
 	}
+
+#ifdef LOCAL_DEBUG
+	g_warning ("No match over all");
+#endif
 
 	return FALSE;
 }
@@ -255,20 +283,20 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 	saddr->sin_family = AF_INET;
 	saddr->sin_port   = htons (atoi (portnum));
 
+	LINC_RESOLV_SET_IPV6;
 	if (!(_res.options & RES_INIT))
 		res_init();
 
-	LINC_RESOLV_CLEAR_IPV6;
-
 	host = gethostbyname (hostname);
-	if (!host) {
+	if (!host ||
+	    !ipv4_addr_from_addr (&saddr->sin_addr,
+				  (guint8 *)host->h_addr_list [0],
+				  host->h_length)) {
 		g_free (saddr);
 		return NULL;
 	}
 
-	memcpy (&saddr->sin_addr, host->h_addr_list[0], sizeof (struct in_addr));
-
-	return (struct sockaddr *)saddr;
+	return (struct sockaddr *) saddr;
 }
 #endif /* AF_INET */
 
@@ -316,7 +344,6 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 		res_init();
 
 	LINC_RESOLV_SET_IPV6;
-
 	host = gethostbyname (hostname);
 	if (!host || host->h_addrtype != AF_INET6) {
 		g_free (saddr);
@@ -477,6 +504,7 @@ linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
 		if (!(local_host = get_local_hostname ()))
 			return FALSE;
 
+		LINC_RESOLV_SET_IPV6;
 		host = gethostbyname (local_host);
 	}
 

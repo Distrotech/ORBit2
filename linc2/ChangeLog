@@ -1,3 +1,17 @@
+2002-06-18  Michael Meeks  <michael@ximian.com>
+
+	* test/test-linc.c (test_local_ipv4): beef up &
+	(test_local_ipv6): split out of
+	(test_local): here.
+
+	* src/linc-protocols.c
+	(linc_protocol_get_sockaddr_ipv4): upd.
+	(ipv4_addr_from_addr): impl.
+	(LINC_RESOLV_CLEAR_IPV6): kill - horrible,
+	vile, out of spec. hack.
+	(linc_protocol_get_sockinfo_ipv46): upd.
+	(linc_protocol_is_local_ipv46): re-re-write.
+
 2002-06-17  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-protocols.c
