@@ -10,12 +10,19 @@ gboolean orbit_idl_backend_output (OIDL_Run_Info *rinfo,
 				   IDL_tree       tree);
 
 /* Utils */
-void orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns);
-void orbit_idl_print_node(IDL_tree node, int indent_level);
-void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
-gboolean orbit_cbe_type_contains_complex(IDL_tree ts);
-
-void orbit_idl_check_oneway_op (IDL_tree op);
+void     orbit_idl_attr_fake_ops         (IDL_tree      attr,
+					  IDL_ns        ns);
+void     orbit_idl_print_node            (IDL_tree      node,
+					  int           indent_level);
+void     IDL_tree_traverse_parents       (IDL_tree      p,
+					  GFunc         f,
+					  gconstpointer func_data);
+void     IDL_tree_traverse_parents_full  (IDL_tree      p,
+					  GFunc         f,
+					  gconstpointer func_data, 
+					  gboolean      include_self);
+gboolean orbit_cbe_type_contains_complex (IDL_tree      ts);
+void     orbit_idl_check_oneway_op       (IDL_tree      op);
 
 typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
 gint oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice);

@@ -1,5 +1,19 @@
 2003-05-12  Michael Meeks  <michael@ximian.com>
 
+	* src/idl-compiler/orbit-idl-utils.c
+	(IDL_tree_traverse_parents_full): split from
+	(IDL_tree_traverse_parents): here.
+
+	* include/orbit/poa/poa-types.h (ORBIT_VEPV_OFFSET): impl.
+
+	* src/idl-compiler/orbit-idl-c-skels.c
+	(cbe_skel_interface_print_vepvmap_offsets): impl.
+	(cbe_skel_do_interface): upd to call skel_class_register.
+
+	* src/orb/poa/poa.c (ORBit_classinfo_lookup): hold lock.
+	(ORBit_skel_class_register): impl. for thread-safe skels
+	(ORBit_poa_init): init lock.
+
 	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):
 	bin current_invocations->data assertion; we can get
 	here without pushing the current invocation; was

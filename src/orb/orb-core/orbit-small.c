@@ -1349,4 +1349,3 @@ ORBit_connection_set_max_buffer (ORBitConnection *cnx,
 
 	linc_connection_set_max_buffer (lcnx, max_buffer_bytes);
 }
-

@@ -298,15 +298,13 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Inf
 }
 
 static void
-cbe_skel_interface_print_vepvmap_line(IDL_tree node, OIDL_C_Info *ci)
+cbe_skel_interface_print_vepvmap_offsets (IDL_tree node, OIDL_C_Info *ci)
 {
-  char *id;
-  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(node).ident),
-			       "_", 0);
-  fprintf(ci->fh, "class_info.vepvmap[%s__classid]"
-    " = (((char*)&(fakevepv->%s_epv)) - ((char*)(fakevepv)))/sizeof(GFunc);\n",
-    id, id);
-  g_free(id);
+	char *id;
+	id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_INTERFACE (node).ident), "_", 0);
+	fprintf (ci->fh, "(CORBA_unsigned_long) %s__classid,\n", id);
+	fprintf (ci->fh, "ORBIT_VEPV_OFFSET (, %s_epv),\n", id);
+	g_free (id);
 }
 
 static void
@@ -336,17 +334,9 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fprintf(ci->fh,"\"%s\", &%s__classid, NULL, &%s__iinterface};\n",
 	  IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id, id);
-  fprintf(ci->fh, "   POA_%s__vepv *fakevepv = NULL;", id);
 
-  {
-  	const char *finref = 
-      		"((PortableServer_ServantBase*)servant)->vepv[0]->finalize";
-  	fprintf(ci->fh, "if ( %s == 0 ) { ", finref);
-      	fprintf(ci->fh, "%s = POA_%s__fini;\n", finref, id);
-  	fprintf(ci->fh, "}\n");
-  }
-  fprintf(ci->fh,
-	  "  PortableServer_ServantBase__init(((PortableServer_ServantBase *)servant), env);\n");
+  fprintf(ci->fh,"  PortableServer_ServantBase__init ("
+	         "       ((PortableServer_ServantBase *)servant), env);\n");
 
   for(curitem = IDL_INTERFACE(tree).inheritance_spec; curitem;
       curitem = IDL_LIST(curitem).next) {
@@ -355,14 +345,13 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     fprintf(ci->fh, "  POA_%s__init(servant, env);\n", id2);
     g_free(id2);
   }
+
   /* registering after other __inits() makes the classids increment nicely. */
-  fprintf(ci->fh, "  ORBit_classinfo_register(&class_info);\n");
-  /* Set classinfo after other __inits() for most derived interface. */
-  fprintf(ci->fh, "  ORBIT_SERVANT_SET_CLASSINFO(servant,&class_info);\n");
-  fprintf(ci->fh, "\nif (!class_info.vepvmap) {\n");
-  fprintf(ci->fh, "   class_info.vepvmap = g_new0 (ORBit_VepvIdx, %s__classid + 1);\n", id);
-  IDL_tree_traverse_parents(tree, (GFunc) cbe_skel_interface_print_vepvmap_line, ci);
-  fprintf(ci->fh, "}\n");
+  fprintf (ci->fh, "   ORBit_skel_class_register (&class_info,\n");
+  fprintf (ci->fh, "   servant, POA_%s__fini,\n", id);
+  fprintf (ci->fh, "   ORBIT_VEPV_OFFSET (POA_%s__vepv, %s_epv),\n", id, id);
+  IDL_tree_traverse_parents_full (tree, (GFunc) cbe_skel_interface_print_vepvmap_offsets, ci, FALSE);
+  fprintf (ci->fh, "   (CORBA_unsigned_long) 0);");
 
   fprintf(ci->fh, "}\n\n");
 

@@ -392,24 +392,36 @@ IDL_tree_traverse_helper(IDL_tree p, GFunc f,
 }
 
 void
-IDL_tree_traverse_parents(IDL_tree p,
-			  GFunc f,
-			  gconstpointer func_data)
+IDL_tree_traverse_parents_full (IDL_tree      p,
+				GFunc         f,
+				gconstpointer func_data,
+				gboolean      include_self)
 {
-	GHashTable *visited_nodes = g_hash_table_new(NULL, g_direct_equal);
+	GHashTable *visited_nodes = g_hash_table_new (NULL, g_direct_equal);
 
-	if(!(p && f))
+	if (!(p && f))
 		return;
 
-	if(IDL_NODE_TYPE(p) != IDLN_INTERFACE)
-		p = IDL_get_parent_node(p, IDLN_INTERFACE, NULL);
+	if (IDL_NODE_TYPE(p) != IDLN_INTERFACE)
+		p = IDL_get_parent_node (p, IDLN_INTERFACE, NULL);
 
-	if(!p)
+	if (!p)
 		return;
 
-	IDL_tree_traverse_helper(p, f, func_data, visited_nodes);
+	if (!include_self)
+		g_hash_table_insert (visited_nodes, p, p);
 
-	g_hash_table_destroy(visited_nodes);
+	IDL_tree_traverse_helper (p, f, func_data, visited_nodes);
+
+	g_hash_table_destroy (visited_nodes);
+}
+
+void
+IDL_tree_traverse_parents (IDL_tree p,
+			   GFunc f,
+			   gconstpointer func_data)
+{
+	IDL_tree_traverse_parents_full (p, f, func_data, TRUE);
 }
 
 /* For use by below function */
