@@ -589,8 +589,8 @@ IOP_start_profiles (CORBA_ORB orb)
 
 		csets->data.ForCharData.native_code_set = IOP_PROFILES_CODE_SET_UTF8;
 		csets->data.ForCharData.conversion_code_sets = empty_conv_codesets;
-		csets->data.ForCharData.native_code_set = IOP_PROFILES_CODE_SET_UTF16;
-		csets->data.ForCharData.conversion_code_sets = empty_conv_codesets;
+		csets->data.ForWcharData.native_code_set = IOP_PROFILES_CODE_SET_UTF16;
+		csets->data.ForWcharData.conversion_code_sets = empty_conv_codesets;
 
 		mci->components = g_slist_append (mci->components, csets);
 	}
