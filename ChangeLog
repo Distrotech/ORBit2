@@ -1,3 +1,18 @@
+2002-06-13  Michael Meeks  <michael@ximian.com> &
+	    Bill Haneman <bill.haneman@sun.com>
+
+	* test/everything/client.c (testPingPong):
+	add client limited stack smash test.
+
+	* test/everything/pingServer.c
+	(PingPongServer_opOneWayCallback): impl.
+	(PingPongServer_opRoundTrip): impl.
+
+2002-06-13  Bill Haneman <bill.haneman@sun.com>
+
+	* test/everything/Makefile.am: fix
+	DEPENDENCIES typo.
+
 2002-06-13  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/GIOP/giop-recv-buffer.c: (handle_reply):

@@ -258,13 +258,15 @@ module test {
 	};
 
 	interface PingPongServer {
-		oneway void opSleep  (in string large_string);
-		oneway void opOneWay (in long l);
-		long        pingPong (in PingPongServer replyTo,
-				      in long idx);
-		void        set      (in PingPongServer reg,
-				      in string         name);
-		Object      get      (in string         name);
+		oneway void opSleep          (in string large_string);
+		oneway void opOneWay         (in long l);
+		oneway void opOneWayCallback (in PingPongServer obj);
+		void        opRoundTrip      ();
+		long        pingPong         (in PingPongServer replyTo,
+				              in long idx);
+		void        set              (in PingPongServer reg,
+					      in string         name);
+		Object      get              (in string         name);
 	};
 };
 

@@ -29,7 +29,7 @@ LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 #  -lefence
 
 client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
-client_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
+client_DEPENDENCIES=${EVERYTHING_BUILT} $(included_src)
 client_LDADD = $(LDADD)
 client_LDFLAGS = -static -module
 
@@ -54,7 +54,7 @@ Everything_module_la_SOURCES = \
 Everything_module_la_LIBADD = \
         $(top_builddir)/src/orb/libORBit-2.la
 server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
-server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
+server_DEPENDENCIES=${EVERYTHING_BUILT} $(included_src)
 server_LDFLAGS = -static -module
 
 IDL_FLAGS= --showcpperrors --add-imodule
