@@ -1,3 +1,7 @@
+2002-02-28  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/orbit-debug.h: fix typo.
+
 2002-02-26  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c
