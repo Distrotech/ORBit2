@@ -19,10 +19,10 @@ main(int argc, char *argv[])
    	  CORBA::Object_var obj = orb->string_to_object(argv[1]);
 
   	  hellomodule::Hello_var ptr = hellomodule::Hello::_narrow(obj);
-g_warning("debug1\n");
+
   	  const char* message = "Hello server, from client!";
   	  const char* reply = ptr->helloWorld(message);
-g_warning("debug2\n");
+
   	  std::cout << "Client: Reply was \"" << reply << "\"" << std::endl;
     }
     catch(const CORBA::Exception& ex)

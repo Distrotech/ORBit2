@@ -54,7 +54,13 @@ IDLPassStubs::runPass() {
 	vector<IDLInterface *>::iterator
 	first = m_state.m_interfaces.begin(), last = m_state.m_interfaces.end();
 	while (first != last)
-		doInterface(**first++);
+	{
+		IDLInterface* pInterface = *first;
+		if(pInterface)
+			doInterface(*pInterface);
+
+		first++;
+	}
 	
 	runJobs();
 
@@ -310,7 +316,8 @@ IDLPassStubs::doInterfaceDownCall(IDLInterface &iface,IDLInterface &of) {
 
 
 void 
-IDLPassStubs::doInterface(IDLInterface &iface) {	
+IDLPassStubs::doInterface(IDLInterface &iface)
+{
 	string ifname = iface.getCPPIdentifier();
 
 	string ns_begin,ns_end;
@@ -326,20 +333,23 @@ IDLPassStubs::doInterface(IDLInterface &iface) {
 	// class declaration
 	m_header
 	<< indent << "class " << iface.getCPPStub() << " : ";
-	
-	if (iface.m_bases.size() > 0) 
-		m_header
-		<< "public " << iface.m_bases[0]->getQualifiedCPPStub();
+
+	string base_name;
+	if (iface.m_bases.size() > 0)
+		base_name = iface.m_bases[0]->getQualifiedCPPStub();
 	else
-		m_header
-		<< "public "IDL_CORBA_NS "::Object";
+		base_name = IDL_CORBA_NS "::Object";
+	
+
+	m_header
+	<< "public " << base_name;
 	
 	// order matters! with gcc, even the empty type container classes
 	// have a non-empty binary footprint (size 1). thus they must go at
 	// the end, or else all we get is segfaults.
-    m_header
+	m_header
 	<< ", public " << iface.getQualifiedCPPIdentifier() << " {" << endl;
-
+	
 	// begin orbitcpp internal section
 	m_header << indent << "// These should really be private, but we make them protected" << endl;
 	m_header << indent << "//  to stop the compiler from generating warnings" << endl;
@@ -379,11 +389,10 @@ IDLPassStubs::doInterface(IDLInterface &iface) {
 	}
 	*/
 
-	
   //Constructor implemention:
   m_module <<
   IDL_IMPL_NS_ID << "::" << IDL_IMPL_STUB_NS_ID << iface.getQualifiedCPPIdentifier() << "::" << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject)" << endl
-	<< ": " << iface.m_bases[0]->getQualifiedCPPStub() << "(cobject)" << endl
+	<< ": " << base_name << "(cobject)" << endl
 	<< "{}" << endl
   << endl;
 
