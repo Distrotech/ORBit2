@@ -1,5 +1,10 @@
 2001-08-27 Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/poa/poa.c(ORBit_POA_setup_root): release
+	the policy.
+
+2001-08-27 Mark McLoughlin <mark@skynet.ie>
+
 	* configure.in, ORBit-2.0.pc.in: removed
 	THREADLIBS stuff. Handled by linc.
 
