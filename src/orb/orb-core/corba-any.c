@@ -608,9 +608,14 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		else
 			p->_length = *(CORBA_unsigned_long *)buf->cur;
 		buf->cur += sizeof (CORBA_long);
-		if (tc->subtypes[0]->kind == CORBA_tk_octet ||
-		    tc->subtypes[0]->kind == CORBA_tk_boolean ||
-		    tc->subtypes[0]->kind == CORBA_tk_char) {
+
+		p->_maximum = p->_length;
+		if (p->_length == 0)
+			p->_buffer = NULL;
+
+		else if (tc->subtypes[0]->kind == CORBA_tk_octet ||
+			 tc->subtypes[0]->kind == CORBA_tk_boolean ||
+			 tc->subtypes[0]->kind == CORBA_tk_char) {
 			/* This special-casing could be taken further to apply to
 			   all atoms... */
 			if ((buf->cur + p->_length) > buf->end ||
