@@ -4,7 +4,8 @@ ORBit is part of the GNU project, and is a GNU program. For more
 information on the Free Software Foundation and GNU, visit
 http://www.gnu.org/
 
-The ORBit web page is currently at http://www.labs.redhat.com/orbit/
+To checkout ORBit2 grab 'linc' and 'ORBit2' from anoncvs, for
+more details on Gnome CVS see http://developer.gnome.org/
 
 Please read the HACKING file for information on where to send
 bug-reports and/or patches.
