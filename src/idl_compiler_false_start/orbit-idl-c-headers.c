@@ -109,6 +109,7 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     fprintf(ci->fh, "#define %s__free CORBA_Object__free\n", fullname);
     fprintf(ci->fh, "typedef CORBA_Object %s;\n", fullname);
     fprintf(ci->fh, "extern CORBA_unsigned_long %s__classid;\n", fullname);
+    ch_type_alloc_and_tc(tree, ci, FALSE);
 
     fprintf(ci->fh, "#endif\n");
     g_free(fullname);
