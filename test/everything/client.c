@@ -25,6 +25,7 @@
 
 #include "everything.h"
 #include "constants.h"
+#include "orb-core/orb-core-private.h"
 
 #define NUM_RUNS 1
 
@@ -1562,6 +1563,26 @@ run_tests (test_TestFactory   factory,
 #endif
 }
 
+static void
+dump_protos (void)
+{
+	int enabled_count = 0;
+	LINCProtocolInfo *info;
+
+	for (info = linc_protocol_all (); info->name; info++) {
+		gboolean enabled;
+
+		if ((enabled = ORBit_proto_use (info->name)))
+			enabled_count++;
+
+		fprintf (stderr, "Protocol %8s: %s\n",
+			 info->name, 
+			 enabled ? "enabled" : "disabled");
+	}
+
+	g_assert (enabled_count > 0);
+}
+
 int
 main (int argc, char *argv [])
 {
@@ -1579,6 +1600,8 @@ main (int argc, char *argv [])
 	test_initial_references (global_orb, &ev);
 
 	free (malloc (8)); /* -lefence */
+
+	dump_protos ();
 
 	/* In Proc ... */
 	in_proc = TRUE;
