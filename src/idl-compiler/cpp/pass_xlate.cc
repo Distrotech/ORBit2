@@ -70,7 +70,7 @@ IDLPassXlate::runPass() {
 
 
 void 
-IDLPassXlate::doTypedef(IDL_tree node,IDLScope &scope) {
+IDLPassXlate::doTypedef(IDL_tree node, IDLScope &scope) {
 	string id;
 
 	IDL_tree dcl_list = IDL_TYPE_DCL(node).dcls;
@@ -89,7 +89,7 @@ IDLPassXlate::doTypedef(IDL_tree node,IDLScope &scope) {
 			m_header << "static ";
 		m_header
 		<< "const CORBA::TypeCode_ptr _tc_" << td.getCPPIdentifier() << " = " 
-		<< "(CORBA::TypeCode_ptr)&"IDL_IMPL_C_NS"::TC_" + td.getQualifiedCIdentifier() + "_struct;" << endl;
+		<< "(CORBA::TypeCode_ptr)TC_" + td.getQualifiedCIdentifier() + ";" << endl;
 		dcl_list = IDL_LIST(dcl_list).next;
 		m_header << endl;
 	}
@@ -155,7 +155,7 @@ IDLPassXlate::doStruct(IDL_tree node,IDLScope &scope) {
 		m_header << "static ";
 	m_header
 	<< "const CORBA::TypeCode_ptr _tc_" << idlStruct.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)&"IDL_IMPL_C_NS"::TC_" + idlStruct.getQualifiedCIdentifier() + "_struct;" << endl;
+	<< "(CORBA::TypeCode_ptr)TC_" + idlStruct.getQualifiedCIdentifier() + ";" << endl;
 	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(idlStruct, m_state, *this) );
 }
 
@@ -306,7 +306,7 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	
 	m_header
 	<< indent << "const CORBA::TypeCode_ptr _tc_" << idlUnion.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)&"IDL_IMPL_C_NS"::TC_" + idlUnion.getQualifiedCIdentifier() + "_struct;" << endl;
+	<< "(CORBA::TypeCode_ptr)TC_" + idlUnion.getQualifiedCIdentifier() + ";" << endl;
 
 	ORBITCPP_MEMCHECK( new IDLWriteUnionAnyFuncs(idlUnion, m_state, *this) );
 }
@@ -338,7 +338,7 @@ IDLPassXlate::doEnum(IDL_tree node,IDLScope &scope) {
 		m_header << "static ";
 	m_header
 	<< "const CORBA::TypeCode_ptr _tc_" << idlEnum.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)&"IDL_IMPL_C_NS"::TC_" + idlEnum.getQualifiedCIdentifier() + "_struct;" << endl;
+	<< "(CORBA::TypeCode_ptr)TC_" + idlEnum.getQualifiedCIdentifier() + ";" << endl;
 	ORBITCPP_MEMCHECK( new IDLWriteEnumAnyFuncs(idlEnum, m_state, *this) );
 }
 
@@ -502,7 +502,7 @@ IDLPassXlate::doException(IDL_tree node,IDLScope &scope) {
 		m_header << "static ";
 	m_header
 	<< "const CORBA::TypeCode_ptr _tc_" << except.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)&"IDL_IMPL_C_NS"::TC_" + except.getQualifiedCIdentifier() + "_struct;" << endl;
+	<< "(CORBA::TypeCode_ptr)TC_" + except.getQualifiedCIdentifier() + ";" << endl;
 
 	ORBITCPP_MEMCHECK( new IDLWriteExceptionAnyFuncs(except, m_state, *this) );
 }
@@ -623,7 +623,7 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 
 	m_header
 	<< indent << "const CORBA::TypeCode_ptr _tc_" << iface.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)&"IDL_IMPL_C_NS"::TC_" + iface.getQualifiedCIdentifier() + "_struct;" << endl;
+	<< "(CORBA::TypeCode_ptr)TC_" + iface.getQualifiedCIdentifier() + ";" << endl;
 
 	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
 }
@@ -774,8 +774,8 @@ void IDLWriteAnyFuncs::writeInsertFunc(ostream& ostr, Indent &indent, FuncType f
 	<< "inline void operator<<=(CORBA::Any& the_any, " << ident
 	<< " val) {" << endl;
 	ostr << indent << "the_any." << any_func 
-	<< "( (CORBA::TypeCode_ptr)&" IDL_IMPL_C_NS "::TC_"
-	<< ctype << "_struct, "
+	<< "( (CORBA::TypeCode_ptr)TC_"
+	<< ctype << ", "
 	<< any_arg << ");" ;
 	ostr << --indent << endl << "}" << endl << endl;
 }
@@ -797,8 +797,8 @@ void IDLWriteAnyFuncs::writeExtractFunc(ostream& ostr, Indent &indent, FuncType 
 	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " << ident
 	<< " val) {" << endl;
 	ostr << ++indent << "return the_any." << any_func 
-	<< "( (CORBA::TypeCode_ptr)&" IDL_IMPL_C_NS "::TC_"
-	<< ctype << "_struct, "
+	<< "( (CORBA::TypeCode_ptr)TC_"
+	<< ctype << ", "
 	<< any_arg << ");" ;
 	ostr << --indent << endl << "}" << endl << endl;
 }
@@ -809,9 +809,9 @@ IDLWriteExceptionAnyFuncs::run() {
 	<< "inline void operator <<=(CORBA::Any& the_any, " 
 	<< m_element.getQualifiedCPPIdentifier() << " const & val) {" << endl;
 	m_header << ++indent
-	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)&" IDL_IMPL_C_NS "::TC_"
-	<< m_element.getQualifiedCIdentifier() << "_struct, const_cast< "
-	<< m_element.getQualifiedCPPIdentifier() << "&>(val)._orbitcpp_pack(),CORBA_FALSE);" << endl;
+	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)TC_"
+	<< m_element.getQualifiedCIdentifier() << ", const_cast< "
+	<< m_element.getQualifiedCPPIdentifier() << "&>(val)._orbitcpp_pack(), CORBA_FALSE);" << endl;
 	m_header
 	  << --indent << endl << "}" << endl;
 
@@ -821,8 +821,8 @@ IDLWriteExceptionAnyFuncs::run() {
 	m_header
 	<< ++indent << "const ::_orbitcpp::c::" << m_element.getQualifiedCIdentifier() << " *ex;" << endl;
 	m_header
-	<< indent << "if( the_any.extract_ptr( (CORBA::TypeCode_ptr)&::_orbitcpp::c::TC_"
-	<< m_element.getQualifiedCIdentifier() << "_struct, ex)){" << endl;
+	<< indent << "if( the_any.extract_ptr( (CORBA::TypeCode_ptr)TC_"
+	<< m_element.getQualifiedCIdentifier() << ", ex)){" << endl;
 	m_header
 	<< ++indent << "val._orbitcpp_unpack(*ex);" << endl;
 	m_header
@@ -845,8 +845,8 @@ IDLWriteArrayAnyFuncs::run()
 	<< "inline void operator <<=(CORBA::Any& the_any, " 
 	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr) {" << endl;
 	m_header << ++indent
-	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)&" IDL_IMPL_C_NS "::TC_"
-	<< m_dest.getQualifiedCIdentifier() << "_struct, ("
+	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)TC_"
+	<< m_dest.getQualifiedCIdentifier() << ", ("
 	<< m_dest.getQualifiedCPPIdentifier() << "_slice*)_arr, "
 	<< "!_arr._nocopy());" << --indent << endl << "}" << endl;
 	
@@ -858,8 +858,8 @@ IDLWriteArrayAnyFuncs::run()
 	<< ++indent
 	<< m_dest.getQualifiedCPPIdentifier() << "_slice const* tmp;" << endl 
 	<< indent << "CORBA::Boolean _retval;" << endl
-	<< indent << "_retval = the_any.extract_ptr( (CORBA::TypeCode_ptr)&" IDL_IMPL_C_NS "::TC_"
-	<< m_dest.getQualifiedCIdentifier() << "_struct, tmp);" << endl
+	<< indent << "_retval = the_any.extract_ptr( (CORBA::TypeCode_ptr)TC_"
+	<< m_dest.getQualifiedCIdentifier() << ", tmp);" << endl
 	<< indent << "_arr = (" << m_dest.getQualifiedCPPIdentifier() 
     << "_slice*)tmp;" << endl << indent << "return _retval;" << endl;
 	m_header

@@ -29,6 +29,7 @@
 
 using namespace _orbitcpp;
 
+//See "C++ Language Mapping Specification", section 1.32 "TypeCode"
 
 CORBA::TypeCode_ptr CORBA::_tc_null =
 	reinterpret_cast <CORBA::TypeCode_ptr> (TC_null);
