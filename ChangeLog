@@ -1,5 +1,29 @@
 2005-02-14  Tor Lillqvist  <tml@novell.com>
 
+	* src/orb/orb-core/orb-core-private.h
+	* src/orb/util/orbit-options.c: On Win32, #undef the compile-time
+	pathnames from the Makefiles, instead use run-time strings set up
+	by DllMain(), see below.
+
+	* src/orb/orb-core/corba-orb.c (DllMain): New function. When
+	ORBit2 is built as a DLL on Win32 (as it should be), this function
+	is called automatically when the DLL is loaded. It fetches the
+	full path of the DLL, and deduces the ORBit2 installation folder
+	from that. Then it forms the type library directory and system
+	orbitrc path names. Some complexity needed by it having to work
+	both when built with GLib 2.4 or 2.6.
+
+	* src/orb/orb-core/orbit-typelib.c (ORBit_small_load_typelib): Use
+	GLib API to check pathnames, for improved Win32 portability.
+
+	* src/orb/util/orbit-options.c (ORBit_option_rc_parse): When built
+	against GLib 2.6, use g_fopen().
+	(ORBit_option_parse): Guard against g_get_home_dir() returning
+	NULL.
+
+	* src/orb/util/genrand.c (ORBit_genuid_init): Bypass the attempts
+	to use /dev/urandom on Win32.
+
 	* src/orb/orb-core/corba-any.c (ORBit_marshal_value): Don't do any
 	post-realignment for array elements. We don't do that for array
 	elements in ORBit_demarshal_value() either, and the marshalling of
