@@ -1,3 +1,10 @@
+Version 0.7.0
+
+	* fixes
+		+ PATH_MAX for HP/UX (Marcus Brinkmann)
+		+ kill dodgy locking path on EOF (Michael)
+		+ IPv6 name resolution (Elliot)
+
 Version 0.5.3
 
 	* fixes
