@@ -1236,6 +1236,9 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 
 	CORBA_exception_init (&env);
 
+	/* FIXME: we can return unexpected excptions from oneway
+	   methods like this ! */
+
 	if (!ORBit_POA_okey_to_objid (poa, objkey, &oid)) {
 		CORBA_exception_set_system (&env, 
 					    ex_CORBA_OBJECT_NOT_EXIST,
@@ -1280,9 +1283,9 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 		GIOPSendBuffer *reply_buf;
 
 		reply_buf = giop_send_buffer_use_reply ( 
-					recv_buffer->connection->giop_version,
-					giop_recv_buffer_get_request_id (recv_buffer),
-					CORBA_SYSTEM_EXCEPTION);
+			recv_buffer->connection->giop_version,
+			giop_recv_buffer_get_request_id (recv_buffer),
+			CORBA_SYSTEM_EXCEPTION);
 		ORBit_send_system_exception (reply_buf, &env);
 		giop_send_buffer_write (reply_buf, recv_buffer->connection);
 		giop_send_buffer_unuse (reply_buf);

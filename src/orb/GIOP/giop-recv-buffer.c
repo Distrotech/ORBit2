@@ -793,9 +793,20 @@ handle_reply (GIOPRecvBuffer *buf)
 	} else {
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-		g_warning ("We received an unexpected reply:");
-		giop_dump_recv (buf);
-		giop_recv_buffer_unuse(buf);
+		if (giop_recv_buffer_reply_status (buf) ==
+		    CORBA_SYSTEM_EXCEPTION) {
+			/*
+			 * Unexpected - but sometimes a oneway
+			 * method invocation on a de-activated
+			 * object results in us getting a bogus
+			 * system exception in reply.
+			 */
+ 		} else {
+			g_warning ("We received an unexpected reply:");
+			giop_dump_recv (buf);
+		}
+
+		giop_recv_buffer_unuse (buf);
 	}
 }
 

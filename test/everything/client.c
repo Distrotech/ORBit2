@@ -1007,7 +1007,7 @@ testMisc (test_TestFactory   factory,
 		CORBA_exception_free (ev);
 	}
 
-	if (!factory->adaptor_obj) {
+	if (!in_proc) {
 		test_BasicServer objref;
 
 		objref = test_TestFactory_getBasicServer (factory, ev);
@@ -1056,7 +1056,7 @@ testMisc (test_TestFactory   factory,
 	/*
 	 * dead reference check
 	 */
-	if (!factory->adaptor_obj) {
+	if (!in_proc) {
 		test_DeadReferenceObj obj;
 
 		obj = test_TestFactory_createDeadReferenceObj (factory, ev);
@@ -1066,6 +1066,38 @@ testMisc (test_TestFactory   factory,
 
 		test_DeadReferenceObj_test (obj, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+		CORBA_Object_release (obj, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	} else { /* Lets do some things on a de-activated ref */
+		test_BasicServer         obj;
+		PortableServer_ObjectId *oid;
+		POA_test_BasicServer     servant = {
+			NULL, &BasicServer_vepv
+		};
+
+		obj = create_object (
+			global_poa, POA_test_BasicServer__init,
+			&servant, ev);
+
+		oid = PortableServer_POA_servant_to_id (
+			global_poa, &servant, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		PortableServer_POA_deactivate_object (
+			global_poa, oid, ev);
+		g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+		CORBA_free (oid);
+
+		test_BasicServer_opException (obj, ev);
+		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+		g_assert (!strcmp (ev->_id, ex_CORBA_OBJECT_NOT_EXIST));
+		CORBA_exception_free (ev);
+
+		test_BasicServer_opOneWay (obj, "Foo", ev);
+		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+		g_assert (!strcmp (ev->_id, ex_CORBA_OBJECT_NOT_EXIST));
+		CORBA_exception_free (ev);
 
 		CORBA_Object_release (obj, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
