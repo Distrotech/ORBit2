@@ -686,57 +686,57 @@ linc_protocol_tcp_setup (int                   fd,
 static LINCProtocolInfo static_linc_protocols[] = {
 #if defined(AF_INET)
 	{
-	.name             = "IPv4",
-	.family           = AF_INET,
-	.addr_len         = sizeof (struct sockaddr_in),
-	.stream_proto_num = IPPROTO_TCP,
-	.flags            = 0,
-	.setup            = linc_protocol_tcp_setup,
-	.destroy          = NULL,
-	.get_sockaddr     = linc_protocol_get_sockaddr_ipv4,
-	.get_sockinfo     = linc_protocol_get_sockinfo_ipv4
+	"IPv4", 			/* name */
+	AF_INET, 			/* family */
+	sizeof (struct sockaddr_in), 	/* addr_len */
+	IPPROTO_TCP, 			/* stream_proto_num */
+	0, 				/* flags */
+	linc_protocol_tcp_setup, 	/* setup */
+	NULL, 				/* destroy */
+	linc_protocol_get_sockaddr_ipv4,/* get_sockaddr */
+	linc_protocol_get_sockinfo_ipv4 /* get_sockinfo */
 	},
 #endif
 #if defined(AF_INET6)
 	{ 
-	.name             = "IPv6",
-	.family           = AF_INET6,
-	.addr_len         = sizeof (struct sockaddr_in6),
-	.stream_proto_num = IPPROTO_TCP,
-	.flags            = 0,
-	.setup            = linc_protocol_tcp_setup,
-	.destroy          = NULL,
-	.get_sockaddr     = linc_protocol_get_sockaddr_ipv6,
-	.get_sockinfo     = linc_protocol_get_sockinfo_ipv6
+	"IPv6", 			/* name */
+	AF_INET6, 			/* family */
+	sizeof (struct sockaddr_in6), 	/* addr_len */
+	IPPROTO_TCP, 			/* stream_proto_num */
+	0, 				/* flags */
+	linc_protocol_tcp_setup, 	/* setup */
+	NULL, 				/* destroy */
+	linc_protocol_get_sockaddr_ipv6,/* get_sockaddr */
+	linc_protocol_get_sockinfo_ipv6	/* get_sockinfo */
 	},
 #endif
 #ifdef AF_UNIX
 	{
-	.name             = "UNIX",
-	.family           = AF_UNIX,
-	.addr_len         = sizeof (struct sockaddr_un),
-	.stream_proto_num = 0,
-	.flags            = LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND,
-	.setup            = NULL, 
-	.destroy          = linc_protocol_unix_destroy, 
-	.get_sockaddr     = linc_protocol_get_sockaddr_unix,
-	.get_sockinfo     = linc_protocol_get_sockinfo_unix
+	"UNIX", 					/* name */
+	AF_UNIX, 					/* family */
+	sizeof (struct sockaddr_un), 			/* addr_len */
+	0, 						/* stream_proto_num */
+	LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND, 	/* flags */
+	NULL,  						/* setup */
+	linc_protocol_unix_destroy,  			/* destroy */
+	linc_protocol_get_sockaddr_unix, 		/* get_sockaddr */
+	linc_protocol_get_sockinfo_unix 		/* get_sockinfo */
 	},
 #endif
 #ifdef AF_IRDA
 	{
-	.name             = "IrDA",
-	.family           = AF_IRDA,
-	.addr_len         = sizeof (struct sockaddr_irda),
-	.stream_proto_num = 0,
-	.flags            = LINC_PROTOCOL_NEEDS_BIND,
-	.setup            = NULL,
-	.destroy          = NULL,
-	.get_sockaddr     = linc_protocol_get_sockaddr_irda,
-	.get_sockinfo     = linc_protocol_get_sockinfo_irda
+	"IrDA", 				/* name */
+	AF_IRDA, 				/* family */
+	sizeof (struct sockaddr_irda), 		/* addr_len */
+	0, 					/* stream_proto_num */
+	LINC_PROTOCOL_NEEDS_BIND, 		/* flags */
+	NULL, 					/* setup */
+	NULL, 					/* destroy */
+	linc_protocol_get_sockaddr_irda, 	/* get_sockaddr */
+	linc_protocol_get_sockinfo_irda 	/* get_sockinfo */
 	},
 #endif
-	{ .name = NULL }
+	{ NULL /* name */ }
 };
 
 /* 

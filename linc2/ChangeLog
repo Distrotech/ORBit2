@@ -1,5 +1,13 @@
 2001-09-20  Mark McLoughlin <mark@skynet.ie>
 
+	Patch from Frank Belew <frb@ximian.com>.
+
+	* src/linc-protocols.c (static_linc_protocols):
+	don't use 'designated initializers' style of initialization.
+	Allowed by C99, but Sun's Forte compiler does't allow it.
+
+2001-09-20  Mark McLoughlin <mark@skynet.ie>
+
 	* src/linc-connection.c
 	(linc_connection_real_state_changed): rename to...
 	(linc_connection_class_state_changed): document and tidy.
