@@ -3,7 +3,7 @@
 #include <orbit/orbit.h>
 #include "orb-core-private.h"
 
-/**
+/***
     The argument {mem} is a chuck of memory described by {tc}, and its
     contents is freed, but {mem} itself is not freed. That is, if {mem}
     contains anything interesting (objrefs, pointers), they are freed.

@@ -1,3 +1,12 @@
+2003-06-28  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* docs/api/Makefile.am (DOC_SOURCE_DIR): indicate a source dir, so
+	that gtk-doc can scan for inline docs.
+
+	* src/orb/orb-core/allocators.c: Added an extra asterisk to the
+	comment block in the beginning of the file, to prevent gtk-doc
+	from thinking this is an inline documentation comment.
+
 2003-06-27  Frank Rehberger  <frehberg@localhost.localdomain>
 
 	* src/orb/orb-core/corba-orb.c (CORBA_ORB_resolve_initial_references): 
