@@ -83,7 +83,7 @@ struct CORBA_Object_type {
   GSList *profile_list, *forward_locations;
   IOP_ObjectKey_info *oki; /* points into profile_list */
 
-  ORBit_POAObject *bypass_obj;
+  ORBit_POAObject *pobj;
 };
 
 #endif

@@ -73,8 +73,8 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   ORBit_delete_profiles (&obj->profile_list);
   ORBit_delete_profiles (&obj->forward_locations);
 
-  if (obj->bypass_obj) {
-    ORBit_RootObject_release (obj->bypass_obj);
+  if (obj->pobj) {
+    ORBit_RootObject_release (obj->pobj);
   }
 
   g_free (obj);

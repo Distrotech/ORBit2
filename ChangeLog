@@ -1,4 +1,15 @@
 2001-07-05  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-object-type.h,
+	  include/orbit/poa/poa-types.h,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/orb-core/orbit-small.c,
+	  src/orb/poa/poa.c,
+	  src/services/name/orbit-name-server.c: make every reference
+	created by the POA have a POAOjbect associated with it.
+	s/bypass_obj/pobj/.
+
+2001-07-05  Mark McLoughlin <mark@skynet.ie>
 	
 	* test/poa/poatest-basic04.c,
 	  test/poa/poatest-basic05.c,

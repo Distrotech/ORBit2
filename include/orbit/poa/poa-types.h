@@ -132,25 +132,25 @@ typedef struct {
   ORBIT_SERVANT_MAJOR_TO_EPVPTR((servant), \
     ORBIT_SERVANT_TO_EPVIDX((servant),(clsid)) )
 
-#define ORBIT_STUB_GetPoaObj(x) (((CORBA_Object)x)->bypass_obj)
-#define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->bypass_obj && \
-                                           ((CORBA_Object)obj)->bypass_obj->servant && classid)
-#define ORBIT_STUB_GetServant(obj) ((CORBA_Object)obj)->bypass_obj->servant
-#define ORBIT_STUB_GetEpv(obj,clsid) ORBIT_POAOBJECT_TO_EPVPTR(((CORBA_Object)obj)->bypass_obj, (clsid))
+#define ORBIT_STUB_GetPoaObj(x) (((CORBA_Object)x)->pobj)
+#define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->pobj && \
+                                           ((CORBA_Object)obj)->pobj->servant && classid)
+#define ORBIT_STUB_GetServant(obj) ((CORBA_Object)obj)->pobj->servant
+#define ORBIT_STUB_GetEpv(obj,clsid) ORBIT_POAOBJECT_TO_EPVPTR(((CORBA_Object)obj)->pobj, (clsid))
 
 #ifdef ORBIT_IN_PROC_COMPLIANT
 #define ORBIT_STUB_PreCall(obj, iframe) {		\
-  ++( (obj)->bypass_obj->use_cnt );			\
-  iframe.pobj = (obj)->bypass_obj;			\
+  ++( (obj)->pobj->use_cnt );				\
+  iframe.pobj = (obj)->pobj;				\
   iframe.prev = (obj)->orb->poa_current_invocations;	\
   (obj)->orb->poa_current_invocations = &iframe;	\
 }
 
 #define ORBIT_STUB_PostCall(obj, iframe) {				\
   (obj)->orb->poa_current_invocations = iframe.prev;			\
-  --( (obj)->bypass_obj->use_cnt );					\
-  if ( (obj)->bypass_obj->life_flags & ORBit_LifeF_NeedPostInvoke )	\
-	ORBit_POAObject_post_invoke( (obj)->bypass_obj);		\
+  --( (obj)->pobj->use_cnt );						\
+  if ( (obj)->pobj->life_flags & ORBit_LifeF_NeedPostInvoke )	\
+	ORBit_POAObject_post_invoke( (obj)->pobj );		\
 }
 #else
 #define ORBIT_STUB_PreCall(x,y)
