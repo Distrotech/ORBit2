@@ -14,7 +14,7 @@ module IOP {
     string protocol;
     string host;
     string service;
-    sequence<octet> object_key;
+    /* Use TAG_COMPLETE_OBJECT_KEY to get the object key */
     sequence<IOP::TaggedComponent> components;
   };
   struct SSLGenericComponent {

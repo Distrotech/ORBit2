@@ -5,7 +5,7 @@
 CORBA_char *
 CORBA_string_alloc(CORBA_unsigned_long len)
 {
-  return ORBit_alloc_simple(len);
+  return ORBit_alloc_simple(len+1);
 }
 
 CORBA_char *

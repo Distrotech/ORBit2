@@ -12,6 +12,13 @@ CORBA_ORB_release_fn(ORBit_RootObject robj)
   g_free(orb);
 }
 
+
+static void
+ORBit_locks_initialize(void)
+{
+  O_MUTEX_INIT(ORBit_RootObject_lifecycle_lock);
+}
+
 CORBA_ORB
 CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 	       CORBA_Environment *ev)
@@ -25,6 +32,10 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 
   if(retval)
     return (CORBA_ORB)CORBA_Object_duplicate((CORBA_Object)retval, ev);
+
+#ifdef ORBIT_THREADSAFE
+  ORBit_locks_initialize();
+#endif  
 
   retval = g_new0(struct CORBA_ORB_type, 1);
 
