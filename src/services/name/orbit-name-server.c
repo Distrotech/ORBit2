@@ -125,7 +125,7 @@ rn_ref (RegisteredName * nom)
   return nom;
 }
 
-static RegisteredName *
+static void
 rn_unref (RegisteredName * nom)
 {
   nom->refcount--;
@@ -136,10 +136,13 @@ rn_unref (RegisteredName * nom)
       CORBA_free (nom->nc.kind);
       CORBA_Object_release (nom->obj, /* cheat */ NULL);
       g_free (nom);
-      return nom;
     }
-  else
-    return NULL;
+}
+
+static void
+l_rn_unref(gpointer data, gpointer user_data)
+{
+  rn_unref((RegisteredName *)data);
 }
 
 static void
@@ -511,7 +514,7 @@ impl_NamingContext_bind_new_context (impl_POA_CosNaming_NamingContextExt *
 }
 
 static void
-do_rn_unref (gpointer key, gpointer val, gpointer user_data)
+h_rn_unref (gpointer key, gpointer val, gpointer user_data)
 {
   rn_unref (val);
 }
@@ -522,7 +525,7 @@ impl_NamingContextExt__destroy (impl_POA_CosNaming_NamingContextExt *servant,
 {
   CORBA_Object_release ((CORBA_Object) servant->poa, ev);
 
-  g_hash_table_foreach_remove (servant->names, (GHRFunc) do_rn_unref,
+  g_hash_table_foreach_remove (servant->names, (GHRFunc) h_rn_unref,
 			       servant);
   g_hash_table_destroy (servant->names);
 
@@ -588,7 +591,7 @@ impl_BindingIterator__destroy (impl_POA_CosNaming_BindingIterator *
 {
   CORBA_Object_release ((CORBA_Object) servant->poa, ev);
 
-  g_list_foreach (servant->items, (GFunc) rn_unref, NULL);
+  g_list_foreach (servant->items, (GFunc) l_rn_unref, NULL);
   g_list_free (servant->items);
 
   POA_CosNaming_BindingIterator__fini ((PortableServer_Servant) servant, ev);
@@ -682,7 +685,7 @@ impl_NamingContextExt_resolve_str (impl_POA_CosNaming_NamingContextExt *
 {
   CosNaming_Name *name = ORBit_string_to_CosNaming_Name (n, ev);
   if (ev->_major != CORBA_NO_EXCEPTION)
-    return NULL;
+    return CORBA_OBJECT_NIL;
   if (name->_length == 0)
     return CORBA_Object_duplicate (servant->objref, ev);
   else
