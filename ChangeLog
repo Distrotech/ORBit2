@@ -1,3 +1,10 @@
+2001-10-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_servant),
+	(ORBit_small_get_connection_status),
+	(ORBit_small_listen_for_broken): stub - impl. to follow.
+
 2001-10-30  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/util/orbit-util.h: make ALIGN_ADDRESS publicly

@@ -21,6 +21,19 @@ void           ORBit_small_freekids    (CORBA_TypeCode      tc,
 					gpointer            p,
 					gpointer            d);
 
+typedef enum {
+	ORBIT_CONNECTION_CONNECTED,
+	ORBIT_CONNECTION_CONNECTING,
+	ORBIT_CONNECTION_DISCONNECTED,
+	ORBIT_CONNECTION_IN_PROC
+} ORBitConnectionStatus;
+
+gpointer              ORBit_small_get_servant           (CORBA_Object obj);
+ORBitConnectionStatus ORBit_small_get_connection_status (CORBA_Object obj);
+ORBitConnectionStatus ORBit_small_listen_for_broken     (CORBA_Object obj,
+							 GCallback    fn,
+							 gpointer     user_data);
+
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 void           ORBit_small_invoke_stub (CORBA_Object        object,
