@@ -25,6 +25,9 @@ typedef struct {
   int *use_count;
   GFunc death_callback;
   gpointer user_data;
+#ifdef ORBIT_BYPASS_MAPCACHE
+	ORBit_VepvIdx*	vepvmap_cache;
+#endif
   guint16 life_flags;
   guint16 use_cnt; /* method invokations */
 } ORBit_POAObject;
@@ -76,11 +79,56 @@ typedef struct {
   int                     vepvlen;
 } PortableServer_ClassInfo;
 
+
+#define ORBIT_SERVANT_SET_CLASSINFO(servant,ci) { 			\
+  ((PortableServer_ServantBase *)(servant))->vepv[0]->_private = (ci);	\
+}
+#define ORBIT_SERVANT_TO_CLASSINFO(servant) ( 				\
+  (PortableServer_ClassInfo*) 						\
+  ( ((PortableServer_ServantBase *)(servant))->vepv[0]->_private )	\
+)
+#define ORBIT_SERVANT_TO_POAOBJECT(servant) (				\
+  (ORBit_POAObject*) 							\
+  ( ((PortableServer_ServantBase *)(servant))->_private )		\
+)
+#define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant,major) 			\
+  ( ((PortableServer_ServantBase *)(servant))->vepv[major] )
+
+#ifdef ORBIT_BYPASS_MAPCACHE
+#define ORBIT_POAOBJECT_TO_EPVIDX(pobj,clsid) \
+  ( (pobj)->vepvmap_cache[(clsid)] )
+#else
+#define ORBIT_POAOBJECT_TO_EPVIDX(pobj,clsid) \
+  ( ORBIT_SERVANT_TO_CLASSINFO((pobj)->servant)->vepvmap[(clsid)] )
+#endif
+#define ORBIT_POAOBJECT_TO_EPVPTR(pobj,clsid) \
+  ORBIT_SERVANT_MAJOR_TO_EPVPTR((pobj)->servant, \
+    ORBIT_POAOBJECT_TO_EPVIDX((pobj),(clsid)) )
+
+#define ORBIT_SERVANT_TO_EPVIDX(servant,clsid) \
+  ( ORBIT_SERVANT_TO_CLASSINFO(servant)->vepvmap[(clsid)] )
+
+#define ORBIT_SERVANT_TO_EPVPTR(servant,clsid) \
+  ORBIT_SERVANT_MAJOR_TO_EPVPTR((servant), \
+    ORBIT_SERVANT_TO_EPVIDX((servant),(clsid)) )
+
 #define ORBIT_STUB_GetPoaObj(x) (((CORBA_Object)x)->bypass_obj)
-#define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->bypass_obj)
-#define ORBIT_STUB_PreCall(x,y)
-#define ORBIT_STUB_PostCall(x,y)
-#define ORBIT_STUB_GetServant(x) NULL
-#define ORBIT_STUB_GetEpv(x,y) NULL
+#define ORBIT_STUB_IsBypass(obj, classid) (((CORBA_Object)obj)->bypass_obj && \
+                                           ((CORBA_Object)obj)->bypass_obj->servant && classid)
+#define ORBIT_STUB_GetServant(obj) ((CORBA_Object)obj)->bypass_obj->servant
+#define ORBIT_STUB_GetEpv(obj,clsid) ORBIT_POAOBJECT_TO_EPVPTR(((CORBA_Object)obj)->bypass_obj, (clsid))
+#define ORBIT_STUB_PreCall(obj, iframe) {		\
+  ++( (obj)->bypass_obj->use_cnt );			\
+  iframe.pobj = (obj)->bypass_obj;			\
+  iframe.prev = (obj)->orb->poa_current_invocations;	\
+  (obj)->orb->poa_current_invocations = &iframe;	\
+}
+
+#define ORBIT_STUB_PostCall(obj, iframe) {				\
+  (obj)->orb->poa_current_invocations = iframe.prev;			\
+  --( (obj)->bypass_obj->use_cnt );					\
+  if ( (obj)->bypass_obj->life_flags & ORBit_LifeF_NeedPostInvoke )	\
+	ORBit_POAObject_post_invoke( (obj)->bypass_obj);		\
+}
 
 #endif

@@ -5,7 +5,7 @@ exec_prefix=@exec_prefix@
 exec_prefix_set=no
 includedir=@includedir@
 libdir=@libdir@
-[ -z "$GLIB_CONFIG_2_0" ] && GLIB_CONFIG_2_0="@GLIB_CONFIG_2_0@"
+[ -z "$PKG_CONFIG" ] && PKG_CONFIG="pkg-config"
 
 usage()
 {
@@ -42,8 +42,8 @@ fi
 
 cflags=false
 libs=false
-the_libs="$the_libs -L$libdir -lORBit `${GLIB_CONFIG_2_0} --libs` @LIBS@ -lm"
-the_flags="$the_flags `${GLIB_CONFIG_2_0} --cflags` -I$includedir -DORBIT2=1"
+the_libs="$the_libs -L$libdir -lORBit `${PKG_CONFIG} --libs glib-2.0` @LIBS@ -lm"
+the_flags="$the_flags `${PKG_CONFIG} --cflags glib-2.0` -I$includedir -DORBIT2=1"
 
 while test $# -gt 0; do
     case "$1" in
