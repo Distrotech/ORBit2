@@ -274,8 +274,8 @@ dynany_init_default (gpointer *val, const CORBA_TypeCode tc)
 
 	*val = ALIGN_ADDRESS (*val, ORBit_find_alignment (tc));
 
-/*	g_warning ("Creating '%s' at %p", 
-	ORBit_tk_to_name (tc->kind), *val);*/
+	/*g_warning ("Creating '%s' at %p",
+	  ORBit_tk_to_name (tc->kind), *val);*/
 
 	switch (tc->kind) {
 	case CORBA_tk_null:
@@ -408,6 +408,7 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 	gpointer buf, old_buf, b;
 	gconstpointer a;
 	CORBA_unsigned_long old_len;
+	int i;
 
 	buf = ORBit_alloc_tcval (tc, len);
 
@@ -420,17 +421,19 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 	s->_buffer = buf;
 	s->_length = len;
 
-	if (old_buf) {
-		int i;
+	b = buf;
 
+	if (old_buf) {
 		a = old_buf;
-		b = buf;
 		
 		for (i = 0; i < old_len; i++)
 			ORBit_copy_value_core (&a, &b, tc);
 		
 		ORBit_free (old_buf);
 	}
+
+	for (i = old_len; i < len; i++)
+		dynany_init_default (&b, tc);
 
 	return TRUE;
 }
@@ -1723,8 +1726,8 @@ DynamicAny_DynSequence_get_length (DynamicAny_DynSequence  obj,
 
 void
 DynamicAny_DynSequence_set_length (DynamicAny_DynSequence   obj,
-			      CORBA_unsigned_long length,
-			      CORBA_Environment  *ev)
+				   CORBA_unsigned_long length,
+				   CORBA_Environment  *ev)
 {
 	DynAny *dynany;
 	CORBA_sequence_CORBA_octet *s;

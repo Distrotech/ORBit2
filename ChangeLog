@@ -1,5 +1,10 @@
 2001-07-30  Martin Baulig  <baulig@suse.de>
 
+	* src/orb/dynamic.c (dynamic_sequence_realloc_to): Initialize
+	the newly created elements.
+
+2001-07-30  Martin Baulig  <baulig@suse.de>
+
 	* configure.in: Bump ORBIT_SERIAL to 16.
 
 	* include/orbit/orb-core/corba-object.h (CORBA_Object__itype):
