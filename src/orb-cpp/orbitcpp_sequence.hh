@@ -129,7 +129,7 @@ namespace _orbitcpp {
 		
 		// Memory managment
 		static buffer_t allocbuf (size_t num_elems) { return new value_t[num_elems]; };
-		static void freebuf (buffer_t buffer)       { delete buffer;                 };    
+		static void freebuf (buffer_t buffer)       { delete[] buffer;                 };    
 		
 		// ORBit2/C++ extension: create C sequence
 		c_seq_t* _orbitcpp_pack () const {
