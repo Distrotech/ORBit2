@@ -1,0 +1,29 @@
+module Test
+{
+	enum Direction
+	{
+		DIR_NORTH,
+		DIR_EAST,
+		DIR_SOUTH,
+		DIR_WEST
+	};
+
+	typedef sequence<long> long_seq;
+	typedef sequence<string> string_seq;
+	/* typedef sequence<long,3> Boundedlong_seq; */
+
+	interface IMaster
+	{
+		/* long_seq operations */
+		void longseq_in(in long_seq seq_in);
+		void longseq_inout(inout long_seq seq_inout);
+		void longseq_out(out long_seq seq_out);
+		long_seq longseq_ret();
+
+		/* string_seq operations */
+		void strseq_in(in string_seq seq_in);
+		void strseq_inout(inout string_seq seq_inout);
+		void strseq_out(out string_seq seq_out);
+		string_seq strseq_ret();
+	};
+};
