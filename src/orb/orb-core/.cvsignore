@@ -16,3 +16,4 @@ runidl_ops
 orbit-interface.h
 runidl_iface
 *-imodule.c
+iop-defs.h
