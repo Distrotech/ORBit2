@@ -41,7 +41,7 @@ if test -z "$*"; then
         echo "to pass any to it, please specify them on the $0 command line."
 fi
 
-for i in . libIDL
+for i in .
 do 
   echo processing $i
   (cd $i; \
@@ -51,6 +51,12 @@ do
     autoheader; \
     autoconf)
 done
+
+echo processing libIDL
+(cd libIDL; \
+    automake --add-missing; \
+    aclocal; \
+    autoconf)
 
 echo "Running ./configure --enable-maintainer-mode" "$@"
 ./configure --enable-maintainer-mode "$@"
