@@ -192,34 +192,3 @@ giop_connection_try_reconnect (GIOPConnection *cnx)
 	return link_connection_try_reconnect (LINK_CONNECTION (cnx));
 }
 
-void
-giop_connections_shutdown (void)
-{
-#warning FIXME: Need to shutdown linc connections ...
-#ifdef G_ENABLE_DEBUG
-	g_warning ("FIXME: Need to shutdown linc connections ...");
-#endif
-#if 0
-	GList *l, *to_close;
-
-	CNX_LIST_LOCK;
-
-	to_close = cnx_list.list;
-	cnx_list.list = NULL;
-
-	CNX_LIST_UNLOCK;
-
-	for (l = to_close; l; l = l->next) {
-		GIOPConnection *cnx = l->data;
-
-		giop_connection_close (cnx);
-		giop_connection_unref (cnx);
-	}
-
-	g_list_free (to_close);
-
-	if (cnx_list.list != NULL)
-		g_warning ("Wierd; new connections opened while shutting down");
-#endif
-}
-

@@ -141,6 +141,8 @@ void           link_connection_remove_broken_cb  (LinkConnection    *cnx,
 						  LinkBrokenCallback opt_fn,
 						  gpointer           opt_user_data);
 
+void           link_connections_close            (void);
+
 G_END_DECLS
 
 #endif /* _LINK_CONNECTION_H */

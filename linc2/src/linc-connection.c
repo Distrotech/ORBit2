@@ -1397,3 +1397,29 @@ link_connection_remove_broken_cb (LinkConnection    *cnx,
 
 	CNX_UNLOCK (cnx);
 }
+
+void
+link_connections_close (void)
+{
+	GList *cnx, *l;
+
+	if (!link_in_io_thread ())
+		return;
+
+	CNX_LIST_LOCK();
+	cnx = cnx_list;
+	cnx_list = NULL;
+	CNX_LIST_UNLOCK();
+
+	if (!cnx_list)
+		return;
+
+#ifdef G_ENABLE_DEBUG
+	g_warning ("FIXME: Need to shutdown linc connections ...");
+#endif
+	for (l = cnx; l; l = l->next) {
+		g_object_run_dispose (l->data);
+		link_connection_unref (l->data);
+	}
+	g_list_free (cnx);
+}

@@ -99,6 +99,7 @@ rm -rf %{buildroot}
 %{_libdir}/pkgconfig/*
 %{_includedir}/*
 %{_datadir}/aclocal/*
+%{_datadir}/idl/orbit-2.0/*
 
 %changelog
 * Tue Mar 05 2002 Chris Chabot <chabotc@reviewboard.com>
