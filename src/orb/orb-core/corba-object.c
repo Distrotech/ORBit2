@@ -244,16 +244,15 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 }
 
 static gboolean
-ORBit_try_connection (CORBA_Object obj)
+ORBit_try_connection_T (CORBA_Object obj)
 {
 	gboolean retval = FALSE;
 	LinkConnectionStatus status;
+	LinkConnection *cnx = LINK_CONNECTION (obj->connection);
 
-	if (!obj->connection)
-		return FALSE;
+	OBJECT_UNLOCK (obj);
 
-	status = link_connection_wait_connected
-		((LinkConnection *) obj->connection);
+	status = link_connection_wait_connected (cnx);
 
 	switch (status) {
 	case LINK_CONNECTING:
@@ -264,12 +263,17 @@ ORBit_try_connection (CORBA_Object obj)
 		break;
 	case LINK_DISCONNECTED:
 		/* Have a go at reviving it */
-		dprintf (MESSAGES, "re-connecting dropped cnx %p", obj->connection);
-		giop_connection_try_reconnect (obj->connection);
+		dprintf (MESSAGES, "re-connecting dropped cnx %p", cnx);
+		if (giop_connection_try_reconnect (cnx) == LINK_CONNECTED)
+			retval = TRUE;
 		break;
 	}
 
-	return TRUE;
+	OBJECT_LOCK (obj);
+
+	g_assert (obj->connection == cnx);
+
+	return retval;
 }
 
 GIOPConnection *
@@ -285,11 +289,17 @@ ORBit_object_get_connection (CORBA_Object obj)
 	GIOPConnection *cnx = NULL;
 
 	OBJECT_LOCK (obj);
-	if (ORBit_try_connection (obj)) {
-		cnx = obj->connection;
-		giop_connection_ref (cnx);
-		OBJECT_UNLOCK (obj);
-		return cnx;
+
+	if (obj->connection) {
+		if (ORBit_try_connection_T (obj)) {
+			cnx = obj->connection;
+			giop_connection_ref (cnx);
+			OBJECT_UNLOCK (obj);
+			return cnx;
+		} else {
+			OBJECT_UNLOCK (obj);
+			return NULL;
+		}
 	}
   
 	g_assert (obj->connection == NULL);
@@ -312,7 +322,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 				obj->orb, proto, host, service,
 				is_ssl ? LINK_CONNECTION_SSL : 0, iiop_version);
 
-			if (ORBit_try_connection (obj)) {
+			if (obj->connection && ORBit_try_connection_T (obj)) {
 				obj->object_key = objkey;
 				obj->connection->orb_data = obj->orb;
 

@@ -186,10 +186,10 @@ giop_connection_initiate (gpointer orb_data,
 			 NULL);
 }
 
-void
+LinkConnectionStatus
 giop_connection_try_reconnect (GIOPConnection *cnx)
 {
-	link_connection_try_reconnect (LINK_CONNECTION (cnx));
+	return link_connection_try_reconnect (LINK_CONNECTION (cnx));
 }
 
 void
