@@ -1,3 +1,11 @@
+2001-05-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POA_free_fn): free the poa's
+	name and key buffer.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_release_fn): 
+	free the initial refs hash.
+
 2001-05-18  Martin Baulig  <baulig@suse.de>
 
 	* ORBit-2.0.pc.in (Cflags): Added `-DORBIT2=1'.

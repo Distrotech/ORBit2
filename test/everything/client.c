@@ -785,10 +785,8 @@ run_tests (test_TestFactory   factory,
     testFixedLengthStruct(factory,ev);
     testVariableLengthStruct(factory,ev);
     testCompoundStruct(factory,ev);
-
     testUnboundedSequence(factory,ev);
     testBoundedSequence(factory,ev);
-
     testFixedLengthUnion(factory,ev);
     testVariableLengthUnion(factory,ev);
     testFixedLengthArray(factory,ev);

@@ -1317,10 +1317,13 @@ ORBit_POA_handle_held_requests(PortableServer_POA poa)
 static void
 ORBit_POA_free_fn(ORBit_RootObject obj_in)
 {
-    PortableServer_POA poa = (PortableServer_POA)obj_in;
-    ORBit_RootObject_release(poa->orb);
+    PortableServer_POA poa = (PortableServer_POA) obj_in;
+    ORBit_RootObject_release (poa->orb);
+    g_hash_table_destroy (poa->oid_to_obj_map);
+    CORBA_free (poa->name);
+    CORBA_free (poa->poa_key._buffer);
     poa->orb = NULL;
-    g_free(poa);
+    g_free (poa);
 }
 
 static const ORBit_RootObject_Interface ORBit_POA_epv = {

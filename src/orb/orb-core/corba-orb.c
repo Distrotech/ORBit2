@@ -11,9 +11,10 @@ CORBA_ORB_release_fn(ORBit_RootObject robj)
 {
   CORBA_ORB orb = (CORBA_ORB)robj;
 
-  g_ptr_array_free(orb->poas, TRUE);
+  g_ptr_array_free (orb->poas, TRUE);
+  g_hash_table_destroy (orb->initial_refs);
 
-  g_free(orb);
+  g_free (orb);
 }
 
 static void
@@ -76,7 +77,7 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
   retval->poas = g_ptr_array_new();
   ORBit_init_internals(retval, ev);
 
-  return CORBA_Object_duplicate ((CORBA_Object) retval, ev);
+  return (CORBA_ORB) CORBA_Object_duplicate ((CORBA_Object) retval, ev);
 }
 
 CORBA_char *
