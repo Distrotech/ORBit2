@@ -63,16 +63,7 @@ CORBA::Object::~Object()
 
 CORBA::Object::Object* CORBA::Object::_orbitcpp_wrap(CORBA_Object cobject, bool release_c_object /* = true */)
 {
-	CORBA::Object::Object* cppObject = new CORBA::Object::Object(cobject);
-
-	if(release_c_object)
-	{
-		::_orbitcpp::CEnvironment ev;
-		CORBA_Object_release(cobject, ev._orbitcpp_get_c_object());
-		ev.propagate_sysex();
-	}
-
-	return cppObject;
+	return new CORBA::Object::Object (cobject, !release_c_object);
 }
 
 CORBA::Object_ptr CORBA::Object::_duplicate(Object_ptr o) {

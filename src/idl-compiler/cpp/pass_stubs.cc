@@ -409,16 +409,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	m_module
 	    << mod_indent << classname << "* " << classname << "::_orbitcpp_wrap(" << iface.getCTypeName() << " cobject, bool release_c_object /* = true */)" << endl
 	    << mod_indent << "{" << endl
-	    << ++mod_indent << classname << "* cppObject = new " << classname << "(cobject);" << endl
-	    << endl
-	    << mod_indent << "if(release_c_object)" << endl
-	    << mod_indent << "{" << endl
-	    << ++mod_indent << "::_orbitcpp::CEnvironment ev;" << endl
-	    << mod_indent << "CORBA_Object_release(cobject, ev._orbitcpp_get_c_object());" << endl
-	    << mod_indent << "ev.propagate_sysex();" << endl
-	    << --mod_indent << "}" << endl
-	    << endl
-	    << mod_indent << "return cppObject;" << endl
+	    << ++mod_indent << "return new " << classname << " (cobject, !release_c_object);" << endl
 	    << --mod_indent << "}" << endl << endl;
 
 	// translate operations (same thing as above)
