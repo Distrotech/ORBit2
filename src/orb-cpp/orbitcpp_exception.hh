@@ -214,7 +214,7 @@ namespace _orbitcpp
 		CEnvironment();
 		~CEnvironment();
 		
-		CORBA_Environment* _orbitcpp_get_c_object()
+		CORBA_Environment* _orbitcpp_cobj()
 		{ return &m_env; }
 
 		CORBA_Environment *operator->() {
