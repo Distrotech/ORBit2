@@ -129,6 +129,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
 				 "_", 0);
     fprintf(ci->fh, "if(ORBIT_STUB_IsBypass(_obj,%s__classid))\n{\n", id);
+    fprintf(ci->fh, "ORBit_POAInvokation invoke_rec;\n");
+
     fprintf(ci->fh, "POA_%s__epv *_epv=(POA_%s__epv*)ORBIT_STUB_GetEpv(_obj,%s__classid);\n",
 	    id, id, id);
 #ifndef BACKWARDS_COMPAT_0_4
@@ -137,7 +139,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
     fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
 #endif
-    fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj);\n");
+    fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj, invoke_rec);\n");
     fprintf(ci->fh, "%s _epv->%s(ORBIT_STUB_GetServant(_obj), ",
 	    IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval = ":"",
 	    IDL_IDENT(IDL_OP_DCL(tree).ident).str);
@@ -152,7 +154,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "ev);\n");
 
-    fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj);\n");
+    fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, invoke_rec);\n");
 #ifndef BACKWARDS_COMPAT_0_4
     fprintf(ci->fh, "if(_use_count) { if(!(--(*_use_count))) _death_func(_use_count, _user_data); }\n");
 #endif
