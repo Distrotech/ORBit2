@@ -1,10 +1,10 @@
-2003-07-02  Frank Rehberger  <frehberg@localhost.localdomain>
+2003-07-02  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval): prevent
 	SEGV on empty sequences; if(old_num_elements==0 && !old_buffer)
 	return ORBit_alloc_tcval(tc,num_elements);
 
-2003-07-01  Frank Rehberger  <frehberg@localhost.localdomain>
+2003-07-01  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/orb-core/corba-any.c (ORBit_sequence_alloc): invoke
 	CORBA_sequence_set_release (seq, CORBA_TRUE) on new sequence,
@@ -32,7 +32,7 @@
 	comment block in the beginning of the file, to prevent gtk-doc
 	from thinking this is an inline documentation comment.
 
-2003-06-27  Frank Rehberger  <frehberg@localhost.localdomain>
+2003-06-27  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* src/orb/orb-core/corba-orb.c (CORBA_ORB_resolve_initial_references): 
 	feature-disabled: disabled exceptions that broke GNOME in
