@@ -34,7 +34,7 @@ typedef struct {
 
   char *remote_host_info, *remote_serv_info;
 
-#if LINC_SSL_SUPPORT
+#ifdef LINC_SSL_SUPPORT
   SSL *ssl;
 #endif
 
