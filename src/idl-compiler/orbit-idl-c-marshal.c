@@ -2,7 +2,7 @@
 
 #include "orbit-idl-c-backend.h"
 
-#define NEEDS_INDIRECT(node) (((node)->flags & MN_LOOPED) && ((node)->flags & MN_NEED_TMPVAR))
+#define NEEDS_INDIRECT(node) (((node)->flags & MN_LOOPED) || ((node)->flags & MN_NEED_TMPVAR))
 
 static void c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
 static void c_marshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi);
