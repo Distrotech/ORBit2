@@ -206,12 +206,9 @@ get_local_hostname (void)
 	if (local_host [0])
 		return local_host;
 
-	if (gethostname (local_host, NI_MAXHOST) == -1) {
-		g_warning ("No local host name");
+	if (gethostname (local_host, NI_MAXHOST) == -1)
 		return NULL;
-	}
 
-	g_warning ("local host name '%s'", local_host);
 	return local_host;
 }
 
