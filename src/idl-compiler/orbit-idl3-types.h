@@ -58,13 +58,14 @@ typedef struct _OIDL_Marshal_Node OIDL_Marshal_Node;
     subtype.
 **/
 
-typedef enum { MARSHAL_DATUM = 0,
-	       MARSHAL_LOOP = 1,
-	       MARSHAL_SWITCH = 2,
-	       MARSHAL_CASE = 3,
-	       MARSHAL_COMPLEX = 4,
-	       MARSHAL_CONST = 5,
-	       MARSHAL_SET = 6
+typedef enum {
+  MARSHAL_DATUM,
+  MARSHAL_LOOP,
+  MARSHAL_SWITCH,
+  MARSHAL_CASE,
+  MARSHAL_COMPLEX,
+  MARSHAL_CONST,
+  MARSHAL_SET
 } OIDL_Marshal_Node_Type;
 
 typedef enum {
@@ -121,6 +122,12 @@ typedef enum {
     MW_Any = (MW_Null|MW_Auto|MW_Alloca|MW_Msg|MW_Heap)
 } OIDL_Marshal_Where;
 
+typedef struct {
+  int len;
+  char *mult_const;
+  OIDL_Marshal_Node *mult_expr;
+} OIDL_Marshal_Length;
+
 struct _OIDL_Marshal_Node {
   OIDL_Marshal_Node *up;
   char *name;
@@ -147,17 +154,18 @@ struct _OIDL_Marshal_Node {
       OIDL_Marshal_Node *amount;
     } update_info;
     struct {
-      guint32 amount;
+      glong amount;
     } const_info;
     struct {
-      enum {	CX_CORBA_FIXED, 
-      		CX_CORBA_ANY, 
-		CX_CORBA_OBJECT, 
-        	CX_CORBA_TYPECODE, 
-		CX_CORBA_CONTEXT,
-		CX_MARSHAL_METHOD,
-		CX_NATIVE
-	} type;
+      enum {
+	CX_CORBA_FIXED, 
+	CX_CORBA_ANY, 
+	CX_CORBA_OBJECT, 
+	CX_CORBA_TYPECODE, 
+	CX_CORBA_CONTEXT,
+	CX_MARSHAL_METHOD,
+	CX_NATIVE
+      } type;
       int context_item_count;
     } complex_info;
     struct {
@@ -169,6 +177,8 @@ struct _OIDL_Marshal_Node {
   guint8 arch_head_align, arch_tail_align;
   guint8 iiop_head_align, iiop_tail_align;
   gint8 nptrs, use_count;
+  OIDL_Marshal_Length *pre, *post; /* This condition must be met before/after (pre/post) this node is marshalled */
+  char *marshal_error_exit;
 };
 
 /* Handling an IDLN_ATTR_DCL:

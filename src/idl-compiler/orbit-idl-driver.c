@@ -26,7 +26,7 @@
 #include "orbit-idl2.h"
 #include <string.h>
 
-static void orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns, OIDL_Output_Tree *rinfo);
+static void orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns, OIDL_Output_Tree *rinfo, gboolean attrs_only);
 
 /****************
   orbit_idl_to_backend:
@@ -75,6 +75,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   otree.tree = tree;
 
+  orbit_idl_tree_populate(otree.tree, namespace, &otree, TRUE);
   otree.ctxt = oidl_marshal_context_new(tree);
   if(rinfo->debug_level > 2)
     {
@@ -82,7 +83,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
       oidl_marshal_context_dump(otree.ctxt);
     }
 
-  orbit_idl_tree_populate(otree.tree, namespace, &otree);
+  orbit_idl_tree_populate(otree.tree, namespace, &otree, FALSE);
   orbit_idl_do_passes(otree.tree, rinfo);
 
   binfo->op_output(&otree, rinfo);
@@ -119,7 +120,7 @@ static void orbit_idl_except_populate(IDL_tree tree, OIDL_Output_Tree *rinfo)
 }
 
 static void
-orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns, OIDL_Output_Tree *rinfo)
+orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns, OIDL_Output_Tree *rinfo, gboolean attrs_only)
 {
   IDL_tree node;
 
@@ -128,33 +129,35 @@ orbit_idl_tree_populate(IDL_tree tree, IDL_ns ns, OIDL_Output_Tree *rinfo)
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
-      orbit_idl_tree_populate(IDL_LIST(node).data, ns, rinfo);
+      orbit_idl_tree_populate(IDL_LIST(node).data, ns, rinfo, attrs_only);
     }
     break;
   case IDLN_MODULE:
-    orbit_idl_tree_populate(IDL_MODULE(tree).definition_list, ns, rinfo);
+    orbit_idl_tree_populate(IDL_MODULE(tree).definition_list, ns, rinfo, attrs_only);
     break;
   case IDLN_INTERFACE:
-    orbit_idl_tree_populate(IDL_INTERFACE(tree).body, ns, rinfo);
+    orbit_idl_tree_populate(IDL_INTERFACE(tree).body, ns, rinfo, attrs_only);
     break;
   case IDLN_OP_DCL:
-    orbit_idl_op_populate(tree, rinfo);
+    if(!attrs_only)
+      orbit_idl_op_populate(tree, rinfo);
     break;
   case IDLN_EXCEPT_DCL:
-    orbit_idl_except_populate(tree, rinfo);
+    if(!attrs_only)
+      orbit_idl_except_populate(tree, rinfo);
     break;
   case IDLN_ATTR_DCL:
     {
       IDL_tree curnode, attr_name;
 
-      orbit_idl_attr_fake_ops(tree, ns);
-
+      if(attrs_only)
+	orbit_idl_attr_fake_ops(tree, ns);
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
 	attr_name = IDL_LIST(curnode).data;
 
-	orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op1, ns, rinfo);
+	orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op1, ns, rinfo, attrs_only);
 	if(((OIDL_Attr_Info *)attr_name->data)->op2)
-	  orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op2, ns, rinfo);
+	  orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op2, ns, rinfo, attrs_only);
       }
     }
     break;

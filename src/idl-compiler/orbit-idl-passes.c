@@ -1,5 +1,6 @@
 #include "config.h"
 #include "orbit-idl2.h"
+#include "orbit-idl-c-backend.h"
 
 typedef void (*OIDL_Pass_Func)(IDL_tree tree, gpointer data, gboolean is_demarshal);
 typedef void (*OIDL_Node_Pass_Func)(OIDL_Marshal_Node *node);
@@ -15,7 +16,7 @@ static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
 static void oidl_pass_del_tail_update(OIDL_Marshal_Node *node); /* Must run after coalescibility */
 static void oidl_pass_set_first_curptr_usage(OIDL_Marshal_Node *node);
 static void oidl_pass_choose_where(OIDL_Marshal_Node *node);
-
+static void oidl_pass_check_bounds(OIDL_Marshal_Node *node);
 static void oidl_node_pass_tmpvars(OIDL_Marshal_Node *top);
 
 static struct {
@@ -33,6 +34,7 @@ static struct {
   {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, oidl_node_pass_tmpvars, FOR_IN|FOR_OUT},
   {"First curptr usage", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_first_curptr_usage, FOR_IN|FOR_OUT},
   {"Memory allocation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_choose_where, FOR_OUT},
+  {"Bounds checking", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_check_bounds, FOR_OUT},
   {NULL, NULL}
 };
 
@@ -570,7 +572,7 @@ oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node)
 
   if(!node) return FALSE;
 
-  if(node->use_count)
+  if(node->use_count || (node->flags & MN_NOMARSHAL))
     return FALSE;
 
   node->use_count++;
@@ -893,7 +895,7 @@ oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
     if((node->u.loop_info.contents->flags & MN_COALESCABLE)
        && (node->u.loop_info.contents->where & MW_Msg))
       node->u.loop_info.contents->where = MW_Msg;
-    else if(!(node->u.loop_info.contents->flags & (MN_ISSEQ|MN_ISSTRING))
+    else if(!(node->flags & (MN_ISSEQ|MN_ISSTRING))
 	    && (node->u.loop_info.contents->where & MW_Null))
       node->u.loop_info.contents->where = MW_Null;
     else if((node->u.loop_info.contents->where & MW_Alloca))
@@ -997,4 +999,132 @@ oidl_pass_choose_where(OIDL_Marshal_Node *node)
       else
 	node->where = MW_Null;
     }
+}
+
+typedef struct {
+  OIDL_Marshal_Length curlen;
+  OIDL_Marshal_Node *run_start; /* where we are going to do the length check when we figure out how long it is */
+  gboolean is_post;
+  int tail_align;
+} OIDL_Check_Bounds_Info;
+
+static void
+oidl_bounds_check_push(OIDL_Marshal_Node *node, OIDL_Check_Bounds_Info *info)
+{
+  if(info->curlen.len > 0
+     || info->curlen.mult_expr)
+    {
+      OIDL_Marshal_Length *ptr;
+
+      ptr = g_new(OIDL_Marshal_Length, 1);
+      *ptr = info->curlen;
+
+      if(info->is_post)
+	info->run_start->post = ptr;
+      else
+	info->run_start->pre = ptr;
+      info->curlen.mult_const = NULL;
+      info->curlen.mult_expr = NULL;
+      info->curlen.len = 0;
+      info->is_post = FALSE;
+    }
+
+  info->run_start = node;
+}
+
+static int oidl_pass_check_bounds_2(OIDL_Marshal_Node *node, gint tail_align);
+
+static void
+oidl_node_pass_check_bounds(OIDL_Marshal_Node *node, OIDL_Check_Bounds_Info *info)
+{
+  int sub_tail_align;
+  GSList *ltmp;
+
+  if(node->flags & MN_NOMARSHAL)
+    return;
+
+  if(!info->run_start)
+    info->run_start = node;
+
+  if(node->iiop_head_align > info->tail_align)
+    oidl_bounds_check_push(node, info);
+
+  switch(node->type)
+    {
+    case MARSHAL_DATUM:
+      info->curlen.len += node->u.datum_info.datum_size;
+      break;
+    case MARSHAL_LOOP:
+      if(node->u.loop_info.contents->flags & MN_COALESCABLE)
+	{
+	  char *ctmp_contents;
+
+	  oidl_node_pass_check_bounds(node->u.loop_info.length_var, info);
+
+	  oidl_bounds_check_push(node->u.loop_info.length_var, info);
+	  info->is_post = TRUE;
+
+	  info->curlen.mult_expr = node->u.loop_info.length_var;
+
+	  ctmp_contents = oidl_marshal_node_valuestr(node->u.loop_info.contents);
+	  info->curlen.mult_const = g_strdup_printf("sizeof(%s)", ctmp_contents);
+	  g_free(ctmp_contents);
+
+	  oidl_bounds_check_push(NULL, info);
+	  info->tail_align = node->u.loop_info.contents->iiop_tail_align;
+	}
+      else
+	{
+	  oidl_node_pass_check_bounds(node->u.loop_info.length_var, info);
+	  oidl_bounds_check_push(NULL, info);
+	  info->tail_align = oidl_pass_check_bounds_2(node->u.loop_info.contents,
+						      MIN(info->tail_align, node->u.loop_info.contents->iiop_tail_align));
+	}
+      break;
+    case MARSHAL_SWITCH:
+      oidl_node_pass_check_bounds(node->u.switch_info.discrim, info);
+      oidl_bounds_check_push(NULL, info);
+      sub_tail_align = 9999;
+      for(ltmp = node->u.switch_info.cases; ltmp; ltmp = ltmp->next)
+	{
+	  int n;
+	  n = oidl_pass_check_bounds_2(ltmp->data, info->tail_align);
+	  sub_tail_align = MIN(n, sub_tail_align);
+	}
+      info->tail_align = sub_tail_align;
+      break;
+    case MARSHAL_CASE:
+      oidl_node_pass_check_bounds(node->u.case_info.contents, info);
+      break;
+    case MARSHAL_COMPLEX:
+      oidl_bounds_check_push(NULL /* We don't want the check to go BEFORE this node... */, info);
+      info->tail_align = 1;
+      break;
+    case MARSHAL_SET:
+      g_slist_foreach(node->u.set_info.subnodes, (GFunc)oidl_node_pass_check_bounds, info);
+      break;
+    case MARSHAL_CONST:
+      break;
+    default:
+      g_assert_not_reached();
+      break;
+    }
+}
+
+static int
+oidl_pass_check_bounds_2(OIDL_Marshal_Node *node, gint tail_align)
+{
+  OIDL_Check_Bounds_Info info = {{0,NULL}, NULL, FALSE};
+
+  info.tail_align = tail_align;
+  info.run_start = node;
+  oidl_node_pass_check_bounds(node, &info);
+  oidl_bounds_check_push(node, &info);
+  return info.tail_align;
+}
+
+static void
+oidl_pass_check_bounds(OIDL_Marshal_Node *node)
+{
+  oidl_pass_check_bounds_2(node, 1);
 }
