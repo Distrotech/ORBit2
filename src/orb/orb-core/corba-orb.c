@@ -195,6 +195,20 @@ CORBA_ORB_create_list(CORBA_ORB _obj, const CORBA_long count,
 		      CORBA_NVList * new_list,
 		      CORBA_Environment * ev)
 {
+  CORBA_NVList new;
+
+  new = g_new0 (struct CORBA_NVList_type, 1);
+  if (new==NULL)
+    goto new_alloc_failed;
+
+  new->list = g_array_new(FALSE, TRUE, sizeof(CORBA_NamedValue));
+
+  *new_list = new;
+	
+  return;
+
+ new_alloc_failed:
+  CORBA_exception_set_system(ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
 }
 
 void

@@ -740,9 +740,11 @@ void testContext(test_TestFactory factory,
   CORBA_Context_create_child (CORBA_OBJECT_NIL, "Whatever", &ctx, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
-  CORBA_Context_set_one_value (ctx, "foo", constants_STRING_IN, ev);
+  CORBA_Context_set_one_value (ctx, "foo", "foo1", ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
-  CORBA_Context_set_one_value (ctx, "baa", constants_STRING_INOUT_IN, ev);
+  CORBA_Context_set_one_value (ctx, "foo", "foo2", ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Context_set_one_value (ctx, "bar", "baaaa", ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   retn = test_ContextServer_opWithContext (
@@ -780,18 +782,17 @@ run_tests (test_TestFactory   factory,
     testBoundedSequence(factory,ev);
     testFixedLengthUnion(factory,ev);
     testVariableLengthUnion(factory,ev);
-
     testFixedLengthArray(factory,ev);
     testVariableLengthArray(factory,ev);
     testAnyLong(factory,ev);
     testAnyString(factory,ev);
     testAnyStruct(factory,ev);
-/*    testAnyException(factory,ev); FIXME */
+    if (in_proc)
+      testAnyException(factory,ev);
     testSequenceOfAny(factory,ev);
-    if (in_proc)
+    if (in_proc) /* FIXME: */
       testTypeCode(factory,ev);
-    if (in_proc)
-      testContext(factory,ev);
+    testContext(factory,ev);
   }
 }
 

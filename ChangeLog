@@ -1,5 +1,10 @@
 2001-05-17  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-context.c (ORBit_Context_demarshal):
+	move buf->cur over the length to point at the value.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_create_list): impl.
+
 	* src/orb/orb-core/corba-typecode.c (tc_dec_tk_sequence),
 	(tc_dec_tk_alias, tc_dec_tk_array): set sub_parts to 1.
 	(tc_dec): set ref count to 1.

@@ -31,11 +31,33 @@ ContextServer_opWithContext(PortableServer_Servant _servant,
 			    CORBA_Context          ctx,
 			    CORBA_Environment     *ev)
 {
-  *outArg = CORBA_OBJECT_NIL;
+	CORBA_NVList      nvout;
+	CORBA_NamedValue *nv;
+	char             *val;
+	int               i;
 
-  g_warning ("Write the context checks");
-  
-  return CORBA_Object_duplicate (inArg, ev);
+	CORBA_Context_get_values (ctx, NULL, 0, "", &nvout, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (nvout->list->len == 2);
+	for (i = 0; i < nvout->list->len; i++) {
+		nv = &g_array_index (nvout->list, 
+				     CORBA_NamedValue, 0);
+		if (!strcmp (nv->name, "bar")) {
+			val = * (char **) nv->argument._value;
+			g_assert (!strcmp (val, "baaaa"));
+		} else if (!strcmp (nv->name, "foo")) {
+			val = * (char **) nv->argument._value;
+			g_assert (!strcmp (val, "foo2"));
+		} else
+			g_error ("Unknown context property '%s'", nv->name);
+	}
+
+	CORBA_NVList_free (nvout, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	*outArg = CORBA_OBJECT_NIL;
+
+	return CORBA_Object_duplicate (inArg, ev);
 }
 
 

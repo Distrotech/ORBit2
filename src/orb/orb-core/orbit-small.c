@@ -759,7 +759,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	}
 
 	if (has_context) {
-		if (!ORBit_Context_demarshal (NULL, &ctx, recv_buffer))
+		if (ORBit_Context_demarshal (NULL, &ctx, recv_buffer))
 			g_warning ("FIXME: handle context demarshaling failure");
 	}
 

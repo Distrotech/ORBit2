@@ -418,6 +418,7 @@ ORBit_Context_demarshal(CORBA_Context parent, CORBA_Context initme,
       vallen = *(CORBA_unsigned_long *)buf->cur;
       if(giop_msg_conversion_needed(buf))
 	vallen = GUINT32_SWAP_LE_BE(vallen);
+      buf->cur += 4;
       if((buf->cur + vallen) > buf->end
 	 || (buf->cur + vallen) < buf->cur)
 	goto errout;
