@@ -21,10 +21,10 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
   *ctmp = '\0';
 
   ci.c_base_name = g_strdup(ci.base_name);
-  if(!isalpha(ci.c_base_name[0]))
+  if(!isalpha((guchar)ci.c_base_name[0]))
     ci.c_base_name[0] = '_';
   for(i = 0; ci.c_base_name[i]; i++) {
-    if(!isalnum(ci.c_base_name[i])) ci.c_base_name[i] = '_';
+    if(!isalnum((guchar)ci.c_base_name[i])) ci.c_base_name[i] = '_';
   }
 
   for(i = 0; i < 5; i++) {
