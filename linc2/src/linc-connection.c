@@ -11,17 +11,17 @@
  */
 #include <config.h>
 #include <stdarg.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
 
 #ifdef LINK_SSL_SUPPORT
-#include <openssl/ssl.h>
+#  include <openssl/ssl.h>
 #endif
 
 #include "linc-private.h"
+#include "linc-compat.h"
 #include <linc/linc-config.h>
 #include <linc/linc-connection.h>
 
@@ -119,9 +119,8 @@ static void
 link_close_fd (LinkConnection *cnx)
 {
 	if (cnx->priv->fd >= 0) {
-		d_printf ("Close %d\n", cnx->priv->fd);
-
-		LINK_CLOSE (cnx->priv->fd);
+		d_printf ("link_close_fd: closing %d\n", cnx->priv->fd);
+		LINK_CLOSE_SOCKET (cnx->priv->fd);
 	}
 	cnx->priv->fd = -1;
 }
@@ -529,23 +528,75 @@ link_connection_do_initiate (LinkConnection        *cnx,
 
 	fd = socket (proto->family, SOCK_STREAM, 
 		     proto->stream_proto_num);
+#ifdef HAVE_WINSOCK2_H
+	if (fd == INVALID_SOCKET) {
+		fd = -1;
+		link_map_winsock_error_to_errno ();
+	}
+#endif
 
-	if (fd < 0)
+	if (fd < 0) {
+		d_printf ("socket() failed: %s\n", link_strerror (errno));
 		goto out;
+	}
 
-	if (options & LINK_CONNECTION_NONBLOCKING)
+	if (options & LINK_CONNECTION_NONBLOCKING) {
+#ifdef HAVE_WINSOCK2_H
+		u_long yes = 1;
+		if (ioctlsocket (fd, FIONBIO, &yes) == SOCKET_ERROR) {
+			link_map_winsock_error_to_errno ();
+			d_printf ("ioctlsocket(FIONBIO) failed: %s\n",
+				  link_strerror (errno));
+			goto out;
+		}
+#else
 		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0)
 			goto out;
+#endif
+	}
 
+#if defined (F_SETFD) && defined (FD_CLOEXEC)
 	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0)
 		goto out;
+#endif
 
-	LINC_TEMP_FAILURE_RETRY (connect (fd, saddr, saddr_len), rv);
+	LINK_TEMP_FAILURE_RETRY_SOCKET (connect (fd, saddr, saddr_len), rv);
+#ifdef HAVE_WINSOCK2_H
+	if (rv == SOCKET_ERROR) {
+		if ((options & LINK_CONNECTION_NONBLOCKING) &&
+		    WSAGetLastError () == WSAEWOULDBLOCK) {
+			/* connect() for nonblocking sockets always
+			 * fails with WSAEWOULDBLOCK. We have to
+			 * select() to wait for actual status.
+			 */
+			fd_set write_fds, except_fds;
+
+			FD_ZERO (&write_fds);
+			FD_SET (fd, &write_fds);
+			
+			FD_ZERO (&except_fds);
+			FD_SET (fd, &except_fds);
+			
+			rv  = select (1, NULL, &write_fds, &except_fds, NULL);
+			if (rv == SOCKET_ERROR) {
+				rv = -1;
+				link_map_winsock_error_to_errno ();
+			} else if (FD_ISSET (fd, &write_fds)) {
+				rv = 0;
+			} else if (FD_ISSET (fd, &except_fds)) {
+				rv = -1;
+				errno = WSAECONNREFUSED;
+			}
+		} else {
+			rv = -1;
+			link_map_winsock_error_to_errno ();
+		}
+	}
+#endif
 	if (rv && errno != EINPROGRESS)
 		goto out;
 
-	d_printf ("initiate 'connect' on new fd %d [ %d; %d ]\n",
-		 fd, rv, errno);
+	d_printf ("initiate 'connect' on new fd %d\n", fd);
 
 	g_assert (CNX_IS_LOCKED (0));
 	link_connection_from_fd_T
@@ -557,8 +608,9 @@ link_connection_do_initiate (LinkConnection        *cnx,
 
  out:
 	if (!retval && fd >= 0) {
-		d_printf ("initiation failed\n");
-		LINK_CLOSE (fd);
+		d_printf ("initiation failed: %s\n", link_strerror (errno));
+		d_printf ("closing %d\n", fd);
+		LINK_CLOSE_SOCKET (fd);
 	}
 
 	g_free (saddr);
@@ -740,10 +792,18 @@ link_connection_read (LinkConnection *cnx,
 			n = SSL_read (cnx->priv->ssl, buf, len);
 		else
 #endif
-			LINC_TEMP_FAILURE_RETRY (read (cnx->priv->fd, 
-							 buf, 
-							 len), n);
-
+#ifdef HAVE_WINSOCK2_H
+			if ((n = recv (cnx->priv->fd, buf, len, 0)) == SOCKET_ERROR){
+				n = -1;
+				link_map_winsock_error_to_errno ();
+				d_printf ("recv failed: %s\n",
+					  link_strerror (errno));
+			}
+#else
+			LINK_TEMP_FAILURE_RETRY_SYSCALL (read (cnx->priv->fd, 
+							       buf, 
+							       len), n);
+#endif
 		g_assert (n <= len);
 
 		if (n < 0) {
@@ -866,10 +926,23 @@ write_data_T (LinkConnection *cnx, QueuedWrite *qw)
 				       qw->vecs->iov_len);
 		else
 #endif
-			LINC_TEMP_FAILURE_RETRY (writev (cnx->priv->fd,
-							     qw->vecs,
-							     MIN (qw->nvecs, LINK_IOV_MAX)), n);
-
+#ifdef HAVE_WINSOCK2_H
+			{
+				if (WSASend (cnx->priv->fd, qw->vecs,
+					     MIN (qw->nvecs, LINK_IOV_MAX),
+					     (LPDWORD) &n, 0, NULL, NULL) == SOCKET_ERROR) {
+					n = -1;
+					link_map_winsock_error_to_errno ();
+					d_printf ("WSASend failed: %s\n",
+						  link_strerror (errno));
+				}
+			}
+		  
+#else
+			LINK_TEMP_FAILURE_RETRY_SOCKET (writev (cnx->priv->fd,
+								qw->vecs,
+								MIN (qw->nvecs, LINK_IOV_MAX)), n);
+#endif
 		d_printf ("wrote %d bytes\n", n);
 
 		if (n < 0) {
@@ -961,7 +1034,7 @@ link_connection_flush_write_queue_T_R (LinkConnection *cnx)
 
 		} else {
 			if (status == LINK_IO_FATAL_ERROR) {
-				d_printf ("Fatal error on queued write");
+				d_printf ("Fatal error on queued write\n");
 				link_connection_state_changed_T_R (cnx, LINK_DISCONNECTED);
 				
 			} else {
@@ -987,7 +1060,7 @@ link_connection_flush_write_queue_T_R (LinkConnection *cnx)
 void
 link_connection_exec_set_condition (LinkCommandSetCondition *cmd, gboolean immediate)
 {
-	d_printf ("Exec defered set condition on %p -> 0x%x",
+	d_printf ("Exec defered set condition on %p -> 0x%x\n",
 		  cmd->cnx, cmd->condition);
 
 	if (!immediate)
@@ -1293,7 +1366,7 @@ link_connection_io_handler (GIOChannel  *gioc,
 		switch (cnx->status) {
 		case LINK_CONNECTING:
 			n = 0;
-			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
+			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, (char *) &n, &n_size);
 			if (!rv && !n && condition == G_IO_OUT) {
 				d_printf ("State changed to connected on %d\n", cnx->priv->fd);
 
@@ -1339,7 +1412,7 @@ link_connection_get_status (LinkConnection *cnx)
 	status = cnx->status;
 	CNX_UNLOCK (cnx);
 
-	d_printf ("Get status on %p = %d", cnx, status);
+	d_printf ("Get status on %p = %d\n", cnx, status);
 
 	return status;
 }
@@ -1347,7 +1420,7 @@ link_connection_get_status (LinkConnection *cnx)
 void
 link_connection_exec_disconnect (LinkCommandDisconnect *cmd, gboolean immediate)
 {
-	d_printf ("Exec defered disconnect on %p", cmd->cnx);
+	d_printf ("Exec defered disconnect on %p\n", cmd->cnx);
 
 	link_connection_state_changed (cmd->cnx, LINK_DISCONNECTED);
 

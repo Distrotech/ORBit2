@@ -13,9 +13,12 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <signal.h>
 #include "linc-private.h"
+#include "linc-compat.h"
 
 /* whether we do locking or not */
 static gboolean link_is_thread_safe = TRUE;
@@ -82,7 +85,11 @@ link_mainloop_handle_input (GIOChannel   *source,
 
 	g_mutex_lock (link_cmd_queue_lock);
 
+#ifdef HAVE_WINSOCK2_H
+	recv (LINK_WAKEUP_POLL, &c, sizeof (c), 0);
+#else
 	read (LINK_WAKEUP_POLL, &c, sizeof (c));
+#endif
 	queue = link_cmd_queue;
 	link_cmd_queue = NULL;
 
@@ -126,8 +133,13 @@ link_exec_command (LinkCommand *cmd)
 
 	if (!link_cmd_queue) {
 		char c = 'A'; /* magic */
+#ifdef HAVE_WINSOCK2_H
+		while ((res = send (LINK_WAKEUP_WRITE, &c, sizeof (c), 0)) == SOCKET_ERROR  &&
+		       (WSAGetLastError () == WSAEWOULDBLOCK));
+#else
 		while ((res = write (LINK_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
 		       (errno == EAGAIN || errno == EINTR));
+#endif
 	}
 
 	link_cmd_queue = g_list_append (link_cmd_queue, cmd);
@@ -160,6 +172,7 @@ link_init (gboolean thread_safe)
 
 	g_type_init ();
 
+#ifdef SIGPIPE
 	/*
 	 * Link's raison d'etre is for ORBit2 and Bonobo
 	 *
@@ -201,6 +214,7 @@ link_init (gboolean thread_safe)
 	 * signal handler.  This is a real possibility.
 	 */
 	signal (SIGPIPE, SIG_IGN);
+#endif
 	
 	link_context = g_main_context_new ();
 	link_loop    = g_main_loop_new (link_context, TRUE);
@@ -217,6 +231,14 @@ link_init (gboolean thread_safe)
 		link_main_cond = g_cond_new ();
 		link_cmd_queue_cond = g_cond_new ();
 	}
+
+#ifdef HAVE_WINSOCK2_H
+	{
+		WSADATA wsadata;
+		if (WSAStartup (MAKEWORD (2, 0), &wsadata) != 0)
+			g_error ("Windows Sockets could not be initialized");
+	}
+#endif
 }
 
 /**
@@ -311,7 +333,7 @@ link_mutex_is_locked (GMutex *lock)
 	 * bogus return values from trylock which screws
 	 * our debugging.
 	 */
-	d_printf ("hosed system is_lock-ing");
+	d_printf ("hosed system is_lock-ing\n");
 	return TRUE;
 #endif
 }
@@ -355,8 +377,13 @@ link_io_thread_fn (gpointer data)
 	/* A tad of shutdown */
 	LINK_MUTEX_LOCK (link_cmd_queue_lock);
 	if (LINK_WAKEUP_WRITE >= 0) {
+#ifdef HAVE_WINSOCK2_H
+		closesocket (LINK_WAKEUP_WRITE);
+		closesocket (LINK_WAKEUP_POLL);
+#else
 		close (LINK_WAKEUP_WRITE);
 		close (LINK_WAKEUP_POLL);
+#endif
 		LINK_WAKEUP_WRITE = -1;
 		LINK_WAKEUP_POLL = -1;
 	}
@@ -391,8 +418,14 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 	link_connections_move_io_T (to_io_thread);
 	link_servers_move_io_T     (to_io_thread);
 
+#ifdef HAVE_WINSOCK2_H
+	/* Use socket pair instead of pipe */
+	if (link_socketpair (link_wakeup_fds) < 0)
+		g_error ("Can't create CORBA main-thread wakeup pipe");
+#else
 	if (pipe (link_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 		g_error ("Can't create CORBA main-thread wakeup pipe");
+#endif
 
 	link_main_source = link_source_create_watch
 		(link_thread_context, LINK_WAKEUP_POLL,

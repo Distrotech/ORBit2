@@ -11,8 +11,6 @@
  */
 #include <config.h>
 #include <stdio.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -140,32 +138,58 @@ link_server_accept_connection (LinkServer      *server,
 	addrlen = server->proto->addr_len;
 	saddr = g_alloca (addrlen);
 
-	LINC_TEMP_FAILURE_RETRY(accept (server->priv->fd, 
-					     saddr, 
-					     &addrlen), fd);
+	LINK_TEMP_FAILURE_RETRY_SOCKET (accept (server->priv->fd, 
+						saddr, 
+						&addrlen), fd);
+#ifdef HAVE_WINSOCK2_H
+	if (fd == INVALID_SOCKET) {
+		fd = -1;
+		link_map_winsock_error_to_errno ();
+	}
+#endif
 	if (fd < 0) {
-		d_printf ("accept on %d failed %d", server->priv->fd, errno);
-		return FALSE; /* error */
+		d_printf ("accept on %d failed: %s\n",
+			  server->priv->fd, link_strerror (errno));
+		return FALSE;
 	}
 
 	if (server->create_options & LINK_CONNECTION_LOCAL_ONLY &&
 	    !link_protocol_is_local (server->proto, saddr, addrlen)) {
-		LINK_CLOSE (fd);
+		d_printf ("link_server_accept_connection: not local, closing %d\n", fd);
+		LINK_CLOSE_SOCKET (fd);
 		return FALSE;
 	}
 
-	if (server->create_options & LINK_CONNECTION_NONBLOCKING)
-		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0) {
-			d_printf ("failed to set O_NONBLOCK on %d", fd);
-			LINK_CLOSE (fd);
+	if (server->create_options & LINK_CONNECTION_NONBLOCKING) {
+#ifdef HAVE_WINSOCK2_H
+		u_long yes = 1;
+		if (ioctlsocket (fd, FIONBIO, &yes) == SOCKET_ERROR) {
+			link_map_winsock_error_to_errno ();
+			d_printf ("failed to set FIONBIO on %d: %s\n",
+				  fd, link_strerror (errno));
+			d_printf ("closing %d\n", fd);
+			LINK_CLOSE_SOCKET (fd);
 			return FALSE;
 		}
-
+#else
+		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0) {
+			d_printf ("failed to set O_NONBLOCK on %d: %s\n",
+				  fd, link_strerror (errno));
+			d_printf ("closing %d\n", fd);
+			LINK_CLOSE_SOCKET (fd);
+			return FALSE;
+		}
+#endif
+	}
+#if defined (F_SETFD) && defined (FD_CLOEXEC)
 	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0) {
-		d_printf ("failed to set cloexec on %d", fd);
-		LINK_CLOSE (fd);
+		d_printf ("failed to set cloexec on %d: %s\n",
+			  fd, link_strerror (errno));
+		d_printf ("closing %d\n", fd);
+		LINK_CLOSE_SOCKET (fd);
 		return FALSE;
 	}
+#endif
 
 	klass = (LinkServerClass *) G_OBJECT_GET_CLASS (server);
 
@@ -201,7 +225,7 @@ link_server_handle_io (GIOChannel  *gioc,
 		 * This call to g_warning was changed from g_error to avoid
 		 * a program crash. See bug #126209.
 		 */
-		g_warning ("error condition on server fd is %#x", condition);
+		d_printf ("error condition on server fd is %#x\n", condition);
 		return TRUE;
 	}	
 
@@ -218,7 +242,7 @@ link_server_handle_io (GIOChannel  *gioc,
 		/* FIXME: this connection is always NULL */
 		g_value_set_object (parms + 1, (GObject *) connection);
 
-		d_printf ("p %d, Non-accepted input on fd %d",
+		d_printf ("p %d, Non-accepted input on fd %d\n",
 			  getpid (), server->priv->fd);
 		
 		g_signal_emitv (parms, server_signals [NEW_CONNECTION], 0, NULL);
@@ -286,18 +310,24 @@ link_server_setup (LinkServer            *srv,
 
 	fd = socket (proto->family, SOCK_STREAM, 
 		     proto->stream_proto_num);
+#ifdef HAVE_WINSOCK2_H
+	if (fd == INVALID_SOCKET) {
+		fd = -1;
+		link_map_winsock_error_to_errno ();
+	}
+#endif
 	if (fd < 0) {
 		g_free (saddr);
-		d_printf ("socket (%d, %d, %d) failed\n",
-			 proto->family, SOCK_STREAM, 
-			 proto->stream_proto_num);
+		d_printf ("socket (%d, SOCK_STREAM, %d) failed: %s\n",
+			  proto->family, proto->stream_proto_num,
+			  link_strerror (errno));
 		return FALSE;
 	}
 
 	{
 		static const int oneval = 1;
 
-		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof (oneval));
+		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (const char *) &oneval, sizeof (oneval));
 	}
     
 	n = 0;
@@ -306,37 +336,73 @@ link_server_setup (LinkServer            *srv,
 	if ((proto->flags & LINK_PROTOCOL_NEEDS_BIND) || local_serv_info)
 		n = bind (fd, saddr, saddr_len);
 
+#ifdef HAVE_WINSOCK2_H
+	if (n == SOCKET_ERROR) {
+		n = -1;
+		link_map_winsock_error_to_errno ();
+	}
+#endif
 	if (n && errno == EADDRINUSE) {
-		d_printf ("bind failed; retrying");
+		d_printf ("bind failed; retrying\n");
 		goto address_in_use;
 	}
 
-	if (!n)
-		n = listen (fd, 10);
-	else
-		d_printf ("bind really failed errno: %d\n", errno);
+	if (n)
+		d_printf ("bind failed: %s\n", link_strerror (errno));
 
+	if (!n) {
+		n = listen (fd, 10);
+#ifdef HAVE_WINSOCK2_H
+		if (n == SOCKET_ERROR) {
+			n = -1;
+			link_map_winsock_error_to_errno ();
+		}
+#endif
+		if (n)
+			d_printf ("listen failed: %s\n", link_strerror (errno));
+	}
 
 	if (!n &&
-	    create_options & LINK_CONNECTION_NONBLOCKING)
+	    create_options & LINK_CONNECTION_NONBLOCKING) {
+#ifdef HAVE_WINSOCK2_H
+		u_long yes = 1;
+		if (ioctlsocket (fd, FIONBIO, &yes) == SOCKET_ERROR) {
+			n = -1;
+			 link_map_winsock_error_to_errno ();
+		}
+#else
 		n = fcntl (fd, F_SETFL, O_NONBLOCK);
-	else
-		d_printf ("listen failed errno: %d\n", errno);
+#endif
+		if (n)
+			d_printf ("failed to set nonblock on %d: %s\n",
+				  fd, link_strerror (errno));
+	}
 
-	if (!n)
+#if defined (F_SETFD) && defined (FD_CLOEXEC)
+	if (!n) {
 		n = fcntl (fd, F_SETFD, FD_CLOEXEC);
-	else
-		d_printf ("failed to set nonblock on %d", fd);
+		if (n)
+			d_printf ("failed to set cloexec on %d: %s",
+				  fd, link_strerror (errno));
+	}
 
-	if (!n)
+#endif
+
+	if (!n) {
 		n = getsockname (fd, saddr, &saddr_len);
-	else
-		d_printf ("failed to set cloexec on %d", fd);
 
-	if (n) {
-		link_protocol_destroy_addr (proto, fd, saddr);
-		d_printf ("get_sockname failed errno: %d\n", errno);
-		return FALSE;
+#ifdef HAVE_WINSOCK2_H
+		if (n == SOCKET_ERROR) {
+			n = -1;
+			link_map_winsock_error_to_errno ();
+		}
+#endif
+		if (n) {
+			link_protocol_destroy_addr (proto, fd, saddr);
+			d_printf ("getsockname failed: %s\n",
+				  link_strerror (errno));
+			return FALSE;
+		}
 	}
 
 	if (!link_protocol_get_sockinfo (proto, saddr, &hostname, &service)) {
