@@ -1,3 +1,14 @@
+2003-04-23  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection): here lurketh much grief.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_msg_reading_body): add comment on 0 length
+	message for CLOSECONNECTION.
+	(giop_connection_handle_input): handle 0 length bodies
+	properly.
+
 2003-04-21  Herbert Valerio Riedel  <hvr@gnu.org>
 
 	* src/orb/poa/orbit-adaptor.c

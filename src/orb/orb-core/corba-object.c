@@ -229,6 +229,8 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 static gboolean
 ORBit_try_connection (CORBA_Object obj)
 {
+	if (giop_threaded ())
+		g_error ("This function is complete foo");
 	while (obj->connection) {
 		switch (LINC_CONNECTION (obj->connection)->status) {
 		case LINC_CONNECTING:
