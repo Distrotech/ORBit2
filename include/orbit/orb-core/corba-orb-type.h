@@ -60,6 +60,7 @@ struct CORBA_ORB_type {
 	GIOPVersion                     default_giop_version;
 
 	GSList                         *servers;
+	GSList                         *profiles;
 	GPtrArray                      *adaptors;
 	GSList                         *current_invocations;
 	gpointer                        default_ctx;

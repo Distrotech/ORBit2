@@ -78,13 +78,7 @@ ORBit_register_objref (CORBA_Object obj)
 static CORBA_Object
 ORBit_lookup_objref (CORBA_Object obj)
 {
-	if (!objrefs) {
-		objrefs = g_hash_table_new (
-			g_CORBA_Object_hash, g_CORBA_Object_equal);
-		return NULL;
-	}
-
-	if (!obj->profile_list)
+	if (!objrefs || !obj->profile_list)
 		return NULL;
 
 	return g_hash_table_lookup (objrefs, obj);
@@ -100,8 +94,8 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 
 	ORBit_free_T (obj->object_key);
 
-	IOP_delete_profiles (&obj->profile_list);
-	IOP_delete_profiles (&obj->forward_locations);
+	IOP_delete_profiles (obj->orb, &obj->profile_list);
+	IOP_delete_profiles (obj->orb, &obj->forward_locations);
 
 	if (obj->adaptor_obj) {
 		obj->adaptor_obj->objref = NULL;
@@ -150,6 +144,17 @@ ORBit_objref_find (CORBA_ORB   orb,
 
 	retval = ORBit_lookup_objref (&fakeme);
 
+#ifdef DEBUG
+	g_warning ("Lookup '%s' (%p) == %p", type_id, profiles, retval);
+	{
+		GSList *l;
+		g_print ("Profiles: ");
+		for (l = profiles; l; l = l->next)
+			g_print ("%s", IOP_profile_dump (&fakeme, l->data));
+		g_print ("\n");
+	}
+#endif
+
 	if (!retval) {
 		retval = ORBit_objref_new (orb, fakeme.type_qid);
 		retval->profile_list = profiles;
@@ -157,7 +162,7 @@ ORBit_objref_find (CORBA_ORB   orb,
 		ORBit_register_objref (retval);
 	} else {
 		ORBit_free_T (fakeme.object_key);
-		IOP_delete_profiles (&profiles);
+		IOP_delete_profiles (orb, &profiles);
 	}
 
 	retval = ORBit_RootObject_duplicate_T (retval);
@@ -194,44 +199,6 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 	iobj->object_key = IOP_ObjectKey_copy (obj->object_key);
 
 	return ORBit_RootObject_duplicate (iobj);
-}
-
-void
-ORBit_start_servers (CORBA_ORB orb)
-{
-	LINCProtocolInfo *info;
-
-	for (info = linc_protocol_all (); info->name; info++) {
-		GIOPServer           *server;
-
-		if (!ORBit_proto_use (info->name))
-			continue;
-
-		server = giop_server_new (orb->default_giop_version,
-					  info->name, NULL, NULL, 0, orb);
-		if (server) {
-			orb->servers = g_slist_prepend (orb->servers, server);
-
-			if (!(info->flags & LINC_PROTOCOL_SECURE)) {
-				if (!ORBit_proto_use ("SSL"))
-					continue;
-
-				server = giop_server_new (
-					orb->default_giop_version, info->name,
-					NULL, NULL, LINC_CONNECTION_SSL, orb);
-
-				if (server)
-					orb->servers = g_slist_prepend (orb->servers, server);
-			}
-#ifdef DEBUG
-			fprintf (stderr, "ORB created giop server '%s'\n", info->name);
-#endif
-		}
-#ifdef DEBUG
-		else
-			fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
-#endif
-	}
 }
 
 static gboolean
@@ -320,7 +287,7 @@ ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 	if (ORBit_demarshal_IOR (obj->orb, buf, NULL, &profiles))
 		goto out;
 
-	IOP_delete_profiles (&obj->forward_locations);
+	IOP_delete_profiles (obj->orb, &obj->forward_locations);
 
 	obj->forward_locations = profiles;
 

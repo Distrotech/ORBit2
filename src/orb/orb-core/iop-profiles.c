@@ -14,18 +14,13 @@
    used the wire structures more intelligently we could store
    everything far more sensibly */
 
-/*
- * common set of profiles for Object Adaptor generated refs
- */
-static GSList *common_profiles = NULL;
-
 static void IOP_profile_free (IOP_Profile_info *p);
 
 #ifdef LINC_SSL_SUPPORT
 static IOP_Component_info *
-IOP_component_find(GSList *list, IOP_ComponentId type, GSList **pos)
+IOP_component_find (GSList *list, IOP_ComponentId type, GSList **pos)
 {
-  for(; list; list = list->next)
+  for (; list; list = list->next)
     {
       IOP_Component_info *pi = list->data;
       if(pi->component_type == type)
@@ -49,7 +44,7 @@ IOP_ObjectKey_dump (ORBit_ObjectKey *objkey)
 }
 
 G_GNUC_UNUSED gchar * 
-IOP_profile_dump(CORBA_Object obj, gpointer p)
+IOP_profile_dump (CORBA_Object obj, gpointer p)
 {
 	IOP_ProfileId t;
 	char         *key = NULL;
@@ -448,52 +443,27 @@ IOP_profile_hash(gpointer item, gpointer data)
 }
 
 void
-IOP_delete_profiles (GSList **profiles)
+IOP_delete_profiles (CORBA_ORB orb,
+		     GSList  **profiles)
 {
-	if (profiles && *profiles && (*profiles != common_profiles)) {
+	if (profiles && *profiles && (*profiles != orb->profiles)) {
 		g_slist_foreach (*profiles, (GFunc)IOP_profile_free, NULL);
 		g_slist_free (*profiles);
 		*profiles = NULL;
 	}
 }
 
-void
-IOP_generate_profiles (CORBA_Object obj)
+GSList *
+IOP_start_profiles (CORBA_ORB orb)
 {
+	GSList  *l;
+	GSList  *common_profiles = NULL;
+	gboolean need_objkey_component = FALSE;
 	IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
 	IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
 	IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
-	gboolean                          need_objkey_component;
-	ORBit_OAObject                    adaptor_obj = obj->adaptor_obj;
-	GSList                           *l;
 
-	g_assert (obj && (obj->profile_list == NULL));
-
-	/*
-	 * no need to have any listening sockets until now.
-	 * if the ORB has been shutdown and restarted,
-	 * the profiles must be regenerated.
-	 */
-	if (!obj->orb->servers) {
-		ORBit_start_servers (obj->orb);
-		if (common_profiles) {
-			g_slist_foreach (common_profiles, (GFunc)IOP_profile_free, NULL);
-			g_slist_free (common_profiles);
-			common_profiles = NULL;
-		}
-	}
-
-	if (!obj->object_key && adaptor_obj)
-		obj->object_key = ORBit_OAObject_object_to_objkey (adaptor_obj);
-
-	/* share the profiles between everyone. */
-	if (common_profiles) {
-		obj->profile_list = common_profiles;
-		return;
-	}
-
-	need_objkey_component = FALSE;
-	for (l = obj->orb->servers ; l != NULL ; l = l->next) {
+	for (l = orb->servers ; l != NULL ; l = l->next) {
 		LINCServer *serv = l->data;
 		gboolean   ipv4, ipv6, uds, ssl;
 
@@ -534,7 +504,7 @@ IOP_generate_profiles (CORBA_Object obj)
 			} else {
 				g_assert (!iiop->port);
 				iiop->port = atoi (serv->local_serv_info);
-				iiop->iiop_version = obj->orb->default_giop_version;
+				iiop->iiop_version = orb->default_giop_version;
 			}
 		} else {
 			GSList *l2;
@@ -554,7 +524,7 @@ IOP_generate_profiles (CORBA_Object obj)
 			if (!giop) {
 				giop = g_new0 (IOP_TAG_GENERIC_IOP_info, 1);
 				giop->parent.profile_type = IOP_TAG_GENERIC_IOP;
-				giop->iiop_version = obj->orb->default_giop_version;
+				giop->iiop_version = orb->default_giop_version;
 				giop->proto = g_strdup (serv->proto->name);
 				giop->host = g_strdup (serv->local_host_info);
 				common_profiles = g_slist_append (common_profiles, giop);
@@ -598,9 +568,40 @@ IOP_generate_profiles (CORBA_Object obj)
 		mci->components = g_slist_append (mci->components, csets);
 	}
 
-	common_profiles = g_slist_append (common_profiles, mci);
+	return g_slist_append (common_profiles, mci);
+}
 
-	obj->profile_list = common_profiles;
+void
+IOP_shutdown_profiles (GSList *profiles)
+{
+	g_slist_foreach (profiles, (GFunc)IOP_profile_free, NULL);
+	g_slist_free (profiles);
+}
+
+void
+IOP_generate_profiles (CORBA_Object obj)
+{
+	CORBA_ORB      orb;
+	ORBit_OAObject adaptor_obj;
+
+	g_assert (obj && (obj->profile_list == NULL) && obj->orb);
+
+	orb = obj->orb;
+	adaptor_obj = obj->adaptor_obj;
+
+	/*
+	 * no need to have any listening sockets until now.
+	 * if the ORB has been shutdown and restarted,
+	 * the profiles must be regenerated.
+	 */
+	if (!orb->servers)
+		ORBit_ORB_start_servers (orb);
+
+	if (!obj->object_key && adaptor_obj)
+		obj->object_key = ORBit_OAObject_object_to_objkey (adaptor_obj);
+
+	obj->profile_list = orb->profiles;
+
 	ORBit_register_objref (obj);
 }
 
@@ -1650,7 +1651,7 @@ ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
   return FALSE;
 
  errout:
-  IOP_delete_profiles(&profiles);
+  IOP_delete_profiles (orb, &profiles);
   return TRUE;
 }
 

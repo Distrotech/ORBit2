@@ -1,3 +1,42 @@
+2001-11-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_delete_profiles): use orb->profiles not common_profiles.
+	(ORBit_demarshal_IOR): upd.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_objref_find, CORBA_Object_release_cb),
+	(ORBit_handle_location_forward): upd.
+
+	* src/orb/orb-core/corba-types.c
+	(CORBA_sequence__freekids): kill.
+	(ORBit_sequence_CORBA_octet_dup): upd.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_start_profiles): impl.
+	(IOP_generate_profiles): upd. ensure that
+	we always register an objref as we generate
+	it's profiles.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_start_servers): move into the ORB.
+	(ORBit_objref_find): add some debug.
+	
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_start_servers): here.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_generate_profiles): prune cut & paste
+	shutdown code - argh; split out,
+	(boot_profiles): this.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_lookup_objref): don't pointlessly setup an
+	objref hash when we don't need one.
+
+	* test/everything/client.c (testPingPong): check we
+	remote and return correctly.
+
 2001-11-20  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-typecode.c

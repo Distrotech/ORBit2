@@ -9,10 +9,62 @@
 #include "../poa/orbit-poa-export.h"
 #include "../util/orbit-options.h"
 #include "../util/orbit-purify.h"
+#include "iop-profiles.h"
 #include "orb-core-private.h"
 #include "orbhttp.h"
 
 extern ORBit_option orbit_supported_options[];
+
+void
+ORBit_ORB_start_servers (CORBA_ORB orb)
+{
+	LINCProtocolInfo *info;
+
+	for (info = linc_protocol_all (); info->name; info++) {
+		GIOPServer           *server;
+
+		if (!ORBit_proto_use (info->name))
+			continue;
+
+		server = giop_server_new (orb->default_giop_version,
+					  info->name, NULL, NULL, 0, orb);
+		if (server) {
+			orb->servers = g_slist_prepend (orb->servers, server);
+
+			if (!(info->flags & LINC_PROTOCOL_SECURE)) {
+				if (!ORBit_proto_use ("SSL"))
+					continue;
+
+				server = giop_server_new (
+					orb->default_giop_version, info->name,
+					NULL, NULL, LINC_CONNECTION_SSL, orb);
+
+				if (server)
+					orb->servers = g_slist_prepend (orb->servers, server);
+			}
+#ifdef DEBUG
+			fprintf (stderr, "ORB created giop server '%s'\n", info->name);
+#endif
+		}
+#ifdef DEBUG
+		else
+			fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
+#endif
+	}
+
+	orb->profiles = IOP_start_profiles (orb);
+}
+
+static void
+ORBit_ORB_shutdown_servers (CORBA_ORB orb)
+{
+	IOP_shutdown_profiles (orb->profiles);
+	orb->profiles = NULL;
+
+	g_slist_foreach (orb->servers, (GFunc) g_object_unref, NULL);
+	g_slist_free (orb->servers); 
+	orb->servers = NULL;
+}
 
 static void
 ORBit_service_list_free_ref (gpointer         key,
@@ -831,9 +883,7 @@ CORBA_ORB_shutdown (CORBA_ORB            orb,
 			return;
 	}
 
-	g_slist_foreach (orb->servers, (GFunc) g_object_unref, NULL);
-	g_slist_free (orb->servers); 
-	orb->servers = NULL;
+	ORBit_ORB_shutdown_servers (orb);
 
 	giop_connection_remove_by_orb (orb);
 
@@ -1005,3 +1055,4 @@ static ORBit_option orbit_supported_options[] = {
 	{"ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl},
 	{NULL,              0,                    NULL},
 };
+

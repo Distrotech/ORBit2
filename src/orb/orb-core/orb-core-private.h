@@ -19,13 +19,14 @@ void         ORBit_set_initial_reference (CORBA_ORB    orb,
 					  gchar       *identifier,
 					  gpointer     objref);
 
-/*
- * profile methods.
- */
+/* profile methods. */
+GSList          *IOP_start_profiles       (CORBA_ORB        orb);
+void             IOP_shutdown_profiles    (GSList          *profiles);
+void             IOP_delete_profiles      (CORBA_ORB        orb,
+					   GSList         **profiles);
 void             IOP_generate_profiles    (CORBA_Object     obj);
 void             IOP_register_profiles    (CORBA_Object     obj,
 					   GSList          *profiles);
-void             IOP_delete_profiles      (GSList         **profiles);
 ORBit_ObjectKey *IOP_profiles_sync_objkey (GSList          *profiles);
 ORBit_ObjectKey *IOP_ObjectKey_copy       (ORBit_ObjectKey *src);
 gboolean         IOP_ObjectKey_equal      (ORBit_ObjectKey *a,

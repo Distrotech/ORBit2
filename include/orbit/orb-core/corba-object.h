@@ -3,8 +3,6 @@
 
 #ifdef ORBIT2_INTERNAL_API
 
-void            ORBit_start_servers         (CORBA_ORB       orb);
-
 GIOPConnection *ORBit_object_get_connection (CORBA_Object    obj);
 
 void            ORBit_marshal_object        (GIOPSendBuffer *buf,
