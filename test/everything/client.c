@@ -1057,6 +1057,7 @@ testMisc (test_TestFactory   factory,
 		CORBA_exception_free (ev);
 	}
 	
+	g_assert (ORBit_copy_value (NULL, TC_CORBA_boolean) == NULL);
 
 	objref = test_TestFactory_getBasicServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
