@@ -702,6 +702,297 @@ CORBA_TypeCode_equivalent (CORBA_TypeCode obj,
 	return typecode_equiv_internal (obj, tc, FALSE, ev);
 }
 
+CORBA_TypeCode
+CORBA_TypeCode_get_compact_typecode (CORBA_TypeCode     typecode,
+				     CORBA_Environment *ev)
+{
+	/* FIXME: implement */
+	CORBA_exception_set_system (
+		ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
+}
+
+CORBA_TCKind
+CORBA_TypeCode_kind (CORBA_TypeCode     typecode,
+		     CORBA_Environment *ev)
+{
+	return typecode->kind;
+}
+
+CORBA_RepositoryId
+CORBA_TypeCode_id (CORBA_TypeCode     typecode,
+		   CORBA_Environment *ev)
+{
+	if (!(typecode->kind == CORBA_tk_objref             ||
+	      typecode->kind == CORBA_tk_value              ||
+	      typecode->kind == CORBA_tk_value_box          ||
+	      typecode->kind == CORBA_tk_abstract_interface ||
+	      typecode->kind == CORBA_tk_native             ||
+	      typecode->kind == CORBA_tk_struct             ||
+	      typecode->kind == CORBA_tk_union              ||
+	      typecode->kind == CORBA_tk_enum               ||
+	      typecode->kind == CORBA_tk_alias              ||
+	      typecode->kind == CORBA_tk_except)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	return typecode->repo_id;
+}
+
+CORBA_Identifier
+CORBA_TypeCode_name (CORBA_TypeCode     typecode,
+		     CORBA_Environment *ev)
+{
+	if (!(typecode->kind == CORBA_tk_objref             ||
+	      typecode->kind == CORBA_tk_struct             ||
+	      typecode->kind == CORBA_tk_union              ||
+	      typecode->kind == CORBA_tk_enum               ||
+	      typecode->kind == CORBA_tk_alias              ||
+	      typecode->kind == CORBA_tk_abstract_interface ||
+	      typecode->kind == CORBA_tk_value              ||
+	      typecode->kind == CORBA_tk_value_box          ||
+	      typecode->kind == CORBA_tk_native             ||
+	      typecode->kind == CORBA_tk_except)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	return typecode->name;
+}
+
+CORBA_unsigned_long
+CORBA_TypeCode_member_count (CORBA_TypeCode     typecode,
+			     CORBA_Environment *ev)
+{
+	if (!(typecode->kind == CORBA_tk_struct ||
+	      typecode->kind == CORBA_tk_union  ||
+	      typecode->kind == CORBA_tk_value  ||
+	      typecode->kind == CORBA_tk_enum   ||
+	      typecode->kind == CORBA_tk_except)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return 0;
+	}
+
+	return typecode->sub_parts;
+}
+
+CORBA_Identifier
+CORBA_TypeCode_member_name (CORBA_TypeCode       typecode,
+			    CORBA_unsigned_long  index,
+			    CORBA_Environment   *ev)
+{
+	if (!(typecode->kind == CORBA_tk_struct ||
+	      typecode->kind == CORBA_tk_union  ||
+	      typecode->kind == CORBA_tk_value  ||
+	      typecode->kind == CORBA_tk_enum   ||
+	      typecode->kind == CORBA_tk_except)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	if (index > typecode->sub_parts) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/Bounds/1.0", NULL);
+		return NULL;
+	}
+
+	return typecode->subnames [index];
+}
+
+CORBA_TypeCode
+CORBA_TypeCode_member_type (CORBA_TypeCode       typecode,
+			    CORBA_unsigned_long  index,
+			    CORBA_Environment   *ev)
+{
+	if (!(typecode->kind == CORBA_tk_struct ||
+	      typecode->kind == CORBA_tk_union  ||
+	      typecode->kind == CORBA_tk_value  ||
+	      typecode->kind == CORBA_tk_enum   ||
+	      typecode->kind == CORBA_tk_except)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	if (index > typecode->sub_parts) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/Bounds/1.0", NULL);
+		return NULL;
+	}
+
+	return typecode->subtypes [index];
+}
+
+CORBA_any *
+CORBA_TypeCode_member_label (CORBA_TypeCode       typecode,
+			     CORBA_unsigned_long  index,
+			     CORBA_Environment   *ev)
+{
+	CORBA_any *retval;
+
+	if (typecode->kind != CORBA_tk_union) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	if (index > typecode->sub_parts) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/Bounds/1.0", NULL);
+		return NULL;
+	}
+
+	retval = CORBA_any__alloc ();
+
+	retval->_type  = ORBit_RootObject_duplicate (typecode->discriminator);
+	retval->_value = ORBit_copy_value (&typecode->sublabels [index],
+					   typecode->discriminator);
+	retval->_release = CORBA_TRUE;
+
+	return retval;
+}
+
+CORBA_TypeCode
+CORBA_TypeCode_discriminator_type (CORBA_TypeCode     typecode,
+				   CORBA_Environment *ev)
+{
+	if (typecode->kind != CORBA_tk_union) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	return typecode->discriminator;
+}
+
+CORBA_long
+CORBA_TypeCode_default_index (CORBA_TypeCode     typecode,
+			      CORBA_Environment *ev)
+{
+	if (typecode->kind != CORBA_tk_union) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return 0;
+	}
+
+	return typecode->default_index;
+}
+
+CORBA_unsigned_long
+CORBA_TypeCode_length (CORBA_TypeCode     typecode,
+		       CORBA_Environment *ev)
+{
+	if (!(typecode->kind == CORBA_tk_string   ||
+	      typecode->kind == CORBA_tk_wstring  ||
+	      typecode->kind == CORBA_tk_sequence ||
+	      typecode->kind == CORBA_tk_array)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return 0;
+	}
+
+	return typecode->length;
+}
+
+CORBA_TypeCode
+CORBA_TypeCode_content_type (CORBA_TypeCode     typecode,
+			     CORBA_Environment *ev)
+{
+	if (!(typecode->kind == CORBA_tk_sequence  ||
+	      typecode->kind == CORBA_tk_array     ||
+	      typecode->kind == CORBA_tk_value_box ||
+	      typecode->kind == CORBA_tk_alias)) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return NULL;
+	}
+
+	g_assert (typecode->sub_parts == 1);
+
+	return typecode->subtypes [0];
+}
+
+CORBA_unsigned_short
+CORBA_TypeCode_fixed_digits (CORBA_TypeCode     typecode,
+			     CORBA_Environment *ev)
+{
+	if (typecode->kind != CORBA_tk_fixed) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return 0;
+	}
+
+	return typecode->digits;
+}
+
+CORBA_short
+CORBA_TypeCode_fixed_scale (CORBA_TypeCode     typecode,
+			    CORBA_Environment *ev)
+{
+	if (typecode->kind != CORBA_tk_fixed) {
+		CORBA_exception_set (
+			ev, CORBA_USER_EXCEPTION,
+			"IDL:omg.org/CORBA/TypeCode/BadKind/1.0", NULL);
+		return 0;
+	}
+
+	return typecode->scale;
+}
+
+CORBA_Visibility
+CORBA_TypeCode_member_visibility (CORBA_TypeCode             typecode,
+				  const CORBA_unsigned_long  index,
+				  CORBA_Environment         *ev)
+{
+	/* FIXME: implement */
+	CORBA_exception_set_system (
+		ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+
+	return 0;
+}
+
+CORBA_ValueModifier
+CORBA_TypeCode_type_modifier (CORBA_TypeCode     typecode,
+			      CORBA_Environment *ev)
+{
+	/* FIXME: implement */
+	CORBA_exception_set_system (
+		ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+
+	return 0;
+}
+
+CORBA_TypeCode
+CORBA_TypeCode_concrete_base_type (CORBA_TypeCode     typecode,
+				   CORBA_Environment *ev)
+{
+	/* FIXME: implement */
+	CORBA_exception_set_system (
+		ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+
+	return CORBA_OBJECT_NIL;
+}
+
 const char *
 ORBit_tk_to_name (CORBA_unsigned_long tk)
 {
