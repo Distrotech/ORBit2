@@ -1,5 +1,8 @@
 TODO:
 
+* It seems the local case optimization can go wrong when
+  invoking bogus methods from a different interface on an Object ref.
+
 * orbit-object.c:
 	+ add the ability to store in a hash pointers to objects
 	  and dump their type with a type->name from the

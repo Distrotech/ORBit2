@@ -57,169 +57,6 @@ typedef struct
   GList *items;
 } impl_POA_CosNaming_BindingIterator;
 
-/*** Implementation stub prototypes ***/
-
-CosNaming_NamingContext
-ORBit_CosNaming_NamingContextExt_create (PortableServer_POA poa, 
-					 CORBA_Environment * ev);
-
-static void
-impl_NamingContextExt__destroy (impl_POA_CosNaming_NamingContextExt * servant,
-				CORBA_Environment * ev);
-
-void
-impl_NamingContext_bind (impl_POA_CosNaming_NamingContextExt * servant,
-			 CosNaming_Name * n, CORBA_Object obj,
-			 CORBA_Environment * ev);
-
-void
-impl_NamingContext_rebind (impl_POA_CosNaming_NamingContextExt * servant,
-			   CosNaming_Name * n, CORBA_Object obj,
-			   CORBA_Environment * ev);
-
-void
-impl_NamingContext_bind_context (impl_POA_CosNaming_NamingContextExt *
-				 servant, CosNaming_Name * n,
-				 CosNaming_NamingContext nc,
-				 CORBA_Environment * ev);
-
-void
-impl_NamingContext_rebind_context (impl_POA_CosNaming_NamingContextExt *
-				   servant, CosNaming_Name * n,
-				   CosNaming_NamingContext nc,
-				   CORBA_Environment * ev);
-
-CORBA_Object
-impl_NamingContext_resolve (impl_POA_CosNaming_NamingContextExt * servant,
-			    CosNaming_Name * n, CORBA_Environment * ev);
-
-void
-impl_NamingContext_unbind (impl_POA_CosNaming_NamingContextExt * servant,
-			   CosNaming_Name * n, CORBA_Environment * ev);
-
-CosNaming_NamingContext
-impl_NamingContext_new_context (impl_POA_CosNaming_NamingContextExt * servant,
-				CORBA_Environment * ev);
-
-CosNaming_NamingContext
-impl_NamingContext_bind_new_context (impl_POA_CosNaming_NamingContextExt *
-				     servant, CosNaming_Name * n,
-				     CORBA_Environment * ev);
-
-void 
-impl_NamingContext_destroy (impl_POA_CosNaming_NamingContextExt * servant, 
-			    CORBA_Environment * ev);
-
-void
-impl_NamingContext_list (impl_POA_CosNaming_NamingContextExt * servant,
-			 CORBA_unsigned_long how_many,
-			 CosNaming_BindingList ** bl,
-			 CosNaming_BindingIterator * bi,
-			 CORBA_Environment * ev);
-
-static CosNaming_BindingIterator
-impl_BindingIterator__create (PortableServer_POA poa,
-			      impl_POA_CosNaming_BindingIterator **
-			      ns, CORBA_Environment * ev);
-
-static void
-impl_BindingIterator__destroy (impl_POA_CosNaming_BindingIterator * servant,
-			       CORBA_Environment * ev);
-
-CORBA_boolean
-impl_BindingIterator_next_one (impl_POA_CosNaming_BindingIterator * servant,
-			       CosNaming_Binding ** b,
-			       CORBA_Environment * ev);
-
-CORBA_boolean
-impl_BindingIterator_next_n (impl_POA_CosNaming_BindingIterator * servant,
-			     CORBA_unsigned_long how_many,
-			     CosNaming_BindingList ** bl,
-			     CORBA_Environment * ev);
-
-void
-impl_BindingIterator_destroy (impl_POA_CosNaming_BindingIterator * servant,
-			      CORBA_Environment * ev);
-
-static CosNaming_NamingContextExt_StringName
-impl_NamingContextExt_to_string (impl_POA_CosNaming_NamingContextExt *
-				 servant, CosNaming_Name * n,
-				 CORBA_Environment * ev);
-
-static CosNaming_Name *
-impl_NamingContextExt_to_name (impl_POA_CosNaming_NamingContextExt * servant,
-			       CosNaming_NamingContextExt_StringName sn,
-			       CORBA_Environment * ev);
-
-static CosNaming_NamingContextExt_URLString
-impl_NamingContextExt_to_url (impl_POA_CosNaming_NamingContextExt * servant,
-			      CosNaming_NamingContextExt_Address addr,
-			      CosNaming_NamingContextExt_StringName sn,
-			      CORBA_Environment * ev);
-
-static CORBA_Object
-impl_NamingContextExt_resolve_str (impl_POA_CosNaming_NamingContextExt *
-				   servant,
-				   CosNaming_NamingContextExt_StringName n,
-				   CORBA_Environment * ev);
-
-/*** epv structures ***/
-
-static PortableServer_ServantBase__epv impl_NamingContextExt_base_epv = {
-  NULL,				/* _private data */
-  (gpointer) & impl_NamingContextExt__destroy,	/* finalize routine */
-  NULL,				/* default_POA routine */
-};
-
-static POA_CosNaming_NamingContext__epv impl_NamingContext_epv = {
-  NULL,				/* _private */
-
-  (gpointer) & impl_NamingContext_bind,
-  (gpointer) & impl_NamingContext_rebind,
-  (gpointer) & impl_NamingContext_bind_context,
-  (gpointer) & impl_NamingContext_rebind_context,
-  (gpointer) & impl_NamingContext_resolve,
-  (gpointer) & impl_NamingContext_unbind,
-  (gpointer) & impl_NamingContext_new_context,
-  (gpointer) & impl_NamingContext_bind_new_context,
-  (gpointer) & impl_NamingContext_destroy,
-  (gpointer) & impl_NamingContext_list,
-};
-
-static PortableServer_ServantBase__epv impl_BindingIterator_base_epv = {
-  NULL,				/* _private data */
-  (gpointer) & impl_BindingIterator__destroy,	/* finalize routine */
-  NULL,				/* default_POA routine */
-};
-
-static POA_CosNaming_BindingIterator__epv impl_BindingIterator_epv = {
-  NULL,				/* _private */
-  (gpointer) & impl_BindingIterator_next_one,
-  (gpointer) & impl_BindingIterator_next_n,
-  (gpointer) & impl_BindingIterator_destroy,
-};
-
-static POA_CosNaming_NamingContextExt__epv impl_NamingContextExt_epv = {
-  NULL,				/* _private */
-  (gpointer) & impl_NamingContextExt_to_string,
-  (gpointer) & impl_NamingContextExt_to_name,
-  (gpointer) & impl_NamingContextExt_to_url,
-  (gpointer) & impl_NamingContextExt_resolve_str,
-};
-
-/*** vepv structures ***/
-
-static POA_CosNaming_BindingIterator__vepv impl_BindingIterator_vepv = {
-  &impl_BindingIterator_base_epv,
-  &impl_BindingIterator_epv,
-};
-
-static POA_CosNaming_NamingContextExt__vepv impl_NamingContextExt_vepv = {
-  &impl_NamingContextExt_base_epv,
-  &impl_NamingContext_epv,
-  &impl_NamingContextExt_epv,
-};
-
 /*** Stub implementations ***/
 
 static void
@@ -305,55 +142,47 @@ rn_unref (RegisteredName * nom)
     return NULL;
 }
 
-CosNaming_NamingContextExt
-ORBit_CosNaming_NamingContextExt_create (PortableServer_POA poa, 
-					 CORBA_Environment * ev)
+static void
+impl_NamingContext_unbind (impl_POA_CosNaming_NamingContextExt *
+			   servant, CosNaming_Name * n,
+			   CORBA_Environment * ev)
 {
-  CosNaming_NamingContext retval;
-  impl_POA_CosNaming_NamingContextExt *newservant;
-  PortableServer_ObjectId *objid;
+  RegisteredName *nom = NULL;
 
-  newservant = g_new0 (impl_POA_CosNaming_NamingContextExt, 1);
-  newservant->servant.vepv = &impl_NamingContextExt_vepv;
-  newservant->poa = poa;
-  newservant->names =
-    g_hash_table_new ((GHashFunc) nc_hash, (GCompareFunc) nc_compare);
+  if (n->_length < 1)
+    goto raise_exc;
+  nom = g_hash_table_lookup (servant->names, n->_buffer);
 
-  POA_CosNaming_NamingContextExt__init ((PortableServer_Servant) newservant,
-					ev);
-  objid = PortableServer_POA_activate_object (poa, newservant, ev);
-  CORBA_free (objid);
-  retval = PortableServer_POA_servant_to_reference (poa, newservant, ev);
-  newservant->objref = CORBA_Object_duplicate (retval, ev);
-  return retval;
+  if (n->_length == 1 && nom)
+    {
+      g_hash_table_remove (servant->names, &nom->nc);
+      rn_unref (nom);
+    }
+  else if (nom && nom->is_subctx)
+    {
+      CosNaming_Name n2 = *n;
+
+      n2._length--;
+      n2._buffer++;
+      CosNaming_NamingContext_unbind (nom->obj, &n2, ev);
+    }
+  else
+    {
+      CosNaming_NamingContext_NotFound *exdata;
+    raise_exc:
+
+      exdata = CosNaming_NamingContext_NotFound__alloc ();
+      exdata->why =
+	nom ? CosNaming_NamingContext_not_context :
+	CosNaming_NamingContext_missing_node;
+      Name__copy (&exdata->rest_of_name, n, 0);
+
+      CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			   ex_CosNaming_NamingContext_NotFound, exdata);
+    }
 }
 
 static void
-do_rn_unref (gpointer key, gpointer val, gpointer user_data)
-{
-  rn_unref (val);
-}
-
-static void
-impl_NamingContextExt__destroy (impl_POA_CosNaming_NamingContextExt
-				* servant, CORBA_Environment * ev)
-{
-  PortableServer_ObjectId *objid;
-
-  objid = PortableServer_POA_servant_to_id (servant->poa, servant, ev);
-  PortableServer_POA_deactivate_object (servant->poa, objid, ev);
-  CORBA_free (objid);
-
-  g_hash_table_foreach_remove (servant->names, (GHRFunc) do_rn_unref,
-			       servant);
-  g_hash_table_destroy (servant->names);
-
-  CORBA_Object_release (servant->objref, ev);
-  POA_CosNaming_NamingContextExt__fini ((PortableServer_Servant) servant, ev);
-  g_free (servant);
-}
-
-void
 impl_NamingContext_bind (impl_POA_CosNaming_NamingContextExt *
 			 servant, CosNaming_Name * n,
 			 CORBA_Object obj, CORBA_Environment * ev)
@@ -410,7 +239,7 @@ impl_NamingContext_bind (impl_POA_CosNaming_NamingContextExt *
     }
 }
 
-void
+static void
 impl_NamingContext_rebind (impl_POA_CosNaming_NamingContextExt *
 			   servant, CosNaming_Name * n,
 			   CORBA_Object obj, CORBA_Environment * ev)
@@ -458,7 +287,7 @@ impl_NamingContext_rebind (impl_POA_CosNaming_NamingContextExt *
     }
 }
 
-void
+static void
 impl_NamingContext_bind_context (impl_POA_CosNaming_NamingContextExt
 				 * servant, CosNaming_Name * n,
 				 CosNaming_NamingContext nc,
@@ -516,7 +345,7 @@ impl_NamingContext_bind_context (impl_POA_CosNaming_NamingContextExt
     }
 }
 
-void
+static void
 impl_NamingContext_rebind_context (impl_POA_CosNaming_NamingContextExt * 
 				   servant, CosNaming_Name * n,
 				   CosNaming_NamingContext nc, 
@@ -564,7 +393,7 @@ impl_NamingContext_rebind_context (impl_POA_CosNaming_NamingContextExt *
     }
 }
 
-CORBA_Object
+static CORBA_Object
 impl_NamingContext_resolve (impl_POA_CosNaming_NamingContextExt *
 			    servant, CosNaming_Name * n,
 			    CORBA_Environment * ev)
@@ -615,54 +444,14 @@ impl_NamingContext_resolve (impl_POA_CosNaming_NamingContextExt *
   return CORBA_OBJECT_NIL;
 }
 
-void
-impl_NamingContext_unbind (impl_POA_CosNaming_NamingContextExt *
-			   servant, CosNaming_Name * n,
-			   CORBA_Environment * ev)
-{
-  RegisteredName *nom = NULL;
-
-  if (n->_length < 1)
-    goto raise_exc;
-  nom = g_hash_table_lookup (servant->names, n->_buffer);
-
-  if (n->_length == 1 && nom)
-    {
-      g_hash_table_remove (servant->names, &nom->nc);
-      rn_unref (nom);
-    }
-  else if (nom && nom->is_subctx)
-    {
-      CosNaming_Name n2 = *n;
-
-      n2._length--;
-      n2._buffer++;
-      CosNaming_NamingContext_unbind (nom->obj, &n2, ev);
-    }
-  else
-    {
-      CosNaming_NamingContext_NotFound *exdata;
-    raise_exc:
-
-      exdata = CosNaming_NamingContext_NotFound__alloc ();
-      exdata->why =
-	nom ? CosNaming_NamingContext_not_context :
-	CosNaming_NamingContext_missing_node;
-      Name__copy (&exdata->rest_of_name, n, 0);
-
-      CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
-			   ex_CosNaming_NamingContext_NotFound, exdata);
-    }
-}
-
-CosNaming_NamingContext
+static CosNaming_NamingContext
 impl_NamingContext_new_context (impl_POA_CosNaming_NamingContextExt
 				* servant, CORBA_Environment * ev)
 {
   return ORBit_CosNaming_NamingContextExt_create (servant->poa, ev);
 }
 
-CosNaming_NamingContext
+static CosNaming_NamingContext
 impl_NamingContext_bind_new_context (impl_POA_CosNaming_NamingContextExt * 
 				     servant, CosNaming_Name * n,
 				     CORBA_Environment * ev)
@@ -721,7 +510,28 @@ impl_NamingContext_bind_new_context (impl_POA_CosNaming_NamingContextExt *
   return CORBA_OBJECT_NIL;
 }
 
-void
+static void
+do_rn_unref (gpointer key, gpointer val, gpointer user_data)
+{
+  rn_unref (val);
+}
+
+static void
+impl_NamingContextExt__destroy (impl_POA_CosNaming_NamingContextExt *servant,
+				CORBA_Environment                   *ev)
+{
+  CORBA_Object_release ((CORBA_Object) servant->poa, ev);
+
+  g_hash_table_foreach_remove (servant->names, (GHRFunc) do_rn_unref,
+			       servant);
+  g_hash_table_destroy (servant->names);
+
+  CORBA_Object_release (servant->objref, ev);
+  POA_CosNaming_NamingContextExt__fini ((PortableServer_Servant) servant, ev);
+  g_free (servant);
+}
+
+static void
 impl_NamingContext_destroy (impl_POA_CosNaming_NamingContextExt *
 			    servant, CORBA_Environment * ev)
 {
@@ -772,72 +582,11 @@ nc_names_into_itemlist (impl_POA_CosNaming_NamingContextExt * servant)
   return retval;
 }
 
-void
-impl_NamingContext_list (impl_POA_CosNaming_NamingContextExt * servant, 
-			 CORBA_unsigned_long how_many,
-			 CosNaming_BindingList ** bl,
-			 CosNaming_BindingIterator * bi,
-			 CORBA_Environment * ev)
-{
-  GList *itemlist;
-
-  itemlist = nc_names_into_itemlist (servant);
-
-  if (how_many > 0)
-    {
-      *bl =
-	n_names_into_bindinglist (&itemlist,
-				  MIN (how_many,
-				       g_hash_table_size (servant->names)));
-    }
-  else
-    {
-      *bl = CosNaming_BindingList__alloc ();
-      (*bl)->_length = 0;
-    }
-
-  if (itemlist)
-    {
-      impl_POA_CosNaming_BindingIterator *newservant;
-      *bi = impl_BindingIterator__create (servant->poa, &newservant, ev);
-      newservant->items = itemlist;
-    }
-  else
-    *bi = CORBA_OBJECT_NIL;
-}
-
-static CosNaming_BindingIterator
-impl_BindingIterator__create (PortableServer_POA poa,
-			      impl_POA_CosNaming_BindingIterator **
-			      ns, CORBA_Environment * ev)
-{
-  CosNaming_BindingIterator retval;
-  impl_POA_CosNaming_BindingIterator *newservant;
-  PortableServer_ObjectId *objid;
-
-  newservant = *ns = g_new0 (impl_POA_CosNaming_BindingIterator, 1);
-  newservant->servant.vepv = &impl_BindingIterator_vepv;
-  newservant->poa = poa;
-  newservant->items = NULL;
-
-  POA_CosNaming_BindingIterator__init ((PortableServer_Servant) newservant,
-				       ev);
-  objid = PortableServer_POA_activate_object (poa, newservant, ev);
-  CORBA_free (objid);
-  retval = PortableServer_POA_servant_to_reference (poa, newservant, ev);
-
-  return retval;
-}
-
 static void
 impl_BindingIterator__destroy (impl_POA_CosNaming_BindingIterator *
 			       servant, CORBA_Environment * ev)
 {
-  PortableServer_ObjectId *objid;
-
-  objid = PortableServer_POA_servant_to_id (servant->poa, servant, ev);
-  PortableServer_POA_deactivate_object (servant->poa, objid, ev);
-  CORBA_free (objid);
+  CORBA_Object_release ((CORBA_Object) servant->poa, ev);
 
   g_list_foreach (servant->items, (GFunc) rn_unref, NULL);
   g_list_free (servant->items);
@@ -846,7 +595,7 @@ impl_BindingIterator__destroy (impl_POA_CosNaming_BindingIterator *
   g_free (servant);
 }
 
-CORBA_boolean
+static CORBA_boolean
 impl_BindingIterator_next_one (impl_POA_CosNaming_BindingIterator *
 			       servant, CosNaming_Binding ** b,
 			       CORBA_Environment * ev)
@@ -875,7 +624,7 @@ impl_BindingIterator_next_one (impl_POA_CosNaming_BindingIterator *
   return servant->items ? CORBA_TRUE : CORBA_FALSE;
 }
 
-CORBA_boolean
+static CORBA_boolean
 impl_BindingIterator_next_n (impl_POA_CosNaming_BindingIterator *
 			     servant, CORBA_unsigned_long how_many,
 			     CosNaming_BindingList ** bl,
@@ -888,7 +637,7 @@ impl_BindingIterator_next_n (impl_POA_CosNaming_BindingIterator *
   return ((*bl)->_length > 0);
 }
 
-void
+static void
 impl_BindingIterator_destroy (impl_POA_CosNaming_BindingIterator *
 			      servant, CORBA_Environment * ev)
 {
@@ -938,4 +687,141 @@ impl_NamingContextExt_resolve_str (impl_POA_CosNaming_NamingContextExt *
     return CORBA_Object_duplicate (servant->objref, ev);
   else
     return impl_NamingContext_resolve (servant, name, ev);
+}
+
+/*** epv structures ***/
+
+static PortableServer_ServantBase__epv impl_BindingIterator_base_epv = {
+  NULL,				/* _private data */
+  (gpointer) & impl_BindingIterator__destroy,	/* finalize routine */
+  NULL,				/* default_POA routine */
+};
+
+static POA_CosNaming_BindingIterator__epv impl_BindingIterator_epv = {
+  NULL,				/* _private */
+  (gpointer) & impl_BindingIterator_next_one,
+  (gpointer) & impl_BindingIterator_next_n,
+  (gpointer) & impl_BindingIterator_destroy,
+};
+
+static POA_CosNaming_NamingContextExt__epv impl_NamingContextExt_epv = {
+  NULL,				/* _private */
+  (gpointer) & impl_NamingContextExt_to_string,
+  (gpointer) & impl_NamingContextExt_to_name,
+  (gpointer) & impl_NamingContextExt_to_url,
+  (gpointer) & impl_NamingContextExt_resolve_str,
+};
+
+/*** vepv structures ***/
+
+static POA_CosNaming_BindingIterator__vepv impl_BindingIterator_vepv = {
+  &impl_BindingIterator_base_epv,
+  &impl_BindingIterator_epv,
+};
+
+static CosNaming_BindingIterator
+impl_BindingIterator__create (PortableServer_POA                   poa,
+			      impl_POA_CosNaming_BindingIterator **ns,
+			      CORBA_Environment                   *ev)
+{
+  CosNaming_BindingIterator retval;
+  impl_POA_CosNaming_BindingIterator *newservant;
+  PortableServer_ObjectId *objid;
+
+  newservant = *ns = g_new0 (impl_POA_CosNaming_BindingIterator, 1);
+  newservant->servant.vepv = &impl_BindingIterator_vepv;
+  newservant->poa = (PortableServer_POA) CORBA_Object_duplicate ((CORBA_Object) poa, ev);
+  newservant->items = NULL;
+
+  POA_CosNaming_BindingIterator__init ((PortableServer_Servant) newservant,
+				       ev);
+  objid = PortableServer_POA_activate_object (poa, newservant, ev);
+  CORBA_free (objid);
+  retval = PortableServer_POA_servant_to_reference (poa, newservant, ev);
+
+  return retval;
+}
+
+static void
+impl_NamingContext_list (impl_POA_CosNaming_NamingContextExt *servant, 
+			 CORBA_unsigned_long                  how_many,
+			 CosNaming_BindingList              **bl,
+			 CosNaming_BindingIterator           *bi,
+			 CORBA_Environment                   *ev)
+{
+  GList *itemlist;
+
+  itemlist = nc_names_into_itemlist (servant);
+
+  if (how_many > 0)
+    {
+      *bl =
+	n_names_into_bindinglist (&itemlist,
+				  MIN (how_many,
+				       g_hash_table_size (servant->names)));
+    }
+  else
+    {
+      *bl = CosNaming_BindingList__alloc ();
+      (*bl)->_length = 0;
+    }
+
+  if (itemlist)
+    {
+      impl_POA_CosNaming_BindingIterator *newservant;
+      *bi = impl_BindingIterator__create (servant->poa, &newservant, ev);
+      newservant->items = itemlist;
+    }
+  else
+    *bi = CORBA_OBJECT_NIL;
+}
+
+static PortableServer_ServantBase__epv impl_NamingContextExt_base_epv = {
+  NULL,				/* _private data */
+  (gpointer) & impl_NamingContextExt__destroy,	/* finalize routine */
+  NULL,				/* default_POA routine */
+};
+
+static POA_CosNaming_NamingContext__epv impl_NamingContext_epv = {
+  NULL,				/* _private */
+
+  (gpointer) & impl_NamingContext_bind,
+  (gpointer) & impl_NamingContext_rebind,
+  (gpointer) & impl_NamingContext_bind_context,
+  (gpointer) & impl_NamingContext_rebind_context,
+  (gpointer) & impl_NamingContext_resolve,
+  (gpointer) & impl_NamingContext_unbind,
+  (gpointer) & impl_NamingContext_new_context,
+  (gpointer) & impl_NamingContext_bind_new_context,
+  (gpointer) & impl_NamingContext_destroy,
+  (gpointer) & impl_NamingContext_list,
+};
+
+static POA_CosNaming_NamingContextExt__vepv impl_NamingContextExt_vepv = {
+	&impl_NamingContextExt_base_epv,
+	&impl_NamingContext_epv,
+	&impl_NamingContextExt_epv,
+};
+
+CosNaming_NamingContextExt
+ORBit_CosNaming_NamingContextExt_create (PortableServer_POA poa, 
+					 CORBA_Environment *ev)
+{
+	CosNaming_NamingContext retval;
+	impl_POA_CosNaming_NamingContextExt *newservant;
+	PortableServer_ObjectId *objid;
+
+	newservant = g_new0 (impl_POA_CosNaming_NamingContextExt, 1);
+	newservant->servant.vepv = &impl_NamingContextExt_vepv;
+	newservant->poa = (PortableServer_POA) CORBA_Object_duplicate ((CORBA_Object) poa, ev);
+	newservant->names =
+		g_hash_table_new ((GHashFunc) nc_hash, (GCompareFunc) nc_compare);
+
+	POA_CosNaming_NamingContextExt__init ((PortableServer_Servant) newservant, ev);
+	objid = PortableServer_POA_activate_object (poa, newservant, ev);
+	CORBA_free (objid);
+	retval = PortableServer_POA_servant_to_reference (poa, newservant, ev);
+	newservant->objref = CORBA_Object_duplicate (retval, ev);
+
+	return retval;
 }

@@ -144,15 +144,31 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		break;
 
 	case CORBA_tk_string: {
-		char *p, *str = g_strdup (*(char **)*val);
+		if (val == NULL)
+			tprintf("(null)");
+		else {
+			const int max = 64;
+			const char * v = (*(const char **)*val);
+			char *p, *str = g_strndup (v, max);
+			int len = strlen (v);
 
-		for (p = str; p && *p; p++) {
-			if (!isascii ((int)*p))
-				*p = '#';
+			if (len > max) {
+				const char ins[5] = " ... ";
+				int i;
+
+				for (i = 0; i < max / 2; ++i)
+					str[i + max / 2] = v[len - max / 2 + i];
+				strncpy(str + (max - sizeof(ins)) / 2, ins, sizeof(ins));
+			}
+
+			for (p = str; p && *p; p++)
+				if (!isascii ((int)*p))
+					*p = '#';
+			
+			tprintf ("'%s'", str);
+			
+			g_free (str);
 		}
-		tprintf ("'%s'", NOT_NULL (str));
-
-		g_free (str);
 		break;
 	}
 
@@ -212,7 +228,7 @@ ORBit_trace_timestamp (void)
 	struct timeval t;
 
 	gettimeofday (&t, NULL);
-	tprintf ("%lu.%lu ", t.tv_sec, t.tv_usec);
+	tprintf ("%lu.%06lu ", t.tv_sec, t.tv_usec);
 }
 
 void

@@ -13,6 +13,7 @@ INCLUDES =                                    \
 	-DVERSION=\"$(ORBIT_VERSION)\"        \
 	-DORBIT2_INTERNAL_API                 \
 	$(WARN_CFLAGS)                        \
+	$(DISABLE_DEPRECATED_CFLAGS)          \
 	$(ORBIT_IDL_CFLAGS)
 
 if ENABLE_CPP
