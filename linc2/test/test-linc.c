@@ -512,13 +512,32 @@ test_host (void)
 	test_hosts_lookup ();
 }
 
+static void
+test_connected (void)
+{
+	LinkServer *server = NULL;
+	LinkConnection *client = NULL;
+
+	create_server (&server);
+	g_assert (server != NULL);
+	create_client (server, &client);
+	g_assert (client != NULL);
+
+	/* FIXME: this is horribly difficult to regression test properly: we fail */
+	g_assert (link_connection_wait_connected (client) == LINK_CONNECTED);
+
+	g_object_unref (server);
+	g_object_unref (client);
+}
+
 int
 main (int argc, char **argv)
 {	
-	link_init (FALSE);
+	link_init (TRUE);
 	init_tmp ();
 
 	test_protos ();
+	test_connected ();
 	test_broken ();
 	test_blocking ();
 	test_local ();
