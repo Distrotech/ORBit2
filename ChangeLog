@@ -1,3 +1,8 @@
+2003-05-22  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): fix
+	non-debugging build; thanks to Christophe.
+
 2003-05-21  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (handle_reply): 
