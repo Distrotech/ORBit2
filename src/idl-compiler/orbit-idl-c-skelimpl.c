@@ -7,9 +7,9 @@
 static void orbit_cbe_write_skelimpl(FILE *outfile, IDL_tree tree, const char *hdrname);
 
 void
-orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+orbit_idl_output_c_skelimpl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  orbit_cbe_write_skelimpl(ci->fh, tree->tree, ci->base_name);
+  orbit_cbe_write_skelimpl(ci->fh, tree, ci->base_name);
 }
 
 #include <ctype.h>
@@ -96,10 +96,6 @@ orbit_cbe_ski_process_piece(CBESkelImplInfo *ski)
     cbe_ski_do_param_dcl(ski);
     break;
   default:
-#if 0
-    g_warning("Node type %s unhandled in \"skeleton implementation producer\" routines.",
-	      IDL_tree_type_names[IDL_NODE_TYPE(ski->tree)]);
-#endif
     break;
   }
 }

@@ -11,8 +11,9 @@
 static FILE *out_for_pass(const char *input_filename, int pass, 
 			  OIDL_Run_Info *rinfo);
 
-void
-orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
+gboolean
+orbit_idl_output_c (IDL_tree       tree,
+		    OIDL_Run_Info *rinfo)
 {
   int i;
   char *ctmp;
@@ -34,7 +35,6 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
 
   ci.do_impl_hack = 1;
   ci.do_skel_defs = rinfo->do_skel_defs;
-  ci.ctxt = tree->ctxt;
   for(i = 0; i < OUTPUT_NUM_PASSES; i++) {
     if( (1 << i) & rinfo->enabled_passes) {
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
@@ -69,6 +69,8 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
     }
   }
   g_string_free(ci.ext_dcls,TRUE);
+
+  return TRUE;
 }
 
 char *

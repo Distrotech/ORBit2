@@ -45,16 +45,24 @@ test_copy (void)
 	}
 
 	fprintf (stderr, "Testing strdup ...\n");
+
+	g_timer_reset (timer);
+	for (i = 0; i < 10000; i++) {
+		char *str = g_strdup (test_string);
+		g_free (str);
+	}
+	elapsed_time = g_timer_elapsed (timer, NULL) / 10.0;
+	bogomark += elapsed_time;
+	fprintf (stderr, " g_strdup :     %g(ns)\n", elapsed_time * 1000.0);
 	
 	g_timer_reset (timer);
-
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 10000; i++) {
 		char *str = CORBA_string_dup (test_string);
 		CORBA_free (str);
 	}
-	elapsed_time = g_timer_elapsed (timer, NULL);
+	elapsed_time = g_timer_elapsed (timer, NULL) / 10.0;
 	bogomark += elapsed_time;
-	fprintf (stderr, " strdup : %g(ms)\n", elapsed_time);
+	fprintf (stderr, " CORBA_strdup : %g(ns)\n", elapsed_time * 1000.0);
 }
 
 static PortableServer_POA

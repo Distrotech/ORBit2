@@ -39,6 +39,10 @@ typedef struct {
 GHashTable      *ORBit_imodule_new_typecodes         (void);
 void             ORBit_imodule_free_typecodes        (GHashTable     *typecodes);
 
+CORBA_sequence_CORBA_TypeCode *
+                 ORBit_imodule_get_typecodes_seq     (GHashTable     *typecodes);
+
+
 CORBA_TypeCode   ORBit_imodule_get_typecode          (GHashTable     *typecodes,
 						      IDL_tree        tree);
 CORBA_TypeCode   ORBit_imodule_create_alias_typecode (GHashTable     *typecodes,

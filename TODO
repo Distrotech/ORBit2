@@ -1,5 +1,9 @@
 TODO:
 
+* GIOP fragments
+	+ need to handle a cancel request in the middle of a fragment stream
+
+
 * It seems the local case optimization can go wrong when
   invoking bogus methods from a different interface on an Object ref.
 	+ this is to do with
@@ -16,6 +20,11 @@ TODO:
 	  since these are horribly slow and again not safe.
 
 * Optimization
+	+ we need 2 de-marshalling routines, 1 with (slow)
+	  byteswap and 1 without it, save scads and scads of
+	  branch cache misses; easy to do too; make it a virtual
+	  method on the recv buffer (?) [ for easy chaining ]
+
 	+ we need some concept of align == native align flagged
 	  on TypeCodes, so we can blat things quickly with memcpy
 	  in a generic way - eg. sequences of octets.
@@ -25,3 +34,8 @@ TODO:
 	  manages to go through the error condition a whole
 	  load; _why_ is this ? - is it a recursive effect on
 	  the method ? why are we called if there is no data ?
+
+	+ We need a typecast in an _allocbuf which we know is
+	  aliased, eg. PortableServer_POAList_allocbuf, since
+	  it gets assigned to a CORBA_Object *, and the cast
+	  is bogus.

@@ -40,10 +40,7 @@ giop_connection_list_add (GIOPConnection *cnx)
 	g_warning ("Add '%s'", giop_cnx_descr (cnx));
 	g_assert (cnx->parent.was_initiated);
 #endif
-
-	cnx_list.list = g_list_prepend (
-		cnx_list.list, 
-		g_object_ref (G_OBJECT (cnx)));
+	cnx_list.list = g_list_prepend (cnx_list.list, cnx);
 }
 
 static void
@@ -145,6 +142,8 @@ giop_connection_dispose (GObject *obj)
 		cnx->outgoing_mutex = NULL;
 	}
 
+	giop_connection_destroy_frags (cnx);
+
 	giop_connection_list_remove (cnx);
 
 	g_assert (cnx->incoming_msg == NULL);
@@ -199,8 +198,18 @@ giop_connection_get_type (void)
 	return object_type;
 }
 
+void
+giop_connection_set_orb_n_ver (GIOPConnection *cnx,
+			       gpointer        orb_data,
+			       GIOPVersion     version)
+{
+	cnx->orb_data = orb_data;
+	cnx->giop_version = version;
+}
+
 GIOPConnection *
-giop_connection_initiate (const char *proto_name,
+giop_connection_initiate (gpointer orb_data,
+			  const char *proto_name,
 			  const char *remote_host_info,
 			  const char *remote_serv_info,
 			  GIOPConnectionOptions options,
@@ -224,7 +233,9 @@ giop_connection_initiate (const char *proto_name,
 		cnx = (GIOPConnection *) g_object_new (
 			giop_connection_get_type (), NULL);
 
-		cnx->giop_version = giop_version;
+		giop_connection_set_orb_n_ver (
+			cnx, orb_data, giop_version);
+
 		if (!linc_connection_initiate (
 			(LINCConnection *) cnx,
 			proto_name, remote_host_info,
@@ -264,7 +275,7 @@ giop_connection_remove_by_orb (gpointer match_orb_data)
 
 	LINC_MUTEX_UNLOCK (cnx_list.lock);
 
-	for (sl = to_close; sl; sl = sl->next) {
+	for (sl= to_close; sl; sl = sl->next) {
 		GIOPConnection *cnx = sl->data;
 
 		giop_connection_close (cnx);

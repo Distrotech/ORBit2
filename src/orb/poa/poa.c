@@ -180,14 +180,14 @@ ORBit_POA_new_system_objid (PortableServer_POA poa)
 
 	g_assert (IS_SYSTEM_ID (poa));
 
-	objid           = PortableServer_ObjectId__alloc ();
-	objid->_length  = objid->_maximum = sizeof (CORBA_unsigned_long) + ORBIT_RAND_DATA_LEN;
+	objid = PortableServer_ObjectId__alloc ();
+	objid->_length  = objid->_maximum = sizeof (CORBA_long) + ORBIT_OBJECT_ID_LEN;
 	objid->_buffer  = PortableServer_ObjectId_allocbuf (objid->_length);
 	objid->_release = CORBA_TRUE;
 
-	*(guint32 *)(objid->_buffer) = ++(poa->next_sysid);
-
-	ORBit_genuid_buffer (objid->_buffer + sizeof (CORBA_unsigned_long), ORBIT_RAND_DATA_LEN);
+	ORBit_genuid_buffer (objid->_buffer + sizeof (CORBA_long),
+			     ORBIT_OBJECT_ID_LEN, ORBIT_GENUID_OBJECT_ID);
+	*((CORBA_long *) objid->_buffer) = ++(poa->next_sysid);
 
 	return objid;
 }
@@ -197,7 +197,7 @@ ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 {
 	ORBit_ObjectAdaptor  adaptor;
 	ORBit_ObjectKey     *objkey;
-	gpointer             mem;
+	guchar              *mem;
 
 	g_return_val_if_fail (pobj != NULL, NULL);
 
@@ -209,11 +209,11 @@ ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 	objkey->_buffer  = CORBA_sequence_CORBA_octet_allocbuf (objkey->_length);
 	objkey->_release = CORBA_TRUE;
 
-	mem = objkey->_buffer;
-	memcpy (mem, adaptor->adaptor_key._buffer, adaptor->adaptor_key._length);
-
+ 	mem = (guchar *) objkey->_buffer;
+ 	memcpy (mem, adaptor->adaptor_key._buffer, adaptor->adaptor_key._length);
+ 
 	mem += adaptor->adaptor_key._length;
-	memcpy (mem, pobj->object_id->_buffer, pobj->object_id->_length);
+ 	memcpy (mem, pobj->object_id->_buffer, pobj->object_id->_length);
 
 	return objkey;
 }
@@ -734,7 +734,9 @@ ORBit_POA_create_object (PortableServer_POA             poa,
 
 	if (poa->p_id_assignment == PortableServer_SYSTEM_ID) {
 		if (objid) {
-			g_assert(objid->_length == sizeof (CORBA_unsigned_long) + ORBIT_RAND_DATA_LEN);
+			g_assert (objid->_length ==
+				  sizeof (CORBA_unsigned_long) +
+				  ORBIT_OBJECT_ID_LEN);
 
 			newobj->object_id          = PortableServer_ObjectId__alloc ();
 			newobj->object_id->_length = objid->_length;
@@ -892,7 +894,7 @@ ORBit_POAObject_invoke (ORBit_POAObject    pobj,
 }
 
 /*
- * return_exception:
+ * giop_recv_buffer_return_sys_exception:
  * @recv_buffer:
  * @m_data:
  * @ev:
@@ -904,10 +906,9 @@ ORBit_POAObject_invoke (ORBit_POAObject    pobj,
  * of the reqeust to be able to determine if this is a oneway
  * method.
  */
-static void
-return_exception (GIOPRecvBuffer    *recv_buffer,
-		  ORBit_IMethod     *m_data,
-		  CORBA_Environment *ev)
+void
+ORBit_recv_buffer_return_sys_exception (GIOPRecvBuffer    *recv_buffer,
+					CORBA_Environment *ev)
 {
 	GIOPSendBuffer *send_buffer;
 
@@ -915,11 +916,6 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 		return;
 
 	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
-
-	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {
-		tprintf ("A serious exception occured on a oneway method");
-		return;
-	}
 
 	send_buffer = giop_send_buffer_use_reply (
 		recv_buffer->connection->giop_version,
@@ -932,6 +928,24 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 	do_giop_dump_send (send_buffer);
 	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
+}
+
+static void
+return_exception (GIOPRecvBuffer    *recv_buffer,
+		  ORBit_IMethod     *m_data,
+		  CORBA_Environment *ev)
+{
+	if (!recv_buffer) /* In Proc */
+		return;
+
+	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
+
+	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {
+		tprintf ("A serious exception occured on a oneway method");
+		return;
+	}
+
+	ORBit_recv_buffer_return_sys_exception (recv_buffer, ev);
 }
 
 /*
@@ -1121,8 +1135,8 @@ ORBit_POA_object_key_lookup (PortableServer_POA       poa,
 			     ORBit_ObjectKey         *objkey,
 			     PortableServer_ObjectId *object_id)
 {
-	object_id->_buffer  = objkey->_buffer + ORBIT_ADAPTOR_KEY_LEN;
-	object_id->_length  = objkey->_length - ORBIT_ADAPTOR_KEY_LEN; 
+	object_id->_buffer  = objkey->_buffer + ORBIT_ADAPTOR_PREFIX_LEN;
+	object_id->_length  = objkey->_length - ORBIT_ADAPTOR_PREFIX_LEN; 
 	object_id->_maximum = object_id->_length;
 	object_id->_release = CORBA_FALSE;
 
@@ -1543,7 +1557,7 @@ PortableServer_POA__get_the_children (PortableServer_POA  poa,
 	retval           = PortableServer_POAList__alloc ();
 	retval->_length  = 0;
 	retval->_maximum = length;
-	retval->_buffer  = PortableServer_POAList_allocbuf (length);
+	retval->_buffer  = (CORBA_Object *) PortableServer_POAList_allocbuf (length);
 	retval->_release = CORBA_TRUE;
 
 	g_hash_table_foreach (poa->child_poas, (GHFunc) ORBit_POAList_add_child, retval);

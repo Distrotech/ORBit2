@@ -1652,7 +1652,7 @@ ORBit_demarshal_IOR (CORBA_ORB        orb,
 		len = GUINT32_SWAP_LE_BE (len);
 	buf->cur += 4;
 
-	if (len < 0 || (buf->cur + len) > buf->end)
+	if ((buf->cur + len) > buf->end)
 		return TRUE;
 
 	type_id = buf->cur;

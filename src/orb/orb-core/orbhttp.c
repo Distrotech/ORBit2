@@ -94,24 +94,24 @@ static int proxyPort;	/* the proxy port if any */
  */
 
 static void
-orbHTTPInit(void)
+orbHTTPInit (void)
 {
-    const char *env;
+	const char *env;
 
-    if (initialized)
-	return;
+	if (initialized)
+		return;
 
-    if (proxy == NULL) {
-	proxyPort = 80;
-	env = getenv("no_proxy");
-	if (env != NULL)
-	    goto done;
-	if((env = getenv("http_proxy"))
-	   || (env = getenv("HTTP_PROXY")))
-	  orbHTTPScanProxy(env);
-    }
-done:
-    initialized = 1;
+	if (!proxy) {
+		proxyPort = 80;
+		env = g_getenv ("no_proxy");
+		if (env)
+			goto done;
+		if ((env = g_getenv ("http_proxy")) ||
+		    (env = g_getenv ("HTTP_PROXY")))
+			orbHTTPScanProxy (env);
+	}
+ done:
+	initialized = 1;
 }
 
 /**
@@ -124,7 +124,8 @@ done:
  */
 
 static void
-orbHTTPScanURL(orbHTTPCtxtPtr ctxt, const char *URL) {
+orbHTTPScanURL (orbHTTPCtxtPtr ctxt, const char *URL)
+{
     const char *cur = URL;
     char buf[ORB_TEMP_BUF_SIZE];
     int index = 0;
@@ -204,64 +205,67 @@ orbHTTPScanURL(orbHTTPCtxtPtr ctxt, const char *URL) {
  */
 
 static void
-orbHTTPScanProxy(const char *URL)
+orbHTTPScanProxy (const char *URL)
 {
-    const char *cur = URL;
-    char buf[ORB_TEMP_BUF_SIZE];
-    int index = 0;
-    int port = 0;
+	const char *cur = URL;
+	char buf[ORB_TEMP_BUF_SIZE];
+	int index;
+	int port = 0;
 
-    if (proxy != NULL) { 
-        g_free(proxy);
+	g_free (proxy);
 	proxy = NULL;
-    }
-    if (proxyPort != 0) { 
-	proxyPort = 0;
-    }
-#ifdef DEBUG_HTTP
-    if (URL == NULL)
-	printf("Removing HTTP proxy info\n");
-    else
-	printf("Using HTTP proxy %s\n", URL);
-#endif
-    if (URL == NULL) return;
-    buf[index] = 0;
-    while (*cur != 0) {
-        if ((cur[0] == ':') && (cur[1] == '/') && (cur[2] == '/')) {
-	    buf[index] = 0;
-	    index = 0;
-            cur += 3;
-	    break;
-	}
-	buf[index++] = *cur++;
-    }
-    if (*cur == 0) return;
 
-    buf[index] = 0;
-    while (1) {
-        if (cur[0] == ':') {
-	    buf[index] = 0;
-	    proxy = g_strdup(buf);
-	    index = 0;
-	    cur += 1;
-	    while ((*cur >= '0') && (*cur <= '9')) {
-	        port *= 10;
-		port += *cur - '0';
-		cur++;
-	    }
-	    if (port != 0) proxyPort = port;
-	    while ((cur[0] != '/') && (*cur != 0)) 
-	        cur++;
-	    break;
+	if (proxyPort != 0) 
+		proxyPort = 0;
+
+#ifdef DEBUG_HTTP
+	if (!URL)
+		printf ("Removing HTTP proxy info\n");
+	else
+		printf ("Using HTTP proxy %s\n", URL);
+#endif
+	if (!URL)
+		return;
+
+	index = 0;
+	buf [index] = 0;
+	while (*cur != '\0') {
+		if ((cur[0] == ':') && (cur[1] == '/') && (cur[2] == '/')) {
+			buf[index] = 0;
+			index = 0;
+			cur += 3;
+			break;
+		}
+		buf[index++] = *cur++;
 	}
-        if ((*cur == '/') || (*cur == 0)) {
-	    buf[index] = 0;
-	    proxy = g_strdup(buf);
-	    index = 0;
-	    break;
+	if (*cur == '\0')
+		return;
+
+	buf[index] = 0;
+	while (1) {
+		if (cur[0] == ':') {
+			buf[index] = 0;
+			proxy = g_strdup(buf);
+			index = 0;
+			cur += 1;
+			while ((*cur >= '0') && (*cur <= '9')) {
+				port *= 10;
+				port += *cur - '0';
+				cur++;
+			}
+			if (port != 0) proxyPort = port;
+			while ((cur[0] != '/') && (*cur != 0)) 
+				cur++;
+			break;
+		}
+		if ((*cur == '/') || (*cur == '\0')) {
+			buf[index] = 0;
+			proxy = g_strdup(buf);
+			index = 0;
+			break;
+		}
+		buf[index++] = *cur++;
 	}
-	buf[index++] = *cur++;
-    }
 }
 
 /**

@@ -30,10 +30,12 @@
 
 G_BEGIN_DECLS
 
-ORBit_IInterfaces *ORBit_iinterfaces_from_file (const char *path,
-						const char *cpp_args);
-ORBit_IInterfaces *ORBit_iinterfaces_from_tree (IDL_tree    tree);
-ORBit_IInterface  *ORBit_iinterface_from_tree  (IDL_tree    tree);
+ORBit_IInterfaces *ORBit_iinterfaces_from_file (const char                     *path,
+						const char                     *cpp_args,
+						CORBA_sequence_CORBA_TypeCode **typecodes_ret);
+
+ORBit_IInterfaces *ORBit_iinterfaces_from_tree (IDL_tree                        tree,
+						CORBA_sequence_CORBA_TypeCode **typecodes_ret);
 
 G_END_DECLS
 

@@ -9,14 +9,16 @@
 #define GIOP_CHUNK_ALIGN 8
 #define GIOP_CHUNK_SIZE (GIOP_CHUNK_ALIGN * 256)
 
+static gboolean giop_blank_wire_data = FALSE;
 static GSList *send_buffer_list = NULL;
 static GMutex *send_buffer_list_lock = NULL;
 
 static const char giop_zero_buf [GIOP_CHUNK_ALIGN * 10] = {0};
 
 void
-giop_send_buffer_init (void)
+giop_send_buffer_init (gboolean wipe)
 {
+	giop_blank_wire_data = wipe;
 	send_buffer_list_lock = linc_mutex_new ();
 }
 
@@ -45,7 +47,7 @@ giop_send_buffer_use_request (GIOPVersion giop_version,
 			      const struct iovec *operation_vec,
 			      const struct iovec *principal_vec)
 {
-  GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
+  GIOPSendBuffer *buf = giop_send_buffer_use (giop_version);
   struct iovec zerovec;
 
   if(!principal_vec)
@@ -235,7 +237,7 @@ giop_send_buffer_append_real (GIOPSendBuffer *buf,
 
 /*
  * get_next_indirect:
- * @buf: the recv buffer with an exhausted indirect.
+ * @buf: the send buffer with an exhausted indirect.
  * @for_size_hint: for very large buffers specify this
  * so we don't allocate too much. If this is non 0 then
  * buf->indirect will contain at least this much space.
@@ -264,7 +266,18 @@ get_next_indirect (GIOPSendBuffer *buf, gulong for_size_hint)
 			new_size = GIOP_CHUNK_SIZE;
 
 		buf->indirects [max].size = new_size;
-		buf->indirects [max].ptr = g_malloc (new_size);
+
+		if (giop_blank_wire_data)
+			buf->indirects [max].ptr = g_malloc0 (new_size);
+		else
+			buf->indirects [max].ptr = g_malloc (new_size);
+
+		/*
+		 *   We assume that this is 8 byte aligned, for efficiency -
+		 * so we can align to the memory address rather than the offset
+		 * into the buffer.
+		 */
+		g_assert (((gulong)buf->indirects [max].ptr & 0x3) == 0);
 	}
 
 	buf->indirect = buf->indirects [max].ptr;
@@ -422,7 +435,11 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 GIOPSendBuffer *
 giop_send_buffer_use (GIOPVersion giop_version)
 {
-	GIOPSendBuffer *retval;
+	GIOPSendBuffer *buf;
+
+	g_return_val_if_fail (
+		((int) giop_version) >= 0 &&
+		giop_version < GIOP_NUM_VERSIONS, NULL);
 
 	LINC_MUTEX_LOCK (send_buffer_list_lock);
 	if (send_buffer_list) {
@@ -434,33 +451,41 @@ giop_send_buffer_use (GIOPVersion giop_version)
 
 		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
 
-		retval = ltmp->data;
+		buf = ltmp->data;
 		g_slist_free_1 (ltmp);
-		retval->num_used = retval->indirect_left = 0;
-		retval->num_indirects_used = 0;
+		buf->num_used = buf->indirect_left = 0;
+		buf->num_indirects_used = 0;
 	} else {
 		LINC_MUTEX_UNLOCK (send_buffer_list_lock);
 
-		retval = g_new0 (GIOPSendBuffer, 1);
+		buf = g_new0 (GIOPSendBuffer, 1);
 
-		memcpy (retval->msg.header.magic, "GIOP", 4);
-		retval->msg.header.flags = GIOP_FLAG_ENDIANNESS;
-		retval->num_alloced = 8;
-		retval->iovecs = g_new (struct iovec, 8);
+		memcpy (buf->msg.header.magic, "GIOP", 4);
+		buf->msg.header.flags = GIOP_FLAG_ENDIANNESS;
+		buf->num_alloced = 8;
+		buf->iovecs = g_new (struct iovec, 8);
 	}
 
-	memcpy (retval->msg.header.version,
+	if (giop_blank_wire_data) {
+		int i;
+
+		for (i = 0; i < buf->num_indirects_alloced; i++)
+			memset (buf->indirects [i].ptr, 0,
+				buf->indirects [i].size);
+	}
+
+	memcpy (buf->msg.header.version,
 		giop_version_ids [giop_version], 2);
-	retval->giop_version = giop_version;
+	buf->giop_version = giop_version;
 
-	g_assert (sizeof (retval->msg.header) == 12);
+	g_assert (sizeof (buf->msg.header) == 12);
 	giop_send_buffer_append_real (
-		retval, (guchar *)&retval->msg.header, 12);
+		buf, (guchar *)&buf->msg.header, 12);
 
-	retval->msg.header.message_size = 0;
-	retval->header_size = 12;
+	buf->msg.header.message_size = 0;
+	buf->header_size = 12;
 
-	return retval;
+	return buf;
 }
 
 void

@@ -265,7 +265,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 					  &host, &service, &is_ssl, tbuf)) {
 
 			obj->connection = giop_connection_initiate (
-				proto, host, service,
+				obj->orb, proto, host, service,
 				is_ssl ? LINC_CONNECTION_SSL : 0, iiop_version);
 
 			if (ORBit_try_connection (obj)) {
@@ -571,7 +571,7 @@ ORBitSmallSkeleton
 get_small_skel_CORBA_Object(PortableServer_Servant servant, const char *opname, 
 			    gpointer * m_data, gpointer * impl)
 {
-	if (!strcmp (opname, "is_a")) {
+	if (!strcmp (opname, "_is_a")) {
 		*impl = *m_data = (gpointer)&CORBA_Object__imethods [4];
 		return (ORBitSmallSkeleton) ORBit_impl_CORBA_Object_is_a;
 
@@ -692,7 +692,7 @@ CORBA_Object__imethods[] = {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_InterfaceDef, "get_interface", 14, 0
+    TC_CORBA_InterfaceDef, "_interface", 11, 0
    },
    {
     {0, 0, NULL, FALSE},
@@ -717,14 +717,14 @@ CORBA_Object__imethods[] = {
     {1, 1, CORBA_Object_is_a__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_boolean, "is_a", 5,
+    TC_CORBA_boolean, "_is_a", 6,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_boolean, "non_existent", 13,
+    TC_CORBA_boolean, "_non_existent", 14,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
