@@ -37,7 +37,7 @@
 #ifdef TIMING_RUN
 #  define d_print(a)
 #else
-#  define d_print(a) g_print(a)
+#  define d_print(a) if (!thread_tests) g_print(a)
 #endif
 
 extern CORBA_ORB global_orb;

@@ -129,8 +129,12 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 		ORBit_RootObject_release_T (obj->adaptor_obj);
 	}
 
-	if (obj->connection)
+	
+	if (obj->connection) {
+		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 		giop_connection_unref (obj->connection);
+		LINK_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
+	}
 
 	p_free (obj, struct CORBA_Object_type);
 }
@@ -263,9 +267,10 @@ ORBit_try_connection_T (CORBA_Object obj)
 		break;
 	case LINK_DISCONNECTED:
 		/* Have a go at reviving it */
-		dprintf (MESSAGES, "re-connecting dropped cnx %p", cnx);
+		dprintf (MESSAGES, "re-connecting dropped cnx %p: ", cnx);
 		if (giop_connection_try_reconnect (GIOP_CONNECTION (cnx)) == LINK_CONNECTED)
 			retval = TRUE;
+		dprintf (MESSAGES, retval ? "connected\n" : "not connected\n" );
 		break;
 	}
 
@@ -274,6 +279,21 @@ ORBit_try_connection_T (CORBA_Object obj)
 	g_assert (LINK_CONNECTION (obj->connection) == cnx);
 
 	return retval;
+}
+
+GIOPConnection *
+ORBit_object_peek_connection (CORBA_Object obj)
+{
+	GIOPConnection *cnx;
+
+	OBJECT_LOCK (obj);
+	
+	if ((cnx = obj->connection))
+		giop_connection_ref (cnx);
+
+	OBJECT_UNLOCK (obj);
+
+	return cnx;
 }
 
 GIOPConnection *
