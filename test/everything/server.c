@@ -204,7 +204,7 @@ TestFactory_segv (PortableServer_Servant servant,
 	/* Emulate a SegV */
 	exit (0);
 #else
-	g_main_loop_quit (linc_loop);
+	CORBA_ORB_shutdown (global_orb, TRUE, ev);
 #endif
 }
 
@@ -529,8 +529,6 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 
 	CORBA_Object_release (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
-
-	g_warning ("released factory");
 
 	if (gen_imodule)
 		CORBA_free (interfaces);

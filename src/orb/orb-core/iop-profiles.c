@@ -458,11 +458,13 @@ IOP_delete_profiles (CORBA_ORB orb,
 		return;
 
 	if (orb && *profiles == orb->profiles)
-		return;
-
-	g_slist_foreach (*profiles, (GFunc)IOP_profile_free, NULL);
-	g_slist_free (*profiles);
-	*profiles = NULL;
+		*profiles = NULL;
+	else {
+		g_slist_foreach (*profiles,
+				 (GFunc)IOP_profile_free, NULL);
+		g_slist_free (*profiles);
+		*profiles = NULL;
+	}
 }
 
 GSList *

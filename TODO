@@ -1,10 +1,8 @@
 TODO:
 
 * Threading 
-	+ Re-work the handling of incoming messages,
-	  we need a single point of dispatch - in the GIOP
-	  code, preferably queue based. Re-read ORBitMT to see
-	  how that is done.
+	+ bin redundant forwards in poa.c
+	+ giop_recv_thread_fn - more work needed
 	+ unsafe bits
 		+ 'random' number generation - the per obj idx ?
 	+ Lock order:
@@ -12,8 +10,6 @@ TODO:
 			POAObject
 				POA (OAObject)
 					ORB lock
-	+ 'shutdown' not working; - kills I/O thread, but not the main
-	+ bin redundant forwards in poa.c
 	+ ** ERROR **: Need to handle zapped cnx' async callbacks
 
 

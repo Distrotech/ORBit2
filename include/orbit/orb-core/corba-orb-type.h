@@ -71,6 +71,12 @@ struct CORBA_ORB_type {
 	gpointer                        default_ctx;
 	GHashTable                     *initial_refs;
 	guint                           life_flags;
+
+	/*
+	 * HashTable of Object Adaptor generated refs that have 
+	 * been externalised and refs that we have received.
+	 */
+	GHashTable		       *objrefs;
 };
 
 #endif /* ORBIT2_INTERNAL_API */
