@@ -1,3 +1,9 @@
+2001-08-20  Martin Baulig  <baulig@suse.de>
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_initiate): If
+	the connection could not be established, drop the connection list
+	lock right before calling g_object_unref(cnx).
+
 2001-08-20  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-typecode.c

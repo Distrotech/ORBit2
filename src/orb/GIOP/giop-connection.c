@@ -277,8 +277,9 @@ giop_connection_initiate (const char *proto_name,
 			proto_name, remote_host_info,
 			remote_serv_info, options)) {
 
+			LINC_MUTEX_UNLOCK (cnx_list.lock);
 			g_object_unref (G_OBJECT(cnx));
-			cnx = NULL;
+			return NULL;
 		} else {
 			giop_connection_list_add(cnx);
 			g_object_ref (G_OBJECT(cnx));
