@@ -1,0 +1,19 @@
+module Test
+{
+    struct Test_st
+    {
+	long   num;
+	string string_one;
+	string string_two;
+    };
+
+    typedef Test_st foo_st;
+    
+    interface IMaster
+    {
+	void struct_in (in Test_st struct_in);
+	void struct_inout (inout Test_st struct_inout);
+	void struct_out (out Test_st struct_out);
+	Test_st struct_ret ();	
+    };
+};

@@ -1,0 +1,22 @@
+module Test
+{
+    struct Inner_st
+    {
+	long   num;
+	string string_one;
+	string string_two;
+    };
+
+    struct Outer_st
+    {
+	long     num;
+	string   id;
+	Inner_st struct_member;
+    };
+    
+    interface IMaster
+    {
+	void struct_in (in Outer_st outer_in);
+	Outer_st struct_ret ();	
+    };
+};

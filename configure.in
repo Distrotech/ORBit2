@@ -246,6 +246,7 @@ include/orbit/util/Makefile
 include/orbit/orb-core/Makefile
 include/orbit/poa/Makefile
 include/orbit/dynamic/Makefile
+
 test/Makefile
   test/cpp/Makefile
     test/cpp/helloworld/Makefile
@@ -255,6 +256,25 @@ test/Makefile
     test/cpp/arrays/Makefile
       test/cpp/arrays/inside_exception/Makefile
         test/cpp/arrays/inside_exception/generated/Makefile
+      test/cpp/arrays/of_interface/Makefile
+        test/cpp/arrays/of_interface/generated/Makefile
+      test/cpp/arrays/of_structs/Makefile
+        test/cpp/arrays/of_structs/generated/Makefile
+      test/cpp/arrays/simple_types/Makefile
+        test/cpp/arrays/simple_types/generated/Makefile
+    test/cpp/structs/Makefile
+      test/cpp/structs/atomic_types/Makefile
+        test/cpp/structs/atomic_types/generated/Makefile
+      test/cpp/structs/inside_exception/Makefile
+        test/cpp/structs/inside_exception/generated/Makefile
+      test/cpp/structs/inside_struct/Makefile
+        test/cpp/structs/inside_struct/generated/Makefile
+      test/cpp/structs/with_array/Makefile
+        test/cpp/structs/with_array/generated/Makefile
+      test/cpp/structs/with_interfaces/Makefile
+        test/cpp/structs/with_interfaces/generated/Makefile
+      test/cpp/structs/with_string/Makefile
+        test/cpp/structs/with_string/generated/Makefile
 
 test/everything/Makefile
 test/inhibit/Makefile
