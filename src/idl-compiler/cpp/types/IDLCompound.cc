@@ -48,16 +48,15 @@ IDLCompound::write_packing_impl (ostream &ostr,
 	string c_id = IDL_IMPL_C_NS_NOTUSED + get_c_typename ();
 
 	// Implementation of _orbitcpp_pack that returns a newly
-	// allocated C structure on heap	
+	// allocated C structure on heap
+	string c_alloc = c_id + "__alloc ()";
+	
 	ostr << indent << c_id << " * "
 	     << get_cpp_method_prefix () << "::_orbitcpp_pack () const" << endl
 	     << indent++ << '{' << endl;
-	ostr << indent << c_id << " *_c_struct = " << c_id << "__alloc ()"
-	     << ';' << endl << endl;
-	ostr << indent << "if (!_c_struct)" << endl;
-	indent++;
-	ostr << indent << "throw CORBA::NO_MEMORY ();" << endl << endl;
-	indent--;
+	ostr << indent << c_id << " *_c_struct = " << c_alloc << ';' << endl << endl;
+	ostr << indent++ << "if (!_c_struct)" << endl;
+	ostr << indent-- << "throw CORBA::NO_MEMORY ();" << endl << endl;
 	ostr << indent << "_orbitcpp_pack (*_c_struct);" << endl;
 	ostr << indent << "return _c_struct;" << endl
 	     << --indent << '}' << endl << endl;
@@ -96,7 +95,6 @@ IDLCompound::write_packing_impl (ostream &ostr,
 
 		member.getType ()->member_unpack_from_c (ostr, indent, cpp_id, c_id);
 	}
-	ostr << endl;
 
 	ostr << --indent << '}' << endl << endl;
 }

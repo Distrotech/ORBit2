@@ -214,6 +214,7 @@ IDLMethod::skel_do_pre (ostream &ostr,
 	// Prepare return value container
 	m_returntype->skel_impl_ret_pre (ostr, indent);
 
+	ostr << endl;
 	ostr << indent << "bool _results_valid = true;" << endl << endl;
 }
 
