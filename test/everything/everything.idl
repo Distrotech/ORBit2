@@ -30,9 +30,9 @@ module test {
 	const double CONST_DOUBLE = 1234.5678;
 	const long double CONST_LONG_DOUBLE = 1234.567891;
 	const boolean CONST_BOOLEAN = TRUE;
-	enum Colour { red, green, blue }; 
-	const Colour FAVORITE_COLOUR = red; 
-
+	enum Soup { veggie, chicken, tomato, oxtail }; 
+	const Soup FAVORITE_SOUP = veggie; 
+	const Soup HORRIBLE_SOUP = oxtail; 
 
 	// Forward declarations
 	interface BasicServer;
@@ -209,7 +209,7 @@ module test {
 	case 8: StrArray d;
 	};
 
-	union EnumUnion switch (Colour) {
+	union EnumUnion switch (enum Colour { red, green, blue }) {
 	case red: long x;
 	case blue: boolean y;
 	};

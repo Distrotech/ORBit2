@@ -1,3 +1,21 @@
+2002-03-01  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-headers.c: (ch_output_type_union):
+	output the enum decl here if need be.
+
+	* src/idl-compiler/orbit-idl-c-imodule.c: (cc_small_build_types):
+	ditto.
+
+	* test/everything/everything.idl: add new soup constats and
+	declare the colour enum in the union decl.
+
+	* test/everything/client.c:
+	(testConst): test the soup consts.
+	(testIInterface): test the soup and colour typecodes.
+	(testMiscUnions): update for colour scope change.
+
+	* test/everything/unionServer.c: (UnionServer_opMisc): ditto.
+
 2002-02-28  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/orbit-debug.h: fix typo.

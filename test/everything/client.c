@@ -54,7 +54,8 @@ testConst (void)
 	g_assert (test_CONST_FLOAT == 1234.56);
 	g_assert (test_CONST_DOUBLE == 1234.5678);
 	g_assert (test_CONST_LONG_DOUBLE == 1234.567891);
-	g_assert (test_FAVORITE_COLOUR == test_red);
+	g_assert (test_FAVORITE_SOUP == test_veggie);
+	g_assert (test_HORRIBLE_SOUP == test_oxtail);
 }
 
 static void
@@ -383,7 +384,8 @@ testIInterface (test_TestFactory   factory,
 	CORBA_free (iinterface);
 
 	tcs = ORBit_small_get_types (TYPELIB_NAME);
-	g_assert (find_tc (tcs, "IDL:orbit/test/Colour:1.0"));
+	g_assert (find_tc (tcs, "IDL:orbit/test/Soup:1.0"));
+	g_assert (find_tc (tcs, "IDL:orbit/test/EnumUnion/Colour:1.0"));
 	g_assert (find_tc (tcs, "IDL:orbit/test/ArrayUnion:1.0"));
 	CORBA_free (tcs);
 }
@@ -747,7 +749,7 @@ testMiscUnions (test_TestFactory   factory,
 		g_free (tmp);
 	}
 
-	g_assert (retn._d == test_red);
+	g_assert (retn._d == test_EnumUnion_red);
 	g_assert (retn._u.x == constants_LONG_IN);
 
 	CORBA_free (outArg);

@@ -109,7 +109,7 @@ UnionServer_opMisc (PortableServer_Servant    servant,
 		g_free (tmp);
 	}
 
-	retval._d   = test_red;
+	retval._d   = test_EnumUnion_red;
 	retval._u.x = constants_LONG_IN;
 
 	return retval;
