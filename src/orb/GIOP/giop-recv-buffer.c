@@ -12,103 +12,6 @@
 static GList  *giop_queued_messages;
 static GMutex *giop_queued_messages_lock = NULL;
 
-/* A list of incoming requests */
-static GList  *incoming_recv_buffer_list;
-static GMutex *incoming_recv_buffer_list_lock = NULL;
-
-#ifdef ORBIT_THREADED
-static GCond  *incoming_recv_buffer_list_condvar = NULL;
-#endif
-
-/**
- * giop_recv_list_push:
- * @buf: the Received buffer
- * @cnx: the GIOP connection it was received on.
- * 
- *   This method either processes the incoming buffer immediately
- * via an asynchronous callback, or it pushes it on the received
- * message list for future handling.
- * 
- * Return value: TRUE if the value was proccessed otherwise FALSE
- **/
-static gboolean
-giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
-{
-	GList                 *l;
-	GIOPMessageQueueEntry *ent;
-	CORBA_unsigned_long    request_id;
-	gboolean               retval = FALSE;
-
-#ifdef DEBUG
-	fprintf (stderr, "Giop recv_list push: ");
-	giop_dump_recv (buf);
-#endif
-
-	buf->connection = cnx;
-	request_id = giop_recv_buffer_get_request_id (buf);
-
-	switch (buf->msg.header.message_type) {
-	case GIOP_REPLY:
-	case GIOP_LOCATEREPLY:
-		LINC_MUTEX_LOCK (giop_queued_messages_lock);
-
-		for (l = giop_queued_messages; l; l = l->next) {
-			ent = l->data;
-
-			if (ent->request_id == request_id &&
-			    ent->msg_type == buf->msg.header.message_type)
-				break;
-		}
-
-		if (l) {
-			ent = l->data;
-
-			ent->buffer = buf;
-#ifdef ORBIT_THREADED
-			pthread_cond_signal (&ent->condvar);
-#else
-			if (ent->u.unthreaded.cb) {
-				giop_queued_messages = g_list_remove_link (
-					giop_queued_messages, l);
-				g_list_free_1 (l);
-			}
-
-			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-
-			if (ent->u.unthreaded.cb) {
-				cnx->incoming_msg = NULL;
-				LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
-#ifdef DEBUG
-				g_warning ("Call %p:%p:%p", l, ent, ent->u.unthreaded.cb);
-#endif
-				ent->u.unthreaded.cb (ent);
-
-				LINC_MUTEX_LOCK (cnx->incoming_mutex);
-			}
-#endif
-		} else {
-			g_warning ("We received an unexpected message:");
-			giop_dump_recv (buf);
-			giop_recv_buffer_unuse(buf);
-			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-		}
-		break;
-	default:
-		LINC_MUTEX_LOCK (incoming_recv_buffer_list_lock);
-
-		incoming_recv_buffer_list = g_list_prepend (
-			incoming_recv_buffer_list, buf);
-
-		LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
-#ifdef ORBIT_THREADED
-		pthread_cond_signal (&incoming_recv_buffer_list_condvar);
-#endif
-		break;
-	}
-
-	return retval;
-}
-
 static gboolean
 giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value)
 {
@@ -578,9 +481,6 @@ giop_recv_buffer_use_encaps_buf (GIOPRecvBuffer *buf)
 	ptr = buf->cur;
 	buf->cur += len;
 
-	/* FIXME: it looks like the 'conversion needed' flag is
-	   stupidly discarded here */
-
 	return giop_recv_buffer_use_encaps (ptr, len);
 }
 
@@ -737,10 +637,10 @@ giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 }
 
 void
-giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
-				 GIOPConnection        *cnx,
-				 CORBA_unsigned_long    msg_type,
-				 CORBA_unsigned_long    request_id)
+giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
+				  GIOPConnection        *cnx,
+				  CORBA_unsigned_long    msg_type,
+				  CORBA_unsigned_long    request_id)
 {
 #ifdef ORBIT_THREADED
 	/* FIXME: fix this mess */
@@ -772,10 +672,6 @@ giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
 	g_return_if_fail (ent != NULL);
 
 	ent->u.unthreaded.cb = cb;
-
-#ifdef DEBUG
-	g_warning ("Set async to XX:%p:%p", ent, ent->u.unthreaded.cb);
-#endif
 }
 
 GIOPRecvBuffer *
@@ -796,55 +692,6 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
 	giop_recv_list_destroy_queue_entry (ent);
 
 	return ent->buffer;
-}
-
-static GIOPRecvBuffer *
-giop_recv_list_pop_T (void)
-{
-	GIOPRecvBuffer *retval = NULL;
-
-	if (incoming_recv_buffer_list) {
-		retval = incoming_recv_buffer_list->data;
-		incoming_recv_buffer_list = g_list_remove (
-			incoming_recv_buffer_list, retval);
-	}
-
-	return retval;
-}
-
-static GIOPRecvBuffer *
-giop_recv_list_pop (void)
-{
-	GIOPRecvBuffer *retval;
-
-	LINC_MUTEX_LOCK   (incoming_recv_buffer_list_lock);
-	retval = giop_recv_list_pop_T ();
-	LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
-
-	return retval;
-}
-
-GIOPRecvBuffer *
-giop_recv_buffer_use (void)
-{
-	GIOPRecvBuffer *retval = NULL;
-
-#ifdef ORBIT_THREADED
-	/* FIXME: fix this mess */
-	LINC_MUTEX_LOCK   (incoming_recv_buffer_list_lock);
-	retval = giop_recv_list_pop_T();
-	if (!retval) {
-		pthread_cond_wait (&incoming_recv_buffer_list_condvar,
-				   &incoming_recv_buffer_list_lock);
-		retval = giop_recv_list_pop_T();
-	}
-	LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
-#else
-	while (!(retval = giop_recv_list_pop ()))
-		linc_main_iteration (TRUE);
-#endif
-
-	return retval;
 }
 
 ORBit_ObjectKey*
@@ -887,14 +734,6 @@ giop_recv_buffer_get_opname (GIOPRecvBuffer *buf)
 void
 giop_recv_buffer_init (void)
 {
-	incoming_recv_buffer_list_lock = linc_mutex_new ();
-
-#ifdef ORBIT_THREADED
-	if (g_thread_supported () &&
-	    orbit_thread_processing_init == ORBIT_REQUEST_PROCESS_THREADED)
-		incoming_recv_buffer_list_condvar_lock = g_cond_new ();
-#endif
-
 	giop_queued_messages_lock = linc_mutex_new ();
 }
 
@@ -911,6 +750,52 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
 	giop_recv_buffer_unuse (buf);
 
 	return TRUE;
+}
+
+static void
+handle_reply (GIOPRecvBuffer *buf)
+{
+	GList                 *l;
+	GIOPMessageQueueEntry *ent;
+	CORBA_unsigned_long    request_id;
+
+	request_id = giop_recv_buffer_get_request_id (buf);
+
+	LINC_MUTEX_LOCK (giop_queued_messages_lock);
+
+	for (l = giop_queued_messages; l; l = l->next) {
+		ent = l->data;
+
+		if (ent->request_id == request_id &&
+		    ent->msg_type == buf->msg.header.message_type)
+			break;
+	}
+
+	if (l) {
+		ent = l->data;
+
+		ent->buffer = buf;
+#ifdef ORBIT_THREADED
+		pthread_cond_signal (&ent->condvar);
+#else
+		if (ent->u.unthreaded.cb) {
+			giop_queued_messages = g_list_remove_link (
+				giop_queued_messages, l);
+			g_list_free_1 (l);
+		}
+
+		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+		if (ent->u.unthreaded.cb)
+			ent->u.unthreaded.cb (ent);
+#endif
+	} else {
+		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+		g_warning ("We received an unexpected message:");
+		giop_dump_recv (buf);
+		giop_recv_buffer_unuse(buf);
+	}
 }
 
 static gboolean
@@ -960,12 +845,20 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 	return FALSE;
 }
 
+/*
+ * FIXME: we should definately handle things more asynchronously,
+ * perhaps even at the expense of having to go to the GSource
+ * twice in order to get fresh input (?)
+ * or should we poll ourselves on the source to see what's up?
+ *
+ * The whole locking concept here looks broken to me.
+ */
 gboolean
 giop_connection_handle_input (LINCConnection *lcnx)
 {
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 	GIOPRecvBuffer *buf;
-	gboolean        processed = FALSE;
+	static int      warned = 0;
 
 	g_object_ref ((GObject *) cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
@@ -1041,14 +934,43 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 	} while (cnx->incoming_msg && buf->state != GIOP_MSG_READY);
 
-	giop_recv_list_push (buf, cnx);
-	buf = cnx->incoming_msg;
 	cnx->incoming_msg = NULL;
 	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 
-	if (buf && buf->msg.header.message_type == GIOP_REQUEST) {
+	buf->connection = cnx;
+
+	switch (buf->msg.header.message_type) {
+	case GIOP_REPLY:
+	case GIOP_LOCATEREPLY:
+		handle_reply (buf);
+		break;
+
+	case GIOP_REQUEST:
 		ORBit_handle_request (cnx->orb_data, buf);
 		giop_recv_buffer_unuse (buf);
+		break;
+
+	case GIOP_CANCELREQUEST:
+	case GIOP_LOCATEREQUEST:
+	case GIOP_MESSAGEERROR:
+		if (!warned++) {
+			g_warning ("dropping an unusual & unhandled input buffer 0x%x",
+				   buf->msg.header.message_type);
+			giop_dump_recv (buf);
+		}
+		/* drop through */
+	case GIOP_CLOSECONNECTION:
+		giop_recv_buffer_unuse (buf);
+		break;
+
+	default:
+		if (!warned++) {
+			g_warning ("dropping an out of bound input buffer "
+				   "on the floor 0x%x", buf->msg.header.message_type);
+			giop_dump_recv (buf);
+		}
+		giop_recv_buffer_unuse (buf);
+		break;
 	}
 	
 	g_object_unref ((GObject *) cnx);
