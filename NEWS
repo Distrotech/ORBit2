@@ -1,3 +1,13 @@
+ORBit2-2.7.6
+
+	* bug fixes
+		+ try_connection deadlock (Michael, Padraig O'Briain)
+		+ shutdown_orb fd leak (Michael, Morten Welinder)
+		+ don't export libIDL strangely (Michael, Morten)
+	* featurelets
+		+ define file specific foo in idlcompile (James H)
+
+
 ORBit2-2.7.5
 
 	* bug fixes
