@@ -894,7 +894,7 @@ ORBit_POAObject_invoke (ORBit_POAObject    pobj,
 }
 
 /*
- * return_exception:
+ * giop_recv_buffer_return_sys_exception:
  * @recv_buffer:
  * @m_data:
  * @ev:
@@ -906,10 +906,9 @@ ORBit_POAObject_invoke (ORBit_POAObject    pobj,
  * of the reqeust to be able to determine if this is a oneway
  * method.
  */
-static void
-return_exception (GIOPRecvBuffer    *recv_buffer,
-		  ORBit_IMethod     *m_data,
-		  CORBA_Environment *ev)
+void
+ORBit_recv_buffer_return_sys_exception (GIOPRecvBuffer    *recv_buffer,
+					CORBA_Environment *ev)
 {
 	GIOPSendBuffer *send_buffer;
 
@@ -917,11 +916,6 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 		return;
 
 	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
-
-	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {
-		tprintf ("A serious exception occured on a oneway method");
-		return;
-	}
 
 	send_buffer = giop_send_buffer_use_reply (
 		recv_buffer->connection->giop_version,
@@ -934,6 +928,24 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 	do_giop_dump_send (send_buffer);
 	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
+}
+
+static void
+return_exception (GIOPRecvBuffer    *recv_buffer,
+		  ORBit_IMethod     *m_data,
+		  CORBA_Environment *ev)
+{
+	if (!recv_buffer) /* In Proc */
+		return;
+
+	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
+
+	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {
+		tprintf ("A serious exception occured on a oneway method");
+		return;
+	}
+
+	ORBit_recv_buffer_return_sys_exception (recv_buffer, ev);
 }
 
 /*

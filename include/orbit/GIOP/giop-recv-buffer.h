@@ -84,7 +84,6 @@ void                        giop_recv_list_zap              (GIOPConnection *cnx
 gboolean                    giop_connection_handle_input    (LINCConnection *lcnx);
 void                        giop_connection_destroy_frags   (GIOPConnection *cnx);
 
-
 #endif /* ORBIT2_INTERNAL_API */
 
 G_END_DECLS
