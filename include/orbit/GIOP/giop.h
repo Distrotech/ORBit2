@@ -15,7 +15,7 @@ G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API
 
-void giop_init (void);
+void giop_init (gboolean blank_wire_data);
 
 #endif /* ORBIT2_INTERNAL_API */
 

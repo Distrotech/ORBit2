@@ -248,8 +248,9 @@ CORBA_ORB_init (int *argc, char **argv,
 #endif /* G_ENABLE_DEBUG */
 
 	genuid_init ();
-
-	giop_init ();
+	
+	giop_init (orbit_use_ipv4 || orbit_use_ipv6 ||
+		   orbit_use_irda || orbit_use_ssl);
 
 	ORBit_locks_initialize ();
 

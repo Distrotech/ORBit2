@@ -36,3 +36,8 @@ TODO:
 	  manages to go through the error condition a whole
 	  load; _why_ is this ? - is it a recursive effect on
 	  the method ? why are we called if there is no data ?
+
+	+ We need a typecast in an _allocbuf which we know is
+	  aliased, eg. PortableServer_POAList_allocbuf, since
+	  it gets assigned to a CORBA_Object *, and the cast
+	  is bogus.
