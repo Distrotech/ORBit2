@@ -73,12 +73,14 @@ ORBit_small_freekids (CORBA_TypeCode tc, gpointer p, gpointer d)
 
 static inline void dprintf (const char *format, ...) { };
 #define dump_arg(a,b)
-#define giop_dump_send(a)
-#define giop_dump_recv(a)
+#define do_giop_dump_send(a)
+#define do_giop_dump_recv(a)
 
 #else /* DEBUG */
 
 #define dprintf(format...) fprintf(stderr, format)
+#define do_giop_dump_send(a) giop_dump_send(a)
+#define do_giop_dump_recv(a) giop_dump_recv(a)
 
 static void
 dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
@@ -87,6 +89,8 @@ dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
 		 a->name, tc->kind, a->flags & (ORBit_I_ARG_IN | ORBit_I_ARG_INOUT) ? 'i' : ' ',
 		 a->flags & (ORBit_I_ARG_OUT | ORBit_I_ARG_INOUT) ? 'o' : ' ');
 }
+
+#endif /* DEBUG */
 	
 static void
 dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
@@ -112,12 +116,14 @@ dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
 	}
 }
 
-static void
+void
 giop_dump_send (GIOPSendBuffer *send_buffer)
 {
 	gulong nvecs;
 	struct iovec *curvec;
 	guint32 offset = 0;
+
+	g_return_if_fail (send_buffer != NULL);
 
 	nvecs = send_buffer->num_used;
 	curvec = (struct iovec *) send_buffer->iovecs;
@@ -130,18 +136,25 @@ giop_dump_send (GIOPSendBuffer *send_buffer)
 	}
 }
 
-static void
+void
 giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 {
-	g_assert (LINC_CONNECTION (recv_buffer->connection)->status == LINC_CONNECTED);
+	const char *status;
 
-	fprintf (stderr, "Incoming IIOP data:\n");
+	g_return_if_fail (recv_buffer != NULL);
+
+	if (recv_buffer->connection &&
+	    LINC_CONNECTION (recv_buffer->connection)->status == LINC_CONNECTED)
+		status = "connected";
+	else
+		status = "not connected";
+
+	fprintf (stderr, "Incoming IIOP data: %s\n", status);
 
 	dump (stderr, recv_buffer->message_body,
 	      recv_buffer->msg.header.message_size +
 	      sizeof (GIOPMsgHeader), 0);
 }
-#endif /* DEBUG */
 
 static void
 ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
@@ -438,7 +451,7 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	ORBit_small_marshal_context (send_buffer, m_data, ctx);
 
-	giop_dump_send (send_buffer);
+	do_giop_dump_send (send_buffer);
 
 	giop_recv_list_setup_queue_entry (mqe, cnx, GIOP_REPLY, request_id);
 
@@ -480,7 +493,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		return MARSHAL_SYS_EXCEPTION_INCOMPLETE;
 	}
 
-	giop_dump_recv (recv_buffer);
+	do_giop_dump_recv (recv_buffer);
 
 	if (giop_recv_buffer_reply_status (recv_buffer) != GIOP_NO_EXCEPTION)
  		goto msg_exception;
@@ -742,7 +755,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 
 /*	fprintf (stderr, "Method '%s' on '%p'\n", m_data->name, servant); */
 
-	giop_dump_recv (recv_buffer);
+	do_giop_dump_recv (recv_buffer);
 
 	orb = ORBIT_SERVANT_TO_ORB (servant);
 
@@ -845,6 +858,9 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	if (has_context)
 		ORBit_Context_server_free (&ctx);
 
+	if (m_data->flags & ORBit_I_METHOD_1_WAY)
+		goto clean_out;
+
  sys_exception:
 	send_buffer = giop_send_buffer_use_reply (
 		recv_buffer->connection->giop_version,
@@ -916,7 +932,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		}
 	}
 
-	giop_dump_send (send_buffer);
+	do_giop_dump_send (send_buffer);
 
 	giop_send_buffer_write (send_buffer, recv_buffer->connection);
 	giop_send_buffer_unuse (send_buffer);
@@ -944,6 +960,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		}
 	}
 
+ clean_out:
 	for (i = 0; i < m_data->arguments._length; i++) {
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
 		
