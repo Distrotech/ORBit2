@@ -10,7 +10,7 @@ echo.h
 test1.h
 *_built
 test-any.h
-ior-decode
+ior-decode-2
 test1
 echo-client
 echo-server

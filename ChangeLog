@@ -1,3 +1,10 @@
+2001-09-20  Mark McLoughlin <mark@skynet.ie>
+
+	*  ORBit-2.0.pc.in (Requires): add linc.
+
+	* .cvsignore, src/idl-compiler/.cvsignore,
+	  src/services/name/.cvsignore, test/.cvsignore: update.
+
 2001-09-19  Havoc Pennington  <hp@redhat.com>
 
 	* src/idl-compiler/Makefile.am (orbit_idl_2_SOURCES): don't
