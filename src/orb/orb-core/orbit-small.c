@@ -618,7 +618,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	}
 
 retry_request:
-	request_id = GPOINTER_TO_UINT (alloca (0));
+	request_id = GPOINTER_TO_UINT (&obj);
 	completion_status = CORBA_COMPLETED_NO;
 
 	if (!orbit_small_marshal (obj, cnx, &mqe, request_id,

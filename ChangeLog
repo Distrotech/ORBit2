@@ -1,5 +1,11 @@
 2001-05-30  Michael Meeks  <michael@ximian.com>
-	
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_stub): 
+	don't do an alloca (0), just use &obj - this points to
+	the stack in a safer, quicker and cleaner way.
+
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/dynamic/dynany.c (dynany_sequence_realloc_to): only
 	copy old_len elements from the old buffer.
 
