@@ -1,3 +1,12 @@
+Version 0.1.21
+
+	* fixes
+		+ kill socklen_t (Michael, Garth Pearce)
+		+ 64 bit test fixage (Michael)
+		+ fixup test linkage (Michael)
+		+ update docs (Michael)
+		+ fixup SSL build (Colin Cambell)
+
 Version 0.1.20
 
 	* fixes (Michael)
