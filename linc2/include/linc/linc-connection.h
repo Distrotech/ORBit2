@@ -49,12 +49,15 @@ typedef struct {
 
 typedef struct {
   GObjectClass parent_class;
-  void (* state_changed)(LINCConnection *cnx, LINCConnectionStatus status); /* subclasses should call parent impl first */
+
+  /* subclasses should call parent impl first */
+  void (* state_changed)(LINCConnection *cnx, LINCConnectionStatus status);
 } LINCConnectionClass;
 
 GType linc_connection_get_type(void) G_GNUC_CONST;
 
-gboolean linc_connection_from_fd(LINCConnection *cnx, int fd, const LINCProtocolInfo *proto,
+gboolean linc_connection_from_fd(LINCConnection *cnx, int fd,
+				 const LINCProtocolInfo *proto,
 				 const char *remote_host_info,
 				 const char *remote_serv_info,
 				 gboolean was_initiated,
@@ -66,11 +69,14 @@ gboolean linc_connection_initiate(LINCConnection *cnx,
 				  const char *remote_serv_info,
 				  LINCConnectionOptions options);
 
-int linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_for_full_read);
+int linc_connection_read(LINCConnection *cnx, guchar *buf,
+			 int len, gboolean block_for_full_read);
 
-/* Return values from these functions are going to be "abnormal", since they make sure to write all the data out */
+/* Return values from these functions are going to be "abnormal",
+   since they make sure to write all the data out */
 int linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len);
-int linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulong total_size);
-
-void linc_connection_state_changed(LINCConnection *cnx, LINCConnectionStatus status);
+int linc_connection_writev(LINCConnection *cnx, struct iovec *vecs,
+			   int nvecs, gulong total_size);
+void linc_connection_state_changed(LINCConnection *cnx,
+				   LINCConnectionStatus status);
 #endif
