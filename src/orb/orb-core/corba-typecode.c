@@ -259,9 +259,6 @@ ORBit_TypeCode_free_fn (ORBit_RootObject obj_in)
 
 		if (tc->subtypes)
 			ORBit_RootObject_release_T (tc->subtypes [i]);
-
-		if (tc->sublabels)
-			CORBA_any__freekids (&tc->sublabels [i], NULL);
 	}
 
 	g_free (tc->subnames);

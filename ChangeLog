@@ -1,5 +1,11 @@
 2002-01-22  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/orb/orb-core/corba-typecode.c
+	(ORBit_TypeCode_free_f): sublabels isn't an 'any' sequence
+	anymore.
+
+2002-01-22  Mark McLoughlin  <mark@skynet.ie>
+
 	* include/orbit/orb-core/corba-typecode.h: change the
 	sublabels member to a CORBA_long *.
 
