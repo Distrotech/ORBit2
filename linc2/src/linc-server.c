@@ -250,9 +250,9 @@ linc_server_setup (LINCServer            *cnx,
 	}
 
 	{
-	static const int oneval = 1;
+		static const int oneval = 1;
 
-	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof (oneval));
+		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &oneval, sizeof (oneval));
 	}
     
 	n = 0;
@@ -281,10 +281,8 @@ linc_server_setup (LINCServer            *cnx,
 	 * FIXME: If we get EINUSE we should loop to getaddrinfo ?
 	 */
 
-	if (!n) {
-		g_free (saddr);
+	if (!n)
 		n = getsockname (fd, saddr, &saddr_len);
-	}
 #ifdef DEBUG
 	else
 		perror ("listen failed");

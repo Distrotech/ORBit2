@@ -1,9 +1,14 @@
+2001-09-09  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_setup): remove
+	bogus g_free (saddr)
+
 2001-09-07  Mark McLoughlin <mark@skynet.ie>
 
-        * acconfig.h, configure.in: add check for
+	* acconfig.h, configure.in: add check for
         sockaddr's sa_len member.
 
-        * src/linc-protocols.c(linc_protocol_get_sockaddr,
+	* src/linc-protocols.c(linc_protocol_get_sockaddr,
         linc_protocol_get_sockaddr_ipv4,
         linc_protocol_get_sockaddr_ipv6,
         linc_protocol_get_sockaddr_unix,
@@ -16,16 +21,16 @@
 	*NOTE*: irda and ipv6 are not working with this yet. But
 	        I doubt anyone is actually using these...
 
-        * src/linc-private.h: add linc_protocol_get_sockaddr.
+	* src/linc-private.h: add linc_protocol_get_sockaddr.
 
-        * src/linc-connection.c(linc_connection_initiate): use
+	* src/linc-connection.c(linc_connection_initiate): use
         linc_protocol_get_sockaddr instead of linc_getaddrinfo.
 
-        * src/linc-server.c(linc_server_setup): ditto.
+	* src/linc-server.c(linc_server_setup): ditto.
 
-        * include/linc/linc-types.h: moved LINCProtocolInfo here.
+	* include/linc/linc-types.h: moved LINCProtocolInfo here.
 
-        * include/linc/linc-protocol.h
+	* include/linc/linc-protocol.h
         (LINCProtocolInfo): added get_sockname. Impl typedefs
         for functions types.
 
