@@ -1,3 +1,60 @@
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
+	Re-implement the idl-compiler language backend loading.
+
+	* configure.in: add src/idl-compiler/ORBit-idl-2.0.pc.
+
+	* src/idl-compiler/orbit-idl-backend.[ch]: implement.
+
+	* src/idl-compiler/Makefile.am: remove orbit-idl-backends.c
+	from the build and add orbit-idl-backend.[ch]. Install
+	orbit-idl-backend.h into $(prefix)/include/orbit-2.0/orbit-idl,
+	install the pkg-config file into $(prefix)/lib/pkgconfig.
+
+	* src/idl-compiler/orbit-idl-backends.c: remove.
+
+	* src/idl-compiler/orbit-idl-c-backend.[ch]: (orbit_idl_output_c):
+	return a bool.
+
+	* src/idl-compiler/orbit-idl-driver.c: (orbit_idl_to_backend):
+	hardwire in the c backend and use the loader for anything else.
+	Also return a bool.
+
+	* src/idl-compiler/orbit-idl-main.c: don't define the backend
+	directory here.
+
+	* src/idl-compiler/orbit-idl2.h: kill OIDL_Backend_Info.
+
+	* src/idl-compiler/orbit-idl3-types.h: upd.
+
+	* src/idl-compiler/ORBit-idl-2.0.pc.in: add
+
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
+	Merged some stuff from orbit-cpp-cactus.
+
+	* include/orbit/orb-core/corba-typecode.h: include giop-basics.h
+	if we're using the headers internally.
+
+	* src/idl-compiler/Makefile.am: don't define -DDEBUG.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_TypeCode_allocate),
+	(CORBA_ORB_create_struct_tc), (CORBA_ORB_create_union_tc),
+	(CORBA_ORB_create_enum_tc), (CORBA_ORB_create_alias_tc),
+	(CORBA_ORB_create_exception_tc), (CORBA_ORB_create_interface_tc),
+	(CORBA_ORB_create_string_tc), (CORBA_ORB_create_wstring_tc),
+	(CORBA_ORB_create_fixed_tc), (CORBA_ORB_create_sequence_tc),
+	(CORBA_ORB_create_recursive_sequence_tc),
+	(CORBA_ORB_create_array_tc):
+	s/CORBA_TypeCode_allocate/ORBit_TypeCode_allocate/g
+
+2002-09-04  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/*: chop, chop - take 2: a year on,
+	remove all the non-small code again, except this time
+	a lot more cleanly. That's 6,000 lines of code we don't
+	have to maintain anymore :-)
+
 2002-09-03  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/goa/*, src/orb/goa/*: prototype

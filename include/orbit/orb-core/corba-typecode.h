@@ -78,6 +78,8 @@ extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_long_struct;
 
 #ifdef ORBIT2_INTERNAL_API
 
+#include <orbit/GIOP/giop-basics.h>
+
 void        ORBit_encode_CORBA_TypeCode (CORBA_TypeCode  tc,
 					 GIOPSendBuffer *buf);
 gboolean    ORBit_decode_CORBA_TypeCode (CORBA_TypeCode *tc,
