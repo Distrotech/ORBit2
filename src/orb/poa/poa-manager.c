@@ -12,8 +12,8 @@ ORBit_POAManager_free_fn(ORBit_RootObject obj_in)
 }
 
 static const ORBit_RootObject_Interface CORBA_POAManager_epv = {
-	ORBIT_ROT_POAMANAGER,
-	ORBit_POAManager_free_fn
+  ORBIT_ROT_POAMANAGER,
+  ORBit_POAManager_free_fn
 };
 
 PortableServer_POAManager
@@ -35,9 +35,8 @@ ORBit_POAManager_register_poa(PortableServer_POAManager poa_mgr,
 			      CORBA_Environment *ev)
 {
   g_assert( g_slist_find(poa_mgr->poa_collection, poa) == 0 );
-  poa_mgr->poa_collection = 
-    g_slist_append(poa_mgr->poa_collection, poa);
-  g_assert(poa->poa_manager == 0 );
+  poa_mgr->poa_collection = g_slist_append(poa_mgr->poa_collection, poa);
+  g_assert(poa->poa_manager == NULL );
   poa->poa_manager = ORBit_RootObject_duplicate(poa_mgr);
 }
 
@@ -89,8 +88,7 @@ PortableServer_POAManager_activate(PortableServer_POAManager obj,
 
   obj->state = PortableServer_POAManager_ACTIVE;
 
-  for(curitem = obj->poa_collection; curitem;
-      curitem = g_slist_next(curitem))
+  for(curitem = obj->poa_collection; curitem; curitem = g_slist_next(curitem))
     {
       curpoa = (PortableServer_POA)curitem->data;
       ORBit_POA_handle_held_requests(curpoa);
@@ -161,6 +159,7 @@ PortableServer_POAManager_deactivate(PortableServer_POAManager _obj,
 				     CORBA_Environment * ev)
 {
   GSList	*poai;
+
   ev->_major = CORBA_NO_EXCEPTION;
   if(!_obj)
     {
@@ -178,14 +177,13 @@ PortableServer_POAManager_deactivate(PortableServer_POAManager _obj,
       return;
     }
 
-  if ( wait_for_completion )
+  if(wait_for_completion)
     {
-      for (poai = _obj->poa_collection; poai; poai = poai->next)
+      for(poai = _obj->poa_collection; poai; poai = poai->next)
 	{
-	  if ( !ORBit_POA_is_inuse(poai->data, /*kids*/0, ev) )
+	  if(!ORBit_POA_is_inuse(poai->data, /*kids*/0, ev))
 	    {
-	      CORBA_exception_set_system(ev, 
-					 ex_CORBA_BAD_INV_ORDER,
+	      CORBA_exception_set_system(ev, ex_CORBA_BAD_INV_ORDER,
 					 CORBA_COMPLETED_NO);
 	      return;
 	    }
@@ -204,4 +202,3 @@ PortableServer_POAManager_get_state(PortableServer_POAManager _obj,
 {
   return _obj->state;
 }
-

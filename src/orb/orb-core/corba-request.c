@@ -39,4 +39,5 @@ CORBA_boolean
 CORBA_Request_poll_response(CORBA_Request _obj,
 			    CORBA_Environment * ev)
 {
+  return CORBA_FALSE;
 }

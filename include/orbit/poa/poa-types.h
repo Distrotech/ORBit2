@@ -29,6 +29,8 @@ typedef struct {
   guint16 use_cnt; /* method invokations */
 } ORBit_POAObject;
 
+#define ORBIT_SERVANT_TO_ORB(servant) \
+  (((PortableServer_POA)ORBIT_SERVANT_TO_POAOBJECT(servant)->poa)->orb )
 #define ORBIT_SERVANT_TO_POAOBJECT(s) \
 ((ORBit_POAObject *)((PortableServer_ServantBase*)(s))->_private)
 

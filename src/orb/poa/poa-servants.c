@@ -6,6 +6,7 @@ PortableServer_ServantBase__default_POA(PortableServer_Servant servant,
 					CORBA_Environment *ev)
 {
   g_return_val_if_fail(servant, NULL);
+
   return ORBIT_SERVANT_TO_POAOBJECT(servant)->poa;
 }
 
