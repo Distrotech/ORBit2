@@ -137,6 +137,7 @@ struct CORBA_TypeCode_struct TC_CORBA_##nom##_struct = { \
 #define CORBA_tk_long_long CORBA_tk_longlong
 #define CORBA_tk_unsigned_long_long CORBA_tk_ulonglong
 #define CORBA_tk_unsigned_short CORBA_tk_ushort
+#define CORBA_tk_long_double CORBA_tk_longdouble
 
 struct CORBA_TypeCode_struct TC_null_struct = {
   {&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
@@ -169,6 +170,7 @@ DEF_TC_BASIC(TypeCode);
 DEF_TC_BASIC(Principal);
 DEF_TC_BASIC(Object);
 DEF_TC_BASIC(wstring);
+DEF_TC_BASIC(long_double);
 DEF_TC_BASIC(long_long);
 DEF_TC_BASIC(unsigned_long_long);
 

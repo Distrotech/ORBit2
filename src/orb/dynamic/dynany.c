@@ -24,22 +24,17 @@
  */
 
 #include <assert.h>
+#include <string.h>
 
 #include "config.h"
-#include "orbit.h"
-#include "sequences.h"
+#include "orbit/orbit.h"
+#include "orb-core/orb-core-private.h"
 
 #define o_return_val_if_fail(expr, val) if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO); return (val); }
 #define o_return_if_fail(expr)          if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO); return; }
 #define b_return_val_if_fail(expr, val) if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_OBJECT_NOT_EXIST, CORBA_COMPLETED_NO); return (val); }
 #define b_return_if_fail(expr)          if(!(expr)) { CORBA_exception_set_system (ev, ex_CORBA_OBJECT_NOT_EXIST, CORBA_COMPLETED_NO); return; }
 
-
-static void DynamicAny_DynAny_release_fn(DynamicAny_DynAny obj, CORBA_Environment *ev);
-
-static const ORBit_RootObject_Interface DynamicAny_DynAny__epv = {
-	(void (*)(gpointer, CORBA_Environment *)) DynamicAny_DynAny_release_fn
-};
 
 /*	     CORBA_tk_null:
 	case CORBA_tk_void:
@@ -107,7 +102,11 @@ static const ORBit_RootObject_Interface DynamicAny_DynAny__epv = {
 	case CORBA_tk_TypeCode: \
 	case CORBA_tk_Principal
 
-
+/* FIXME: ported very quickly from stable */
+struct DynamicAny_DynAny_type {
+	struct ORBit_RootObject_struct parent;
+	gpointer data;
+};
 
 typedef struct _DynAny DynAny;
 
@@ -139,8 +138,7 @@ struct _DynAny {
  */
 static void
 dynany_invalidate (DynAny *d,
-		   gboolean invalidate_cur,
-		   CORBA_Environment *ev)
+		   gboolean invalidate_cur)
 {
 	if (invalidate_cur) {
 		if (d->parent) {
@@ -151,34 +149,34 @@ dynany_invalidate (DynAny *d,
 		}
 
 		if (d->any->_release) 
-			CORBA_free (d->any);
+			ORBit_free (d->any);
 		d->any = NULL;
 	}
 
 	while (d->children)
-		dynany_invalidate (d->children->data, TRUE, ev);
+		dynany_invalidate (d->children->data, TRUE);
 }
 
 #define GET_DYNANY(obj) ((DynAny *)((struct DynamicAny_DynAny_type *)(obj))->data)
 
 static void
-DynamicAny_DynAny_release_fn (DynamicAny_DynAny obj, CORBA_Environment *ev)
+DynamicAny_DynAny_release_fn (ORBit_RootObject robj)
 {
 	DynAny *dynany;
 
-	g_return_if_fail (obj != NULL);
+	g_return_if_fail (robj != NULL);
 
-	dynany = GET_DYNANY (obj);
+	dynany = GET_DYNANY (robj);
 
-	dynany_invalidate (dynany, FALSE, ev);
+	dynany_invalidate (dynany, FALSE);
 
 	if (dynany->any)
-		CORBA_free (dynany->any);
+		ORBit_free (dynany->any);
 
 	g_slist_free (dynany->children);
 
 	g_free (dynany);
-	g_free (obj);
+	g_free (robj);
 }
 
 static CORBA_TypeCode
@@ -259,33 +257,6 @@ dynany_kind_mismatch (DynAny *dynany,
 	return FALSE;
 }
 
-/* ORBit_demarshal_allocate_mem cut & paste: should globalize this */
-static gpointer
-ORBit_demarshal_allocate_mem (CORBA_TypeCode tc, gint nelements)
-{
-	size_t block_size;
-	gpointer retval = NULL;
-
-	if (!nelements)
-		return retval;
-
-	block_size = ORBit_gather_alloc_info(tc);
-
-	if (block_size) {
-		retval = ORBit_alloc_2 (
-			block_size *nelements,
-			(ORBit_free_childvals) ORBit_free_via_TypeCode,
-			GINT_TO_POINTER (nelements),
-			sizeof (CORBA_TypeCode));
-
-		*(CORBA_TypeCode *)((char *) retval - sizeof (ORBit_mem_info) -
-				    sizeof (CORBA_TypeCode)) =
-			(CORBA_TypeCode) CORBA_Object_duplicate ((CORBA_Object) tc, NULL);
-	}
-
-	return retval;
-}
-
 static void
 dynany_init_default (gpointer *val, const CORBA_TypeCode tc)
 {
@@ -310,6 +281,7 @@ dynany_init_default (gpointer *val, const CORBA_TypeCode tc)
 	case CORBA_tk_octet:
 	case CORBA_tk_longlong:
 	case CORBA_tk_ulonglong:
+	case CORBA_tk_fixed:
 		memset (*val, 0, size);
 		*val = ((guchar *)*val) + size;
 		break;
@@ -359,16 +331,16 @@ dynany_init_default (gpointer *val, const CORBA_TypeCode tc)
 		break;
 
  	case CORBA_tk_sequence: {
-		CORBA_sequence_octet *s;
+		CORBA_sequence_CORBA_octet *s;
 
-		s = (CORBA_sequence_octet *) *val;
+		s = (CORBA_sequence_CORBA_octet *) *val;
 
 		s->_maximum = tc->length;
 		s->_length = 0;
 		s->_buffer = NULL;
 		s->_release = CORBA_TRUE;
 
-		*val = ((guchar *)*val) + sizeof (CORBA_sequence_octet);
+		*val = ((guchar *)*val) + sizeof (CORBA_sequence_CORBA_octet);
 		break;
 	}
 
@@ -398,7 +370,6 @@ dynany_init_default (gpointer *val, const CORBA_TypeCode tc)
 		dynany_init_default (val, tc->subtypes [0]);
 		break;
 		
-	case CORBA_tk_fixed:
 	default:
 		g_warning ("Unhandled typecode");
 		break;
@@ -411,22 +382,23 @@ dynany_any_new_default (const CORBA_TypeCode tc)
 	gpointer value;
 	gpointer p;
 
-	p = value = ORBit_demarshal_allocate_mem (tc, 1);
+	p = value = ORBit_alloc_tcval (tc, 1);
 	dynany_init_default (&p, tc);
 
 	return value;
 }
 
 static gboolean
-dynany_sequence_realloc_to (CORBA_sequence_octet *s,
+dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 			    CORBA_TypeCode        sequence_tc,
 			    long                  len,
 			    CORBA_Environment    *ev)
 {
 	CORBA_TypeCode tc = sequence_tc->subtypes [0];
-	gpointer buf, old_buf, a, b;
+	gpointer buf, old_buf, b;
+	gconstpointer a;
 
-	buf = ORBit_demarshal_allocate_mem (tc, len);
+	buf = ORBit_alloc_tcval (tc, len);
 
 	if (!buf)
 		return FALSE;
@@ -442,9 +414,9 @@ dynany_sequence_realloc_to (CORBA_sequence_octet *s,
 		b = buf;
 		
 		for (i = 0; i < len; i++)
-			_ORBit_copy_value (&a, &b, tc);
+			ORBit_copy_value_core (&a, &b, tc);
 		
-		ORBit_free (old_buf, TRUE);
+		ORBit_free (old_buf);
 	}
 
 	return TRUE;
@@ -486,9 +458,9 @@ dynany_get_value (DynAny *dynany, CORBA_Environment *ev)
 
 		switch (tc->kind) {
 		case CORBA_tk_sequence: {
-			CORBA_sequence_octet *s;
+			CORBA_sequence_CORBA_octet *s;
 			
-			s = (CORBA_sequence_octet *) any->_value;
+			s = (CORBA_sequence_CORBA_octet *) any->_value;
 			if (!s || dynany->idx >= s->_length) {
 				value = NULL;
 				g_warning ("Serious internal sequence related "
@@ -543,19 +515,19 @@ dynany_get (DynAny *dynany,
 	    CORBA_TypeCode value_type,
 	    CORBA_Environment *ev)
 {
-	gpointer dval;
+	gconstpointer dval;
 
 	dval = dynany_get_value (dynany, ev);
 	if (!dval)
 		return;
 
-	_ORBit_copy_value (&dval, &retval, value_type);
+	ORBit_copy_value_core (&dval, &retval, value_type);
 }
 
 static void
 dynany_insert (DynAny        *dynany,
 	       CORBA_TypeCode value_type,
-	       gpointer       value,
+	       gconstpointer  value,
 	       CORBA_Environment *ev)
 {
 	gpointer dval;
@@ -564,8 +536,13 @@ dynany_insert (DynAny        *dynany,
 	if (!dval)
 		return;
 
-	_ORBit_copy_value (&value, &dval, value_type);
+	ORBit_copy_value_core (&value, &dval, value_type);
 }
+
+static ORBit_RootObject_Interface dynany_if = {
+	ORBIT_ROT_OBJREF, /* FIXME: correct ? */
+	DynamicAny_DynAny_release_fn
+};
 
 /**
  * dynany_create:
@@ -605,14 +582,10 @@ dynany_create (const CORBA_TypeCode type,
 	dynany->children = NULL;
 	dynany->parent_idx = 0;
 
-	ORBit_RootObject_set_interface (
-		ORBIT_ROOT_OBJECT (object),
-		(ORBit_RootObject_Interface *) &DynamicAny_DynAny__epv, ev);
-	ORBIT_ROOT_OBJECT (object)->refs = 0;
+	ORBit_RootObject_init ((ORBit_RootObject) object, &dynany_if);
 
 	dynany->any = CORBA_any_alloc ();
-	dynany->any->_type = (CORBA_TypeCode)
-		CORBA_Object_duplicate ((CORBA_Object) type, ev);
+	dynany->any->_type = ORBit_RootObject_duplicate (type);
 
 	if (parent) {
 		dynany->parent = parent;
@@ -634,7 +607,7 @@ dynany_create (const CORBA_TypeCode type,
 
 	object->data = dynany;
 
-	return object;
+	return ORBit_RootObject_duplicate (object);
 
  nomemory:
 	CORBA_exception_set_system (
@@ -643,100 +616,27 @@ dynany_create (const CORBA_TypeCode type,
 	return CORBA_OBJECT_NIL;
 }
 
-
-/* Section 7.2.2 */
 DynamicAny_DynAny
-CORBA_ORB_create_dyn_any(CORBA_ORB obj,
-			 CORBA_any *value,
-			 CORBA_Environment *ev)
+DynamicAny_DynAnyFactory_create_dyn_any (
+	DynamicAny_DynAnyFactory obj,
+	const CORBA_any         *value,
+	CORBA_Environment       *ev)
 {
 	o_return_val_if_fail (value, CORBA_OBJECT_NIL);
 
-	return dynany_create (value->_type, value->_value, CORBA_OBJECT_NIL, ev);
+	return dynany_create (value->_type, value->_value,
+			      CORBA_OBJECT_NIL, ev);
 }
 
-/* Section 7.2.2
- *
- * raises: InconsistentTypeCode
- */
 DynamicAny_DynAny
-CORBA_ORB_create_basic_dyn_any(CORBA_ORB obj,
-			       const CORBA_TypeCode type,
-			       CORBA_Environment *ev)
+DynamicAny_DynAnyFactory_create_dyn_any_from_type_code (
+	DynamicAny_DynAnyFactory obj,
+	const CORBA_TypeCode     type,
+	CORBA_Environment       *ev)
 {
 	o_return_val_if_fail (type, CORBA_OBJECT_NIL);
 
 	return dynany_create (type, NULL, CORBA_OBJECT_NIL, ev);
-}
-
-/* Section 7.2.2
- *
- * raises: InconsistentTypeCode
- */
-DynamicAny_DynStruct
-CORBA_ORB_create_dyn_struct (CORBA_ORB obj,
-			     const CORBA_TypeCode type,
-			     CORBA_Environment *ev)
-{
-	o_return_val_if_fail (type, CORBA_OBJECT_NIL);
-
-	return (DynamicAny_DynStruct) dynany_create (type, NULL, CORBA_OBJECT_NIL, ev);
-}
-
-/* Section 7.2.2
- *
- * raises: InconsistentTypeCode
- */
-DynamicAny_DynSequence
-CORBA_ORB_create_dyn_sequence (CORBA_ORB obj,
-			       const CORBA_TypeCode type,
-			       CORBA_Environment *ev)
-{
-	o_return_val_if_fail (type, CORBA_OBJECT_NIL);
-
-	return (DynamicAny_DynSequence) dynany_create (type, NULL, CORBA_OBJECT_NIL, ev);
-}
-
-/* Section 7.2.2
- *
- * raises: InconsistentTypeCode
- */
-DynamicAny_DynArray
-CORBA_ORB_create_dyn_array (CORBA_ORB obj,
-			    const CORBA_TypeCode type,
-			    CORBA_Environment *ev)
-{
-	o_return_val_if_fail (type, CORBA_OBJECT_NIL);
-
-	return (DynamicAny_DynArray) dynany_create (type, NULL, CORBA_OBJECT_NIL, ev);
-}
-
-/* Section 7.2.2
- *
- * raises: InconsistentTypeCode
- */
-DynamicAny_DynUnion
-CORBA_ORB_create_dyn_union (CORBA_ORB obj,
-			    const CORBA_TypeCode type,
-			    CORBA_Environment *ev)
-{
-	o_return_val_if_fail (type, CORBA_OBJECT_NIL);
-
-	return (DynamicAny_DynUnion) dynany_create (type, NULL, CORBA_OBJECT_NIL, ev);
-}
-
-/* Section 7.2.2
- *
- * raises: InconsistentTypeCode
- */
-DynamicAny_DynEnum
-CORBA_ORB_create_dyn_enum (CORBA_ORB obj,
-			   const CORBA_TypeCode type,
-			   CORBA_Environment *ev)
-{
-	o_return_val_if_fail (type, CORBA_OBJECT_NIL);
-
-	return (DynamicAny_DynEnum) dynany_create (type, NULL, CORBA_OBJECT_NIL, ev);
 }
 
 /* 9.2.3.1 */
@@ -780,9 +680,9 @@ DynamicAny_DynAny_assign (DynamicAny_DynAny dest,
 /* 9.2.3.3 */
 
 void
-DynamicAny_DynAny_from_any (DynamicAny_DynAny obj,
-		       CORBA_any   *value,
-		       CORBA_Environment *ev)
+DynamicAny_DynAny_from_any (DynamicAny_DynAny  obj,
+			    const CORBA_any   *value,
+			    CORBA_Environment *ev)
 {
 	DynAny  *dynany;
 	gboolean equal;
@@ -805,9 +705,9 @@ DynamicAny_DynAny_from_any (DynamicAny_DynAny obj,
 		return;
 	}
 
-	dynany_invalidate (dynany, TRUE, ev);
+	dynany_invalidate (dynany, TRUE);
 	
-	CORBA_free (dynany->any);
+	ORBit_free (dynany->any);
 
 	dynany->any = CORBA_any_alloc ();
 	CORBA_any__copy (dynany->any, value);
@@ -896,7 +796,7 @@ DynamicAny_DynAny_copy (DynamicAny_DynAny obj,
 /* 9.2.3.8 */
 
 void
-DynamicAny_DynAny_insert_string (DynamicAny_DynAny       obj,
+DynamicAny_DynAny_insert_string (DynamicAny_DynAny  obj,
 				 const CORBA_char  *value,
 				 CORBA_Environment *ev)
 {
@@ -908,18 +808,40 @@ DynamicAny_DynAny_insert_string (DynamicAny_DynAny       obj,
 	b_return_if_fail (dynany != NULL &&
 			  dynany->any != NULL);
 
-	if (dynany_type_mismatch (dynany, TC_string, ev))
+	if (dynany_type_mismatch (dynany, TC_CORBA_string, ev))
 		return;
 
-	dynany_insert (dynany, TC_string, (gpointer)&value, ev);
+	dynany_insert (dynany, TC_CORBA_string, (gpointer)&value, ev);
+
+	return;
+
+}
+
+void
+DynamicAny_DynAny_insert_any (DynamicAny_DynAny  obj,
+			      const CORBA_any   *value,
+			      CORBA_Environment *ev)
+{
+	DynAny *dynany;
+
+	o_return_if_fail (obj != NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_if_fail (dynany != NULL &&
+			  dynany->any != NULL);
+
+	if (dynany_type_mismatch (dynany, TC_CORBA_any, ev))
+		return;
+
+	dynany_insert (dynany, TC_CORBA_any, (gpointer)&value, ev);
 
 	return;
 }
 
-#define MAKE_DYNANY_INSERT(ctype,typecode,apiname)				\
+#define MAKE_DYNANY_INSERT(ctype,apiname)					\
 										\
 void										\
-DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,				\
+DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,		\
 			       CORBA_##ctype      value,			\
 			       CORBA_Environment *ev)				\
 {										\
@@ -931,42 +853,37 @@ DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,				\
 	b_return_if_fail (dynany != NULL &&					\
 			  dynany->any != NULL);					\
 										\
-	if (dynany_type_mismatch (dynany, typecode, ev))			\
+	if (dynany_type_mismatch (dynany, TC_CORBA_##ctype, ev))		\
 		return;								\
 										\
-	dynany_insert (dynany, typecode, &value, ev);				\
+	dynany_insert (dynany, TC_CORBA_##ctype, &value, ev);		       	\
 										\
 	return;									\
 }
 
-#if 0
-MAKE_DYNANY_INSERT (char *,              TC_string,             string);
-#endif
-MAKE_DYNANY_INSERT (short,               TC_short,              short);
-MAKE_DYNANY_INSERT (long,                TC_long,               long);
-MAKE_DYNANY_INSERT (unsigned_short,      TC_ushort,             ushort);
-MAKE_DYNANY_INSERT (unsigned_long,       TC_ulong,              ulong);
-MAKE_DYNANY_INSERT (float,               TC_float,              float);
-MAKE_DYNANY_INSERT (double,              TC_double,             double);
-MAKE_DYNANY_INSERT (long_double,         TC_longdouble,         longdouble);
-MAKE_DYNANY_INSERT (boolean,             TC_boolean,            boolean);
-MAKE_DYNANY_INSERT (char,                TC_char,               char);
-MAKE_DYNANY_INSERT (wchar,               TC_wchar,              wchar);
-MAKE_DYNANY_INSERT (octet,               TC_octet,              octet);
-MAKE_DYNANY_INSERT (any *,               TC_any,                any);
-MAKE_DYNANY_INSERT (TypeCode,            TC_TypeCode,           typecode);
-MAKE_DYNANY_INSERT (Object,              TC_Object,             reference);
-MAKE_DYNANY_INSERT (wchar *,             TC_wstring,            wstring);
-#ifdef HAVE_CORBA_LONG_LONG
-MAKE_DYNANY_INSERT (long_long,           TC_longlong,           longlong); 
-MAKE_DYNANY_INSERT (unsigned_long_long,  TC_ulonglong,          ulonglong);
-#endif
+MAKE_DYNANY_INSERT (short,               short);
+MAKE_DYNANY_INSERT (long,                long);
+MAKE_DYNANY_INSERT (unsigned_short,      ushort);
+MAKE_DYNANY_INSERT (unsigned_long,       ulong);
+MAKE_DYNANY_INSERT (float,               float);
+MAKE_DYNANY_INSERT (double,              double);
+MAKE_DYNANY_INSERT (long_double,         longdouble);
+MAKE_DYNANY_INSERT (boolean,             boolean);
+MAKE_DYNANY_INSERT (char,                char);
+MAKE_DYNANY_INSERT (wchar,               wchar);
+MAKE_DYNANY_INSERT (octet,               octet);
+MAKE_DYNANY_INSERT (TypeCode,            typecode);
+MAKE_DYNANY_INSERT (Object,              reference);
+/* #ifdef HAVE_CORBA_LONG_LONG */
+MAKE_DYNANY_INSERT (long_long,           longlong); 
+MAKE_DYNANY_INSERT (unsigned_long_long,  ulonglong);
+/* #endif */
 
-#define MAKE_DYNANY_GET(ctype,typecode,apiname)					\
+#define MAKE_DYNANY_GET(ctype,tc,apiname)					\
 										\
 CORBA_##ctype									\
-DynamicAny_DynAny_get_##apiname (DynamicAny_DynAny       obj,				\
-			    CORBA_Environment *ev)				\
+DynamicAny_DynAny_get_##apiname (DynamicAny_DynAny  obj,			\
+			         CORBA_Environment *ev)				\
 {										\
 	DynAny       *dynany;							\
 	CORBA_##ctype value;							\
@@ -979,34 +896,34 @@ DynamicAny_DynAny_get_##apiname (DynamicAny_DynAny       obj,				\
 	b_return_val_if_fail (dynany != NULL &&					\
 			      dynany->any != NULL, 0);				\
 										\
-	if (dynany_type_mismatch (dynany, typecode, ev))			\
+	if (dynany_type_mismatch (dynany, tc, ev))				\
 		return 0;	       						\
 										\
-	dynany_get (dynany, &value, typecode, ev);				\
+	dynany_get (dynany, &value, tc, ev);					\
 										\
 	return value;								\
 }
 
-MAKE_DYNANY_GET (short,               TC_short,              short);
-MAKE_DYNANY_GET (long,                TC_long,               long);
-MAKE_DYNANY_GET (unsigned_short,      TC_ushort,             ushort);
-MAKE_DYNANY_GET (unsigned_long,       TC_ulong,              ulong);
-MAKE_DYNANY_GET (float,               TC_float,              float);
-MAKE_DYNANY_GET (double,              TC_double,             double);
-MAKE_DYNANY_GET (long_double,         TC_longdouble,         longdouble);
-MAKE_DYNANY_GET (boolean,             TC_boolean,            boolean);
-MAKE_DYNANY_GET (char,                TC_char,               char);
-MAKE_DYNANY_GET (wchar,               TC_wchar,              wchar);
-MAKE_DYNANY_GET (octet,               TC_octet,              octet);
-MAKE_DYNANY_GET (any *,               TC_any,                any);
-MAKE_DYNANY_GET (TypeCode,            TC_TypeCode,           typecode);
-MAKE_DYNANY_GET (Object,              TC_Object,             reference);
-MAKE_DYNANY_GET (char *,              TC_string,             string);
-MAKE_DYNANY_GET (wchar *,             TC_wstring,            wstring);
-#ifdef HAVE_CORBA_LONG_LONG
-MAKE_DYNANY_GET (long_long,           TC_longlong,           longlong); 
-MAKE_DYNANY_GET (unsigned_long_long,  TC_ulonglong,          ulonglong);
-#endif
+MAKE_DYNANY_GET (short,               TC_CORBA_short,              short);
+MAKE_DYNANY_GET (long,                TC_CORBA_long,               long);
+MAKE_DYNANY_GET (unsigned_short,      TC_CORBA_unsigned_short,     ushort);
+MAKE_DYNANY_GET (unsigned_long,       TC_CORBA_unsigned_long,      ulong);
+MAKE_DYNANY_GET (float,               TC_CORBA_float,              float);
+MAKE_DYNANY_GET (double,              TC_CORBA_double,             double);
+MAKE_DYNANY_GET (long_double,         TC_CORBA_long_double,        longdouble);
+MAKE_DYNANY_GET (boolean,             TC_CORBA_boolean,            boolean);
+MAKE_DYNANY_GET (char,                TC_CORBA_char,               char);
+MAKE_DYNANY_GET (wchar,               TC_CORBA_wchar,              wchar);
+MAKE_DYNANY_GET (octet,               TC_CORBA_octet,              octet);
+MAKE_DYNANY_GET (any *,               TC_CORBA_any,                any);
+MAKE_DYNANY_GET (TypeCode,            TC_CORBA_TypeCode,           typecode);
+MAKE_DYNANY_GET (Object,              TC_CORBA_Object,             reference);
+MAKE_DYNANY_GET (char *,              TC_CORBA_string,             string);
+MAKE_DYNANY_GET (wchar *,             TC_CORBA_wstring,            wstring);
+/* #ifdef HAVE_CORBA_LONG_LONG */
+MAKE_DYNANY_GET (long_long,           TC_CORBA_long_long,          longlong); 
+MAKE_DYNANY_GET (unsigned_long_long,  TC_CORBA_unsigned_long_long, ulonglong);
+/* #endif */
 
 /* 9.2.3.9 */
 
@@ -1057,7 +974,7 @@ DynamicAny_DynAny_seek (DynamicAny_DynAny obj, CORBA_long index, CORBA_Environme
 		break;
 
 	case CORBA_tk_sequence: {
-		CORBA_sequence_octet *s;
+		CORBA_sequence_CORBA_octet *s;
 
 		s = dynany->any->_value;
 		if (s && index < s->_length) {
@@ -1116,7 +1033,7 @@ DynamicAny_DynAny_component_count (DynamicAny_DynAny obj,
 		return 0;
 
 	case CORBA_tk_sequence: {
-		CORBA_sequence_octet *s = any->_value;
+		CORBA_sequence_CORBA_octet *s = any->_value;
 		if (!s) {
 			g_warning ("Wierd");
 			return 0;
@@ -1354,9 +1271,9 @@ DynamicAny_DynEnum_set_as_ulong (DynamicAny_DynEnum obj,
 
 /* 9.2.6 */
 
-CORBA_FieldName
+DynamicAny_FieldName
 DynamicAny_DynStruct_current_member_name (DynamicAny_DynStruct obj,
-					  CORBA_Environment *ev)
+					  CORBA_Environment   *ev)
 {
 	DynAny *dynany;
 	CORBA_TypeCode tc;
@@ -1418,18 +1335,18 @@ DynamicAny_DynStruct_current_member_kind (DynamicAny_DynStruct obj,
 	return 0;
 }
 
-CORBA_NameValuePairSeq *
+DynamicAny_NameValuePairSeq *
 DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
-			     CORBA_Environment *ev)
+				  CORBA_Environment   *ev)
 {
 	g_assert (!"Not yet implemented");
 	return NULL;
 }
 
 void
-DynamicAny_DynStruct_set_members (DynamicAny_DynStruct obj,
-			     CORBA_NameValuePairSeq *value,
-			     CORBA_Environment *ev)
+DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
+				  const DynamicAny_NameValuePairSeq *value,
+				  CORBA_Environment                 *ev)
 {
 	g_assert (!"Not yet implemented");
 }
@@ -1514,15 +1431,15 @@ DynamicAny_DynUnion_discriminator_kind (DynamicAny_DynUnion obj,
 
 DynamicAny_DynAny
 DynamicAny_DynUnion_member (DynamicAny_DynUnion obj,
-		       CORBA_Environment *ev)
+			    CORBA_Environment  *ev)
 {
 	g_assert (!"Not yet implemented");
 	return NULL;
 }
 
-CORBA_FieldName
+DynamicAny_FieldName
 DynamicAny_DynUnion_member_name (DynamicAny_DynUnion obj,
-			    CORBA_Environment *ev)
+				 CORBA_Environment  *ev)
 {
 	DynAny *dynany;
 	CORBA_TypeCode tc;
@@ -1583,15 +1500,15 @@ DynamicAny_DynUnion_member_kind (DynamicAny_DynUnion obj,
 
 /* 9.2.8 */
 
-DynamicAny_DynAny_AnySeq *
+DynamicAny_AnySeq *
 DynamicAny_DynSequence_get_elements (DynamicAny_DynSequence obj,
-				CORBA_Environment *ev)
+				     CORBA_Environment     *ev)
 {
 	DynAny *dynany;
-	CORBA_sequence_octet *s;
-	DynamicAny_DynAny_AnySeq *retval;
+	CORBA_sequence_CORBA_octet *s;
+	DynamicAny_AnySeq *retval;
 	int i;
-	gpointer src;
+	gconstpointer src;
 	CORBA_TypeCode subtc;
 
 	o_return_val_if_fail (obj != NULL, NULL);
@@ -1610,35 +1527,32 @@ DynamicAny_DynSequence_get_elements (DynamicAny_DynSequence obj,
 		return NULL;
 	
 	src = s->_buffer;
-	retval = CORBA_sequence_DynamicAny_DynAny_AnySeq__alloc ();
-	retval->_buffer = CORBA_sequence_DynamicAny_DynAny_AnySeq_allocbuf (
-		s->_length);
+	retval = DynamicAny_AnySeq__alloc ();
+	retval->_buffer = DynamicAny_AnySeq_allocbuf (s->_length);
 	retval->_length = s->_length;
 	subtc = dynany->any->_type->subtypes [0];
 
 	for (i = 0; i < s->_length; i++) {
-		CORBA_any *any = CORBA_any__alloc ();
+		CORBA_any *any = &retval->_buffer [i];
 		gpointer   to;
-
-		retval->_buffer [i] = any;
 
 		any->_type = (CORBA_TypeCode) CORBA_Object_duplicate (
 			(CORBA_Object) subtc, ev);
-		to = any->_value = ORBit_demarshal_allocate_mem (subtc, 1);
+		to = any->_value = ORBit_alloc_tcval (subtc, 1);
 		
-		_ORBit_copy_value (&src, &to, subtc);
+		ORBit_copy_value_core (&src, &to, subtc);
 	}
 
 	return retval;
 }
 
 void
-DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence obj,
-				DynamicAny_DynAny_AnySeq *value,
-				CORBA_Environment *ev)
+DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence   obj,
+				     const DynamicAny_AnySeq *value,
+				     CORBA_Environment       *ev)
 {
 	DynAny *dynany;
-	CORBA_sequence_octet *s;
+	CORBA_sequence_CORBA_octet *s;
 	int i;
 	gpointer dest;
 	CORBA_TypeCode subtc;
@@ -1661,7 +1575,7 @@ DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence obj,
 	subtc = dynany->any->_type->subtypes [0];
 
 	for (i = 0; i < value->_length && i < s->_length; i++) {
-		CORBA_any *a = value->_buffer [i];
+		CORBA_any *a = &value->_buffer [i];
 		if (!a || !a->_type ||
 		    !CORBA_TypeCode_equal (subtc, a->_type, ev)) {
 			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
@@ -1670,14 +1584,14 @@ DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence obj,
 		}
 	}
 
-	dynany_invalidate (dynany, FALSE, ev);
+	dynany_invalidate (dynany, FALSE);
 
 	dest = s->_buffer;
 	for (i = 0; i < value->_length; i++) {
-		CORBA_any *a = value->_buffer [i];
-		gpointer src = a->_value;
+		CORBA_any *a = &value->_buffer [i];
+		gconstpointer src = a->_value;
 
-		_ORBit_copy_value (&src, &dest, subtc);
+		ORBit_copy_value_core (&src, &dest, subtc);
 	}
 }
 
@@ -1686,7 +1600,7 @@ DynamicAny_DynSequence_get_length (DynamicAny_DynSequence  obj,
 			      CORBA_Environment *ev)
 {
 	DynAny *dynany;
-	CORBA_sequence_octet *s;
+	CORBA_sequence_CORBA_octet *s;
 
 	o_return_val_if_fail (obj != NULL, 0);
 
@@ -1712,7 +1626,7 @@ DynamicAny_DynSequence_set_length (DynamicAny_DynSequence   obj,
 			      CORBA_Environment  *ev)
 {
 	DynAny *dynany;
-	CORBA_sequence_octet *s;
+	CORBA_sequence_CORBA_octet *s;
 	CORBA_long old_length;
 
 	o_return_if_fail (obj != NULL);
@@ -1753,7 +1667,7 @@ DynamicAny_DynSequence_set_length (DynamicAny_DynSequence   obj,
 			DynAny *child = l->data;
 
 			if (child->parent_idx >= length)
-				dynany_invalidate (child, TRUE, ev);
+				dynany_invalidate (child, TRUE);
 		}
 
 		if (length == 0 ||
@@ -1764,7 +1678,7 @@ DynamicAny_DynSequence_set_length (DynamicAny_DynSequence   obj,
 
 /* 9.2.9 */
 
-DynamicAny_DynAny_AnySeq *
+DynamicAny_AnySeq *
 DynamicAny_DynArray_get_elements (DynamicAny_DynArray obj,
 			     CORBA_Environment *ev)
 {
@@ -1773,103 +1687,10 @@ DynamicAny_DynArray_get_elements (DynamicAny_DynArray obj,
 }
 
 void
-DynamicAny_DynArray_set_elements (DynamicAny_DynArray obj,
-			     DynamicAny_DynAny_AnySeq *value,
-			     CORBA_Environment *ev)
+DynamicAny_DynArray_set_elements (DynamicAny_DynArray      obj,
+				  const DynamicAny_AnySeq *value,
+				  CORBA_Environment       *ev)
 {
 	g_assert (!"Not yet implemented");
 }
 
-static const CORBA_TypeCode
-DynamicAny_DynAny_AnySeq_subtypes_array [] = {
-	TC_any
-};
-
-static const struct CORBA_TypeCode_struct
-TC_CORBA_sequence_DynamicAny_DynAny_AnySeq_struct = {
-	{{(ORBit_RootObject_Interface *) & ORBit_TypeCode_epv, TRUE, -1},
-	 ORBIT_PSEUDO_TYPECODE},
-
-	CORBA_tk_sequence, NULL, NULL,
-	0, 1,
-	NULL,
-	(CORBA_TypeCode *) DynamicAny_DynAny_AnySeq_subtypes_array,
-	NULL,
-	CORBA_OBJECT_NIL, 0, -1, 0, 0
-};
-
-CORBA_sequence_DynamicAny_DynAny_AnySeq *
-CORBA_sequence_DynamicAny_DynAny_AnySeq__alloc (void)
-{
-	CORBA_sequence_DynamicAny_DynAny_AnySeq *retval;
-
-	retval = ORBit_demarshal_allocate_mem (
-		TC_CORBA_sequence_DynamicAny_DynAny_AnySeq, 1);
-
-	retval->_maximum = 0;
-	retval->_length = 0;
-	retval->_buffer = NULL;
-	retval->_release = CORBA_FALSE;
-
-	return retval;
-}
-
-CORBA_any **
-CORBA_sequence_DynamicAny_DynAny_AnySeq_allocbuf (CORBA_unsigned_long len)
-{
-	CORBA_any **retval;
-
-	retval = ORBit_demarshal_allocate_mem (
-		TC_any, len);
-
-	memset (retval, '\0', sizeof (CORBA_any *) * len);
-
-	return retval;
-}
-
-static const CORBA_TypeCode
-DynamicAny_DynAny_DynAnySeq_subtypes_array [] = {
-	TC_Object
-};
-
-static const struct CORBA_TypeCode_struct
-TC_CORBA_sequence_DynamicAny_DynAny_DynAnySeq_struct = {
-	{{(ORBit_RootObject_Interface *) & ORBit_TypeCode_epv, TRUE, -1},
-	 ORBIT_PSEUDO_TYPECODE},
-
-	CORBA_tk_sequence, NULL, NULL,
-	0, 1,
-	NULL,
-	(CORBA_TypeCode *) DynamicAny_DynAny_DynAnySeq_subtypes_array,
-	NULL,
-	CORBA_OBJECT_NIL, 0, -1, 0, 0
-};
-
-CORBA_sequence_DynamicAny_DynAny_DynAnySeq *
-CORBA_sequence_DynamicAny_DynAny_DynAnySeq__alloc (void)
-{
-	CORBA_sequence_DynamicAny_DynAny_DynAnySeq *retval;
-
-	retval = ORBit_demarshal_allocate_mem (
-		TC_CORBA_sequence_DynamicAny_DynAny_DynAnySeq, 1);
-
-	retval->_maximum = 0;
-	retval->_length = 0;
-	retval->_buffer = NULL;
-	retval->_release = CORBA_FALSE;
-
-	return retval;
-}
-
-DynamicAny_DynAny *
-CORBA_sequence_DynamicAny_DynAny_DynAnySeq_allocbuf (CORBA_unsigned_long len)
-{
-	DynamicAny_DynAny *retval;
-
-	retval = ORBit_demarshal_allocate_mem (
-		TC_Object, len);
-
-	memset (retval, '\0', sizeof (DynamicAny_DynAny) * len);
-
-	return retval;
-}

@@ -753,7 +753,7 @@ CORBA_any__freekids(gpointer mem, gpointer dat)
   if(t->_type)
     ORBit_RootObject_release ((ORBit_RootObject)t->_type);
   if(t->_release)
-    CORBA_free(t->_value);
+    ORBit_free(t->_value);
   return t + 1;
 }
 
@@ -969,7 +969,7 @@ ORBit_copy_value(gconstpointer value, CORBA_TypeCode tc)
 }
 
 void
-CORBA_any__copy(CORBA_any *out, CORBA_any *in)
+CORBA_any__copy(CORBA_any *out, const CORBA_any *in)
 {
   out->_type = ORBit_RootObject_duplicate(in->_type);
   out->_value = ORBit_copy_value(in->_value, in->_type);

@@ -1,3 +1,39 @@
+2001-05-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/dynany.c: Port from ORBit-stable.
+
+	* src/orb/orb-core/allocators.c (ORBit_free): use
+	ORBit_free internaly not CORBA_free to clean stack traces.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any__freekids): ditto
+	& accelerate.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_set_initial_reference): fix g_hash_table
+	manipulation leak / bug.
+
+2001-05-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/Makefile.am: install dynamic-defs.h
+	in the right place ...
+
+	* src/orb/orb-core/corba-typecode.c: add long_double TC def.
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_type_alloc_and_tc): fixup emmission of __allocbuf as
+	well as __alloc for sequences.
+
+	* include/orbit/orb-core/corba-typecode.h: declare.
+	TC_CORBA_long_double_struct and TC_CORBA_wstring_struct.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any__copy): constipate.
+
+	* include/orbit/dynamic/dynamic.h: upd.
+
+	* include/orbit/orbit.h: add dynamic.h
+
+	* src/orb/dynamic/Makefile.am: add dynany.c
+
 2001-05-25  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/Makefile.am (runidl_poa): install poa-defs into

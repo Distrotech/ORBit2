@@ -501,7 +501,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   char *ctmp, *fullname, *fullname_def, *ctmp2;
   IDL_tree tts;
   gboolean separate_defs, fake_if;
-  IDL_tree fake_seq;
+  IDL_tree fake_seq = NULL;
 
   tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
@@ -635,6 +635,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 	  g_free (tc);
   } else if(do_alloc) {
     gboolean extern_alloc = FALSE;
+    gboolean needs_allocbuf = FALSE;
     gboolean extern_freekids = FALSE;
     char *ctmp2, *ctmp3;
     gboolean alias_alloc = FALSE, alias_freekids = FALSE;
@@ -681,7 +682,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 	    }
 	}
       else
-	extern_alloc = TRUE;
+	extern_alloc = needs_allocbuf = TRUE;
       g_free(ctmp2);
       g_free(ctmp3);
       fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
@@ -695,6 +696,9 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
       }
       extern_freekids = TRUE;
       break;
+    case IDLN_TYPE_ARRAY:
+      /* FIXME: do we need to check for fixed length and set
+	 needs_allocbuf if not */
     default:
       extern_alloc = TRUE;
       extern_freekids = TRUE;
@@ -715,6 +719,9 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 	    ctmp3 = orbit_cbe_get_typespec_str(IDL_TYPE_DCL(unident).type_spec);
 	    fprintf(ci->fh, "#define %s__alloc %s__alloc\n", ctmp,
 		    ctmp3);
+	    if (needs_allocbuf)
+	      fprintf(ci->fh, "#define %s_allocbuf %s_allocbuf\n", ctmp,
+		      ctmp3);
 	    g_free(ctmp3);
 	  }
 	else
