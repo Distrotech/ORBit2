@@ -18,68 +18,6 @@
 #include "linc-private.h"
 #include "linc-debug.h"
 
-extern LINCProtocolInfo static_linc_protocols[];
-
-/*
- * linc_protocol_all:
- *
- * Returns a list of protocols supported by linc.
- *
- * Note: the list is terminated by a #LINCProtocolInfo with a
- *       NULL name pointer.
- *
- * Return Value: an array of #LINCProtocolInfo structures.
- */
-LINCProtocolInfo * const
-linc_protocol_all (void)
-{
-	return static_linc_protocols;
-}
-
-/*
- * linc_protocol_find:
- * @name: name of the protocol.
- *
- * Find a protocol identified by @name.
- *
- * Return Value: a pointer to a valid #LINCProtocolInfo structure if 
- *               the protocol is supported by linc, NULL otherwise.
- */
-LINCProtocolInfo * const
-linc_protocol_find (const char *name)
-{
-	int i;
-
-	for (i = 0; static_linc_protocols [i].name; i++) {
-		if (!strcmp (name, static_linc_protocols [i].name))
-			return &static_linc_protocols [i];
-	}
-
-	return NULL;
-}
-
-/*
- * linc_protocol_find_num:
- * @family: the family identifier of the protocol - i.e. AF_*
- *
- * Find a protocol identified by @family.
- *
- * Return Value: a pointer to a valid #LINCProtocolInfo structure if
- *               the protocol is supported by linc, NULL otherwise.
- */
-LINCProtocolInfo * const
-linc_protocol_find_num (const int family)
-{
-	int i;
-
-	for (i = 0; static_linc_protocols [i].name; i++) {
-		if (family == static_linc_protocols [i].family)
-			return &static_linc_protocols [i];
-	}
-
-	return NULL;
-}
-
 static char linc_tmpdir [PATH_MAX] = "";
 
 /*
@@ -1108,3 +1046,62 @@ linc_protocol_destroy_addr (const LINCProtocolInfo *proto,
 
 }
 
+/*
+ * linc_protocol_all:
+ *
+ * Returns a list of protocols supported by linc.
+ *
+ * Note: the list is terminated by a #LINCProtocolInfo with a
+ *       NULL name pointer.
+ *
+ * Return Value: an array of #LINCProtocolInfo structures.
+ */
+LINCProtocolInfo * const
+linc_protocol_all (void)
+{
+	return static_linc_protocols;
+}
+
+/*
+ * linc_protocol_find:
+ * @name: name of the protocol.
+ *
+ * Find a protocol identified by @name.
+ *
+ * Return Value: a pointer to a valid #LINCProtocolInfo structure if 
+ *               the protocol is supported by linc, NULL otherwise.
+ */
+LINCProtocolInfo * const
+linc_protocol_find (const char *name)
+{
+	int i;
+
+	for (i = 0; static_linc_protocols [i].name; i++) {
+		if (!strcmp (name, static_linc_protocols [i].name))
+			return &static_linc_protocols [i];
+	}
+
+	return NULL;
+}
+
+/*
+ * linc_protocol_find_num:
+ * @family: the family identifier of the protocol - i.e. AF_*
+ *
+ * Find a protocol identified by @family.
+ *
+ * Return Value: a pointer to a valid #LINCProtocolInfo structure if
+ *               the protocol is supported by linc, NULL otherwise.
+ */
+LINCProtocolInfo * const
+linc_protocol_find_num (const int family)
+{
+	int i;
+
+	for (i = 0; static_linc_protocols [i].name; i++) {
+		if (family == static_linc_protocols [i].family)
+			return &static_linc_protocols [i];
+	}
+
+	return NULL;
+}
