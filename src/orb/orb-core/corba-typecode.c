@@ -81,7 +81,7 @@ typedef struct {
 const struct CORBA_TypeCode_struct TC_null_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
 	CORBA_tk_null, 0, 0, -1, 0, 0, NULL,
-	CORBA_OBJECT_NIL, "null", "Null"
+	CORBA_OBJECT_NIL, "null", "IDL:omg.org/CORBA/Null:1.0"
 };
 
 const struct CORBA_TypeCode_struct TC_void_struct = {
