@@ -84,7 +84,7 @@ giop_connection_list_lookup (const char *proto_name,
 		    !strcmp (remote_host_info, cnx->parent.remote_host_info) &&
 		    !strcmp (remote_serv_info, cnx->parent.remote_serv_info))
 
-			return g_object_ref (G_OBJECT (cnx));
+			return linc_object_ref (cnx);
 	}
 
 	return NULL;
@@ -252,7 +252,7 @@ giop_connection_initiate (gpointer orb_data,
 			remote_serv_info, options)) {
 
 			CNX_LIST_UNLOCK;
-			g_object_unref (G_OBJECT (cnx));
+			linc_object_unref (cnx);
 
 			return NULL;
 		} else
@@ -280,7 +280,7 @@ giop_connections_shutdown (void)
 		GIOPConnection *cnx = l->data;
 
 		giop_connection_close (cnx);
-		g_object_unref (G_OBJECT (cnx));
+		linc_object_unref (cnx);
 	}
 
 	g_list_free (to_close);
@@ -292,7 +292,6 @@ giop_connections_shutdown (void)
 void
 giop_connection_unref (GIOPConnection *cnx)
 {
-	g_warning ("FIXME: whole cnx. lifecycle here needs looking at");
 	if (cnx)
-		linc_object_unref (G_OBJECT (cnx));
+		linc_object_unref (cnx);
 }

@@ -1,3 +1,13 @@
+2002-11-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_list_lookup),
+	(giop_connection_initiate),
+	(giop_connections_shutdown): use linc_object_[un]ref.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): ditto.
+	
 2002-10-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c

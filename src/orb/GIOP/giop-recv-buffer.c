@@ -530,9 +530,6 @@ giop_recv_list_zap (GIOPConnection *cnx)
 
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 
-	if (giop_threaded ())
-		g_warning ("FIXME: callbacks emitted in wrong thread");
-
 	for (l = giop_queued_messages; l; l = next) {
 		GIOPMessageQueueEntry *ent = l->data;
 
@@ -1120,7 +1117,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	GIOPRecvBuffer *buf;
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 
-	g_object_ref ((GObject *) cnx);
+	linc_object_ref (cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
 
 	do {
@@ -1136,14 +1133,14 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 		if (n == 0) { /* We'll be back */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
-			g_object_unref ((GObject *) cnx);
+			linc_object_unref (cnx);
 			return TRUE;
 		}
 
 		if (n < 0 || !buf->left_to_read) { /* HUP */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
-			g_object_unref ((GObject *) cnx);
+			linc_object_unref (cnx);
 			return TRUE;
 		}
 
@@ -1258,7 +1255,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	}
 
  frag_out:	
-	g_object_unref ((GObject *) cnx);
+	linc_object_unref (cnx);
 
 	return TRUE;
 
@@ -1276,7 +1273,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	 * messages more graciously XXX */
 	linc_connection_state_changed (LINC_CONNECTION (cnx),
 				       LINC_DISCONNECTED);
-	g_object_unref ((GObject *) cnx);
+	linc_object_unref (cnx);
 
 	return TRUE;
 }
