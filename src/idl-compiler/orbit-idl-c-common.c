@@ -1,12 +1,21 @@
 #include "config.h"
 
 #include "orbit-idl-c-backend.h"
+#include <string.h>
 
 static gboolean cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data);
 static void cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 
 static void cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void cc_typecode_prep_sequence(IDL_tree tree, OIDL_C_Info *ci);
 static void cc_output_marshallers(OIDL_C_Info *ci);
+
+static void
+cc_output_typecodes(IDL_tree tree, OIDL_C_Info *ci)
+{
+  IDL_tree_walk2( tree, /*tfd*/0, IDL_WalkF_TypespecOnly,
+		  /*pre*/ cc_output_tc_walker, /*post*/ cc_output_tc_walker, ci);
+}
 
 void
 orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -21,9 +30,7 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
   fprintf(ci->fh, "#include <orbit/GIOP/giop.h>\n");
   fprintf(ci->fh, "static const CORBA_unsigned_long ORBit_zero_int = 0;\n");
 
-  IDL_tree_walk2( tree->tree, /*tfd*/0, IDL_WalkF_TypespecOnly,
-    /*pre*/ cc_output_tc_walker, /*post*/ cc_output_tc_walker, ci);
-
+  cc_output_typecodes(tree->tree, ci);
   cc_output_allocs(tree->tree, rinfo, ci);
   cc_output_marshallers(ci);
 }
@@ -41,6 +48,8 @@ cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data) {
   case IDLN_ATTR_DCL:
   case IDLN_OP_DCL:
       return FALSE;	/* dont recurse into these */
+  case IDLN_TYPE_SEQUENCE:
+    cc_typecode_prep_sequence(tree, ci);
   case IDLN_INTERFACE: /* may need to be pre-order? */
   case IDLN_EXCEPT_DCL:
   case IDLN_TYPE_STRUCT:
@@ -48,7 +57,6 @@ cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data) {
   case IDLN_TYPE_DCL:
   case IDLN_TYPE_ENUM:
   case IDLN_TYPE_FIXED:
-  case IDLN_TYPE_SEQUENCE:
     if ( tfd->step ) {
 	/* do post-order */
         orbit_output_typecode(ci, tree);
@@ -57,6 +65,7 @@ cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data) {
   default:
     break;
   }
+
   return TRUE;	/* continue walking */
 }
 
@@ -422,29 +431,76 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
   }
 }
 
+static void
+cc_typecode_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
+{
+  char *ctmp, *ctmp2;
+  gboolean separate_defs;
+  IDL_tree tts, fake_seq;
+  gboolean fake_if = FALSE;
+
+  tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+
+  ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+  if(IDL_NODE_TYPE(tts) == IDLN_INTERFACE) {
+    ctmp2 = g_strdup("CORBA_Object");
+    fake_if = TRUE;
+  } else
+    ctmp2 = orbit_cbe_get_typespec_str(tts);
+  separate_defs = strcmp(ctmp, ctmp2);
+  g_free(ctmp);
+  ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp2);
+
+  if(separate_defs)
+    {
+      if(fake_if)
+	tts = IDL_type_object_new();
+      fake_seq = IDL_type_sequence_new(tts, NULL);
+      IDL_NODE_UP(fake_seq) = IDL_NODE_UP(tree);
+
+      cc_output_typecodes(fake_seq, ci);
+
+      if(!fake_if)
+	IDL_TYPE_SEQUENCE(fake_seq).simple_type_spec = NULL;
+      IDL_tree_free(fake_seq);
+    }
+}
+
 /**
     Note that the __freekids is always a #define in the header.
 **/
 static void
 cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  char *ctmp, *ctmp2, *ctmp3;
-  gboolean elements_are_fixed;
-  IDL_tree tts;
+  char *ctmp, *ctmp2;
+  gboolean elements_are_fixed, separate_defs;
+  IDL_tree tts, fake_seq;
+  gboolean fake_if = FALSE;
 
   tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   cc_output_allocs(IDL_TYPE_SEQUENCE(tree).simple_type_spec, rinfo, ci);
 
-#if 0
-  ctmp = orbit_cbe_get_typespec_str(tree);
-  ctmp2 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-#endif
-  if(IDL_NODE_TYPE(tts) == IDLN_INTERFACE)
-    ctmp3 = "CORBA_Object";
-  else
-    ctmp3 = orbit_cbe_get_typespec_str(tts);
-  ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp3);
-  ctmp2 = g_strdup(ctmp3);
+  ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+  if(IDL_NODE_TYPE(tts) == IDLN_INTERFACE) {
+    ctmp2 = g_strdup("CORBA_Object");
+    fake_if = TRUE;
+  } else
+    ctmp2 = orbit_cbe_get_typespec_str(tts);
+  separate_defs = strcmp(ctmp, ctmp2);
+  g_free(ctmp);
+  ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp2);
+
+  if(separate_defs)
+    {
+      if(fake_if)
+	tts = IDL_type_object_new();
+      fake_seq = IDL_type_sequence_new(tts, NULL);
+      IDL_NODE_UP(fake_seq) = IDL_NODE_UP(tree);
+      cc_alloc_prep_sequence(fake_seq, rinfo, ci);
+      if(!fake_if)
+	IDL_TYPE_SEQUENCE(fake_seq).simple_type_spec = NULL;
+      IDL_tree_free(fake_seq);
+    }
 
   fprintf(ci->fh, "#if ");
   orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);

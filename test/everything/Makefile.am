@@ -8,6 +8,7 @@ EVERYTHING_BUILT = \
 
 INCLUDES = \
 	-I$(top_srcdir)/include		\
+	-I$(top_builddir)/include		\
 	-I$(top_builddir)/src		\
 	-I$(top_builddir)/src/ORBitutil \
 	-I$(top_srcdir)/src/orb		\

@@ -488,13 +488,13 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 {
   char *ctmp, *fullname, *fullname_def, *ctmp2;
   IDL_tree tts;
-  gboolean separate_defs, fake_if, fake_native;
+  gboolean separate_defs, fake_if;
+  IDL_tree fake_seq;
 
   tts = orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   ctmp2 = orbit_cbe_get_typespec_str(tts);
   fake_if = (IDL_NODE_TYPE(tts) == IDLN_INTERFACE);
-  fake_native = (IDL_NODE_TYPE(tts) == IDLN_NATIVE);
   if(fake_if)
     {
       g_free(ctmp2);
@@ -505,8 +505,6 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 
   if(separate_defs)
     {
-      IDL_tree fake_seq;
-
       if(fake_if)
 	tts = IDL_type_object_new();
       fake_seq = IDL_type_sequence_new(tts, NULL);
@@ -515,7 +513,6 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
       fullname_def = g_strdup_printf("CORBA_sequence_%s", ctmp2);
       if(!fake_if)
 	IDL_TYPE_SEQUENCE(fake_seq).simple_type_spec = NULL;
-      IDL_tree_free(fake_seq);
     }
   else
     fullname_def = g_strdup(fullname);
@@ -550,6 +547,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
       fprintf(ci->fh, "#define %s_marshal(x,y,z) %s_marshal((x),(y),(z))\n", fullname, fullname_def);
 
       fprintf(ci->fh, "#define %s_demarshal(x,y,z,i) %s_demarshal((x),(y),(z),(i))\n", fullname, fullname_def);
+      IDL_tree_free(fake_seq);
     }
   else
     {
