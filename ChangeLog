@@ -1,3 +1,14 @@
+2002-01-16  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/pass_stubs.cc
+	  IDLPassSkels::doOperationPrototype(),
+	  src/idl-compiler/cpp/pass_skels.cc
+	    IDLPassSkels::doOperationPrototype():
+	Added some null pointer checks to prevent segfaults. Maybe this is
+	just masking more serious problems somewhere else. orbit-2-idl -lc++
+	now compiles Bonobo.idl, but I haven't investigated whether the 
+	generated code is sane.
+
 2002-01-07  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_idl_it.cc: doDefinitionList():

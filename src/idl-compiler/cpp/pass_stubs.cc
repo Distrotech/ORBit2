@@ -239,7 +239,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		<< mod_indent << "void *value = "
 		<<  "::CORBA_exception_value(_ev);" << endl << endl;
 
-		while (exfirst != exlast) {
+		while (exfirst != exlast && *exfirst) {
 			m_module
 			<< mod_indent << "if (strcmp(repo_id,ex_" << (*exfirst)->getQualifiedCIdentifier()
 			<< ") == 0) {" << endl;
