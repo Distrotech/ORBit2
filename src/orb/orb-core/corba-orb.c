@@ -551,7 +551,12 @@ static void
 copy_case_value (CORBA_long *dest,
 		 CORBA_any  *src)
 {
-        switch (src->_type->kind) {
+	CORBA_TypeCode tc = src->_type;
+
+	if (tc->kind == CORBA_tk_alias)
+		tc = tc->subtypes [0];
+
+        switch (tc->kind) {
         case CORBA_tk_ulong:
         case CORBA_tk_long:
         case CORBA_tk_enum:
