@@ -14,6 +14,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 #include <errno.h>
 
 #include <linc/linc.h>
@@ -127,6 +128,17 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 	fd = accept (server->fd, saddr, &addrlen);
 	if (fd < 0)
 		return FALSE; /* error */
+
+	if (server->create_options & LINC_CONNECTION_NONBLOCKING)
+		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0) {
+			close (fd);
+			return FALSE;
+		}
+
+	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0) {
+		close (fd);
+		return FALSE;
+	}
 
 	if (!linc_protocol_get_sockinfo (server->proto, saddr, &hostname, &service)) {
 		close (fd);
