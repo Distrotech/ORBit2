@@ -247,7 +247,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     n = 0;
   if((proto->flags & LINC_PROTOCOL_NEEDS_BIND)
      || local_serv_info)
-  n = bind(fd, ai->ai_addr, ai->ai_addrlen);
+    n = bind(fd, ai->ai_addr, ai->ai_addrlen);
   if(!n)
     n = listen(fd, 10);
   if(!n)

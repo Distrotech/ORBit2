@@ -347,14 +347,36 @@ irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 }
 #endif
 
+#include <sys/time.h>
 static int
 sys_getaddrinfo(const char *nodename, const char *servname,
 		const struct addrinfo *hints, struct addrinfo **res)
 {
+  int retval;
+#if 0
+  struct timeval tvend, tvstart;
+
+  gettimeofday(&tvstart, NULL);
+#endif
+
   if(!nodename && !servname && hints)
     servname = "0";
+  retval = getaddrinfo(nodename, servname, hints, res);
+#if 0
+  gettimeofday(&tvend, NULL);
 
-  return getaddrinfo(nodename, servname, hints, res);
+  if(tvend.tv_usec < tvstart.tv_usec)
+    {
+      tvend.tv_usec += 1000000;
+      tvend.tv_sec -= 1;
+    }
+  tvend.tv_sec -= tvstart.tv_sec;
+  tvend.tv_usec -= tvstart.tv_usec;
+  g_message("getaddrinfo(%s,%s, fam %d) took %ld.%06ld\n",
+	    nodename, servname, hints->ai_family, tvend.tv_sec, tvend.tv_usec);
+#endif
+
+  return retval;
 }
 
 static int
@@ -363,8 +385,42 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 		int flags)
 {
   int retval;
+  char *fakehost = host;
 
-  retval = getnameinfo(sa, sa_len, host, hostlen, serv, servlen, flags);
+  switch(sa->sa_family)
+    {
+#if defined(AF_INET) || defined(AF_INET6)
+#ifdef AF_INET
+    case AF_INET:
+      if(sa->sa_family == AF_INET && host)
+	{
+	  struct sockaddr_in *sa4 = (struct sockaddr_in *)sa;
+	  if(sa4->sin_addr.s_addr == INADDR_ANY)
+	    {
+	      strcpy(host, "0.0.0.0");
+	      fakehost = NULL;
+	    }
+	}
+#endif
+#ifdef AF_INET6
+    case AF_INET6:
+#endif
+      if(sa->sa_family == AF_INET6 && host)
+	{
+	  struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+	  struct in6_addr sa6addr = IN6ADDR_ANY_INIT;
+
+	  if(!memcmp(&sa6->sin6_addr, &sa6addr, sizeof(sa6addr)))
+	    {
+	      strcpy(host, "::");
+	      fakehost = NULL;
+	    }
+	}
+#endif
+    default:
+      retval = getnameinfo(sa, sa_len, fakehost, hostlen, serv, servlen, flags);
+      break;
+    }
 
   /* Yet another bad hack. Just give me my daggone FQDN */
   switch(sa->sa_family)
@@ -383,7 +439,7 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 	  hints.ai_flags = AI_CANONNAME;
 	  hints.ai_family = sa->sa_family;
 	  hints.ai_protocol = 0;
-	  
+
 	  if(!linc_getaddrinfo(host, NULL, &hints, &ai))
 	    {
 	      g_snprintf(host, hostlen, "%s", ai->ai_canonname);
