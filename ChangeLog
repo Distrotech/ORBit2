@@ -1,3 +1,13 @@
+2004-03-04  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.10.0
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init):
+	add 'orbit-io-thread' initializer to force I/O thread
+	usage.
+
+	* src/orb/GIOP/giop.c (giop_init): s/threaded/thread_safe/
+
 2004-02-12  Chris Toshok  <toshok@ximian.com>
 
 	* Version 2.9.8

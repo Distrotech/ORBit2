@@ -330,7 +330,7 @@ CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORBid orb_identifier,
 		CORBA_Environment *ev)
 {
-	gboolean threaded;
+	gboolean thread_safe;
 	CORBA_ORB retval;
 	static ORBit_RootObject_Interface orb_if = {
 		ORBIT_ROT_ORB,
@@ -347,9 +347,9 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	if (orb_identifier &&
 	    strstr (orb_identifier, "orbit-local-non-threaded-orb") != NULL)
-		threaded = FALSE;
+		thread_safe = FALSE;
 	else
-		threaded = TRUE;
+		thread_safe = TRUE;
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
 	
@@ -358,15 +358,20 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	if (_orbit_debug_flags & ORBIT_DEBUG_FORCE_THREADED) {
 		g_warning ("-- Forced orb into threaded mode --");
-		threaded |= TRUE;
+		thread_safe |= TRUE;
 	}
 #endif /* G_ENABLE_DEBUG */
 
 
 	giop_recv_set_limit (orbit_initial_recv_limit);
-	giop_init (threaded,
+	giop_init (thread_safe,
 		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
+
+	if (orb_identifier && thread_safe &&
+	    strstr (orb_identifier, "orbit-io-thread") != NULL)
+		link_set_io_thread (TRUE);
+
 	genuid_init ();
 	_ORBit_object_init ();
 	ORBit_poa_init ();
