@@ -94,7 +94,8 @@ IOP_profile_dump(CORBA_Object obj, gpointer p)
 		
 		objkey = os->object_key ? os->object_key : obj->object_key;
 
-		key = IOP_ObjectKey_dump (os->object_key);
+		key = IOP_ObjectKey_dump (objkey);
+
 		g_string_printf (str, "P-OS %s:0x%x '%s'",
 				 os->unix_sock_path, os->ipv6_port,
 				 key);
