@@ -1,4 +1,22 @@
+ORBit2-2.7.3
+
+	* bug fixes
+		+ vicious union discriminator issue (Brian Cameron)
+		+ non_existent / try_connection fix (Michael)
+		+ 'broken' emission at idle (Michael, George Lebl)
+		+ DynAnyFactory registration (Michael)
+		+ no longer explicitely "entering a wold of pain"
+		+ ORBit_sequence fixes (Frank Rehberger)
+		+ linc source fix (Padraig O'Briain)
+		+ gthread linkage fix (Michael)
+		+ struct/union leakage on exceptions (Frank)
+	* featurelets
+		+ improved regression tests (Michael, Frank, Bowie Owens)
+		+ lots of documentation improvements (Gustavo Carneiro)
+		+ -ORBInitRef, -ORBNamingIOR (Frank)
+
 ORBit2-2.7.2
+
 
 	* bug fixes
 		+ fixed docs build (Gustavo Varneiro)
