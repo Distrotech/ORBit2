@@ -38,6 +38,8 @@ linc_server_get_type(void)
   return object_type;
 }
 
+static GObjectClass *parent_class = NULL;
+
 static void
 linc_server_class_init (LINCServerClass *klass)
 {
@@ -45,6 +47,7 @@ linc_server_class_init (LINCServerClass *klass)
 
   object_class->shutdown = linc_server_destroy;
   klass->create_connection = linc_server_create_connection;
+  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
 }
 
 static void
@@ -68,6 +71,8 @@ linc_server_destroy(GObject         *obj)
     close(cnx->fd);
   g_free(cnx->local_host_info);
   g_free(cnx->local_serv_info);
+  if(parent_class->shutdown)
+    parent_class->shutdown(obj);
 }
 
 static LINCConnection *
@@ -136,10 +141,10 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   int fd, n;
   const LINCProtocolInfo * proto;
   struct addrinfo *ai, hints = {0};
-  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV*2];
+  char hnbuf[NI_MAXHOST], servbuf[256];
 
 #if !LINC_SSL_SUPPORT
-  if((create_options & LINC_CONNECTION_SSL)
+  if(create_options & LINC_CONNECTION_SSL)
      return FALSE;
 #endif
 
@@ -151,6 +156,11 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   hints.ai_family = proto->family;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = proto->stream_proto_num;
+  if(!local_host_info)
+    {
+      local_host_info = hnbuf;
+      gethostname(hnbuf, sizeof(hnbuf));
+    }
   if(linc_getaddrinfo(local_host_info, local_serv_info, &hints, &ai))
     return FALSE;
 
@@ -170,7 +180,9 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
      || local_serv_info)
   n = bind(fd, ai->ai_addr, ai->ai_addrlen);
   if(!n)
-  n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
+    n = listen(fd, 10);
+  if(!n)
+    n = getsockname(fd, ai->ai_addr, &ai->ai_addrlen);
   if(linc_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
 		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
   {
@@ -179,8 +191,6 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
     }
   freeaddrinfo(ai);
 
-  if(!n)
-    n = listen(fd, 10);
   if(n)
     {
       close(fd);

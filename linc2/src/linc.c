@@ -7,9 +7,15 @@ SSL_METHOD *linc_ssl_method;
 SSL_CTX *linc_ssl_ctx;
 #endif
 
+#ifdef LINC_THREADSAFE
+pthread_mutexattr_t linc_mutex_attrs;
+#endif
+
 void
 linc_init(void)
 {
+  pthread_mutexattr_init(&linc_mutex_attrs);
+  pthread_mutexattr_settype(&linc_mutex_attrs, PTHREAD_MUTEX_RECURSIVE_NP);
   g_thread_init(NULL);
   g_type_init();
 

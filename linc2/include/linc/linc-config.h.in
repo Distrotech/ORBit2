@@ -3,10 +3,4 @@
 
 #define LINC_SSL_SUPPORT @LINC_SSL_SUPPORT@
 
-#include <glib.h>
-
-#ifdef G_THREADS_ENABLED
-#define LINC_THREADSAFE 1
-#endif
-
 #endif

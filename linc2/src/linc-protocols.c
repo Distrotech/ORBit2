@@ -362,7 +362,41 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 		char *host, size_t hostlen, char *serv, size_t servlen,
 		int flags)
 {
-  return getnameinfo(sa, sa_len, host, hostlen, serv, servlen, flags);
+  int retval;
+
+  retval = getnameinfo(sa, sa_len, host, hostlen, serv, servlen, flags);
+
+  /* Yet another bad hack. Just give me my daggone FQDN */
+  switch(sa->sa_family)
+    {
+#if defined(AF_INET) || defined(AF_INET6)
+#ifdef AF_INET
+    case AF_INET:
+#endif
+#ifdef AF_INET6
+    case AF_INET6:
+#endif
+      if(host && (!strcmp(host, "0.0.0.0") || !strcmp(host, "::")))
+	{
+	  struct addrinfo *ai, hints;
+	  gethostname(host, hostlen);
+	  hints.ai_flags = AI_CANONNAME;
+	  hints.ai_family = sa->sa_family;
+	  hints.ai_protocol = 0;
+	  
+	  if(!linc_getaddrinfo(host, NULL, &hints, &ai))
+	    {
+	      g_snprintf(host, hostlen, "%s", ai->ai_canonname);
+	      freeaddrinfo(ai);
+	    }
+	}
+      break;
+#endif
+    default:
+      break;
+    }
+
+  return retval;
 }
 
 static void

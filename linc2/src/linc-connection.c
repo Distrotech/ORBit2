@@ -43,6 +43,8 @@ linc_connection_get_type(void)
   return object_type;
 }
 
+static GObjectClass *parent_class = NULL;
+
 static void
 linc_connection_class_init (LINCConnectionClass *klass)
 {
@@ -50,6 +52,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 
   object_class->shutdown = linc_connection_destroy;
   klass->state_changed = linc_connection_real_state_changed;
+  parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(klass)));
 }
 
 static void
@@ -66,7 +69,10 @@ linc_connection_destroy    (GObject             *obj)
     g_source_remove(cnx->tag);
   g_free(cnx->remote_host_info);
   g_free(cnx->remote_serv_info);
-  close(cnx->fd);
+  if(cnx->fd >= 0)
+    close(cnx->fd);
+  if(parent_class->shutdown)
+    parent_class->shutdown(obj);
 }
 
 static gboolean
@@ -130,6 +136,8 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
     case LINC_DISCONNECTED:
       if(cnx->tag) g_source_remove(cnx->tag);
       cnx->tag = 0;
+      close(cnx->fd);
+      cnx->fd = -1;
       break;
     }
 
