@@ -10,6 +10,8 @@
 
 #undef DEBUG
 
+#define MORE_FRAGMENTS_FOLLOW(buf) ((buf)->msg.header.flags & GIOP_FLAG_FRAGMENTED)
+
 /*
  * FIXME: pretty much this whole module,
  * and all the giop-types headers should be
@@ -717,19 +719,164 @@ giop_recv_buffer_init (void)
 	giop_queued_messages_lock = linc_mutex_new ();
 }
 
-
-static gboolean
-giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
-				    GIOPConnection *cnx)
+static void
+giop_connection_add_frag (GIOPConnection *cnx,
+			  GIOPRecvBuffer *buf)
 {
-	/* FIXME: Drop fragmented packets on the floor for now */
-	g_warning ("Dropping a fragmented packed on the floor !");
+	cnx->incoming_frags = g_list_prepend (cnx->incoming_frags,
+					      g_list_prepend (NULL, buf));
+}
 
-	buf->connection = cnx;
-	buf->end = buf->message_body + buf->msg.header.message_size;
-	giop_recv_buffer_unuse (buf);
+static GList *
+giop_connection_get_frag (GIOPConnection     *cnx,
+			  CORBA_unsigned_long request_id,
+			  gboolean            return_first_if_none)
+{
+	GList *l;
 
-	return TRUE;
+	for (l = cnx->incoming_frags; l; l = l->next) {
+		GList *frags = l->data;
+
+		if (giop_recv_buffer_get_request_id (frags->data) == request_id)
+			return l->data;
+	}
+
+	/* This sucks, but it's prolly a GIOP-1.1 spec issue */
+	if (return_first_if_none && cnx->incoming_frags) {
+		static int warned = 0;
+		if (!warned++)
+			g_warning ("GIOP-1.1 1 fragment set per cnx (?)");
+
+		return cnx->incoming_frags->data;
+	}
+
+	return NULL;
+}
+
+static void
+giop_connection_remove_frag (GIOPConnection *cnx, GList *frags)
+{
+	cnx->incoming_frags = g_list_remove (cnx->incoming_frags, frags);
+	g_list_free (frags);
+}
+
+static void
+alloc_buffer (GIOPRecvBuffer *buf, gpointer old_alloc, gulong body_size)
+{
+	buf->message_body = g_realloc (old_alloc, body_size + 12);
+	/*
+	 *   We assume that this is 8 byte aligned, for efficiency -
+	 * so we can align to the memory address rather than the offset
+	 * into the buffer.
+	 */
+	g_assert (((gulong)buf->message_body & 0x3) == 0);
+	buf->free_body = TRUE;
+	buf->cur = buf->message_body + 12;
+	buf->end = buf->cur + body_size;
+	buf->left_to_read = body_size;
+}
+
+static void
+concat_frags (GList *list)
+{
+	GList *l;
+	guchar *ptr;
+	gulong length = 0;
+	GIOPRecvBuffer *head;
+
+	head = list->data;
+
+	for (l = list; l; l = l->next) {
+		GIOPRecvBuffer *buf = l->data;
+
+		/* to account for fragment (msg id) header */
+		length += buf->end - buf->cur;
+	}
+
+	g_assert (head->free_body);
+	alloc_buffer (head, head->message_body, length);
+	head->left_to_read = 0;
+
+	ptr = head->end;
+	for (l = list->next; l; l = l->next) {
+		gulong len;
+		GIOPRecvBuffer *buf = l->data;
+			
+		len = buf->end - buf->cur;
+		memcpy (ptr, buf->cur, len);
+		ptr+= len;
+
+		giop_recv_buffer_unuse (buf);
+	}
+}
+
+/**
+ * giop_recv_buffer_handle_fragmented:
+ * @buf: pointer to recv buffer pointer
+ * @cnx: current connection.
+ * 
+ *   This will append @buf to the right list of buffers
+ * on the connection, forming a complete message, and
+ * re-write *@buf to the first buffer in the chain.
+ * 
+ * Return value: TRUE on error else FALSE
+ **/
+static gboolean
+giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
+				    GIOPConnection  *cnx)
+{
+	GList *list;
+	gboolean giop_1_1;
+	CORBA_long message_id;
+	GIOPRecvBuffer *buf = *ret_buf;
+
+	switch (buf->msg.header.message_type) {
+	case GIOP_REPLY:
+	case GIOP_LOCATEREPLY:
+	case GIOP_REQUEST:
+	case GIOP_LOCATEREQUEST:
+	case GIOP_FRAGMENT:
+		break;
+	default:
+		g_warning ("Bogus fragment packet type %d",
+			   buf->msg.header.message_type);
+		return TRUE;
+	}
+
+	if ((giop_1_1 = (buf->giop_version == GIOP_1_1)))
+		message_id = giop_recv_buffer_get_request_id (buf);
+
+	else {
+		buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+
+		if ((buf->cur + 4) > buf->end)
+			return TRUE;
+		if (giop_msg_conversion_needed (buf))
+			message_id = GUINT16_SWAP_LE_BE (*(guint32 *) buf->cur);
+		else
+			message_id = *(guint32 *) buf->cur;
+		buf->cur += 4;
+	}
+
+	if (!(list = giop_connection_get_frag (cnx, message_id, giop_1_1)))
+		giop_connection_add_frag (cnx, buf);
+
+	else {
+		*ret_buf = list->data;
+
+		g_list_append (list, buf);
+			
+		if (!MORE_FRAGMENTS_FOLLOW (buf)) {
+			g_assert (buf->msg.header.message_type == GIOP_FRAGMENT);
+
+			/* concat all fragments - re-write & continue */
+			concat_frags (list);
+
+			giop_connection_remove_frag (cnx, list);
+		}
+	}
+
+	return FALSE;
 }
 
 static void
@@ -831,17 +978,7 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 	if (!is_auth && (buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT))
 		return TRUE;
 
-	buf->message_body = g_malloc (buf->msg.header.message_size + 12);
-	/*
-	 *   We assume that this is 8 byte aligned, for efficiency -
-	 * so we can align to the memory address rather than the offset
-	 * into the buffer.
-	 */
-	g_assert (((gulong)buf->message_body & 0x3) == 0);
-	buf->free_body = TRUE;
-	buf->cur = buf->message_body + 12;
-	buf->end = buf->cur + buf->msg.header.message_size;
-	buf->left_to_read = buf->msg.header.message_size;
+	alloc_buffer (buf, NULL, buf->msg.header.message_size);
 
 	return FALSE;
 }
@@ -909,9 +1046,13 @@ giop_connection_handle_input (LINCConnection *lcnx)
 			case GIOP_MSG_READING_BODY:
 				buf->state = GIOP_MSG_READY;
 
-				if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED) {
-					if (giop_recv_buffer_handle_fragmented (buf, cnx))
+				if (MORE_FRAGMENTS_FOLLOW (buf)) {
+					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
+					else {
+						LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+						goto frag_out;
+					}
 				} else {
 					buf->cur = buf->message_body + 12;
 
@@ -925,7 +1066,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 						goto msg_error;
 
 					if (buf->msg.header.message_type == GIOP_FRAGMENT) {
-						if (giop_recv_buffer_handle_fragmented (buf, cnx))
+						if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 							goto msg_error;
 					}
 				}
@@ -981,12 +1122,15 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		giop_recv_buffer_unuse (buf);
 		break;
 	}
-	
+ frag_out:	
 	g_object_unref ((GObject *) cnx);
 
 	return TRUE;
 
  msg_error:
+	cnx->incoming_msg = NULL;
+	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+
 	buf->msg.header.message_type = GIOP_MESSAGEERROR;
 	buf->msg.header.message_size = 0;
 
