@@ -244,6 +244,7 @@ module test {
 	};
 
 	interface PingPongServer {
+		oneway void opSleep  (in string large_string);
 		oneway void opOneWay (in long l);
 		long        pingPong (in PingPongServer replyTo,
 				      in long idx);

@@ -361,7 +361,7 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	do_giop_dump_send (send_buffer);
 
-	if (giop_send_buffer_write (send_buffer, cnx)) {
+	if (giop_send_buffer_write (send_buffer, cnx, FALSE)) {
 		g_warning ("Failed to send buffer");
 		giop_recv_list_destroy_queue_entry (mqe);
 		return FALSE;
@@ -868,7 +868,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	do_giop_dump_send (send_buffer);
 
-	giop_send_buffer_write (send_buffer, recv_buffer->connection);
+	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
 
 	if (m_data->ret && ev->_major == CORBA_NO_EXCEPTION) {
@@ -1241,3 +1241,21 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 
 	return ret;
 }
+
+ORBitConnection *
+ORBit_small_get_connection (CORBA_Object obj)
+{
+	return (ORBitConnection *) ORBit_object_get_connection (obj);
+}
+
+void
+ORBit_connection_set_max_buffer (ORBitConnection *cnx,
+				 gulong           max_buffer_bytes)
+{
+	LINCConnection *lcnx = (LINCConnection *) cnx;
+
+	g_return_if_fail (LINC_IS_CONNECTION (lcnx));
+
+	linc_connection_set_max_buffer (lcnx, max_buffer_bytes);
+}
+

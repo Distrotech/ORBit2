@@ -1304,6 +1304,12 @@ testAsync (test_TestFactory   factory,
 }
 
 static void
+broken_cb (LINCConnection *connection, gboolean *broken)
+{
+	*broken = TRUE;
+}
+
+static void
 testPingPong (test_TestFactory   factory, 
 	      CORBA_Environment *ev)
 {
@@ -1358,7 +1364,55 @@ testPingPong (test_TestFactory   factory,
 	g_assert (!CORBA_Object_is_equivalent (
 		CORBA_OBJECT_NIL, l_objref, ev));
 
+	if (!in_proc) {
+		int i;
+		ORBitConnection *cnx = ORBit_small_get_connection (r_objref);
+		const char *base =
+			"This string is in order to provide some "
+			"more bulky data on the wire, the larger "
+			"the better. When the socket buffer fills "
+			"we start exercising the linc buffering code "
+			"and hopefully we get an exception somewhere "
+			"indicating that the buffer is full and that "
+			"the write has failed & that the connection is "
+			"now saturated ";
+		char *str;
+		gboolean broken;
+
+		g_assert (cnx != NULL);
+		ORBit_connection_set_max_buffer (cnx, 10000);
+
+		str = g_strdup (base);
+		for (i = 0; i < 4; i++) {
+			char *new;
+			new = g_strconcat (str, str, NULL);
+			g_free (str);
+			str = new;
+		}
+
+		d_print ("Testing non blocking IO ...\n");
+
+		ORBit_small_listen_for_broken (
+			r_objref, G_CALLBACK (broken_cb),
+			&broken);
+
+		for (i = 0; i < 100; i++) {
+			test_PingPongServer_opSleep (
+				r_objref, str, ev);
+			if (broken)
+				break;
+		}
+
+		g_free (str);
+
+		/* If this blows - perhaps you just have a strange
+		 * system scheduler */
+		g_assert (broken);
+		CORBA_exception_free (ev);
+	}
+
 	CORBA_Object_release (objref, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	CORBA_Object_release (l_objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
@@ -1366,13 +1420,6 @@ testPingPong (test_TestFactory   factory,
 	CORBA_Object_release (r_objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }
-
-static void
-broken_cb (LINCConnection *connection, gboolean *broken)
-{
-	*broken = TRUE;
-}
-
 
 static void
 dummy_cb (LINCConnection *connection, gboolean *invoked)

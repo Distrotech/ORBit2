@@ -120,7 +120,7 @@ giop_connection_close (GIOPConnection *cnx)
 
 		buf = giop_send_buffer_use_close_connection (
 			cnx->giop_version);
-		giop_send_buffer_write (buf, cnx);
+		giop_send_buffer_write (buf, cnx, TRUE);
 		giop_send_buffer_unuse (buf);
 	}
 

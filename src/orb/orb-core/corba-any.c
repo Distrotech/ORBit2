@@ -822,9 +822,8 @@ ORBit_copy_value_core (gconstpointer *val,
 	case CORBA_tk_except:
 		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		*newval = ALIGN_ADDRESS (*newval, tc->c_align);
-		for (i = 0; i < tc->sub_parts; i++) {
+		for (i = 0; i < tc->sub_parts; i++)
 			ORBit_copy_value_core (val, newval, tc->subtypes[i]);
-		}
 		break;
 	case CORBA_tk_union:
 	{
@@ -845,8 +844,8 @@ ORBit_copy_value_core (gconstpointer *val,
 
 		*val = ((guchar *)*val) + union_size;
 		*newval = ((guchar *)*newval) + union_size;
+		break;
 	}
-	break;
 	case CORBA_tk_wstring:
 	case CORBA_tk_string:
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
