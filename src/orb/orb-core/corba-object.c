@@ -349,6 +349,43 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
   return FALSE;
 }
 
+static void
+ORBit_start_servers( CORBA_ORB orb )
+{
+  LINCProtocolInfo *info;
+
+  for(info = linc_protocol_all(); info->name; info++)
+    {
+      GIOPServer *server;
+      LINCConnectionOptions options = 0;
+
+#ifndef ORBIT_THREADED
+      options |= LINC_CONNECTION_NONBLOCKING;
+#endif
+      server = giop_server_new(orb->default_giop_version,
+                               info->name, NULL, NULL,
+                               options, orb);
+      if(server)
+        {
+          orb->servers = g_slist_prepend(orb->servers, server);
+          if(!(info->flags & LINC_PROTOCOL_SECURE))
+            {
+              server = giop_server_new(orb->default_giop_version, info->name,
+                                       NULL, NULL, LINC_CONNECTION_SSL, orb);
+              if(server)
+                orb->servers = g_slist_prepend(orb->servers, server);
+            }
+#ifdef DEBUG
+          fprintf (stderr, "ORB created giop server '%s'\n", info->name);
+#endif
+        }
+#ifdef DEBUG
+      else
+        fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
+#endif
+    }
+}
+
 GIOPConnection *
 _ORBit_object_get_connection(CORBA_Object obj)
 {
@@ -746,6 +783,12 @@ ORBit_generate_profiles( CORBA_Object obj )
 
   g_assert( obj && (obj->profile_list == NULL) );
 
+  /*
+   * no need to have any listening sockets until now.
+   */
+  if ( obj->orb->servers == NULL )
+    ORBit_start_servers( obj->orb );
+
   need_objkey_component = FALSE;
 
   for(ltmp = obj->orb->servers ; ltmp != NULL ; ltmp = ltmp->next)
@@ -757,8 +800,6 @@ ORBit_generate_profiles( CORBA_Object obj )
       ipv6 = (strcmp(serv->proto->name, "IPv6") == 0)     ? TRUE : FALSE;
       uds  = (strcmp(serv->proto->name, "UNIX") == 0)     ? TRUE : FALSE;
       ssl  = (serv->create_options & LINC_CONNECTION_SSL) ? TRUE : FALSE;
-
-      g_assert( ipv4 || ipv6 || uds );
 
       if( osi == NULL && (uds || (ipv6 && !ssl)) )
         {

@@ -28,7 +28,6 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 	       CORBA_Environment *ev)
 {
   static CORBA_ORB retval = NULL;
-  LINCProtocolInfo *info;
   static ORBit_RootObject_Interface orb_if = {
     ORBIT_ROT_ORB,
     CORBA_ORB_release_fn
@@ -51,37 +50,6 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 
   ORBit_genrand_init(&retval->genrand);
   retval->default_giop_version = GIOP_LATEST;
-
-  for(info = linc_protocol_all(); info->name; info++)
-    {
-      GIOPServer *server;
-      LINCConnectionOptions options = 0;
-
-#ifndef ORBIT_THREADED
-      options |= LINC_CONNECTION_NONBLOCKING;
-#endif
-      server = giop_server_new(retval->default_giop_version,
-			       info->name, NULL, NULL,
-			       options, retval);
-      if(server)
-	{
-	  retval->servers = g_slist_prepend(retval->servers, server);
-	  if(!(info->flags & LINC_PROTOCOL_SECURE))
-	    {
-	      server = giop_server_new(retval->default_giop_version, info->name,
-				       NULL, NULL, LINC_CONNECTION_SSL, retval);
-	      if(server)
-		retval->servers = g_slist_prepend(retval->servers, server);
-	    }
-#ifdef DEBUG
-          fprintf (stderr, "ORB created giop server '%s'\n", info->name);
-#endif
-	}
-#ifdef DEBUG
-      else
-        fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
-#endif
-    }
 
   retval->poas = g_ptr_array_new();
   ORBit_init_internals(retval, ev);
