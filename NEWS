@@ -1,3 +1,11 @@
+Version 2.3.104
+
+	* runtime GIOP debugging (Mark)	
+	* union, any and floats regression tests (Mark)
+	* minor optimisations/rationalisations (Mark)
+	* orb-core code cleanups (Mark)
+	* removing deprecated glib functions (Shivram U)
+
 Version 2.3.103
 
 	* Changes
