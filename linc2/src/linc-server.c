@@ -323,10 +323,17 @@ linc_server_setup (LINCServer            *cnx,
 	else
 		d_printf ("bind really failed errno: %d\n", errno);
 
+
+	if (!n &&
+	    create_options & LINC_CONNECTION_NONBLOCKING)
+		n = fcntl (fd, F_SETFL, O_NONBLOCK);
+	else
+		d_printf ("listen failed errno: %d\n", errno);
+
 	if (!n)
 		n = fcntl (fd, F_SETFD, FD_CLOEXEC);
 	else
-		d_printf ("listen failed errno: %d\n", errno);
+		d_printf ("failed to set nonblock on %d", fd);
 
 	if (!n)
 		n = getsockname (fd, saddr, &saddr_len);
