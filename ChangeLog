@@ -1,3 +1,16 @@
+2002-05-02  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/pass_xlate.cc: re-enabled a bunch of the Any
+	container class generation
+
+2002-04-30  Diego Sevilla Ruiz  <dsevilla@um.es>
+
+	* src/idl-compiler/cpp/types/IDLElement.cc: Added <algorithm> to
+	includes
+
+	* src/idl-compiler/cpp/types/IDLScope.hh: Added <vector> to
+	includes
+
 2002-04-30  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/pass_xlate.cc (doInterface): 
@@ -17,4 +30,4 @@
 2002-04-30  Diego Sevilla Ruiz  <dsevilla@um.es>
 
 	* src/idl-compiler/cpp/types/IDLArray.cc (typedef_decl_write): 
-	Changed non-compiland STL usage
+	Changed non-compliant STL usage

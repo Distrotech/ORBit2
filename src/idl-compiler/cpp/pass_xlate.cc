@@ -416,9 +416,7 @@ IDLPassXlate::doEnum (IDL_tree  node,
 		 << "(CORBA::TypeCode_ptr)TC_" << idlEnum.get_c_typename ()
 		 << ';' << endl;
 	
-#if 0 //!!!
 	ORBITCPP_MEMCHECK(new IDLWriteEnumAnyFuncs (idlEnum, m_state, *this));
-#endif
 }
 
 
@@ -680,9 +678,7 @@ IDLPassXlate::doInterface (IDL_tree  node,
 		 << iface.get_cpp_identifier () << " = " 
 		 << "(CORBA::TypeCode_ptr)TC_" + iface.get_c_typename () + ";" << endl;
 
-#if 0 //!!!
-	ORBITCPP_MEMCHECK( new IDLWriteIfaceAnyFuncs(iface, m_state, *this) );
-#endif
+	ORBITCPP_MEMCHECK (new IDLWriteIfaceAnyFuncs (iface, m_state, *this));
 
 	// _duplicate() and _narrow implementations:
 	// write the static method definitions
@@ -878,6 +874,42 @@ void IDLWriteAnyFuncs::writeExtractFunc (ostream      &ostr,
 	ostr << --indent << endl << "}" << endl << endl;
 }
 
+// IDLWriteIFaceAnyFuncs -------------------------------------------------------
+IDLWriteIfaceAnyFuncs::IDLWriteIfaceAnyFuncs (const IDLInterface &_iface,
+					      IDLCompilerState   &state,
+					      IDLOutputPass      &pass) :
+	IDLWriteAnyFuncs(state, pass),
+	m_iface(_iface)
+{
+}
+
+void
+IDLWriteIfaceAnyFuncs::run()
+{
+	string cpptype = m_iface.get_cpp_typename ()+ "_ptr";
+	string ctype = m_iface.get_c_typename ();
+	writeInsertFunc(m_header, indent, FUNC_NOCOPY, cpptype, ctype);
+	writeAnyFuncs(true, cpptype, ctype );
+}
+
+// IDLWriteEnumAnyFuncs -------------------------------------------------------
+
+IDLWriteEnumAnyFuncs::IDLWriteEnumAnyFuncs (const IDLEnum    &_enum,
+					    IDLCompilerState &state,
+					    IDLOutputPass    &pass) :
+	IDLWriteAnyFuncs (state, pass),
+	m_enum(_enum)
+{
+}
+
+void IDLWriteEnumAnyFuncs::run()
+{
+	writeAnyFuncs(true,
+		      m_enum.get_cpp_typename (),
+		      m_enum.get_c_typename ());
+}
+
+
 // IDLWriteStructAnyFuncs -------------------------------------------------------
 IDLWriteStructAnyFuncs::IDLWriteStructAnyFuncs (const IDLStruct  &_struct,
 						IDLCompilerState &state,
@@ -944,6 +976,18 @@ IDLWriteExceptionAnyFuncs::run ()
 	m_header << --indent << "}" << endl << endl;
 }
 
+// IDLWriteArrayAnyFuncs -------------------------------------------------------
+IDLWriteArrayAnyFuncs::IDLWriteArrayAnyFuncs (const IDLArray   &_array,
+					      const IDLElement &_dest, 
+					      IDLCompilerState &state,
+					      IDLOutputPass    &pass) :
+	IDLWriteAnyFuncs(state, pass),
+	m_array(_array),
+	m_dest(_dest)
+{
+}
+
+
 void
 IDLWriteArrayAnyFuncs::run()
 {
@@ -980,4 +1024,4 @@ IDLWriteArrayAnyFuncs::run()
 	m_header << indent << "return _retval;" << endl;
 
 	m_header << --indent << "}" << endl << endl;
-}	
+}

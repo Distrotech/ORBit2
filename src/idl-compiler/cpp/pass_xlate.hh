@@ -146,19 +146,15 @@ public:
 	void run() = 0;
 };
 
-#if 0 //!!!
 class IDLWriteEnumAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLEnum const& m_enum;
 public:
-	IDLWriteEnumAnyFuncs(IDLEnum const& _enum, IDLCompilerState &state, IDLOutputPass &pass)
-		: IDLWriteAnyFuncs(state, pass), m_enum(_enum) {}
-	void run() {
-		writeAnyFuncs(true, m_enum.getQualifiedCPPIdentifier(),
-			m_enum.getQualifiedCIdentifier() );
-	}
+	IDLWriteEnumAnyFuncs (const IDLEnum    &_enum,
+			      IDLCompilerState &state,
+			      IDLOutputPass    &pass);
+	void run();
 };
-#endif
 
 class IDLWriteStructAnyFuncs : public IDLWriteAnyFuncs
 {
@@ -191,30 +187,25 @@ public:
 	void run();
 };
 
-#if 0 //!!!
 class IDLWriteIfaceAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLInterface const &m_iface;
 public:
-	IDLWriteIfaceAnyFuncs(IDLInterface const& _iface, IDLCompilerState &state, IDLOutputPass &pass)
-		: IDLWriteAnyFuncs(state, pass), m_iface(_iface) {}
-	void run() {
-		string cpptype = m_iface.getQualifiedCPPIdentifier()+"_ptr";
-		string ctype = m_iface.getQualifiedCIdentifier();
-		writeInsertFunc(m_header, indent, FUNC_NOCOPY, cpptype, ctype);
-		writeAnyFuncs(true, cpptype, ctype );
-	}
+	IDLWriteIfaceAnyFuncs (const IDLInterface &iface,
+			       IDLCompilerState   &state,
+			       IDLOutputPass      &pass);
+	void run();
 };
-#endif
 
 class IDLWriteArrayAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLArray const &m_array;
 	IDLElement const &m_dest;
 public:
-	IDLWriteArrayAnyFuncs(IDLArray const &_array, IDLElement const &_dest, 
-						IDLCompilerState &state, IDLOutputPass &pass)
-		: IDLWriteAnyFuncs(state, pass), m_array(_array), m_dest(_dest) {}
+	IDLWriteArrayAnyFuncs (const IDLArray   &array,
+			       const IDLElement &dest, 
+			       IDLCompilerState &state,
+			       IDLOutputPass    &pass);
 	void run();
 };
 
