@@ -1,5 +1,9 @@
 2001-11-01  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.3.97
+
+2001-11-01  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-typecode.c: populate tk_info
 	with CORBA_TypeCodes for the empty case, so we don't
 	have to alloc / free them continualy.
