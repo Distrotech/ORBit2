@@ -16,8 +16,4 @@ typedef enum {
 #define O_MUTEX_DESTROY(x)
 #endif
 
-#ifndef orbit_alloca
-#define orbit_alloca alloca
-#endif
-
 #endif

@@ -77,7 +77,7 @@ linc_server_handle_io(GIOChannel *gioc,
     g_error("condition on server fd is %#x", condition);
 
   addrlen = cnx->proto->addr_len;
-  saddr = orbit_alloca(addrlen);
+  saddr = g_alloca(addrlen);
   fd = accept(cnx->fd, saddr, &addrlen);
 
   if(fd < 0)
