@@ -119,7 +119,7 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     n = node->u.datum_info.datum_size * 8;
 
     if(n >= 64)
-      fprintf(cmi->ci->fh, "iiop_byteswap(&(%s), _ORBIT_curptr, %d);\n", ctmp, node->u.datum_info.datum_size);
+      fprintf(cmi->ci->fh, "iiop_byteswap((guchar *)&(%s), _ORBIT_curptr, %d);\n", ctmp, node->u.datum_info.datum_size);
     else {
       fprintf(cmi->ci->fh, "(*((guint%d *)&(%s))) = ", n, ctmp);
       fprintf(cmi->ci->fh, "GUINT%d_SWAP_LE_BE(*((guint%d *)_ORBIT_curptr));",
