@@ -15,16 +15,16 @@
 void
 ORBit_genrand_init(ORBit_genrand *gr)
 {
-    gr->fd = open("/dev/urandom", O_RDONLY);
+  gr->fd = open("/dev/urandom", O_RDONLY);
 }
 
 void
 ORBit_genrand_fini(ORBit_genrand *gr)
 {
-    if ( gr->fd >= 0 ) {
-    	close(gr->fd); 
-    	gr->fd = -1;
-    }
+  if ( gr->fd >= 0 ) {
+    close(gr->fd); 
+    gr->fd = -1;
+  }
 }
 
 static gboolean
@@ -40,13 +40,19 @@ genrand_dev(ORBit_genrand *gr, guchar *buffer, int buf_len)
   return TRUE;
 }
 
-static volatile int received_alarm = 0;
+#if LINC_SSL_SUPPORT
+#include <openssl/rand.h>
 
-static void
-handle_alarm(int signum)
+static gboolean
+genrand_openssl(guchar *buffer, int buf_len)
 {
-  received_alarm = 1;
+  static RAND_METHOD *rm = NULL;
+  if(!rm) rm = RAND_get_rand_method();
+  RAND_bytes(buffer, buf_len);
+
+  return TRUE;
 }
+#endif
 
 static inline guchar
 hashlong(long val)
@@ -61,19 +67,13 @@ hashlong(long val)
   return retval;
 }
 
-#if LINC_SSL_SUPPORT
-#include <openssl/rand.h>
+static volatile int received_alarm = 0;
 
-static gboolean
-genrand_openssl(guchar *buffer, int buf_len)
+static void
+handle_alarm(int signum)
 {
-  static RAND_METHOD *rm = NULL;
-  if(!rm) rm = RAND_get_rand_method();
-  RAND_bytes(buffer, buf_len);
-
-  return TRUE;
+  received_alarm = 1;
 }
-#endif
 
 static gboolean
 genrand_unix(guchar *buffer, int buf_len)
@@ -141,4 +141,3 @@ ORBit_genrand_buf(ORBit_genrand *gr, guchar *buffer, int buf_len)
   else
     g_error("Couldn't generate random data!");
 }
-

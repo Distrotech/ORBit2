@@ -38,6 +38,7 @@ CDR_put_string(GIOPSendBuffer *c, const char *str)
 #define CDR_put_wchar(buf, n) CDR_put_ulong(buf, n)
 #define CDR_put_octet(buf, n) CDR_put_ulong(buf, n)
 #define CDR_put_ushort(buf, n) CDR_put_ulong(buf, n)
+#define CDR_put_short(buf, n) CDR_put_ulong(buf, n)
 
 static void ORBit_TypeCode_free_fn(ORBit_RootObject obj_in);
 static void tc_enc(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx);
@@ -171,16 +172,6 @@ DEF_TC_BASIC(Object);
 DEF_TC_BASIC(wstring);
 DEF_TC_BASIC(long_long);
 DEF_TC_BASIC(unsigned_long_long);
-
-gboolean
-ORBit_TypeCode_demarshal_value(CORBA_TypeCode tc,
-			       gpointer *val,
-			       GIOPRecvBuffer *c,
-			       gboolean dup_strings,
-			       CORBA_ORB orb)
-{
-  return TRUE;
-}
 
 gpointer
 CORBA_TypeCode__freekids(gpointer mem, gpointer dat)
@@ -390,20 +381,24 @@ static void tc_enc_tk_except(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContex
 }
 
 
-static void tc_enc_tk_array(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_array(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   tc_enc(*t->subtypes, c, ctx);
   CDR_put_ulong(c, t->length);
 }
 
-static void tc_enc_tk_wstring(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_wstring(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
-  g_assert(!"Not yet implemented.");
+  CDR_put_ulong(c, t->length);
 }
 
-static void tc_enc_tk_fixed(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_fixed(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
-  g_assert(!"Not yet implemented.");
+  CDR_put_ushort(c, t->digits);
+  CDR_put_short(c, t->scale);
 }
 
 static void
@@ -454,12 +449,13 @@ CDR_get(GIOPRecvBuffer *buf, guchar *ptr, guint len, gboolean align)
 
 #define CDR_get_ulong(x, y) _CDR_get(x, y)
 #define CDR_get_ushort(x, y) _CDR_get(x, y)
+#define CDR_get_short(x, y) _CDR_get(x, y)
 #define CDR_get_ulong_long(x, y) _CDR_get(x, y)
 #define CDR_get_octet(x, y) _CDR_get(x, y)
 #define CDR_get_wchar(x, y) _CDR_get(x, y)
 
 static gboolean
-CDR_get_const_string(GIOPRecvBuffer *buf, const guchar **ptr)
+CDR_get_const_string(GIOPRecvBuffer *buf, char **ptr)
 {
   CORBA_unsigned_long len;
 
@@ -587,8 +583,8 @@ tc_dec_tk_struct(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     return TRUE;
   if(CDR_get_ulong(c, &t->sub_parts))
     return TRUE;
-  t->subnames=g_new0(const char*, t->sub_parts);
-  t->subtypes=g_new0(CORBA_TypeCode, t->sub_parts);
+  t->subnames = g_new0(char*, t->sub_parts);
+  t->subtypes = g_new0(CORBA_TypeCode, t->sub_parts);
   for(i=0;i<t->sub_parts;i++)
     {
       if(CDR_get_const_string(c, &t->subnames[i]))
@@ -625,8 +621,8 @@ tc_dec_tk_union(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   vec = g_malloc0( (sizeof(CORBA_any) + sizeof(long)) * t->sub_parts);
   t->sublabels= (CORBA_any*) vec;
   discrim_vec = (long*) (vec + sizeof(CORBA_any) * t->sub_parts);
-  t->subnames=g_new0(const char*, t->sub_parts);
-  t->subtypes=g_new0(CORBA_TypeCode, t->sub_parts);
+  t->subnames = g_new0(char*, t->sub_parts);
+  t->subtypes = g_new0(CORBA_TypeCode, t->sub_parts);
 
 #define MEMBER_LOOPER_DEC(getname, typename, tkname) \
     case CORBA_tk_##tkname: \
@@ -649,8 +645,9 @@ tc_dec_tk_union(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     {
       UNION_MEMBERS(DEC);
     default:
-      /* XXX: what is correct error handling */
-      g_assert(!"Not yet implemented.");
+      /* XXX: what is correct error handling? */
+      g_error("Don't know how to handle this type (%d) of discriminator.",
+	      t->discriminator->kind);
     }
 
   return FALSE;
@@ -667,7 +664,7 @@ tc_dec_tk_enum(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   if(CDR_get_ulong(c, &t->sub_parts))
     return TRUE;
 
-  t->subnames = g_new0(const char*, t->sub_parts);
+  t->subnames = g_new0(char*, t->sub_parts);
   for(i=0; i < t->sub_parts; i++)
     {
       if(CDR_get_const_string(c, &t->subnames[i]))
@@ -683,8 +680,10 @@ tc_dec_tk_alias(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
   CDR_get_const_string(c, &t->repo_id);
   CDR_get_const_string(c, &t->name);
   t->subtypes = g_new0(CORBA_TypeCode, 1);
-  tc_dec(t->subtypes, c, ctx);
+  if(tc_dec(t->subtypes, c, ctx))
+    return TRUE;
   ORBit_RootObject_duplicate(t->subtypes[0]);
+  return FALSE;
 }
 
 
@@ -698,8 +697,8 @@ tc_dec_tk_except(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
     return TRUE;
   if(CDR_get_ulong(c, &t->sub_parts))
     return TRUE;
-  t->subtypes=g_new0(CORBA_TypeCode, t->sub_parts);
-  t->subnames=g_new0(const char*, t->sub_parts);
+  t->subtypes = g_new0(CORBA_TypeCode, t->sub_parts);
+  t->subnames = g_new0(char *, t->sub_parts);
   for(i=0;i<t->length;i++)
     {
       if(CDR_get_const_string(c, &t->subnames[i]))
@@ -708,6 +707,7 @@ tc_dec_tk_except(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 	return TRUE;
       ORBit_RootObject_duplicate(t->subtypes[i]);
     }
+  return FALSE;
 }
 
 static gboolean
@@ -727,11 +727,17 @@ tc_dec_tk_array(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 static gboolean
 tc_dec_tk_wstring(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 {
-  return TRUE;
+  if(CDR_get_ulong(c, &t->length))
+    return TRUE;
+  return FALSE;
 }
 
 static gboolean
 tc_dec_tk_fixed(CORBA_TypeCode t, GIOPRecvBuffer *c, TCDecodeContext* ctx)
 {
-  return TRUE;
+  if(CDR_get_ushort(c, &t->digits))
+    return TRUE;
+  if(CDR_get_short(c, &t->scale))
+    return TRUE;
+  return FALSE;
 }

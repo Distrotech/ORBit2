@@ -38,3 +38,13 @@ CORBA_wstring_alloc(CORBA_unsigned_long len)
 {
   return ORBit_alloc_simple((len+1)*2);
 }
+
+CORBA_unsigned_long
+CORBA_wstring_len(CORBA_wchar *ws)
+{
+  int i;
+
+  for(i = 0; ws[i]; i++) /**/;
+
+  return i;
+}

@@ -313,7 +313,7 @@ CORBA_ORB_create_struct_tc(CORBA_ORB _obj,
   if(tc->subtypes == NULL)
     goto subtypes_alloc_failed;
 
-  tc->subnames = g_new0(const char *, members->_length);
+  tc->subnames = g_new0(char *, members->_length);
   if(tc->subnames == NULL)
     goto subnames_alloc_failed;
 
@@ -366,7 +366,7 @@ CORBA_ORB_create_union_tc(CORBA_ORB _obj,
   if(tc->subtypes==NULL)
     goto subtypes_alloc_failed;
 
-  tc->subnames=g_new0(const char *, members->_length);
+  tc->subnames=g_new0(char *, members->_length);
   if(tc->subnames==NULL)
     goto subnames_alloc_failed;
 
@@ -423,7 +423,7 @@ CORBA_ORB_create_enum_tc(CORBA_ORB _obj,
   if(tc == NULL)
     goto tc_alloc_failed;
 
-  tc->subnames=g_new0(const char *, members->_length);
+  tc->subnames=g_new0(char *, members->_length);
   if(tc->subnames==NULL)
     goto subnames_alloc_failed;
 
@@ -506,7 +506,7 @@ CORBA_ORB_create_exception_tc(CORBA_ORB _obj,
       if(tc->subtypes==NULL)
 	goto subtypes_alloc_failed;
 
-      tc->subnames=g_new0(const char *, members->_length);
+      tc->subnames=g_new0(char *, members->_length);
       if(tc->subnames==NULL)
 	goto subnames_alloc_failed;
     }

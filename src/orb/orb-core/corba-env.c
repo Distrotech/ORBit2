@@ -1,5 +1,4 @@
 #include "config.h"
-
 #include <orbit/orbit.h>
 #include <string.h>
 

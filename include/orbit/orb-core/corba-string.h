@@ -6,6 +6,7 @@ CORBA_wchar *CORBA_wstring_alloc(CORBA_unsigned_long len);
 
 /* ORBit extension */
 CORBA_char *CORBA_string_dup(const CORBA_char *str);
+CORBA_unsigned_long CORBA_wstring_len(CORBA_wchar *ws);
 
 /* Internals, do not use */
 gpointer CORBA_string__freekids(gpointer mem, gpointer data);

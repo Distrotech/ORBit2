@@ -9,4 +9,8 @@ struct _CORBA_any {
   CORBA_boolean _release;
 };
 
+typedef struct ORBit_marshal_value_info_struct {
+  CORBA_TypeCode alias_element_type;
+} ORBit_marshal_value_info;
+
 #endif

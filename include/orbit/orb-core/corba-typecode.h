@@ -9,20 +9,20 @@
 #define CORBA_tk_last (CORBA_tk_abstract_interface + 1)
 
 struct CORBA_TypeCode_struct {
-	struct ORBit_RootObject_struct parent;
-	CORBA_unsigned_long kind;
-	const char *name;
-	const char *repo_id;
-	CORBA_unsigned_long length;
-	CORBA_unsigned_long sub_parts;
-	const char **subnames;		/* for struct, exception, union, enum */
-	CORBA_TypeCode *subtypes;	/* for struct, exception, union, alias, array, sequence */
-	CORBA_any *sublabels;		/* for union */
-	CORBA_TypeCode discriminator;	/* for union */
-	CORBA_unsigned_long recurse_depth; /* for recursive sequence */
-	CORBA_long default_index;	/* for union */
-	CORBA_unsigned_short digits; /* for fixed */
-	CORBA_short scale;	     /* for fixed */
+  struct ORBit_RootObject_struct parent;
+  CORBA_unsigned_long kind;
+  char *name;
+  char *repo_id;
+  CORBA_unsigned_long length;
+  CORBA_unsigned_long sub_parts;
+  char **subnames;		/* for struct, exception, union, enum */
+  CORBA_TypeCode *subtypes;	/* for struct, exception, union, alias, array, sequence */
+  CORBA_any *sublabels;		/* for union */
+  CORBA_TypeCode discriminator;	/* for union */
+  CORBA_unsigned_long recurse_depth; /* for recursive sequence */
+  CORBA_long default_index;	/* for union */
+  CORBA_unsigned_short digits; /* for fixed */
+  CORBA_short scale;	     /* for fixed */
 };
 
 #define TC_null ((CORBA_TypeCode)&TC_null_struct)
