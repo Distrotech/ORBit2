@@ -1,3 +1,9 @@
+2002-03-09  Dou Wen  <orbkernel@hotmail.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_msg_reading_body): assert that the buffer is
+	correctly aligned.
+
 2002-03-20  Gregory Leblanc  <gleblanc@linuxweasel.com>
 
 	* ORBit.spec.in:  Lots of re-writing and such.
