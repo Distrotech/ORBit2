@@ -1,5 +1,22 @@
 2002-05-31  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/services/imodule/*: added runtime IDL->IInterfaces
+	service.
+
+	* configure.in, src/services/Makefile.am: added build
+	for above.
+
+	* test/everything/Makefile.am: build against libORBit-imodule.
+
+	* test/everything/client.c: (main):
+	* test/everything/server.c: (init_iinterfaces), (get_server):
+	add --gen-imodule arg to run tests using runtime generated
+	IInterfaces.
+
+	* test/everything/test.sh: use it.
+
+2002-05-31  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-orb.c: (copy_case_value): handle
 	alias typecodes.
 

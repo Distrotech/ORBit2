@@ -26,6 +26,7 @@
 #include "everything.h"
 #include "constants.h"
 #include "orb-core/orb-core-private.h"
+#include "orbit-imodule.h"
 
 #define NUM_RUNS 1
 
@@ -1857,8 +1858,11 @@ test_init (CORBA_Environment *ev)
 int
 main (int argc, char *argv [])
 {
-	CORBA_Environment ev;
-	test_TestFactory  factory;
+	CORBA_Environment  ev;
+	test_TestFactory   factory;
+	ORBit_IInterfaces *interfaces = NULL;
+	gboolean           gen_imodule = FALSE;
+	int                i;
 
 	CORBA_exception_init (&ev);
 
@@ -1867,6 +1871,17 @@ main (int argc, char *argv [])
 
 	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
+
+	for (i = 0; i < argc; i++)
+		if (!strcmp (argv [i], "--gen-imodule"))
+			gen_imodule = TRUE;
+
+	if (gen_imodule) {
+		interfaces = ORBit_iinterfaces_from_file ("everything.idl", NULL);
+		g_assert (interfaces != NULL);
+
+		init_iinterfaces (interfaces);
+	}
 
 	test_init (&ev);
 	test_initial_references (global_orb, &ev);
@@ -1918,6 +1933,9 @@ main (int argc, char *argv [])
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
 	g_warning ("released factory");
+
+	if (gen_imodule)
+		CORBA_free (interfaces);
 
 	CORBA_Object_release ((CORBA_Object) global_poa, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
