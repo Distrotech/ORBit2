@@ -197,11 +197,9 @@ giop_dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
 			off = lp2 + (lp<<4);
 			fprintf (out, "%c", off<len?(ptr[off]>'!'&&ptr[off]<127?ptr[off]:'.'):'*');
 		}
-		if (lp == 0)
-			fprintf (out, " --- \n");
-		else
-			fprintf (out, "\n");
+		fprintf (out, "\n");
 	}
+	fprintf (out, " --- \n");
 }
 
 void

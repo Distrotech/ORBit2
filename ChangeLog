@@ -1,3 +1,26 @@
+2003-03-17  Michael Meeks  <michael@server.home>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): memset scratch, args to 0.
+	(ORBit_small_invoke_adaptor, orbit_small_demarshal):
+	handle de-marshalling overruns with an exception, rather
+	a goto spaghetitfication.
+
+	* src/orb/include/Makefile.am: check and install
+	rules depend on 'all', hopefully fixes brokenness
+	with 'make install'
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_adaptor): use g_alloca now
+	we have it.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): debug dump the correct
+	body offset instead of starting at 0, use 12.
+
+	* src/orb/GIOP/giop.c (giop_dump): print --- delimiter
+	after dumping the full block.
+
 2003-03-15  Christophe Merlet  <redfox@redfoxcenter.org>
 
 	* ORBit-imodule-2.0.pc.in: Fix a typo.

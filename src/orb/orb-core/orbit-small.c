@@ -220,7 +220,7 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 	   efficiency of the current impl */
 	ORBit_ContextMarshalItem *mlist;
 
-	mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
+	mlist = g_alloca (sizeof (ORBit_ContextMarshalItem) *
 			m_data->contexts._length);
 
 	tprintf (" context { ");
@@ -284,7 +284,8 @@ typedef struct {
 #define do_marshal_value(a,b,c)     \
 	ORBit_marshal_value   ((a),(gconstpointer *)(b),(c))
 #define do_demarshal_value(a,b,c,e) \
-	ORBit_demarshal_value ((c),(b),(a),(e))
+	if (ORBit_demarshal_value ((c),(b),(a),(e))) \
+		goto demarshal_exception
 
 static gboolean
 orbit_small_marshal (CORBA_Object           obj,
@@ -305,7 +306,7 @@ orbit_small_marshal (CORBA_Object           obj,
 	{
 		int          align;
 		int          len = sizeof (CORBA_unsigned_long) + m_data->name_len + 1;
-		guchar      *header = alloca (len + sizeof (CORBA_unsigned_long));
+		guchar      *header = g_alloca (len + sizeof (CORBA_unsigned_long));
 
 		*(CORBA_unsigned_long *) header = m_data->name_len + 1;
 		memcpy (header + sizeof (CORBA_unsigned_long),
@@ -526,6 +527,12 @@ orbit_small_demarshal (CORBA_Object           obj,
 
 	return MARSHAL_CLEAN;
 
+ demarshal_exception:
+	/* FIXME: may well leak */
+	CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
+				   CORBA_COMPLETED_MAYBE);
+	return MARSHAL_EXCEPTION_COMPLETE;
+
  msg_exception:
 	if (giop_recv_buffer_reply_status (recv_buffer) ==
 	    GIOP_LOCATION_FORWARD) {
@@ -698,7 +705,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 		switch (tc->kind) {
 		case BASE_TYPES:
 		case OBJ_STRING_TYPES:
-			retval = alloca (ORBit_gather_alloc_info (tc));
+			retval = g_alloca (ORBit_gather_alloc_info (tc));
 			break;
 		case STRUCT_UNION_TYPES:
 			if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
@@ -716,8 +723,10 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 		int len = m_data->arguments._length *
 			sizeof (gpointer);
 
-		args = alloca (len);
-		scratch = alloca (len);
+		args = g_alloca (len);
+		memset (args, 0, len);
+		scratch = g_alloca (len);
+		memset (scratch, 0, len);
 	}		
 
 	for (i = 0; i < m_data->arguments._length; i++) {
@@ -735,7 +744,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			switch (tc->kind) {
 			case BASE_TYPES:
 			case OBJ_STRING_TYPES:
-				p = args [i] = alloca (ORBit_gather_alloc_info (tc));
+				p = args [i] = g_alloca (ORBit_gather_alloc_info (tc));
 				do_demarshal_value (recv_buffer, &p, tc, orb);
 
 				p = args [i];
@@ -744,7 +753,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
 				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
-					p = args [i] = alloca (ORBit_gather_alloc_info (tc));
+					p = args [i] = g_alloca (ORBit_gather_alloc_info (tc));
 					do_demarshal_value (recv_buffer, &p, tc, orb);
 					p = args [i];
 					tprintf_trace_value (&p, tc);
@@ -768,7 +777,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			switch (tc->kind) {
 			case BASE_TYPES:
 			case OBJ_STRING_TYPES:
-				scratch [i] = alloca (ORBit_gather_alloc_info (tc));
+				scratch [i] = g_alloca (ORBit_gather_alloc_info (tc));
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
@@ -802,8 +811,14 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	if (m_data->flags & ORBit_I_METHOD_1_WAY)
 		goto clean_out;
+	else
+		goto handle_possible_exception;
+	
+ demarshal_exception:
+	CORBA_exception_set_system (ev, ex_CORBA_MARSHAL,
+				    CORBA_COMPLETED_NO);
 
- sys_exception:
+ handle_possible_exception:
 	/* FIXME: should we be using the connection's GIOP version ? */
 	send_buffer = giop_send_buffer_use_reply (
 		recv_buffer->giop_version,
@@ -821,7 +836,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			   so we throw a system exception next */
 			dprintf (MESSAGES, "Re-sending an exception, this time %d: '%s'",
 				 ev->_major, ev->_id);
-			goto sys_exception;
+			goto handle_possible_exception;
 		}
 		tprintf ("User exception '%s'", ev->_id);
 
