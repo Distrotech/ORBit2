@@ -2,8 +2,6 @@
 
 #include "orbit-idl-c-backend.h"
 
-#define BACKWARDS_COMPAT_0_4
-
 static void cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci);
 
 void
@@ -130,10 +128,12 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 				 "_", 0);
     fprintf(ci->fh, "if(_obj->servant && _obj->vepv && %s__classid)\n{\n",
 	    id);
+#ifndef BACKWARDS_COMPAT_0_4
     fprintf(ci->fh, "int *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
     fprintf(ci->fh, "_pobj = ORBIT_OBJECT_KEY(((PortableServer_ServantBase *)_obj->servant)->_private)->object;\n");
     fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
     fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
+#endif
     fprintf(ci->fh, "%s((POA_%s__epv *)_obj->vepv[%s__classid])->%s(_obj->servant, ",
 	    IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval = ":"",
 	    id, id, IDL_IDENT(IDL_OP_DCL(tree).ident).str);
@@ -148,7 +148,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "ev);\n");
 
+#ifndef BACKWARDS_COMPAT_0_4
     fprintf(ci->fh, "if(_use_count) { if(!(--(*_use_count))) _death_func(_use_count, _user_data); }\n");
+#endif
     fprintf(ci->fh, "return %s;\n}\n", IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval":"");
   }
 
