@@ -37,7 +37,8 @@ using namespace _orbitcpp;
 
 
 
-CORBA_Object CORBA::Object::_orbitcpp_get_c_object() {
+CORBA_Object CORBA::Object::_orbitcpp_get_c_object()
+{
 	return m_target;
 }
 
@@ -45,10 +46,15 @@ CORBA::Object::Object()
 {
 }
 
-CORBA::Object::Object(CORBA_Object cobject)
+CORBA::Object::Object(CORBA_Object cobject, bool take_copy = true)
 {
-  ::_orbitcpp::CEnvironment ev;
-	m_target = CORBA_Object_duplicate(cobject, ev._orbitcpp_get_c_object());
+	if (take_copy)
+	{
+		::_orbitcpp::CEnvironment ev;
+		cobject = CORBA_Object_duplicate(cobject, ev._orbitcpp_get_c_object());
+	}
+
+	m_target = cobject;
 }
 
 CORBA::Object::~Object()
