@@ -1,5 +1,4 @@
-#include "config.h"
-
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -21,83 +20,93 @@ static GMutex *incoming_recv_buffer_list_lock = NULL;
 static GCond  *incoming_recv_buffer_list_condvar = NULL;
 #endif
 
-static void
+/**
+ * giop_recv_list_push:
+ * @buf: the Received buffer
+ * @cnx: the GIOP connection it was received on.
+ * 
+ *   This method either processes the incoming buffer immediately
+ * via an asynchronous callback, or it pushes it on the received
+ * message list for future handling.
+ * 
+ * Return value: TRUE if the value was proccessed otherwise FALSE
+ **/
+static gboolean
 giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
-  GList *ltmp;
-  GIOPMessageQueueEntry *ent;
+	GList                 *l;
+	GIOPMessageQueueEntry *ent;
+	CORBA_unsigned_long    request_id;
+	gboolean               retval = FALSE;
 
 #ifdef DEBUG
-  fprintf (stderr, "Giop recv_list push: ");
-  giop_dump_recv (buf);
+	fprintf (stderr, "Giop recv_list push: ");
+	giop_dump_recv (buf);
 #endif
 
-  buf->connection = cnx;
+	buf->connection = cnx;
+	request_id = giop_recv_buffer_get_request_id (buf);
 
-  switch(buf->msg.header.message_type)
-    {
-    case GIOP_REPLY:
-    case GIOP_LOCATEREPLY:
-      LINC_MUTEX_LOCK (giop_queued_messages_lock);
-      for(ltmp = giop_queued_messages, ent = NULL; ltmp; ltmp = ltmp->next)
-	{
-	  GIOPMessageQueueEntry *tmpent = ltmp->data;
-	  if(tmpent->msg_type == buf->msg.header.message_type
-	     && tmpent->request_id == giop_recv_buffer_get_request_id (buf))
-	    {
-	      ent = tmpent;
-	      break;
-	    }
-	}
-      if(ent)
-	{
-	  ent->buffer = buf;
+	switch (buf->msg.header.message_type) {
+	case GIOP_REPLY:
+	case GIOP_LOCATEREPLY:
+		LINC_MUTEX_LOCK (giop_queued_messages_lock);
+
+		for (l = giop_queued_messages; l; l = l->next) {
+			ent = l->data;
+
+			if (ent->request_id == request_id &&
+			    ent->msg_type == buf->msg.header.message_type)
+				break;
+		}
+
+		if (l) {
+			ent = l->data;
+
+			ent->buffer = buf;
 #ifdef ORBIT_THREADED
-	  pthread_cond_signal(&ent->condvar);
+			pthread_cond_signal (&ent->condvar);
 #else
-	  if (ent->u.unthreaded.cb) {
-		  giop_queued_messages = g_list_remove_link (
-			  giop_queued_messages, ltmp);
-		  g_list_free_1 (ltmp);
-		  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-		  cnx->incoming_msg = NULL;
-		  LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+			if (ent->u.unthreaded.cb) {
+				giop_queued_messages = g_list_remove_link (
+					giop_queued_messages, l);
+				g_list_free_1 (l);
+			}
 
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+			if (ent->u.unthreaded.cb) {
+				cnx->incoming_msg = NULL;
+				LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 #ifdef DEBUG
-		  g_warning ("Call %p:%p:%p", ltmp, ent, ent->u.unthreaded.cb);
+				g_warning ("Call %p:%p:%p", l, ent, ent->u.unthreaded.cb);
 #endif
-		  ent->u.unthreaded.cb (ent);
+				ent->u.unthreaded.cb (ent);
 
-		  LINC_MUTEX_LOCK (cnx->incoming_mutex);
-	  } else
-		  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+				LINC_MUTEX_LOCK (cnx->incoming_mutex);
+			}
 #endif
-	}
-      else
-	{
-	  /*
-	    the stub may have already sent the request but not gotten to
-	    the giop_recv_buffer_use_reply() part of things yet.
-	    Race condition probably best fixed by having the stub set up
-	    waiting for a reply BEFORE sending the request.
-	  */
-	  giop_recv_buffer_unuse(buf);
-	  g_error("This is a known bug that hasn't yet been fixed because the"
-		  " most obvious solution involves creating other bugs. "
-		  "Please make noise so this gets fixed.");
-	  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-	}
-      break;
-    default:
-      LINC_MUTEX_LOCK (incoming_recv_buffer_list_lock);
-      incoming_recv_buffer_list = g_list_prepend (
-	      incoming_recv_buffer_list, buf);
-      LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
+		} else {
+			g_warning ("We received an unexpected message:");
+			giop_dump_recv (buf);
+			giop_recv_buffer_unuse(buf);
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+		}
+		break;
+	default:
+		LINC_MUTEX_LOCK (incoming_recv_buffer_list_lock);
+
+		incoming_recv_buffer_list = g_list_prepend (
+			incoming_recv_buffer_list, buf);
+
+		LINC_MUTEX_UNLOCK (incoming_recv_buffer_list_lock);
 #ifdef ORBIT_THREADED
-      pthread_cond_signal(&incoming_recv_buffer_list_condvar);
+		pthread_cond_signal (&incoming_recv_buffer_list_condvar);
 #endif
-      break;
-    }
+		break;
+	}
+
+	return retval;
 }
 
 static gboolean
@@ -477,86 +486,102 @@ giop_recv_buffer_demarshal_locate_reply_1_1(GIOPRecvBuffer *buf)
 }
 
 gboolean
-giop_recv_buffer_demarshal_locate_reply_1_2(GIOPRecvBuffer *buf)
+giop_recv_buffer_demarshal_locate_reply_1_2 (GIOPRecvBuffer *buf)
 {
-  return giop_recv_buffer_demarshal_locate_reply_1_1(buf);
+	return giop_recv_buffer_demarshal_locate_reply_1_1 (buf);
 }
 
-typedef gboolean (*GIOPDecodeFunc)(GIOPRecvBuffer *buf);
+typedef gboolean (*GIOPDecodeFunc) (GIOPRecvBuffer *buf);
 
 gboolean
-giop_recv_buffer_demarshal(GIOPRecvBuffer *buf)
+giop_recv_buffer_demarshal (GIOPRecvBuffer *buf)
 {
-  static const GIOPDecodeFunc decode_funcs[GIOP_NUM_MSG_TYPES][GIOP_NUM_VERSIONS] = {
-    /* request */
-    {giop_recv_buffer_demarshal_request_1_1, giop_recv_buffer_demarshal_request_1_1, giop_recv_buffer_demarshal_request_1_2},
-    /* reply */
-    {giop_recv_buffer_demarshal_reply_1_1, giop_recv_buffer_demarshal_reply_1_1, giop_recv_buffer_demarshal_reply_1_2},
-    /* cancel request */
-    {giop_recv_buffer_demarshal_cancel, giop_recv_buffer_demarshal_cancel, giop_recv_buffer_demarshal_cancel},
-    /* locate request */
-    {giop_recv_buffer_demarshal_locate_request_1_1, giop_recv_buffer_demarshal_locate_request_1_1,
-     giop_recv_buffer_demarshal_locate_request_1_2},
-    /* locate reply */
-    {giop_recv_buffer_demarshal_locate_reply_1_1, giop_recv_buffer_demarshal_locate_reply_1_1,
-     giop_recv_buffer_demarshal_locate_reply_1_2},
-    /* message error */
-    {NULL, NULL, NULL},
-    /* fragment */
-    {NULL, NULL, NULL}
-  };
-  GIOPDecodeFunc decode_func;
+	GIOPDecodeFunc              decode_func;
+	static const GIOPDecodeFunc decode_funcs [GIOP_NUM_MSG_TYPES] [GIOP_NUM_VERSIONS] = {
+		/* request */
+		{ giop_recv_buffer_demarshal_request_1_1,
+		  giop_recv_buffer_demarshal_request_1_1,
+		  giop_recv_buffer_demarshal_request_1_2},
+		/* reply */
+		{ giop_recv_buffer_demarshal_reply_1_1,
+		  giop_recv_buffer_demarshal_reply_1_1,
+		  giop_recv_buffer_demarshal_reply_1_2},
+		/* cancel request */
+		{ giop_recv_buffer_demarshal_cancel,
+		  giop_recv_buffer_demarshal_cancel,
+		  giop_recv_buffer_demarshal_cancel},
+		/* locate request */
+		{ giop_recv_buffer_demarshal_locate_request_1_1,
+		  giop_recv_buffer_demarshal_locate_request_1_1,
+		  giop_recv_buffer_demarshal_locate_request_1_2},
+		/* locate reply */
+		{ giop_recv_buffer_demarshal_locate_reply_1_1,
+		  giop_recv_buffer_demarshal_locate_reply_1_1,
+		  giop_recv_buffer_demarshal_locate_reply_1_2},
+		/* message error */
+		{NULL, NULL, NULL},
+		/* fragment */
+		{NULL, NULL, NULL}
+	};
 
-  if(buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
-    return TRUE;
+	if (buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
+		return TRUE;
 
-  decode_func = decode_funcs[buf->msg.header.message_type][buf->giop_version];
+	if (buf->giop_version >= GIOP_NUM_VERSIONS)
+		return TRUE;
 
-  if(decode_func)
-    return (* decode_func)(buf);
+	decode_func = decode_funcs [buf->msg.header.message_type] [buf->giop_version];
 
-  return FALSE;
+	if (decode_func)
+		return decode_func (buf);
+
+	return FALSE;
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_encaps(guchar *mem, gulong len)
+giop_recv_buffer_use_encaps (guchar *mem, gulong len)
 {
-  GIOPRecvBuffer *buf = giop_recv_buffer_use_buf(FALSE);
+	GIOPRecvBuffer *buf = giop_recv_buffer_use_buf ();
 
-  buf->cur = buf->message_body = mem;
-  buf->end = buf->cur + len;
-  buf->msg.header.message_size = len;
-  buf->msg.header.flags = *(buf->cur++);
-  buf->giop_version = GIOP_LATEST;
-  buf->left_to_read = 0;
-  buf->state = GIOP_MSG_READY;
-  buf->free_body = FALSE;
+	buf->cur = buf->message_body = mem;
+	buf->end = buf->cur + len;
+	buf->msg.header.message_size = len;
+	buf->msg.header.flags = *(buf->cur++);
+	buf->giop_version = GIOP_LATEST;
+	buf->left_to_read = 0;
+	buf->state = GIOP_MSG_READY;
+	buf->free_body = FALSE;
 
-  return buf;
+	return buf;
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
+giop_recv_buffer_use_encaps_buf (GIOPRecvBuffer *buf)
 {
-  CORBA_unsigned_long len;
-  guchar *ptr;
+	guchar             *ptr;
+	CORBA_unsigned_long len;
 
-  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) > buf->end)
-    return NULL;
-  len = *(CORBA_unsigned_long *)buf->cur;
-  if(giop_msg_conversion_needed(buf))
-    len = GUINT32_SWAP_LE_BE(len);
-  buf->cur += 4;
-  if((buf->cur + len) > buf->end
-     || (buf->cur + len) < buf->cur)
-    {
-      return NULL;
-    }
-  ptr = buf->cur;
-  buf->cur += len;
+	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 
-  return giop_recv_buffer_use_encaps(ptr, len);
+	if ((buf->cur + 4) > buf->end)
+		return NULL;
+	len = *(CORBA_unsigned_long *) buf->cur;
+
+	if (giop_msg_conversion_needed (buf))
+		len = GUINT32_SWAP_LE_BE (len);
+
+	buf->cur += 4;
+	if ((buf->cur + len) > buf->end ||
+	    (buf->cur + len) < buf->cur)
+		return NULL;
+
+	ptr = buf->cur;
+	buf->cur += len;
+
+	/* FIXME: it looks like the 'conversion needed' flag is
+	   stupidly discarded here */
+
+	return giop_recv_buffer_use_encaps (ptr, len);
 }
 
 void
@@ -611,12 +636,12 @@ giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 void
 giop_recv_list_zap (GIOPConnection *cnx)
 {
-	GList *ltmp;
+	GList *l;
 
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 
-	for (ltmp = giop_queued_messages; ltmp; ltmp = ltmp->next) {
-		GIOPMessageQueueEntry *ent = ltmp->data;
+	for (l = giop_queued_messages; l; l = l->next) {
+		GIOPMessageQueueEntry *ent = l->data;
 
 		if (ent->cnx == cnx) {
 			ent->buffer = NULL;
@@ -626,12 +651,12 @@ giop_recv_list_zap (GIOPConnection *cnx)
 			if (ent->u.unthreaded.cb) {
 				/* Remove it from the list */
 				giop_queued_messages = g_list_remove_link (
-					giop_queued_messages, ltmp);
-				g_list_free_1 (ltmp);
+					giop_queued_messages, l);
+				g_list_free_1 (l);
 				
 				LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 #ifdef DEBUG
-				g_warning ("About to invoke %p:%p:%p", ltmp, ent, ent->u.unthreaded.cb);
+				g_warning ("About to invoke %p:%p:%p", l, ent, ent->u.unthreaded.cb);
 #endif
 				ent->u.unthreaded.cb (ent);
 				LINC_MUTEX_LOCK (giop_queued_messages_lock);
@@ -646,52 +671,52 @@ giop_recv_list_zap (GIOPConnection *cnx)
 CORBA_unsigned_long
 giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 {
-  static const glong reqid_offsets[GIOP_NUM_MSG_TYPES][GIOP_NUM_VERSIONS] = {
-    /* GIOP_REQUEST */
-    { G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.request_1_0.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.request_1_1.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.request_1_2.request_id)},
-    /* GIOP_REPLY */
-    { G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.reply_1_0.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.reply_1_1.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.reply_1_2.request_id)},
-    /* GIOP_CANCELREQUEST */
-    { G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.cancel_request.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.cancel_request.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.cancel_request.request_id)},
-    /* GIOP_LOCATEREQUEST */
-    { G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.locate_request_1_0.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.locate_request_1_1.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.locate_request_1_2.request_id)},
-    /* GIOP_LOCATEREPLY */
-    { G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.locate_reply_1_0.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.locate_reply_1_1.request_id),
-      G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.locate_reply_1_2.request_id)},
-    {0,0,0}, /* GIOP_MESSAGEERROR */
-    {0,0,0} /* GIOP_FRAGMENT */
-  };
-  gulong offset;
+	static const glong reqid_offsets [GIOP_NUM_MSG_TYPES] [GIOP_NUM_VERSIONS] = {
+		/* GIOP_REQUEST */
+		{ G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.request_1_0.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.request_1_1.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.request_1_2.request_id)},
+		/* GIOP_REPLY */
+		{ G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.reply_1_0.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.reply_1_1.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.reply_1_2.request_id)},
+		/* GIOP_CANCELREQUEST */
+		{ G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.cancel_request.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.cancel_request.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.cancel_request.request_id)},
+		/* GIOP_LOCATEREQUEST */
+		{ G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.locate_request_1_0.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.locate_request_1_1.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.locate_request_1_2.request_id)},
+		/* GIOP_LOCATEREPLY */
+		{ G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.locate_reply_1_0.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.locate_reply_1_1.request_id),
+		  G_STRUCT_OFFSET(GIOPRecvBuffer,
+				  msg.u.locate_reply_1_2.request_id)},
+		{0,0,0}, /* GIOP_MESSAGEERROR */
+		{0,0,0} /* GIOP_FRAGMENT */
+	};
+	gulong offset;
 
-  offset = reqid_offsets[buf->msg.header.message_type][buf->giop_version];
-  if(!offset)
-    return 0;
+	offset = reqid_offsets [buf->msg.header.message_type] [buf->giop_version];
+	if (!offset)
+		return 0;
 
-  return G_STRUCT_MEMBER(CORBA_unsigned_long, buf, offset);
+	return G_STRUCT_MEMBER (CORBA_unsigned_long, buf, offset);
 }
 
 void
@@ -874,122 +899,82 @@ giop_recv_buffer_init (void)
 }
 
 
-static GIOPMessageInfo
+static gboolean
 giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
 				    GIOPConnection *cnx)
 {
 	/* FIXME: Drop fragmented packets on the floor for now */
 	g_warning ("Dropping a fragmented packed on the floor !");
+
 	buf->connection = cnx;
 	buf->end = buf->message_body + buf->msg.header.message_size;
 	giop_recv_buffer_unuse (buf);
 
-	return GIOP_MSG_INVALID;
+	return TRUE;
 }
 
-/* FIXME: this should be split and folded back into _handle_input */
-static GIOPMessageInfo
-giop_recv_buffer_state_change (GIOPRecvBuffer        *buf,
-			       GIOPMessageBufferState state,
-			       gboolean               is_auth,
-			       GIOPConnection        *cnx)
+static gboolean
+giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
+			    gboolean        is_auth)
 {
-	GIOPMessageInfo retval = GIOP_MSG_UNDERWAY;
-
-	buf->state = state;
-
-	switch (state) {
-	case GIOP_MSG_READING_HEADER:
-		buf->cur = (guchar *)&buf->msg.header;
-		buf->left_to_read = 12;
-		break;
-
-	case GIOP_MSG_READING_BODY:
-		/* Check the header */
-		if (memcmp (buf->msg.header.magic, "GIOP", 4))
-			goto msg_error;
-
-		if (buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
-			goto msg_error;
-
-		switch (buf->msg.header.version [0]) {
+	/* Check the header */
+	if (memcmp (buf->msg.header.magic, "GIOP", 4))
+		return TRUE;
+	
+	if (buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
+		return TRUE;
+	
+	switch (buf->msg.header.version [0]) {
+	case 1:
+		switch(buf->msg.header.version [1]) {
+		case 0:
+			buf->giop_version = GIOP_1_0;
+			break;
 		case 1:
-			switch(buf->msg.header.version [1]) {
-			case 0:
-				buf->giop_version = GIOP_1_0;
-				break;
-			case 1:
-				buf->giop_version = GIOP_1_1;
-				break;
-			case 2:
-				buf->giop_version = GIOP_1_2;
-				break;
-			default:
-				goto msg_error;
-				break;
-			}
+			buf->giop_version = GIOP_1_1;
+			break;
+		case 2:
+			buf->giop_version = GIOP_1_2;
 			break;
 		default:
-			goto msg_error;
+			return TRUE;
 			break;
 		}
-		if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) !=
-		    GIOP_FLAG_ENDIANNESS)
-			buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
-		if ((buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
-		    && !is_auth)
-			goto msg_error;
-
-		buf->message_body = g_malloc (buf->msg.header.message_size + 12);
-		buf->free_body = TRUE;
-		buf->cur = buf->message_body + 12;
-		buf->end = buf->cur + buf->msg.header.message_size;
-		buf->left_to_read = buf->msg.header.message_size;
 		break;
-
-	case GIOP_MSG_READY:
-		retval = GIOP_MSG_COMPLETE;
-		buf->cur = buf->message_body + 12;
-		if (giop_recv_buffer_demarshal (buf))
-			goto msg_error;
-		if (buf->msg.header.message_type == GIOP_FRAGMENT)
-			retval = giop_recv_buffer_handle_fragmented (buf, cnx);
-		else
-			giop_recv_list_push (buf, cnx);
-		break;
-
-	case GIOP_MSG_AWAITING_FRAGMENTS:
-		retval = GIOP_MSG_COMPLETE;
-		giop_recv_buffer_handle_fragmented (buf, cnx);
+	default:
+		return TRUE;
 		break;
 	}
+	if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) != GIOP_FLAG_ENDIANNESS)
+		buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
 
-	return retval;
+	if (!is_auth && (buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT))
+		return TRUE;
 
- msg_error:
-	buf->msg.header.message_type = GIOP_MESSAGEERROR;
-	buf->msg.header.message_size = 0;
+	buf->message_body = g_malloc (buf->msg.header.message_size + 12);
+	buf->free_body = TRUE;
+	buf->cur = buf->message_body + 12;
+	buf->end = buf->cur + buf->msg.header.message_size;
+	buf->left_to_read = buf->msg.header.message_size;
 
-	return GIOP_MSG_INVALID;
+	return FALSE;
 }
 
 gboolean
 giop_connection_handle_input (LINCConnection *lcnx)
 {
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
-	int n;
-	GIOPMessageInfo info;
 	GIOPRecvBuffer *buf;
+	gboolean        processed = FALSE;
 
 	g_object_ref ((GObject *) cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
 
 	do {
-		GIOPMessageBufferState new_state;
+		int n;
 
 		if (!cnx->incoming_msg)
-			cnx->incoming_msg = giop_recv_buffer_use_buf (
-				cnx->parent.is_auth);
+			cnx->incoming_msg = giop_recv_buffer_use_buf ();
 
 		buf = cnx->incoming_msg;
 
@@ -1016,20 +1001,37 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		buf->left_to_read -= n;
 		buf->cur += n;
 
-		if (buf->left_to_read)
-			new_state = GIOP_MSG_UNDERWAY;
-		else {
+		if (buf->left_to_read == 0) {
+
 			switch (buf->state) {
+
 			case GIOP_MSG_READING_HEADER:
-				new_state = GIOP_MSG_READING_BODY;
+				if (giop_recv_msg_reading_body (buf, cnx->parent.is_auth))
+					goto msg_error;
+				buf->state = GIOP_MSG_READING_BODY;
 				break;
 
 			case GIOP_MSG_READING_BODY:
-				if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED)
-					new_state = GIOP_MSG_AWAITING_FRAGMENTS;
-				else
-					new_state = GIOP_MSG_READY;
+				buf->state = GIOP_MSG_READY;
+
+				if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED) {
+					if (giop_recv_buffer_handle_fragmented (buf, cnx))
+						goto msg_error;
+				} else {
+					/* FIXME: looks like we waste 12 bytes here for
+					   no good reason */
+					buf->cur = buf->message_body + 12;
+
+					if (giop_recv_buffer_demarshal (buf))
+						goto msg_error;
+
+					if (buf->msg.header.message_type == GIOP_FRAGMENT) {
+						if (giop_recv_buffer_handle_fragmented (buf, cnx))
+							goto msg_error;
+					}
+				}
 				break;
+
 			case GIOP_MSG_AWAITING_FRAGMENTS:
 			case GIOP_MSG_READY:
 				g_assert_not_reached ();
@@ -1037,44 +1039,40 @@ giop_connection_handle_input (LINCConnection *lcnx)
 			}
 		}
 
-		info = giop_recv_buffer_state_change (
-			buf, new_state, cnx->parent.is_auth, cnx);
+	} while (cnx->incoming_msg && buf->state != GIOP_MSG_READY);
 
-	} while (cnx->incoming_msg && info == GIOP_MSG_UNDERWAY);
-
+	giop_recv_list_push (buf, cnx);
 	buf = cnx->incoming_msg;
 	cnx->incoming_msg = NULL;
 	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 
-	switch (info) {
-	case GIOP_MSG_COMPLETE:
-		if (buf && buf->msg.header.message_type == GIOP_REQUEST) {
-			ORBit_handle_request (cnx->orb_data, buf);
-			giop_recv_buffer_unuse (buf);
-		}
-		/* FIXME: we need to move the giop_recv_list_push code
-		 * here, and put all the msg handling into the same
-		 * switch so people have a chance of understanding what
-		 * is going on. */
-		break;
-
-	case GIOP_MSG_INVALID:
-		/* Zap it for badness.
-		 * XXX We should probably handle oversized
-		 * messages more graciously XXX */
-		giop_connection_close (cnx);
-
-		if (!cnx->parent.was_initiated)
-			/* If !was_initiated, then
-			   a refcount owned by a GIOPServer
-			   must be released */
-			g_object_unref (G_OBJECT (cnx));
-		break;
-
-	case GIOP_MSG_UNDERWAY:
-		g_assert_not_reached ();
-		break;
+	if (buf && buf->msg.header.message_type == GIOP_REQUEST) {
+		ORBit_handle_request (cnx->orb_data, buf);
+		giop_recv_buffer_unuse (buf);
 	}
+	
+	g_object_unref ((GObject *) cnx);
+
+	return TRUE;
+
+ msg_error:
+	buf->msg.header.message_type = GIOP_MESSAGEERROR;
+	buf->msg.header.message_size = 0;
+
+	giop_recv_buffer_unuse (buf);
+
+	g_warning ("Hyper unusual code path of little testing");
+
+	/* Zap it for badness.
+	 * XXX We should probably handle oversized
+	 * messages more graciously XXX */
+	giop_connection_close (cnx);
+	
+	if (!cnx->parent.was_initiated)
+		/* If !was_initiated, then
+		   a refcount owned by a GIOPServer
+		   must be released */
+		g_object_unref (G_OBJECT (cnx));
 
 	g_object_unref ((GObject *) cnx);
 
@@ -1082,14 +1080,15 @@ giop_connection_handle_input (LINCConnection *lcnx)
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_buf (gboolean is_auth)
+giop_recv_buffer_use_buf (void)
 {
-	GIOPRecvBuffer *retval = NULL;
+	GIOPRecvBuffer *buf = NULL;
 
-	retval = g_new0 (GIOPRecvBuffer, 1);
+	buf = g_new0 (GIOPRecvBuffer, 1);
 
-	giop_recv_buffer_state_change (
-		retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
+	buf->state = GIOP_MSG_READING_HEADER;
+	buf->cur = (guchar *)&buf->msg.header;
+	buf->left_to_read = 12;
 
-	return retval;
+	return buf;
 }
