@@ -41,8 +41,14 @@ IDLPassXlate::runPass() {
 	<< indent << "#ifndef __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
 	<< indent << "#define __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
 	<< endl << endl
-	<< indent << "#include <string.h>" << endl
+  << indent << "#ifdef _ORBITCPP_TESTCODE" << endl
+	<< indent << "//The headers are in a different place than when they are installed:" << endl
+	<< indent << "#include <orb-cpp/orbitcpp.hh>" << endl
+  << indent << "#else" << endl
 	<< indent << "#include <orbit/orb-cpp/orbitcpp.hh>" << endl
+	<< indent << "#endif" << endl
+	<< endl
+	<< indent << "#include <string.h>" << endl
 	//<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
 	//indent++;
 	//m_header
@@ -552,7 +558,7 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 
 	m_header
 	<< indent << ns_iface_end << endl
-  << indent << "}} //namepsaces" << endl << endl;
+  << indent << "}} //namespaces" << endl << endl;
 
 	if(non_empty_ns){
 		m_header
@@ -647,20 +653,18 @@ IDLPassXlate::doInterface(IDL_tree node,IDLScope &scope) {
 
 
 void
-IDLPassXlate::doInterfaceStaticMethodDeclarations(IDLInterface &iface) {
-  	string ifname = iface.getCPPIdentifier();
+IDLPassXlate::doInterfaceStaticMethodDeclarations(IDLInterface &iface)
+{
+  string ifname = iface.getCPPIdentifier();
 
 	m_header 
-	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _duplicate("
-	<< iface.getQualifiedCPP_ptr() << " obj);" << endl
+	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _duplicate(" << iface.getQualifiedCPP_ptr() << " obj);" << endl
 
-	<< indent << "static " << iface.getQualifiedCPP_ptr()
-	<< " _narrow(CORBA::Object_ptr obj);" << endl
+	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _narrow(CORBA::Object_ptr obj);" << endl
 
-	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _nil() {" << endl;
-	m_header
-	<< ++indent << "return CORBA_OBJECT_NIL;" << endl;
-	m_header
+	<< indent << "static " << iface.getQualifiedCPP_ptr() << " _nil()" << endl
+	<< indent << "{" << endl
+	<< ++indent << "return CORBA_OBJECT_NIL;" << endl
 	<< --indent << '}' << endl;
 }
 

@@ -1,5 +1,12 @@
 2002-03-07  Murray Cumming  <murrayc@usa.net>
 
+	* Added comments to the generated skel code to explain how we use the C
+	mapping.
+	* Replaced reinterpret_cast<> with a new in stub's _duplicate().
+	* Added #ifdef which allows test code to use a different #include path.
+
+2002-03-07  Murray Cumming  <murrayc@usa.net>
+
 	* Changed indentation of generated sources: The "{" now comes after
 	namespace, class, and method declarations, and there are newlines after
 	all "}"s.

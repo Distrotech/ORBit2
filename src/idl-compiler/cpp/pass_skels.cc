@@ -561,9 +561,13 @@ IDLPassSkels::doInterfaceAppServant(IDLInterface &iface) {
 	<< indent << "struct _orbitcpp_Servant" << endl
 	<< indent << "{" << endl;
 	indent++;
+
+  string c_POA = iface.getQualifiedC_POA();
 	m_header
-	<< indent << IDL_IMPL_C_NS_NOTUSED
-	<< iface.getQualifiedC_POA() << " m_cservant;" << endl
+	<< indent << "//\"Inherit\" from " << c_POA << ", which is a ServantBase-like struct." << endl
+	<< indent << IDL_IMPL_C_NS_NOTUSED << c_POA << " m_cservant;" << endl
+  << endl
+	<< indent << "//C++-specific stuff:" << endl
 	<< indent << "PortableServer::Servant m_cppservant;" << endl
 	<< indent << iface.getQualifiedCPP_POA() << " *m_cppimpl;  // fully downcasted version of m_cppservant" << endl;
 	m_header
@@ -701,20 +705,24 @@ void
 IDLPassSkels::doInterfaceFinalizer(IDLInterface &iface) {
 	m_header
 	<< indent << "static void _orbitcpp_fini("
-	<<  "::PortableServer_Servant servant,"
+	<<  "::PortableServer_Servant servant, "
 	<<  "::CORBA_Environment *ev);" << endl;
 
 	m_module
 	<< mod_indent << "void " << iface.getQualifiedCPP_POA()
 	<< "::_orbitcpp_fini("
-	<<  "::PortableServer_Servant servant,"
-	<<  "::CORBA_Environment *ev) {" << endl;
+	<<  "::PortableServer_Servant servant, "
+	<<  "::CORBA_Environment *ev)" << endl
+	<< mod_indent << "{" << endl;
+
 	m_module
-	<< ++mod_indent << IDL_IMPL_C_NS_NOTUSED
-	<< iface.getQualifiedC_POA() << "__fini(servant,ev);" << endl;
+	<< ++mod_indent << "//Call C __fini():" << endl
+	<< mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.getQualifiedC_POA() << "__fini(servant, ev);" << endl << endl;
+
 	m_module
-	<< mod_indent << iface.getQualifiedCPP_POA() << " *self = "
-	<< "reinterpret_cast<_orbitcpp_Servant *>(servant)->m_cppimpl;" << endl
+	<< mod_indent << "//Do C++-specific stuff:" << endl
+  << mod_indent << "_orbitcpp_Servant* pCppServant = reinterpret_cast<_orbitcpp_Servant*>(servant);" << endl
+	<< mod_indent << iface.getQualifiedCPP_POA() << "* self = pCppServant->m_cppimpl;" << endl
 	<< mod_indent << "self->_remove_ref();" << endl;
 	m_module
 	<< --mod_indent << '}'<< endl << endl;
@@ -792,6 +800,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	// C++ interface
 	indent--;
 	m_header
+	<< endl
 	<< indent << "// C++ interface" << endl
 	<< indent << "public:" << endl;
 	indent++;
@@ -804,13 +813,18 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 	<< mod_indent << iface.getQualifiedCPP_POA() 
 	<< "::" << iface.getCPP_POA() << "() {" << endl;
 	m_module
-	<< ++mod_indent << "m_target.m_cservant._private = NULL;" << endl
+  << ++mod_indent << "//C Servant:" << endl
+	<< mod_indent << "m_target.m_cservant._private = NULL;" << endl
 	<< mod_indent << "m_target.m_cservant.vepv = &_vepv;" << endl
-	<< mod_indent << "m_target.m_cppservant = this; // does an appropriate upcast thunk" << endl
+	<< endl
+  << mod_indent << "//C++ Servant:"
+	<< mod_indent << "m_target.m_cppservant = this; // does an appropriate upcast thunk (Multiple Inheritance)" << endl
 	<< mod_indent << "m_target.m_cppimpl = this;" << endl
+	<< endl
+	<< mod_indent << "//Call __init(), passing our \"derived\" C Servant:" << endl
 	<< mod_indent << IDL_IMPL_NS "::CEnvironment ev;" << endl
 	<< mod_indent << IDL_IMPL_C_NS_NOTUSED << iface.getQualifiedC_POA()
-	<< "__init(&m_target.m_cservant,ev);" << endl
+	<< "__init( &m_target, ev._orbitcpp_get_c_object() );" << endl
 	<< mod_indent << "ev.propagate_sysex();" << endl;
 	m_module
 	<< --mod_indent << '}' << endl << endl;
@@ -833,13 +847,18 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 
 	// _this() method
 	m_header
-		<< indent << iface.getQualifiedCPP_ptr() << " _this() {" << endl;
+		<< indent << iface.getQualifiedCPP_ptr() << " _this()" << endl
+		<< indent << "{" << endl;
+
+  string stub_name = iface.getQualifiedCPPStub();
 	m_header
 	  << ++indent << "PortableServer::POA_var rootPOA = _default_POA();" << endl
 	  << indent << "PortableServer::ObjectId_var oid = rootPOA->activate_object(this);" << endl
 	  << indent << "CORBA::Object_ptr object = rootPOA->id_to_reference(oid);" << endl
-	  << indent << "return reinterpret_cast< "
-	  << iface.getQualifiedCPPStub() << " *>(object);" << endl; 
+		<< indent << stub_name << "* pDerived = new " << stub_name << "(object->_orbitcpp_get_c_object());" << endl
+    << indent << "CORBA::release(object);" << endl
+		<< indent << "object = 0;" << endl
+	  << indent << "return pDerived;" << endl;
 	m_header
 	  << --indent << "}" << endl << endl;
 

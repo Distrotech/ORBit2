@@ -63,7 +63,6 @@ namespace CORBA {
 	public:
 		// begin ORBit-C++ extension
 		Object(CORBA_Object cobject);
-		operator CORBA_Object();
 		CORBA_Object _orbitcpp_get_c_object();
 		// end ORBit-C++ extension
 
@@ -97,7 +96,7 @@ namespace CORBA {
 	
 	inline void release(Object_ptr o)
 	{
-		_orbitcpp::release_guarded(*o);
+		_orbitcpp::release_guarded(o->_orbitcpp_get_c_object());
 	}
 	
 	Boolean is_nil(Object_ptr o);

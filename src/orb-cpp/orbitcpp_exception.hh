@@ -203,20 +203,20 @@ namespace CORBA {
   
   
 
-namespace _orbitcpp {
-	class CEnvironment { 
+namespace _orbitcpp
+{
+	class CEnvironment
+	{
 	  // ha! this is not hungarian notation, it is "C Environment" - Andy
 	  // - Yeah Yeah! very funny ;-) - Phil 
-	private:
-		CORBA_Environment m_env;
-  
+	
 	public: 
 		CEnvironment();
 		~CEnvironment();
 		
-		operator CORBA_Environment *() {
-			return &m_env;
-		}
+		CORBA_Environment* _orbitcpp_get_c_object()
+		{ return &m_env; }
+
 		CORBA_Environment *operator->() {
 			return &m_env;
 		}
@@ -232,8 +232,11 @@ namespace _orbitcpp {
 
 	private:
 		void propagate_sysex_guts();
+
+		CORBA_Environment m_env;
 	};
-}
+
+} //namespace
 
 
 
