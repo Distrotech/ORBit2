@@ -1,3 +1,8 @@
+2003-09-05  Frank Rehberger  <Frank.Rehberger@xtradyne.de>
+
+	* test/test-mem.c: autmatic memory verification based on 'ps' command,
+	added POA test
+
 2003-08-26  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.8.0
