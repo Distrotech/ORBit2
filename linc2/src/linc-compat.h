@@ -35,6 +35,7 @@
 #include <linux/irda.h>
 #endif
 
+#include <arpa/inet.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 
@@ -49,6 +50,10 @@
 
 #if !defined (NI_MAXSERV)
 #  define NI_MAXSERV 64
+#endif
+
+#if !defined (INADDR_NONE)
+#  define INADDR_NONE (-1)
 #endif
 
 #endif /* LINC_HACKS_H */

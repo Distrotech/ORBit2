@@ -418,11 +418,43 @@ test_local (void)
 }
 
 static void
+verify_addr_is_loopback (guint8 *addr, int length)
+{
+	int i;
+
+	if (length == 4)
+		i = 0;
+
+	else if (length == 16) {
+
+		for (i = 0; i < 10; i++)
+			if (addr [i] != 0)
+				return;
+
+		if (addr [i++] != 0xff || addr [i++] != 0xff)
+			return;
+	} else {
+		i = 0;
+		g_assert_not_reached ();
+	}
+
+	if (addr [i + 0] == 127 &&
+	    addr [i + 1] == 0 &&
+	    addr [i + 2] == 0 &&
+	    addr [i + 3] == 1)
+		g_error ("The reverse lookup of your hostname "
+			 "is 127.0.0.1 you will not be able to "
+			 "do inter-machine comms.");
+}
+
+static void
 test_hosts_lookup (void)
 {
 	int i;
-	guint8 *addr;
 	struct hostent *hent;
+	LINCProtocolInfo *proto;
+	LincSockLen saddr_len;
+	struct sockaddr_in *addr;
 		
 	hent = gethostbyname (linc_get_local_hostname ());
 	g_assert (hent != NULL);
@@ -434,28 +466,15 @@ test_hosts_lookup (void)
 		fprintf (stderr, " '%s'", hent->h_aliases [i]);
 	fprintf (stderr, "\n");
 
-	addr = hent->h_addr_list [0];
+	verify_addr_is_loopback (hent->h_addr_list [0], hent->h_length);
 
-	if (hent->h_length == 4)
-		i = 0;
-
-	else if (hent->h_length == 16) {
-
-		for (i = 0; i < 10; i++)
-			if (addr [i] != 0)
-				return;
-
-		if (addr [i++] != 0xff || addr [i++] != 0xff)
-			return;
-	}
-
-	if (addr [i + 0] == 127 &&
-	    addr [i + 1] == 0 &&
-	    addr [i + 2] == 0 &&
-	    addr [i + 3] == 1)
-		g_error ("The reverse lookup of your hostname "
-			 "is 127.0.0.1 you will not be able to "
-			 "do inter-machine comms.");
+	proto = linc_protocol_find ("IPv4");
+	addr = (struct sockaddr_in *)linc_protocol_get_sockaddr (
+		proto, "127.0.0.1", "1047", &saddr_len);
+	g_assert (addr != NULL);
+	g_assert (saddr_len == sizeof (struct sockaddr_in));
+	
+	verify_addr_is_loopback ((guint8 *) &addr->sin_addr.s_addr, saddr_len);
 }
 
 static void

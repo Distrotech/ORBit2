@@ -1,3 +1,17 @@
+2002-07-31  Michael Meeks  <michael@ximian.com>
+
+	* test/test-linc.c (test_hosts_lookup): regression test.
+	(verify_addr_is_loopback): split out.
+
+	* configure.in: add inet_pton check.
+
+	* src/linc-protocols.c (linc_protocol_get_sockaddr_ipv4):
+	do a dotted quad type lookup first.
+	(linc_protocol_get_sockaddr_ipv6): add inet_pton - raw IPv6
+	addr translation 
+
+	* src/linc-compat.h (INADDR_NONE): for broken systems.
+
 2002-07-25  Yanko Kaneti <yaneti@declera.com>
 
 	* test/test-linc.c: include "linc-compat.h" for ehm.. compatibilty. 
