@@ -1,3 +1,9 @@
+2002-05-24  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_init): do a plain g_type_init
+	without adding the debug_flags, they're not
+	helping us enough for the pain.
+
 2002-05-21  Michael Meeks  <michael@ximian.com>
 
 	* src/cleanup.c: make it work for the simple
