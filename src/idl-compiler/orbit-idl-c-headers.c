@@ -330,7 +330,7 @@ ch_output_native(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     IDL_tree id = IDL_NATIVE(tree).ident;
     ctmp = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(id), "_", 0);
     fprintf(ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n", ctmp, ctmp);
-    fprintf(ci->fh, "typedef struct %s_type *%s;", ctmp, ctmp);
+    fprintf(ci->fh, "typedef struct %s_type *%s;\n", ctmp, ctmp);
     /* Dont even think about emitting a typecode. */
     fprintf(ci->fh, "#endif\n");
     g_free(ctmp);

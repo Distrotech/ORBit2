@@ -126,7 +126,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 		fprintf(ci->fh, "ORBIT_STUB_PostCall(_obj, _invoke_rec);\n");
 	}
 
-	fprintf (of, " } else");
+	fprintf (of, " } else\n");
 	fprintf (of, "#endif ORBIT_STUB_DEBUG_LOCAL\n");
 	fprintf (of, " { /* remote marshal */\n");
 	{
