@@ -1,3 +1,12 @@
+Thu Sep 18 09:09:39 2003  George Lebl <jirka@5z.com>
+
+	* src/orb/util/genrand.c: when seeding from time shift the
+	  seconds up as we don't really care much about the high
+	  order bits (they're not interesting).  Achieve almost 32
+	  bits of entropy within an hour of uncertainty this way
+	  rather then a century.  Only affects places without
+	  /dev/urandom
+
 2003-09-16  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: add $(top_builddir)/linc2/include
