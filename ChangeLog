@@ -1,3 +1,8 @@
+2003-05-31  Michael Meeks  <michael@ximian.com>
+
+	* ORBit-2.0.pc.in: remove 'linc' in Requires,
+	thanks oGalaxyo.
+
 2003-05-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (giop_tmpdir_init):
