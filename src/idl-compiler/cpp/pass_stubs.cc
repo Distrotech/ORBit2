@@ -383,9 +383,8 @@ IDLPassStubs::doInterface(IDLInterface &iface) {
   //Constructor implemention:
   m_module <<
   IDL_IMPL_NS_ID << "::" << IDL_IMPL_STUB_NS_ID << iface.getQualifiedCPPIdentifier() << "::" << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject)" << endl
-  << ++indent << "m_target = cobject;" << endl;
-  indent--;
-  m_module << "}" << endl
+	<< ": CORBA::Object(cobject)" << endl
+	<< "{}" << endl
   << endl;
 
 	// translate operations (same thing as above)
