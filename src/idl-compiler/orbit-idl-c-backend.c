@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 static FILE *out_for_pass(const char *input_filename, int pass, 
 			  OIDL_Run_Info *rinfo);
@@ -117,14 +118,20 @@ out_for_pass (const char    *input_filename,
 	      int            pass,
 	      OIDL_Run_Info *rinfo)
 {
+	FILE *fp;
 	char *output_filename;
 	char *cmdline;
 
 	if (pass == OUTPUT_DEPS) {
+		
 		if (rinfo->deps_file)
-			return fopen (rinfo->deps_file, "w");
+			fp =  fopen (rinfo->deps_file, "w");
 		else
-			return NULL;
+			fp = NULL;
+
+		if (fp == NULL) 
+			g_error ("failed to open '%s': %s\n", input_filename, strerror(errno));
+		
 	} else {
 		output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
 
@@ -134,6 +141,11 @@ out_for_pass (const char    *input_filename,
 		sprintf (cmdline, "%s > %s", rinfo->output_formatter, output_filename);
 
 		g_free (output_filename);
-		return popen (cmdline, "w");
+		fp = popen (cmdline, "w");
+
+		if (fp == NULL)
+			g_error ("failed to popen '%s': %s\n", cmdline, strerror(errno));
 	}
+
+	return fp;
 }

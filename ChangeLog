@@ -1,3 +1,9 @@
+2001-08-18 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
+
+	* src/idl-compiler/orbit-idl-c-backend.c
+	(out_for_pass): raise a g_error instead of segfaulting
+	if the output can't be opened or popened
+
 2001-08-16  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/orbit-debug.h:
