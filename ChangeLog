@@ -1,5 +1,31 @@
 2001-08-23  Mark McLoughlin <mark@skynet.ie>
 
+	Bunch of warnings fixes.
+
+	* libIDL/lexer.l, libIDL/parser.y,
+	  libIDL/util.c, 
+	  src/idl-compiler/orbit-idl-c-headers.c:
+	cast char to int for isspace() etc.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_push): kill G_BREAKPOINT.
+
+	* src/orb/dynamic/dynany.c
+	(DynamicAny_DynStruct_get_elements_as_dyn)
+	kill unused newdyn.
+
+	* src/orb/orb-core/corba-context.c
+	(ctx_get_values) changes CORBA_Identifier arg
+	to const CORBA_char *.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_components_marshal): kill unsed lenptr.
+
+	* test/test-dynany.c(test_struct): pass dyn_struct
+	to DynamicAny_DynStruct_* instead of dyn_any.
+	  
+2001-08-23  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-context.c,
 	  src/orb/orb-core/corba-nvlist.c,
 	  src/orb/orb-core/corba-object.c,

@@ -766,7 +766,7 @@ IOP_components_marshal (CORBA_Object obj,
 			GIOPSendBuffer *buf,
 			GSList *components)
 {
-	CORBA_unsigned_long  len, lenptr;
+	CORBA_unsigned_long  len;
 	GSList              *cur;
 	guchar              *marker;
 
