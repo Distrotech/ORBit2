@@ -1,0 +1,21 @@
+module Test
+{
+    interface IMember
+    {
+	void print_name ();
+    };
+
+    typedef long    NumArray[3];
+    typedef IMember ObjArray[3];
+    
+    exception ExTest
+    {
+	ObjArray objs;
+	NumArray nums;
+    };
+    
+    interface IMaster
+    {
+	void provoke () raises (ExTest);
+    };
+};

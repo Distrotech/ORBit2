@@ -1,3 +1,3 @@
-SUBDIRS = helloworld struct-simple
+SUBDIRS = arrays helloworld struct-simple
 
 EXTRA_DIST = Makefile.am_fragment Makefile_generated.am_fragment README

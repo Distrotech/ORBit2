@@ -247,13 +247,14 @@ include/orbit/orb-core/Makefile
 include/orbit/poa/Makefile
 include/orbit/dynamic/Makefile
 test/Makefile
-test/cpp/Makefile
-
-test/cpp/helloworld/Makefile
-test/cpp/helloworld/generated/Makefile
-
-test/cpp/struct-simple/Makefile
-test/cpp/struct-simple/generated/Makefile
+  test/cpp/Makefile
+    test/cpp/helloworld/Makefile
+      test/cpp/helloworld/generated/Makefile
+    test/cpp/struct-simple/Makefile
+      test/cpp/struct-simple/generated/Makefile
+    test/cpp/arrays/Makefile
+      test/cpp/arrays/inside_exception/Makefile
+        test/cpp/arrays/inside_exception/generated/Makefile
 
 test/everything/Makefile
 test/inhibit/Makefile
