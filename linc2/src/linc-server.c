@@ -138,7 +138,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   if(!proto)
     return FALSE;
 
-  hints.ai_flags = AI_PASSIVE|AI_CANONNAME;
+  hints.ai_flags = AI_PASSIVE;
   hints.ai_family = proto->family;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = proto->stream_proto_num;
