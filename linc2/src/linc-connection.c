@@ -369,7 +369,7 @@ linc_connection_initiate (LINCConnection        *cnx,
 		options);
 
  out:
-	if (!cnx && fd >= 0) {
+	if (!retval && fd >= 0) {
 		d_printf ("initiation failed\n");
 		close (fd);
 	}

@@ -1,3 +1,11 @@
+2002-03-20  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c (linc_server_accept_connection):
+	always initialize the connection - thanks again Havoc.
+
+	* src/linc-connection.c (linc_connection_initiate):
+	fix fd leak - thanks Havoc.
+
 2002-03-04  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: Version 0.1.19
