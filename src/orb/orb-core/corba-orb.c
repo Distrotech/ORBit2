@@ -679,7 +679,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
  
 	if (!orb->initial_refs ||
 	    !(objref=g_hash_table_lookup (orb->initial_refs, identifier)))
-		goto raise_invalid_name;
+		return CORBA_OBJECT_NIL;
 	
 	return ORBit_RootObject_duplicate (objref);
 
