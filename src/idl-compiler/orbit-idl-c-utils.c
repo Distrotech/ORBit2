@@ -258,7 +258,7 @@ orbit_cbe_get_typename(IDL_tree tree)
   }
 }
 
-static void
+void
 orbit_cbe_param_printptrs(FILE *of, IDL_tree param, IDL_ParamRole role)
 {
   int i, n;
