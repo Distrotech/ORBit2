@@ -1,3 +1,13 @@
+2003-04-17  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (test_basic_server):
+	re-factor this out so we can apply it to different remote
+	POA policies later.
+
+	* src/orb/poa/poa.c (push_request_idle, poa_invoke_at_idle),
+	(ORBit_POA_handle_request): impl both. both idle policies.
+	(poa_recv_is_oneway): impl.
+
 2003-04-15  Masahiro Sakai  <sakai@tom.sfc.keio.ac.jp>
 
 	* Makefile.shared: append $(EXEEXT) to IDL_COMPILER.
