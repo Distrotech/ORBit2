@@ -1,3 +1,13 @@
+2003-03-29  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_writev)
+	(linc_connection_init, linc_connection_io_handler) 
+	(linc_connection_dispose): use the write_lock mutex
+	to protect the write_queue.
+	(queue_signal): drop it over signal emission (clearly)
+	(linc_connection_flush_write_queue): split out of
+	(linc_connection_io_handler): here.
+
 2003-03-25  Michael Meeks  <michael@ximian.com>
 
 	* Version 1.1.0

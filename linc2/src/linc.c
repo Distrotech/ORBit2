@@ -257,6 +257,18 @@ linc_idle_unref (gpointer object)
 	return FALSE;
 }
 
+gboolean
+linc_in_io_thread (void)
+{
+	gboolean result;
+
+	/* FIXME: we can do a lot better here */
+	if ((result = g_main_context_acquire (linc_context)))
+		g_main_context_release (linc_context);
+
+	return result;
+}
+
 void
 linc_object_unref (gpointer object)
 {

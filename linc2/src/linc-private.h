@@ -46,6 +46,7 @@ struct _LINCConnectionPrivate {
 	LincWatch   *tag;
 	int          fd;
 
+	GMutex      *write_lock;
 	gulong       max_buffer_bytes;
 	gulong       write_queue_bytes;
 	GList       *write_queue;
@@ -105,5 +106,6 @@ void             linc_watch_set_condition   (LincWatch              *w,
 
 GMainContext    *linc_main_get_context      (void);
 gboolean         linc_get_threaded          (void);
+gboolean         linc_in_io_thread          (void);
 
 #endif /* _LINC_PRIVATE_H */
