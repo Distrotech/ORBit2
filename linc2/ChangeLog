@@ -1,3 +1,8 @@
+2001-08-20  Theo van Klaveren  <t.vanklaveren@student.utwente.nl>
+
+	* include/linc/linc-protocol.h: Include <sys/types.h> to
+	fix build on FreeBSD.
+
 2001-08-18  Cody Russell  <bratsche@gnome.org>
 
 	* linc.pc.in: Added.

@@ -6,6 +6,7 @@
 G_BEGIN_DECLS
 
 #include <linc/linc-types.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
