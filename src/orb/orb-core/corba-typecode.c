@@ -86,7 +86,7 @@ const struct CORBA_TypeCode_struct TC_null_struct = {
 
 const struct CORBA_TypeCode_struct TC_void_struct = {
 	{&ORBit_TypeCode_epv, ORBIT_REFCOUNT_STATIC},
-	CORBA_tk_null, 0, 0, -1, 0, 0, NULL,
+	CORBA_tk_void, 0, 0, -1, 0, 0, NULL,
 	CORBA_OBJECT_NIL, "void", "IDL:omg.org/CORBA/void:1.0"
 };
 

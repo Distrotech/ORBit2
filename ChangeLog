@@ -20,7 +20,36 @@
 	* src/idl-compiler/orbit-idl-c-imodule.c
 	(orbit_idl_output_c_imodule): only define
 	ORBIT_IDL_C_IMODULE_filename.
- 
+
+2002-09-30  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/orbit-idl-c-stubs.c (cs_output_stub): Cast EPV
+	to correct type before storing it
+
+2002-09-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_marshal, orbit_small_demarshal),
+	(ORBit_small_invoke_adaptor): bin inefficient
+	trailing TC_void business.
+
+2002-09-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c: TC_void's
+	kind should be tk_void.
+
+	* configure.in: bump to 2.5.0, so it's clear
+	this is the devel-branch.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_output_method): output TC_void not
+	CORBA_OBJECT_NIL for no return value.
+
+	* src/idl-compiler/orbit-idl-c-common.c
+	(cc_output_iargs, cc_output_method): don't do
+	silly things with the argument list length,
+	fixes #93928
+
 2002-09-20  Mark McLoughlin  <mark@skynet.ie>
 
 	* ORBit.spec.in: remove name-client-2 and

@@ -103,8 +103,8 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 
 		fprintf (ci->fh, "if (ORBit_small_flags & ORBIT_SMALL_FAST_LOCALS && \n");
 		fprintf (ci->fh, "    ORBIT_STUB_IsBypass (_obj, %s__classid) && \n", id);
-		fprintf (ci->fh, "    (%s = ORBIT_STUB_GetEpv (_obj, %s__classid))->%s) {\n",
-			 ORBIT_EPV_VAR_NAME, id, IDL_IDENT (IDL_OP_DCL (tree).ident).str);
+		fprintf (ci->fh, "    (%s = (POA_%s__epv *) ORBIT_STUB_GetEpv (_obj, %s__classid))->%s) {\n",
+			 ORBIT_EPV_VAR_NAME, id, id, IDL_IDENT (IDL_OP_DCL (tree).ident).str);
 
 		fprintf (ci->fh, "ORBIT_STUB_PreCall (_obj);\n");
 
