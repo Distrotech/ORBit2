@@ -1210,7 +1210,7 @@ get_status (LINCConnection *cnx)
 
 	g_return_val_if_fail (cnx != NULL, ORBIT_CONNECTION_DISCONNECTED);
 
-	switch (cnx->status) {
+	switch (linc_connection_get_status (cnx)) {
 	case LINC_CONNECTED:
 		ret = ORBIT_CONNECTION_CONNECTED;
 		break;

@@ -1,3 +1,30 @@
+2003-04-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (wakeup_mainloop): handle EINTR.
+
+2003-04-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (giop_init, giop_shutdown): bin
+	incoming thread bits.
+
+	* src/orb/orb-core/orbit-small.c (get_status): use
+	linc_connection_get_status.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_close):
+	use linc_connection_disconnect instead of a dubious forced
+	state change.
+
+2003-04-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_connection_handle_input):
+	hold neither ref nor lock, linc does it.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_real_state_changed) 
+	(giop_connection_dispose, giop_connection_init): bin locking action.
+
+	* include/orbit/GIOP/giop-connection.h: bin incoming and
+	outgoing mutex; all locking is in linc-connection now.
+
 2003-04-18  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
                                                                                 
         * src/orb/poa/orbit-adaptor.c

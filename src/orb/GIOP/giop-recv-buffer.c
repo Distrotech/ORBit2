@@ -1117,9 +1117,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	GIOPRecvBuffer *buf;
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 
-	linc_object_ref (cnx);
-	LINC_MUTEX_LOCK (cnx->incoming_mutex);
-
 	do {
 		int n;
 
@@ -1131,16 +1128,11 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		n = linc_connection_read (
 			lcnx, buf->cur, buf->left_to_read, FALSE);
 
-		if (n == 0) { /* We'll be back */
-			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
-			linc_object_unref (cnx);
+		if (n == 0) /* We'll be back */
 			return TRUE;
-		}
 
 		if (n < 0 || !buf->left_to_read) { /* HUP */
-			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
-			linc_object_unref (cnx);
 			return TRUE;
 		}
 
@@ -1191,7 +1183,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 					else {
 						cnx->incoming_msg = NULL;
-						LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 						goto frag_out;
 					}
 
@@ -1213,7 +1204,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	} while (cnx->incoming_msg && buf->state != GIOP_MSG_READY);
 
 	cnx->incoming_msg = NULL;
-	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 
 	buf->connection = cnx;
 
@@ -1254,13 +1244,10 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	}
 
  frag_out:	
-	linc_object_unref (cnx);
-
 	return TRUE;
 
  msg_error:
 	cnx->incoming_msg = NULL;
-	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 
 	buf->msg.header.message_type = GIOP_MESSAGEERROR;
 	buf->msg.header.message_size = 0;
@@ -1272,7 +1259,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	 * messages more graciously XXX */
 	linc_connection_state_changed (LINC_CONNECTION (cnx),
 				       LINC_DISCONNECTED);
-	linc_object_unref (cnx);
 
 	return TRUE;
 }
