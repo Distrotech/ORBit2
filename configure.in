@@ -237,7 +237,7 @@ docs/devel/Makefile
 docs/internals/Makefile
 ])
 
-echo "ORBit configureation:
+echo "ORBit configuration:
 
 	Source code location:	${srcdir}
 	Compiler:		${CC} 
