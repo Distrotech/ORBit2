@@ -26,6 +26,8 @@ typedef struct {
   gpointer poa;
   gpointer object_id;
 
+  CORBA_Object objref;
+
 #ifdef ORBIT_BYPASS_MAPCACHE
 	ORBit_VepvIdx*	vepvmap_cache;
 #endif

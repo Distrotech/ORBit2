@@ -39,10 +39,6 @@ ORBit_POAObject *ORBit_POA_create_object(PortableServer_POA poa,
 					 const PortableServer_ObjectId *oid,
 					 CORBA_boolean isDefault,
 					 CORBA_Environment *ev);
-CORBA_Object ORBit_POA_oid_to_ref(PortableServer_POA poa,
-				  const PortableServer_ObjectId *oid,
-				  const CORBA_RepositoryId intf,
-				  CORBA_Environment *ev);
 ORBit_POAObject *ORBit_POA_oid_to_obj(PortableServer_POA poa,
 				      const PortableServer_ObjectId *oid,
 				      gboolean active,
