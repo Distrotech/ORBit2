@@ -84,6 +84,8 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 	_ORBIT_HANDLE_TYPE (enum, long, int, 32, 4, "%d");
 	_ORBIT_HANDLE_TYPE (ushort, unsigned_short, unsigned int, 16, 2, "%u");
 	_ORBIT_HANDLE_TYPE (ulong, unsigned_long, unsigned int, 32, 4, "0x%x");
+	_ORBIT_HANDLE_TYPE (longlong, long_long, long long, 64, 8, "%"G_GINT64_FORMAT);
+	_ORBIT_HANDLE_TYPE (ulonglong, unsigned_long_long, unsigned long long, 64, 8, "%"G_GUINT64_FORMAT);
 	_ORBIT_HANDLE_TYPE (boolean, boolean, int, 8, 1, "%d");
 	_ORBIT_HANDLE_TYPE (char, char, int, 8, 1, "'%c'");
 	_ORBIT_HANDLE_TYPE (wchar, wchar, int, 16, 2, "'%lc'");
@@ -201,8 +203,6 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		break;
 	}
 
-	case CORBA_tk_longlong:
-	case CORBA_tk_ulonglong:
 	case CORBA_tk_longdouble:
 	case CORBA_tk_fixed:
 		tprintf ("wierd");

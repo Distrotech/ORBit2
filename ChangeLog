@@ -1,4 +1,10 @@
-2005-02-11  Michael Meeks  <michael.meeks@novel.com>
+2005-02-11  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/orbit-trace.c (ORBit_trace_value): Print also
+	long long values, using G_GINT64_FORMAT. Ditto unsigned long long
+	and G_GUINT64_FORMAT.
+
+2005-02-11  Michael Meeks  <michael.meeks@novell.com>
 
 	* src/orb/dynamic/dynany.c
 	(DynamicAny_DynStruct_get_members),
