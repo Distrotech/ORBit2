@@ -39,6 +39,7 @@ static char        *orbit_ipname             = NULL;
 static char        *orbit_debug_options      = NULL;
 static char        *orbit_naming_ref         = NULL;
 static GSList      *orbit_initref_list       = NULL; 
+/* static GSList      *orbit_use_corbaloc       = FALSE; */
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -404,6 +405,12 @@ CORBA_ORB_object_to_string (CORBA_ORB          orb,
 		return NULL;
 	}
 
+	/* FIXME, do nice integration */ 
+/* 	if (orbit_use_corbaloc) */
+/* 	{ */
+/* 		return ORBit_object_to_corbaloc (obj, ev); */
+/* 	} */
+	
 	buf = giop_send_buffer_use (orb->default_giop_version);
 
 	g_assert (buf->num_used == 1);
@@ -457,7 +464,12 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 	guchar              *tmpbuf;
 	int                  i;
 
-	if (strncmp (string, "IOR:", 4)) {
+	if (strncmp (string, "IOR:", strlen("IOR:"))            &&
+	    strncmp (string, "corbaloc:", strlen ("corbaloc:")) &&
+	    strncmp (string, "iiop:", strlen ("iiop:"))         &&
+	    strncmp (string, "iiops:", strlen ("iiops:"))       &&
+	    strncmp (string, "ssliop:", strlen ("ssliop:"))     &&
+	    strncmp (string, "uiop:", strlen ("uiop:"))) {
 
 #if defined ENABLE_HTTP
 		if (orbit_use_http_iors &&
@@ -480,41 +492,46 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 		}
 	}
 
-	string += 4;
-	len = strlen (string);
-	while (len > 0 && !g_ascii_isxdigit (string [len - 1]))
-		len--;
-
-	if (len % 2) {
-		if (ior)
-			g_free (ior);
-
-		return CORBA_OBJECT_NIL;
-	}
-
-	tmpbuf = g_alloca (len / 2);
-
-	for (i = 0; i < len; i += 2)
-		tmpbuf [i/2] = (g_ascii_xdigit_value (string [i]) << 4) |
-					g_ascii_xdigit_value (string [i + 1]);
-
-	buf = giop_recv_buffer_use_encaps (tmpbuf, len / 2);
-
-	if (ORBit_demarshal_object (&retval, buf, orb)) {
-		CORBA_exception_set_system (
+	if (!strncmp (string, "IOR:", strlen ("IOR:")))
+	{
+		string += 4;
+		len = strlen (string);
+		while (len > 0 && !g_ascii_isxdigit (string [len - 1]))
+			len--;
+		
+		if (len % 2) {
+			if (ior)
+				g_free (ior);
+			
+			return CORBA_OBJECT_NIL;
+		}
+		
+		tmpbuf = g_alloca (len / 2);
+		
+		for (i = 0; i < len; i += 2)
+			tmpbuf [i/2] = (g_ascii_xdigit_value (string [i]) << 4) |
+				g_ascii_xdigit_value (string [i + 1]);
+		
+		buf = giop_recv_buffer_use_encaps (tmpbuf, len / 2);
+		
+		if (ORBit_demarshal_object (&retval, buf, orb)) {
+			CORBA_exception_set_system (
 				ev,
 				ex_CORBA_MARSHAL,
 				CORBA_COMPLETED_NO);
-
-		retval = CORBA_OBJECT_NIL;
-	}
-
-	giop_recv_buffer_unuse (buf);
-
-	if (ior)
-		g_free (ior);
-
-	return retval;
+			
+			retval = CORBA_OBJECT_NIL;
+		}
+		
+		giop_recv_buffer_unuse (buf);
+		
+		if (ior)
+			g_free (ior);
+		
+		return retval;
+	} else {
+		return ORBit_object_by_corbaloc (orb, string, ev);
+	} 
 }
 
 void
@@ -1295,5 +1312,6 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBSimpleUIDs",      ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
 	{ "ORBDebugFlags",      ORBIT_OPTION_STRING,  &orbit_debug_options },
 	{ "ORBInitRef",         ORBIT_OPTION_KEY_VALUE,  &orbit_initref_list},
+/* 	{ "ORBCorbaloc",        ORBIT_OPTION_BOOLEAN, &orbit_use_corbaloc}, */
 	{ NULL,                 0,                    NULL },
 };

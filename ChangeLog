@@ -1,5 +1,25 @@
 2003-07-28  Frank Rehberger  <Frank.Rehberger@web.de>
 
+	* test/Makefile.am (noinst_PROGRAMS): add target test-corbaloc
+
+	* test/test-corbaloc.c: test verifies string->object
+	transformation from corbaloc strings
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_string_to_object):
+	provide corbaloc parsing
+
+	* src/orb/orb-core/Makefile.am (main_src): add corba-loc.c
+
+	* src/orb/orb-core/corba-loc.c: new module, provides OMG corbaloc
+	support
+
+	* src/orb/orb-core/corba-object.c (ORBit_object_to_corbaloc):
+	thread safe invocation of corbaloc functions
+	(ORBit_object_by_corbaloc): thread safe creation of object from
+	corbaloc string
+
+2003-07-28  Frank Rehberger  <Frank.Rehberger@web.de>
+
 	* src/orb/orb-core/iop-profiles.c (IOP_ObjectKey_dump): zero
 	padding in hex object key
 
