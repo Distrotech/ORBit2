@@ -1,3 +1,7 @@
+2002-05-27  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.5.0
+
 2002-05-24  Michael Meeks  <michael@ximian.com>
 
 	* src/linc.c (linc_init): do a plain g_type_init
