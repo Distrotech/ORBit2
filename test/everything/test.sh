@@ -6,7 +6,11 @@
 # We had issues creating this once, and it gives us a 'clean' slate.
 rm -Rf "/tmp/orbit-$USER"
 
-for params in '--ORBIIOPIPv4=0 --ORBIIOPUSock=1' '--ORBIIOPIPv4=1 --ORBIIOPUSock=0' ; do
+for params in '--ORBIIOPIPv4=0 --ORBIIOPUSock=1'		\
+	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0'		\
+	      '--ORBIIOPIPv4=0 --ORBIIOPUSock=1 --gen-imodule'	\
+	      '--ORBIIOPIPv4=1 --ORBIIOPUSock=0 --gen-imodule'
+do
 
     ./server $params &
 
