@@ -1,5 +1,10 @@
 2002-01-03  Mark McLoughlin  <mark@skynet.ie>
 
+	* test/test-performance.c: make global symbols static to
+	stop core dumps in my ldap libraries. Don't ask me :/
+
+2002-01-03  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/idl-compiler/orbit-idl-c-stubs.c: (cs_small_output_stub):
 	output local case code to check to see if the operation is
 	implemented and return NO_IMPLEMENT if not.
