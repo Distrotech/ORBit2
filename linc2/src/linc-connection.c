@@ -467,14 +467,14 @@ linc_connection_get_type (void)
 	if (!object_type) {
 		static const GTypeInfo object_info = {
 			sizeof (LINCConnectionClass),
-			(GBaseInitFunc) linc_connection_init,
+			(GBaseInitFunc) NULL,
 			(GBaseFinalizeFunc) NULL,
 			(GClassInitFunc) linc_connection_class_init,
 			NULL,           /* class_finalize */
 			NULL,           /* class_data */
 			sizeof (LINCConnection),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) NULL,
+			(GInstanceInitFunc) linc_connection_init,
 		};
       
 		object_type = g_type_register_static (G_TYPE_OBJECT,
