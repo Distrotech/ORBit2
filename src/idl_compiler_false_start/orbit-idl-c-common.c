@@ -183,27 +183,29 @@ cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf(ci->fh, "return (gpointer)(var + 1);\n");
   fprintf(ci->fh, "}\n\n");
 
-  fprintf(ci->fh, "%s *%s__alloc(void)\n", tname, tname);
-  fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "%s *retval;\n", tname);
-  fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));\n", tname, tname);
+  if(IDL_TYPE_STRUCT(tree).member_list) {
+    fprintf(ci->fh, "%s *%s__alloc(void)\n", tname, tname);
+    fprintf(ci->fh, "{\n");
+    fprintf(ci->fh, "%s *retval;\n", tname);
+    fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));\n", tname, tname);
 
-  for(sub = IDL_TYPE_STRUCT(tree).member_list; sub; sub = IDL_LIST(sub).next) {
-    IDL_tree memb, sub2;
+    for(sub = IDL_TYPE_STRUCT(tree).member_list; sub; sub = IDL_LIST(sub).next) {
+      IDL_tree memb, sub2;
 
-    memb = IDL_LIST(sub).data;
+      memb = IDL_LIST(sub).data;
 
-    if(orbit_cbe_type_is_fixed_length(IDL_MEMBER(memb).type_spec))
-      continue;
+      if(orbit_cbe_type_is_fixed_length(IDL_MEMBER(memb).type_spec))
+	continue;
 
-    for(sub2 = IDL_MEMBER(memb).dcls; sub2; sub2 = IDL_LIST(sub2).next)
-      fprintf(ci->fh, "memset(&(retval->%s), '\\0', sizeof(retval->%s));\n",
-	      IDL_IDENT(IDL_LIST(sub2).data).str,
-	      IDL_IDENT(IDL_LIST(sub2).data).str);
+      for(sub2 = IDL_MEMBER(memb).dcls; sub2; sub2 = IDL_LIST(sub2).next)
+	fprintf(ci->fh, "memset(&(retval->%s), '\\0', sizeof(retval->%s));\n",
+		IDL_IDENT(IDL_LIST(sub2).data).str,
+		IDL_IDENT(IDL_LIST(sub2).data).str);
+    }
+
+    fprintf(ci->fh, "return retval;\n");
+    fprintf(ci->fh, "}\n");
   }
-
-  fprintf(ci->fh, "return retval;\n");
-  fprintf(ci->fh, "}\n");
 
   g_free(tname);
 }
