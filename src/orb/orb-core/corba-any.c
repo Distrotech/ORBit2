@@ -543,7 +543,6 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
     *val = ALIGN_ADDRESS(*val, ORBIT_ALIGNOF_CORBA_POINTER);
     if(ORBit_decode_CORBA_TypeCode(*val, buf))
       return TRUE;
-    ORBit_RootObject_duplicate(*(CORBA_TypeCode *)*val);
     *val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
     break;
   case CORBA_tk_except:
@@ -667,22 +666,24 @@ ORBit_demarshal_arg(GIOPRecvBuffer *buf,
 }
 
 gboolean
-ORBit_demarshal_any(GIOPRecvBuffer *buf, CORBA_any *retval,
-		    gboolean dup_strings,
-		    CORBA_ORB orb)
+ORBit_demarshal_any (GIOPRecvBuffer *buf,
+		     CORBA_any      *retval,
+		     gboolean        dup_strings,
+		     CORBA_ORB       orb)
 {
-  gpointer val;
+	gpointer val;
 
-  CORBA_any_set_release(retval, CORBA_TRUE);
+	CORBA_any_set_release (retval, CORBA_TRUE);
 
-  if(ORBit_decode_CORBA_TypeCode(&retval->_type, buf))
-    return TRUE;
-  ORBit_RootObject_duplicate(retval->_type);
+	if (ORBit_decode_CORBA_TypeCode (&retval->_type, buf))
+		return TRUE;
 
-  val = retval->_value = ORBit_alloc_tcval(retval->_type, 1);
-  if(ORBit_demarshal_value(retval->_type, &val, buf, dup_strings, orb))
-    return TRUE;
-  return FALSE;
+	val = retval->_value = ORBit_alloc_tcval (retval->_type, 1);
+	if (ORBit_demarshal_value (retval->_type, &val,
+				   buf, dup_strings, orb))
+		return TRUE;
+
+	return FALSE;
 }
 
 gpointer

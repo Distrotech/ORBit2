@@ -155,29 +155,31 @@ CORBA_TypeCode retntypecode = TC_test_VariableLengthStruct;
 
 static
 CORBA_TypeCode 
-AnyServer_opTypeCode(PortableServer_Servant _servant,
-					 const CORBA_TypeCode inArg,
-					 CORBA_TypeCode * inoutArg,
-					 CORBA_TypeCode * outArg,
-					 CORBA_Environment * ev){
-  g_assert(CORBA_TypeCode_equal(inArg,TC_test_ArrayUnion,ev) );
-  g_assert(CORBA_TypeCode_equal(*inoutArg,TC_test_AnyServer,ev) );
+AnyServer_opTypeCode (PortableServer_Servant servant,
+		      const CORBA_TypeCode   inArg,
+		      CORBA_TypeCode        *inoutArg,
+		      CORBA_TypeCode        *outArg,
+		      CORBA_Environment     *ev)
+{
+	g_assert (CORBA_TypeCode_equal (inArg, TC_test_ArrayUnion, ev));
+	g_assert (CORBA_TypeCode_equal (*inoutArg, TC_test_AnyServer, ev));
   
-  CORBA_Object_release((CORBA_Object)*inoutArg,ev);
-  *inoutArg = (CORBA_TypeCode) CORBA_Object_duplicate((CORBA_Object)TC_test_TestException,ev);
-  *outArg = TC_test_AnEnum;
+	CORBA_Object_release ((CORBA_Object)*inoutArg, ev);
+	*inoutArg = (CORBA_TypeCode) CORBA_Object_duplicate (
+		(CORBA_Object) TC_test_TestException, ev);
+	*outArg = TC_test_AnEnum;
 
-  return TC_test_VariableLengthStruct; 
+	return TC_test_VariableLengthStruct; 
 }
 
 PortableServer_ServantBase__epv AnyServer_base_epv = {NULL,NULL,NULL};
 
 POA_test_AnyServer__epv AnyServer_epv = {
-  NULL,
-  AnyServer_opAnyLong,
-  AnyServer_opAnyString,
-  AnyServer_opAnyStruct,
-  AnyServer_opTypeCode,
+	NULL,
+	AnyServer_opAnyLong,
+	AnyServer_opAnyString,
+	AnyServer_opAnyStruct,
+	AnyServer_opTypeCode,
 };
 
 POA_test_AnyServer__vepv AnyServer_vepv = {&AnyServer_base_epv,&AnyServer_epv};
