@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <string.h>
 #include <resolv.h>
+#include <netdb.h>
 
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
@@ -33,7 +34,7 @@
 #include <linux/irda.h>
 #endif
 
-extern LINCProtocolInfo protocol_ents[];
+extern LINCProtocolInfo static_linc_protocols[];
 
 /*
  * linc_protocol_all:
@@ -48,7 +49,7 @@ extern LINCProtocolInfo protocol_ents[];
 LINCProtocolInfo * const
 linc_protocol_all (void)
 {
-	return protocol_ents;
+	return static_linc_protocols;
 }
 
 /*
@@ -65,9 +66,9 @@ linc_protocol_find (const char *name)
 {
 	int i;
 
-	for (i = 0; protocol_ents [i].name; i++) {
-		if (!strcmp (name, protocol_ents [i].name))
-			return &protocol_ents [i];
+	for (i = 0; static_linc_protocols [i].name; i++) {
+		if (!strcmp (name, static_linc_protocols [i].name))
+			return &static_linc_protocols [i];
 	}
 
 	return NULL;
@@ -87,9 +88,9 @@ linc_protocol_find_num (const int family)
 {
 	int i;
 
-	for (i = 0; protocol_ents [i].name; i++) {
-		if (family == protocol_ents [i].family)
-			return &protocol_ents [i];
+	for (i = 0; static_linc_protocols [i].name; i++) {
+		if (family == static_linc_protocols [i].family)
+			return &static_linc_protocols [i];
 	}
 
 	return NULL;
@@ -402,107 +403,350 @@ linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 	return NULL;
 }
 
-int
-linc_getaddrinfo (const char             *nodename,
-		  const char             *servname,
-		  const struct addrinfo  *hints,
-		  struct addrinfo       **res)
+/*
+ * linc_protocol_get_sockinfo_ipv46:
+ * @host: a #hostent structure describing the host.
+ * @port: the portnumber.
+ * @hostname: pointer by which the hostname string is returned.
+ * @portnum: pointer by which the port number string is returned.
+ *
+ * Generates two strings, returned through @hostname and @portnum, corresponding
+ * to @host and @port. On return @hostname should contain the canonical hostname 
+ * of the host and @portnum should contain the port number string.
+ *
+ * If @host is NULL, the local host name is used.
+ *
+ * Note: both @hostname and @service are allocated on the heap and should be
+ *       freed using g_free().
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
+static gboolean
+linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
+				  in_port_t        port,
+				  gchar          **hostname,
+				  char           **portnum)
 {
-  int i, rv = EAI_NONAME, tmprv;
-  gboolean keep_going;
 
-  for(keep_going = TRUE, i = 0; keep_going && protocol_ents[i].name; i++)
-    {
-      if(protocol_ents[i].getaddrinfo && (hints->ai_family == AF_UNSPEC || hints->ai_family == protocol_ents[i].family))
-	{
-	  char srvbuf[64];
-	  gboolean fakeserv = FALSE;
+	if (!host) {
+		char local_host[MAXHOSTNAMELEN];
 
-	  if(!servname && (hints->ai_flags & AI_PASSIVE))
-	    switch(hints->ai_family)
-	      {
-#if defined(AF_INET)
-	      case AF_INET:
-#endif
-#if defined(AF_INET6)
-	      case AF_INET6:
-#endif
-		strcpy(srvbuf, "0");
-		fakeserv = TRUE;
-		break;
-#if defined(AF_UNIX)
-	      case AF_UNIX: {
-                struct timeval t;
-		gettimeofday (&t, NULL);
-		g_snprintf(srvbuf, sizeof(srvbuf),
-			   "%s/linc-%x%x", linc_tmpdir,
-			   rand(), (guint)(t.tv_sec^t.tv_usec));
-#ifdef DEBUG
-		if (g_file_test (srvbuf, G_FILE_TEST_EXISTS))
-			g_warning ("'%s' already exists !", srvbuf);
-#endif
-		fakeserv = TRUE;
-		break;
-	      }
-#endif
-	      default:
-		break;
-	      }
+		if (gethostname (local_host, MAXHOSTNAMELEN) == -1)
+			return FALSE;
 
-	  tmprv = protocol_ents[i].getaddrinfo(nodename,
-					       fakeserv?srvbuf:servname,
-					       hints, res);
-	  switch(tmprv)
-	    {
-	    case EAI_ADDRFAMILY:
-	    case EAI_FAMILY:
-	    case EAI_NONAME:
-	      /* Maybe we have support for it in another routine */
-	      break;
-
-	    default:
-	      rv = tmprv;
-	      keep_going = FALSE;
-	      break;
-	    }
-	}
-    }
-
-  return rv;
-}
-
-int
-linc_getnameinfo (const struct sockaddr *sa,
-		  socklen_t              sa_len,
-		  char                  *host,
-		  size_t                 hostlen,
-		  char                  *serv,
-		  size_t                 servlen,
-		  int                    flags)
-{
-	int i, rv = -1;
-
-	for (i = 0; rv == -1 && protocol_ents [i].name; i++) {
-		if (protocol_ents [i].getnameinfo &&
-		    protocol_ents [i].family == sa->sa_family)
-			rv = protocol_ents [i].getnameinfo (
-				sa, sa_len, host, hostlen,
-				serv, servlen, flags);
+		host = gethostbyname (local_host);
 	}
 
-	return rv;
+	if (!host)
+		return FALSE;
+
+	if (hostname)
+		*hostname = g_strdup (host->h_name);
+
+	if (portnum) {
+		gchar tmpport[NI_MAXSERV];
+
+		g_snprintf (tmpport, NI_MAXSERV, "%d", ntohs (port));
+
+		*portnum = g_strdup (tmpport);
+	}
+
+	return TRUE;
 }
 
-/* Routines for AF_UNIX */
+/*
+ * linc_protocol_get_sockinfo_ipv4:
+ * @proto: the #LINCProtocolInfo structure for the IPv4 protocol.
+ * @sockaddr: a #sockaddr_in structure desribing the socket.
+ * @hostname: pointer by which the hostname string is returned.
+ * @portnum: pointer by which the port number string is returned.
+ *
+ * Generates two strings, returned through @hostname and @portnum, describing
+ * the socket address, @sockaddr. On return @hostname should contain the 
+ * canonical hostname of the host described in @sockaddr and @portnum should
+ * contain the port number of the socket described in @sockaddr.
+ *
+ * Note: both @hostname and @service are allocated on the heap and should be
+ *       freed using g_free().
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
+#ifdef AF_INET
+static gboolean
+linc_protocol_get_sockinfo_ipv4 (const LINCProtocolInfo  *proto,
+				 const struct sockaddr   *saddr,
+				 gchar                  **hostname,
+				 gchar                  **portnum)
+{
+	struct sockaddr_in *sa_in = (struct sockaddr_in  *)saddr;
+	struct hostent     *host = NULL;
+
+	g_assert (proto && saddr && saddr->sa_family == AF_INET);
+
+	if (sa_in->sin_addr.s_addr != INADDR_ANY) {
+		host = gethostbyaddr ((char *)&sa_in->sin_addr, 
+                                      sizeof (struct in_addr), AF_INET);
+		if (!host)
+			return FALSE;
+	}
+
+	return linc_protocol_get_sockinfo_ipv46 (host, sa_in->sin_port, 
+						 hostname, portnum);
+}
+#endif /* AF_INET */
+
+/*
+ * linc_protocol_get_sockinfo_ipv6:
+ * @proto: the #LINCProtocolInfo structure for the IPv6 protocol.
+ * @sockaddr: a #sockaddr_in structure desribing the socket.
+ * @hostname: pointer by which the hostname string is returned.
+ * @portnum: pointer by which the port number string is returned.
+ *
+ * Generates two strings, returned through @hostname and @portnum, describing
+ * the socket address, @sockaddr. On return @hostname should contain the 
+ * canonical hostname of the host described in @sockaddr and @portnum should
+ * contain the port number of the socket described in @sockaddr.
+ *
+ * Note: both @hostname and @service are allocated on the heap and should be
+ *       freed using g_free().
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
+#ifdef AF_INET6
+static gboolean
+linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
+				 const struct sockaddr   *saddr,
+				 gchar                  **hostname,
+				 gchar                  **portnum)
+{
+	struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)saddr;
+	struct hostent      *host;
+
+
+	g_assert (proto && saddr && saddr->sa_family == AF_INET6);
+
+	if (!memcmp (&sa_in6->sin6_addr, &in6addr_any, sizeof (struct in6_addr))) {
+
+		host = gethostbyaddr ((char *)&sa_in6->sin6_addr, 
+				      sizeof (struct in6_addr), AF_INET6);
+		if (!host)
+			return FALSE;
+	}
+
+	return linc_protocol_get_sockinfo_ipv46 (host, sa_in6->sin6_port, 
+						 hostname, portnum);
+}
+
+#endif /* AF_INET6 */
+
+/*
+ * linc_protocol_get_sockinfo_unix:
+ * @proto: a #LINCProtocolInfo structure.
+ * @sockaddr: a #sockaddr_un structure desribing the socket.
+ * @hostname: pointer by which the hostname string is returned.
+ * @service: pointer by which the sockets pathname string is returned.
+ *
+ * Generates two strings, returned through @hostname and @sock_path, describing
+ * the socket address, @sockaddr. On return @hostname should contain the 
+ * canonical hostname of the local host and @sock_path should contain the 
+ * path name of the unix socket described in @sockaddr.
+ *
+ * Note: both @hostname and @sock_path are allocated on the heap and should 
+ *       be freed using g_free().
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
+#ifdef AF_UNIX
+static gboolean
+linc_protocol_get_sockinfo_unix (const LINCProtocolInfo  *proto,
+				 const struct sockaddr   *saddr,
+				 gchar                  **hostname,
+				 gchar                  **sock_path)
+{
+	struct sockaddr_un *sa_un = (struct sockaddr_un *)saddr;
+
+	g_assert (proto && saddr && saddr->sa_family == AF_UNIX);
+
+	if (hostname) {
+		gchar hname[NI_MAXHOST];
+
+		if (gethostname (hname, NI_MAXHOST) == -1)
+			return FALSE;
+
+		*hostname = g_strdup (hname);
+	}
+
+	if (sock_path)
+		*sock_path = g_strdup (sa_un->sun_path);
+
+	return TRUE;
+}
+#endif /* AF_UNIX */
+
+/*
+ * linc_protocol_get_sockinfo_irda:
+ * @proto: a #LINCProtocolInfo structure.
+ * @sockaddr: a #sockaddr_irda structure desribing the socket.
+ * @hostname: 
+ * @service: 
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
+#ifdef AF_IRDA
+static boolean
+linc_protocol_get_sockinfo_irda (const LINCProtocolInfo  *proto,
+				 const struct sockaddr   *saddr,
+				 gchar                  **hostname,
+				 gchar                  **portnum)
+{
+	g_assert (proto && saddr && saddr->sa_family == AF_IRDA);
+
+	return FALSE;
+}
+#endif /* AF_IRDA */
+
+/*
+ * linc_protocol_get_sockinfo:
+ * @proto: a #LINCProtocolInfo structure.
+ * @sockaddr: a #sockadrr structure desribing the socket.
+ * @hostname: pointer by which the hostname string is returned.
+ * @service: pointer by which the service string is returned.
+ *
+ * Generates two strings, returned through @hostname and @service, describing
+ * the socket address, @sockaddr. On return @hostname should contain the 
+ * canonical hostname of the host described in @sockaddr and @service should
+ * contain the service descriptor(e.g. port number) of the socket described in 
+ * @sockaddr
+ *
+ * Note: both @hostname and @service are allocated on the heap and should be
+ *       freed using g_free().
+ *
+ * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
+ */
+gboolean
+linc_protocol_get_sockinfo (const LINCProtocolInfo  *proto,
+			    const struct sockaddr   *saddr,
+			    gchar                  **hostname,
+			    gchar                  **service)
+{
+	if (proto && proto->get_sockinfo)
+		return proto->get_sockinfo (proto, saddr, hostname, service);
+
+	return FALSE;
+}
+
+/*
+ * af_unix_destroy:
+ * @fd: file descriptor of the socket.
+ * @dummy: not used.
+ * @pathname: path name of the UNIX socket
+ *
+ * Removes the UNIX socket file.
+ */
 #ifdef AF_UNIX
 static void
-af_unix_destroy(int fd, const char *host_info, const char *serv_info)
+linc_protocol_unix_destroy (int         fd,
+			    const char *dummy,
+			    const char *pathname)
 {
-  unlink(serv_info);
+	unlink (pathname);
 }
-#endif
+#endif /* AF_UNIX */
 
-/* Routines for AF_IRDA */
+/*
+ * linc_protocol_tcp_setup:
+ * @fd: file descriptor of the socket.
+ * @cnx_flags: a #LINCConnectionOptions value.
+ *
+ * Sets the TCP_NODELAY option on the TCP socket.
+ *
+ * Note: this is not applied to SSL TCP sockets.
+ */
+#if defined(AF_INET) || defined(AF_INET6)
+static void
+linc_protocol_tcp_setup (int                   fd,
+			 LINCConnectionOptions cnx_flags)
+{
+#ifdef TCP_NODELAY
+	if (!(cnx_flags & LINC_CONNECTION_SSL)) {
+		struct protoent *proto;
+		int              on = 1;
+
+		proto = getprotobyname ("tcp");
+		if (!proto)
+			return;
+
+		setsockopt (fd, proto->p_proto, TCP_NODELAY, 
+		            &on, sizeof (on));
+	}
+#endif
+}
+#endif /* defined(AF_INET) || defined(AF_INET6) */
+
+static LINCProtocolInfo static_linc_protocols[] = {
+#if defined(AF_INET)
+	{
+	.name             = "IPv4",
+	.family           = AF_INET,
+	.addr_len         = sizeof (struct sockaddr_in),
+	.stream_proto_num = IPPROTO_TCP,
+	.flags            = 0,
+	.setup            = linc_protocol_tcp_setup,
+	.destroy          = NULL,
+	.get_sockaddr     = linc_protocol_get_sockaddr_ipv4,
+	.get_sockinfo     = linc_protocol_get_sockinfo_ipv4
+	},
+#endif
+#if defined(AF_INET6)
+	{ 
+	.name             = "IPv6",
+	.family           = AF_INET6,
+	.addr_len         = sizeof (struct sockaddr_in6),
+	.stream_proto_num = IPPROTO_TCP,
+	.flags            = 0,
+	.setup            = linc_protocol_tcp_setup,
+	.destroy          = NULL,
+	.get_sockaddr     = linc_protocol_get_sockaddr_ipv6,
+	.get_sockinfo     = linc_protocol_get_sockinfo_ipv6
+	},
+#endif
+#ifdef AF_UNIX
+	{
+	.name             = "UNIX",
+	.family           = AF_UNIX,
+	.addr_len         = sizeof (struct sockaddr_un),
+	.stream_proto_num = 0,
+	.flags            = LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND,
+	.setup            = NULL, 
+	.destroy          = linc_protocol_unix_destroy, 
+	.get_sockaddr     = linc_protocol_get_sockaddr_unix,
+	.get_sockinfo     = linc_protocol_get_sockinfo_unix
+	},
+#endif
+#ifdef AF_IRDA
+	{
+	.name             = "IrDA",
+	.family           = AF_IRDA,
+	.addr_len         = sizeof (struct sockaddr_irda),
+	.stream_proto_num = 0,
+	.flags            = LINC_PROTOCOL_NEEDS_BIND,
+	.setup            = NULL,
+	.destroy          = NULL,
+	.get_sockaddr     = linc_protocol_get_sockaddr_irda,
+	.get_sockinfo     = linc_protocol_get_sockinfo_irda
+	},
+#endif
+	{ .name = NULL }
+};
+
+/* 
+ * Routines for AF_IRDA 
+ * FIXME: These are left here only as a reference for implementing
+ *        linc_protocol_get_sockinfo_irda and 
+ *        linc_protocol_get_sockaddr_irda
+ *       
+ */
+#if 0
 #ifdef AF_IRDA
 
 #define MAX_IRDA_DEVICES 10
@@ -683,166 +927,5 @@ irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 
   return 0;
 }
-#endif
-
-static int
-sys_getaddrinfo (const char             *nodename,
-		 const char             *servname,
-		 const struct addrinfo  *hints,
-		 struct addrinfo       **res)
-{
-	int retval;
-
-	if (!nodename && !servname && hints)
-		servname = "0";
-
-	errno = 0;
-
-	retval = getaddrinfo (nodename, servname, hints, res);
-#ifdef DEBUG
-	if (errno)
-		perror ("In getaddrinfo ");
-#endif
-
-	return retval;
-}
-
-static int
-sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
-		char *host, size_t hostlen, char *serv, size_t servlen,
-		int flags)
-{
-  int retval;
-  char *fakehost = host;
-  socklen_t fakelen = hostlen;
-
-  switch(sa->sa_family)
-    {
-#if defined(AF_INET) || defined(AF_INET6)
-#ifdef AF_INET
-    case AF_INET:
-      if(sa->sa_family == AF_INET && host)
-	{
-	  struct sockaddr_in *sa4 = (struct sockaddr_in *)sa;
-	  if(sa4->sin_addr.s_addr == INADDR_ANY)
-	    {
-	      strcpy(host, "0.0.0.0");
-	      fakehost = NULL;
-	      fakelen = 0;
-	    }
-	}
-#endif
-#ifdef AF_INET6
-    case AF_INET6:
-#endif
-      if(sa->sa_family == AF_INET6 && host)
-	{
-	  struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
-	  struct in6_addr sa6addr = IN6ADDR_ANY_INIT;
-
-	  if(!memcmp(&sa6->sin6_addr, &sa6addr, sizeof(sa6addr)))
-	    {
-	      strcpy(host, "::");
-	      fakehost = NULL;
-	      fakelen = 0;
-	    }
-	}
-#endif
-    default:
-      retval = getnameinfo(sa, sa_len, fakehost, fakelen, serv, servlen, flags);
-      break;
-    }
-
-  /* Yet another bad hack. Just give me my daggone FQDN */
-  switch(sa->sa_family)
-    {
-#if defined(AF_INET) || defined(AF_INET6)
-#ifdef AF_INET
-    case AF_INET:
-#endif
-#ifdef AF_INET6
-    case AF_INET6:
-#endif
-      if(host && (!strcmp(host, "0.0.0.0") || !strcmp(host, "::")))
-	{
-	  struct addrinfo *ai, hints;
-	  gethostname(host, hostlen);
-	  hints.ai_flags = AI_CANONNAME;
-	  hints.ai_family = sa->sa_family;
-	  hints.ai_protocol = 0;
-
-	  if(!linc_getaddrinfo(host, NULL, &hints, &ai))
-	    {
-	      g_snprintf(host, hostlen, "%s", ai->ai_canonname);
-	      freeaddrinfo(ai);
-	    }
-	}
-      break;
-#endif
-    default:
-      break;
-    }
-
-  return retval;
-}
-
-static void
-tcp_setup(int fd, LINCConnectionOptions cnx_flags)
-{
-#ifdef TCP_NODELAY
-  if(!(cnx_flags & LINC_CONNECTION_SSL))
-    {
-      struct protoent *proto;
-      int on;
-      proto = getprotobyname("tcp");
-      if(!proto)
-	return;
-      on = 1;
-      setsockopt(fd, proto->p_proto, TCP_NODELAY, &on, sizeof(on));
-    }
-#endif
-}
-
-static LINCProtocolInfo protocol_ents[] = {
-#if defined(AF_INET)
-	{ "IPv4", AF_INET,
-	sizeof (struct sockaddr_in),
-	IPPROTO_TCP, 0, 
-	tcp_setup, NULL, 
-	sys_getaddrinfo,
-	sys_getnameinfo,
-	linc_protocol_get_sockaddr_ipv4
-	},
-#endif
-#if defined(AF_INET6)
-	{ "IPv6", AF_INET6, 
-	sizeof (struct sockaddr_in6),
-	IPPROTO_TCP, 0, 
-	tcp_setup, NULL, 
-	sys_getaddrinfo, 
-	sys_getnameinfo,
-	linc_protocol_get_sockaddr_ipv6
-	},
-#endif
-#ifdef AF_UNIX
-	{ "UNIX", AF_UNIX,
-	sizeof (struct sockaddr_un),
-	0, LINC_PROTOCOL_SECURE|LINC_PROTOCOL_NEEDS_BIND,
-	NULL, af_unix_destroy, 
-	sys_getaddrinfo, 
-	sys_getnameinfo,
-	linc_protocol_get_sockaddr_unix
-	},
-#endif
-#ifdef AF_IRDA
-	{ "IrDA",AF_IRDA,
-	sizeof (struct sockaddr_irda), 
-	0, LINC_PROTOCOL_NEEDS_BIND,
-	NULL, NULL,
-	irda_getaddrinfo,
-	irda_getnameinfo,
-	linc_protocol_get_sockaddr_irda
-	},
-#endif
-	{ NULL }
-};
+#endif /* AF_IRDA */
+#endif /* 0 */

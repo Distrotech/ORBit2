@@ -65,8 +65,8 @@ GType    linc_connection_get_type (void) G_GNUC_CONST;
 
 gboolean linc_connection_from_fd  (LINCConnection *cnx, int fd,
 				   const LINCProtocolInfo *proto,
-				   const char *remote_host_info,
-				   const char *remote_serv_info,
+				   char *remote_host_info,
+				   char *remote_serv_info,
 				   gboolean was_initiated,
 				   LINCConnectionStatus status,
 				   LINCConnectionOptions options);
