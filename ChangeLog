@@ -1,5 +1,29 @@
 2001-07-12  Mark McLoughlin <mark@skynet.ie>
 
+	* include/orbit/orb-core/corba-object.h,
+	  src/idl-compiler/orbit-idl-c-common.c,
+	  src/idl-compiler/orbit-idl-c-skels.c,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/poa/orbit-poa.h,
+	  src/orb/poa/poa.c:
+	add IInterface data for CORBA_object.
+
+	* include/orbit/orbit-types.h,
+	  include/orbit/poa/poa-types.h,
+	  include/orbit/poa/poa-basics.h: split out
+	some of poa-types.h into new poa-basics.h. Include
+	poa-basics.h from orbit-types.h.
+
+	* include/orbit/orb-core/corba-object-type.h,
+	  include/orbit/poa/poa-types.h,
+	  include/orbit/poa/poa.h,
+	  src/orb/orb-core/orbit-small.c,
+	  src/orb/poa/orbit-poa-export.h:
+	make ORBit_POAObject a pointer to ORBit_POAObject_type
+	instead of a struct.
+
+2001-07-12  Mark McLoughlin <mark@skynet.ie>
+
 	* include/orbit/orb-core/orbit-small.h,
 	  include/orbit/poa/poa-types.h,
 	  src/idl-compiler/orbit-idl-c-backend.h,

@@ -1,13 +1,6 @@
 #ifndef POA_TYPES_H
 #define POA_TYPES_H 1
 
-#if !defined(_PortableServer_Servant_defined)
-#define _PortableServer_Servant_defined 1
-typedef gpointer PortableServer_Servant;
-#else
-#error "Include mixup"
-#endif
-
 #define ORBit_LifeF_NeedPostInvoke      (1<<0)
 #define ORBit_LifeF_DoEtherealize       (1<<1)
 #define ORBit_LifeF_IsCleanup           (1<<2)
@@ -18,13 +11,13 @@ typedef gpointer PortableServer_Servant;
 #define ORBit_LifeF_Destroying          (1<<9)
 #define ORBit_LifeF_Destroyed           (1<<10)
 
-typedef struct {
+struct ORBit_POAObject_type {
   struct ORBit_RootObject_struct parent;
 
   /* The object is activated if servant is non-NULL */
-  PortableServer_Servant servant;
-  gpointer poa;
-  gpointer object_id;
+  PortableServer_Servant   servant;
+  PortableServer_POA       poa;
+  PortableServer_ObjectId *object_id;
 
   CORBA_Object objref;
 
@@ -34,52 +27,11 @@ typedef struct {
 
   guint16 life_flags;
   guint16 use_cnt; /* method invokations */
-} ORBit_POAObject;
+};
 
 #define ORBIT_SERVANT_TO_ORB(servant) \
   (((PortableServer_POA)ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant)->poa)->orb)
 
-typedef struct ORBit_POAInvocation ORBit_POAInvocation;
-
-#if !defined(ORBIT_DECL_PortableServer_POA) && !defined(_PortableServer_POA_defined)
-#define ORBIT_DECL_PortableServer_POA 1
-#define _PortableServer_POA_defined 1
-   typedef struct PortableServer_POA_type *PortableServer_POA;
-#endif
-
-typedef struct {
-  void *_private;
-  void (*finalize)(PortableServer_Servant servant, CORBA_Environment *ev);
-  PortableServer_POA (*default_POA)(PortableServer_Servant servant,
-				    CORBA_Environment *ev);
-} PortableServer_ServantBase__epv;
-
-typedef PortableServer_ServantBase__epv *PortableServer_ServantBase__vepv;
-
-typedef struct {
-  void *_private;
-  PortableServer_ServantBase__vepv *vepv;
-} PortableServer_ServantBase;
-
-typedef gshort ORBit_VepvIdx;
-
-typedef void (*ORBitSkeleton)(PortableServer_ServantBase *_ORBIT_servant,
-                              gpointer _ORBIT_recv_buffer,
-                              CORBA_Environment *ev,
-                              gpointer implementation);
-
-typedef void (*ORBitSmallSkeleton) (PortableServer_ServantBase *_ORBIT_servant,
-				    gpointer ret, gpointer *args,
-				    gpointer ctx, CORBA_Environment *ev,
-				    gpointer implementation);
-
-typedef ORBitSkeleton (*ORBit_impl_finder)(PortableServer_ServantBase *servant,
-					   gpointer _ORBIT_recv_buffer,
-					   gpointer *implementation);
-typedef ORBitSmallSkeleton (*ORBit_small_impl_finder)(PortableServer_ServantBase *servant,
-						      const char                 *method,
-						      gpointer                   *m_data,
-						      gpointer                   *implementation);
 typedef void (*ORBit_vepvmap_init)(ORBit_VepvIdx *map);
 
 typedef struct {
@@ -90,6 +42,7 @@ typedef struct {
   ORBit_vepvmap_init init_vepvmap;
   ORBit_VepvIdx*          vepvmap;
   int                     vepvlen;
+  ORBit_IInterface       *idata;
 } PortableServer_ClassInfo;
 
 
@@ -110,7 +63,7 @@ typedef struct {
 )
 #define ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant) (                               \
   ( (PortableServer_ServantBase *)(servant) )->_private == NULL ? NULL :          \
-    (ORBit_POAObject *)                                                           \
+    (ORBit_POAObject)                                                             \
     ( ( (GSList *)( (PortableServer_ServantBase *)(servant) )->_private )->data ) \
 )
 #define ORBIT_SERVANT_MAJOR_TO_EPVPTR(servant,major) 			\

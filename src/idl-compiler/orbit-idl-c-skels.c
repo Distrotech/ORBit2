@@ -832,12 +832,14 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	  id);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh,"  static PortableServer_ClassInfo class_info = {");
+
   if (rinfo->small_skels)
 	  fprintf(ci->fh, "NULL, (ORBit_small_impl_finder)&get_skel_small_%s, ", id);
   else
 	  fprintf(ci->fh, "(ORBit_impl_finder)&get_skel_%s, NULL, ", id);
-  fprintf(ci->fh,"\"%s\", &%s__classid, INIT_VEPVMAP_%s};\n",
-	  IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id, id);
+
+  fprintf(ci->fh,"\"%s\", &%s__classid, INIT_VEPVMAP_%s, NULL, 0, &%s__itype};\n",
+	  IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id, id, id);
 
   {
   	const char *finref = 

@@ -432,3 +432,169 @@ CORBA_Object__freekids(gpointer mem, gpointer dat)
 {
   return mem + sizeof(CORBA_Object);
 }
+
+/* 
+ * Arguments' Definitions.
+ */
+
+static ORBit_IArg CORBA_Object_is_a__arginfo[] = {
+   {
+   TC_CORBA_string, ORBit_I_ARG_IN, "logical_type_id"
+   },
+   {NULL, 0, NULL}
+};
+
+static ORBit_IArg CORBA_Object_is_equivalent__arginfo[] = {
+   {
+    TC_CORBA_Object, ORBit_I_ARG_IN, "other_object"
+   },
+   {NULL, 0, NULL}
+};
+
+static ORBit_IArg CORBA_Object_hash__arginfo[] = {
+   {
+    TC_CORBA_unsigned_long, 
+    ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE,
+    "maximum"
+   },
+   {NULL, 0, NULL}
+};
+
+static ORBit_IArg CORBA_Object_create_request__arginfo[] = {
+   {
+    TC_CORBA_Context, ORBit_I_ARG_IN, "ctx"
+   },
+   {
+    TC_CORBA_Identifier, ORBit_I_ARG_IN, "operation"
+   },
+   {
+    TC_CORBA_NVList, ORBit_I_ARG_IN, "arg_list"
+   },
+   {
+    TC_CORBA_NamedValue, ORBit_I_ARG_INOUT, "result"
+   },
+   {
+    TC_CORBA_Request, ORBit_I_ARG_OUT, "request"
+   },
+   {
+    TC_CORBA_Flags, 
+    ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE, 
+    "req_flag"
+   },
+   {NULL, 0, NULL}
+};
+
+static ORBit_IArg CORBA_Object_get_policy__arginfo[] = {
+   {
+    TC_CORBA_PolicyType,
+    ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE,
+    "policy_type"
+   },
+   {NULL, 0, NULL}
+};
+
+static ORBit_IArg CORBA_Object_set_policy_overrides__arginfo[] = {
+   {
+    TC_CORBA_PolicyList, ORBit_I_ARG_IN, "policies"
+   },
+   {
+    TC_CORBA_SetOverrideType, 
+    ORBit_I_ARG_IN | ORBit_I_COMMON_FIXED_SIZE,
+    "set_add"
+   },
+   {NULL, 0, NULL}
+};
+
+/* 
+ * Methods' Definitions.
+ */
+
+ORBit_IMethod CORBA_Object__imethods[] = {
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_InterfaceDef, "get_interface", 14, 0
+   },
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_boolean, "is_nil", 7, 
+    0 | ORBit_I_COMMON_FIXED_SIZE
+   },
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_Object, "duplicate", 10, 0
+   },
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    CORBA_OBJECT_NIL, "release", 8, 0
+   },
+   {
+    {1, 1, CORBA_Object_is_a__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_boolean, "is_a", 5,
+    0 | ORBit_I_COMMON_FIXED_SIZE
+   },
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_boolean, "non_existent", 13,
+    0 | ORBit_I_COMMON_FIXED_SIZE
+   },
+   {
+    {1, 1, CORBA_Object_is_equivalent__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_boolean, "is_equivalent", 14,
+    0 | ORBit_I_COMMON_FIXED_SIZE
+   },
+   {
+    {1, 1, CORBA_Object_hash__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_unsigned_long, "hash", 5,
+    0 | ORBit_I_COMMON_FIXED_SIZE
+   },
+   {
+    {6, 6, CORBA_Object_create_request__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    CORBA_OBJECT_NIL, "create_request", 15, 0
+   },
+   {
+    {1, 1, CORBA_Object_get_policy__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_Policy, "get_policy", 11, 0
+   },
+   {
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_DomainManagersList, "get_domain_managers", 20, 0
+   },
+   {
+    {2, 2, CORBA_Object_set_policy_overrides__arginfo, FALSE},
+    {0, 0, NULL, FALSE},
+    {0, 0, NULL, FALSE},
+    TC_CORBA_Object, "set_policy_overrides", 21, 0
+   }
+};
+
+/* 
+ * Interface Definition.
+ */
+
+ORBit_IInterface CORBA_Object__itype = {
+  "CORBA_Object", 
+  {12, 12, CORBA_Object__imethods, FALSE},
+  {0, 0, NULL, FALSE}
+};

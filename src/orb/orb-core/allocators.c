@@ -199,7 +199,10 @@ ORBit_freekids_via_TypeCode_T (CORBA_TypeCode tc,
   case CORBA_tk_objref:
     {
       CORBA_Object	*pval = mem;
+      /*
+       * FIXME: should we do this?
       ORBit_RootObject_release_T(*pval);
+       */
       *pval = 0;
       retval = ((guchar *)mem) + sizeof(*pval);
     }

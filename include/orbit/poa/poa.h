@@ -2,7 +2,7 @@
 #define POA_H 1
 
 #include <orbit/poa/poa-defs.h>
-
+#include <orbit/poa/poa-types.h>
 #include <orbit/poa/poa-policy.h>
 
 typedef struct {
@@ -69,9 +69,10 @@ typedef struct {
   POA_PortableServer_ServantLocator__vepv *vepv;
 } POA_PortableServer_ServantLocator;
 
+typedef struct ORBit_POAInvocation ORBit_POAInvocation;
 struct ORBit_POAInvocation {
-  ORBit_POAInvocation*                prev;
-  ORBit_POAObject*                    pobj;
+  ORBit_POAInvocation                *prev;
+  ORBit_POAObject                     pobj;
 };
 
 #include <orbit/poa/portableserver-poa-type.h>
@@ -82,7 +83,7 @@ void PortableServer_ServantBase__init(PortableServer_Servant p_servant,
 void PortableServer_ServantBase__fini(PortableServer_Servant p_servant,
 				      CORBA_Environment *ev);
 void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
-void ORBit_POAObject_post_invoke(    ORBit_POAObject *obj);
+void ORBit_POAObject_post_invoke(ORBit_POAObject obj);
 
 
 PortableServer_ObjectId *PortableServer_string_to_ObjectId(CORBA_char *str,
