@@ -122,14 +122,8 @@ dnl LINC_LIBS="`$LINC_CONFIG --libs`"
 dnl AC_SUBST(LINC_CFLAGS)
 dnl AC_SUBST(LINC_LIBS)
 
-AC_CHECK_HEADERS(pthread.h)
-if test $ac_cv_header_pthread_h = yes; then
-	THREADLIBS=gthread
-fi
-AC_SUBST(THREADLIBS)
-
 AM_PATH_GLIB_2_0(1.3.7,, AC_MSG_ERROR([*** GLIB 1.3.7 or better is required. The latest version of GLIB
-*** is always available from ftp://ftp.gtk.org/.]), gobject gmodule $THREADLIBS)
+*** is always available from ftp://ftp.gtk.org/.]), gobject gmodule)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GLIB_DEPLIBS)
