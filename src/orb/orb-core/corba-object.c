@@ -74,13 +74,7 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   ORBit_delete_profiles (&obj->forward_locations);
 
   if (obj->bypass_obj) {
-/* FIXME: Elliot needs to sort me out,
- * this used to be a RootObject ..., cf. poa.c
- * FIXME: Shameless leak.
- */
-#if 0
     ORBit_RootObject_release (obj->bypass_obj);
-#endif
   }
 
   g_free (obj);

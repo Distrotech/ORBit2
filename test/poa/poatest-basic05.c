@@ -166,6 +166,9 @@ poatest_run( PortableServer_POA rootpoa,
     POATEST_PRINT_EX("activate_object_with_id : ", &ev);
     return CORBA_OBJECT_NIL;
     }
+ /*
+  * Reference should still be valid.
+  */
 
  CORBA_free( objid );
 
@@ -182,9 +185,7 @@ poatest_run( PortableServer_POA rootpoa,
     return CORBA_OBJECT_NIL;
     }
 
- /*
-  * Reference should still be valid.
-  */
+ CORBA_Object_release( (CORBA_Object)child_poa, &ev );
 
  return poatest_obj;
  }

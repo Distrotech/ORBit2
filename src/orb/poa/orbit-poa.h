@@ -30,9 +30,6 @@ CORBA_boolean ORBit_POA_deactivate(PortableServer_POA poa,
 gboolean ORBit_POA_destroy(PortableServer_POA poa,
 			   CORBA_boolean etherealize_objects,
 			   CORBA_Environment *ev);
-void ORBit_POA_add_child(PortableServer_POA poa,
-			 PortableServer_POA child, 
-			 CORBA_Environment *ev);
 PortableServer_POA ORBit_POA_setup_root(CORBA_ORB orb, CORBA_Environment *ev);
 PortableServer_POA ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
 				 const PortableServer_POAManager manager,

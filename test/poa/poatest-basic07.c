@@ -139,5 +139,7 @@ poatest_run( PortableServer_POA rootpoa,
     return CORBA_OBJECT_NIL;
     }
 
+ CORBA_Object_release( (CORBA_Object)child_poa, &ev );
+
  return poatest_obj2;
  }

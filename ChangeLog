@@ -1,3 +1,24 @@
+2001-06-28  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/poa/poa-types.h,
+	  src/orb/orbit-init.c,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/orb-core/corba-orb.c,
+	  src/orb/poa/orbit-poa.h,
+	  src/orb/poa/poa.c: sorted out the POA and
+	POAObject ref counting mess - I hope ;)
+
+	* src/orb/poa/poa-servants.c: remove assertions -
+	not valid in MULT_ID case.
+
+	* test/poa/poatest-basic-shell.c,
+	  test/poa/poatest-basic04.c,
+	  test/poa/poatest-basic05.c,
+	  test/poa/poatest-basic06.c,
+	  test/poa/poatest-basic07.c,
+	  test/poa/poatest-basic08.c: release more refs,
+	and invoke orb->destroy and orb->shutdown.
+
 2001-06-28  Michael Meeks  <michael@ximian.com>
 
 	* include/orbit/util/basic_types.h: include glib/gunicode.h,
