@@ -15,6 +15,7 @@ oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, co
   retval->up = parent;
   retval->type = type;
   retval->name = (char *)name;
+  retval->arch_head_align = retval->arch_tail_align = retval->iiop_head_align = retval->iiop_tail_align = 1;
 
   if(parent)
     retval->flags |= (parent->flags & (MN_LOOPED));
@@ -335,18 +336,21 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
       /* IDL_tree ident = IDL_NODE_TYPE(tree)==IDLN_TYPE_STRUCT 
        * ? IDL_TYPE_STRUCT(tree).ident : IDL_EXCEPT_DCL(tree).ident; */
       gboolean isRecur = IDL_tree_is_recursive( tree, /*hasRecur*/NULL);
-      if ( isRecur ) {
-	  retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
-     	  retval->u.complex_info.type = CX_RECURSIVE;
-    	  retval->tree = tree;
+      if ( isRecur && tree->data) {
+	return tree->data;
       } else {
 	  retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
+	  retval->tree = tree;
+	  if(isRecur)
+	    retval->flags |= MN_RECURSIVE_TOP;
+	  tree->data = retval;
 	  for(curitem = IDL_TYPE_STRUCT(tree).member_list; curitem; curitem = IDL_LIST(curitem).next) {
 	    OIDL_Marshal_Node *newnode
 	     = marshal_populate(IDL_LIST(curitem).data, retval, is_out, pi);
 	    retval->u.set_info.subnodes 
 	      = g_slist_append(retval->u.set_info.subnodes, newnode);
 	  }
+	  tree->data = NULL;
       }
     }
     retval->tree = tree;
@@ -355,13 +359,14 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
     {
       IDL_tree ntmp;
       gboolean isRecur = IDL_tree_is_recursive( tree, /*hasRecur*/NULL);
-      if ( isRecur ) {
-	  retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
-     	  retval->u.complex_info.type = CX_RECURSIVE;
-    	  retval->tree = tree;
+      if ( isRecur && tree->data) {
+	return tree->data;
       } else {
 	  retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
 	  retval->tree = tree;
+	  if(isRecur)
+	    retval->flags |= MN_RECURSIVE_TOP;
+	  tree->data = retval;
 	  retval->u.switch_info.discrim = marshal_populate(IDL_TYPE_UNION(tree).switch_type_spec, retval, is_out, pi);
 	  retval->u.switch_info.discrim->name = "_d";
 	  for(ntmp = IDL_TYPE_UNION(tree).switch_body; ntmp; ntmp = IDL_LIST(ntmp).next) {
@@ -370,6 +375,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
 	    retval->u.switch_info.cases 
 	      = g_slist_append(retval->u.switch_info.cases, newnode);
 	  }
+	  tree->data = NULL;
       }
     }
     break;
@@ -380,6 +386,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
       OIDL_Marshal_Node *tnode = NULL; /* Quiet gcc */
 
       retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
+      
       for(curitem = IDL_MEMBER(tree).dcls; curitem; curitem = IDL_LIST(curitem).next) {
 	curnode = IDL_LIST(curitem).data;
 

@@ -31,6 +31,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
 
   ci.do_impl_hack = 1;
   ci.do_skel_defs = rinfo->do_skel_defs;
+  ci.ctxt = oidl_marshal_context_new(tree->tree);
   for(i = 0; i < 5; i++) {
     if( (1 << i) & rinfo->enabled_passes) {
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
@@ -55,6 +56,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
       pclose(ci.fh);
     }
   }
+  oidl_marshal_context_free(ci.ctxt);
   g_string_free(ci.ext_dcls,TRUE);
 }
 

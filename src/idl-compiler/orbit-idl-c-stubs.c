@@ -87,7 +87,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   if(IDL_OP_DCL(tree).raises_expr) {
     IDL_tree curitem;
-    fprintf(ci->fh, "static const ORBit_exception_demarshal_info _ORBIT_user_exceptions[] = { ");
+    fprintf(ci->fh, "const ORBit_exception_demarshal_info _ORBIT_user_exceptions[] = { ");
     for(curitem = IDL_OP_DCL(tree).raises_expr; curitem;
 	curitem = IDL_LIST(curitem).next) {
       char *id;
@@ -103,10 +103,10 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   if(IDL_OP_DCL(tree).context_expr) {
     IDL_tree curitem;
-    fprintf(ci->fh, "static const ORBit_ContextMarshalItem _context_items[] = {\n");
+    fprintf(ci->fh, "const ORBit_ContextMarshalItem _context_items[] = {\n");
 
     for(curitem = IDL_OP_DCL(tree).context_expr; curitem; curitem = IDL_LIST(curitem).next) {
-      fprintf(ci->fh, "{%d, \"%s\"},\n", strlen(IDL_STRING(IDL_LIST(curitem).data).value) + 1,
+      fprintf(ci->fh, "{%lu, \"%s\"},\n", strlen(IDL_STRING(IDL_LIST(curitem).data).value) + 1,
 	      IDL_STRING(IDL_LIST(curitem).data).value);
     }
     fprintf(ci->fh, "};\n");
@@ -163,10 +163,6 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "return %s;\n}\n", IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval":"");
   }
 
-  /* Ensure that the compiler thinks _ORBIT_retval is initialized */
-  if (IDL_OP_DCL(tree).op_type_spec)
-	  fprintf (ci->fh, "if (0) return *(&_ORBIT_retval);\n");
-
   fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
@@ -181,11 +177,11 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "_ORBIT_request_id = GPOINTER_TO_UINT(alloca(0));\n");
 
   fprintf(ci->fh, "{ /* marshalling */\n");
-  fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%d]; } _ORBIT_operation_name_data = { %d, \"%s\" };\n",
+  fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%lu]; } _ORBIT_operation_name_data = { %lu, \"%s\" };\n",
 	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
 	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1,
 	  IDL_IDENT(IDL_OP_DCL(tree).ident).str);
-  fprintf(ci->fh, "static const struct iovec _ORBIT_operation_vec = {(gpointer)&_ORBIT_operation_name_data, %d};\n",
+  fprintf(ci->fh, "const struct iovec _ORBIT_operation_vec = {(gpointer)&_ORBIT_operation_name_data, %lu};\n",
 	  sizeof(CORBA_unsigned_long) +
 	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1);
 
