@@ -27,13 +27,13 @@
 #include "IDLBoolean.hh"
 
 string
-IDLBoolean::get_c_typename () const
+IDLBoolean::get_fixed_c_typename () const
 {
 	return "CORBA_boolean";
 }
 
 string
-IDLBoolean::get_cpp_typename () const
+IDLBoolean::get_fixed_cpp_typename () const
 {
 	return IDL_CORBA_NS "::Boolean";
 }

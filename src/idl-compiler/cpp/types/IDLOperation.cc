@@ -166,16 +166,16 @@ IDLOperation::skel_arglist_get () const
 	     i != m_parameterinfo.end (); i++)
 	{
 		retval += i->type->skel_decl_arg_get (i->id, i->direction);
-		retval += ',';
+		retval += ", ";
 	}
 
-	retval += "::CORBA_Environment *_ev":
+	retval += "::CORBA_Environment *_ev";
 
 	return retval;
 }
 
 string
-ILDOperation::skel_decl_proto () const
+IDLOperation::skel_decl_proto () const
 {
 	return skel_ret_get () + " _skel_" + get_c_identifier () +
 		" (" + skel_arglist_get () + ")";
@@ -242,8 +242,8 @@ IDLOperation::skel_do_call (ostream &ostr,
 
 	// Catch and report unknown exceptions
 	ostr << indent++ << "catch (...) {" << endl;
-	ostr << indent << "::orbitcpp::error (\"unknown exception in skeleton\");" << endl
-	ostr << --indent << "}";
+	ostr << indent << "::orbitcpp::error (\"unknown exception in skeleton\");" << endl;
+	ostr << --indent << "}" << endl;
 }
 
 void
