@@ -4,7 +4,10 @@
 #include <orbit/GIOP/giop-types.h>
 #include <linc/linc.h>
 #include <orbit/GIOP/giop-server.h>
-#include <netdb.h>
+
+#ifndef G_OS_WIN32
+#  include <netdb.h>		/* XXX really needed? */
+#endif
 
 G_BEGIN_DECLS
 
