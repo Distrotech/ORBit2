@@ -1,3 +1,7 @@
+2002-10-18  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.7.0
+
 2002-10-14  Marcus Brinkmann <Marcus.Brinkmann@ruhr-uni-bochum.de>
 
 	* src/linc-protocols.c (linc_set_tmpdir), 
