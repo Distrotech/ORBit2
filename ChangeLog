@@ -1,3 +1,9 @@
+2002-06-12  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_real_state_changed): fix a
+	logic silly.
+
 2002-06-11  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c
