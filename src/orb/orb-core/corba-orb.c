@@ -503,6 +503,31 @@ CORBA_ORB_create_struct_tc (CORBA_ORB                    _obj,
   return NULL;
 }
 
+static void
+copy_case_value (CORBA_long *dest,
+		 CORBA_any  *src)
+{
+        switch (src->_type->kind) {
+        case CORBA_tk_ulong:
+        case CORBA_tk_long:
+        case CORBA_tk_enum:
+                *dest = *(CORBA_long *) src->_value;
+                break;
+        case CORBA_tk_ushort:
+        case CORBA_tk_short:
+                *dest = *(CORBA_short *) src->_value;
+                break;
+        case CORBA_tk_char:
+        case CORBA_tk_boolean:
+        case CORBA_tk_octet:
+                *dest = *(CORBA_octet *) src->_value;
+                break;
+        default:
+		g_assert_not_reached ();
+		break;
+        }
+}
+
 CORBA_TypeCode
 CORBA_ORB_create_union_tc (CORBA_ORB                   _obj,
 			   const CORBA_char           *id,
@@ -529,7 +554,7 @@ CORBA_ORB_create_union_tc (CORBA_ORB                   _obj,
   if(tc->subnames==NULL)
     goto subnames_alloc_failed;
 
-  tc->sublabels=g_new0(CORBA_any, members->_length);
+  tc->sublabels=g_new0(CORBA_long, members->_length);
   if(tc->sublabels == NULL)
     goto sublabels_alloc_failed;
 
@@ -544,7 +569,7 @@ CORBA_ORB_create_union_tc (CORBA_ORB                   _obj,
     CORBA_UnionMember *mem=(CORBA_UnionMember *)&(members->_buffer[i]);
 
     g_assert(&(mem->label)!=NULL);
-    memcpy(&(tc->sublabels[i]), &(mem->label), (size_t)sizeof(CORBA_any));
+    copy_case_value (&tc->sublabels [i], &mem->label);
     g_assert(&(mem->type)!=NULL);
     tc->subtypes[i] = ORBit_RootObject_duplicate(mem->type);
     tc->subnames[i]=g_strdup(mem->name);

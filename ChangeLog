@@ -1,5 +1,25 @@
 2002-01-22  Mark McLoughlin  <mark@skynet.ie>
 
+	* include/orbit/orb-core/corba-typecode.h: change the
+	sublabels member to a CORBA_long *.
+
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	(orbit_output_tcstruct_anon_sublabels_array),
+	(orbit_output_tcstruct_sublabels), (cbe_tc_generate):
+	output the array.
+
+	* src/orb/orb-core/corba-any.c: (ORBit_get_union_tag):
+	simplify the discrim compare.
+
+	* src/orb/orb-core/corba-orb.c: (copy_case_value): impl.
+	(CORBA_ORB_create_union_tc): don't copy the whole any, just
+	the value.
+
+	* src/orb/orb-core/corba-typecode.c: (tc_enc_tk_union),
+	(tc_dec_tk_union), (typecode_equiv_internal): upd.
+
+2002-01-22  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/idl-compiler/orbit-idl-utils.c:
 	(orbit_idl_check_oneway_op): impl to check if oneways have
 	returns or outs/inouts.

@@ -317,23 +317,23 @@ orbit_output_tcstruct_anon_subtypes_array (FILE     *fh,
 	}
 }
 
-static void
+static int
 orbit_output_tcstruct_anon_sublabels_array (FILE     *fh, 
 					    IDL_tree  node,
-					    int       sublabels_id,
-					    int       union_sublabels_array_ctr)
+					    int       sublabels_id)
 {
 	IDL_tree l;
+	int      default_index = -1;
 
 	switch (IDL_NODE_TYPE (node)) {
 	case IDLN_TYPE_UNION: {
 		char *tmpstr;
-		int   n = 0;
+		int   index = 0;
 
 		if (!IDL_TYPE_UNION (node).switch_body)
 			break;
 
-		fprintf (fh, "static const CORBA_any anon_sublabels_array%d[] = {", sublabels_id);
+		fprintf (fh, "static const CORBA_long anon_sublabels_array%d[] = {", sublabels_id);
 
 		tmpstr = orbit_cbe_get_typespec_str (IDL_TYPE_UNION (node).switch_type_spec);
 		for (l = IDL_TYPE_UNION (node).switch_body; l; l = IDL_LIST (l).next) {
@@ -342,17 +342,16 @@ orbit_output_tcstruct_anon_sublabels_array (FILE     *fh,
 			g_assert (IDL_NODE_TYPE (IDL_LIST (l).data) == IDLN_CASE_STMT);
 
 			for (label = IDL_CASE_STMT (IDL_LIST (l).data).labels; label;
-			     label = IDL_LIST (label).next) {
+			     label = IDL_LIST (label).next, index++) {
 
 				if (IDL_LIST (label).data) {
-					fprintf (fh, "{(CORBA_TypeCode)&TC_%s_struct, ", tmpstr);
-					fprintf (fh, "(gpointer)&anon_sublabel_values_array");
-					fprintf (fh, "%d[%d], CORBA_FALSE}", union_sublabels_array_ctr, n);
-					n++;
+					fprintf (fh, "(CORBA_long) ");
+
+					orbit_cbe_write_const (fh, IDL_LIST (label).data);
 				}
 				else { /* default case */
-					fprintf (fh, "{(CORBA_TypeCode)&TC_CORBA_octet_struct, ");
-					fprintf (fh, "(int *)&ORBit_zero_int, CORBA_FALSE}");
+					fprintf (fh, "-1");
+					default_index = index;
 				}
 
 				if (IDL_LIST (label).next || IDL_LIST (l).next)
@@ -368,6 +367,8 @@ orbit_output_tcstruct_anon_sublabels_array (FILE     *fh,
 	default:
 		break;
 	}
+
+	return default_index;
 }
 
 static void
@@ -691,7 +692,7 @@ orbit_output_tcstruct_sublabels (FILE *fh, IDL_tree node, int sublabels_id)
 {
 	switch (IDL_NODE_TYPE (node)) {
 	case IDLN_TYPE_UNION:
-		fprintf (fh, "(CORBA_any *)anon_sublabels_array%d", sublabels_id);
+		fprintf (fh, "(CORBA_long *)anon_sublabels_array%d", sublabels_id);
 		break;
 	default:
 		fprintf (fh, "NULL");
@@ -858,10 +859,8 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 {
 	CBETCGenInfo  subtci;
 	IDL_tree      curitem;
-	int           n;
 	char         *ctmp;
 	int           union_default_index = -1,
-		      union_sublabels_array_ctr = random_id++,
 		      subnames_id  = random_id++,
 		      subtypes_id  = random_id++,
 		      sublabels_id = random_id++;
@@ -921,47 +920,15 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 
 		cbe_tc_generate (ci, &subtci);
 
-		tci->substructname = ctmp; /* XXX memory leak */
-	}
-
-	/* Do magic here - make some values to be used in the anys of sublabels */
-	if (IDL_NODE_TYPE (tci->ts) == IDLN_TYPE_UNION &&
-	    IDL_TYPE_UNION (tci->ts).switch_body) {
-		ctmp = orbit_cbe_get_typespec_str (IDL_TYPE_UNION (tci->ts).switch_type_spec);
-		union_sublabels_array_ctr = random_id++;
-		fprintf (ci->fh, "static const %s anon_sublabel_values_array%d[] = {", 
-			 ctmp, union_sublabels_array_ctr);
-		g_free (ctmp);
-
-		n = 0;
-		for (curitem = IDL_TYPE_UNION (tci->ts).switch_body; curitem;
-		     curitem = IDL_LIST (curitem).next) {
-			IDL_tree curlabel;
-
-			g_assert (IDL_NODE_TYPE (IDL_LIST (curitem).data) == IDLN_CASE_STMT);
-
-			for (curlabel = IDL_CASE_STMT (IDL_LIST (curitem).data).labels; curlabel;
-			     curlabel = IDL_LIST (curlabel).next, n++) {
-
-				if (!IDL_LIST (curlabel).data) { /* default case */
-					union_default_index = n;
-					continue;
-				}
-
-				orbit_cbe_write_const (ci->fh, IDL_LIST (curlabel).data);
-
-				if (IDL_LIST (curlabel).next || IDL_LIST (curitem).next)
-					fprintf (ci->fh, ", ");
-			}
-		}
-		fprintf (ci->fh, "};\n");
+		tci->substructname = ctmp; /* FIXME: memory leak */
 	}
 
 	orbit_output_tcstruct_anon_subnames_array  (ci->fh, tci->ts, subnames_id);
 	orbit_output_tcstruct_anon_subtypes_array  (ci->fh, tci->ts, subtypes_id,
 						    tci->substructname);
-	orbit_output_tcstruct_anon_sublabels_array (ci->fh, tci->ts, sublabels_id,
-						    union_sublabels_array_ctr);
+
+	union_default_index = orbit_output_tcstruct_anon_sublabels_array (
+					ci->fh, tci->ts, sublabels_id);
 
 	if (!strncmp (tci->structname, "anon", 4))
 		fprintf (ci->fh, "static ");
