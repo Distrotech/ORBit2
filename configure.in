@@ -35,7 +35,6 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE(ORBit2, $ORBIT_VERSION, no-define)
 
-AC_MSG_WARN([host is $host])
 case "$host" in
   *-*-mingw*)
     os_win32=yes
