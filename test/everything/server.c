@@ -18,6 +18,8 @@
  * Author: Phil Dawes <philipd@users.sourceforge.net>
  */
 
+#undef DO_HARDER_SEGV
+
 #include "everything.h"
 #include <stdio.h>
 #include <string.h>
@@ -46,22 +48,18 @@ PortableServer_POA global_poa;
 #include "deadReference.c"
 #include "pingServer.c"
 
-/* Servant class */
-
 typedef struct {
 	POA_test_TestFactory baseServant;
 
-	test_BasicServer basicServerRef;
-	test_StructServer structServerRef;
-	test_SequenceServer sequenceServerRef;
-	test_UnionServer unionServerRef;
-	test_ArrayServer arrayServerRef;
-	test_AnyServer anyServerRef;
-	test_ContextServer contextServerRef;
+	test_BasicServer     basicServerRef;
+	test_StructServer    structServerRef;
+	test_SequenceServer  sequenceServerRef;
+	test_UnionServer     unionServerRef;
+	test_ArrayServer     arrayServerRef;
+	test_AnyServer       anyServerRef;
+	test_ContextServer   contextServerRef;
+	GSList              *pingPongServerRefs;
 } test_TestFactory_Servant;
-
-
-/* Methods */
 
 static test_BasicServer
 TestFactory_getBasicServer (PortableServer_Servant servant,
@@ -142,11 +140,20 @@ static test_PingPongServer
 TestFactory_createPingPongServer (PortableServer_Servant servant,
 				  CORBA_Environment     *ev)
 {
-	CORBA_Object obj;
+	test_PingPongServer obj;
 
 	obj = create_object (
 		global_poa, POA_test_PingPongServer__init,
 		create_ping_pong_servant (), ev);
+
+	if (servant) {
+		test_TestFactory_Servant *this;
+
+		this = (test_TestFactory_Servant*) servant;
+
+		this->pingPongServerRefs = g_slist_prepend (
+			this->pingPongServerRefs, obj);
+	}
 
 	return CORBA_Object_duplicate (obj, ev);
 }
@@ -173,9 +180,11 @@ TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 	obj = create_object (poa, POA_test_DeadReferenceObj__init,
 			     &DeadReferenceObj_servant, ev);
 
-	/*
-	 * Note: Not duping - ORB will free it and reference should dangle.
-	 */
+	CORBA_Object_release ((CORBA_Object) poa, ev);
+	CORBA_Object_release ((CORBA_Object) poa_current, ev);
+
+	/* Note: Not duping - ORB will free it and reference
+	 * should dangle. */
 	return obj;
 }
 
@@ -184,8 +193,12 @@ TestFactory_segv (PortableServer_Servant servant,
 		  const CORBA_char      *when,
 		  CORBA_Environment     *ev)
 {
+#ifdef DO_HARDER_SEGV
 	/* Emulate a SegV */
 	exit (0);
+#else
+	g_main_loop_quit (linc_loop);
+#endif
 
 	return CORBA_string_dup ("I'm dead");
 }
@@ -194,15 +207,22 @@ static void
 test_TestFactory__fini (PortableServer_Servant  servant,
 			CORBA_Environment      *ev)
 {
-	test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
+	GSList                   *l;
+	test_TestFactory_Servant *this;
 
-	CORBA_Object_release (this->basicServerRef,ev);
-	CORBA_Object_release (this->structServerRef,ev);
-	CORBA_Object_release (this->sequenceServerRef,ev);
-	CORBA_Object_release (this->unionServerRef,ev);
-	CORBA_Object_release (this->arrayServerRef,ev);
-	CORBA_Object_release (this->anyServerRef,ev);
-	CORBA_Object_release (this->contextServerRef,ev);
+	this = (test_TestFactory_Servant*) servant;
+
+	CORBA_Object_release (this->basicServerRef, ev);
+	CORBA_Object_release (this->structServerRef, ev);
+	CORBA_Object_release (this->sequenceServerRef, ev);
+	CORBA_Object_release (this->unionServerRef, ev);
+	CORBA_Object_release (this->arrayServerRef, ev);
+	CORBA_Object_release (this->anyServerRef, ev);
+	CORBA_Object_release (this->contextServerRef, ev);
+
+	for (l = this->pingPongServerRefs; l; l = l->next)
+		CORBA_Object_release (l->data, ev);
+	g_slist_free (this->pingPongServerRefs);
 }
 
 
@@ -325,6 +345,8 @@ test_TestFactory__init (PortableServer_Servant servant,
 		poa, POA_test_ContextServer__init,
 		&ContextServer_servant, ev);
 
+	this->pingPongServerRefs = NULL;
+
 	POA_test_TestFactory__init (
 		(PortableServer_ServantBase *) servant, ev);
 }
@@ -431,7 +453,7 @@ test_TestFactory_Servant servant;
 	g_assert (factory != CORBA_OBJECT_NIL);
 
 	/* a quick local test */
-	objref = test_TestFactory_getBasicServer (factory,ev);
+	objref = test_TestFactory_getBasicServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (objref != CORBA_OBJECT_NIL);
 	g_assert (CORBA_Object_is_a (objref, "IDL:orbit/test/BasicServer:1.0", ev));
@@ -441,12 +463,13 @@ test_TestFactory_Servant servant;
 	fprintf (stderr, "Local server test passed\n");
 
 #ifndef _IN_CLIENT_
-	if (!dump_ior (global_orb, "iorfile", ev)) {
+	if (!dump_ior (global_orb, "iorfile", ev))
 		CORBA_ORB_run (global_orb, ev);
-		return 0;
-	}
 
 	CORBA_Object_release ((CORBA_Object) global_poa, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	CORBA_ORB_destroy (global_orb, ev);
@@ -456,7 +479,7 @@ test_TestFactory_Servant servant;
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	
 	CORBA_exception_free (ev);
-	return 1;
+	return 0;
 #else
 	return factory;
 #endif

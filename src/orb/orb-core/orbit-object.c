@@ -28,7 +28,7 @@ ORBit_RootObject_shutdown (void)
 
 void
 ORBit_RootObject_init (ORBit_RootObject obj,
-		       const ORBit_RootObject_Interface * interface)
+		       const ORBit_RootObject_Interface *interface)
 {
 	if (!ORBit_RootObject_lifecycle_lock) /* No locking */
 		alive_root_objects++;

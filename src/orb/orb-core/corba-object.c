@@ -97,19 +97,18 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	if (obj->profile_list)
 		g_hash_table_remove (objrefs, obj);
 
-	if (obj->connection) {
-/*    g_warning("Release object '%p's connection", obj); */
-		giop_connection_close (obj->connection);
-		g_object_unref (G_OBJECT (obj->connection));
-	}
-
 	ORBit_free_T (obj->object_key);
 
 	IOP_delete_profiles (&obj->profile_list);
 	IOP_delete_profiles (&obj->forward_locations);
 
-	if (obj->adaptor_obj)
-		ORBit_RootObject_release_T (obj->adaptor_obj);
+	ORBit_POA_object_shutdown (obj->adaptor_obj);
+	
+	if (obj->connection) {
+/*    g_warning("Release object '%p's connection", obj); */
+		giop_connection_close (obj->connection);
+		g_object_unref (G_OBJECT (obj->connection));
+	}
 
 	p_free (obj, struct CORBA_Object_type);
 }
@@ -358,8 +357,8 @@ CORBA_Object_release (CORBA_Object        obj,
 }
 
 CORBA_boolean
-CORBA_Object_non_existent(CORBA_Object       obj,
-			  CORBA_Environment *ev)
+CORBA_Object_non_existent (CORBA_Object       obj,
+			   CORBA_Environment *ev)
 {
 	ORBit_OAObject adaptor_obj;
 

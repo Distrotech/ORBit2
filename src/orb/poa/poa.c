@@ -115,7 +115,7 @@ ORBit_POACurrent_get_object (PortableServer_Current  obj,
 		return NULL;
 	}
 
-	return (ORBit_POAObject)obj->orb->current_invocations->data;
+	return (ORBit_POAObject) obj->orb->current_invocations->data;
 }
 
 CORBA_unsigned_long
@@ -206,16 +206,16 @@ remove_cb (PortableServer_ObjectId *oid,
 	   gpointer                 dummy)
 {
 	if (pobj->life_flags & ORBit_LifeF_Destroyed) {
-		g_free (pobj);
+		p_free (pobj, struct ORBit_POAObject_type);
 		return TRUE;
 	}
 	return FALSE;
 }
 
 gboolean
-ORBit_POA_is_inuse(PortableServer_POA poa,
-		   CORBA_boolean consider_children,
-		   CORBA_Environment *ev)
+ORBit_POA_is_inuse (PortableServer_POA poa,
+		    CORBA_boolean      consider_children,
+		    CORBA_Environment *ev)
 {
 	if (poa->use_cnt > 0) 
 		return CORBA_TRUE;
@@ -308,9 +308,7 @@ ORBit_POA_oid_to_obj (PortableServer_POA             poa,
 {
 	ORBit_POAObject pobj;
 
-	/*
-	 * FIXME, FIXME, FIXME
-	 */
+	/* FIXME, FIXME, FIXME */
 	if (poa->p_servant_retention != PortableServer_RETAIN) {
 		if (ev)
 			CORBA_exception_set (
@@ -337,8 +335,10 @@ ORBit_POA_set_life (PortableServer_POA poa,
 		    CORBA_boolean      etherealize_objects,
 		    int                action_do)
 {
-	if ((poa->life_flags 
-	     & (ORBit_LifeF_DeactivateDo|ORBit_LifeF_DestroyDo)) == 0) {
+	if ((poa->life_flags &
+	     (ORBit_LifeF_DeactivateDo |
+	      ORBit_LifeF_DestroyDo)) == 0) {
+
 		if (etherealize_objects)
 			poa->life_flags |= ORBit_LifeF_DoEtherealize;
 	}
@@ -427,7 +427,7 @@ ORBit_POA_destroy (PortableServer_POA poa,
 	/* each objref holds a POAObj, and each POAObj holds a ref 
 	 * to the POA. In addition, the app can hold open refs
 	 * to the POA itself. */
-	numobjs = poa->oid_to_obj_map ? g_hash_table_size(poa->oid_to_obj_map) : 0;
+	numobjs = poa->oid_to_obj_map ? g_hash_table_size (poa->oid_to_obj_map) : 0;
 	g_assert (((ORBit_RootObject)poa)->refs > numobjs);
 
 	poa->life_flags |= ORBit_LifeF_Destroyed;
@@ -445,40 +445,44 @@ ORBit_POA_destroy (PortableServer_POA poa,
     has no affect of children POAs.
 **/
 CORBA_boolean
-ORBit_POA_deactivate(PortableServer_POA poa, CORBA_boolean etherealize_objects,
-		     CORBA_Environment *ev)
+ORBit_POA_deactivate (PortableServer_POA poa,
+		      CORBA_boolean      etherealize_objects,
+		      CORBA_Environment *ev)
 {
-    CORBA_boolean	done = CORBA_TRUE;
+	CORBA_boolean done = CORBA_TRUE;
 
-    ORBit_POA_set_life(poa, etherealize_objects, ORBit_LifeF_DeactivateDo);
-    if ( poa->life_flags & ORBit_LifeF_Deactivated )
-	return TRUE;	/* already did it */
-    if ( poa->life_flags & ORBit_LifeF_Deactivating )
-	return FALSE;	/* recursion */
-    poa->life_flags |= ORBit_LifeF_Deactivating;
+	ORBit_POA_set_life (poa, etherealize_objects, ORBit_LifeF_DeactivateDo);
+	if (poa->life_flags & ORBit_LifeF_Deactivated)
+		return TRUE;	/* already did it */
+	if (poa->life_flags & ORBit_LifeF_Deactivating)
+		return FALSE;	/* recursion */
+	poa->life_flags |= ORBit_LifeF_Deactivating;
 
-    /* bounce all pending requested (OBJECT_NOT_EXIST
-     * exceptions raised); none should get requeued. */
-    ORBit_POA_handle_held_requests(poa);
-    g_assert( poa->held_requests == 0 );
+	/* bounce all pending requested (OBJECT_NOT_EXIST
+	 * exceptions raised); none should get requeued. */
+	ORBit_POA_handle_held_requests (poa);
+	g_assert (poa->held_requests == 0);
 
-    if ( poa->p_servant_retention == PortableServer_RETAIN ) {
-	TraverseInfo	info;
-	info.num_in_use = 0;
-	info.do_deact = 1;
-	info.poa = poa;
-	info.do_etherealize = (poa->life_flags&ORBit_LifeF_DoEtherealize)
-		  		?CORBA_TRUE:CORBA_FALSE;
-	info.is_cleanup = TRUE;
-    	g_assert( poa->oid_to_obj_map );
-	g_hash_table_foreach(poa->oid_to_obj_map, (GHFunc)traverse_cb, &info);
-	g_hash_table_foreach_remove(poa->oid_to_obj_map, (GHRFunc)remove_cb, NULL);
-    	done = info.num_in_use == 0 ? CORBA_TRUE : CORBA_FALSE;
-    }
-    if ( done )
-    	poa->life_flags |= ORBit_LifeF_Deactivated;
-    poa->life_flags &= ~ORBit_LifeF_Deactivating;
-    return done;
+	if (poa->p_servant_retention == PortableServer_RETAIN) {
+		TraverseInfo	info;
+		info.num_in_use = 0;
+		info.do_deact = 1;
+		info.poa = poa;
+		info.do_etherealize = (poa->life_flags&ORBit_LifeF_DoEtherealize);
+		info.is_cleanup = TRUE;
+		g_assert (poa->oid_to_obj_map);
+		g_hash_table_foreach (
+			poa->oid_to_obj_map, (GHFunc)traverse_cb, &info);
+		g_hash_table_foreach_remove (
+			poa->oid_to_obj_map, (GHRFunc)remove_cb, NULL);
+		done = info.num_in_use == 0 ? CORBA_TRUE : CORBA_FALSE;
+	}
+
+	if (done)
+		poa->life_flags |= ORBit_LifeF_Deactivated;
+	poa->life_flags &= ~ORBit_LifeF_Deactivating;
+
+	return done;
 }
 
 void
@@ -761,12 +765,26 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 	objref = ORBit_objref_new (poa->poa_manager->orb,
 				   g_quark_from_string (type_id));
 
-	/* released by CORBA_Object_release */
+	/* released by ORBit_POA_object_shutdown called from
+	 * CORBA_Object_release */
 	objref->adaptor_obj = ORBit_RootObject_duplicate (pobj);
 
 	((ORBit_OAObject)pobj)->objref = ORBit_RootObject_duplicate (objref);
 
 	return objref;
+}
+
+void
+ORBit_POA_object_shutdown (ORBit_POAObject pobj)
+{
+	if (pobj) {
+		/* FIXME: should we de-activate here ? it's only
+		 * wasting space in the hash surely
+		 * ORBit_POA_deactivate_object (
+		 *	pobj->poa, pobj, FALSE, FALSE); */
+		pobj->base.objref = NULL;
+		ORBit_RootObject_release_T (pobj);
+	}
 }
 
 PortableServer_POA
@@ -797,61 +815,58 @@ ORBit_POAObject_is_active (ORBit_POAObject pobj)
 	return FALSE;
 }
 
-/*
- * POAObject RootObject stuff
- */
+/* POAObject RootObject stuff */
 static void
-ORBit_POAObject_release_cb(ORBit_RootObject robj)
+ORBit_POAObject_release_cb (ORBit_RootObject robj)
 {
-  ORBit_POAObject    pobj = (ORBit_POAObject) robj;
-  PortableServer_POA poa = pobj->poa;
-  PortableServer_ObjectId *object_id;
+	ORBit_POAObject    pobj = (ORBit_POAObject) robj;
+	PortableServer_POA poa = pobj->poa;
+	PortableServer_ObjectId *object_id;
  
-  /* object *must* be deactivated */
-  g_assert (pobj->servant == NULL);
+	/* object *must* be deactivated */
+	g_assert (pobj->servant == NULL);
 
-  object_id = pobj->object_id;
-  pobj->object_id = NULL;
+	object_id = pobj->object_id;
+	pobj->object_id = NULL;
 
-  /*
-   * Don't want to remove from oid_to_obj_map if we 
-   * are currently traversing across it !
-   * Just mark it as destroyed
-   */
-  if ((poa->life_flags & ORBit_LifeF_Deactivating) == 0) {
-    g_hash_table_remove (poa->oid_to_obj_map, object_id);
-    g_free (pobj);
-  }
-  else
-    pobj->life_flags = ORBit_LifeF_Destroyed;
+	/*
+	 * Don't want to remove from oid_to_obj_map if we 
+	 * are currently traversing across it !
+	 * Just mark it as destroyed
+	 */
+	if ((poa->life_flags & ORBit_LifeF_Deactivating) == 0) {
+		g_hash_table_remove (poa->oid_to_obj_map, object_id);
+		p_free (robj, struct ORBit_POAObject_type);
+	} else
+		pobj->life_flags = ORBit_LifeF_Destroyed;
 
-  object_id->_release = CORBA_TRUE;
-  ORBit_free_T (object_id);
+	object_id->_release = CORBA_TRUE;
+	ORBit_free_T (object_id);
 
-  ORBit_RootObject_release_T (poa);
+	ORBit_RootObject_release_T (poa);
 }
 
 static ORBit_RootObject_Interface ORBit_POAObject_if = {
-  ORBIT_ROT_OAOBJECT,
-  ORBit_POAObject_release_cb
-  };
+	ORBIT_ROT_OAOBJECT,
+	ORBit_POAObject_release_cb
+};
 
 static struct 
 ORBit_OAObject_Interface_type ORBit_POAObject_methods = {
 	ORBIT_ADAPTOR_POA,
-	(ORBitStateCheckFunc)ORBit_POAObject_is_active,
-	(ORBitKeyGenFunc)ORBit_POAObject_object_to_objkey,
-	(ORBitInvokeFunc)ORBit_POAObject_invoke,
-	(ORBitReqFunc) ORBit_POAObject_handle_request
+	(ORBitStateCheckFunc) ORBit_POAObject_is_active,
+	(ORBitKeyGenFunc)     ORBit_POAObject_object_to_objkey,
+	(ORBitInvokeFunc)     ORBit_POAObject_invoke,
+	(ORBitReqFunc)        ORBit_POAObject_handle_request
 };
 
 /*
-    If USER_ID policy, {oid} must be non-NULL.
-    If SYSTEM_ID policy, {oid} must ether be NULL, or must have
-    been previously created by the POA. If the user passes in
-    a bogus oid under SYSTEM_ID, we will assert or segfault. This
-    is allowed by the CORBA spec.
-*/
+ *    If USER_ID policy, {oid} must be non-NULL.
+ *  If SYSTEM_ID policy, {oid} must ether be NULL, or must have
+ *  been previously created by the POA. If the user passes in
+ *  a bogus oid under SYSTEM_ID, we will assert or segfault. This
+ *  is allowed by the CORBA spec.
+ */
 static ORBit_POAObject
 ORBit_POA_create_object (PortableServer_POA             poa,
 			 const PortableServer_ObjectId *objid,
@@ -880,8 +895,7 @@ ORBit_POA_create_object (PortableServer_POA             poa,
 		}
 		else
 			newobj->object_id = ORBit_POA_new_system_objid (poa);
-	}
-	else {
+	} else {
 		newobj->object_id           = PortableServer_ObjectId__alloc ();
 		newobj->object_id->_length  = objid->_length;
 		newobj->object_id->_buffer  = PortableServer_ObjectId_allocbuf (objid->_length);
@@ -890,7 +904,7 @@ ORBit_POA_create_object (PortableServer_POA             poa,
 		memcpy(newobj->object_id->_buffer, objid->_buffer, objid->_length);
 	}
 
-	g_hash_table_insert(poa->oid_to_obj_map, newobj->object_id, newobj);
+	g_hash_table_insert (poa->oid_to_obj_map, newobj->object_id, newobj);
 
 	return newobj;
 }
@@ -933,73 +947,78 @@ ORBit_POA_activate_object(PortableServer_POA poa,
     ORBit_RootObject_duplicate(pobj);
 }
 
-
 /*
-    Note that this doesn't necessarily remove the object from
-    the oid_to_obj_map; it just removes knowledge of the servant.
-    If object is currentin use (servicing a request), etherialization
-    and memory release will occur later.
-**/
+ * Note that this doesn't necessarily remove the object from
+ * the oid_to_obj_map; it just removes knowledge of the servant.
+ * If the object is currently in use (servicing a request),
+ * etherialization and memory release will occur later.
+ */
 static void
-ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject pobj,
-			     CORBA_boolean do_etherealize,
-			     CORBA_boolean is_cleanup)
+ORBit_POA_deactivate_object (PortableServer_POA poa,
+			     ORBit_POAObject    pobj,
+			     CORBA_boolean      do_etherealize,
+			     CORBA_boolean      is_cleanup)
 {
-    PortableServer_ServantBase	*serv = pobj->servant;
-    GSList                      **obj_list;
+	GSList **obj_list;
+	PortableServer_ServantBase *serv = pobj->servant;
 
-    if ( serv == NULL ) {
-	    /* deactivation has already occured, or is in progress */
-	    return;
-    }
-    if ( do_etherealize && (pobj->life_flags&ORBit_LifeF_DeactivateDo)==0 )
-    	pobj->life_flags |= ORBit_LifeF_DoEtherealize;
-    if ( is_cleanup )
-    	pobj->life_flags |= ORBit_LifeF_IsCleanup;
-    if ( pobj->use_cnt > 0 ) {
-        pobj->life_flags |= ORBit_LifeF_DeactivateDo;
-	pobj->life_flags |= ORBit_LifeF_NeedPostInvoke;
-	return;
-    }
-    pobj->servant = NULL;
-    obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR(serv);
-    *obj_list = g_slist_remove(*obj_list,pobj);
+	if (!serv) /* deactivation done, or in progress */
+		return;
 
-    if ( (pobj->life_flags & ORBit_LifeF_DoEtherealize)!=0 ) {
-	CORBA_Environment env, *ev = &env;
-	CORBA_exception_init(ev);
-	++(pobj->use_cnt);	/* prevent re-activation */
-        if ( poa->p_request_processing == PortableServer_USE_SERVANT_MANAGER) {
-	    POA_PortableServer_ServantActivator__epv *epv;
-	    POA_PortableServer_ServantActivator *sm;
+	if (do_etherealize && !(pobj->life_flags & ORBit_LifeF_DeactivateDo))
+		pobj->life_flags |= ORBit_LifeF_DoEtherealize;
+	
+	if (is_cleanup)
+		pobj->life_flags |= ORBit_LifeF_IsCleanup;
 
-	    sm = (POA_PortableServer_ServantActivator *)poa->servant_manager;
-	    epv = sm->vepv->PortableServer_ServantActivator_epv;
-	    (*(epv->etherealize))(sm, pobj->object_id, poa,
-			    serv,
-			    (pobj->life_flags & ORBit_LifeF_IsCleanup)
-			      ? CORBA_TRUE : CORBA_FALSE,
-			    /* remaining_activations */ CORBA_FALSE,
-			    ev);
-        }
-        {
-	    PortableServer_ServantBase__epv *epv = serv->vepv[0];
-	    /* In theory, the finalize fnc should always be non-NULL;
-	     * however, for backward compat. and general extended
-	     * applications we dont insist on it.
-	     */
-	    if ( epv && epv->finalize ) {
-	        (*(epv->finalize))(serv, ev);
-	    }
+	if (pobj->use_cnt > 0) {
+		pobj->life_flags |= ORBit_LifeF_DeactivateDo;
+		pobj->life_flags |= ORBit_LifeF_NeedPostInvoke;
+		return;
 	}
-	--(pobj->use_cnt);	/* allow re-activation */
-	g_assert( ev->_major == 0 );
-    }
+	pobj->servant = NULL;
 
-    pobj->life_flags &= ~(ORBit_LifeF_DeactivateDo
-      |ORBit_LifeF_IsCleanup|ORBit_LifeF_DoEtherealize);
+	obj_list = ORBIT_SERVANT_TO_POAOBJECT_LIST_ADDR (serv);
+	*obj_list = g_slist_remove (*obj_list, pobj);
 
-    ORBit_RootObject_release(pobj);
+	if (pobj->life_flags & ORBit_LifeF_DoEtherealize) {
+		CORBA_Environment env, *ev = &env;
+
+		CORBA_exception_init (ev);
+
+		pobj->use_cnt++; /* prevent re-activation */
+		if (poa->p_request_processing == PortableServer_USE_SERVANT_MANAGER) {
+			POA_PortableServer_ServantActivator      *sm;
+			POA_PortableServer_ServantActivator__epv *epv;
+
+			sm = (POA_PortableServer_ServantActivator *) poa->servant_manager;
+			epv = sm->vepv->PortableServer_ServantActivator_epv;
+
+			epv->etherealize (sm, pobj->object_id, poa,
+					  serv,
+					  pobj->life_flags & ORBit_LifeF_IsCleanup,
+					  /* remaining_activations */ CORBA_FALSE,
+					  ev);
+		}
+		{
+			PortableServer_ServantBase__epv *epv = serv->vepv[0];
+			/* In theory, the finalize fnc should always be non-NULL;
+			 * however, for backward compat. and general extended
+			 * applications we dont insist on it. */
+			if (epv && epv->finalize)
+				epv->finalize (serv, ev);
+		}
+		pobj->use_cnt--; /* allow re-activation */
+		g_assert (ev->_major == 0);
+
+		CORBA_exception_free (ev);
+	}
+
+	pobj->life_flags &= ~(ORBit_LifeF_DeactivateDo |
+			      ORBit_LifeF_IsCleanup |
+			      ORBit_LifeF_DoEtherealize);
+
+	ORBit_RootObject_release (pobj);
 }
 
 struct ORBit_POA_invoke_data {
@@ -1345,7 +1364,7 @@ ORBit_POA_ServantManager_use_servant( PortableServer_POA poa,
 	  *obj_list = g_slist_append(*obj_list,pobj);
 
           /* released by ORBit_POA_deactivate_object */
-	  ORBit_RootObject_duplicate(pobj);
+	  ORBit_RootObject_duplicate (pobj);
 	  pobj->servant = retval;
 	}
     }
@@ -1936,8 +1955,9 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 	}
 
 	if (retain && unique && pobj)
-		if (((ORBit_OAObject)pobj)->objref)
-			return ((ORBit_OAObject)pobj)->objref;
+		if (((ORBit_OAObject) pobj)->objref)
+			return ORBit_RootObject_duplicate (
+				pobj->base.objref);
 		else
 			return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 

@@ -24,12 +24,12 @@
 
 static  
 CORBA_Object
-ContextServer_opWithContext(PortableServer_Servant _servant,
-			    const CORBA_Object     inArg,
-			    CORBA_Object          *inoutArg,
-			    CORBA_Object          *outArg,
-			    CORBA_Context          ctx,
-			    CORBA_Environment     *ev)
+ContextServer_opWithContext (PortableServer_Servant _servant,
+			     const CORBA_Object     inArg,
+			     CORBA_Object          *inoutArg,
+			     CORBA_Object          *outArg,
+			     CORBA_Context          ctx,
+			     CORBA_Environment     *ev)
 {
 	CORBA_NVList      nvout;
 	CORBA_NamedValue *nv;
@@ -37,8 +37,10 @@ ContextServer_opWithContext(PortableServer_Servant _servant,
 	int               i;
 
 	CORBA_Context_get_values (ctx, NULL, 0, "", &nvout, ev);
+
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (nvout->list->len == 2);
+
 	for (i = 0; i < nvout->list->len; i++) {
 		nv = &g_array_index (nvout->list, 
 				     CORBA_NamedValue, 0);
