@@ -240,6 +240,8 @@ c_marshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     char *ctmp;
     GString *tmpstr = g_string_new(NULL);
 
+    c_marshal_alignfor(node, cmi);
+
     ctmp = oidl_marshal_node_fqn(node);
     g_string_sprintf(tmpstr, "sizeof(%s)", ctmp);
 
