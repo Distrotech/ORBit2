@@ -61,7 +61,7 @@ IDL_FILES=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl
 include $(top_srcdir)/Makefile.shared
 
 IDL_FLAGS_CORBA_OPS = --showcpperrors
-$(OPS_IDLOUT): corba-ops.idl $(IDL)
+$(OPS_IDLOUT): corba-ops.idl $(IDL_COMPILER)
 	-(rm -f $(OPS_IDLOUT) || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS_CORBA_OPS) --deps .deps/corba-ops.idl.P $<
 	for I in $(OPS_IDLOUT); do								\
@@ -71,7 +71,7 @@ $(OPS_IDLOUT): corba-ops.idl $(IDL)
 	mv corba-ops-skels.c.out corba-ops-skels.c;
 
 IDL_FLAGS_INTERFACE = --nostubs --noskels --showcpperrors --noheaders
-$(IFACE_IDLOUT) : orbit-interface.idl $(IDL)
+$(IFACE_IDLOUT) : orbit-interface.idl $(IDL_COMPILER)
 	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS_INTERFACE) --deps .deps/orbit-interface.idl.P $<
 
