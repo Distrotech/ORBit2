@@ -274,6 +274,9 @@ dynany_init_default (gpointer *val, const CORBA_TypeCode tc)
 
 	*val = ALIGN_ADDRESS (*val, ORBit_find_alignment (tc));
 
+/*	g_warning ("Creating '%s' at %p", 
+	ORBit_tk_to_name (tc->kind), *val);*/
+
 	switch (tc->kind) {
 	case CORBA_tk_null:
 		break;

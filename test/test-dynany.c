@@ -6,7 +6,7 @@
 #include <orbit/orbit.h>
 #include "dynany.h"
 
-#define CHECK_OK(ev)           (g_assert ((ev)->_major == CORBA_NO_EXCEPTION))
+#define CHECK_OK(ev)	g_assert ((ev)->_major == CORBA_NO_EXCEPTION)
 #define CHECK_TYPE_MISMATCH(ev) \
 	do { \
 		g_assert ((ev)->_major == CORBA_USER_EXCEPTION && \
@@ -466,11 +466,6 @@ test_struct (CORBA_ORB orb, CORBA_Environment *ev)
 	dyn_struct = (DynamicAny_DynStruct) dyn_any;
 	CHECK_OK (ev);
 	g_assert (dyn_any != CORBA_OBJECT_NIL);
-
-
-	CORBA_Object_release ((CORBA_Object) dyn_any, ev);
-	CHECK_OK (ev);
-	return;
 
 	g_assert (!DynamicAny_DynStruct_seek (dyn_any, 6, ev));
 	CHECK_OK (ev);
