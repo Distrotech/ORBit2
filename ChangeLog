@@ -1,3 +1,7 @@
+2004-04-13  Joe Marcus Clarke  <marcus@freebsd.org>
+
+	* ORBit-2.0.pc.in: add gthread dep.
+
 2004-03-19  Mark McLoughlin  <mark@skynet.ie>
 
 	* orbit2-config.in: return -lORBitCosNaming-2 with
