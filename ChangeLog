@@ -1,3 +1,8 @@
+2003-04-02  Richard Kinder <r_kinder@yahoo.com>
+        * configure.in: fix for #108932 - warning spat out for linux/irda.h.
+        Also fix up error case when no pkg-config script exists - exit with
+        AC_MSG_ERROR rather than letting the script die by coincidence.
+
 2003-04-01  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (giop_shutdown, giop_main_run):
