@@ -161,7 +161,7 @@ run_test_hook_new_connection (GIOPServer     *server,
 }
 
 static void
-run_test (CORBA_ORB orb, void (*do_test) (void))
+run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 {
 	server = giop_server_new (GIOP_1_2, "UNIX", NULL, NULL, 0, orb);
 	server_cnx = NULL;
@@ -177,13 +177,26 @@ run_test (CORBA_ORB orb, void (*do_test) (void))
 		GIOP_1_2);
 	g_assert (cnx != NULL);
 
-	while (server_cnx == NULL) //LINC_CONNECTION (cnx)->status != LINC_CONNECTED)
+	while (server_cnx == NULL)
 		linc_main_iteration (TRUE);
 
 	giop_debug_hook_new_connection = NULL;
 	g_assert (server_cnx != NULL);
 
+	if (reverse) {
+		gpointer tmp = server_cnx;
+		server_cnx = cnx;
+		cnx = tmp;
+	}
+
+
 	do_test ();
+
+	if (reverse) {
+		gpointer tmp = server_cnx;
+		server_cnx = cnx;
+		cnx = tmp;
+	}
 
 	g_object_unref (server);
 	server_cnx = NULL;
@@ -206,8 +219,10 @@ main (int argc, char *argv[])
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	non_blocking = linc_write_options_new (FALSE);
 
-	run_test (orb, test_fragments);
-	run_test (orb, test_spoofing);
+	run_test (orb, test_fragments, FALSE);
+	run_test (orb, test_fragments, TRUE);
+	run_test (orb, test_spoofing, FALSE);
+	run_test (orb, test_spoofing, TRUE);
 
 	linc_write_options_free (non_blocking);
 	CORBA_ORB_destroy (orb, &ev);
