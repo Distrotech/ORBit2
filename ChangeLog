@@ -1,3 +1,7 @@
+2003-01-14  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.6.0
+
 2003-01-09  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: remove 'development ver.' warning.
