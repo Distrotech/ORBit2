@@ -66,23 +66,26 @@ testConst (void)
 static void
 testSequenceHelpers (void)
 {
-	CORBA_long l;
+	CORBA_long                  l    = 0;
 	test_BoundedLongSeq        *lseq = NULL;
 	
 
 	lseq = ORBit_sequence_alloc (TC_test_BoundedLongSeq, 2);
 	g_assert (lseq != NULL);
-	g_assert (lseq->_length ==  0);
+	g_assert (lseq->_length ==  2);
 	g_assert (lseq->_maximum >= 2);
 
+	ORBit_sequence_index (lseq,0) = 0;
+	ORBit_sequence_index (lseq,1) = 0;
+	
 	l = 1;
 	ORBit_sequence_append (lseq, &l);
 	l++;
 	ORBit_sequence_append (lseq, &l);
 	
-	g_assert (lseq->_length == 2);
-	g_assert (ORBit_sequence_index (lseq, 0) == 1);
-	g_assert (ORBit_sequence_index (lseq, 1) == 2);
+	g_assert (lseq->_length == 4);
+	g_assert (ORBit_sequence_index (lseq, 2) == 1);
+	g_assert (ORBit_sequence_index (lseq, 3) == 2);
 
 	ORBit_sequence_set_size (lseq, 100);
 	ORBit_sequence_set_size (lseq, 0);
@@ -99,8 +102,7 @@ testSequenceHelpers (void)
 		/* generic sequence<octet> test */ 
 		CORBA_sequence_CORBA_octet *oseq = NULL;
 		
-		g_warning ("FIXME, for sequences of capacity=0 append fails ");
-		oseq = ORBit_sequence_alloc (TC_CORBA_sequence_CORBA_octet, 1);
+		oseq = ORBit_sequence_alloc (TC_CORBA_sequence_CORBA_octet, 0);
 		
 		g_assert (oseq != NULL);
 		g_assert (oseq->_length == 0);
@@ -113,8 +115,8 @@ testSequenceHelpers (void)
 			ORBit_sequence_append (oseq, &oct); /* realloc */ 
 			g_assert (i+1==oseq->_length);
 			
-			/* infrequent check, complete seq has been
-			 * copied on realloc? */
+			/* infrequent validation sequence values have
+			 * been re-located correctly */
 			if (i % 367 == 0) 
 			for (j = 0; j < oseq->_length; ++j /* prim */ )
 			{
