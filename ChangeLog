@@ -1,3 +1,10 @@
+2005-01-27  Tor Lillqvist  <tml@novell.com>
+
+	* include/orbit/orb-core/corba-orb-type.h
+	* include/orbit/orb-core/corba-typecode.h: Drop the constness of
+	extern structs as it causes problems when building libORBit-2 as a
+	DLL on Win32 and Cygwin.
+
 2005-01-26  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Check also for utime.h, and sys/utime.h (where
