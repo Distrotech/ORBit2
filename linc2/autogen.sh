@@ -31,7 +31,7 @@ DIE=0
 }
 
 # Check for automake, the required version is set in Makefile.am
-(automake --version) < /dev/null > /dev/null 2>&1 ||{
+(automake-1.4 --version) < /dev/null > /dev/null 2>&1 ||{
 	echo
 	echo "You must have at minimum automake version 1.4 installed"
 	echo "to compile ORBit. Download the appropriate package for"
@@ -65,9 +65,9 @@ do
   echo processing $i
   (cd $i; \
     libtoolize --copy --force; \
-    aclocal $ACLOCAL_FLAGS;
+    aclocal-1.4 $ACLOCAL_FLAGS;
     autoheader; \
-    automake --add-missing $am_opt; \
+    automake-1.4 --add-missing $am_opt; \
     autoheader; \
     autoconf)
 done
