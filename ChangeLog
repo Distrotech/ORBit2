@@ -1,5 +1,12 @@
 2001-09-03 Mark McLoughlin <mark@skynet.ie>
 
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_output_const_dcl): implement the unsigned
+	check correctly. Michael should have more faith 
+	in the splendifuredness of libIDL ;)
+
+2001-09-03 Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-any.c,
 	  src/orb/orb-core/orb-core-private.h
 	(ORBit_find_alignment): kill - we have that info

@@ -441,42 +441,19 @@ static void
 ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
 	char    *id;
-	int      const_unsigned = FALSE;
 	IDL_tree ident;
 
 	ident = IDL_CONST_DCL (tree).ident;
 	id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS (ident), "_", 0);
-
-#warning We need to find out if the thing is an unsigned type and whack U
-#warning afterwards if so. Unfortunately libIDL is just totaly useless.
-
-#if 0
-	res = IDL_ns_resolve_this_scope_ident (
-		rinfo->namespace, IDL_tree_get_scope (ident), ident);
-	if (res) {
-		g_warning ("Resolved ident '%s' to '%s'",
-			   IDL_IDENT (ident).str,
-			   IDL_tree_type_names [IDL_NODE_TYPE (res)]);
-		switch (IDL_NODE_TYPE (res)) {
-		case IDLN_TYPE_INTEGER:
-			if (IDL_TYPE_INTEGER (res).f_signed == 0) {
-				g_warning ("Unsigned !");
-				const_unsigned = TRUE;
-			}
-			break;
-		default:
-			break;
-		}
-	} else
-		g_warning ("Can't resolve ident '%s'", IDL_IDENT (ident).str);
-#endif
 
 	fprintf(ci->fh, "#ifndef %s\n", id);
 	fprintf(ci->fh, "#define %s ", id);
 
 	orbit_cbe_write_const(ci->fh,
 			      IDL_CONST_DCL(tree).const_exp);
-	if (const_unsigned)
+
+	if (IDL_NODE_TYPE (IDL_CONST_DCL(tree).const_type) == IDLN_TYPE_INTEGER &&
+	    !IDL_TYPE_INTEGER (IDL_CONST_DCL(tree).const_type).f_signed)
 		fprintf(ci->fh, "U");
 
 	fprintf(ci->fh, "\n");
