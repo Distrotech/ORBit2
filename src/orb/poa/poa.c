@@ -113,109 +113,6 @@ ORBit_POACurrent_get_invocation(PortableServer_Current obj,
   return obj->orb->poa_current_invocations;
 }
 
-PortableServer_POA
-PortableServer_Current_get_POA(PortableServer_Current obj, CORBA_Environment *ev)
-{
-  ORBit_POAInvocation	*invoke;
-  if ( (invoke=ORBit_POACurrent_get_invocation(obj, ev))==0 )
-    return 0;
-
-  /* this ref is the application's responsibility */
-  return (PortableServer_POA)
-		CORBA_Object_duplicate(obj->orb->poa_current,ev);
-}
-
-PortableServer_ObjectId *
-PortableServer_Current_get_object_id(PortableServer_Current obj,
-				     CORBA_Environment *ev)
-{
-  ORBit_POAInvocation	*invoke;
-
-  if ( (invoke=ORBit_POACurrent_get_invocation(obj, ev))==0 )
-    return 0;
-  return (PortableServer_ObjectId *)
-		ORBit_sequence_CORBA_octet_dup(invoke->pobj->object_id);
-}
-
-/***********************************************************************
- *
- *		Object to/from strings
- *
- * These are specified in the C language mapping spec, not the base
- * spec. See sec 1.26.2. These are meanful only under USER_ID policy,
- * since SYSTEM_ID oids have NULs in them. Probably they would only
- * be used with MULTIPLE_ID/DEFAULT_SERVANT policies.
- * Using strings as oids may be convenient, but it seems horribly slow.
- *
- ***********************************************************************/
-
-CORBA_char *
-PortableServer_ObjectId_to_string(PortableServer_ObjectId *id, 
-				  CORBA_Environment *ev)
-{
-  CORBA_char	*str;
-  if ( memchr( id->_buffer, 0, id->_length) )
-    {
-      /* we could try to escape it, but the spec
-       * specifically alllows us to throw an exception. */
-      CORBA_exception_set_system(ev, ex_CORBA_BAD_PARAM,
-				 CORBA_COMPLETED_NO);
-      return NULL;
-    }
-  str = CORBA_string_alloc(id->_length);
-  memcpy( str, id->_buffer, id->_length);
-  str[id->_length] = 0;
-  return str;
-}
-
-CORBA_wchar *
-PortableServer_ObjectId_to_wstring(PortableServer_ObjectId *id,
-				   CORBA_Environment *ev)
-{
-  CORBA_wchar *retval;
-  int i;
-  
-  if ( memchr( id->_buffer, 0, id->_length) )
-    {
-      /* we could try to escape it, but the spec
-       * specifically alllows us to throw an exception. */
-      CORBA_exception_set_system(ev, ex_CORBA_BAD_PARAM,
-				 CORBA_COMPLETED_NO);
-      return NULL;
-    }
-  retval = CORBA_wstring_alloc(id->_length);
-  for(i = 0; i < id->_length; i++)
-    retval[i] = id->_buffer[i];
-  retval[id->_length] = 0;
-  return retval;
-}
-
-PortableServer_ObjectId *
-PortableServer_string_to_ObjectId (CORBA_char        *str,
-				   CORBA_Environment *env)
-{
-	PortableServer_ObjectId tmp;
-
-	tmp._length  = strlen (str);
-	tmp._buffer  = str;
-  
-	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
-}
-
-PortableServer_ObjectId *
-PortableServer_wstring_to_ObjectId(CORBA_wchar *str, CORBA_Environment *env)
-{
-  int i;
-  PortableServer_ObjectId tmp;
-  for(i = 0; str[i]; i++) /**/;
-  tmp._length = i*2;
-  tmp._buffer = g_alloca(tmp._length);
-  for(i = 0; str[i]; i++)
-    tmp._buffer[i] = str[i];
-
-  return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup(&tmp);
-}
-
 CORBA_unsigned_long
 ORBit_classinfo_lookup_id(const char *type_id)
 {
@@ -1543,6 +1440,116 @@ ORBit_POAObject_post_invoke(ORBit_POAObject pobj)
 	ORBit_POA_deactivate_object(pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
     	/* WATCHOUT: pobj may not exist anymore! */
     }
+}
+
+/*
+ * C Language Mapping Specific Methods.
+ * Section 1.26.2 (C Language Mapping Specification).
+ */
+
+CORBA_char*
+PortableServer_ObjectId_to_string (PortableServer_ObjectId *id, 
+				   CORBA_Environment       *ev)
+{
+	CORBA_char *str;
+
+	if (memchr (id->_buffer, 0, id->_length)) {
+		CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM,
+					    CORBA_COMPLETED_NO);
+		return NULL;
+	}
+
+	str = CORBA_string_alloc (id->_length);
+	memcpy (str, id->_buffer, id->_length);
+	str[id->_length] = 0;
+
+	return str;
+}
+
+CORBA_wchar*
+PortableServer_ObjectId_to_wstring (PortableServer_ObjectId *id,
+				    CORBA_Environment       *ev)
+{
+	CORBA_wchar *retval;
+	int          i;
+  
+	if (memchr (id->_buffer, 0, id->_length)) {
+		CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM,
+					    CORBA_COMPLETED_NO);
+		return NULL;
+	}
+
+	retval = CORBA_wstring_alloc (id->_length);
+	for (i = 0; i < id->_length; i++)
+		retval[i] = id->_buffer[i];
+	retval[id->_length] = 0;
+
+	return retval;
+}
+
+PortableServer_ObjectId*
+PortableServer_string_to_ObjectId (CORBA_char        *str,
+				   CORBA_Environment *env)
+{
+	PortableServer_ObjectId tmp;
+
+	tmp._length  = strlen (str);
+	tmp._buffer  = str;
+  
+	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
+}
+
+PortableServer_ObjectId*
+PortableServer_wstring_to_ObjectId (CORBA_wchar       *str,
+				    CORBA_Environment *env)
+{
+	PortableServer_ObjectId tmp;
+	int                     i;
+
+	for(i = 0; str[i]; i++);
+
+	tmp._length = i*2;
+	tmp._buffer = g_alloca(tmp._length);
+
+	for(i = 0; str[i]; i++)
+		tmp._buffer[i] = str[i];
+
+	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (&tmp);
+}
+
+/*
+ * Current Operations.
+ * Section 11.3.9
+ */
+
+PortableServer_POA
+PortableServer_Current_get_POA (PortableServer_Current  obj,
+				CORBA_Environment      *ev)
+{
+	ORBit_POAInvocation *iframe;
+
+	iframe = ORBit_POACurrent_get_invocation(obj, ev);
+
+	if (!iframe) 
+		return CORBA_OBJECT_NIL;
+
+	return (PortableServer_POA)
+			CORBA_Object_duplicate (obj->orb->poa_current, ev);
+}
+
+PortableServer_ObjectId *
+PortableServer_Current_get_object_id (PortableServer_Current  obj,
+				      CORBA_Environment      *ev)
+{
+	ORBit_POAInvocation *iframe;
+
+	iframe = ORBit_POACurrent_get_invocation(obj, ev);
+
+	if (!iframe) 
+		return NULL;
+
+	return (PortableServer_ObjectId *)
+			ORBit_sequence_CORBA_octet_dup (iframe->pobj->object_id);
 }
 
 /*

@@ -33,11 +33,11 @@ ORBit_POAManager_register_poa (PortableServer_POAManager  poa_mgr,
 			       PortableServer_POA         poa,
 			       CORBA_Environment         *ev)
 {
-  g_assert (g_slist_find (poa_mgr->poa_collection, poa) == NULL);
-  g_assert (poa->poa_manager == NULL );
+	g_assert (g_slist_find (poa_mgr->poa_collection, poa) == NULL);
+	g_assert (poa->poa_manager == NULL );
 
-  poa_mgr->poa_collection = g_slist_append (poa_mgr->poa_collection, poa);
-  poa->poa_manager        = ORBit_RootObject_duplicate (poa_mgr);
+	poa_mgr->poa_collection = g_slist_append (poa_mgr->poa_collection, poa);
+	poa->poa_manager        = ORBit_RootObject_duplicate (poa_mgr);
 }
 
 void
