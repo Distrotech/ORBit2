@@ -250,6 +250,7 @@ testIInterface (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	g_assert (iinterface != NULL);
 	g_assert (!strcmp(iinterface->tc->repo_id, "IDL:orbit/test/StructServer:1.0"));
+	CORBA_free (iinterface);
 
 	CORBA_Object_release (objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
