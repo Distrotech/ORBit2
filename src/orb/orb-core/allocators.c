@@ -65,6 +65,7 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 			mem = ALIGN_ADDRESS (mem, subtc->c_align);
 			mem = ORBit_freekids_via_TypeCode_T (mem, subtc);
 		}
+		mem = ALIGN_ADDRESS (mem, tc->c_align);
 		retval = mem;
 		break;
 	case CORBA_tk_union: {
