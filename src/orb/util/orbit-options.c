@@ -178,7 +178,7 @@ ORBit_option_command_line_parse (int                 *argc,
 			tmpstr++;
 
                 strncpy (name, tmpstr, sizeof (name) - 1);
-		tmpstr [sizeof (name) - 1] = '\0';
+		name [sizeof (name) - 1] = '\0';
 
                 tmpstr = strchr (name, '=');
                 if (tmpstr)
