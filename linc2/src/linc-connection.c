@@ -328,7 +328,7 @@ linc_connection_initiate (LINCConnection        *cnx,
 	int                     fd;
 	gboolean                retval = FALSE;
 	struct sockaddr        *saddr;
-	socklen_t		saddr_len;
+	LincSockLen		saddr_len;
 
 	proto = linc_protocol_find (proto_name);
 
@@ -826,7 +826,7 @@ linc_connection_io_handler (GIOChannel  *gioc,
 	LINCConnection      *cnx = data;
 	LINCConnectionClass *klass;
 	int rv, n;
-	socklen_t n_size = sizeof(n);
+	LincSockLen n_size = sizeof (n);
 
 	g_object_ref (G_OBJECT (cnx));
 

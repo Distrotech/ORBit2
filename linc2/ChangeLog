@@ -1,5 +1,19 @@
 2002-04-08  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-protocols.[ch],
+	* src/linc-server.c (linc_server_setup): use
+	LincSockLen instead of socklen_t so that we can
+	build on systems without it.
+
+	* src/linc-compat.h: hide the evil compat mess into here.
+
+	* src/linc-server.c: include linc-hacks.h
+
+	* test/test-linc.c
+	(test_blocking_cnx_handle_input),
+	(test_blocking_cnx_handle_input): use
+	guint32 not glong.
+
 	* configure.in: use --with-openssl #77962
 
 2002-04-08  Michael Meeks  <michael@ximian.com>

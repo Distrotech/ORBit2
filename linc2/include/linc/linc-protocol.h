@@ -21,6 +21,9 @@ G_BEGIN_DECLS
 #include <sys/socket.h>
 #include <netdb.h>
 
+/* socklen_t seems rather un-portable */
+typedef unsigned int LincSockLen;
+
 typedef enum {
 	LINC_PROTOCOL_SECURE     = 1<<0,
 	LINC_PROTOCOL_NEEDS_BIND = 1<<1
@@ -34,7 +37,7 @@ typedef void (*LINCProtocolDestroyFunc)     (int                     fd,
 typedef struct sockaddr *(*LINCProtocolGetSockAddrFunc) (const LINCProtocolInfo *proto,
 							 const char             *hostname,
 							 const char             *service,
-							 socklen_t              *saddr_len);
+							 LincSockLen            *saddr_len);
 
 typedef gboolean (*LINCProtocolGetSockInfoFunc) (const LINCProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
@@ -43,7 +46,7 @@ typedef gboolean (*LINCProtocolGetSockInfoFunc) (const LINCProtocolInfo *proto,
 
 typedef gboolean (*LINCProtocolIsLocal)         (const LINCProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
-						 socklen_t               saddr_len);
+						 LincSockLen             saddr_len);
 
 struct _LINCProtocolInfo {
 	const char                 *name;

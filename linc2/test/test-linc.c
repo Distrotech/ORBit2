@@ -238,9 +238,9 @@ blocking_cb (LINCConnection *cnx,
 static gboolean 
 test_blocking_cnx_handle_input (LINCConnection *cnx)
 {
-	static gulong idx = 0;
-	glong  size, i;
-	glong  buffer[1024];
+	static  gulong idx = 0;
+	glong   size, i;
+	guint32 buffer[1024];
 
 	size = linc_connection_read (cnx, (guchar *) buffer, 512, TRUE);
 	g_assert (size != -1);
@@ -292,7 +292,8 @@ test_blocking (void)
 	LINCServer     *server;
 	LINCConnection *client;
 	LINCWriteOpts  *options;
-	glong           l, buffer[1024] = { 0 };
+	guint32         buffer[1024] = { 0 };
+	glong           l;
 	int             i;
 
 	fprintf (stderr, "Testing blocking code ...\n");
