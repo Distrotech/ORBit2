@@ -1,3 +1,10 @@
+2002-04-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/util/genrand.c
+	(genrand_openssl): rename to 
+	(genuid_rand_openssl): this to be consistant and work.
+	[thanks to Colin Campbell].
+
 2002-04-02  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c
