@@ -1,5 +1,14 @@
 2002-03-20  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-protocols.c (linc_protocol_destroy_cnx): impl.
+	(linc_protocol_destroy_saddr): impl with nasty hacks for UDS.
+
+	* src/linc-server.c (linc_server_dispose): use it.
+	(linc_server_setup): on error unlink the UDS & fix fd
+	leak.
+
+2002-03-20  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-server.c (linc_server_accept_connection):
 	always initialize the connection - thanks again Havoc.
 

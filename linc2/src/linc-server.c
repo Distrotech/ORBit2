@@ -93,14 +93,11 @@ linc_server_dispose (GObject *obj)
 		linc_io_remove_watch (thewatch);
 	}
 
-	if (cnx->priv->fd >= 0) {
-		if (cnx->proto->destroy)
-			cnx->proto->destroy (
-				cnx->priv->fd, cnx->local_host_info,
-				cnx->local_serv_info);
-		close (cnx->priv->fd);
-		cnx->priv->fd = -1;
-	}
+	linc_protocol_destroy_cnx (cnx->proto,
+				   cnx->priv->fd, 
+				   cnx->local_host_info,
+				   cnx->local_serv_info);
+	cnx->priv->fd = -1;
 
 	while ((l = cnx->priv->connections)) {
 		GObject *o = l->data;
@@ -327,14 +324,13 @@ linc_server_setup (LINCServer            *cnx,
 		d_printf ("failed to set cloexec on %d", fd);
 
 	if (n) {
-		close (fd);
+		linc_protocol_destroy_addr (proto, fd, saddr);
 		d_printf ("get_sockname failed errno: %d\n", errno);
 		return FALSE;
 	}
 
 	if (!linc_protocol_get_sockinfo (proto, saddr, &hostname, &service)) {
-
-		g_free (saddr);
+		linc_protocol_destroy_addr (proto, fd, saddr);
 		d_printf ("linc_getsockinfo failed.\n");
 		return FALSE;
 	}

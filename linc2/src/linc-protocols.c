@@ -1055,3 +1055,43 @@ irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 }
 #endif /* AF_IRDA */
 #endif /* 0 */
+
+void
+linc_protocol_destroy_cnx (const LINCProtocolInfo *proto,
+			   int                     fd,
+			   const char             *host,
+			   const char             *service)
+{
+	g_return_if_fail (proto != NULL);
+
+	if (fd >= 0) {
+		if (proto->destroy)
+			proto->destroy (fd, host, service);
+		
+		close (fd);
+	}
+}
+
+
+void
+linc_protocol_destroy_addr (const LINCProtocolInfo *proto,
+			    int                     fd,
+			    struct sockaddr        *saddr)
+{
+	g_return_if_fail (proto != NULL);
+
+	if (fd >= 0) {
+#ifdef AF_UNIX
+		if (proto->destroy) {
+			/* We are AF_UNIX - we need the path to unlink */
+			struct sockaddr_un *addr_un =
+				(struct sockaddr_un *) saddr;
+			proto->destroy (fd, NULL, addr_un->sun_path);
+		}
+#endif
+		close (fd);
+		g_free (saddr);
+	}
+
+}
+

@@ -82,6 +82,15 @@ gboolean         linc_protocol_is_local     (const LINCProtocolInfo  *proto,
 					     const struct sockaddr   *saddr,
 					     socklen_t                saddr_len);
 
+void             linc_protocol_destroy_cnx  (const LINCProtocolInfo  *proto,
+					     int                      fd,
+					     const char              *host,
+					     const char              *service);
+
+void             linc_protocol_destroy_addr (const LINCProtocolInfo  *proto,
+					     int                      fd,
+					     struct sockaddr         *saddr);
+
 LincWatch       *linc_io_add_watch_fd       (int                     fd,
 					     GIOCondition            condition,
 					     GIOFunc                 func,
