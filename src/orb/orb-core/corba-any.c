@@ -698,13 +698,12 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
       return TRUE;
     break;
   case CORBA_tk_fixed:
-    g_error("CORBA_fixed NYI");
-    break;
   default:
+    return TRUE;
     break;
   }
 
-  return TRUE;
+  return FALSE;
 }
 
 

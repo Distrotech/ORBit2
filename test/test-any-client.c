@@ -36,19 +36,22 @@ main (int argc, char *argv[])
   any._value = &any_value;
   CORBA_any_set_release(&any, CORBA_FALSE );
   retany = TestAny_print (obj, &any, &ev);
+  if(ev._major == CORBA_NO_EXCEPTION)
+    {
 
-  retany_value = retany->_value;
-if(retany_value)
-  g_message("long %d string %s",
-	    retany_value->long_value,
-	    retany_value->string_value);
+      retany_value = retany->_value;
+      if(retany_value)
+	g_message("long %d string %s",
+		  retany_value->long_value,
+		  retany_value->string_value);
 
-  CORBA_free(retany);
-
-  if(ev._major != CORBA_NO_EXCEPTION) {
-    printf("we got exception %d from TestAny_print!\n", ev._major);
-    return 1;
-  }
+      CORBA_free(retany);
+    }
+  else
+    {
+      printf("we got exception %d from TestAny_print!\n", ev._major);
+      return 1;
+    }
   
   CORBA_Object_release(obj, &ev);
   CORBA_Object_release((CORBA_Object)orb, &ev);
