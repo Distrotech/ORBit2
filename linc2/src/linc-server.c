@@ -61,6 +61,8 @@ linc_server_destroy(GObject         *obj)
   O_MUTEX_DESTROY(cnx->mutex);
   if(cnx->tag)
     g_source_remove(cnx->tag);
+  if(cnx->proto->destroy)
+    cnx->proto->destroy(cnx->fd, cnx->local_host_info, cnx->local_serv_info);
   if(cnx->fd >= 0)
     close(cnx->fd);
   g_free(cnx->local_host_info);

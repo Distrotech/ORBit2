@@ -136,7 +136,8 @@ linc_connection_real_state_changed (LINCConnection *cnx, LINCConnectionStatus st
 }
 
 gboolean
-linc_connection_from_fd(LINCConnection *cnx, int fd, const LINCProtocolInfo *proto,
+linc_connection_from_fd(LINCConnection *cnx, int fd,
+			const LINCProtocolInfo *proto,
 			const char *remote_host_info,
 			const char *remote_serv_info,
 			gboolean was_initiated,
@@ -151,7 +152,7 @@ linc_connection_from_fd(LINCConnection *cnx, int fd, const LINCProtocolInfo *pro
   cnx->remote_serv_info = g_strdup(remote_serv_info);
   cnx->options = options;
   if(proto->setup)
-    proto->setup(fd);
+    proto->setup(fd, options);
 
 #if LINC_SSL_SUPPORT
   if(options & LINC_CONNECTION_SSL)
