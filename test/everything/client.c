@@ -1019,6 +1019,11 @@ main (int argc, char *argv [])
 	test_TestFactory  factory;
 
 	CORBA_exception_init (&ev);
+
+	/* Initialize threads first - so we get a threaded ORB */
+	if (!g_thread_supported ())
+		g_thread_init (NULL);
+
 	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
