@@ -882,9 +882,9 @@ CORBA_TypeCode_equal (CORBA_TypeCode obj,
 }
 
 CORBA_boolean
-CORBA_TypeCode_eqivalent (CORBA_TypeCode obj,
-			  CORBA_TypeCode tc,
-			  CORBA_Environment *ev)
+CORBA_TypeCode_equivalent (CORBA_TypeCode obj,
+			   CORBA_TypeCode tc,
+			   CORBA_Environment *ev)
 {
 	return typecode_equiv_internal (obj, tc, FALSE, ev);
 }
