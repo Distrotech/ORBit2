@@ -20,7 +20,7 @@ BUILT_SOURCES=$(DYNAMIC_IDLOUT)
 
 $(DYNAMIC_IDLOUT) runidl_dynamic: dynamic-defs.idl $(IDL)
 	-(rm -f $(DYNAMIC_IDLOUT) || true) > /dev/null
-	$(IDL) --noidata -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \

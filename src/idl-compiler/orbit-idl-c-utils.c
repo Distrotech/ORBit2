@@ -695,7 +695,7 @@ orbit_cbe_op_get_interface_name (IDL_tree op)
 	case IDLN_FORWARD_DCL
 
 static const char *
-cs_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
+cs_small_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 {
 	gboolean is_fixed;
 
@@ -779,7 +779,7 @@ cs_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 }
 
 void
-cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
+cbe_small_flatten_args (IDL_tree tree, FILE *of, const char *name)
 {
 	IDL_tree l;
 
@@ -799,7 +799,7 @@ cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
 			g_error("Unknown IDL_PARAM type");
 		}
 		
-		fprintf (of, "%s%s%c ", cs_flatten_ref (r, tspec),
+		fprintf (of, "%s%s%c ", cs_small_flatten_ref (r, tspec),
 			 IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str,
 			 IDL_LIST (l).next ? ',' : ' ');
 	}
@@ -807,7 +807,7 @@ cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
 }
 
 static char *
-cs_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
+cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 {
 	gboolean is_fixed;
 	char    *typestr;
@@ -927,7 +927,7 @@ cs_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 }
 
 void
-cbe_unflatten_args (IDL_tree tree, FILE *of, const char *name)
+cbe_small_unflatten_args (IDL_tree tree, FILE *of, const char *name)
 {
 	IDL_tree l;
 	int      i = 0;
@@ -947,7 +947,7 @@ cbe_unflatten_args (IDL_tree tree, FILE *of, const char *name)
 			g_error("Unknown IDL_PARAM type");
 		}
 
-		unflatten = cs_unflatten_ref (r, tspec);
+		unflatten = cs_small_unflatten_ref (r, tspec);
 		fprintf (of, "%s%s[%d], ", unflatten, name, i++);
 		g_free (unflatten);
 	}
