@@ -1,3 +1,8 @@
+2004-07-30  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/test-corbaloc.c: "\%" isn't a valid escape sequence,
+	so just use "%". From d.binderman@virgin.net.
+
 2004-07-07  Frank Rehberger  <frehberg@mole.xtradyne.de>
 
 	* Revert to Version 2.11.x and Add Version ORBit2-2.11.1
