@@ -1,5 +1,8 @@
 2003-06-05  Michael Meeks  <michael@ximian.com>
 
+	* include/orbit/orb-core/corba-object.h: fix
+	include.
+
 	* src/orb/orb-core/orbit-policy.[ch]: stub.
 
 2003-06-05  Michael Meeks  <michael@ximian.com>
