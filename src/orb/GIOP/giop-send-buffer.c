@@ -134,7 +134,7 @@ giop_send_buffer_use_request(GIOPVersion giop_version,
   if(!principal_vec)
     {
       zerovec.iov_base = giop_zero_buf;
-      zerovec.iov_len = sizeof(GIOP_unsigned_long);
+      zerovec.iov_len = sizeof(CORBA_unsigned_long);
       principal_vec = &zerovec;
     }
 
