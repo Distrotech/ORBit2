@@ -103,7 +103,9 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
   buf = giop_send_buffer_use(_obj->default_giop_version);
   buf->header_size = 0;
   g_assert(buf->num_used == 1);
+  buf->lastptr = NULL;
   buf->num_used = 0; /* we don't want the header in there */
+  buf->msg.header.message_size = 0;
   giop_send_buffer_append(buf, &endianness, 1);
   ORBit_marshal_object(buf, obj);
   out = CORBA_string_alloc(4 + (buf->msg.header.message_size * 2) + 1);
