@@ -746,7 +746,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:
-				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
+				if (a->flags & ORBit_I_COMMON_FIXED_SIZE) {
 					scratch [i] = ORBit_alloc_by_tc (tc);
 					break;
 				} /* drop through */

@@ -1,3 +1,9 @@
+2002-04-13  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_adaptor):
+	Check for FIXED flag on the argument type and not the method (as
+	that would be silly:)
+
 2002-04-10  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: remove poll & basename checks,
