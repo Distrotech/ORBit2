@@ -1,5 +1,9 @@
 2003-12-08  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.9.2
+
+2003-12-08  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_invoke_stub): bin double unuse in
 	MARSHAL_RETRY loop; add more exception handling.
