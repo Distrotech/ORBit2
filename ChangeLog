@@ -1,3 +1,20 @@
+2003-05-28  Michael Meeks  <michael@ximian.com>
+
+	* src/idl-compiler/orbit-idl-c-skels.c:
+	move ck_output_skels (and deps) into:
+
+	* src/idl-compiler/orbit-idl-c-common.c: here.
+	(orbit_idl_output_c_common): hook in, but only on
+	stub/skelish builds.
+
+	* src/orb/poa/poa.c (ORBit_stub_post_invoke): kill.
+	(ORBit_stub_pre_get_epv): rename to 
+	(get_c_method): this and re-hash.
+	(ORBit_c_stub_invoke): impl. - a new plan.
+
+	* include/orbit/poa/poa-basics.h: bin old/stale
+	ORBitSkeleton typedef.
+
 2003-05-27  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_stub_pre_get_epv) 

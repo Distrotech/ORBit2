@@ -55,11 +55,6 @@ typedef struct ORBit_OAObject_type  *ORBit_OAObject;
 
 typedef gshort ORBit_VepvIdx;
 
-typedef void               (*ORBitSkeleton)      (PortableServer_ServantBase *servant,
-						  gpointer                    recv_buffer,
-						  CORBA_Environment          *ev,
-						  gpointer                    implementation);
-
 typedef void               (*ORBitSmallSkeleton) (PortableServer_ServantBase *servant,
 						  gpointer                    ret,
 						  gpointer                   *args,

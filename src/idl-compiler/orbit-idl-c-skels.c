@@ -17,111 +17,6 @@ typedef struct {
 	int       idx;
 } CBESkelOpInfo;
 
-static void
-ck_output_skel (IDL_tree     tree,
-		OIDL_C_Info *ci,
-		int         *idx)
-{
-	IDL_tree  intf;
-	gboolean  has_args;
-	gboolean  has_retval;
-	char     *opname;
-	char     *ifname;
-
-	g_return_if_fail (idx != NULL);
-
-	intf = IDL_get_parent_node (tree, IDLN_INTERFACE, NULL);
-
-	has_args   = IDL_OP_DCL (tree).parameter_dcls != NULL;
-	has_retval = IDL_OP_DCL (tree).op_type_spec != NULL;
-
-	opname = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_OP_DCL (tree).ident), "_", 0);
-	ifname = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_INTERFACE (intf).ident), "_", 0);
-
-	fprintf (ci->fh, "void _ORBIT_skel_small_%s("
-				"POA_%s             *_o_servant, "
-				"gpointer            _o_retval,"
-				"gpointer           *_o_args,"
-				"CORBA_Context       _o_ctx,"
-				"CORBA_Environment  *_o_ev,\n", opname, ifname);
-
-	orbit_cbe_op_write_proto (ci->fh, tree, "_impl_", TRUE);
-
-	fprintf (ci->fh, ") {\n");
-
-	if (has_retval) {
-		fprintf (ci->fh, "*(");
-		orbit_cbe_write_param_typespec (ci->fh, tree);
-		fprintf (ci->fh, " *)_o_retval = ");
-	}
-
-	fprintf (ci->fh, "_impl_%s (_o_servant, ", IDL_IDENT (IDL_OP_DCL (tree).ident).str);
-  
-	orbit_cbe_unflatten_args (tree, ci->fh, "_o_args");
-
-	if (IDL_OP_DCL (tree).context_expr)
-		fprintf (ci->fh, "_o_ctx, ");
-
-	fprintf (ci->fh, "_o_ev);\n");
-
-	fprintf (ci->fh, "}\n");
-
-	g_free (opname);
-	g_free (ifname);
-
-	(*idx)++;
-}
-
-static void
-ck_output_skels (IDL_tree       tree,
-		 OIDL_Run_Info *rinfo,
-		 OIDL_C_Info   *ci,
-		 int           *idx)
-{
-	if (!tree || (tree->declspec & IDLF_DECLSPEC_PIDL))
-		return;
-
-	switch (IDL_NODE_TYPE (tree)) {
-	case IDLN_MODULE:
-		ck_output_skels (IDL_MODULE (tree).definition_list, rinfo, ci, idx);
-		break;
-	case IDLN_LIST: {
-		IDL_tree node;
-
-		for (node = tree; node; node = IDL_LIST (node).next)
-			ck_output_skels (IDL_LIST (node).data, rinfo, ci, idx);
-		break;
-		}
-	case IDLN_ATTR_DCL: {
-		OIDL_Attr_Info *ai = tree->data;
-		IDL_tree        node;
-      
-		for (node = IDL_ATTR_DCL (tree).simple_declarations; node; node = IDL_LIST (node).next) {
-			ai = IDL_LIST (node).data->data;
-	
-			ck_output_skels (ai->op1, rinfo, ci, idx);
-			if (ai->op2)
-				ck_output_skels (ai->op2, rinfo, ci, idx);
-		}
-		break;
-		}
-	case IDLN_INTERFACE: {
-		int real_idx = 0;
-
-		ck_output_skels (IDL_INTERFACE (tree).body, rinfo, ci, &real_idx);
-		}
-		break;
-	case IDLN_OP_DCL:
-		ck_output_skel (tree, ci, idx);
-		break;
-	default:
-		break;
-	}
-}
-
-
-/* POA stuff */
-
 static void cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 
 static void
@@ -165,7 +60,7 @@ cbe_skel_free_op_info(CBESkelOpInfo *op)
 }
 
 static void
-cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
+cbe_skel_interface_add_relayer (IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
 {
   CBESkelOpInfo *newopi;
   IDL_tree curitem, curdcl, curattr, curattrdcl;
@@ -394,8 +289,6 @@ orbit_idl_output_c_skeletons (IDL_tree       tree,
 	fprintf (ci->fh, "#include <string.h>\n");
 	fprintf (ci->fh, "#define ORBIT2_STUBS_API\n");
 	fprintf (ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
-
-	ck_output_skels (tree, rinfo, ci, NULL);
 
 	ck_output_poastuff (tree, rinfo, ci);
 }

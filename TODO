@@ -1,5 +1,8 @@
 TODO:
 
+* Turn off the global 'fast_calls' variable, to knobble
+  old stubs, and go with the new ABI.
+
 * Cross thread Object references
 	+ I think the way to fix this is by using a different
 	  interface->adaptor_type: ORBIT_ADAPTOR_POA_THREADED,
