@@ -709,29 +709,6 @@ cbe_skel_interface_print_initializer(IDL_tree node,
   g_free(id);
 }
 
-static void
-cbe_skel_interface_print_objref_initializer(IDL_tree tree, OIDL_C_Info *ci)
-{
-  char *id;
-
-  fprintf(ci->fh, "\n#ifdef ORBIT_BYPASS_VIA_REFCOPY\n");
-  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
-  fprintf(ci->fh, "static void init_local_objref_%s(CORBA_Object obj, POA_%s *servant)\n", id, id);
-  fprintf(ci->fh, "{\n");
-
-
-  IDL_tree_traverse_parents(tree,
-			    (GFunc)cbe_skel_interface_print_initializer,
-			    ci);
-
-  fprintf(ci->fh, "}\n");
-  fprintf(ci->fh, "#define INIT_OBJREF_%s init_local_objref_%s\n", id, id);
-  fprintf(ci->fh, "#else /*ORBIT_BYPASS_VIA_REFCOPY*/\n");
-  fprintf(ci->fh, "#define INIT_OBJREF_%s 0\n", id);
-  fprintf(ci->fh, "#endif /*ORBIT_BYPASS_VIA_REFCOPY*/\n");
-  g_free(id);
-}
-
 
 static void
 cbe_skel_interface_print_vepvmap_line(IDL_tree node, OIDL_C_Info *ci)
@@ -749,7 +726,6 @@ static void
 cbe_skel_interface_print_vepvmap_initializer(IDL_tree tree, OIDL_C_Info *ci)
 {
   char *id;
-  fprintf(ci->fh, "\n#ifdef ORBIT_BYPASS_VIA_VEPVMAP\n");
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
   fprintf(ci->fh, "static void init_vepvmap_%s(ORBit_VepvIdx *map)\n", id, id);
   fprintf(ci->fh, "{\n");
@@ -758,9 +734,6 @@ cbe_skel_interface_print_vepvmap_initializer(IDL_tree tree, OIDL_C_Info *ci)
     (GFunc)cbe_skel_interface_print_vepvmap_line, ci);
   fprintf(ci->fh, "}\n");
   fprintf(ci->fh, "#define INIT_VEPVMAP_%s init_vepvmap_%s\n", id, id);
-  fprintf(ci->fh, "#else /*ORBIT_BYPASS_VIA_VEPVMAP*/\n");
-  fprintf(ci->fh, "#define INIT_VEPVMAP_%s 0\n", id);
-  fprintf(ci->fh, "#endif /*ORBIT_BYPASS_VIA_VEPVMAP*/\n");
   g_free(id);
 }
 
@@ -775,7 +748,6 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci)
 
   cbe_skel_interface_print_relayer(tree, ci);
 
-  cbe_skel_interface_print_objref_initializer(tree, ci);
   cbe_skel_interface_print_vepvmap_initializer(tree, ci);
 
   fprintf(ci->fh,
@@ -784,8 +756,7 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh,
 	  "  static PortableServer_ClassInfo class_info = "
-	  "{(ORBit_impl_finder)&get_skel_%s, \"%s\", "
-	  "(ORBit_local_objref_init)INIT_OBJREF_%s, "
+	  "{(ORBit_impl_finder)&get_skel_%s, \"%s\", &%s__classid,"
 	  " INIT_VEPVMAP_%s};\n",
 	  id, IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id, id);
 
@@ -799,12 +770,10 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "  POA_%s__init(servant, env);\n", id2);
     g_free(id2);
   }
-
+  /* registering after other __inits() makes the classids increment nicely. */
+  fprintf(ci->fh, "  ORBit_classinfo_register(&class_info);\n");
+  /* Set classinfo after other __inits() for most derived interface. */
   fprintf(ci->fh, "  ORBIT_SERVANT_SET_CLASSINFO(servant,&class_info);\n");
-
-  fprintf(ci->fh,
-	  "if(!%s__classid)\n%s__classid = ORBit_register_class(&class_info);\n",
-	  id, id);
 
   fprintf(ci->fh, "}\n\n");
 
