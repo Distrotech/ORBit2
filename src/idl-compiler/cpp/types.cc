@@ -764,7 +764,7 @@ IDLArray::writeTypedef(ostream &ostr,Indent &indent,IDLCompilerState &state,
 	<< dest.getCPPIdentifier() << "_alloc() {\n";
 
 	
-	string allocfunc = idlGetCast(IDL_IMPL_C_NS "::" +
+	string allocfunc = idlGetCast(IDL_IMPL_C_NS_NOTUSED  +
 								  dest.getQualifiedCIdentifier()+"__alloc()",
 								  dest.getCPPIdentifier() +"_slice *");
 	ostr

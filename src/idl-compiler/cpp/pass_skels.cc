@@ -561,7 +561,7 @@ IDLPassSkels::doInterfaceAppServant(IDLInterface &iface) {
 	<< indent << "struct _orbitcpp_Servant {" << endl;
 	indent++;
 	m_header
-	<< indent << IDL_IMPL_C_NS "::"
+	<< indent << IDL_IMPL_C_NS_NOTUSED
 	<< iface.getQualifiedC_POA() << " m_cservant;" << endl
 	<< indent << "PortableServer::Servant m_cppservant;" << endl
 	<< indent << iface.getQualifiedCPP_POA() << " *m_cppimpl;  // fully downcasted version of m_cppservant" << endl;
@@ -604,12 +604,12 @@ IDLPassSkels::doInterfaceEPVs(IDLInterface &iface) {
 
 	// vepv decl
 	m_header
-	<< indent << "static " IDL_IMPL_C_NS "::"
+	<< indent << "static " IDL_IMPL_C_NS_NOTUSED
 	<< iface.getQualifiedC_vepv() << " _vepv;" << endl;
 
 	// vepv def
 	m_module
-	<< mod_indent << IDL_IMPL_C_NS "::"
+	<< mod_indent << IDL_IMPL_C_NS_NOTUSED
 	<< iface.getQualifiedC_vepv() << ' '
 	<< iface.getQualifiedCPP_POA() << "::_vepv = {" << endl;
 	mod_indent++;
@@ -640,7 +640,7 @@ IDLPassSkels::doInterfaceEPVs(IDLInterface &iface) {
 void 
 IDLPassSkels::declareEPV(IDLInterface &iface,IDLInterface &of) {
 	m_header
-	<< indent << "static " IDL_IMPL_C_NS "::"
+	<< indent << "static " IDL_IMPL_C_NS_NOTUSED
 	<< of.getQualifiedC_epv() << " _"
 	<< of.getQualifiedCIdentifier() << "_epv;" << endl;
 }
@@ -651,7 +651,7 @@ IDLPassSkels::declareEPV(IDLInterface &iface,IDLInterface &of) {
 void 
 IDLPassSkels::defineEPV(IDLInterface &iface,IDLInterface &of) {
 	m_module
-	<< mod_indent << IDL_IMPL_C_NS "::"
+	<< mod_indent << IDL_IMPL_C_NS_NOTUSED
 	<< of.getQualifiedC_epv() << ' '
 	<< iface.getQualifiedCPP_POA() << "::"
 	<< "_" << of.getQualifiedCIdentifier() << "_epv = {" << endl;

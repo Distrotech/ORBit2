@@ -1,7 +1,13 @@
 2002-03-01  Murray Cumming  <murrayc@usa.net>
 
-	* src/idl-compiler/cpp/types.hh: Another use of IDL_IMPL_C_NS, this
-	time in IDLStrcut::getNSScopedCTypeName().	
+	* src/idl-compiler/cpp/pass_xlate.cc:
+	Changed use of old <ctype>__free() to new <ctype>__freekids().
+	* Lots more use of IDL_IMPL_C_NS_NOTUSED.
+
+2002-03-01  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/types.hh: Another use of IDL_IMPL_C_NS_NOTUSED,
+	this time in IDLStruct::getNSScopedCTypeName().	
 	See previous ChangeLog entry.
 
 2002-03-01  Murray Cumming  <murrayc@usa.net>

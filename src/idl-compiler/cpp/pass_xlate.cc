@@ -41,7 +41,7 @@ IDLPassXlate::runPass() {
 	<< indent << "#ifndef __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
 	<< indent << "#define __ORBITCPP_IDL_" << idlUpper(m_state.m_basename) << "_COMMON" << endl
 	<< endl << endl
-	<< indent << "#include <strings.h>" << endl
+	<< indent << "#include <string.h>" << endl
 	<< indent << "#include <orbit/orb-cpp/orbitcpp.hh>" << endl
 	<< indent << "namespace "IDL_IMPL_NS_ID" { namespace "IDL_IMPL_C_NS_ID" {" << endl;
 	indent++;
@@ -175,7 +175,7 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	m_header	
 	<< indent << "void _clear_member() {" << endl;
 	m_header	
-	  << ++indent << idlUnion.getNSScopedCTypeName() << "__free(&m_target,NULL,true);  // actually frees the children, but not the union itself" << endl;
+	  << ++indent << idlUnion.getNSScopedCTypeName() << "__freekids(&m_target, NULL);  // actually frees the children, but not the union itself" << endl;
 	m_header	
 	<< --indent << "}" << endl << endl;
 
@@ -275,7 +275,7 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 		<< endl
 		<< indent++ << "void* operator new(size_t) {" << endl
 		<< indent << "return "
-		<< IDL_IMPL_C_NS "::"
+		<< IDL_IMPL_C_NS_NOTUSED
 		<< idlUnion.getQualifiedCIdentifier() << "__alloc();" << endl;
 		m_header
 		<< --indent << "};" << endl << endl;
@@ -819,7 +819,7 @@ IDLWriteExceptionAnyFuncs::run() {
 	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " 
 	<< m_element.getQualifiedCPPIdentifier() << " & val) {" << endl;
 	m_header
-	<< ++indent << "const ::_orbitcpp::c::" << m_element.getQualifiedCIdentifier() << " *ex;" << endl;
+	<< ++indent << "const " << m_element.getQualifiedCIdentifier() << " *ex;" << endl;
 	m_header
 	<< indent << "if( the_any.extract_ptr( (CORBA::TypeCode_ptr)TC_"
 	<< m_element.getQualifiedCIdentifier() << ", ex)){" << endl;
