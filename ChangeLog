@@ -1,3 +1,7 @@
+2003-05-19  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.6.2
+
 2003-05-14  Michael Meeks  <michael@ximian.com>
 
 	* include/orbit/GIOP/giop-recv-buffer.h: make
