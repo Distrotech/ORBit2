@@ -1,3 +1,9 @@
+2002-11-02  Michael Meeks  <michael@ximian.com>
+
+	* test/test-linc.c
+	(test_broken_cnx_handle_input): disconnect
+	on fatal error.
+
 2002-10-31  Michael Meeks  <michael@ximian.com>
 
 	* include/linc/linc-source.h: add.
