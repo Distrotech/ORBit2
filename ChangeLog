@@ -1,3 +1,35 @@
+2005-02-01  Tor Lillqvist  <tml@novell.com>
+
+	* src/idl-compiler/orbit-idl-c-utils.c (orbit_cbe_flatten_ref):
+	Take output file as parameter, output directly there instead of
+	returning a string.
+
+	Don't take the address of function parameters and pass it on to
+	the marshalling layers. Function parameters are not necessarily
+	aligned according to the alinments in orbit-config.h. Case in
+	point: long long on the x86. ORBIT_ALIGNOF_CORBA_LONG_LONG is 8,
+	but as function parameters on the stack, long longs only have
+	4-byte alignment. The lower levels will realign the address,
+	meaning long long IN parameters might have a completely wrong
+	value marshalled. The same presumably holds for doubles and long
+	doubles. Why this problem hasn't occured on Linux on x86, no
+	idea. I noticed it on Windows.
+
+	Instead, copy IN parameters to a field in a local struct variable,
+	and pass on the address of that field.
+
+	In theory, the above could hold on exotic architectures also for
+	OUT parameters, where the address of a parameter is also passed
+	on. But in that case the parameter is a pointer, and at least on
+	the x86, a pointer's alignment as parameter matches expectation in
+	orbit-config.h (4).
+
+	(orbit_cbe_maybe_copy_of_data_in): New helper function that
+	outputs the definition and initialization of the local copy of IN
+	parameters mentioned above.
+
+	(orbit_cbe_flatten_args): Modify accordingly.
+
 2005-01-28  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/orbit-init.c
