@@ -14,10 +14,12 @@ the basic connection object
 
 </para>
 
-<!-- ##### TYPEDEF LINCConnection ##### -->
+<!-- ##### MACRO LINC_IS_CONNECTION ##### -->
 <para>
 
 </para>
+
+@object: 
 
 
 <!-- ##### ENUM LINCConnectionStatus ##### -->

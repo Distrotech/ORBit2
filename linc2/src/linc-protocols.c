@@ -24,14 +24,7 @@
 #include <errno.h>
 #include <string.h>
 #include <netinet/in.h>
-#include <resolv.h>
 #include <netdb.h>
-
-#include <linc/linc-protocol.h>
-#include <linc/linc-connection.h>
-
-#include "linc-private.h"
-#include "linc-debug.h"
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -46,6 +39,14 @@
 #include <asm/types.h>
 #include <linux/irda.h>
 #endif
+
+#include <resolv.h>
+
+#include <linc/linc-protocol.h>
+#include <linc/linc-connection.h>
+
+#include "linc-private.h"
+#include "linc-debug.h"
 
 extern LINCProtocolInfo static_linc_protocols[];
 

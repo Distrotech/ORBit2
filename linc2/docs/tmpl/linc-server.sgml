@@ -14,10 +14,12 @@ A listening server object
 
 </para>
 
-<!-- ##### TYPEDEF LINCServer ##### -->
+<!-- ##### MACRO LINC_IS_SERVER ##### -->
 <para>
 
 </para>
+
+@object: 
 
 
 <!-- ##### FUNCTION linc_server_setup ##### -->
