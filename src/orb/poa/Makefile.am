@@ -4,9 +4,11 @@ IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-I$(top_builddir)/src/orb/orb-core \
+	-I$(top_srcdir)/src/orb/orb-core \
 	-I$(top_builddir)/include/orbit/poa \
 	-I$(top_srcdir)/include/orbit/orb-core \
 	-I$(top_builddir)/include/orbit/orb-core \
+	-I$(top_srcdir)/src/orb/poa \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
 
