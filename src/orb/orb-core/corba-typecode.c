@@ -219,61 +219,66 @@ ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf)
 /* Encode a typecode to a codec, possibly recursively */
 
 static void
-tc_enc (CORBA_TypeCode   tc,
-	GIOPSendBuffer  *c,
-	TCEncodeContext *ctx)
+tc_enc (CORBA_TypeCode tc, GIOPSendBuffer *buf, TCEncodeContext *ctx)
 {
-  TCRecursionNode* node;
-  const TkInfo* info;
-  GSList* l;
-  gint32 num, *tmpi;
-  gint8 end;
+	TCRecursionNode     *node;
+	const TkInfo        *info;
+	GSList              *l;
+	CORBA_unsigned_long  len, tmp;
+	guchar              *marker;
+	gint8                endianness;
 
-  g_assert(CLAMP(0, tc->kind, CORBA_tk_last) == tc->kind);
+	g_assert ( CLAMP(0, tc->kind, CORBA_tk_last) == tc->kind );
 
-  giop_send_buffer_align(c, sizeof(num));
-  for(l=ctx->prior_tcs;l;l=l->next)
-    {
-      TCRecursionNode* node=l->data;
-      /* CORBA_CORBA_TypeCode_equal might save space, but is slow.. */
-      if(node->tc==tc)
-	{
-	  num = CORBA_tk_recursive;
-	  giop_send_buffer_append_aligned(c, &num, sizeof(num));
-	  num = node->index - c->msg.header.message_size - 4;
-/*	  g_warning ("Offset = '%d' - '%d' = %d",
-	  node->index, c->msg.header.message_size, num); */
-	  giop_send_buffer_append_aligned(c, &num, sizeof(num));
-	  return;
+	giop_send_buffer_align (buf, 4);
+
+	for( l = ctx->prior_tcs ; l ; l = l->next ) {
+		node = l->data;
+
+		if (node->tc == tc) {
+			tmp = CORBA_tk_recursive;
+			giop_send_buffer_append_aligned (buf, &tmp, 4);
+			len = node->index - buf->msg.header.message_size - 4;
+			giop_send_buffer_append_aligned (buf, &len, 4);
+
+			return;
+		}
 	}
-    }
 
-  node = g_new (TCRecursionNode, 1);
-  node->tc = tc;
-  node->index = c->msg.header.message_size;
-  ctx->prior_tcs = g_slist_prepend (ctx->prior_tcs, node);
+	node = g_new (TCRecursionNode, 1);
+	node->tc = tc;
+	node->index = buf->msg.header.message_size;
 
-  giop_send_buffer_append(c, &tc->kind, sizeof(tc->kind));
+	ctx->prior_tcs = g_slist_prepend (ctx->prior_tcs, node);
 
-	
-  info=&tk_info[tc->kind];
-  switch(info->type)
-    {
-    case TK_EMPTY:
-      break;
+	giop_send_buffer_append (buf, &tc->kind, sizeof(tc->kind));
 
-    case TK_COMPLEX:
-      num = 0;
-      tmpi = (guint32*)giop_send_buffer_append_aligned(c, &num, sizeof(num));
-      *tmpi = c->msg.header.message_size;
-      end = GIOP_FLAG_ENDIANNESS;
-      giop_send_buffer_append(c, &end, 1);
-      (info->encoder)(tc, c, ctx);
-      *tmpi = c->msg.header.message_size - *tmpi;
-      break;
-    case TK_SIMPLE:
-      (info->encoder)(tc, c, ctx);
-    }
+	info=&tk_info[tc->kind];
+
+	switch (info->type) {
+	case TK_EMPTY:
+		break;
+	case TK_COMPLEX:
+		marker = giop_send_buffer_append_aligned (buf, NULL, 4);
+
+		tmp = buf->msg.header.message_size;
+		endianness = GIOP_FLAG_ENDIANNESS;
+
+		giop_send_buffer_append (buf, &endianness, 1);
+
+		(info->encoder)(tc, buf, ctx);
+
+		len = buf->msg.header.message_size - tmp;
+
+		memcpy (marker, &len, 4);
+		break;
+	case TK_SIMPLE:
+		(info->encoder)(tc, buf, ctx);
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
 }
 
 static void

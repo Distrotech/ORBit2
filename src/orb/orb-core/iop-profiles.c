@@ -895,39 +895,41 @@ IOP_UnknownProfile_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 }
 
 void
-IOP_profile_marshal( CORBA_Object obj, GIOPSendBuffer *buf, gpointer *p )
+IOP_profile_marshal (CORBA_Object obj, GIOPSendBuffer *buf, gpointer *p)
 {
-  IOP_Profile_info    *profile = (IOP_Profile_info *)p;
-  CORBA_unsigned_long *seqlen, dumb;
+	IOP_Profile_info    *profile = (IOP_Profile_info *)p;
+	CORBA_unsigned_long  seqlen, msgsz;
+	guchar              *marker;
 
-  giop_send_buffer_append_aligned(buf, &profile->profile_type, 4);
-  seqlen = (CORBA_unsigned_long *)
-    giop_send_buffer_append_aligned(buf, NULL, 4);
+	giop_send_buffer_append_aligned (buf, &profile->profile_type, 4);
+	marker = giop_send_buffer_append_aligned (buf, NULL, 4);
 
-  dumb = buf->msg.header.message_size;
-  switch(profile->profile_type)
-    {
-    case IOP_TAG_INTERNET_IOP:
-      giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_INTERNET_IOP_marshal(obj, buf, profile);
-      break;
-    case IOP_TAG_ORBIT_SPECIFIC:
-      giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_ORBIT_SPECIFIC_marshal(obj, buf, profile);
-      break;
-    case IOP_TAG_GENERIC_IOP:
-      giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_GENERIC_IOP_marshal(obj, buf, profile);
-      break;
-    case IOP_TAG_MULTIPLE_COMPONENTS:
-      giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_MULTIPLE_COMPONENTS_marshal(obj, buf, profile);
-      break;
-    default:
-      IOP_UnknownProfile_marshal(obj, buf, profile);
-      break;
-    }
-  *seqlen = buf->msg.header.message_size - dumb;
+	msgsz = buf->msg.header.message_size;
+
+	switch (profile->profile_type) {
+	case IOP_TAG_INTERNET_IOP:
+		giop_send_buffer_append (buf, &buf->msg.header.flags, 1);
+		IOP_TAG_INTERNET_IOP_marshal (obj, buf, profile);
+		break;
+	case IOP_TAG_ORBIT_SPECIFIC:
+		giop_send_buffer_append (buf, &buf->msg.header.flags, 1);
+		IOP_TAG_ORBIT_SPECIFIC_marshal (obj, buf, profile);
+		break;
+	case IOP_TAG_GENERIC_IOP:
+		giop_send_buffer_append (buf, &buf->msg.header.flags, 1);
+		IOP_TAG_GENERIC_IOP_marshal (obj, buf, profile);
+		break;
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+		giop_send_buffer_append (buf, &buf->msg.header.flags, 1);
+		IOP_TAG_MULTIPLE_COMPONENTS_marshal (obj, buf, profile);
+		break;
+	default:
+		IOP_UnknownProfile_marshal (obj, buf, profile);
+		break;
+	}
+
+	seqlen = buf->msg.header.message_size - msgsz;
+	memcpy (marker, &seqlen, 4);
 }
 
 /*

@@ -1,3 +1,12 @@
+2001-07-25  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/iop-profiles.c(IOP_profile_marshal),
+	  src/orb/corba-typecode.c(tc_enc):
+	do not dereference pointers that aren't neccessarily
+	properly aligned.
+
+	* src/orb/GIOP/giop-send-buffer.c: document this.
+
 2001-07-25  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (giop_dump_send, giop_dump_recv),
