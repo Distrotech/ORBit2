@@ -124,12 +124,13 @@ linc_exec_command (LINCCommand *cmd)
 
 	LINC_MUTEX_LOCK (linc_cmd_queue_lock);
 
-	if (LINC_WAKEUP_WRITE == -1) {/* shutdown main loop */
+	if (LINC_WAKEUP_WRITE == -1) { /* shutdown main loop */
 		linc_dispatch_command (cmd);
 		LINC_MUTEX_UNLOCK (linc_cmd_queue_lock);
 		return;
 	}
 
+	/* FIXME: if (linc_cmd_queue) - no need to wake mainloop */
 	linc_cmd_queue = g_list_append (linc_cmd_queue, cmd);
 
 	while ((res = write (LINC_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
