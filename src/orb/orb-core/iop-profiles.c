@@ -14,7 +14,7 @@
    everything far more sensibly */
 
 /*
- * common set of profiles for Ojbect Adaptor generated refs
+ * common set of profiles for Object Adaptor generated refs
  */
 static GSList *common_profiles = NULL;
 

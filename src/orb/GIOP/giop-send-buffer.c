@@ -321,10 +321,9 @@ giop_send_buffer_align (GIOPSendBuffer *buf, gulong boundary)
 	/* 2. Do the alignment */
 	if (align_amt) {
 
-		if (buf->indirect_left < align_amt) {
-			align_amt -= buf->indirect_left;
+		if (buf->indirect_left < align_amt)
 			get_next_indirect (buf, 0);
-		}
+
 #ifdef ORBIT_PURIFY
 		memset (buf->indirect, 0, align_amt);
 #endif
@@ -363,10 +362,8 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 	   more aggressively here */
 	giop_send_buffer_align (buf, align_len);
   
-	if (buf->indirect_left < align_len) {
-		g_assert (buf->indirect_left == 0);
+	if (buf->indirect_left < align_len)
 		get_next_indirect (buf, 0);
-	}
 
 	indirect = buf->indirect;
 
@@ -461,7 +458,7 @@ giop_send_buffer_append_string (GIOPSendBuffer *buf,
 	giop_send_buffer_align (buf, 4);
 
 	/* be cleverer for short strings */
-	if (buf->indirect_left < 4 + len) {
+	if (buf->indirect_left >= 4 + len) {
 		guchar *indirect = buf->indirect;
 
 		memcpy (indirect, &len, 4);
@@ -472,7 +469,7 @@ giop_send_buffer_append_string (GIOPSendBuffer *buf,
 		buf->indirect      += 4 + len;
 		buf->indirect_left -= 4 + len;
 	} else {
-		giop_send_buffer_append_aligned (buf, &len, 4);
+		giop_send_buffer_append_copy (buf, &len, 4);
 		giop_send_buffer_append (buf, str, len);
 	}
 }
