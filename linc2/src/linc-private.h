@@ -104,5 +104,6 @@ void             linc_watch_set_condition   (LincWatch              *w,
 					     GIOCondition            condition);
 
 GMainContext    *linc_main_get_context      (void);
+gboolean         linc_get_threaded          (void);
 
 #endif /* _LINC_PRIVATE_H */
