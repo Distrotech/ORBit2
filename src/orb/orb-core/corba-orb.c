@@ -487,9 +487,8 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	return ORBit_RootObject_duplicate (objref);
 }
 
-//This shouldn't be static because we use it in orbitcpp_tools.cc too:
-CORBA_TypeCode
-CORBA_TypeCode_allocate (void)
+static CORBA_TypeCode
+ORBit_TypeCode_allocate (void)
 {
 	CORBA_TypeCode tc = g_new0 (struct CORBA_TypeCode_struct, 1);
 
@@ -508,7 +507,7 @@ CORBA_ORB_create_struct_tc (CORBA_ORB                    orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -591,7 +590,7 @@ CORBA_ORB_create_union_tc (CORBA_ORB                   orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 
 	if (!retval)
 		goto tc_alloc_failed;
@@ -660,7 +659,7 @@ CORBA_ORB_create_enum_tc (CORBA_ORB                  orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -698,7 +697,7 @@ CORBA_ORB_create_alias_tc (CORBA_ORB             orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 	
@@ -736,7 +735,7 @@ CORBA_ORB_create_exception_tc (CORBA_ORB                    orb,
 	CORBA_TypeCode retval;
 	int            i;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -788,7 +787,7 @@ CORBA_ORB_create_interface_tc (CORBA_ORB                 orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -810,7 +809,7 @@ CORBA_ORB_create_string_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -831,7 +830,7 @@ CORBA_ORB_create_wstring_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -853,7 +852,7 @@ CORBA_ORB_create_fixed_tc (CORBA_ORB                   orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval) {
 		CORBA_exception_set_system (
 				ev, ex_CORBA_NO_MEMORY, CORBA_COMPLETED_NO);
@@ -876,7 +875,7 @@ CORBA_ORB_create_sequence_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval = CORBA_TypeCode_allocate ();
+	retval = ORBit_TypeCode_allocate ();
 	if (!retval)
 		goto tc_alloc_failed;
 
@@ -910,7 +909,7 @@ CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode retval;
 
-	retval=CORBA_TypeCode_allocate ();
+	retval=ORBit_TypeCode_allocate ();
 	if (retval)
 		goto tc_alloc_failed;
 
@@ -922,7 +921,7 @@ CORBA_ORB_create_recursive_sequence_tc (CORBA_ORB                  orb,
 	retval->sub_parts = 1;
 	retval->length    = bound;
 
-	retval->subtypes [0] = CORBA_TypeCode_allocate ();
+	retval->subtypes [0] = ORBit_TypeCode_allocate ();
 
 	retval->subtypes [0]->kind          = CORBA_tk_recursive;
 	retval->subtypes [0]->recurse_depth = offset;
@@ -947,7 +946,7 @@ CORBA_ORB_create_array_tc (CORBA_ORB                  orb,
 {
 	CORBA_TypeCode tc;
 
-	tc = CORBA_TypeCode_allocate ();
+	tc = ORBit_TypeCode_allocate ();
 	if (!tc)
 		goto tc_alloc_failed;
 

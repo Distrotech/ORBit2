@@ -71,9 +71,6 @@ namespace _orbitcpp {
 
   
 	void error(char *text);
-	
-	// JKL: this is used by any to make temporary and bounded string typecodes
-	CORBA_TypeCode TypeCode_allocate();
 }
 
 

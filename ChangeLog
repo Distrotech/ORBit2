@@ -1,3 +1,25 @@
+2002-08-28  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-orb.h: kill
+	CORBA_TypeCode_allocate.
+
+	* src/orb-cpp/Makefile.am: kill -DORBIT2_INTERNAL_API.
+
+	* src/orb-cpp/orbitcpp_any.cc: allocate the correct TypeCodes
+	using CORBA_ORB_create_string_tc for example.
+
+	* src/orb-cpp/orbitcpp_tools.(cc|hh): kill TypeCode_allocate.
+
+	* src/orb/orb-core/corba-orb.c:
+	(ORBit_TypeCode_allocate): rename from CORBA_TypeCode_allocate.
+	(CORBA_ORB_create_struct_tc), (CORBA_ORB_create_union_tc),
+	(CORBA_ORB_create_enum_tc), (CORBA_ORB_create_alias_tc),
+	(CORBA_ORB_create_exception_tc), (CORBA_ORB_create_interface_tc),
+	(CORBA_ORB_create_string_tc), (CORBA_ORB_create_wstring_tc),
+	(CORBA_ORB_create_fixed_tc), (CORBA_ORB_create_sequence_tc),
+	(CORBA_ORB_create_recursive_sequence_tc),
+	(CORBA_ORB_create_array_tc): update.
+
 2002-07-24  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/pass_skels.cc: activate servants the first

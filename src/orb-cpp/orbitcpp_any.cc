@@ -116,10 +116,8 @@ CORBA::Any::operator<<=(from_string in)
 	::_orbitcpp::CEnvironment _ev;
 	CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_cobj()); // release typecode
 
-	CORBA_TypeCode new_tc = ::_orbitcpp::TypeCode_allocate();
-	new_tc->kind = CORBA_tk_string;
-	new_tc->length = in.bound;
-	m_target._type = new_tc;
+	_ev.clear ();
+	m_target._type = CORBA_ORB_create_string_tc (NULL, in.bound, _ev._orbitcpp_cobj ());
 
 	if (CORBA_any_get_release((CORBA_any*)&m_target))
 		CORBA_free (m_target._value);
@@ -140,10 +138,9 @@ CORBA::Any::operator<<=(from_wstring in)
 		return;
 	::_orbitcpp::CEnvironment _ev;
 	CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_cobj()); // release typecode
-	CORBA_TypeCode new_tc = ::_orbitcpp::TypeCode_allocate();
-	new_tc->kind = CORBA_tk_wstring;
-	new_tc->length = in.bound;
-	m_target._type = new_tc;
+
+	_ev.clear ();
+	m_target._type = CORBA_ORB_create_wstring_tc (NULL, in.bound, _ev._orbitcpp_cobj ());
 		
 	if( CORBA_any_get_release((CORBA_any*)&m_target) )
 		CORBA_free( m_target._value );
@@ -160,12 +157,11 @@ CORBA::Any::operator<<=(from_wstring in)
 CORBA::Boolean
 CORBA::Any::operator>>=(to_string out) const
 {
-	CORBA_TypeCode tmp = ::_orbitcpp::TypeCode_allocate();
-	tmp->kind = CORBA_tk_string;
-	tmp->length = out.bound;
+	::_orbitcpp::CEnvironment _ev;
+	CORBA_TypeCode tmp = CORBA_ORB_create_string_tc (NULL, out.bound, _ev._orbitcpp_cobj ());
 	Boolean ret = extract (CORBA::TypeCode::_orbitcpp_wrap (tmp), const_cast<char*&> (out.val));
 
-	::_orbitcpp::CEnvironment _ev;
+	_ev.clear ();
 	CORBA_Object_release((CORBA_Object)tmp, _ev._orbitcpp_cobj()); // release typecode
 
 	return ret;
@@ -174,11 +170,11 @@ CORBA::Any::operator>>=(to_string out) const
 CORBA::Boolean
 CORBA::Any::operator>>=(to_wstring out) const
 {
-	CORBA_TypeCode tmp = ::_orbitcpp::TypeCode_allocate();
-	tmp->kind = CORBA_tk_wstring;
-	tmp->length = out.bound;
-	Boolean ret = extract(reinterpret_cast<CORBA::TypeCode_ptr>(tmp), const_cast<WChar*&>(out.val));
 	::_orbitcpp::CEnvironment _ev;
+	CORBA_TypeCode tmp = CORBA_ORB_create_wstring_tc (NULL, out.bound, _ev._orbitcpp_cobj ());
+	Boolean ret = extract(reinterpret_cast<CORBA::TypeCode_ptr>(tmp), const_cast<WChar*&>(out.val));
+
+	_ev.clear ();
 	CORBA_Object_release((CORBA_Object)tmp, _ev._orbitcpp_cobj()); // release typecode
 	return ret;
 }

@@ -61,10 +61,3 @@ void _orbitcpp::error(char *text) {
 	printf("%s\n",text);
 	abort();
 }
-
-
-CORBA_TypeCode _orbitcpp::TypeCode_allocate() {
-	CORBA_TypeCode tc = CORBA_TypeCode_allocate();
-	return tc;
-}
-

@@ -3,7 +3,6 @@ lib_LTLIBRARIES = libORBit-2-cpp.la
 INCLUDES = \
 	-I. \
 	-I$(top_srcdir)/include \
-	-DORBIT2_INTERNAL_API \
 	$(WARN_CFLAGS) \
 	$(ORBIT_CFLAGS)
 
