@@ -1,3 +1,9 @@
+ORBit2-2.9.4
+
+	* bug fixes
+		+ enviroment pollution (Michael)
+		+ AIX portability bits (The Written Word)
+
 ORBit2-2.9.3
 
 	* bug fixes
