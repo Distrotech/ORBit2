@@ -327,6 +327,7 @@ ORBit-2.0.pc
 ORBit-CosNaming-2.0.pc
 ORBit-imodule-2.0.pc
 ORBit.spec
+orbit2-zip
 src/Makefile
 src/idl-compiler/Makefile
 src/idl-compiler/ORBit-idl-2.0.pc
