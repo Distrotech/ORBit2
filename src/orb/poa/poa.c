@@ -728,86 +728,6 @@ ORBit_classinfo_lookup_id(const char *type_id)
 }
 
 void
-ORBit_impl_CORBA_Object_is_a(gpointer servant,
-			     GIOPRecvBuffer * _ORBIT_recv_buffer,
-			     CORBA_Environment *ev,
-			     gpointer dummy_impl)
-{
-  GIOPSendBuffer *_ORBIT_send_buffer;
-  CORBA_boolean retval;
-  char *repo_id;
-  CORBA_unsigned_long slen;
-  guchar *curptr;
-  PortableServer_ServantBase *_ORBIT_servant;
-
-  _ORBIT_servant = servant;
-
-	/* XXX security implications */
-  curptr = _ORBIT_recv_buffer->cur;
-  curptr = ALIGN_ADDRESS(curptr, 4);
-  if((curptr + 4) > _ORBIT_recv_buffer->end)
-    goto errout;
-  if(giop_msg_conversion_needed(_ORBIT_recv_buffer))
-    slen = GUINT32_SWAP_LE_BE(*((CORBA_unsigned_long *)curptr));
-  else
-    slen = *((CORBA_unsigned_long *)curptr);
-  curptr += 4;
-  if((curptr + slen) > _ORBIT_recv_buffer->end
-     || (curptr + slen) < curptr)
-    goto errout;
-
-  repo_id = curptr;
-  /* the terminaling NULL is included in the length! */
-  g_assert( slen > 1 && repo_id[slen-1] == '\0' );
-
-  {
-    PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
-    CORBA_unsigned_long clsid;
-    clsid = ORBit_classinfo_lookup_id(repo_id);
-    retval = (clsid && clsid < ci->vepvlen && ci->vepvmap[clsid]);
-  }
-
-  _ORBIT_send_buffer = giop_send_buffer_use_reply(_ORBIT_recv_buffer->connection->giop_version,
-						  giop_recv_buffer_get_request_id
-						  (_ORBIT_recv_buffer),
-						  ev->_major);
-  giop_send_buffer_append(_ORBIT_send_buffer,
-			  &retval, sizeof(retval));
-  giop_send_buffer_write(_ORBIT_send_buffer, _ORBIT_recv_buffer->connection);
-  giop_send_buffer_unuse(_ORBIT_send_buffer);
-  return;
-    errout:
-}
-
-CORBA_boolean
-CORBA_Object_is_a(CORBA_Object _obj,
-		  const CORBA_char * logical_type_id,
-		  CORBA_Environment * ev)
-{
-  if(!strcmp(logical_type_id, "IDL:CORBA/Object:1.0"))
-    return CORBA_TRUE;
-
-  if(!_obj)
-    return CORBA_FALSE;
-
-  if(!strcmp(logical_type_id, _obj->type_id))
-    return CORBA_TRUE;
-
-  if(_obj->pobj)
-    {
-      CORBA_unsigned_long clsid
-	= ORBit_classinfo_lookup_id(logical_type_id);
-      PortableServer_ClassInfo *ci 
-	= ORBIT_SERVANT_TO_CLASSINFO(_obj->pobj->servant);
-      return (clsid && (clsid < ci->vepvlen) && ci->vepvmap[clsid]);
-  
-      return CORBA_FALSE;
-    }
-  else
-    return ORBit_ObjectImpl__is_a(_obj, logical_type_id, ev);
-}
-
-void
 ORBit_classinfo_register(PortableServer_ClassInfo *ci)
 {
   if(!ORBit_class_assignments)
@@ -1740,6 +1660,10 @@ ORBit_ORB_find_POA_for_okey(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey)
   return NULL;
 }
 
+/*
+ * If invoked in the local case, recv_buffer == NULL.
+ * If invoked in the remote cse, ret = args = ctx == NULL.
+ */
 void
 ORBit_small_handle_request(ORBit_POAObject    pobj,
 			   CORBA_Identifier   opname,
@@ -1818,9 +1742,9 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 					 (gpointer *)&m_data, &imp);
 
   if( skel == NULL && small_skel == NULL ) {
-    if ( opname[0] == '_' && strcmp(opname + 1, "is_a") == 0 )
-      skel = (gpointer)&ORBit_impl_CORBA_Object_is_a;
-    else
+    small_skel = get_small_skel_CORBA_Object(pobj->servant, opname,
+					     (gpointer *)&m_data, &imp);
+    if ( small_skel == NULL )
       CORBA_exception_set_system(ev, ex_CORBA_BAD_OPERATION,
 				 CORBA_COMPLETED_NO);
   }

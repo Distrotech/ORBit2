@@ -1,8 +1,9 @@
 #ifndef ORB_CORE_EXPORT_H
 #define ORB_CORE_EXPORT_H 1
 
-void ORBit_impl_CORBA_Object_is_a(gpointer servant,
-				  GIOPRecvBuffer * _ORBIT_recv_buffer,
-				  CORBA_Environment *ev,
-				  gpointer dummy_impl);
+ORBitSmallSkeleton get_small_skel_CORBA_Object(PortableServer_Servant  servant, 
+					       const char             *opname,
+					       gpointer               *m_data, 
+					       gpointer               *impl);
+
 #endif

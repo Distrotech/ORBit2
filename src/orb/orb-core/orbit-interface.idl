@@ -41,8 +41,8 @@ module ORBit {
 	typedef sequence<IMethod> IMethods;
 
 	struct IInterface {
-		string   repo_id;
-		IMethods methods;
+		TypeCode             tc;
+		IMethods             methods;
 		sequence<IInterface> base_interfaces;
 	};
 }; /* module ORBit */

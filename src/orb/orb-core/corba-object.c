@@ -438,6 +438,67 @@ CORBA_Object__freekids(gpointer mem, gpointer dat)
   return mem + sizeof(CORBA_Object);
 }
 
+CORBA_boolean
+CORBA_Object_is_a(CORBA_Object       obj,
+                  const CORBA_char  *logical_type_id,
+                  CORBA_Environment *ev)
+{
+  CORBA_boolean  retval;
+  gpointer      *arg = (gpointer *)&logical_type_id;
+
+  if( strcmp(logical_type_id, "IDL:CORBA/Object:1.0") == 0 )
+    return CORBA_TRUE;
+
+  if( obj == NULL )
+    return CORBA_FALSE;
+
+  if( strcmp(logical_type_id, obj->type_id) == 0 )
+    return CORBA_TRUE;
+
+  ORBit_small_invoke_stub(obj, &CORBA_Object__imethods[4], &retval, arg, NULL, ev);
+
+  return retval;
+}
+
+static gboolean
+ORBit_IInterface_is_a( ORBit_IInterface *idata, const char *type_id ) {
+ int idx;
+
+ if ( strcmp(idata->tc->name, type_id) == 0 )
+   return TRUE;
+
+ for ( idx = 0 ; idx < idata->base_interfaces._length ; idx++ )
+   if ( strcmp(idata->base_interfaces._buffer[idx].tc->name, type_id) == 0 )
+     return TRUE;
+
+ return FALSE;
+ }
+
+static void
+ORBit_impl_CORBA_Object_is_a(PortableServer_ServantBase *servant,
+                             gpointer ret, gpointer *arg,
+                             gpointer ctx, CORBA_Environment *ev,
+                             gpointer imp)
+{
+  PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
+  const char               *type_id = *(const char **)arg;
+
+  *(CORBA_boolean *)ret = ORBit_IInterface_is_a(ci->idata, type_id);
+}
+
+ORBitSmallSkeleton
+get_small_skel_CORBA_Object(PortableServer_Servant servant, const char *opname, 
+			    gpointer * m_data, gpointer * impl)
+{
+
+ if ( strcmp(opname, "is_a") == 0 ) {
+   *m_data = (gpointer)&CORBA_Object__imethods[4];
+   return (ORBitSmallSkeleton)ORBit_impl_CORBA_Object_is_a;
+   }
+
+ return NULL;
+}
+
 /* 
  * Arguments' Definitions.
  */
@@ -599,7 +660,7 @@ ORBit_IMethod CORBA_Object__imethods[] = {
  */
 
 ORBit_IInterface CORBA_Object__itype = {
-  "CORBA_Object", 
+  TC_CORBA_Object, 
   {12, 12, CORBA_Object__imethods, FALSE},
   {0, 0, NULL, FALSE}
 };
