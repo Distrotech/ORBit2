@@ -22,6 +22,8 @@
 #include "constants.h"
 #include <stdio.h>
 
+extern int _orbit_debug_flags;
+
 static CORBA_char *
 BasicServer__get_foo (PortableServer_Servant servant,
 		      CORBA_Environment     *ev)

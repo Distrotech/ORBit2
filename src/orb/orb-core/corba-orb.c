@@ -254,22 +254,20 @@ shutdown_orb (void)
 	CORBA_exception_free (&ev);
 }
 
-static
-void 
+static void 
 ORBit_initial_references_by_user (CORBA_ORB          orb, 
 				  gchar             *naming_ref,
 				  GSList            *initref_list,
 				  CORBA_Environment *ev)
 {
-	/* return if exception */ 
-	if (ev->_major != CORBA_NO_EXCEPTION) return;
+	GList *l;
+	CORBA_Object objref;
 
-	/* set user defined references */ 
-	if (naming_ref != NULL) {
-		CORBA_Object objref
-			= CORBA_ORB_string_to_object (orb,
-						      naming_ref, 
-						      ev);
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return;
+
+	if (naming_ref) {
+		objref = CORBA_ORB_string_to_object (orb, naming_ref, ev);
 		
 		/* FIXME, should abort if invalid option, don't forget
 		 * to free resources allocated by ORB */ 
@@ -277,50 +275,34 @@ ORBit_initial_references_by_user (CORBA_ORB          orb,
 			g_warning ("Option ORBNamingIOR has invalid object reference: %s", 
 				   naming_ref);
 			CORBA_exception_free (ev);
-		}
-		else
-		{
+		} else {
 			/* FIXME, test type of object for
 			 * IDL:omg.org/CosNaming/NamingContext using _is_a()
 			 * operation */ 
-			ORBit_set_initial_reference (orb, 
-						     "NameService", 
-						     objref);
+			ORBit_set_initial_reference (orb, "NameService", objref);
 		}
 	}
 
-	{ 
-		CORBA_Object objref = CORBA_OBJECT_NIL;
-		gint i = 0;
-		for (i = 0; i < g_slist_length (initref_list); ++i) {
-			ORBit_OptionKeyValue *tuple 
-				= (ORBit_OptionKeyValue*) g_slist_nth_data (
-					initref_list, i);
+	for (l = initref_list; l; l = l->next) {
+		ORBit_OptionKeyValue *tuple = l->data;
 
-			g_assert (tuple != NULL);
-			g_assert (tuple->key   != (gchar*)NULL);
-			g_assert (tuple->value != (gchar*)NULL);
+		g_assert (tuple != NULL);
+		g_assert (tuple->key   != (gchar*)NULL);
+		g_assert (tuple->value != (gchar*)NULL);
 			
-			objref=CORBA_ORB_string_to_object (orb,
-							   tuple->value, 
-							   ev);
+		objref = CORBA_ORB_string_to_object (orb, tuple->value, ev);
 
-			/* FIXME, should abort if invalid option,
-			 * don't forget to free resources allocated by
-			 * ORB */ 
-			if (ev->_major != CORBA_NO_EXCEPTION) {
-				g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
-					   tuple->key, tuple->value);
-				CORBA_exception_free (ev);
-			}
-			else
-			{
-				ORBit_set_initial_reference (orb, 
-							     tuple->key, 
-							     objref);
-			}
-		}
+		/* FIXME, should abort if invalid option,
+		 * don't forget to free resources allocated by
+		 * ORB */ 
+		if (ev->_major != CORBA_NO_EXCEPTION) {
+			g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
+				   tuple->key, tuple->value);
+			CORBA_exception_free (ev);
+		} else
+			ORBit_set_initial_reference (orb, tuple->key, objref);
 	}
+
 }
 
 CORBA_ORB
@@ -678,7 +660,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	 * SecurityCurrent, PolicyCurrent, etc. */
  
 	if (!orb->initial_refs ||
-	    !(objref=g_hash_table_lookup (orb->initial_refs, identifier)))
+	    !(objref = g_hash_table_lookup (orb->initial_refs, identifier)))
 		return CORBA_OBJECT_NIL;
 	
 	return ORBit_RootObject_duplicate (objref);

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include <execinfo.h>
 #include "giop-private.h"
 #include "giop-debug.h"
 #include <orbit/GIOP/giop-types.h>
@@ -524,6 +525,60 @@ ent_unlock (GIOPMessageQueueEntry *ent)
 		g_mutex_unlock (ent->src_thread->lock);
 }
 
+static void
+giop_recv_destroy_queue_entry_T (GIOPMessageQueueEntry *ent)
+{
+	if (ent->cnx) {
+		giop_connection_unref (ent->cnx);
+		ent->cnx = NULL;
+	}
+}
+
+void
+giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
+{
+	LINK_MUTEX_LOCK (giop_queued_messages_lock);
+#ifdef DEBUG
+	g_warning ("Remove XX:%p:(%p) - %d", ent, ent->async_cb,
+		   g_list_length (giop_queued_messages));
+#endif
+	giop_recv_destroy_queue_entry_T (ent);
+	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
+	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
+}
+
+void
+giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
+				  GIOPConnection        *cnx,
+				  CORBA_unsigned_long    msg_type,
+				  CORBA_unsigned_long    request_id)
+{
+	ent->src_thread = giop_thread_self ();
+	ent->async_cb = NULL;
+
+	ent->cnx = giop_connection_ref (cnx);
+	ent->msg_type = msg_type;
+	ent->request_id = request_id;
+	ent->buffer = NULL;
+
+	LINK_MUTEX_LOCK   (giop_queued_messages_lock);
+#ifdef DEBUG
+	g_warning ("Push XX:%p:(%p) - %d", ent, ent->async_cb,
+		   g_list_length (giop_queued_messages));
+#endif
+	giop_queued_messages = g_list_prepend (giop_queued_messages, ent);
+	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
+}
+
+void
+giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
+					GIOPAsyncCallback      cb)
+{
+	g_return_if_fail (ent != NULL);
+
+	ent->async_cb = cb;
+}
+
 void
 giop_recv_list_zap (GIOPConnection *cnx)
 {
@@ -540,9 +595,13 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		if (ent->cnx == cnx) {
 			ent_lock (ent);
 
+			dprintf (ERRORS, "Zap listener on dead cnx with buffer %p\n",
+				 ent->buffer);
+
 			giop_recv_buffer_unuse (ent->buffer);
 			ent->buffer = NULL;
-			ent->cnx = NULL;
+
+			giop_recv_destroy_queue_entry_T (ent);
 
 			ent_unlock (ent);
 			if (ent->async_cb)
@@ -618,51 +677,6 @@ giop_recv_buffer_get_request_id (GIOPRecvBuffer *buf)
 		return 0;
 
 	return G_STRUCT_MEMBER (CORBA_unsigned_long, buf, offset);
-}
-
-void
-giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
-{
-#warning We need to hold a cnx ref on ent, and release it here.
-	LINK_MUTEX_LOCK (giop_queued_messages_lock);
-#ifdef DEBUG
-	g_warning ("Remove XX:%p:(%p) - %d", ent, ent->async_cb,
-		   g_list_length (giop_queued_messages));
-#endif
-	giop_queued_messages = g_list_remove (giop_queued_messages, ent);
-	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
-}
-
-void
-giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
-				  GIOPConnection        *cnx,
-				  CORBA_unsigned_long    msg_type,
-				  CORBA_unsigned_long    request_id)
-{
-	ent->src_thread = giop_thread_self ();
-	ent->async_cb = NULL;
-
-	ent->cnx = cnx;
-	ent->msg_type = msg_type;
-	ent->request_id = request_id;
-	ent->buffer = NULL;
-
-	LINK_MUTEX_LOCK   (giop_queued_messages_lock);
-#ifdef DEBUG
-	g_warning ("Push XX:%p:(%p) - %d", ent, ent->async_cb,
-		   g_list_length (giop_queued_messages));
-#endif
-	giop_queued_messages = g_list_prepend (giop_queued_messages, ent);
-	LINK_MUTEX_UNLOCK (giop_queued_messages_lock);
-}
-
-void
-giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
-					GIOPAsyncCallback      cb)
-{
-	g_return_if_fail (ent != NULL);
-
-	ent->async_cb = cb;
 }
 
 static inline gboolean
