@@ -3,7 +3,7 @@
 
 #include <glib.h>
 #include <orbit/orbit-config.h>
-#include <orbit/util/os-feature-alloca.h>
+#include <orbit/util/basic_types.h>
 #include <orbit/util/thread-safety.h>
 
 /* Align an address upward to a boundary, expressed as a number of bytes.

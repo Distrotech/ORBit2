@@ -1,9 +1,11 @@
 #include "config.h"
 #include <orbit/IIOP/giop-server.h>
+#include <orbit/IIOP/giop-connection.h>
 #include <netdb.h>
 
-static void giop_server_init       (GIOPServer      *cnx);
+static void giop_server_init       (GIOPServer      *server);
 static void giop_server_class_init (GIOPServerClass *klass);
+static LINCConnection *giop_server_handle_create_connection(LINCServer *server);
 
 GType
 giop_server_get_type(void)
@@ -25,7 +27,7 @@ giop_server_get_type(void)
         (GInstanceInitFunc) giop_server_init,
       };
       
-      object_type = g_type_register_static (G_TYPE_OBJECT,
+      object_type = g_type_register_static (linc_server_get_type(),
                                             "GIOPServer",
                                             &object_info);
     }  
@@ -34,111 +36,38 @@ giop_server_get_type(void)
 }
 
 static void
-giop_server_init       (GIOPServer      *cnx)
+giop_server_init       (GIOPServer      *server)
 {
-  O_MUTEX_INIT(cnx->mutex);
 }
-
-enum {
-  PARAM_SA_FAMILY,
-  LAST_PARAM
-};
 
 static void
 giop_server_class_init (GIOPServerClass *klass)
 {
+#if 0
   GObjectClass *object_class = (GObjectClass *)klass;
-}
+#endif
 
-static gboolean
-giop_server_handle_io(GIOChannel *gioc,
-		      GIOCondition condition,
-		      gpointer data)
-{
-  GIOPServer *cnx = data;
-  struct sockaddr *saddr;
-  int addrlen, fd;
-  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
-
-  if(condition != G_IO_IN)
-    g_error("condition on server fd is %#x", condition);
-
-  addrlen = cnx->proto->addr_len;
-  saddr = orbit_alloca(addrlen);
-  fd = accept(cnx->fd, saddr, &addrlen);
-
-  if(fd < 0)
-    return TRUE; /* error */
-
-  if(giop_getnameinfo(saddr, cnx->proto->addr_len, hnbuf, sizeof(hnbuf),
-		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-    {
-      close(fd);
-      return TRUE;
-    }
-
-  giop_connection_from_fd(fd, cnx->proto, hnbuf, servbuf, FALSE);
-
-  return TRUE;
+  klass->parent_class.create_connection = giop_server_handle_create_connection;
 }
 
 GIOPServer *
-giop_server_new(const char *proto_name, GIOPConnectionOptions create_options)
+giop_server_new(const char *proto_name, const char *local_host_info, const char *local_serv_info,
+		LINCConnectionOptions create_options)
 {
-  GIOPServer *cnx;
-  GIOChannel *gioc;
-  int fd, n;
-  const GIOPProtocolInfo * proto;
-  struct addrinfo *ai, hints = {0};
-  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
+  GIOPServer *server = (GIOPServer *)g_object_new(giop_server_get_type(), NULL);
 
-  proto = giop_protocol_find(proto_name);
-  if(!proto)
-    return NULL;
+  linc_server_setup((LINCServer *)server, proto_name, local_host_info, local_serv_info,
+		    create_options);
 
-  hints.ai_flags = AI_PASSIVE|AI_CANONNAME;
-  hints.ai_family = proto->family;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = proto->stream_proto_num;
-  if(giop_getaddrinfo(NULL, NULL, &hints, &ai))
-    return NULL;
-  if(giop_getnameinfo(ai->ai_addr, ai->ai_addrlen, hnbuf, sizeof(hnbuf),
-		      servbuf, sizeof(servbuf), NI_NUMERICSERV))
-    {
-      freeaddrinfo(ai);
-      return NULL;
-    }
+  return server;
+}
 
-  fd = socket(proto->family, SOCK_STREAM, proto->stream_proto_num);
-  if(fd < 0)
-    {
-      freeaddrinfo(ai);
-      return NULL;
-    }
+static LINCConnection *
+giop_server_handle_create_connection(LINCServer *server)
+{
+  GIOPConnection *retval = g_object_new(giop_connection_get_type(), NULL);
 
-  n = 0;
-  if(proto->flags & GIOP_PROTOCOL_NEEDS_BIND)
-    n = bind(fd, ai->ai_addr, ai->ai_addrlen);
-  freeaddrinfo(ai);
+  retval->giop_version = GIOP_LATEST;
 
-  if(!n)
-    n = listen(fd, 10);
-  if(n)
-    {
-      close(fd);
-      return NULL;
-    }
-
-  cnx = g_object_new(giop_server_get_type(), NULL);
-  cnx->proto = proto;
-  cnx->fd = fd;
-  gioc = g_io_channel_unix_new(fd);
-  cnx->tag = g_io_add_watch(gioc, G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
-			    giop_server_handle_io, cnx);
-  g_io_channel_unref(gioc);
-  cnx->create_options = create_options;
-  cnx->local_host_info = g_strdup(hnbuf);
-  cnx->local_serv_info = g_strdup(servbuf);
-
-  return cnx;
+  return (LINCConnection *)retval;
 }

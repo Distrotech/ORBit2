@@ -3,6 +3,9 @@
 
 #include <glib.h>
 
+typedef struct {
+} CORBA_sequence_octet;
+
 typedef gint16 CORBA_short;
 typedef gint32 CORBA_long;
 typedef guint16 CORBA_unsigned_short;

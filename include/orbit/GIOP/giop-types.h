@@ -16,7 +16,8 @@ typedef enum {
 typedef enum {
   GIOP_1_0,
   GIOP_1_1,
-  GIOP_1_2
+  GIOP_1_2,
+  GIOP_LATEST = GIOP_1_2
 } GIOPVersion;
 
 typedef struct {
@@ -53,6 +54,18 @@ typedef enum
   GIOP_OBJECT_HERE,
   GIOP_OBJECT_FORWARD
 } GIOPLocateStatusType;
+
+typedef struct {
+  int dummy;
+} IOP_ServiceContextList;
+
+typedef struct {
+} CORBA_Principal;
+
+typedef struct {
+} CORBA_sequence_IOP_TaggedComponent;
+
+typedef gushort IOP_ProfileId;
 
 typedef struct {
   IOP_ServiceContextList service_context;

@@ -17,7 +17,7 @@
 #define O_MUTEX_INIT(x)
 #define O_MUTEX_LOCK(x)
 #define O_MUTEX_UNLOCK(x)
-#define O_MUTEX_FREE(x)
+#define O_MUTEX_DESTROY(x)
 
 #endif
 

@@ -1,10 +1,11 @@
-INCLUDES=-I$(top_srcdir)/include -I$(top_builddir)/include @GLIB_CFLAGS@
+INCLUDES=-I$(top_srcdir)/include -I$(top_builddir)/include \
+	$(LINC_CFLAGS) \
+	@GLIB_CFLAGS@
 
 noinst_LTLIBRARIES=libIIOP.la
 
 libIIOP_la_SOURCES=giop-connection.c \
 	giop-server.c \
-	giop-protocols.c \
 	giop.c \
 	giop-private.h
 
