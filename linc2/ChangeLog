@@ -1,5 +1,11 @@
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-connection.c (linc_connection_read),
+	(linc_connection_write, linc_connection_writev),
+	catch and warn on EBADF.
+
+2001-11-12  Michael Meeks  <michael@ximian.com>
+
 	* configure.in: bump version to 0.1.8
 
 	* src/linc-connection.c
