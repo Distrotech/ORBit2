@@ -657,20 +657,20 @@ cbe_tc_generate(CBETCGenInfo *tci)
   switch(IDL_NODE_TYPE(tci->ts)) {
   case IDLN_TYPE_ENUM:
     if(IDL_TYPE_ENUM(tci->ts).enumerator_list)
-      fprintf(tci->of, "(char **)anon_subnames_array%d", subnames_id);
+      fprintf(tci->of, "(const char **)anon_subnames_array%d", subnames_id);
     else
       fprintf(tci->of, "NULL");
     break;
   case IDLN_TYPE_UNION:
     if(IDL_TYPE_UNION(tci->ts).switch_body)
-      fprintf(tci->of, "(char **)anon_subnames_array%d", subnames_id);
+      fprintf(tci->of, "(const char **)anon_subnames_array%d", subnames_id);
     else
       fprintf(tci->of, "NULL");
     break;
   case IDLN_TYPE_STRUCT:
   case IDLN_EXCEPT_DCL:
     if(IDL_TYPE_STRUCT(tci->ts).member_list)
-      fprintf(tci->of, "(char **)anon_subnames_array%d", subnames_id);
+      fprintf(tci->of, "(const char **)anon_subnames_array%d", subnames_id);
     else
       fprintf(tci->of, "NULL");
     break;
