@@ -36,7 +36,7 @@ TODO:
 	+ add an X like 'event' processing API for incoming bits (?)
 
 * GIOP fragments
-	+ need to handle a cancel request in the middle of a fragment stream
+/	+ need to handle a cancel request in the middle of a fragment stream
 
 * It seems the local case optimization can go wrong when
   invoking bogus methods from a different interface on an Object ref.

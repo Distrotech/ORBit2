@@ -579,9 +579,9 @@ testUnboundedSequence (test_TestFactory   factory,
 
   g_warning ("FIXME: opMassiveSeq fails - due to max. size check");
   /*  long_retn = test_SequenceServer_opMassiveSeq(objref, ev);
-      g_assert (ev->_major == CORBA_NO_EXCEPTION); */
+      g_assert (ev->_major == CORBA_NO_EXCEPTION);
+      CORBA_free (long_retn); */
 
-  CORBA_free (long_retn);
   CORBA_free (inArg._buffer);
   CORBA_free (inoutArg._buffer);
   CORBA_free (outArg);
