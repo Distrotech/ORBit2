@@ -194,7 +194,6 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
        && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)
        && ((node->flags & MN_ISSEQ) /* Doesn't work for arrays. */
 	   || (node->flags & MN_ISSTRING))) {
-      char *ctmp_typename;
       fprintf(cmi->ci->fh, "%s = (", tmpstr2->str);
       orbit_cbe_write_typespec(cmi->ci->fh, node->u.loop_info.contents->tree);
       fprintf(cmi->ci->fh, "*)_ORBIT_curptr;\n");
