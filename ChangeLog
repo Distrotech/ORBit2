@@ -1,3 +1,21 @@
+2003-02-14  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/poa/orbit-adaptor.h: add
+	ORBit_ObjectAdaptor_(get|set)_thread_hint.
+
+	* src/idl/misc/PortableServer.idl: kill non spec compliant
+	ThreadPolicy enum values.
+
+	* src/orb/poa/orbit-adaptor.c:
+	(ORBit_ObjectAdaptor_set_thread_hint),
+	(ORBit_ObjectAdaptor_get_thread_hint): impl.
+	(ORBit_adaptor_setup): init the hint.
+
+	* src/orb/poa/poa.c:
+	(queue_request): split out from handle_request().
+	(ORBit_POA_handle_request): upd and treat ORB_CTRL mode
+	with no hint just like single threaded mode.
+
 2003-02-11  Mark McLoughlin  <mark@skynet.ie>
 
 	* Makefile.am, ORBit-imodule-2.0.pc.in,

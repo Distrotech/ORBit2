@@ -41,11 +41,7 @@ module PortableServer {
     
     enum ThreadPolicyValue {
         ORB_CTRL_MODEL,
-	THREAD_PER_OBJECT,
-        SINGLE_THREAD_MODEL,
-	THREAD_PER_REQUEST,
-	THREAD_PER_POA,
-	THREAD_PER_CONNECTION
+        SINGLE_THREAD_MODEL
     };
         interface ThreadPolicy : CORBA::Policy {
         readonly attribute ThreadPolicyValue value;

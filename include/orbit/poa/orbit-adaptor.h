@@ -5,6 +5,20 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+	ORBIT_THREAD_HINT_NONE = 0,
+	ORBIT_THREAD_HINT_PER_OBJECT,
+	ORBIT_THREAD_HINT_PER_REQUEST,
+	ORBIT_THREAD_HINT_PER_POA,
+	ORBIT_THREAD_HINT_PER_CONNECTION
+} ORBitThreadHint;
+
+typedef struct ORBit_ObjectAdaptor_type *ORBit_ObjectAdaptor;
+
+void            ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
+						     ORBitThreadHint     thread_hint);
+ORBitThreadHint ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor);
+
 #ifdef ORBIT2_INTERNAL_API
 
 void                ORBit_handle_request            (CORBA_ORB          orb, 
@@ -89,8 +103,7 @@ struct ORBit_OAObject_type {
 
 #ifdef ORBIT2_INTERNAL_API
 
-typedef struct ORBit_ObjectAdaptor_type *ORBit_ObjectAdaptor;
-typedef CORBA_sequence_CORBA_octet       ORBit_AdaptorKey;
+typedef CORBA_sequence_CORBA_octet ORBit_AdaptorKey;
 
 typedef void (*ORBitReqHandlerFunc) (ORBit_ObjectAdaptor         adaptor,
 				     GIOPRecvBuffer             *recv_buffer,
@@ -102,6 +115,8 @@ struct ORBit_ObjectAdaptor_type {
 	ORBitReqHandlerFunc            handle_request;
 
 	ORBit_AdaptorKey               adaptor_key;
+
+	ORBitThreadHint                thread_hint;
 };
 
 int ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor, CORBA_ORB orb);
