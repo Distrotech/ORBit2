@@ -80,7 +80,7 @@ while test $# -gt 0; do
        	;;
 
     client|server)
-	the_libs="$the_libs -L@libdir@ -lORBitutil -lORBit -lIIOP `glib-config --libs` -lm"
+	the_libs="$the_libs -L@libdir@ -lORBit -lIIOP -lORBitutil `glib-config --libs` -lm"
 	the_flags="$the_flags `glib-config --cflags` -I@includedir@"
 	;;
 
