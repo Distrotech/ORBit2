@@ -1,6 +1,10 @@
 #ifndef CORBA_CONTEXT_H
 #define CORBA_CONTEXT_H 1
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 struct CORBA_Context_type {
@@ -26,5 +30,7 @@ gboolean ORBit_Context_demarshal   (CORBA_Context   parent,
 void     ORBit_Context_server_free (CORBA_Context ctx);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

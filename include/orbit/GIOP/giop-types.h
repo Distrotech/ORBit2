@@ -12,6 +12,8 @@
 
 #include <orbit/GIOP/giop-basics.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 #define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
@@ -186,5 +188,7 @@ typedef struct {
 #define GIOP_MSG(x) ((GIOPMsg *)(x))
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

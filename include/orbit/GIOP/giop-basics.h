@@ -3,6 +3,8 @@
 
 #include <linc/linc.h>
 
+G_BEGIN_DECLS
+
 #ifdef LINC_THREADSAFE
 #define ORBIT_THREADSAFE 1
 /* #define ORBIT_THREADED 1 */
@@ -23,5 +25,7 @@ typedef enum {
 } GIOPVersion;
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

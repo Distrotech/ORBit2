@@ -3,6 +3,8 @@
 
 #include <orbit/poa/orbit-adaptor.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 struct PortableServer_POAManager_type {
@@ -44,5 +46,7 @@ struct PortableServer_POA_type {
 };
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

@@ -11,10 +11,14 @@
 #include <orbit/GIOP/giop-server.h>
 #include <orbit/GIOP/giop-endian.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 void giop_init (void);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

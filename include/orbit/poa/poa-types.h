@@ -3,6 +3,8 @@
 
 #include <orbit/poa/orbit-adaptor.h>
 
+G_BEGIN_DECLS
+
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 typedef struct {
@@ -94,5 +96,7 @@ struct ORBit_POAObject_type {
 #endif
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
+G_END_DECLS
 
 #endif

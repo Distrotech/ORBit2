@@ -1,6 +1,8 @@
 #ifndef _POA_BASICS_H_
 #define _POA_BASICS_H_ 1
 
+G_BEGIN_DECLS
+
 #if !defined(_PortableServer_Servant_defined)
 #define _PortableServer_Servant_defined 1
 	typedef gpointer PortableServer_Servant;
@@ -74,5 +76,7 @@ typedef ORBitSmallSkeleton (*ORBit_small_impl_finder)
 						  gpointer                   *implementation);
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
+G_END_DECLS
 
 #endif /* _POA_BASICS_H_ 1 */

@@ -4,6 +4,8 @@
 #include <orbit/GIOP/giop-types.h>
 #include <orbit/GIOP/giop-connection.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 typedef struct {
@@ -69,5 +71,7 @@ int     giop_send_buffer_write          (GIOPSendBuffer *buf,
 					 gboolean        block);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif
