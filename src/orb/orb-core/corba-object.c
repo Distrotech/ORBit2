@@ -308,11 +308,12 @@ CORBA_boolean
 CORBA_Object_non_existent(CORBA_Object       obj,
 			  CORBA_Environment *ev)
 {
-  ORBit_OAObject adaptor_obj = obj->adaptor_obj;
+  ORBit_OAObject adaptor_obj;
 
   if(obj == CORBA_OBJECT_NIL)
     return TRUE;
 
+  adaptor_obj = obj->adaptor_obj;
   if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
     return FALSE;
 

@@ -1,3 +1,8 @@
+2001-07-31  Darin Adler  <darin@bentspoon.com>
+
+	* src/orb/orb-core/corba-object.c: (CORBA_Object_non_existent):
+	Don't dereference obj until after we check it for nil.
+
 2001-07-31  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/poa/orbit-adaptor.h,
