@@ -10,7 +10,7 @@ DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
 # The directory containing the source code. Relative to $(srcdir).
 # gtk-doc will search all .c & .h files beneath here for inline comments
 # documenting functions and macros.
-DOC_SOURCE_DIR=.
+DOC_SOURCE_DIR=$(top_srcdir)/src/orb/orb-core
 EXTRA_HFILES=\
 	$(top_srcdir)/include/orbit/orb-core/allocators.h\
 	$(top_srcdir)/include/orbit/orb-core/orbit-small.h
@@ -29,7 +29,13 @@ HFILE_GLOB=
 CFILE_GLOB=
 
 # Header files to ignore when scanning.
-IGNORE_HFILES= 
+IGNORE_HFILES= corba-ops.h			\
+	iop-profiles.h				\
+	orb-core-export.h			\
+	orb-core-private.h			\
+	orbhttp.h				\
+	$orbit-debug.h				\
+	orbit-policy.h
 
 # Images to copy into HTML directory.
 HTML_IMAGES = 
