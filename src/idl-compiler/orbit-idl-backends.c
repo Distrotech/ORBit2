@@ -35,6 +35,7 @@ static OIDL_Backend_Info orbit_idl_builtin_backends[] = {
 OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
 {
   int i;
+  int ret;
   char *fname, *ctmp;
   GModule *gmod;
   OIDL_Backend_Info *retval = NULL;
@@ -56,10 +57,10 @@ OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang)
 
   g_module_make_resident(gmod);
 
-  g_return_val_if_fail(g_module_symbol(gmod,
-				       "orbit_idl_backend",
-				       (gpointer *)&retval),
-		       NULL);
+  ret = g_module_symbol(gmod,
+			"orbit_idl_backend",
+			(gpointer *)&retval);
+  g_return_val_if_fail(!ret, NULL);
 
   return retval;
 }
