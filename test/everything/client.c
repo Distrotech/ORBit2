@@ -328,6 +328,7 @@ testIInterface (test_TestFactory   factory,
 	CORBA_char       *type_id;
 	ORBit_IInterface *iinterface;
 	CORBA_sequence_CORBA_TypeCode *tcs;
+	CORBA_TypeCode tc;
 
 	d_print ("Testing IInterface code...\n");
 	objref = test_TestFactory_getStructServer (factory, ev);
