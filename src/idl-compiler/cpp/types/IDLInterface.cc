@@ -523,8 +523,7 @@ IDLInterface::member_pack_to_c (ostream          &ostr,
 	duplicate = duplicate + "::_duplicate";
 	
 	ostr << indent << c_id << " = " << duplicate << "("
-	     << "(" << get_cpp_typename () << "_mgr&)"
-	     << cpp_id << ")->_orbitcpp_cobj ()" << ';' << endl;
+	     << cpp_id << ".in() " << ")->_orbitcpp_cobj ()" << ';' << endl;
 }
 
 void
