@@ -4,6 +4,6 @@
 #include <orbit/util/orbit-util.h>
 #include <orbit/GIOP/giop-basics.h>
 #include <orbit/orb-core/orb-core-types.h>
-#include <orbit/poa/poa-types.h>
+#include <orbit/poa/poa-basics.h>
 
 #endif

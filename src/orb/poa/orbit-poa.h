@@ -35,31 +35,31 @@ PortableServer_POA ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
 				 const PortableServer_POAManager manager,
 				 const CORBA_PolicyList *policies,
 				 CORBA_Environment *ev);
-ORBit_POAObject *ORBit_POA_create_object(PortableServer_POA poa,
-					 const PortableServer_ObjectId *oid,
-					 CORBA_boolean isDefault,
-					 CORBA_Environment *ev);
-ORBit_POAObject *ORBit_POA_oid_to_obj(PortableServer_POA poa,
-				      const PortableServer_ObjectId *oid,
-				      gboolean active,
-				      CORBA_Environment *ev);
+ORBit_POAObject ORBit_POA_create_object(PortableServer_POA poa,
+					const PortableServer_ObjectId *oid,
+					CORBA_boolean isDefault,
+					CORBA_Environment *ev);
+ORBit_POAObject ORBit_POA_oid_to_obj(PortableServer_POA poa,
+				     const PortableServer_ObjectId *oid,
+				     gboolean active,
+				     CORBA_Environment *ev);
 CORBA_Object ORBit_POA_obj_to_ref(PortableServer_POA poa,
-				  ORBit_POAObject *pobj,
+				  ORBit_POAObject pobj,
 				  const CORBA_RepositoryId intf,
 				  CORBA_Environment *ev);
 void ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid);
 void ORBit_POA_activate_object(PortableServer_POA poa, 
-			       ORBit_POAObject *pobj,
+			       ORBit_POAObject pobj,
 			       PortableServer_ServantBase *servant, 
 			       CORBA_Environment *ev);
-void ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
+void ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject pobj,
 				 CORBA_boolean do_etherealize,
 				 CORBA_boolean is_cleanup);
-void ORBit_POAObject_post_invoke(ORBit_POAObject *pobj);
+void ORBit_POAObject_post_invoke(ORBit_POAObject pobj);
 CORBA_boolean ORBit_POA_okey_to_oid(/*in*/PortableServer_POA poa,
 				    /*in*/CORBA_sequence_CORBA_octet *okey,
 				    /*out*/PortableServer_ObjectId *oid);
-ORBit_POAObject *ORBit_POA_okey_to_obj(PortableServer_POA poa,
+ORBit_POAObject ORBit_POA_okey_to_obj(PortableServer_POA poa,
 				      CORBA_sequence_CORBA_octet *okey);
 void ORBit_POAManager_register_poa(PortableServer_POAManager poa_mgr, 
 				   PortableServer_POA poa,

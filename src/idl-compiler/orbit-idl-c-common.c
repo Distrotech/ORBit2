@@ -894,12 +894,6 @@ cc_small_output_base_itypes(IDL_tree node, CCSmallInterfaceTraverseInfo *iti)
 	id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
 			IDL_INTERFACE (node).ident), "_", 0);
 
-	if ( iti->parents == 0 ) {
-		fprintf (iti->of, 
-			"static ORBit_IInterface %s__base_itypes[] = {\n", 
-			iti->cur_id);
-		}
-
 	fprintf (iti->of, "{\"%s\",", id);
 	fprintf (iti->of, "{%s_IMETHODS_LEN, %s_IMETHODS_LEN,\n", id, id );
 	fprintf (iti->of, " %s__imethods, FALSE},\n", id);
@@ -936,14 +930,17 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 
 		fprintf (of, "};\n");
 
+		fprintf (of, "static ORBit_IInterface %s__base_itypes[] = {\n", id);
+
 		iti.of = of;
 		iti.cur_node = i->tree;
 		iti.cur_id = id;
 		iti.parents = 0;
 		IDL_tree_traverse_parents(i->tree, (GFunc)cc_small_output_base_itypes, &iti);
 
-		if ( iti.parents != 0 )
-			fprintf (of, "};\n", id);
+		fprintf (of, "{\"CORBA_object\", {CORBA_Object_IMETHODS_LEN, CORBA_Object_IMETHODS_LEN,\n");
+		fprintf (of, "CORBA_Object__imethods, FALSE},\n");
+		fprintf (of, "{0, 0, NULL, FALSE}}\n};");
 
 		fprintf (of, "ORBit_IInterface %s__itype = {\n", id);
 		fprintf (of, "\"%s\",", id);
@@ -951,11 +948,8 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 			 g_slist_length (i->methods),
 			 g_slist_length (i->methods), id);
 
-		if ( iti.parents != 0 )
-			fprintf (of, "{%d, %d, %s__base_itypes, FALSE}\n", 
-						iti.parents, iti.parents, id);
-		else
-			fprintf (of, "{0, 0, NULL, FALSE}\n", id);
+		fprintf (of, "{%d, %d, %s__base_itypes, FALSE}\n", 
+					iti.parents, iti.parents, id);
 
 		fprintf (of, "};\n\n");
 

@@ -979,7 +979,7 @@ gpointer
 ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
 {
 	gpointer epv;
-	ORBit_POAObject *pobj;
+	ORBit_POAObject pobj;
 	PortableServer_ServantBase *servant;
 	PortableServer_ClassInfo   *class_info;
 	CORBA_unsigned_long         offset;

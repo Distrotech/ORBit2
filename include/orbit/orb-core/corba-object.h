@@ -11,4 +11,14 @@ gboolean ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
 				CORBA_ORB orb);
 CORBA_Object ORBit_objref_new(CORBA_ORB orb, const char *type_id);
 
+/*
+ * CORBA_Object interface type data.
+ */
+#include <orbit/orb-core/orbit-interface.h>
+
+extern ORBit_IInterface CORBA_Object__itype;
+extern ORBit_IMethod    CORBA_Object__imethods[];
+
+#define CORBA_Object_IMETHODS_LEN 12
+
 #endif
