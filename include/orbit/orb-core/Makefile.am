@@ -32,6 +32,7 @@ BUILT_SOURCES = corba-defs.h iop-defs.h orbit-interface.h
 IDL_FLAGS_NO_DEFS = -I$(top_srcdir)/src/idl/CORBA_PIDL	\
 	-I$(top_srcdir)/src/idl/CORBA			\
 	-I$(top_srcdir)/src/idl/interop			\
+	-I$(top_srcdir)/src/orb/orb-core		\
 	--noskels --nodefskels --nostubs --noidata	\
 	--nocommon					\
         --showcpperrors
