@@ -14,6 +14,8 @@ orbit_idl_attr_fake_ops(IDL_tree attr)
   attrname = g_string_new(NULL);
 
   for(curnode = IDL_ATTR_DCL(attr).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
+    op1 = op2 = NULL;
+
     attr_name = IDL_LIST(curnode).data;
 
     g_string_sprintf(attrname, "_get_%s",
@@ -365,8 +367,13 @@ oidl_marshal_tree_dump(IDL_tree tree, int indent_level)
   case IDLN_OP_DCL:
     do_indent(indent_level);
     g_print("Operation %s:\n", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+#if 1
     oidl_marshal_node_dump(((OIDL_Op_Info *)tree->data)->in_stubs, indent_level + INDENT_INCREMENT_2);
     oidl_marshal_node_dump(((OIDL_Op_Info *)tree->data)->out_stubs, indent_level + INDENT_INCREMENT_2);
+#else
+    oidl_marshal_node_dump(((OIDL_Op_Info *)tree->data)->in_skels, indent_level + INDENT_INCREMENT_2);
+    oidl_marshal_node_dump(((OIDL_Op_Info *)tree->data)->out_skels, indent_level + INDENT_INCREMENT_2);
+#endif
     break;
   case IDLN_ATTR_DCL:
     oidl_marshal_tree_dump(((OIDL_Attr_Info *)tree->data)->op1, indent_level);
@@ -381,19 +388,18 @@ oidl_marshal_tree_dump(IDL_tree tree, int indent_level)
 void
 oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
 {
+  char *ctmp;
+
   do_indent(indent_level);
 
   if(!tree) { g_print("Nil\n"); return; }
 
+  ctmp = oidl_marshal_node_fqn(tree);
   if(tree->name)
-    g_print("\"%s\" (\"%s\") ", tree->name, oidl_marshal_node_fqn(tree));
-  else {
-    char *ctmp;
-
-    ctmp = oidl_marshal_node_fqn(tree);
-    if(ctmp)
-      g_print("(\"%s\") ", ctmp);
-  }
+    g_print("\"%s\" (\"%s\") ", tree->name, ctmp);
+  else
+    g_print("(\"%s\") ", ctmp);
+  g_free(ctmp);
 
   g_print("(%s %p): [", nodenames[tree->type], tree);
   if(tree->flags & MN_INOUT)
@@ -418,7 +424,9 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("DEMARSHAL_UPDATE_AFTER ");
   if(tree->flags & MN_DEMARSHAL_CORBA_ALLOC)
     g_print("DEMARSHAL_CORBA_ALLOC ");
-  g_print("]\n");
+  g_print("] ");
+
+  g_print("*%d\n", tree->nptrs);
 
   switch(tree->type) {
   case MARSHAL_LOOP:

@@ -40,9 +40,15 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
     {
       OIDL_Attr_Info *ai = tree->data;
 
-      cs_output_stubs(ai->op1, ci);
-      if(ai->op2)
-	cs_output_stubs(ai->op2, ci);
+      IDL_tree curitem;
+      
+      for(curitem = IDL_ATTR_DCL(tree).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
+	ai = IDL_LIST(curitem).data->data;
+	
+	cs_output_stubs(ai->op1, ci);
+	if(ai->op2)
+	  cs_output_stubs(ai->op2, ci);
+      }
     }
     break;
   case IDLN_INTERFACE:
@@ -137,9 +143,11 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "{ /* demarshalling */\n");
 
-    fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-
-    cs_stub_alloc_tmpvars(oi->out_stubs, ci);
+    if(oi->out_stubs) {
+      fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+      
+      cs_stub_alloc_tmpvars(oi->out_stubs, ci);
+    }
 
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
 
@@ -403,6 +411,7 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
     fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
+    cs_stub_alloc_tmpvars(ei->demarshal, ci);
     fprintf(ci->fh, "%s *_ORBIT_exdata = %s__alloc();\n", id, id);
     c_demarshalling_generate(ei->demarshal, ci, FALSE);
   }

@@ -21,17 +21,26 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
   cmi.ci = ci;
   cmi.last_tail_align = 1;
   cmi.curptr_loaded = FALSE;
-  cmi.endian_swap_pass = FALSE;
+  cmi.endian_swap_pass = TRUE;
 
   if(in_skels) {
     cmi.alloc_on_stack = TRUE;
     cmi.orb_name = "(((ORBit_ObjectKey *) _ORBIT_servant->_private)->object->orb)";
   } else {
     cmi.alloc_on_stack = FALSE;
+#if 0
     cmi.orb_name = "_obj->orb";
+#else
+    cmi.orb_name = "GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer)->connection->orb_data";
+#endif
   }
 
+  fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
   c_demarshal_generate(node, &cmi);
+  fprintf(ci->fh, "} else {\n");
+  cmi.endian_swap_pass = FALSE;
+  c_demarshal_generate(node, &cmi);
+  fprintf(ci->fh, "}\n");
 }
 
 static void
@@ -109,7 +118,8 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
   c_demarshal_load_curptr(cmi);
 
-  if(cmi->endian_swap_pass) {
+  if(cmi->endian_swap_pass
+     && (node->u.datum_info.datum_size > 1)) {
     int n;
 
     n = node->u.datum_info.datum_size * 8;
@@ -121,7 +131,7 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       orbit_cbe_write_node_typespec(cmi->ci->fh, node);
       fprintf(cmi->ci->fh, ")GUINT%d_SWAP_LE_BE(*((", n);
       orbit_cbe_write_node_typespec(cmi->ci->fh, node);
-      fprintf(cmi->ci->fh, "*)_ORBIT_curptr))");
+      fprintf(cmi->ci->fh, "*)_ORBIT_curptr));");
     }
   } else {
     fprintf(cmi->ci->fh, "%s = *((", ctmp);

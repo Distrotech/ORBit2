@@ -2,7 +2,20 @@
 
 #include "orbit-idl-c-backend.h"
 
+typedef struct {
+  OIDL_C_Info *ci;
+  GSList *oplist;
+  gint curlevel;
+} CBESkelInterfaceTraverseInfo;
+
+typedef struct {
+  char *iface_id;
+  char *opname;
+  IDL_tree op;
+} CBESkelOpInfo;
+
 static void ck_output_skels(IDL_tree tree, OIDL_C_Info *ci);
+static void ck_output_poastuff(IDL_tree tree, OIDL_C_Info *ci);
 
 void
 orbit_idl_output_c_skeletons(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -14,6 +27,7 @@ orbit_idl_output_c_skeletons(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
 
   ck_output_skels(tree->tree, ci);
+  ck_output_poastuff(tree->tree, ci);
 }
 
 static void ck_output_skel(IDL_tree tree, OIDL_C_Info *ci);
@@ -40,9 +54,15 @@ ck_output_skels(IDL_tree tree, OIDL_C_Info *ci)
     {
       OIDL_Attr_Info *ai = tree->data;
 
-      ck_output_skels(ai->op1, ci);
-      if(ai->op2)
-	ck_output_skels(ai->op2, ci);
+      IDL_tree curitem;
+      
+      for(curitem = IDL_ATTR_DCL(tree).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
+	ai = IDL_LIST(curitem).data->data;
+	
+	ck_output_skels(ai->op1, ci);
+	if(ai->op2)
+	  ck_output_skels(ai->op2, ci);
+      }
     }
     break;
   case IDLN_INTERFACE:
@@ -116,6 +136,8 @@ cbe_print_var_dcl(FILE *of, IDL_tree tree, gboolean for_skels)
 }
 
 static void ck_skel_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
+static void cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci);
+static void cbe_skel_op_dcl_print_call_param(IDL_tree tree, OIDL_C_Info *ci);
 
 static void
 ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
@@ -144,26 +166,43 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, ";\n");
   }
 
-  fprintf(ci->fh, "{ /* demarshalling */\n");
-  fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
-
   oi = tree->data;
-  c_demarshalling_generate(oi->in_skels, ci, TRUE);
 
-  fprintf(ci->fh, "}\n");
+  if(oi->in_skels) {
+    fprintf(ci->fh, "{ /* demarshalling */\n");
+    fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
+    
+    ck_skel_alloc_tmpvars(oi->in_skels, ci);
+    c_demarshalling_generate(oi->in_skels, ci, TRUE);
+    
+    fprintf(ci->fh, "}\n");
+  }
 
   if(IDL_OP_DCL(tree).op_type_spec)
     fprintf(ci->fh, "_ORBIT_retval = ");
   fprintf(ci->fh, "_impl_%s(_ORBIT_servant, ", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
+  for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
+    cbe_skel_op_dcl_print_call_param(IDL_LIST(curitem).data, ci);
+    fprintf(ci->fh, ", ");
+  }
   fprintf(ci->fh, "ev);\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) {
     fprintf(ci->fh, "{ /* marshalling */\n");
-    
+    fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
+
+    fprintf(ci->fh, "_ORBIT_send_buffer = giop_send_reply_buffer_use(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer)->connection, NULL, "
+	    "_ORBIT_recv_buffer->message.u.request.request_id, ev->_major);\n");
+
+    fprintf(ci->fh, "if (ev->_major == CORBA_NO_EXCEPTION) {\n");
+    ck_skel_alloc_tmpvars(oi->out_skels, ci);
+
+    c_marshalling_generate(oi->out_skels, ci);
 
     if(IDL_OP_DCL(tree).raises_expr) {
       IDL_tree curitem;
       
+      fprintf(ci->fh, "} else if (ev->_major == CORBA_USER_EXCEPTION) { \n");
       fprintf(ci->fh, "static const ORBit_exception_marshal_info _ORBIT_user_exceptions[] = { ");
       for(curitem = IDL_OP_DCL(tree).raises_expr; curitem;
 	  curitem = IDL_LIST(curitem).next) {
@@ -175,10 +214,19 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
 		id, id);
 	g_free(id);
       }
+
       fprintf(ci->fh, "{CORBA_OBJECT_NIL, NULL}};\n");
+      fprintf(ci->fh, "ORBit_send_user_exception(_ORBIT_send_buffer, ev, _ORBIT_user_exceptions);\n");
     }
 
-    c_marshalling_generate(oi->out_skels, ci);
+    fprintf(ci->fh, "} else\n");
+    fprintf(ci->fh, "ORBit_send_system_exception(_ORBIT_send_buffer, ev);\n");
+
+    fprintf(ci->fh, "giop_send_buffer_write(_ORBIT_send_buffer);\n");
+    fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
+
+    /* Free the vars */
+    cbe_skel_op_params_free(tree, ci);
 
     fprintf(ci->fh, "}\n");
   }
@@ -200,12 +248,12 @@ ck_output_except(IDL_tree tree, OIDL_C_Info *ci)
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_EXCEPT_DCL(tree).ident), "_", 0);
 
-  fprintf(ci->fh, "void\n_ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev)\n", id);
+  fprintf(ci->fh, "void\n_ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev)\n", id);
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
-    fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
+    ck_skel_alloc_tmpvars(ei->demarshal, ci);
     fprintf(ci->fh, "%s *_ORBIT_exdata = ev->_params;\n", id);
-    c_marshalling_generate(ei->demarshal, ci);
+    c_marshalling_generate(ei->marshal, ci);
   }
 
   fprintf(ci->fh, "}\n");
@@ -243,4 +291,483 @@ static void
 ck_skel_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
   orbit_idl_node_foreach(node, (GFunc)ck_skel_alloc_tmpvar, ci);
+}
+
+static void
+cbe_skel_param_subfree(IDL_tree tree, OIDL_C_Info *ci, gboolean free_internal)
+{
+  char *id, *varname;
+
+  if(IDL_NODE_TYPE(tree) != IDLN_PARAM_DCL) {
+    id = orbit_cbe_get_typename(tree);
+    varname = "_ORBIT_retval";
+  } else {
+    id = orbit_cbe_get_typename(IDL_PARAM_DCL(tree).param_type_spec);
+    varname = IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str;
+  }
+
+  fprintf(ci->fh, "%s__free(&%s, NULL, %s);\n",
+	  id, varname, free_internal?"CORBA_TRUE":"CORBA_FALSE");
+  g_free(id);
+}
+
+static void
+cbe_skel_op_retval_free(IDL_tree tree, OIDL_C_Info *ci, gboolean free_internal)
+{
+  IDL_tree ts;
+
+  ts = orbit_cbe_get_typespec(tree);
+
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_UNION:
+  case IDLN_TYPE_STRUCT:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      return;
+  case IDLN_TYPE_SEQUENCE:
+  case IDLN_TYPE_STRING:
+  case IDLN_TYPE_ARRAY:
+  case IDLN_TYPE_ANY:
+    break;
+  case IDLN_TYPE_OBJECT:
+  case IDLN_INTERFACE:
+  case IDLN_FORWARD_DCL:
+    fprintf(ci->fh, "if(ev->_major == CORBA_NO_EXCEPTION) CORBA_Object_release(_ORBIT_retval, ev);\n");
+  default:
+    return;
+  }
+
+  fprintf(ci->fh, "if(ev->_major == CORBA_NO_EXCEPTION) CORBA_free(_ORBIT_retval);\n");
+}
+
+static gboolean
+cbe_skel_op_param_has_sequence(IDL_tree ts)
+{
+  gboolean has_seq = FALSE, subhas;
+  IDL_tree curitem, sn;
+
+  ts = orbit_cbe_get_typespec(ts);
+
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_UNION:
+    for(curitem = IDL_TYPE_UNION(ts).switch_body; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      sn = IDL_MEMBER(IDL_CASE_STMT(IDL_LIST(curitem).data).element_spec).type_spec;
+      subhas = cbe_skel_op_param_has_sequence(sn);
+      has_seq = has_seq || subhas;
+    }
+    return has_seq;
+    break;
+  case IDLN_TYPE_STRUCT:
+    for(curitem = IDL_TYPE_STRUCT(ts).member_list; curitem;
+	curitem = IDL_LIST(curitem).next) {
+      sn = IDL_MEMBER(IDL_LIST(curitem).data).type_spec;
+      subhas = cbe_skel_op_param_has_sequence(sn);
+      has_seq = has_seq || subhas;
+    }
+    return has_seq;
+    break;
+  case IDLN_TYPE_ARRAY:
+    return cbe_skel_op_param_has_sequence(IDL_TYPE_DCL(IDL_get_parent_node(ts, IDLN_TYPE_DCL, NULL)).type_spec);
+    break;
+  case IDLN_TYPE_SEQUENCE:
+    return TRUE;
+  default:
+    return FALSE;
+  }
+}
+
+static void
+cbe_skel_op_param_free(IDL_tree tree, OIDL_C_Info *ci, gboolean free_internal)
+{
+  IDL_tree ts;
+
+  ts = orbit_cbe_get_typespec(tree);
+
+  switch(IDL_PARAM_DCL(tree).attr) {
+  case IDL_PARAM_IN:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      return;
+    switch(IDL_NODE_TYPE(ts)) {
+    case IDLN_TYPE_SEQUENCE:
+    case IDLN_TYPE_UNION:
+    case IDLN_TYPE_STRUCT:
+    case IDLN_TYPE_ARRAY:
+    case IDLN_TYPE_ANY:
+      cbe_skel_param_subfree(tree, ci, FALSE);
+      break;
+    case IDLN_TYPE_OBJECT:
+    case IDLN_INTERFACE:
+    case IDLN_FORWARD_DCL:
+      fprintf(ci->fh, "CORBA_Object_release(%s, ev);\n",
+	      IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
+      break;
+    default:
+      break;
+    }
+    break;
+  case IDL_PARAM_OUT:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      return;
+
+    fprintf(ci->fh, "if(ev->_major == CORBA_NO_EXCEPTION)");
+    switch(IDL_NODE_TYPE(ts)) {
+    case IDLN_TYPE_OBJECT:
+    case IDLN_INTERFACE:
+      fprintf(ci->fh, "CORBA_Object_release(%s, ev);\n",
+	      IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
+      break;
+    default:
+      fprintf(ci->fh, "CORBA_free(%s);\n",
+	      IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
+    }
+    break;
+  case IDL_PARAM_INOUT:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      return;
+    switch(IDL_NODE_TYPE(ts)) {
+    case IDLN_TYPE_OBJECT:
+    case IDLN_INTERFACE:
+      fprintf(ci->fh, "CORBA_Object_release(%s, ev);\n",
+	      IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
+      break;
+    default:
+      cbe_skel_param_subfree(tree, ci, free_internal);
+      break;
+    }
+    break;
+  }
+
+}
+
+static void
+cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci)
+{
+  IDL_tree curitem;
+  
+  if(IDL_OP_DCL(tree).op_type_spec)
+    cbe_skel_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci, TRUE);
+  
+  for(curitem = IDL_OP_DCL(tree).parameter_dcls;
+      curitem; curitem = IDL_LIST(curitem).next)
+    cbe_skel_op_param_free(IDL_LIST(curitem).data, ci, TRUE);
+}
+
+static void
+cbe_skel_op_dcl_print_call_param(IDL_tree tree, OIDL_C_Info *ci)
+{
+  int i, n;
+
+  n = oidl_param_numptrs(tree, oidl_attr_to_paramrole(IDL_PARAM_DCL(tree).attr));
+
+  n = n && n; /* just one & */
+  for(i = 0; i < n; i++)
+    fprintf(ci->fh, "&(");
+
+  fprintf(ci->fh, "%s",
+	  IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
+
+  for(i = 0; i < n; i++)
+    fprintf(ci->fh, ")");
+}
+
+/*****************************************/
+static void cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci);
+
+static void
+ck_output_poastuff(IDL_tree tree, OIDL_C_Info *ci)
+{
+  if(!tree) return;
+
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_MODULE:
+    ck_output_poastuff(IDL_MODULE(tree).definition_list, ci);
+    break;
+  case IDLN_LIST:
+    {
+      IDL_tree sub;
+      for(sub = tree; sub; sub = IDL_LIST(sub).next) {
+	ck_output_poastuff(IDL_LIST(sub).data, ci);
+      }
+    }
+    break;
+  case IDLN_INTERFACE:
+    cbe_skel_do_interface(tree, ci);
+    break;
+  default:
+    break;
+  }
+}
+
+/* Blatantly copied from the old IDL compiler. (A few fixes to the
+   get_skel generation stuff to do proper checking of the opname...) */
+
+void
+cbe_skel_print_skelptr(FILE *of, IDL_tree tree)
+{
+  char *id = NULL;
+  IDL_tree curitem;
+
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_OP_DCL:
+    id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(tree).ident),
+				 "_", 0);
+    fprintf(of, "  skel_%s,\n", id);
+    break;
+  case IDLN_ATTR_DCL:
+    id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(IDL_get_parent_node(tree, IDLN_INTERFACE, NULL)).ident),
+				 "_", 0);
+    for(curitem = IDL_ATTR_DCL(tree).simple_declarations;
+	curitem; curitem = IDL_LIST(curitem).data) {
+      fprintf(of, "  skel_%s__get_%s,\n", id,
+	      IDL_IDENT(IDL_LIST(curitem).data).str);
+      if(!IDL_ATTR_DCL(tree).f_readonly)
+	fprintf(of, "  skel_%s__set_%s,\n", id,
+		IDL_IDENT(IDL_LIST(curitem).data).str);
+    }
+    break;
+  default:
+    break;
+  }
+  g_free(id);
+}
+
+static gint
+cbe_skel_compare_op_dcls(CBESkelOpInfo *op1, CBESkelOpInfo *op2)
+{
+  return strcmp(op1->opname, op2->opname);
+}
+
+static void
+cbe_skel_free_op_info(CBESkelOpInfo *op)
+{
+  g_free(op->opname);
+  g_free(op->iface_id);
+  g_free(op);
+}
+
+static void
+cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
+{
+  CBESkelOpInfo *newopi;
+  IDL_tree curitem, curdcl, curattr, curattrdcl;
+  char *iface_id;
+
+  iface_id =
+    IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(intf).ident),
+			    "_", 0);
+
+  for(curitem = IDL_INTERFACE(intf).body; curitem;
+      curitem = IDL_LIST(curitem).next) {
+    curdcl = IDL_LIST(curitem).data;
+
+    switch(IDL_NODE_TYPE(curdcl)) {
+    case IDLN_OP_DCL:
+      newopi = g_new0(CBESkelOpInfo, 1);
+      newopi->iface_id = g_strdup(iface_id);
+      newopi->opname = g_strdup(IDL_IDENT(IDL_OP_DCL(curdcl).ident).str);
+      iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
+					  (GCompareFunc)cbe_skel_compare_op_dcls);
+      break;
+    case IDLN_ATTR_DCL:
+      for(curattr = IDL_ATTR_DCL(curdcl).simple_declarations;
+	  curattr; curattr = IDL_LIST(curattr).next) {
+	curattrdcl = IDL_LIST(curattr).data;
+
+	newopi = g_new0(CBESkelOpInfo, 1);
+	newopi->iface_id = g_strdup(iface_id);
+	newopi->opname = g_strdup_printf("_get_%s", IDL_IDENT(curattrdcl).str);
+	iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
+					    (GCompareFunc)cbe_skel_compare_op_dcls);
+	if(!IDL_ATTR_DCL(curdcl).f_readonly) {
+	  newopi = g_new0(CBESkelOpInfo, 1);
+	  newopi->iface_id = g_strdup(iface_id);
+	  newopi->opname = g_strdup_printf("_set_%s", IDL_IDENT(curattrdcl).str);
+	  iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
+					      (GCompareFunc)cbe_skel_compare_op_dcls);
+	}
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
+  g_free(iface_id);
+}
+
+static void
+cbe_skel_interface_print_relayers(const CBESkelInterfaceTraverseInfo *iti)
+{
+  CBESkelInterfaceTraverseInfo subiti = *iti;
+  GSList *curnode;
+  CBESkelOpInfo *opi;
+  char curchar;
+
+  curnode = iti->oplist;
+  subiti.curlevel = iti->curlevel+1;
+  fprintf(iti->ci->fh, "switch(opname[%d]) {\n", iti->curlevel);
+  while(curnode) {
+    opi = (CBESkelOpInfo *)curnode->data;
+    if(iti->curlevel > strlen(opi->opname)) {
+      curnode = g_slist_next(curnode);
+      continue;
+    }
+    curchar = opi->opname[iti->curlevel];
+    if(curchar)
+      fprintf(iti->ci->fh, "case '%c':\n", curchar);
+    else
+      fprintf(iti->ci->fh, "case '\\0':\n");
+    subiti.oplist = NULL;
+    while(curnode && ((CBESkelOpInfo *)curnode->data)->opname[iti->curlevel]
+	  == curchar) {
+      subiti.oplist = g_slist_append(subiti.oplist, curnode->data);
+      curnode = g_slist_next(curnode);
+    }
+
+    if(g_slist_length(subiti.oplist) > 1) {
+      if(curchar)
+	cbe_skel_interface_print_relayers(&subiti);
+      else
+	g_error("two ops with same name!!!!");
+    } else {
+      if(strlen(opi->opname + iti->curlevel))
+	fprintf(iti->ci->fh, "if(strcmp((opname + %d), \"%s\")) break;\n", iti->curlevel + 1, opi->opname + iti->curlevel+1);
+      fprintf(iti->ci->fh, "*impl = (gpointer)servant->vepv->%s_epv->%s;\n",
+	      opi->iface_id, opi->opname);
+       fprintf(iti->ci->fh, "return (ORBitSkeleton)_ORBIT_skel_%s_%s;\n",
+	       opi->iface_id, opi->opname);
+    }
+    fprintf(iti->ci->fh, "break;\n");
+    g_slist_free(subiti.oplist);
+  }
+  fprintf(iti->ci->fh, "default: break; \n}\n");
+}
+
+static void
+cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_C_Info *ci)
+{
+  char *id;
+  CBESkelInterfaceTraverseInfo iti;
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
+  fprintf(ci->fh, "static ORBitSkeleton get_skel_%s(POA_%s *servant,\nGIOPRecvBuffer *_ORBIT_recv_buffer,\ngpointer *impl)\n", id, id);
+  fprintf(ci->fh, "{\n");
+  fprintf(ci->fh, "gchar *opname = _ORBIT_recv_buffer->message.u.request.operation;\n\n");
+
+  iti.ci = ci;
+  iti.oplist = NULL;
+  iti.curlevel = 0;
+
+  IDL_tree_traverse_parents(tree,
+			    (GFunc)cbe_skel_interface_add_relayer, &iti);
+
+  cbe_skel_interface_print_relayers(&iti);
+
+  g_slist_foreach(iti.oplist, (GFunc)cbe_skel_free_op_info, NULL);
+  g_slist_free(iti.oplist);
+
+  fprintf(ci->fh, "return NULL;\n");
+  fprintf(ci->fh, "}\n\n");
+
+  g_free(id);
+}
+
+static void
+cbe_skel_interface_print_initializer(IDL_tree node,
+				     OIDL_C_Info *ci)
+{
+  char *id;
+
+  g_assert(IDL_NODE_TYPE(node) == IDLN_INTERFACE);
+
+  /* Print the operations defined for this interface, but in current's
+     namespace */
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(node).ident),
+			       "_", 0);
+
+  fprintf(ci->fh, "obj->vepv[%s__classid] = servant->vepv->%s_epv;\n", id, id);
+
+  g_free(id);
+}
+
+static void
+cbe_skel_interface_print_objref_initializer(IDL_tree tree, OIDL_C_Info *ci)
+{
+  char *id;
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
+  fprintf(ci->fh, "static void init_local_objref_%s(CORBA_Object obj, POA_%s *servant)\n", id, id);
+  fprintf(ci->fh, "{\n");
+
+  g_free(id);
+
+  IDL_tree_traverse_parents(tree,
+			    (GFunc)cbe_skel_interface_print_initializer,
+			    ci);
+
+  fprintf(ci->fh, "}\n");
+}
+
+static void
+cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci)
+{
+  char *id, *id2;
+  IDL_tree curitem;
+  int i;
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
+
+  cbe_skel_interface_print_relayer(tree, ci);
+
+  cbe_skel_interface_print_objref_initializer(tree, ci);
+
+  fprintf(ci->fh,
+	  "void POA_%s__init(PortableServer_Servant servant,\nCORBA_Environment *env)\n",
+	  id);
+  fprintf(ci->fh, "{\n");
+  fprintf(ci->fh,
+	  "  static const PortableServer_ClassInfo class_info = {(ORBit_impl_finder)&get_skel_%s, \"%s\", (ORBit_local_objref_init)&init_local_objref_%s};\n",
+	  id, IDL_IDENT(IDL_INTERFACE(tree).ident).repo_id, id);
+
+  fprintf(ci->fh,
+	  "  PortableServer_ServantBase__init(((PortableServer_ServantBase *)servant), env);\n");
+
+  for(curitem = IDL_INTERFACE(tree).inheritance_spec; curitem;
+      curitem = IDL_LIST(curitem).next) {
+    id2 = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_LIST(curitem).data),
+				  "_", 0);
+    fprintf(ci->fh, "  POA_%s__init(servant, env);\n", id2);
+    g_free(id2);
+  }
+
+  fprintf(ci->fh, "  ORBIT_OBJECT_KEY(((PortableServer_ServantBase *)servant)->_private)->class_info = (PortableServer_ClassInfo*) &class_info;\n");
+
+  fprintf(ci->fh,
+	  "if(!%s__classid)\n%s__classid = ORBit_register_class(&class_info);\n",
+	  id, id);
+
+  fprintf(ci->fh, "}\n\n");
+
+  fprintf(ci->fh,
+	  "void POA_%s__fini(PortableServer_Servant servant,\nCORBA_Environment *env)\n",
+	  id);
+  fprintf(ci->fh, "{\n");
+  if(IDL_INTERFACE(tree).inheritance_spec)
+    {
+      for(i = IDL_list_length(IDL_INTERFACE(tree).inheritance_spec) - 1;
+	  i >= 0; i--) {
+	curitem = IDL_list_nth(IDL_INTERFACE(tree).inheritance_spec, i);
+	id2 = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_LIST(curitem).data),
+				      "_", 0);
+	/* XXX fixme - this is going to call ServantBase__fini multiple times */
+	fprintf(ci->fh, "  POA_%s__fini(servant, env);\n",
+		id2);
+	g_free(id2);
+      }
+    }
+  fprintf(ci->fh, "  PortableServer_ServantBase__fini(servant, env);\n");
+  fprintf(ci->fh, "}\n\n");
+
+  g_free(id);
 }
