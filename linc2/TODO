@@ -1,3 +1,12 @@
+** linc_main_iteration () / linc_main_loop_run ...
+	+ We need to examine the API/ABI compat issues with
+	  these methods; what can we do about them ?
+	+ It seems we need a dummy 'wakeup' loop which we
+	  simply wake-up when someone in the main thread
+	  calls linc_main_iteration / linc_main_loop_run
+	  from the main thread [ ... ]
+	+ and/or screw people using the 'linc_*' apis ...
+
 Incoming foo
 	+ need to treat the poll atomically,
 	+ on input,
