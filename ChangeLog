@@ -1,3 +1,16 @@
+2002-01-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(send_buffer_list): initialize it.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_remove_by_orb): fix acute
+	re-enterancy hazard.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_zap): fix re-enterancy hazard.
+	(giop_queued_messages): initialize it.
+
 2002-01-09  Mark McLoughlin  <mark@skynet.ie>
 
 	* test/test-performance.c: (create_mult_id_poa), (test_activation),

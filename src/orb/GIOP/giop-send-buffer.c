@@ -9,7 +9,7 @@
 #define GIOP_CHUNK_ALIGN 8
 #define GIOP_CHUNK_SIZE (GIOP_CHUNK_ALIGN * 256)
 
-static GSList *send_buffer_list;
+static GSList *send_buffer_list = NULL;
 static GMutex *send_buffer_list_lock = NULL;
 
 static const char giop_zero_buf [GIOP_CHUNK_ALIGN * 10] = {0};

@@ -245,6 +245,7 @@ void
 giop_connection_remove_by_orb (gpointer match_orb_data)
 {
 	GList *l, *next;
+	GSList *sl, *to_close = NULL;
 
 	LINC_MUTEX_LOCK (cnx_list.lock);
 
@@ -254,13 +255,20 @@ giop_connection_remove_by_orb (gpointer match_orb_data)
 		next = l->next;
 
 		if (cnx->orb_data == match_orb_data) {
+			to_close = g_slist_prepend (to_close, cnx);
 			cnx_list.list = g_list_delete_link (cnx_list.list, l);
-			giop_connection_close (cnx);
-			g_object_unref (G_OBJECT (cnx));
 		}
 	}
 
 	LINC_MUTEX_UNLOCK (cnx_list.lock);
+
+	for (sl = to_close; sl; sl = sl->next) {
+		GIOPConnection *cnx = sl->data;
+
+		giop_connection_close (cnx);
+		g_object_unref (G_OBJECT (cnx));
+	}
+	g_slist_free (to_close);
 }
 
 void

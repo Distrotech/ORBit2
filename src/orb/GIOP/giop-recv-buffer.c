@@ -17,7 +17,7 @@
  */
 
 /* A list of GIOPMessageQueueEntrys */
-static GList  *giop_queued_messages;
+static GList  *giop_queued_messages = NULL;
 static GMutex *giop_queued_messages_lock = NULL;
 
 /* Don't do this genericaly, union's suck genericaly */
@@ -502,36 +502,50 @@ giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 void
 giop_recv_list_zap (GIOPConnection *cnx)
 {
-	GList *l;
+	GList  *l, *next;
+	GSList *sl, *notify = NULL;
 
 	LINC_MUTEX_LOCK (giop_queued_messages_lock);
 
-	for (l = giop_queued_messages; l; l = l->next) {
+	for (l = giop_queued_messages; l; l = next) {
 		GIOPMessageQueueEntry *ent = l->data;
+
+		next = l->next;
 
 		if (ent->cnx == cnx) {
 			ent->buffer = NULL;
 #ifdef ORBIT_THREADED
-			pthread_cond_signal (&ent->condvar);
+			notify = g_slist_prepend (notify, ent);
 #else
 			if (ent->u.unthreaded.cb) {
-				/* Remove it from the list */
-				giop_queued_messages = g_list_remove_link (
+				giop_queued_messages = g_list_delete_link (
 					giop_queued_messages, l);
-				g_list_free_1 (l);
-				
-				LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-#ifdef DEBUG
-				g_warning ("About to invoke %p:%p:%p", l, ent, ent->u.unthreaded.cb);
-#endif
-				ent->u.unthreaded.cb (ent);
-				LINC_MUTEX_LOCK (giop_queued_messages_lock);
+
+				notify = g_slist_prepend (notify, ent);
 			}
 #endif
 		}
 	}
 
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+	for (sl = notify; sl; sl = sl->next) {
+		GIOPMessageQueueEntry *ent = sl->data;
+
+#ifdef ORBIT_THREADED
+		pthread_cond_signal (&ent->condvar);
+#else
+
+		if (ent->u.unthreaded.cb) {
+#ifdef DEBUG
+			g_warning ("About to invoke %p:%p:%p", l, ent, ent->u.unthreaded.cb);
+#endif
+			ent->u.unthreaded.cb (ent);
+		} else
+			g_warning ("Extraordinary recv list re-enterancy");
+#endif
+	}
+	g_slist_free (notify);
 }
 
 CORBA_unsigned_long
@@ -744,11 +758,9 @@ handle_reply (GIOPRecvBuffer *buf)
 #ifdef ORBIT_THREADED
 		pthread_cond_signal (&ent->condvar);
 #else
-		if (ent->u.unthreaded.cb) {
-			giop_queued_messages = g_list_remove_link (
+		if (ent->u.unthreaded.cb)
+			giop_queued_messages = g_list_delete_link (
 				giop_queued_messages, l);
-			g_list_free_1 (l);
-		}
 
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
