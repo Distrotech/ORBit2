@@ -265,7 +265,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 					  &host, &service, &is_ssl, tbuf)) {
 
 			obj->connection = giop_connection_initiate (
-				proto, host, service,
+				obj->orb, proto, host, service,
 				is_ssl ? LINC_CONNECTION_SSL : 0, iiop_version);
 
 			if (ORBit_try_connection (obj)) {

@@ -40,11 +40,16 @@ typedef struct {
 } GIOPConnectionClass;
 
 GType           giop_connection_get_type      (void) G_GNUC_CONST;
-GIOPConnection *giop_connection_initiate      (const char           *proto_name,
+GIOPConnection *giop_connection_initiate      (gpointer              orb_data,
+					       const char           *proto_name,
 					       const char           *remote_host_info,
 					       const char           *remote_serv_info,
 					       LINCConnectionOptions options,
 					       GIOPVersion           giop_version);
+void            giop_connection_set_orb_n_ver (GIOPConnection       *cnx,
+					       gpointer              orb_data,
+					       GIOPVersion           version);
+					       
 void            giop_connection_remove_by_orb (gpointer              match_orb_data);
 void            giop_connection_close         (GIOPConnection       *cnx);
 void            giop_connection_unref         (GIOPConnection       *cnx);

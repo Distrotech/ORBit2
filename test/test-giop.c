@@ -172,7 +172,7 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 	giop_debug_hook_new_connection = run_test_hook_new_connection;
 
 	cnx = giop_connection_initiate (
-		"UNIX",
+		orb, "UNIX",
 		LINC_SERVER (server)->local_host_info,
 		LINC_SERVER (server)->local_serv_info,
 		LINC_CONNECTION_NONBLOCKING,

@@ -203,8 +203,18 @@ giop_connection_get_type (void)
 	return object_type;
 }
 
+void
+giop_connection_set_orb_n_ver (GIOPConnection *cnx,
+			       gpointer        orb_data,
+			       GIOPVersion     version)
+{
+	cnx->orb_data = orb_data;
+	cnx->giop_version = version;
+}
+
 GIOPConnection *
-giop_connection_initiate (const char *proto_name,
+giop_connection_initiate (gpointer orb_data,
+			  const char *proto_name,
 			  const char *remote_host_info,
 			  const char *remote_serv_info,
 			  GIOPConnectionOptions options,
@@ -228,7 +238,9 @@ giop_connection_initiate (const char *proto_name,
 		cnx = (GIOPConnection *) g_object_new (
 			giop_connection_get_type (), NULL);
 
-		cnx->giop_version = giop_version;
+		giop_connection_set_orb_n_ver (
+			cnx, orb_data, giop_version);
+
 		if (!linc_connection_initiate (
 			(LINCConnection *) cnx,
 			proto_name, remote_host_info,
