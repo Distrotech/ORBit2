@@ -1,5 +1,7 @@
 2003-10-10  Michael Meeks  <michael@ximian.com>
 
+	* configure.in: switch to 2.9.0
+
 	* ORBit.spec.in: fix from Joe Pranevich.
 
 	* src/orb/GIOP/giop-recv-buffer.c
