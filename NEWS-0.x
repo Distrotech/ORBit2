@@ -1,3 +1,9 @@
+Aug 13, 1998:
+	ORBit 0.2.1 release
+		. Object (de)marshalling
+		. Hierarchical POA namespace
+		. "Misc fixes"
+
 Aug 5, 1998:
 	ORBit 0.2 release
 
