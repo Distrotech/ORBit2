@@ -12,6 +12,7 @@
 #include <config.h>
 #include "linc-compat.h"
 #include <dirent.h>
+#include <utime.h>
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 
