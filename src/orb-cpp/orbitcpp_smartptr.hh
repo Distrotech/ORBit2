@@ -926,12 +926,15 @@ namespace _orbitcpp {
 		String_var(CharT *p)
 			: m_data(p) {
 		}
+
 		String_var(const CharT *p)
 			: m_data(Properties::dup(p)) {
 		}
+
 		String_var(const String_var &s)
 			: m_data(Properties::dup(s.m_data)) {
 		}
+
 		~String_var() {
 			Properties::free(m_data);
 			m_data = NULL;

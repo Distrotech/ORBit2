@@ -421,9 +421,12 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 	const char         *typeid;
 	CORBA_unsigned_long num_profiles;
 
-	if (obj)
+	if (obj) {
 		typeid = g_quark_to_string (obj->type_qid);
-	else
+		if (!typeid)
+			g_error ("Attempted to marshal a bogus / "
+				 "dead object %p type", obj);
+	} else
 		typeid = "";
 
 	giop_send_buffer_append_string (buf, typeid);

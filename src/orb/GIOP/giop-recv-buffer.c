@@ -830,6 +830,12 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 		return TRUE;
 
 	buf->message_body = g_malloc (buf->msg.header.message_size + 12);
+	/*
+	 *   We assume that this is 8 byte aligned, for efficiency -
+	 * so we can align to the memory address rather than the offset
+	 * into the buffer.
+	 */
+	g_assert (((gulong)buf->message_body & 0x3) == 0);
 	buf->free_body = TRUE;
 	buf->cur = buf->message_body + 12;
 	buf->end = buf->cur + buf->msg.header.message_size;
