@@ -1,3 +1,12 @@
+2001-08-02  Martin Baulig  <baulig@suse.de>
+
+	* src/orb/orb-core/orbit-interface.idl:
+	(ORBit::IInterfaces): New typedef.
+
+	* include/orbit/orb-core/orbit-small.h,
+	src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_iinterfaces): New function.
+
 2001-08-02  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/poa(ORBit_OAObject_invoke): let's not 

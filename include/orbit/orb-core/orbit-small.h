@@ -42,5 +42,7 @@ ORBit_IInterface *ORBit_small_get_iinterface      (CORBA_Object       opt_object
 gboolean          ORBit_small_load_typelib        (const char        *libname);
 CORBA_sequence_CORBA_TypeCode *
                   ORBit_small_get_types           (const char        *name);
+CORBA_sequence_ORBit_IInterface *
+                  ORBit_small_get_iinterfaces     (const char        *name);
 
 #endif /* CORBA_SMALL_H */
