@@ -97,22 +97,23 @@ typedef struct {
 		ORBIT_POAOBJECT_TO_EPVPTR(((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj), (clsid))
 
 #ifdef ORBIT_IN_PROC_COMPLIANT
-#define ORBIT_STUB_PreCall(obj, iframe) {		\
-  ++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );	\
-  iframe.pobj = ((ORBit_POAObject)(obj)->adaptor_obj);	\
-  iframe.prev = (obj)->orb->poa_current_invocations;	\
-  (obj)->orb->poa_current_invocations = &iframe;	\
+#define ORBIT_STUB_PreCall(obj) {                                   \
+	++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );	    \
+	(obj)->orb->current_invocations =                           \
+		g_slist_prepend ((obj)->orb->current_invocations,   \
+				 (obj)->adaptor_obj);               \
 }
 
-#define ORBIT_STUB_PostCall(obj, iframe) {						\
-  (obj)->orb->poa_current_invocations = iframe.prev;					\
-  --( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );					\
-  if ( ((ORBit_POAObject)(obj)->adaptor_obj)->life_flags & ORBit_LifeF_NeedPostInvoke )	\
-	ORBit_POAObject_post_invoke( ((ORBit_POAObject)(obj)->adaptor_obj) );		\
+#define ORBIT_STUB_PostCall(obj) {                                                             \
+	(obj)->orb->current_invocations =                                                      \
+                g_slist_remove ((obj)->orb->current_invocations, pobj);                        \
+	--(((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt);                                    \
+	if (((ORBit_POAObject)(obj)->adaptor_obj)->life_flags & ORBit_LifeF_NeedPostInvoke)    \
+		ORBit_POAObject_post_invoke (((ORBit_POAObject)(obj)->adaptor_obj));           \
 }
 #else
-#define ORBIT_STUB_PreCall(x,y)
-#define ORBIT_STUB_PostCall(x,y)
+#define ORBIT_STUB_PreCall(x)
+#define ORBIT_STUB_PostCall(x)
 #endif
 
 #endif

@@ -4,23 +4,28 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <orbit/orbit.h>
+
 #include "poa/orbit-poa.h"
+#include "orb-core/orb-core-private.h"
 
 void
-ORBit_init_internals(CORBA_ORB orb, CORBA_Environment *ev)
+ORBit_init_internals (CORBA_ORB          orb,
+		      CORBA_Environment *ev)
 {
-  static ORBit_InitialReference root_poa_val = {NULL, TRUE, FALSE};
-  struct timeval t;
+	PortableServer_POA     root_poa;
+	PortableServer_Current poa_current;
+	struct timeval         t;
 
-  root_poa_val.objref = ORBit_POA_setup_root(orb, ev);
+	root_poa = ORBit_POA_setup_root (orb, ev);
 
-  /* released in CORBA_ORB_destroy */
-  ORBit_RootObject_duplicate(root_poa_val.objref);
+	ORBit_set_initial_reference (orb, "RootPOA", root_poa);
 
-  CORBA_ORB_set_initial_reference(orb, "RootPOA", &root_poa_val, ev);
+	poa_current = ORBit_POACurrent_new (orb);
 
-  gettimeofday (&t, NULL);
-  srand (t.tv_sec ^ t.tv_usec ^ getpid ());
+	ORBit_set_initial_reference (orb, "POACurrent", poa_current);
+
+	gettimeofday (&t, NULL);
+	srand (t.tv_sec ^ t.tv_usec ^ getpid ());
 }
 
 const char  *orbit_version       = ORBIT_VERSION;

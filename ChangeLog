@@ -1,3 +1,48 @@
+2001-10-18  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-orb-type.h
+	(CORBA_ORB_type): kill poa_current, make poa_current_invocations
+	a GSList and rename to current_invocations.
+	(ORBit_InitialReference): kill.
+
+	* include/orbit/orb-core/corba-orb.h,
+	  src/orb/orb-core/orb-core-private.h,
+	  src/orb/orb-core/corba-object.c:
+	(CORBA_ORB_set_initial_reference): rename to
+	ORBit_set_initial_reference, privatise and simplify arguments.
+	(ORBit_service_list_add_id): kill ugly _maximum++ hack.
+	(ORBit_service_list_free_ref): impl.
+	(CORBA_ORB_release_fn): unref all initial references.
+	(CORBA_ORB_resolve_initial_references): update.
+
+	* src/orb/poa/poa.c (ORBit_POACurrent_get_object): update.
+	(ORBit_POAObject_handle_request): ditto.
+	(PortableServer_Current_get_POA): ditto.
+	(PortableServer_Current_get_object_id): ditto.
+	(PortableServer_POA_servant_to_id): ditto.
+	(PortableServer_POA_servant_to_reference): ditto.
+	(CORBA_ORB_list_initial_services): update.
+
+	* src/orb/orbit-init.c (ORBit_init_internals): update, and
+	create + register a "POACurrent" reference.
+
+	* include/orbit/poa/poa-types.h
+	(ORBIT_STUB_PreCall, PostCall): update.
+
+	* include/orbit/poa/poa.h(ORBit_POAInvocation): kill.
+
+	* src/orb/poa/orbit-poa.h: add ORBit_POACurrent_new.
+
+	* test/everything/client.c, test/everything/everything.idl,
+	  test/everything/server.c, test/everything/deadReference.c,
+	  test/everything/test.sh: added regression test for dead 
+	server-side references and ORB initial services.
+
+	* src/idl-compiler/orbit-idl-c-stubs.c (cs_small_output_stub):
+	update.
+
+	* configure.in: bump up ORBIT_SERIAL.
+
 2001-10-18  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testSegv): invoke a remote segv.

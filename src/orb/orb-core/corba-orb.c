@@ -10,12 +10,26 @@
 #include "orbhttp.h"
 
 extern ORBit_option orbit_supported_options[];
+
+void
+ORBit_service_list_free_ref (gpointer         key,
+			     ORBit_RootObject objref,
+			     gpointer         dummy)
+{
+	ORBit_RootObject_release_T (objref);
+}
+
 static void
 CORBA_ORB_release_fn (ORBit_RootObject robj)
 {
 	CORBA_ORB orb = (CORBA_ORB)robj;
 
 	g_ptr_array_free (orb->adaptors, TRUE);
+
+	g_hash_table_foreach (orb->initial_refs,
+			      (GHFunc)ORBit_service_list_free_ref,
+			      NULL);
+
 	g_hash_table_destroy (orb->initial_refs);
 
 	g_free (orb);
@@ -244,51 +258,72 @@ CORBA_ORB_get_service_information(CORBA_ORB _obj,
   return CORBA_FALSE;
 }
 
-static void
-servlist_add_id(gpointer key, gpointer value, gpointer data)
-{
-  CORBA_ORB_ObjectIdList *retval = data;
+struct ORBit_service_list_info {
+	CORBA_ORB_ObjectIdList *list;
+	CORBA_long              index;
+};
 
-  retval->_buffer[retval->_maximum++] = CORBA_string_dup(key);
+static void
+ORBit_service_list_add_id (CORBA_string                    key,
+			   gpointer                        value,
+			   struct ORBit_service_list_info *info)
+{
+	info->list->_buffer [info->index++] = CORBA_string_dup (key);
 }
 
 CORBA_ORB_ObjectIdList *
-CORBA_ORB_list_initial_services(CORBA_ORB _obj,
-				CORBA_Environment *ev)
+CORBA_ORB_list_initial_services (CORBA_ORB          orb,
+				 CORBA_Environment *ev)
 {
-  CORBA_ORB_ObjectIdList *retval;
-  retval = CORBA_ORB_ObjectIdList__alloc();
-  if(_obj->initial_refs)
-    {
-      retval->_length = g_hash_table_size(_obj->initial_refs);
-      retval->_maximum = 0;
-      retval->_buffer =
-	CORBA_sequence_CORBA_ORB_ObjectId_allocbuf(retval->_length);
-      g_hash_table_foreach(_obj->initial_refs, servlist_add_id, retval);
-      retval->_release = CORBA_TRUE;
-    }
-  else
-    {
-      retval->_length = 0;
-      retval->_buffer = NULL;
-    }
-  return retval;
+	CORBA_ORB_ObjectIdList         *retval;
+
+	retval = CORBA_ORB_ObjectIdList__alloc();
+
+	if (orb->initial_refs) {
+		struct ORBit_service_list_info *info;
+
+		info = g_alloca (sizeof (struct ORBit_service_list_info));
+
+		info->index = 0;
+		info->list  = retval;
+
+		retval->_length  = g_hash_table_size (orb->initial_refs);
+		retval->_maximum = retval->_length;
+		retval->_buffer  = CORBA_sequence_CORBA_ORB_ObjectId_allocbuf (
+					retval->_length);
+
+		g_hash_table_foreach (orb->initial_refs,
+				      (GHFunc)ORBit_service_list_add_id,
+				      info);
+
+		retval->_release = CORBA_TRUE;
+
+		g_assert (info->index = retval->_length);
+	}
+	else {
+		retval->_length = 0;
+		retval->_buffer = NULL;
+	}
+
+	return retval;
 }
 
 CORBA_Object
-CORBA_ORB_resolve_initial_references (CORBA_ORB          _obj,
+CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 				      const CORBA_char  *identifier,
 				      CORBA_Environment *ev)
 {
-  ORBit_InitialReference *val;
-  if(!_obj->initial_refs)
-    return CORBA_OBJECT_NIL;
-  val = g_hash_table_lookup(_obj->initial_refs, identifier);
+	CORBA_Object objref;
 
-  if(val)
-    return CORBA_Object_duplicate(val->objref, ev);
+	if (!orb->initial_refs)
+		return CORBA_OBJECT_NIL;
 
-  return CORBA_OBJECT_NIL;
+	objref = g_hash_table_lookup (orb->initial_refs, identifier);
+
+	if(objref)
+		return CORBA_Object_duplicate (objref, ev);
+
+	return CORBA_OBJECT_NIL;
 }
 
 static CORBA_TypeCode
@@ -869,29 +904,20 @@ CORBA_ORB_lookup_value_factory (CORBA_ORB          _obj,
   return CORBA_OBJECT_NIL;
 }
 
-/* ORBit extension */
 void
-CORBA_ORB_set_initial_reference (CORBA_ORB orb, CORBA_ORB_ObjectId identifier,
-				 ORBit_InitialReference *val, CORBA_Environment *ev)
+ORBit_set_initial_reference (CORBA_ORB  orb,
+			     gchar     *identifier,
+			     gpointer   objref)
 {
-	ORBit_InitialReference *findval;
-	char *findkey = NULL;
-
 	if (!orb->initial_refs)
 		orb->initial_refs = g_hash_table_new (g_str_hash, g_str_equal);
 
-	if (g_hash_table_lookup_extended (
-		orb->initial_refs, identifier,
-		(gpointer *)&findkey, (gpointer *)&findval) &&
-	    findval->free_name) {
+	if (g_hash_table_lookup (orb->initial_refs, identifier))
 		g_hash_table_remove (orb->initial_refs, identifier);
-		g_free (findkey);
-	}
 
-	g_hash_table_insert (
-		orb->initial_refs,
-		val->free_name?g_strdup(identifier):identifier,
-		val);
+	g_hash_table_insert (orb->initial_refs,
+			     identifier,
+			     ORBit_RootObject_duplicate (objref));
 }
 
 void

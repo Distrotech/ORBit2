@@ -6,12 +6,11 @@
 # We had issues creating this once, and it gives us a 'clean' slate.
 rm -Rf "/tmp/orbit-$USER"
 
-./server&
+./server &
 
 until test -s iorfile; do sleep 1; done
 
 if ./client; then
-	kill $!
 	rm iorfile
 else
 	kill $!

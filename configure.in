@@ -25,7 +25,7 @@ AC_SUBST(ORBIT_VERSION)
 
 # Increment this every time a feature is added in the .idl compiler
 # that needs help from the main libraries.
-ORBIT_SERIAL=16
+ORBIT_SERIAL=17
 AC_SUBST(ORBIT_SERIAL)
 
 # For automake.

@@ -95,21 +95,20 @@ ORBit_POACurrent_new(CORBA_ORB orb)
   return ORBit_RootObject_duplicate(poacur);
 }
 
-static ORBit_POAInvocation*
-ORBit_POACurrent_get_invocation(PortableServer_Current obj,
-				CORBA_Environment *ev)
+static ORBit_POAObject
+ORBit_POACurrent_get_object (PortableServer_Current  obj,
+			     CORBA_Environment      *ev)
 {
-  g_assert( obj && obj->parent.interface->type == ORBIT_ROT_POACURRENT );
+	g_assert (obj && obj->parent.interface->type == ORBIT_ROT_POACURRENT);
 
-  if ( obj->orb->poa_current_invocations == 0 )
-    {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_Current_NoContext,
-			  NULL);
-      return 0;
-    }
+	if (!obj->orb->current_invocations) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_Current_NoContext,
+				     NULL);
+		return NULL;
+	}
 
-  return obj->orb->poa_current_invocations;
+	return (ORBit_POAObject)obj->orb->current_invocations->data;
 }
 
 CORBA_unsigned_long
@@ -1049,7 +1048,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	ORBit_IMethod                       *m_data = NULL;
 	ORBitSkeleton                        skel = NULL;
 	ORBitSmallSkeleton                   small_skel = NULL;
-	ORBit_POAInvocation		     iframe;
 	gpointer                             imp = NULL;
 
 	switch (poa->poa_manager->state) {
@@ -1111,9 +1109,8 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	}
 
 	pobj->use_cnt++;
-	iframe.pobj = pobj;
-	iframe.prev = poa->orb->poa_current_invocations;
-	poa->orb->poa_current_invocations = &iframe;
+	poa->orb->current_invocations =
+		g_slist_prepend (poa->orb->current_invocations, pobj);
 	
 	if (ev->_major == CORBA_NO_EXCEPTION && !pobj->servant)
 		CORBA_exception_set_system (
@@ -1189,8 +1186,9 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 			break;
 		}
 
-	g_assert (poa->orb->poa_current_invocations == &iframe);
-	poa->orb->poa_current_invocations = iframe.prev;
+	g_assert ((ORBit_POAObject)poa->orb->current_invocations->data == pobj);
+	poa->orb->current_invocations =
+		g_slist_remove (poa->orb->current_invocations, pobj);
 	pobj->use_cnt--;
 
 	if (pobj->life_flags & ORBit_LifeF_NeedPostInvoke)
@@ -1496,30 +1494,28 @@ PortableServer_POA
 PortableServer_Current_get_POA (PortableServer_Current  obj,
 				CORBA_Environment      *ev)
 {
-	ORBit_POAInvocation *iframe;
+	ORBit_POAObject pobj;
 
-	iframe = ORBit_POACurrent_get_invocation(obj, ev);
+	pobj = ORBit_POACurrent_get_object (obj, ev);
 
-	if (!iframe) 
+	if (!pobj) 
 		return CORBA_OBJECT_NIL;
 
-	return (PortableServer_POA)
-			CORBA_Object_duplicate (obj->orb->poa_current, ev);
+	return (PortableServer_POA)CORBA_Object_duplicate ((CORBA_Object)pobj->poa, ev);
 }
 
 PortableServer_ObjectId *
 PortableServer_Current_get_object_id (PortableServer_Current  obj,
 				      CORBA_Environment      *ev)
 {
-	ORBit_POAInvocation *iframe;
+	ORBit_POAObject pobj;
 
-	iframe = ORBit_POACurrent_get_invocation(obj, ev);
+	pobj = ORBit_POACurrent_get_object (obj, ev);
 
-	if (!iframe) 
+	if (!pobj) 
 		return NULL;
 
-	return (PortableServer_ObjectId *)
-			ORBit_sequence_CORBA_octet_dup (iframe->pobj->object_id);
+	return (PortableServer_ObjectId *)ORBit_sequence_CORBA_octet_dup (pobj->object_id);
 }
 
 /*
@@ -1870,11 +1866,14 @@ PortableServer_POA_servant_to_id (PortableServer_POA            poa,
 		 * The stricter form could be implemented, 
 		 * but it would only add more code...
 		 */
-		ORBit_POAInvocation	*irec = poa->orb->poa_current_invocations;
+		GSList *l = poa->orb->current_invocations;
 
-		for ( ; irec; irec = irec->prev)
-			if (irec->pobj->servant == p_servant)
-				return ORBit_sequence_CORBA_octet_dup (irec->pobj->object_id);
+		for ( ; l; l = l->next) {
+			ORBit_POAObject pobj = l->data;
+
+			if (pobj->servant == p_servant)
+				return ORBit_sequence_CORBA_octet_dup (pobj->object_id);
+		}
 	}
 
 	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
@@ -1926,9 +1925,10 @@ PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
 		 * go backward from servant to pobj to use_cnt, but we
 		 * dont do this since forward search is more general 
 		 */
-		ORBit_POAInvocation	*irec = poa->orb->poa_current_invocations;
-		for ( ; irec; irec = irec->prev)
-			if (irec->pobj->servant == p_servant)
+		GSList *l = poa->orb->current_invocations;
+
+		for ( ; l; l = l->next)
+			if ((ORBit_POAObject)l->data == p_servant)
 				return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 	}
 
