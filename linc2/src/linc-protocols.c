@@ -158,14 +158,14 @@ make_local_tmpdir (const char *dirname)
 	}
 }
 
-/*
+/**
  * linc_set_tmpdir:
  * @dir: directory name.
  *
  * Set the temporary directory used by linc to @dir. 
  *
  * This directory is used for the creation of UNIX sockets.
- */
+ **/
 void
 linc_set_tmpdir (const char *dir)
 {

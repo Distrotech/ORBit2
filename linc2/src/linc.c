@@ -119,6 +119,19 @@ struct _LincWatch {
 static GSList *watches = NULL;
 #endif
 
+/**
+ * linc_io_add_watch:
+ * @channel: the GIOChannel to watch
+ * @condition: the condition mask to watch for
+ * @func: the function to invoke when a condition is met
+ * @user_data: a user data closure
+ * 
+ * This routine creates a watch on an IO channel that operates both in
+ * the standard glib mainloop, but also in the 'linc' mainloop so we
+ * can iterate that without causing re-enterancy.
+ * 
+ * Return value: a pointer identifying the watch.
+ **/
 LincWatch *
 linc_io_add_watch (GIOChannel    *channel,
 		   GIOCondition   condition,
@@ -153,6 +166,12 @@ linc_io_add_watch (GIOChannel    *channel,
 	return w;
 }
 
+/**
+ * linc_io_remove_watch:
+ * @watch: the handle of a watch on a GIOChannel
+ * 
+ * This removes a watch by it's handle in @w
+ **/
 void
 linc_io_remove_watch (LincWatch *w)
 {
@@ -184,6 +203,13 @@ linc_io_remove_watch (LincWatch *w)
 	}
 }
 
+/**
+ * linc_main_iteration:
+ * @block_for_reply: whether we should wait for a reply
+ * 
+ * This routine iterates the linc mainloop, which has
+ * only the linc sources registered against it.
+ **/
 void
 linc_main_iteration (gboolean block_for_reply)
 {
@@ -210,18 +236,38 @@ linc_main_iteration (gboolean block_for_reply)
 		linc_context, block_for_reply);
 }
 
+/**
+ * linc_main_pending:
+ * 
+ * determines if the linc mainloop has any pending work to process.
+ * 
+ * Return value: TRUE if the linc mainloop has any pending work to process.
+ **/
 gboolean
 linc_main_pending (void)
 {
 	return g_main_context_pending (linc_context);
 }
 
+/**
+ * linc_main_loop_run:
+ * 
+ * Runs the linc mainloop; blocking until the loop is exited.
+ **/
 void
 linc_main_loop_run (void)
 {
 	g_main_loop_run (linc_loop);
 }
 
+/**
+ * linc_mutex_new:
+ * 
+ * Creates a mutes, iff threads are supported, initialized and
+ * linc_set_threaded has been called.
+ * 
+ * Return value: a new GMutex, or NULL if one is not required.
+ **/
 GMutex *
 linc_mutex_new (void)
 {

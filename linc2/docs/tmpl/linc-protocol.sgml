@@ -2,7 +2,7 @@
 linc-protocol
 
 <!-- ##### SECTION Short_Description ##### -->
-
+The protocols exposed
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -31,6 +31,18 @@ linc-protocol
 @cnx_flags: 
 
 
+<!-- ##### USER_FUNCTION LINCProtocolGetSockInfoFunc ##### -->
+<para>
+
+</para>
+
+@proto: 
+@sockaddr: 
+@hostname: 
+@service: 
+@Returns: 
+
+
 <!-- ##### USER_FUNCTION LINCProtocolDestroyFunc ##### -->
 <para>
 
@@ -39,14 +51,6 @@ linc-protocol
 @fd: 
 @host_info: 
 @serv_info: 
-
-
-<!-- ##### FUNCTION gboolean ##### -->
-<para>
-
-</para>
-
-@Returns: 
 
 
 <!-- ##### STRUCT LINCProtocolInfo ##### -->

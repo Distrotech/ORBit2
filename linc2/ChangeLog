@@ -1,5 +1,21 @@
 2001-11-13  Michael Meeks  <michael@ximian.com>
 
+	* docs/Makefile.am (IGNORE_HFILES): add config.h, acconfig.h
+
+	* src/linc-server.c (linc_server_handle): privatize,
+	unused & redundant.
+
+	* docs/tmpl/linc-types.sgml: document LINC_MUTEX_LOCK /
+	UNLOCK.
+
+	* src/linc-protocols.c (linc_set_tmpdir): fix docs.
+
+	* src/linc.c (linc_io_add_watch, linc_io_remove_watch),
+	(linc_main_iteration, linc_main_pending, linc_mutex_new),
+	(linc_main_loop_run): document.
+
+2001-11-13  Michael Meeks  <michael@ximian.com>
+
 	* docs/linc-sections.txt: remove config, acconfig,
 	linc-config, linc-private sections.
 

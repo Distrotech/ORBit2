@@ -204,6 +204,7 @@ linc_server_handle_io (GIOChannel  *gioc,
 	return TRUE;
 }
 
+/* FIXME: kill me */
 void
 linc_server_handle (LINCServer *cnx)
 {

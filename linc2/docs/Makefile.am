@@ -25,7 +25,7 @@ HFILE_GLOB=
 CFILE_GLOB=
 
 # Header files to ignore when scanning.
-IGNORE_HFILES=
+IGNORE_HFILES=config.h acconfig.h linc-private.h
 
 # Images to copy into HTML directory.
 HTML_IMAGES =
