@@ -180,14 +180,14 @@ ORBit_POA_new_system_objid (PortableServer_POA poa)
 
 	g_assert (IS_SYSTEM_ID (poa));
 
-	objid           = PortableServer_ObjectId__alloc ();
-	objid->_length  = objid->_maximum = sizeof (CORBA_unsigned_long) + ORBIT_RAND_DATA_LEN;
+	objid = PortableServer_ObjectId__alloc ();
+	objid->_length  = objid->_maximum = sizeof (CORBA_long) + ORBIT_OBJECT_ID_LEN;
 	objid->_buffer  = PortableServer_ObjectId_allocbuf (objid->_length);
 	objid->_release = CORBA_TRUE;
 
-	*(guint32 *)(objid->_buffer) = ++(poa->next_sysid);
-
-	ORBit_genuid_buffer (objid->_buffer + sizeof (CORBA_unsigned_long), ORBIT_RAND_DATA_LEN);
+	ORBit_genuid_buffer (objid->_buffer + sizeof (CORBA_long),
+			     ORBIT_OBJECT_ID_LEN, ORBIT_GENUID_OBJECT_ID);
+	*((CORBA_long *) objid->_buffer) = ++(poa->next_sysid);
 
 	return objid;
 }
@@ -734,7 +734,9 @@ ORBit_POA_create_object (PortableServer_POA             poa,
 
 	if (poa->p_id_assignment == PortableServer_SYSTEM_ID) {
 		if (objid) {
-			g_assert(objid->_length == sizeof (CORBA_unsigned_long) + ORBIT_RAND_DATA_LEN);
+			g_assert (objid->_length ==
+				  sizeof (CORBA_unsigned_long) +
+				  ORBIT_OBJECT_ID_LEN);
 
 			newobj->object_id          = PortableServer_ObjectId__alloc ();
 			newobj->object_id->_length = objid->_length;
@@ -1121,8 +1123,8 @@ ORBit_POA_object_key_lookup (PortableServer_POA       poa,
 			     ORBit_ObjectKey         *objkey,
 			     PortableServer_ObjectId *object_id)
 {
-	object_id->_buffer  = objkey->_buffer + ORBIT_ADAPTOR_KEY_LEN;
-	object_id->_length  = objkey->_length - ORBIT_ADAPTOR_KEY_LEN; 
+	object_id->_buffer  = objkey->_buffer + ORBIT_ADAPTOR_PREFIX_LEN;
+	object_id->_length  = objkey->_length - ORBIT_ADAPTOR_PREFIX_LEN; 
 	object_id->_maximum = object_id->_length;
 	object_id->_release = CORBA_FALSE;
 

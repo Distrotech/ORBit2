@@ -29,7 +29,7 @@ static gboolean     orbit_use_usocks        = TRUE;
 static gboolean     orbit_use_irda          = FALSE;
 static gboolean     orbit_use_ssl           = FALSE;
 static gboolean     orbit_use_genuid_simple = FALSE;
-static gboolean     orbit_allow_local       = FALSE;
+static gboolean     orbit_local_only       = FALSE;
 static gboolean     orbit_use_http_iors     = FALSE;
 static char        *orbit_ipsock            = NULL;
 static char        *orbit_ipname            = NULL;
@@ -41,7 +41,7 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 	LINCProtocolInfo     *info;
 	LINCConnectionOptions create_options = 0;
 
-	if (orbit_allow_local)
+	if (orbit_local_only)
 		create_options |= LINC_CONNECTION_LOCAL_ONLY;
 
 	for (info = linc_protocol_all (); info->name; info++) {
@@ -108,6 +108,31 @@ ORBit_genuid_type (void)
 
 	return retval;
 }
+
+static void
+genuid_init (void)
+{
+	char *error;
+
+	/* We treat the 'local_only' mode as a very special case */
+
+	if (orbit_local_only &&
+	    orbit_use_genuid_simple)
+		g_error  ("It is impossible to isolate one user from another "
+			  "with only simple cookie generation, you cannot "
+			  "explicitely enable this option and LocalOnly mode "
+			  "at the same time");
+
+	else if (!ORBit_genuid_init (ORBit_genuid_type ())) {
+
+		if (orbit_local_only)
+			g_error ("Failed to find a source of randomness good "
+				 "enough to insulate local users from each "
+				 "other. If you use Solaris you need /dev/random "
+				 "from the SUNWski package");
+	}
+}
+
 
 static void
 ORBit_service_list_free_ref (gpointer         key,
@@ -222,7 +247,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_setup_debug_flags ();
 #endif /* G_ENABLE_DEBUG */
 
-	ORBit_genuid_init (ORBit_genuid_type ());
+	genuid_init ();
 
 	giop_init ();
 
@@ -1241,7 +1266,7 @@ static ORBit_option orbit_supported_options[] = {
 	{ "ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
  	{ "ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname },
  	{ "ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock },
-	{ "ORBLocalOnly",    ORBIT_OPTION_BOOLEAN, &orbit_allow_local },
+	{ "ORBLocalOnly",    ORBIT_OPTION_BOOLEAN, &orbit_local_only },
 	/* warning: this option is a security risk unless used with LocalOnly */
 	{ "ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
 	{ "ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },

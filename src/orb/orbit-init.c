@@ -25,6 +25,7 @@ ORBit_init_internals (CORBA_ORB          orb,
 	ORBit_set_initial_reference (orb, "POACurrent", poa_current);
 	ORBit_RootObject_release (poa_current);
 
+	/* need to srand for linc's node creation */
 	gettimeofday (&t, NULL);
 	srand (t.tv_sec ^ t.tv_usec ^ getpid () ^ getuid ());
 }
