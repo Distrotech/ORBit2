@@ -283,6 +283,8 @@ giop_send_buffer_append(GIOPSendBuffer *buf, gconstpointer mem, gulong len)
   register gulong num_used;
   register const guchar *lastptr;
 
+  g_assert(mem);
+
   lastptr = buf->lastptr;
   num_used = buf->num_used;
   if(num_used && mem == lastptr)
@@ -357,7 +359,7 @@ giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary)
 
   /* 1. Figure out how much to align by */
   ms = buf->msg.header.message_size + buf->header_size;
-  align_amt = ALIGN_VALUE(ms, boundary);
+  align_amt = ALIGN_VALUE(ms, boundary) - ms;
 
   /* 2. Do the alignment */
   if(align_amt)

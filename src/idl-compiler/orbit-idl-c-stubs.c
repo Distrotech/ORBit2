@@ -134,7 +134,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curitem).ident),
 				 "_", 0);
     fprintf(ci->fh, "if(ORBIT_STUB_IsBypass(_obj,%s__classid))\n{\n", id);
+#if 0
     fprintf(ci->fh, "ORBit_POAInvocation invoke_rec;\n");
+#endif
 
     fprintf(ci->fh, "POA_%s__epv *_epv=(POA_%s__epv*)ORBIT_STUB_GetEpv(_obj,%s__classid);\n",
 	    id, id, id);
@@ -249,7 +251,9 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	fprintf(ci->fh, "%s_demarshal_error:\n", ORBIT_RETVAL_VAR_NAME);
 	cbe_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci);
       }
-    fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
+
+    if(IDL_OP_DCL(tree).parameter_dcls)
+      fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
     fprintf(ci->fh, "_ORBIT_system_exception_ex = ex_CORBA_MARSHAL;\n");
   }
   fprintf(ci->fh, "_ORBIT_system_exception:\n");

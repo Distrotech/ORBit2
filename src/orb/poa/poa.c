@@ -75,6 +75,7 @@ ORBit_POAManager_new(CORBA_ORB orb, CORBA_Environment *ev)
   retval = g_new0(struct PortableServer_POAManager_type, 1);
   ORBit_RootObject_init(&retval->parent, &CORBA_POAManager_epv);
   retval->state = PortableServer_POAManager_HOLDING;
+  retval->orb = orb;
 
   return retval;
 }
@@ -540,7 +541,27 @@ PortableServer_POA_deactivate_object(PortableServer_POA _obj,
 				     const PortableServer_ObjectId *oid,
 				     CORBA_Environment * ev)
 {
-  g_error("NYI");
+  ORBit_POAObject *oldobj;
+
+  ev->_major = CORBA_NO_EXCEPTION;
+  if(!_obj || !oid) {
+    CORBA_exception_set_system(ev, ex_CORBA_BAD_PARAM,
+			       CORBA_COMPLETED_NO);
+    return;
+  }
+  oldobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/1, ev);
+  if ( ev->_major )
+    return;
+  if(!oldobj) {
+    CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
+			ex_PortableServer_POA_ObjectNotActive,
+			NULL);
+    return;
+  }
+  ORBit_POA_deactivate_object(_obj, oldobj, 
+			      /*etherealize_objects*/CORBA_TRUE,
+			      /*cleanup_in_progress*/CORBA_FALSE);
+
 }
 
 CORBA_Object
@@ -939,16 +960,27 @@ ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
 		       randlen);
 }
 
+IOP_ObjectKey_info *
+IOP_ObjectKey_copy(IOP_ObjectKey_info *oki)
+{
+  guint len;
+
+  len = G_STRUCT_OFFSET(IOP_ObjectKey_info, object_key_data._buffer)
+    + oki->object_key._length;
+
+  return g_memdup(oki, len);
+}
+
 IOP_ObjectKey_info*
 ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
-			/*in*/PortableServer_ObjectId *oid)
+			/*in*/const PortableServer_ObjectId *oid)
 {
   guint32	keynum, *iptr;
   int			restlen;
   CORBA_octet*	restbuf;
   IOP_ObjectKey_info *retval;
   CORBA_sequence_CORBA_octet *okey;
-  gulong okey_len;
+  gulong okey_len, rlen;
 
   if ( poa->num_to_koid_map )
     {
@@ -986,18 +1018,23 @@ ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
       restbuf = oid->_buffer;
     }
 
-  okey_len = poa->poa_key._length + sizeof(ORBit_POA_Serial) + restlen;;
+  okey_len = poa->poa_key._length + restlen + sizeof(guint32);
+  rlen = ALIGN_VALUE(okey_len, 4);
   retval = g_malloc(G_STRUCT_OFFSET(IOP_ObjectKey_info, object_key_data._buffer)
-		    + okey_len);
+		    + rlen);
   okey = &retval->object_key;
   okey->_length = okey_len;
   okey->_buffer = retval->object_key_data._buffer;
+  retval->object_key_data._length = okey_len;
   okey->_release = CORBA_FALSE;
   memcpy( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length);
-  iptr = (okey->_buffer+poa->poa_key._length);
+  iptr = (guint32*)(okey->_buffer+poa->poa_key._length);
   *iptr = keynum;
   memcpy( okey->_buffer + poa->poa_key._length + sizeof(guint32),
 	  restbuf, restlen);
+  retval->object_key_vec.iov_base = &retval->object_key_data;
+  retval->object_key_vec.iov_len = sizeof(guint32) + rlen;
+  return retval;
 }
 
 CORBA_Object
@@ -1006,76 +1043,155 @@ ORBit_POA_oid_to_ref(PortableServer_POA poa,
 		     const CORBA_RepositoryId intf,
 		     CORBA_Environment *ev)
 {
-  GSList *profiles=NULL, *ltmp;
-  CORBA_Object retval;
+  GSList *profiles, *ltmp;
   CORBA_ORB orb;
   gboolean need_objkey_component;
+  IOP_TAG_INTERNET_IOP_info *iiop = NULL;
+  IOP_ObjectKey_info *oki = NULL;
+  IOP_TAG_ORBIT_SPECIFIC_info *osi = NULL;
+  IOP_TAG_MULTIPLE_COMPONENTS_info *mci = NULL;
 
-  g_assert( oid && type_id );
+  g_assert( oid && intf );
 
-  orb = obj->poa_manager->orb;
+  orb = poa->poa_manager->orb;
 
   need_objkey_component = FALSE;
-    ORBit_POA_oid_to_okey(obj, oid, &object_info->object_key);
-  for(ltmp = orb->servers; ltmp; ltmp = ltmp->next)
+  oki = ORBit_POA_oid_to_okey(poa, oid);
+  for(profiles = NULL, ltmp = orb->servers; ltmp; ltmp = ltmp->next)
     {
       LINCServer *serv = ltmp->data;
 
-      if
+      if(!osi
+	 && (!strcmp(serv->proto->name, "UNIX")
+	     || (!strcmp(serv->proto->name, "IPv6")
+		 && !(serv->create_options & LINC_CONNECTION_SSL))))
+	{
+	  osi = g_new0(IOP_TAG_ORBIT_SPECIFIC_info, 1);
+	  osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
+	  osi->oki = IOP_ObjectKey_copy(oki);
+	}
+      if(!strcmp(serv->proto->name, "UNIX")
+	 && !osi->unix_sock_path)
+	osi->unix_sock_path = g_strdup(serv->local_serv_info);
+      else if(!strcmp(serv->proto->name, "IPv6")
+	      && !(serv->create_options & LINC_CONNECTION_SSL))
+	osi->ipv6_port = atoi(serv->local_serv_info);
+
+      if(!strcmp(serv->proto->name, "IPv4"))
+	{
+	  if(!iiop)
+	    {
+	      iiop = g_new0(IOP_TAG_INTERNET_IOP_info, 1);
+	      iiop->host = g_strdup(serv->local_host_info);
+	      profiles = g_slist_append(profiles, iiop);
+	    }
+
+	  if(serv->create_options & LINC_CONNECTION_SSL)
+	    {
+	      IOP_TAG_SSL_SEC_TRANS_info *sslsec;
+	      sslsec = g_new0(IOP_TAG_SSL_SEC_TRANS_info, 1);
+	      sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
+	      /* integrity & confidentiality */
+	      sslsec->target_supports = sslsec->target_requires = 2|4;
+	      sslsec->port = atoi(serv->local_serv_info);
+	      iiop->components = g_slist_append(iiop->components, sslsec);
+	    }
+	  else
+	    {
+	      g_assert(!iiop->port);
+	      iiop->port = atoi(serv->local_serv_info);
+	      iiop->oki = IOP_ObjectKey_copy(oki);
+	      iiop->iiop_version = orb->default_giop_version;
+	    }
+	}
+      else
+	{
+	  GSList *ltmp2;
+	  IOP_TAG_GENERIC_IOP_info *giop;
+
+	  for(giop = NULL, ltmp2 = profiles; ltmp2; ltmp2 = ltmp2->next)
+	    {
+	      IOP_TAG_GENERIC_IOP_info *giopt;
+
+	      giopt = ltmp2->data;
+	      if(giopt->parent.profile_type == IOP_TAG_GENERIC_IOP
+		 && strcmp(giopt->proto, serv->proto->name))
+		{
+		  giop = giopt;
+		  break;
+		}
+	    }
+	  if(!giop)
+	    {
+	      giop = g_new0(IOP_TAG_GENERIC_IOP_info, 1);
+	      giop->parent.profile_type = IOP_TAG_GENERIC_IOP;
+	      giop->iiop_version = orb->default_giop_version;
+	      giop->proto = g_strdup(serv->proto->name);
+	      giop->host = g_strdup(serv->local_host_info);
+	      profiles = g_slist_append(profiles, giop);
+	    }
+	  if(serv->create_options & LINC_CONNECTION_SSL)
+	    {
+	      IOP_TAG_GENERIC_SSL_SEC_TRANS_info *sslsec;
+	      sslsec = g_new0(IOP_TAG_GENERIC_SSL_SEC_TRANS_info, 1);
+	      sslsec->parent.component_type = IOP_TAG_GENERIC_SSL_SEC_TRANS;
+	      sslsec->service = g_strdup(serv->local_serv_info);
+	      giop->components = g_slist_append(giop->components, sslsec);
+	    }
+	  else
+	    {
+	      g_assert(!giop->service);
+	      giop->service = g_strdup(serv->local_serv_info);
+	    }
+	  need_objkey_component = TRUE;
+	}
     }
 
-  /* Do the local connection first, so it will be attempted first by
-	   the client parsing the IOR string
-	 */
-  if(orb->cnx.ipv6 || orb->cnx.usock) {
-    object_info = g_new0(ORBit_Object_info, 1);
-
-    object_info->profile_type=IOP_TAG_ORBIT_SPECIFIC;
-    object_info->iiop_major = 1;
-    object_info->iiop_minor = 0;
-
-#ifdef HAVE_IPV6
-    if(orb->cnx.ipv6) {
-      object_info->tag.orbitinfo.ipv6_port =
-	ntohs(IIOP_CONNECTION(orb->cnx.ipv6)->u.ipv6.location.sin6_port);
+  if(need_objkey_component)
+    {
+      mci = g_new0(IOP_TAG_MULTIPLE_COMPONENTS_info, 1);
+      mci->parent.profile_type = IOP_TAG_MULTIPLE_COMPONENTS;
+      if(need_objkey_component)
+	{
+	  IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
+	  coki = g_new0(IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
+	  coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
+	  coki->oki = IOP_ObjectKey_copy(oki);
+	  mci->components = g_slist_append(mci->components, coki);
+	}
+      profiles = g_slist_append(profiles, mci);
     }
-#endif
-    if(orb->cnx.usock) {
-      object_info->tag.orbitinfo.unix_sock_path =
-	g_strdup(IIOP_CONNECTION(orb->cnx.usock)->u.usock.sun_path);
-    }
-    ORBit_set_object_key(object_info);
-    profiles=g_slist_append(profiles, object_info);
-  }
 
-  if(orb->cnx.ipv4) {
-    object_info=g_new0(ORBit_Object_info, 1);
-
-    object_info->profile_type = IOP_TAG_INTERNET_IOP;
-    object_info->iiop_major = 1;
-    object_info->iiop_minor = 0;
-    ORBit_POA_oid_to_okey(obj, oid, &object_info->object_key);
-
-    object_info->tag.iopinfo.host = g_strdup(IIOP_CONNECTION(orb->cnx.ipv4)->u.ipv4.hostname);
-    object_info->tag.iopinfo.port = ntohs(IIOP_CONNECTION(orb->cnx.ipv4)->u.ipv4.location.sin_port);
-
-    ORBit_set_object_key(object_info);
-    profiles=g_slist_append(profiles, object_info);
-  }
-
-  retval = ORBit_create_object_with_info(profiles, type_id, orb, ev);
-  /* We depend upon ORBit_CORBA_Object_new() to zero out retval */
-  return retval;
-  
+  return ORBit_objref_find(orb, intf, profiles);
 }
 
 ORBit_POAObject *
 ORBit_POA_oid_to_obj(PortableServer_POA poa,
 		     const PortableServer_ObjectId *oid,
-		     gboolean active,
+		     gboolean only_active,
 		     CORBA_Environment *ev)
 {
-  return NULL;
+  ORBit_POAObject *pobj;
+
+  if ( poa->p_servant_retention != PortableServer_RETAIN )
+    {
+      if ( ev )
+	CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
+			    ex_PortableServer_POA_WrongPolicy, NULL);
+      return NULL;
+    }
+
+  pobj = g_hash_table_lookup(poa->oid_to_obj_map, oid);
+
+  if ( only_active && pobj && pobj->servant==0 )
+    {
+      if ( ev )
+	CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
+			    ex_PortableServer_POA_ObjectNotActive, NULL);
+      return NULL;
+    }
+
+  return pobj;
 }
 
 gboolean
@@ -1183,10 +1299,9 @@ ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
   poa = g_new0(struct PortableServer_POA_type, 1);
   ORBit_RootObject_init(&poa->parent, &ORBit_POA_epv);
   ORBit_RootObject_duplicate(poa);
-  if(manager)
-    poa->poa_manager = ORBit_RootObject_duplicate(manager);
-  else
-    poa->poa_manager = ORBit_POAManager_new(orb, ev);
+  if(!manager)
+    manager = ORBit_POAManager_new(orb, ev);
+  poa->poa_manager = ORBit_RootObject_duplicate(manager);
   if(ev->_major != CORBA_NO_EXCEPTION) goto error;
   poa->child_poas = NULL;
   poa->orb = ORBit_RootObject_duplicate(orb);
@@ -1451,5 +1566,7 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
      */
     pobj->life_flags &= ~(ORBit_LifeF_DeactivateDo
       |ORBit_LifeF_IsCleanup|ORBit_LifeF_DoEtherealize);
+#if 0
     ORBit_RootObject_release(pobj);
+#endif
 }

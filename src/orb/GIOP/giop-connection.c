@@ -214,6 +214,9 @@ giop_connection_from_fd(int fd, const LINCProtocolInfo *proto,
 void
 giop_connection_unref(GIOPConnection *cnx)
 {
+  if(!cnx)
+    return;
+
   O_MUTEX_LOCK(cnx_list.lock);
   if(G_OBJECT(cnx)->ref_count == 1)
     giop_connection_list_remove(cnx);

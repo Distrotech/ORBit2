@@ -482,7 +482,8 @@ cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci)
 	  cbe_op_param_free(param, ci, TRUE);
 	}
     }
-  fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
+  if(IDL_OP_DCL(tree).parameter_dcls)
+    fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
 }
 
 

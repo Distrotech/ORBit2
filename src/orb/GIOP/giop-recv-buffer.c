@@ -515,6 +515,7 @@ giop_recv_buffer_use_encaps(guchar *mem, gulong len)
   buf->cur = buf->message_body = mem;
   buf->end = buf->cur + len;
   buf->msg.header.message_size = len;
+  buf->msg.header.flags = *(buf->cur++);
   buf->giop_version = GIOP_LATEST;
   buf->left_to_read = 0;
   buf->state = GIOP_MSG_READY;
@@ -546,6 +547,9 @@ giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
 void
 giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 {
+  if(!buf)
+    return;
+
   O_MUTEX_LOCK(recv_buffer_list_lock);
   if(buf->free_body)
     {
@@ -643,7 +647,8 @@ giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 
 static GIOPRecvBuffer *
 giop_recv_list_pop(gboolean choose_msg_type, CORBA_unsigned_long msg_type,
-		   gboolean choose_request_id, CORBA_unsigned_long request_id)
+		   gboolean choose_request_id, CORBA_unsigned_long request_id,
+		   gboolean incoming_only)
 {
   GIOPRecvBuffer *buf = NULL;
 
@@ -655,6 +660,18 @@ giop_recv_list_pop(gboolean choose_msg_type, CORBA_unsigned_long msg_type,
       for(ltmp = giop_queued_messages; ltmp; ltmp = ltmp->next)
 	{
 	  GIOPRecvBuffer *check = ltmp->data;
+
+	  if(incoming_only)
+	    {
+	      switch(check->msg.header.message_type)
+		{
+		case GIOP_REPLY:
+		case GIOP_LOCATEREPLY:
+		  continue;
+		default:
+		  break;
+		}
+	    }
 
 	  if(!choose_msg_type
 	     || (check->msg.header.message_type = msg_type
@@ -681,7 +698,8 @@ giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, 
 
   do {
     g_main_iteration(block_for_reply);
-  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_REPLY, TRUE, request_id))
+  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_REPLY, TRUE, request_id,
+					FALSE))
 	  && block_for_reply
 	  && (!cnx || cnx->parent.status != LINC_DISCONNECTED));
 
@@ -695,7 +713,7 @@ giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long reque
   
   do {
     g_main_iteration(block_for_reply);
-  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_LOCATEREPLY, TRUE, request_id))
+  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_LOCATEREPLY, TRUE, request_id, FALSE))
 	  && block_for_reply
 	  && (!cnx || cnx->parent.status != LINC_DISCONNECTED));
 
@@ -707,7 +725,7 @@ giop_recv_buffer_use(void)
 {
   GIOPRecvBuffer *retval;
 
-  while(!(retval = giop_recv_list_pop(FALSE, 0, FALSE, 0)))
+  while(!(retval = giop_recv_list_pop(FALSE, 0, FALSE, 0, TRUE)))
     g_main_iteration(TRUE);
 
   return retval;

@@ -8,7 +8,8 @@ CORBA_ORB_release_fn(ORBit_RootObject robj)
 {
   CORBA_ORB orb = (CORBA_ORB)robj;
 
-  g_list_foreach(orb->servers, (GFunc)g_object_unref, NULL);
+  g_slist_foreach(orb->servers, (GFunc)g_object_unref, NULL);
+  g_slist_free(orb->servers);
   g_ptr_array_free(orb->poas, TRUE);
 
   g_free(orb);
@@ -35,7 +36,8 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
   if(retval)
     return (CORBA_ORB)CORBA_Object_duplicate((CORBA_Object)retval, ev);
 
-  linc_init();
+  giop_init();
+
 #ifdef ORBIT_THREADSAFE
   ORBit_locks_initialize();
 #endif  
@@ -55,13 +57,13 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 			       info->name, NULL, NULL, 0);
       if(server)
 	{
-	  retval->servers = g_list_prepend(retval->servers, server);
+	  retval->servers = g_slist_prepend(retval->servers, server);
 	  if(!(info->flags & LINC_PROTOCOL_SECURE))
 	    {
 	      server = giop_server_new(retval->default_giop_version, info->name,
 				       NULL, NULL, LINC_CONNECTION_SSL);
 	      if(server)
-		retval->servers = g_list_prepend(retval->servers, server);
+		retval->servers = g_slist_prepend(retval->servers, server);
 	    }
 	}
     }
@@ -132,10 +134,15 @@ CORBA_ORB_string_to_object(CORBA_ORB _obj,
   GIOPRecvBuffer *buf;
   CORBA_unsigned_long len;
   int i;
+  char *tbuf;
 
-  if(!strncmp(str, "IOR:", 4))
-    /* XXX raise ex_CORBA_MARSHAL */
-    return CORBA_OBJECT_NIL;
+  if(strncmp(str, "IOR:", 4))
+    {
+      CORBA_exception_set_system(ev,
+				 ex_CORBA_BAD_PARAM,
+				 CORBA_COMPLETED_NO);
+      return CORBA_OBJECT_NIL;
+    }
 
   str += 4;
   len = strlen(str);
@@ -143,21 +150,23 @@ CORBA_ORB_string_to_object(CORBA_ORB _obj,
   if(len % 2)
     /* XXX raise ex_CORBA_MARSHAL */
     return CORBA_OBJECT_NIL;
-  buf = giop_recv_buffer_use_encaps(g_alloca(len / 2), len / 2);
-  
-  buf->msg.header.flags = *(buf->cur++);
-
+  tbuf = g_alloca(len / 2);
 #define HEXDIGIT(c) (isdigit((guchar)(c))?(c)-'0':tolower((guchar)(c))-'a'+10)
 #define HEXOCTET(a,b) ((HEXDIGIT((a)) << 4) | HEXDIGIT((b)))
 
   for(i = 0; i < len; i += 2)
-    buf->message_body[i/2] = HEXOCTET(str[i],str[i+1]);
-  
-  if(!ORBit_demarshal_object(&retval, buf, _obj))
+    tbuf[i/2] = HEXOCTET(str[i],str[i+1]);
+
+  buf = giop_recv_buffer_use_encaps(tbuf, len / 2);
+
+  if(ORBit_demarshal_object(&retval, buf, _obj))
     {
-      /* XXX raise ex_CORBA_MARSHAL */
+      CORBA_exception_set_system(ev,
+				 ex_CORBA_MARSHAL,
+				 CORBA_COMPLETED_NO);
       retval = CORBA_OBJECT_NIL;
     }
+
   giop_recv_buffer_unuse(buf);
 
   return retval;
@@ -449,6 +458,14 @@ CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
 void
 CORBA_ORB_run(CORBA_ORB _obj, CORBA_Environment * ev)
 {
+  while(1)
+    {
+      GIOPRecvBuffer *in_buf;
+      in_buf = giop_recv_buffer_use();
+      g_print("Incoming message of type %d\n",
+	      in_buf->msg.header.message_type);
+      giop_recv_buffer_unuse(in_buf);
+    }
 }
 
 void

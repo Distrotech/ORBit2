@@ -6,6 +6,7 @@ struct PortableServer_POAManager_type {
 
   GSList *poa_collection;
   PortableServer_POAManager_State state;
+  CORBA_ORB orb;
 };
 
 struct PortableServer_POA_type {
