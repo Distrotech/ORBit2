@@ -21,6 +21,7 @@
 #include <linc/linc-server.h>
 #include <linc/linc-connection.h>
 
+#include "linc-debug.h"
 #include "linc-private.h"
 
 struct _LINCServerPrivate {
@@ -29,8 +30,6 @@ struct _LINCServerPrivate {
 	LincWatch *tag;
 	GSList    *connections;
 };
-
-#undef DEBUG
 
 enum {
 	NEW_CONNECTION,
@@ -86,6 +85,8 @@ linc_server_dispose (GObject *obj)
 {
 	GSList     *l;
 	LINCServer *cnx = (LINCServer *)obj;
+
+	d_printf ("Dispose / close server fd %d", cnx->priv->fd);
 
 #ifdef G_THREADS_ENABLED
 	if (cnx->priv->mutex) {
@@ -150,16 +151,20 @@ linc_server_accept_connection (LINCServer      *server,
 	saddr = g_alloca (addrlen);
 
 	fd = accept (server->priv->fd, saddr, &addrlen);
-	if (fd < 0)
+	if (fd < 0) {
+		d_printf ("accept on %d failed %d", server->priv->fd, errno);
 		return FALSE; /* error */
+	}
 
 	if (server->create_options & LINC_CONNECTION_NONBLOCKING)
 		if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0) {
+			d_printf ("failed to set O_NONBLOCK on %d", fd);
 			close (fd);
 			return FALSE;
 		}
 
 	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0) {
+		d_printf ("failed to set cloexec on %d", fd);
 		close (fd);
 		return FALSE;
 	}
@@ -170,6 +175,9 @@ linc_server_accept_connection (LINCServer      *server,
 	*connection = klass->create_connection (server);
 
 	g_return_val_if_fail (*connection != NULL, FALSE);
+
+	d_printf ("accepted a new connection (%d) on server %d\n",
+		 fd, server->priv->fd);
 
 	if (!linc_connection_from_fd (
 		*connection, fd, server->proto, NULL, NULL,
@@ -196,8 +204,8 @@ linc_server_handle_io (GIOChannel  *gioc,
 	LINCServer     *server = data;
 	LINCConnection *connection;
 
-	if (condition != G_IO_IN)
-		g_error ("condition on server fd is %#x", condition);
+	if (!(condition & LINC_IN_CONDS))
+		g_error ("error condition on server fd is %#x", condition);
 
 	LINC_MUTEX_LOCK (server->priv->mutex);
 
@@ -223,13 +231,6 @@ linc_server_handle_io (GIOChannel  *gioc,
 	return TRUE;
 }
 
-/* FIXME: kill me */
-void
-linc_server_handle (LINCServer *cnx)
-{
-	linc_server_handle_io (NULL, G_IO_IN, cnx);
-}
-
 gboolean
 linc_server_setup (LINCServer            *cnx,
 		   const char            *proto_name,
@@ -252,9 +253,7 @@ linc_server_setup (LINCServer            *cnx,
 
 	proto = linc_protocol_find (proto_name);
 	if (!proto) {
-#ifdef DEBUG
-		fprintf (stderr, "Can't find proto '%s'\n", proto_name);
-#endif
+		d_printf ("Can't find proto '%s'\n", proto_name);
 		return FALSE;
 	}
 
@@ -270,11 +269,9 @@ linc_server_setup (LINCServer            *cnx,
 					    local_serv_info, &saddr_len);
 
 	if (!saddr) {
-#ifdef DEBUG
-		fprintf (stderr, "Can't get_sockaddr proto '%s' '%s'\n",
+		d_printf ("Can't get_sockaddr proto '%s' '%s'\n",
 			 local_host_info,
 			 local_serv_info ? local_serv_info : "(null)");
-#endif
 		return FALSE;
 	}
 
@@ -282,11 +279,9 @@ linc_server_setup (LINCServer            *cnx,
 		     proto->stream_proto_num);
 	if (fd < 0) {
 		g_free (saddr);
-#ifdef DEBUG
-		fprintf (stderr, "socket (%d, %d, %d) failed\n",
+		d_printf ("socket (%d, %d, %d) failed\n",
 			 proto->family, SOCK_STREAM, 
 			 proto->stream_proto_num);
-#endif
 		return FALSE;
 	}
 
@@ -303,42 +298,30 @@ linc_server_setup (LINCServer            *cnx,
 		n = bind (fd, saddr, saddr_len);
 
 	if (n && errno == EADDRINUSE) {
-#ifdef DEBUG
-		perror ("bind failed, retrying.");
-#endif
+		d_printf ("bind failed; retrying");
 		goto address_in_use;
 	}
 
 	if (!n)
 		n = listen (fd, 10);
-#ifdef DEBUG
-	else {
-		fprintf (stderr, "Errno: %d (0x%x)\n", errno, errno);
-		perror ("bind really failed");
-	}
-#endif
+	else
+		d_printf ("bind really failed errno: %d\n", errno);
 
 	if (!n)
 		n = getsockname (fd, saddr, &saddr_len);
-#ifdef DEBUG
 	else
-		perror ("listen failed");
-#endif
+		d_printf ("listen failed errno: %d\n", errno);
 
 	if (n) {
 		close (fd);
-#ifdef DEBUG
-		perror ("get_sockname failed");
-#endif
+		d_printf ("get_sockname failed errno: %d\n", errno);
 		return FALSE;
 	}
 
 	if (!linc_protocol_get_sockinfo (proto, saddr, &hostname, &service)) {
 
 		g_free (saddr);
-#ifdef DEBUG
-		fprintf (stderr, "linc_getsockinfo failed.\n");
-#endif
+		d_printf ("linc_getsockinfo failed.\n");
 		return FALSE;
 	}
 
@@ -353,16 +336,20 @@ linc_server_setup (LINCServer            *cnx,
 		g_assert (cnx->priv->tag == NULL);
 
 		cnx->priv->tag = linc_io_add_watch (
-			gioc, 
-			G_IO_IN|G_IO_HUP|G_IO_ERR|G_IO_NVAL,
+			gioc, LINC_IN_CONDS | LINC_ERR_CONDS,
 			linc_server_handle_io, cnx);
 
-		g_io_channel_unref(gioc);
+		g_io_channel_unref (gioc);
 	}
 
-	cnx->create_options = create_options;
+	cnx->create_options  = create_options;
 	cnx->local_host_info = hostname;
 	cnx->local_serv_info = service;
+
+	d_printf ("Created a new server fd (%d) '%s', '%s', '%s'\n",
+		 fd, proto->name, 
+		 hostname ? hostname : "<Null>",
+		 service ? service : "<Null>");
 
 	return TRUE;
 }
