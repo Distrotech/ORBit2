@@ -351,36 +351,6 @@ cc_output_alloc_array(IDL_tree node, IDL_tree ts,
 }
 
 
-/**
-    Generate alloc funcs for identifier {ident}, which is of type {ts}.
-    I dont think we should generate any code at all here. Instead,
-    just gen #defines in the header.
-**/
-static void
-cc_output_alloc_alias(IDL_tree ident, IDL_tree ts, 
-  OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
-{
-    char *ts_name, *tname;
-
-    ts_name = orbit_cbe_get_typename(ts);
-    tname = orbit_cbe_get_typename(ident);
-
-    fprintf(ci->fh, "/* %s is alias of %s */\n", tname, ts_name);
-#if 0
-    fprintf(ci->fh, "gpointer %s__freekids(gpointer mem, gpointer dat)\n", tname);
-    fprintf(ci->fh, "{\n");
-    fprintf(ci->fh, "return %s__freekids(mem, dat);\n", ts_name);
-    fprintf(ci->fh, "}\n\n");
-#endif
-
-    fprintf(ci->fh, "%s* %s__alloc(void)\n", tname, tname);
-    fprintf(ci->fh, "{\n");
-    fprintf(ci->fh, "return %s__alloc();\n", ts_name);
-    fprintf(ci->fh, "}\n");
-    g_free(tname);
-    g_free(ts_name);
-}
-
 static void
 cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
@@ -408,8 +378,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	continue;
       if(IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
 	 	|| IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) 
-	 continue;	/* why? */
-      cc_output_alloc_alias(node, ts, rinfo, ci);
+	 continue;	/* why? - because strings don't need alloc functions */
       break;
     case IDLN_TYPE_ARRAY:
       cc_output_alloc_array(node, ts, rinfo, ci);
