@@ -679,12 +679,12 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 		ent_lock (ent);
 
 		for (; !check_got (ent); ) {
-			g_cond_wait (tdata->incoming, tdata->lock);
-			if (!check_got (ent)) {
+			if (tdata->request_queue) {
 				ent_unlock (ent);
 				giop_recv_handle_queued_input ();
 				ent_lock (ent);
-			}
+			} else
+				g_cond_wait (tdata->incoming, tdata->lock);
 		}
 		
 		ent_unlock (ent);
@@ -1310,7 +1310,6 @@ giop_recv_thread_fn (gpointer data)
 
 	/* a) - needs re-structuring of cnx creation */
 	giop_connections_shutdown ();
-	
 
 	return NULL;
 }
@@ -1327,16 +1326,19 @@ giop_recv_handle_queued_input (void)
 		GIOPRecvBuffer *buf;
 
 		LINC_MUTEX_LOCK (tdata->lock); /* ent_lock */
-		if (tdata->recv_buffers) {
-			buf = tdata->recv_buffers->data;
-			tdata->recv_buffers = g_slist_delete_link (
-				tdata->recv_buffers, tdata->recv_buffers);
+		if (tdata->reply_list) {
+			buf = tdata->reply_list->data;
+			tdata->reply_list = g_slist_delete_link (
+				tdata->reply_list, tdata->reply_list);
 		} else
 			buf = NULL;
 		LINC_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
-		
-		if (!buf)
+
+		if (!buf) {
+			dprintf (MESSAGES, "process a genuine XT request\n");
+			giop_thread_request_process (tdata);
 			return handled;
+		}
 
 		handled = TRUE;
 		

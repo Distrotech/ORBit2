@@ -137,6 +137,8 @@ void ORBit_POAObject_post_invoke (ORBit_POAObject obj);
 void ORBit_recv_buffer_return_sys_exception (GIOPRecvBuffer    *buf,
 					     CORBA_Environment *ev);
 
+void ORBit_poa_init (void);
+
 #endif /* ORBIT2_INTERNAL_API */
 
 G_END_DECLS

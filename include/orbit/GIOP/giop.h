@@ -23,14 +23,12 @@ GIOPThread *giop_thread_self      (void);
 void        giop_thread_push_recv (GIOPMessageQueueEntry *ent);
 
 typedef struct _GIOPQueue GIOPQueue;
-typedef void (*GIOPQueueHandler)  (gpointer poa_object,
-				   gpointer recv_buffer);
-GIOPQueue  *giop_queue_new        (gpointer   queue_handler);
-GIOPQueue  *giop_queue_get_main   (void);
-void        giop_queue_free       (GIOPQueue *queue);
-void        giop_queue_push       (GIOPQueue *queue,
-				   gpointer   poa_object,
-				   gpointer   recv_buffer);
+GIOPThread *giop_thread_get_main  (void);
+void        giop_thread_set_main_handler (gpointer    request_handler);
+void        giop_thread_request_push     (GIOPThread *tdata,
+					  gpointer   *poa_object,
+					  gpointer   *recv_buffer);
+void        giop_thread_request_process  (GIOPThread *tdata);
 
 #endif /* ORBIT2_INTERNAL_API */
 

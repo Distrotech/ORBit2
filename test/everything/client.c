@@ -1917,12 +1917,12 @@ run_tests (test_TestFactory   factory,
 		testTypeCode (factory, ev);
 		testContext (factory, ev);
 		testIInterface (factory, ev);
-		testMisc (factory, ev);
 #ifndef TIMING_RUN
 		testAsync (factory, ev);
 #endif
 		if (!in_proc)
 			testPingPong (factory, ev);
+		testMisc (factory, ev);
 #if NUM_RUNS == 1
 		testSegv (factory, ev);
 #endif

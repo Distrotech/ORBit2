@@ -288,6 +288,7 @@ static int      corba_wakeup_fds[2];
 #define WAKEUP_WRITE corba_wakeup_fds [1]
 static GSource *giop_main_source = NULL;
 static GThread *giop_incoming_thread = NULL;
+static GIOPThread *giop_main_thread = NULL;
 
 static gboolean
 giop_mainloop_handle_input (GIOChannel     *source,
@@ -317,8 +318,8 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 		/* FIXME: should really cleanup with descructor */
 		giop_tdata_private = g_private_new (NULL);
 
-		tdata = giop_thread_new ( /* main thread */
-			g_main_context_default ());
+		giop_main_thread = tdata = giop_thread_new (
+			g_main_context_default ()); /* main thread */
 
 		if (pipe (corba_wakeup_fds) < 0) /* cf. g_main_context_init_pipe */
 			g_error ("Can't create CORBA main-thread wakeup pipe");
@@ -374,8 +375,8 @@ giop_thread_push_recv (GIOPMessageQueueEntry *ent)
 	g_mutex_lock (tdata->lock);
 
 	if (ent->async_cb) /* we need the recv buffer later */
-		tdata->recv_buffers = g_slist_append (
-			tdata->recv_buffers, ent->buffer);
+		tdata->reply_list = g_slist_append (
+			tdata->reply_list, ent->buffer);
 	/* else - someone already waiting on the stack */
 
 	/* wakeup thread ... */
@@ -419,55 +420,66 @@ typedef struct {
 	gpointer recv_buffer;
 } GIOPQueueEntry;
 
+void
+giop_thread_request_process (GIOPThread *tdata)
+{
+	GIOPQueueEntry *qe = NULL;
 
-struct _GIOPQueue {
-	GList           *entries;
-	GIOPQueueHandler handler_fn;
-	void           (*push_fn) (GIOPQueue      *queue,
-				   GIOPQueueEntry *qe);
-};
+	LINC_MUTEX_LOCK (tdata->lock);
+
+	if (tdata->request_queue) {
+		qe = tdata->request_queue->data;
+		tdata->request_queue = g_slist_delete_link
+			(tdata->request_queue, tdata->request_queue);
+	}
+	
+	LINC_MUTEX_UNLOCK (tdata->lock);
+
+	if (qe)
+		tdata->request_handler (qe->poa_object, qe->recv_buffer, NULL);
+}
 
 void
-giop_queue_push (GIOPQueue *queue,
-		 gpointer   poa_object,
-		 gpointer   recv_buffer)
+giop_thread_request_push (GIOPThread *tdata,
+			  gpointer   *poa_object,
+			  gpointer   *recv_buffer)
 {
 	GIOPQueueEntry *qe;
 
-	g_return_if_fail (queue != NULL);
+	g_return_if_fail (tdata != NULL);
+	g_return_if_fail (poa_object != NULL);
+	g_return_if_fail (recv_buffer != NULL);
 
 	qe = g_new (GIOPQueueEntry, 1);
 
-	qe->poa_object  = poa_object;
-	qe->recv_buffer = recv_buffer;
+	qe->poa_object  = *poa_object;
+	qe->recv_buffer = *recv_buffer;
+	*poa_object = NULL;
+	*recv_buffer = NULL;
 
-	/* FIXME: no locking */
-	queue->entries = g_list_append (queue->entries, qe);
+	LINC_MUTEX_LOCK (tdata->lock);
 
-	/* FIXME: no special casing */
-	if (queue->push_fn)
-		queue->push_fn (queue, qe);
+	tdata->request_queue = g_slist_append (tdata->request_queue, qe);
+
+	g_cond_signal (tdata->incoming);
+	if (tdata->wake_context)
+		wakeup_mainloop ();
+
+	LINC_MUTEX_UNLOCK (tdata->lock);
 }
 
-GIOPQueue *
-giop_queue_new (gpointer queue_handler)
+GIOPThread *
+giop_thread_get_main (void)
 {
-	GIOPQueue *queue = g_new0 (GIOPQueue, 1);
-
-	queue->handler_fn = queue_handler;
-	
-	return queue;
-}
-
-GIOPQueue *
-giop_queue_get_main (void)
-{
-	return NULL;
+	return giop_main_thread;
 }
 
 void
-giop_queue_free (GIOPQueue *queue)
+giop_thread_set_main_handler (gpointer request_handler)
 {
-	g_assert (queue->entries == NULL);
-	g_free (queue);
+	if (!giop_is_threaded)
+		return;
+	g_assert (giop_main_thread != NULL);
+
+	giop_main_thread->request_handler = request_handler;
 }

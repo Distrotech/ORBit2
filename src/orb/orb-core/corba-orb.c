@@ -271,6 +271,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	giop_init (threaded,
 		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
+	ORBit_poa_init ();
 
 	ORBit_locks_initialize ();
 
