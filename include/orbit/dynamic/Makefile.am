@@ -1,4 +1,4 @@
-dynamicincludedir=$(includedir)/orbit/dynamic
+dynamicincludedir=$(includedir)/orbit-2.0/orbit/dynamic
 dynamicinclude_HEADERS= \
 	dynamic.h	\
 	dynamic-defs.h

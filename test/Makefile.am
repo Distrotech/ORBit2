@@ -4,7 +4,7 @@ INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
-bin_PROGRAMS=ior-decode typelib-dump
+bin_PROGRAMS=ior-decode-2 typelib-dump
 noinst_PROGRAMS=test1 \
 	echo-client echo-server \
 	empty-client empty-server \
@@ -34,7 +34,7 @@ IDLOUT=test1-stubs.c test1-skels.c test1-common.c test1.h
 test1_SOURCES=test1.c $(IDLOUT)
 $(srcdir)/test1.c: test1.h
 
-ior_decode_SOURCES=ior-decode.c
+ior_decode_2_SOURCES=ior-decode.c
 
 typelib_dump_SOURCES=typelib-dump.c
 

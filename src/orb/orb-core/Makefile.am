@@ -48,7 +48,7 @@ OPS_IDLOUT= corba-ops.h corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
 IFACE_IDLOUT=orbit-interface-common.c
 
 $(liborb_core_la_OBJECTS) : $(BUILT_SOURCES)
-IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl
+IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl-2
 
 IDL_FLAGS = -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\

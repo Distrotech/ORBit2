@@ -1,4 +1,4 @@
-utilincludedir=$(includedir)/orbit/util
+utilincludedir=$(includedir)/orbit-2.0/orbit/util
 
 utilinclude_HEADERS= \
 	basic_types.h \

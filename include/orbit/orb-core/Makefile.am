@@ -1,4 +1,4 @@
-orbcoreincludedir=$(includedir)/orbit/orb-core
+orbcoreincludedir=$(includedir)/orbit-2.0/orbit/orb-core
 orbcoreinclude_HEADERS= \
 	corba-environment-type.h	\
 	corba-ir.h			\
