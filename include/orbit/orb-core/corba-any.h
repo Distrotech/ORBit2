@@ -1,6 +1,10 @@
 #ifndef CORBA_ANY_H
 #define CORBA_ANY_H 1
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 void       CORBA_any__copy     (CORBA_any       *out,
 				const CORBA_any *in);
 CORBA_any *CORBA_any__alloc    (void);
@@ -56,5 +60,7 @@ CORBA_boolean
 size_t  ORBit_gather_alloc_info (CORBA_TypeCode tc);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

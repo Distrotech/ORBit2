@@ -4,6 +4,8 @@
 #include <glib.h>
 #include <glib/gunicode.h>
 
+G_BEGIN_DECLS
+
 enum {
 	CORBA_FALSE = FALSE,
 	CORBA_TRUE  = TRUE
@@ -49,5 +51,7 @@ typedef guint64 CORBA_unsigned_long_long;
 #error "Please make sure you don't have an old glibconfig.h lying around."
 #error ""
 #endif
+
+G_END_DECLS
 
 #endif

@@ -4,6 +4,8 @@
 #include <orbit/orb-core/orb-types.h>
 #include <orbit/orb-core/orbit-object.h>
 
+G_BEGIN_DECLS
+
 #if !defined(ORBIT_DECL_CORBA_ORB) && !defined(_CORBA_ORB_defined)
 #define ORBIT_DECL_CORBA_ORB 1
 #define _CORBA_ORB_defined 1
@@ -69,5 +71,7 @@ struct CORBA_ORB_type {
 };
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

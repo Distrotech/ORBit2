@@ -4,6 +4,8 @@
 #include <orbit/poa/poa-defs.h>
 #include <orbit/poa/poa-types.h>
 
+G_BEGIN_DECLS
+
 typedef struct {
   void *_private;
 } POA_PortableServer_ServantManager__epv;
@@ -133,5 +135,7 @@ PortableServer_ClassInfo *ORBit_classinfo_lookup (const char *type_id);
 void ORBit_POAObject_post_invoke (ORBit_POAObject obj);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif

@@ -3,6 +3,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 #ifdef ORBIT2_INTERNAL_API
 
 typedef enum {
@@ -15,5 +17,7 @@ void ORBit_genuid_fini   (void);
 void ORBit_genuid_buffer (guchar *buffer, int length);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif /* ORBIT_GENRAND_H */

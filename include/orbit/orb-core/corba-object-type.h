@@ -1,6 +1,10 @@
 #ifndef CORBA_OBJECT_TYPE_H
 #define CORBA_OBJECT_TYPE_H 1
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 #ifndef ORBIT2_INTERNAL_API
@@ -22,5 +26,7 @@ struct CORBA_Object_type {
 };
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
+G_END_DECLS
 
 #endif

@@ -1,3 +1,8 @@
+2002-02-24  Sam Couter <scouter@bigpond.net.au>
+
+	* Add G_BEGIN_DECLS and G_END_DECLS around each installed header to
+	allow the exported interfaces to be used from C++ code.
+
 2002-02-23  Sam Couter <scouter@bigpond.net.au>
 
 	* src/orb-cpp/orbitcpp_any.cc: Nuke left-over

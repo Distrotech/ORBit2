@@ -5,6 +5,8 @@
 #include <orbit/orb-core/corba-orb-type.h>
 #include <orbit/orb-core/corba-typecode-type.h>
 
+G_BEGIN_DECLS
+
 CORBA_ORB CORBA_ORB_init (int                *argc,
 			  char              **argv,
 			  CORBA_ORBid         orb_identifier,
@@ -24,5 +26,7 @@ void      ORBit_ORB_start_servers (CORBA_ORB orb);
 CORBA_TypeCode CORBA_TypeCode_allocate(void);
 
 #endif /* ORBIT2_INTERNAL_API */
+
+G_END_DECLS
 
 #endif
