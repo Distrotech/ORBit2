@@ -27,7 +27,6 @@ struct PortableServer_POA_type {
 	PortableServer_Servant          default_servant;
 
 	GHashTable                     *oid_to_obj_map;
-	GPtrArray                      *num_to_koid_map;
 	CORBA_unsigned_long             next_id;
 
 	GSList                         *held_requests;
@@ -41,9 +40,7 @@ struct PortableServer_POA_type {
 	PortableServer_ServantRetentionPolicyValue   p_servant_retention;
 	PortableServer_RequestProcessingPolicyValue  p_request_processing;
 
-	int obj_rand_len;
 	int poa_rand_len;
-	int koid_rand_len;
 };
 
 #endif

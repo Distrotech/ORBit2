@@ -106,22 +106,12 @@ PortableServer_POA_create_request_processing_policy(PortableServer_POA _obj,
   return (PortableServer_RequestProcessingPolicy)ORBit_Policy_new(PortableServer_REQUEST_PROCESSING_POLICY_ID, value);
 }
 
-typedef struct {
-  struct CORBA_Policy_type parent;
-  CORBA_unsigned_long obj_rand_len;
-} ORBit_PortableServer_OkeyrandPolicy_t;
-
 ORBit_PortableServer_OkeyrandPolicy
-PortableServer_POA_create_okeyrand_policy(PortableServer_POA _obj,
-					  const CORBA_unsigned_long poa_rand_len,
-					  const CORBA_unsigned_long obj_rand_len,
-					  CORBA_Environment *ev)
+PortableServer_POA_create_okeyrand_policy (PortableServer_POA         poa,
+					   const CORBA_unsigned_long  poa_rand_len,
+					   CORBA_Environment         *ev)
 {
-  ORBit_PortableServer_OkeyrandPolicy_t *rv;
-  rv = (ORBit_PortableServer_OkeyrandPolicy_t *)
-    ORBit_Policy_new(ORBit_PortableServer_OKEYRAND_POLICY_ID,
-		     poa_rand_len);
-  rv = g_realloc(rv, sizeof(ORBit_PortableServer_OkeyrandPolicy_t));
-  rv->obj_rand_len = obj_rand_len;
-  return (ORBit_PortableServer_OkeyrandPolicy)rv;
+	return (ORBit_PortableServer_OkeyrandPolicy)
+			ORBit_Policy_new (ORBit_PortableServer_OKEYRAND_POLICY_ID,
+                                          poa_rand_len);
 }

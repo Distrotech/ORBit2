@@ -4,7 +4,7 @@
 #include <orbit/poa/orbit-adaptor.h>
 
 static ORBit_ObjectAdaptor
-ORBit_adaptor_find (CORBA_ORB orb, CORBA_sequence_CORBA_octet *objkey)
+ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 {
 	ORBit_ObjectAdaptor   adaptor;
 	gint32                adaptorId;
@@ -33,7 +33,7 @@ void
 ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 {
 	ORBit_ObjectAdaptor         adaptor;
-	CORBA_sequence_CORBA_octet *objkey;
+	ORBit_ObjectKey            *objkey;
 
 	objkey = giop_recv_buffer_get_objkey (recv_buffer);
 	adaptor = ORBit_adaptor_find (orb, objkey);
@@ -64,8 +64,8 @@ ORBit_OAObject_is_active (ORBit_OAObject adaptor_obj)
 
 }
 
-IOP_ObjectKey_info*
-ORBit_OAObject_object_to_objkey (ORBit_OAObject  adaptor_obj)
+ORBit_ObjectKey*
+ORBit_OAObject_object_to_objkey (ORBit_OAObject adaptor_obj)
 {
 	return adaptor_obj->interface->object_to_objkey (adaptor_obj);
 }

@@ -937,7 +937,7 @@ giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
   return 0;
 }
 
-CORBA_sequence_CORBA_octet *
+ORBit_ObjectKey*
 giop_recv_buffer_get_objkey(GIOPRecvBuffer *buf)
 {
   switch(buf->msg.header.version[1])

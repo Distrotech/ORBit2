@@ -8,7 +8,6 @@ typedef CORBA_Policy ORBit_PortableServer_OkeyrandPolicy;
 ORBit_PortableServer_OkeyrandPolicy
 PortableServer_POA_create_okeyrand_policy(PortableServer_POA _obj,
 					  const CORBA_unsigned_long poa_rand_len,
-					  const CORBA_unsigned_long obj_rand_len,
 					  CORBA_Environment *ev);
 
 #endif

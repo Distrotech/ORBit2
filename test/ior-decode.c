@@ -6,15 +6,15 @@
 #include "../src/orb/orb-core/iop-profiles.h"
 
 static void
-print_objkey (IOP_ObjectKey_info *oki)
+print_objkey (ORBit_ObjectKey *objkey)
 {
 	int i;
-	GString *str = g_string_sized_new (oki->object_key._length * 2 + 8);
+	GString *str = g_string_sized_new (objkey->_length * 2 + 8);
 
-	for (i = 0; i < oki->object_key._length; i++)
-		g_string_printfa (str, "%02x", oki->object_key._buffer [i]);
+	for (i = 0; i < objkey->_length; i++)
+		g_string_printfa (str, "%02x", objkey->_buffer [i]);
 
-	printf ("(%d) '%s'", oki->object_key._length, str->str);
+	printf ("(%d) '%s'", objkey->_length, str->str);
 
 	g_string_free (str, TRUE);
 }
@@ -33,7 +33,7 @@ print_components(GSList *components)
 	  {
 	    IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = ltmp->data;
 	    printf("    IOP_TAG_COMPLETE_OBJECT_KEY: object_key ");
-	    print_objkey(coki->oki);
+	    print_objkey(coki->object_key);
 	    printf("\n");
 	  }
 	  break;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	    printf(" %s:%d\n",
 		   iiop->host, iiop->port);
 	    printf("    object_key ");
-	    print_objkey(iiop->oki);
+	    print_objkey(iiop->object_key);
 	    printf("\n");
 	    print_components(iiop->components);
 	  }
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 	    printf("IOP_TAG_ORBIT_SPECIFIC: usock %s IPv6 port %d\n",
 		   osi->unix_sock_path, osi->ipv6_port);
 	    printf("    object_key ");
-	    print_objkey(osi->oki);
+	    print_objkey(osi->object_key);
 	    printf("\n");
 	  }
 	  break;

@@ -5,23 +5,6 @@
 
 #define ORBIT_RAND_DATA_LEN 8
 
-typedef struct {
-  struct CORBA_Policy_type parent;
-  CORBA_unsigned_long obj_rand_len;
-} ORBit_PortableServer_OkeyrandPolicy_t;
-
-typedef struct ORBit_POAKOid_struct {
-        gushort                   oid_length;
-        /* oid octets comes here */
-        /* rand_data octets come here */
-} ORBit_POAKOid;
-#define ORBIT_POAKOID_OidLenOf(koid) \
-        ((koid)->oid_length)
-#define ORBIT_POAKOID_OidBufOf(koid) \
-        ( (CORBA_octet*) (((char*)(koid))+sizeof(*(koid))) )
-#define ORBIT_POAKOID_RandBufOf(koid) \
-        ( (CORBA_octet*) (((char*)(koid))+sizeof(*(koid))+(koid)->oid_length) )
-
 void ORBit_POA_handle_held_requests(PortableServer_POA poa);
 gboolean ORBit_POA_is_inuse(PortableServer_POA poa,
 			    CORBA_boolean consider_children,
@@ -53,9 +36,6 @@ void ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject pobj,
 				 CORBA_boolean do_etherealize,
 				 CORBA_boolean is_cleanup);
 void ORBit_POAObject_post_invoke(ORBit_POAObject pobj);
-CORBA_boolean ORBit_POA_okey_to_oid(/*in*/PortableServer_POA poa,
-				    /*in*/CORBA_sequence_CORBA_octet *okey,
-				    /*out*/PortableServer_ObjectId *oid);
 void ORBit_POAManager_register_poa(PortableServer_POAManager poa_mgr, 
 				   PortableServer_POA poa,
 				   CORBA_Environment *ev);

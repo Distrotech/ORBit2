@@ -22,7 +22,7 @@ void     IOP_delete_profiles( GSList **profiles );
 gboolean IOP_profile_get_info( CORBA_Object obj, gpointer *pinfo,
 			       GIOPVersion *iiop_version, char **proto,
 			       char **host, char **service, gboolean *ssl,
-			       IOP_ObjectKey_info **oki, char *tmpbuf );
+			       ORBit_ObjectKey **objkey, char *tmpbuf );
 
 void     IOP_profile_hash( gpointer item, gpointer data );
 gchar   *IOP_profile_dump( CORBA_Object obj, gpointer p );
