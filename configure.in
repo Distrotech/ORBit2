@@ -186,7 +186,7 @@ AC_C_BIGENDIAN
 AC_DEFUN(AC_CHECK_ALIGNOF,
 [changequote(<<, >>)dnl
 dnl The name to #define.
-define(<<AC_TYPE_NAME>>, translit(alignof_$1, [a-z *], [A-Z_P]))dnl
+define(<<AC_TYPE_NAME>>, translit(orbit_alignof_$1, [a-z *], [A-Z_P]))dnl
 dnl The cache variable name.
 define(<<AC_CV_NAME>>, translit(ac_cv_alignof_$1, [ *], [_p]))dnl
 changequote([, ])dnl
@@ -209,23 +209,24 @@ main()
 }], AC_CV_NAME=`cat conftestval`, AC_CV_NAME=0, AC_CV_NAME=0)])dnl
 AC_MSG_RESULT($AC_CV_NAME)
 LIBS="$align_save_libs"
-AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME)
+AC_TYPE_NAME=$AC_CV_NAME
+AC_SUBST(AC_TYPE_NAME)
 undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])
 
 orig_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GLIB_CFLAGS"
+AC_CHECK_ALIGNOF(CORBA_octet)
+AC_CHECK_ALIGNOF(CORBA_boolean)
+AC_CHECK_ALIGNOF(CORBA_char)
+AC_CHECK_ALIGNOF(CORBA_wchar)
 AC_CHECK_ALIGNOF(CORBA_short)
 AC_CHECK_ALIGNOF(CORBA_long)
 AC_CHECK_ALIGNOF(CORBA_long_long)
 AC_CHECK_ALIGNOF(CORBA_float)
 AC_CHECK_ALIGNOF(CORBA_double)
 AC_CHECK_ALIGNOF(CORBA_long_double)
-AC_CHECK_ALIGNOF(CORBA_char)
-AC_CHECK_ALIGNOF(CORBA_boolean)
-AC_CHECK_ALIGNOF(CORBA_octet)
-AC_CHECK_ALIGNOF(CORBA_wchar)
 AC_CHECK_ALIGNOF(CORBA_struct)
 AC_CHECK_ALIGNOF(CORBA_pointer)
 CPPFLAGS=$orig_CPPFLAGS 

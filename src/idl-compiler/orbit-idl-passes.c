@@ -1,4 +1,3 @@
-#include "config.h"
 #include "orbit-idl2.h"
 #include "orbit-idl-c-backend.h"
 
@@ -241,13 +240,13 @@ oidl_get_tree_alignment(IDL_tree tree)
   case IDLN_TYPE_INTEGER:
     switch(IDL_TYPE_INTEGER(tree).f_type) {
     case IDL_INTEGER_TYPE_SHORT:
-      itmp = ALIGNOF_CORBA_SHORT;
+      itmp = ORBIT_ALIGNOF_CORBA_SHORT;
       break;
     case IDL_INTEGER_TYPE_LONG:
-      itmp = ALIGNOF_CORBA_LONG;
+      itmp = ORBIT_ALIGNOF_CORBA_LONG;
       break;
     case IDL_INTEGER_TYPE_LONGLONG:
-      itmp = ALIGNOF_CORBA_LONG_LONG;
+      itmp = ORBIT_ALIGNOF_CORBA_LONG_LONG;
       break;
     default:
       g_error("Weird integer type");
@@ -255,18 +254,18 @@ oidl_get_tree_alignment(IDL_tree tree)
     }
     break;
   case IDLN_TYPE_ENUM:
-    itmp = ALIGNOF_CORBA_LONG;
+    itmp = ORBIT_ALIGNOF_CORBA_LONG;
     break;
   case IDLN_TYPE_FLOAT:
     switch(IDL_TYPE_FLOAT(tree).f_type) {
     case IDL_FLOAT_TYPE_FLOAT:
-      itmp = ALIGNOF_CORBA_FLOAT;
+      itmp = ORBIT_ALIGNOF_CORBA_FLOAT;
       break;
     case IDL_FLOAT_TYPE_DOUBLE:
-      itmp = ALIGNOF_CORBA_DOUBLE;
+      itmp = ORBIT_ALIGNOF_CORBA_DOUBLE;
       break;
     case IDL_FLOAT_TYPE_LONGDOUBLE:
-      itmp = ALIGNOF_CORBA_LONG_DOUBLE;
+      itmp = ORBIT_ALIGNOF_CORBA_LONG_DOUBLE;
       break;
     default:
       g_error("Weird float type");
@@ -275,13 +274,13 @@ oidl_get_tree_alignment(IDL_tree tree)
     break;
   case IDLN_TYPE_OCTET:
   case IDLN_TYPE_CHAR:
-    itmp = ALIGNOF_CORBA_CHAR;
+    itmp = ORBIT_ALIGNOF_CORBA_CHAR;
     break;
   case IDLN_TYPE_WIDE_CHAR:
-    itmp = ALIGNOF_CORBA_SHORT;
+    itmp = ORBIT_ALIGNOF_CORBA_SHORT;
     break;
   case IDLN_TYPE_BOOLEAN:
-    itmp = ALIGNOF_CORBA_BOOLEAN;
+    itmp = ORBIT_ALIGNOF_CORBA_BOOLEAN;
     break;
   case IDLN_IDENT:
     itmp = oidl_get_tree_alignment(orbit_cbe_get_typespec(tree));
@@ -330,7 +329,7 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
 
       g_slist_foreach(node->u.set_info.subnodes, (GFunc)oidl_pass_set_alignment, NULL);
 
-      itmp = ALIGNOF_CORBA_STRUCT;
+      itmp = ORBIT_ALIGNOF_CORBA_STRUCT;
       for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
 	sub = ltmp->data;
 	itmp = MAX(MAX(itmp, sub->arch_head_align), sub->arch_tail_align);
@@ -354,8 +353,8 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
       GSList *ltmp;
       oidl_pass_set_alignment(node->u.switch_info.discrim);
       g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_alignment, NULL);
-      node->arch_head_align = MAX(node->u.switch_info.discrim->arch_head_align, ALIGNOF_CORBA_STRUCT);
-      node->arch_tail_align = MAX(node->u.switch_info.discrim->arch_tail_align, ALIGNOF_CORBA_STRUCT);
+      node->arch_head_align = MAX(node->u.switch_info.discrim->arch_head_align, ORBIT_ALIGNOF_CORBA_STRUCT);
+      node->arch_tail_align = MAX(node->u.switch_info.discrim->arch_tail_align, ORBIT_ALIGNOF_CORBA_STRUCT);
       for(ltmp = node->u.switch_info.cases, node->iiop_tail_align = ((OIDL_Marshal_Node *)ltmp->data)->iiop_tail_align;
 	  ltmp; ltmp = g_slist_next(ltmp)) {
 	OIDL_Marshal_Node *sub;
@@ -384,8 +383,8 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
        require the complex marshal/demarshal function to internally ensure its alignment requirements are met */
     switch(node->u.complex_info.type) {
     case CX_CORBA_FIXED:
-      node->arch_head_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_SHORT);
-      node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_SHORT);
+      node->arch_head_align = MAX(ORBIT_ALIGNOF_CORBA_STRUCT, ORBIT_ALIGNOF_CORBA_SHORT);
+      node->arch_tail_align = MAX(ORBIT_ALIGNOF_CORBA_STRUCT, ORBIT_ALIGNOF_CORBA_SHORT);
       node->iiop_head_align = 1; /* sizeof(CORBA_short); */
       node->iiop_tail_align = 1;
       break;
@@ -395,13 +394,13 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
       node->iiop_tail_align = 1;
       break;
     case CX_CORBA_ANY:
-      node->arch_head_align = node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_POINTER);
+      node->arch_head_align = node->arch_tail_align = MAX(ORBIT_ALIGNOF_CORBA_STRUCT, ORBIT_ALIGNOF_CORBA_POINTER);
       node->iiop_head_align = 1; /* sizeof(CORBA_unsigned_long); */ /* TCKind enum */
       node->iiop_tail_align = 1;
       break;
     case CX_CORBA_TYPECODE:
-      node->arch_head_align = node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT,
-							  MAX(ALIGNOF_CORBA_POINTER, ALIGNOF_CORBA_LONG));
+      node->arch_head_align = node->arch_tail_align = MAX(ORBIT_ALIGNOF_CORBA_STRUCT,
+							  MAX(ORBIT_ALIGNOF_CORBA_POINTER, ORBIT_ALIGNOF_CORBA_LONG));
       node->iiop_head_align = 1; /* sizeof(CORBA_unsigned_long); */ /* TCKind enum */
       node->iiop_tail_align = 1;
       break;
