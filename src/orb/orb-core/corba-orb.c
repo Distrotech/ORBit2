@@ -39,7 +39,7 @@ static char        *orbit_ipname             = NULL;
 static char        *orbit_debug_options      = NULL;
 static char        *orbit_naming_ref         = NULL;
 static GSList      *orbit_initref_list       = NULL; 
-static GSList      *orbit_use_corbaloc       = FALSE;
+static gboolean     orbit_use_corbaloc       = FALSE;
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
