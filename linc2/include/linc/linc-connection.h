@@ -26,6 +26,7 @@
 				    LINC_TYPE_IS_CONNECTION (((GTypeClass*) (class))->g_type))
 
 typedef enum { LINC_CONNECTING, LINC_CONNECTED, LINC_DISCONNECTED } LINCConnectionStatus;
+
 typedef struct {
   GObject parent;
 
@@ -70,4 +71,6 @@ int linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean blo
 /* Return values from these functions are going to be "abnormal", since they make sure to write all the data out */
 int linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len);
 int linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulong total_size);
+
+void linc_connection_state_changed(LINCConnection *cnx, LINCConnectionStatus status);
 #endif

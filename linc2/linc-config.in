@@ -85,7 +85,7 @@ while test $# -gt 0; do
 done
 
 the_libs="$the_libs -L$libdir -llinc"
-the_flags="$the_flags `glib-config --cflags` -I$includedir"
+the_flags="$the_flags `glib-config-2.0 --cflags` -I$includedir"
 
 if $cflags; then
     all_flags="$the_flags"
