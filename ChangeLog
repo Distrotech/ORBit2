@@ -1,3 +1,7 @@
+2001-09-25  Mark McLoughlin <mark@skynet.ie>
+
+	* Version 2.3.95.
+
 2001-09-24  Mark McLoughlin <mark@skynet.ie>
 
 	* Makefile.am(SUBDIRS): remove libIDL - this is to built 
