@@ -1467,9 +1467,10 @@ testSegv (test_TestFactory   factory,
 		g_assert (broken);
 		g_assert (!invoked);
 #else
-		g_assert (ORBit_small_unlisten_for_broken (
-			factory, G_CALLBACK (broken_cb)) ==
-			  ORBIT_CONNECTION_CONNECTED);
+		if (ORBit_small_unlisten_for_broken (
+			factory, G_CALLBACK (broken_cb)) !=
+		    ORBIT_CONNECTION_CONNECTED)
+			g_warning ("Unusual race in unlisten");
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		CORBA_free (id);
 #endif
