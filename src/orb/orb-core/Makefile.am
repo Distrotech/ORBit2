@@ -17,8 +17,10 @@ INCLUDES =						\
 	$(LOCAL_LINC_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
+HTTP_FILES = orbhttp.c orbhttp.h
+
 if ENABLE_HTTP
-ORBHTTP = orbhttp.c orbhttp.h
+ORBHTTP = $(HTTP_FILES)
 endif
 
 main_src = \
@@ -91,7 +93,7 @@ $(IFACE_IDLOUT) : orbit-interface.idl $(IDL_COMPILER)
 
 BUILT_SOURCES = $(IFACE_IDLOUT) $(IDLOUT) $(DEFS_IDLOUT) $(OPS_IDLOUT_C) $(OPS_IDLOUT_H)
 CLEANFILES = $(BUILT_SOURCES)
-EXTRA_DIST = $(IDL_FILES)
+EXTRA_DIST = $(IDL_FILES) $(HTTP_FILES)
 
 dist-hook:
 	cd $(distdir); rm -f $(BUILT_SOURCES)
