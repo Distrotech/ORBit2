@@ -114,7 +114,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
   fprintf(ci->fh, "register CORBA_unsigned_long _ORBIT_request_id;\n");
   fprintf(ci->fh, "register CORBA_char *_ORBIT_system_exception_ex = ex_CORBA_COMM_FAILURE;\n");
-  fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
+  fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status = CORBA_COMPLETED_NO;\n");
   fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer = NULL;\n");
   if(!IDL_OP_DCL(tree).f_oneway)
     {
