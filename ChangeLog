@@ -1,3 +1,21 @@
+2003-04-24  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/test.sh: add threaded tests into the
+	default run: too bold perhaps.
+
+	* src/orb/orb-core/corba-object.c
+	(_ORBit_object_init): impl.
+	(ORBit_try_connection): re-hash; add locking.
+	(CORBA_Object_release_cb): bin giop_connection_unref.
+	(ORBit_object_get_connection): hold the lock while we're
+	working on the object. Add a FIXME: we need a thread-safe
+	variant of this method (that returns a ref).
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_unref): bin it.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): add init.
+
 2003-04-23  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c

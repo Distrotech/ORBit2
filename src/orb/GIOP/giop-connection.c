@@ -271,10 +271,3 @@ giop_connections_shutdown (void)
 	if (cnx_list.list != NULL)
 		g_warning ("Wierd; new connections opened while shutting down");
 }
-
-void
-giop_connection_unref (GIOPConnection *cnx)
-{
-	if (cnx)
-		linc_object_unref (cnx);
-}

@@ -8,6 +8,18 @@
 #include "orbit-debug.h"
 #include "../util/orbit-purify.h"
 
+static GMutex *object_lock = NULL;
+
+#define OBJECT_LOCK(obj)   LINC_MUTEX_LOCK   (object_lock)
+#define OBJECT_UNLOCK(obj) LINC_MUTEX_UNLOCK (object_lock)
+
+/*
+ * obj->orb -> construct time property ...
+ * obj->type_qid -> construct time property ?
+ *
+ * obj->profile_list -> needs locking
+ */
+
 static guint
 g_CORBA_Object_hash (gconstpointer key)
 {
@@ -120,7 +132,8 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 		ORBit_RootObject_release_T (obj->adaptor_obj);
 	}
 
-	giop_connection_unref (obj->connection);
+	if (obj->connection)
+		linc_object_unref (obj->connection);
 
 	p_free (obj, struct CORBA_Object_type);
 }
@@ -229,27 +242,49 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 static gboolean
 ORBit_try_connection (CORBA_Object obj)
 {
-	if (giop_threaded ())
-		g_error ("This function is complete foo");
-	while (obj->connection) {
-		switch (LINC_CONNECTION (obj->connection)->status) {
+	gboolean retval = FALSE;
+	gboolean disconnect = FALSE;
+
+	if (giop_threaded ()) {
+		if (!obj->connection)
+			retval = FALSE;
+		else {
+			switch (linc_connection_get_status
+					(LINC_CONNECTION (obj->connection))) {
+			case LINC_CONNECTING:
+				dprintf (GIOP, "ORBit_try_connection bypassed while connecting ...");
+			case LINC_CONNECTED:
+				retval = TRUE;
+				break;
+			case LINC_DISCONNECTED:
+				disconnect = TRUE;
+				break;
+			}
+		}
+	} else {
+		switch (linc_connection_wait_connected
+				(LINC_CONNECTION (obj->connection))) {
 		case LINC_CONNECTING:
-			g_main_context_iteration(NULL, TRUE);
+			g_assert_not_reached();
 			break;
-
 		case LINC_CONNECTED:
-			return TRUE;
+			retval = TRUE;
 			break;
-
 		case LINC_DISCONNECTED:
-			giop_connection_unref (obj->connection);
-			obj->connection = NULL;
-			return FALSE;
+			disconnect = TRUE;
 			break;
 		}
 	}
 
-	return FALSE;
+	if (disconnect) {
+		if (obj->connection) {
+			linc_object_unref (obj->connection);
+			obj->connection = NULL;
+		}
+		retval = FALSE;
+	}
+
+	return retval;
 }
 
 GIOPConnection *
@@ -262,9 +297,15 @@ ORBit_object_get_connection (CORBA_Object obj)
 	char *proto = NULL, *host, *service;
 	gboolean is_ssl = FALSE;
 	GIOPVersion iiop_version = GIOP_1_2;
+	GIOPConnection *cnx= NULL;
 
-	if (ORBit_try_connection (obj))
-		return obj->connection;
+	OBJECT_LOCK (obj);
+	if (ORBit_try_connection (obj)) {
+		cnx = obj->connection;
+		OBJECT_UNLOCK (obj);
+#warning FIXME: we need a thread-safe method that returns a reference [!]
+		return cnx;
+	}
   
 	g_assert (obj->connection == NULL);
 
@@ -293,12 +334,15 @@ ORBit_object_get_connection (CORBA_Object obj)
 				dprintf (OBJECTS, "Initiated a connection to '%s' '%s' '%s'\n",
 					 proto, host, service);
 
-				return obj->connection;
+				cnx = obj->connection;
+#warning FIXME: we need a thread-safe method that returns a reference [!]
+				break;
 			}
 		}
 	}
+	OBJECT_UNLOCK (obj);
 
-	return NULL;
+	return cnx;
 }
 
 GIOPConnection *
@@ -808,3 +852,9 @@ CORBA_Object__iinterface = {
   {12, 12, CORBA_Object__imethods, FALSE},
   {0, 0, NULL, FALSE}
 };
+
+void
+_ORBit_object_init (void)
+{
+	object_lock = linc_mutex_new();
+}
