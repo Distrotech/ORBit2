@@ -1,3 +1,7 @@
+2001-12-06  Laszlo Peter  <laca@ireland.sun.com>
+
+	* configure.in: Fix detection of WRITEV_IOVEC_LIMIT.
+
 2001-12-05  Kristian Rietveld  <kris@gtk.org>
 
 	* src/linc-protocols.c: Move down resolve.h for better
