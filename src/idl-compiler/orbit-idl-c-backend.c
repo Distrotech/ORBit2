@@ -32,7 +32,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
   ci.do_impl_hack = 1;
   ci.do_skel_defs = rinfo->do_skel_defs;
   ci.ctxt = tree->ctxt;
-  for(i = 0; i < 6; i++) {
+  for(i = 0; i < OUTPUT_NUM_PASSES; i++) {
     if( (1 << i) & rinfo->enabled_passes) {
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
       
@@ -55,31 +55,33 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
       case OUTPUT_IMODULE:
 	orbit_idl_output_c_imodule(tree, rinfo, &ci);
 	break;
+      case OUTPUT_DEPS:
+	orbit_idl_output_c_deps(tree, rinfo, &ci);
+	break;
       }
-      pclose(ci.fh);
+      if (1 << i == OUTPUT_DEPS)
+	fclose(ci.fh);
+      else 
+	pclose(ci.fh);
     }
   }
   g_string_free(ci.ext_dcls,TRUE);
 }
 
-static FILE *
-out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
+char *
+orbit_idl_c_filename_for_pass (const char *input_filename, 
+                               int pass)
 {
-  char *tack_on = NULL; /* Quiet gcc */
-  char *basein;
-  char *ctmp;
-  char *cmdline;
-
-  basein = g_alloca(strlen(input_filename) + sizeof("-skelimpl.c"));
-  ctmp = g_path_get_basename(input_filename);
-  strcpy(basein, ctmp);
-  g_free(ctmp);
-
-  ctmp = strrchr(basein, '.');
-
-  g_assert(ctmp);
-
-  *ctmp = '\0';
+  char *filename;
+  char *basename;
+  char *dot;
+  const char *tack_on = NULL;
+  
+  basename = g_path_get_basename (input_filename);
+  dot = strrchr (basename, '.');
+  if (dot != NULL) {
+    *dot = '\0';
+  }
 
   switch(pass) {
   case OUTPUT_STUBS:
@@ -105,10 +107,27 @@ out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
     break;
   }
 
-  strcat(basein, tack_on);
+  filename = g_strconcat (basename, tack_on, NULL);
+  g_free (basename);
+  return filename;
+}
 
-  cmdline = g_alloca(strlen(rinfo->output_formatter) + strlen(basein) 
-		   + sizeof(" > "));
-  sprintf(cmdline, "%s > %s", rinfo->output_formatter, basein);
-  return popen(cmdline, "w");
+static FILE *
+out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
+{
+  char *output_filename;
+  char *cmdline;
+
+  if (pass == OUTPUT_DEPS) {
+    return fopen (rinfo->deps_file, "w");
+  } else {
+    output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
+
+    cmdline = g_alloca(strlen(rinfo->output_formatter) + strlen(output_filename) 
+		       + sizeof(" > "));
+    sprintf(cmdline, "%s > %s", rinfo->output_formatter, output_filename);
+
+    g_free (output_filename);
+    return popen(cmdline, "w");
+  }
 }

@@ -1,4 +1,3 @@
-IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	$(LINC_CFLAGS) \
@@ -32,11 +31,11 @@ check_PROGRAMS = $(TESTS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la
 
-ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-
 POATEST_IDLOUT = poatest.h poatest-common.c poatest-skels.c poatest-stubs.c
-$(POATEST_IDLOUT) : poatest.idl $(ORBIT_IDL)
-	$(IDL) --showcpperrors $<
+
+IDL_FLAGS=--showcpperrors
+IDL_FILES=poatest.idl
+include $(top_srcdir)/Makefile.shared
 
 common_srcs = $(POATEST_IDLOUT) poatest-basic-shell.c poatest-exception.h
 
@@ -51,9 +50,9 @@ poatest_basic08_SOURCES = $(common_srcs) poatest-basic08.c
 poatest_basic09_SOURCES = $(common_srcs) poatest-basic09.c 
 poatest_basic10_SOURCES = $(common_srcs) poatest-basic10.c 
 
-BUILT_SOURCES = $(POATEST_IDLOUT)
-CLEANFILES = dynany_built echo_built empty_built test1_built test_any_built $(BUILT_SOURCES)
-EXTRA_DIST = poatest.idl README
+BUILT_SOURCES=$(POATEST_IDLOUT)
+CLEANFILES=$(BUILT_SOURCES)
+EXTRA_DIST=$(IDL_FILES) README
 
 README : $(POA_TESTS_SRCS)
 	awk -F'*' 'BEGIN { intest = 0; } \

@@ -35,6 +35,7 @@ orbit_idl_SOURCES=orbit-idl-main.c \
         orbit-idl-c-typecode.c \
         orbit-idl-c-marshal.c \
         orbit-idl-c-demarshal.c \
+        orbit-idl-c-deps.c \
 	orbit-idl-marshal.c \
 	orbit-idl-marshal.h
 

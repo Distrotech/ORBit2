@@ -5,7 +5,6 @@ liborb_dynamic_la_SOURCES= \
 	$(DYNAMIC_IDLOUT) \
 	dynany.c
 
-IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES= \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/orb \
@@ -18,17 +17,15 @@ DYNAMIC_IDLOUT=dynamic-defs-common.c dynamic-defs.h
 
 BUILT_SOURCES=$(DYNAMIC_IDLOUT)
 
-$(DYNAMIC_IDLOUT) runidl_dynamic: dynamic-defs.idl $(IDL)
-	-(rm -f $(DYNAMIC_IDLOUT) || true) > /dev/null
-	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
-	--define=Object=OObject --define=TypeCode=TTypeCode \
-	-I$(top_srcdir)/src/idl/CORBA \
-	-I$(top_srcdir)/src/idl/misc \
-	-I$(top_srcdir)/src/orb/orb-core \
-	--noskels --nodefskels --nostubs --noidata \
-                --showcpperrors $(top_srcdir)/src/orb/dynamic/dynamic-defs.idl
-	for I in $(DYNAMIC_IDLOUT); do \
-	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
-	mv $$I.out $$I; done
+IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
+	--define=Object=OObject --define=TypeCode=TTypeCode	\
+	-I$(top_srcdir)/src/idl/CORBA				\
+	-I$(top_srcdir)/src/idl/misc				\
+	-I$(top_srcdir)/src/orb/orb-core			\
+	--noskels --nodefskels --nostubs --noidata		\
+	--showcpperrors
+IDL_FILES=dynamic-defs.idl
+include $(top_srcdir)/Makefile.shared
 
-EXTRA_DIST=dynamic-defs.idl
+EXTRA_DIST=$(IDL_FILES)
+

@@ -1,3 +1,46 @@
+2001-08-13  Maciej Stachowiak  <mjs@noisehavoc.org>
+
+	Implemented dependency tracking in the IDL compiler (much like the
+	similar feature of gcc) and use it everywhere.
+
+	* src/idl-compiler/orbit-idl-c-deps.c (orbit_idl_output_c_deps,
+	output_deps): New pass that outputs dependency info in a format
+	suitable for including into a Makefile.
+	* src/idl-compiler/orbit-idl-main.c (main): Add a --deps switch
+	which takes a filename argument.
+	* src/idl-compiler/orbit-idl-c-backend.h,
+	src/idl-compiler/orbit-idl-c-backend.c (orbit_idl_output_c):
+	Output dependencies when requested.
+	(orbit_idl_c_filename_for_pass, out_for_pass): Split out the code
+	that generates the output filename for each pass and make it
+	public, to help the new dependency pass.
+	* src/idl-compiler/orbit-idl-driver.c (orbit_idl_to_backend):
+	Always pass IDLF_SRCFILES flag, since SRCFILE nodes are required
+	by the dependency generation pass.
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_output_types): Only
+	output weird stuff for SRCFILE nodes when suppressing includes.
+	* src/idl-compiler/orbit-idl3-types.h: Add dependency pass and a
+	#define for the number of passes, to help avoid magic numbers in
+	code.
+	* src/idl-compiler/Makefile.am: Add orbit-idl-c-deps.c to build. 
+
+	* Makefile.shared: Common Makefile segment that has the
+	appropriate rules for building IDL files and generating dependency
+	info for targets of IDL sources.
+
+	* include/orbit/dynamic/Makefile.am,
+	include/orbit/orb-core/Makefile.am, include/orbit/poa/Makefile.am,
+	src/orb/dynamic/Makefile.am, src/orb/include/Makefile.am,
+	src/orb/orb-core/Makefile.am, src/orb/poa/Makefile.am,
+	src/services/name/Makefile.am, test/Makefile.am,
+	test/everything/Makefile.am, test/inhibit/Makefile.am,
+	test/poa/Makefile.am: Use Makefile.shared and IDL dependencies to
+	simplify and sanitize IDL compilation.
+
+	* include/orbit/dynamic/.cvsignore,
+	include/orbit/orb-core/.cvsignore, include/orbit/poa/.cvsignore:
+	Ignore .deps directories.
+
 2001-08-14  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-headers.c

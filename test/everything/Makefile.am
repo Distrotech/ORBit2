@@ -48,16 +48,12 @@ server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
 server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 server_LDFLAGS = -static -module
 
-ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
+IDL_FLAGS= --showcpperrors --add-imodule
+IDL_FILES= everything.idl
+include $(top_srcdir)/Makefile.shared
 
-${EVERYTHING_BUILT}: everything.idl $(ORBIT_IDL)
-	$(ORBIT_IDL) $(srcdir)/everything.idl
-
-everything-imodule.c : everything.idl $(ORBIT_IDL)
-	$(ORBIT_IDL) --imodule $(srcdir)/everything.idl
-
-CLEANFILES = ${EVERYTHING_BUILT} iorfile
-BUILT_SOURCES = ${EVERYTHING_BUILT}
+BUILT_SOURCES = ${EVERYTHING_BUILT} everything-imodule.c
+CLEANFILES = ${BUILT_SOURCES} iorfile
 
 TESTS = $(srcdir)/test.sh
 
