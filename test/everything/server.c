@@ -480,8 +480,6 @@ test_TestFactory_Servant servant;
 	
 	CORBA_exception_free (ev);
 
-	sleep (10000);
-
 	return 0;
 #else
 	return factory;

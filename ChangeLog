@@ -1,5 +1,11 @@
 2001-11-16  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/server.c (main): kill sleep.
+
+	* test/everything/client.c (main): kill sleep.
+
+2001-11-16  Michael Meeks  <michael@ximian.com>
+
 	* configure.in: require a linc we can work with.
 	
 	* src/orb/orb-core/corba-object.c
