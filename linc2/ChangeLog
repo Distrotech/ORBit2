@@ -1,3 +1,8 @@
+2001-12-05  Kristian Rietveld  <kris@gtk.org>
+
+	* src/linc-protocols.c: Move down resolve.h for better
+	FreeBSD build.
+
 2001-12-01  Theo van Klaveren  <t.vanklaveren@student.utwente.nl>
 
 	* src/linc-protocols.c: Add <netinet/in.h> to includes.

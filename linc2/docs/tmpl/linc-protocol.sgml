@@ -31,6 +31,16 @@ The protocols exposed
 @cnx_flags: 
 
 
+<!-- ##### USER_FUNCTION LINCProtocolDestroyFunc ##### -->
+<para>
+
+</para>
+
+@fd: 
+@host_info: 
+@serv_info: 
+
+
 <!-- ##### USER_FUNCTION LINCProtocolGetSockInfoFunc ##### -->
 <para>
 
@@ -41,16 +51,6 @@ The protocols exposed
 @hostname: 
 @service: 
 @Returns: 
-
-
-<!-- ##### USER_FUNCTION LINCProtocolDestroyFunc ##### -->
-<para>
-
-</para>
-
-@fd: 
-@host_info: 
-@serv_info: 
 
 
 <!-- ##### STRUCT LINCProtocolInfo ##### -->

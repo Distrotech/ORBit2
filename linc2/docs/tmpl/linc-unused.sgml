@@ -18,19 +18,17 @@
 acconfig
 
 
-<!-- ##### MACRO LINC_IS_CONNECTION ##### -->
+<!-- ##### TYPEDEF LINCConnection ##### -->
 <para>
 
 </para>
 
-@object: 
 
-<!-- ##### MACRO LINC_IS_SERVER ##### -->
+<!-- ##### TYPEDEF LINCServer ##### -->
 <para>
 
 </para>
 
-@object: 
 
 <!-- ##### FUNCTION gboolean ##### -->
 <para>
