@@ -1,5 +1,7 @@
 2003-03-14  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.6.1
+
 	* src/orb/orb-core/corba-orb.c
 	(CORBA_ORB_destroy): give a different warning if
 	people unref but don't destroy the ORB.
