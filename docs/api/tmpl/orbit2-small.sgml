@@ -14,11 +14,14 @@ orbit2-small
 
 </para>
 
-<!-- ##### TYPEDEF ORBit_IModule ##### -->
+<!-- ##### STRUCT ORBit_IModule ##### -->
 <para>
 
 </para>
 
+@version: 
+@interfaces: 
+@types: 
 
 <!-- ##### FUNCTION ORBit_get_safe_tmp ##### -->
 <para>

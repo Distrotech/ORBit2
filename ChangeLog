@@ -1,3 +1,10 @@
+2003-12-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (wakeup_mainloop): don't spin on
+	EAGAIN, if the buffer is full we're sure of waking the
+	mainloop. Warn on EAGAIN - someone isn't running the
+	glib mainloop.
+
 2003-11-17  Frank Rehberger  <frehberg@xtradyne.de>
 
 	* src/orb/GIOP/giop.c (giop_mainloop_handle_input): invoke

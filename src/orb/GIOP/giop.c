@@ -542,7 +542,11 @@ wakeup_mainloop (void)
 	char c = 'A'; /* magic */
 	int  res;
 	while ((res = write (WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
-	       (errno == EAGAIN || errno == EINTR));
+	       errno == EINTR );
+#ifdef G_ENABLE_DEBUG
+	if (res < 0 && errno == EAGAIN)
+		g_warning ("Looks like you have no glib mainloop running");
+#endif
 	if (res < 0)
 		g_error ("Failed to write to GIOP wakeup socket %d 0x%x(%d) (%d)",
 			 res, errno, errno, WAKEUP_WRITE);
