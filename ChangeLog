@@ -1,5 +1,11 @@
 2002-09-20  Mark McLoughlin  <mark@skynet.ie>
 
+	* ORBit.spec.in: remove name-client-2 and
+	orbit-name-server-2 since they are no longer
+	installed. Fixes #93643.
+
+2002-09-20  Mark McLoughlin  <mark@skynet.ie>
+
 	* test/Makefile.am:
 	* test/poa/Makefile.am:
 	* test/inhibit/Makefile.am: add $(ORBIT_LIBS)
