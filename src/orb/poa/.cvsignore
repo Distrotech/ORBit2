@@ -6,3 +6,4 @@ Makefile.in
 *.lo
 *-common.c
 runidl_poa
+poa-defs.h
