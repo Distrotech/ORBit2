@@ -1,9 +1,25 @@
+2001-05-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-context.c (CORBA_Context_set_one_value):
+	remove the hash table value, so we don't screw up the key allocation.
+
 2001-05-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_initiate): 
+	reference the connection before returning it, if it wasn't
+	looked up in the list.
+	(giop_connection_remove_by_orb): fix serious brokenness.
+	(giop_connection_close): publicise.
+	(giop_connection_shutdown): remove the connection from the
+	connection list.
+	(giop_connection_unref): remove last unref sillies.
 
 	* src/orb/orb-core/corba-object.c (g_CORBA_Object_equal): uglify,
 	we need to be able to scan for MULTIPLE_COMPONENTS profiles in
 	order to do the GIOP profile comparison (get_mci): impl helper.
 	(IOP_Profile_equal): similarly uglify.
+	(CORBA_Object_release_cb): close the connection and
+	unref it.
 
 	* src/orb/poa/poa.c (ORBit_POA_oid_to_ref): set the profile_type
 	on the iiop profile.

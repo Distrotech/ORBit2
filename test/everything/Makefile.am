@@ -19,14 +19,14 @@ INCLUDES = \
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 	$(LINC_LIBS)					\
-	${GLIB_LIBS} 
+	${GLIB_LIBS}
+#  -lefence
 
 LDFLAGS = -static
 
 client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
 client_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 client_LDADD = $(LDADD)
-# -lefence
 
 included_src = \
 	basicServer.c    \

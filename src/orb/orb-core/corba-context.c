@@ -98,6 +98,7 @@ CORBA_Context_set_one_value(CORBA_Context ctx,
     ctx->mappings = g_hash_table_new(g_str_hash, g_str_equal);
 
   if(g_hash_table_lookup_extended(ctx->mappings, prop_name, &old_nom, &old_value)) {
+    g_hash_table_remove (ctx->mappings, prop_name);
     g_free(old_nom);
     g_free(old_value);
   }

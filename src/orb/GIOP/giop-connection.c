@@ -23,6 +23,7 @@ giop_connection_list_init(void)
 static void
 giop_connection_list_add(GIOPConnection *cnx)
 {
+  g_return_if_fail (cnx != NULL);
   cnx_list.list = g_list_prepend(cnx_list.list, cnx);
 }
 
@@ -104,7 +105,7 @@ giop_connection_init       (GIOPConnection      *cnx)
   O_MUTEX_INIT(cnx->outgoing_mutex);
 }
 
-static void
+void
 giop_connection_close (GIOPConnection *cnx)
 {
   if(cnx->parent.status == LINC_DISCONNECTED)
@@ -125,13 +126,17 @@ giop_connection_close (GIOPConnection *cnx)
 }
 
 static void
-giop_connection_shutdown    (GObject             *obj)
+giop_connection_shutdown (GObject *obj)
 {
   GIOPConnection *cnx = (GIOPConnection *)obj;
 
   giop_connection_close(cnx);
   O_MUTEX_DESTROY(cnx->incoming_mutex);
   O_MUTEX_DESTROY(cnx->outgoing_mutex);
+
+  O_MUTEX_LOCK(cnx_list.lock);
+  giop_connection_list_remove(cnx);
+  O_MUTEX_UNLOCK(cnx_list.lock);
 
   if(parent_class->shutdown)
     parent_class->shutdown(obj);
@@ -265,11 +270,7 @@ giop_connection_unref(GIOPConnection *cnx)
   if(!cnx)
     return;
 
-  O_MUTEX_LOCK(cnx_list.lock);
-  if(G_OBJECT(cnx)->ref_count == 1)
-    giop_connection_list_remove(cnx);
   g_object_unref(G_OBJECT(cnx));
-  O_MUTEX_UNLOCK(cnx_list.lock);
 }
 
 /* This will just create the fd, do the connect and all, and then call
@@ -299,6 +300,8 @@ giop_connection_initiate(const char *proto_name,
 	}
       else
 	giop_connection_list_add(cnx);
+
+      g_object_ref (G_OBJECT(cnx));
     }
 
   O_MUTEX_UNLOCK(cnx_list.lock);
@@ -309,16 +312,18 @@ giop_connection_initiate(const char *proto_name,
 void
 giop_connection_remove_by_orb(gpointer match_orb_data)
 {
-  GList *link;
+  GList *l, *next;
 
   O_MUTEX_LOCK(cnx_list.lock);
-  for (link = cnx_list.list; link; )
+  for (l = cnx_list.list; l; l = next)
     {
-      GIOPConnection *cnx = link->data;
-      link = link->next;
-      if ( cnx->orb_data == match_orb_data )
-	cnx_list.list = g_list_delete_link(cnx_list.list, link);
-      giop_connection_close (cnx);
+      GIOPConnection *cnx = l->data;
+
+      next = l->next;
+      if ( cnx->orb_data == match_orb_data ) {
+	cnx_list.list = g_list_delete_link(cnx_list.list, l);
+	giop_connection_close (cnx);
+      }
     }
   O_MUTEX_UNLOCK(cnx_list.lock);
 }

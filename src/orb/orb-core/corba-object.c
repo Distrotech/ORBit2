@@ -60,7 +60,8 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   g_hash_table_remove (objrefs, obj);
 
   if (obj->connection) {
-/*    g_warning("Release object '%p's connection", obj);*/
+/*    g_warning("Release object '%p's connection", obj); */
+    giop_connection_close (obj->connection);
     giop_connection_unref (obj->connection);
   }
 
@@ -303,7 +304,6 @@ _ORBit_object_get_connection(CORBA_Object obj)
       if(IOP_profile_get_info(obj, pi, &iiop_version, &proto,
 			      &host, &service, &is_ssl, &oki, tbuf))
 	{
-          g_warning ("Initiated new connection on '%s'", obj->type_id);
 	  obj->connection =
 	    giop_connection_initiate(proto, host, service,
 				     is_ssl?LINC_CONNECTION_SSL:0, iiop_version);
@@ -576,11 +576,11 @@ g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
            if(IOP_Profile_equal(cur1->data, cur2->data,
 				mci1, mci2))
 	     {
-                char *a, *b;
+/*                char *a, *b;
 		a = IOP_Profile_dump (cur1->data);
 		b = IOP_Profile_dump (cur2->data);
 		fprintf (stderr, "Profiles match:\n'%s':%s\n'%s':%s\n",
-			 _obj->type_id, a, other_object->type_id, b);
+		_obj->type_id, a, other_object->type_id, b);*/
 		return TRUE;
 	     }
 	}
