@@ -1,3 +1,8 @@
+2001-10-02  Mark McLoughlin <mark@skynet.ie>
+
+	* test/Makefile.am(test_dynany_LDFLAGS): add -lm
+	for non-glibc systems.
+
 2001-10-02  Glynn Foster <glynn.foster@sun.com>
 
 	* autogen.sh, configure.in: Dumb commit to fix

@@ -41,7 +41,7 @@ typelib_dump_SOURCES=typelib-dump.c
 
 DYNANY_IDLOUT=dynany.h dynany-common.c
 test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
-
+test_dynany_LDFLAGS=-lm
 
 IDL_FLAGS =  --showcpperrors
 IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl
