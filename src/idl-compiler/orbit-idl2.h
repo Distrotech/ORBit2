@@ -49,9 +49,15 @@ typedef struct {
  */
 typedef struct _OIDL_Marshal_Node OIDL_Marshal_Node;
 
-typedef enum { MARSHAL_DATUM, MARSHAL_LOOP, MARSHAL_SWITCH,
-	       MARSHAL_COMPLEX, MARSHAL_UPDATE, MARSHAL_CONST, MARSHAL_SET,
-	       MARSHAL_ALLOCATE } OIDL_Marshal_Node_Type;
+typedef enum { MARSHAL_DATUM = 0,
+	       MARSHAL_LOOP = 1,
+	       MARSHAL_SWITCH = 2,
+	       MARSHAL_COMPLEX = 3,
+	       MARSHAL_UPDATE = 4,
+	       MARSHAL_CONST = 5,
+	       MARSHAL_SET = 6,
+	       MARSHAL_ALLOCATE = 7
+} OIDL_Marshal_Node_Type;
 
 typedef enum {
   MN_POINTER_VAR = 1<<0,
@@ -60,7 +66,8 @@ typedef enum {
   MN_NEED_TMPVAR = 1<<3, /* Need a temporary variable to hold this value */
   MN_NOMARSHAL = 1<<4, /* This is used by other vars, but not actually marshalled */
   MN_ISSEQ = 1<<5, /* for MARSHAL_LOOP only - we need to do foo._buffer before tacking on [v1] */
-  MN_ISSTRING = 1<<6 /* for MARSHAL_LOOP only */
+  MN_ISSTRING = 1<<6, /* for MARSHAL_LOOP only */
+  MN_LOOPED = 1<<7 /* This variable is looped over */
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {
@@ -136,6 +143,7 @@ IDL_tree orbit_idl_get_array_type(IDL_tree tree);
 char *orbit_idl_member_get_name(IDL_tree tree);
 void orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_data);
 void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
+gboolean oidl_node_aggregatable_p(OIDL_Marshal_Node *node);
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
 

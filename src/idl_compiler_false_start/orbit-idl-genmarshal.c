@@ -13,6 +13,9 @@ oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, co
   retval->type = type;
   retval->name = (char *)name;
 
+  if(parent && (parent->flags & MN_LOOPED))
+    retval->flags = MN_LOOPED;
+
   return retval;
 }
 
@@ -193,9 +196,10 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
     retval->u.loop_info.length_var->flags |= MN_NEED_TMPVAR;
     retval->u.loop_info.loop_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
     retval->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_long);
-    retval->u.loop_info.loop_var->flags |= MN_NEED_TMPVAR;
+    retval->u.loop_info.loop_var->flags |= MN_NEED_TMPVAR|MN_NOMARSHAL;
     retval->u.loop_info.contents = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL);
     retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_octet);
+    retval->u.loop_info.contents->flags |= MN_LOOPED;
     retval->tree = tree;
     break;
   case IDLN_TYPE_ENUM:
@@ -215,6 +219,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
 	  retval = newsub;
 
 	cursub->u.loop_info.contents = newsub;
+	cursub->u.loop_info.contents->flags |= MN_LOOPED;
 	cursub = newsub;
 
 	cursub->u.loop_info.loop_var = oidl_marshal_node_new(cursub, MARSHAL_DATUM, NULL);
@@ -226,6 +231,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
       }
 
       cursub->u.loop_info.contents = marshal_populate_in(orbit_idl_get_array_type(tree), cursub);
+      cursub->u.loop_info.contents->flags |= MN_LOOPED;
     }
     retval->tree = tree;
     break;
@@ -242,6 +248,7 @@ marshal_populate_in(IDL_tree tree, OIDL_Marshal_Node *parent)
     retval->u.loop_info.length_var->name = "_length";
 
     retval->u.loop_info.contents = marshal_populate_in(IDL_TYPE_SEQUENCE(tree).simple_type_spec, retval);
+    retval->u.loop_info.contents->flags |= MN_LOOPED;
     retval->tree = tree;
     break;
   case IDLN_TYPE_STRUCT:
@@ -374,6 +381,7 @@ orbit_idl_marshal_populate_out(IDL_tree tree)
 
     rvnode->name = ORBIT_RETVAL_VAR_NAME;
   }
+
  out1:
 
   for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
@@ -394,7 +402,7 @@ orbit_idl_assign_tmpvar_names(OIDL_Marshal_Node *node, int *counter)
   if(!(node->flags & MN_NEED_TMPVAR))
     return;
 
-  node->name = g_strdup_printf("v%d", *counter);
+  node->name = g_strdup_printf("_ORBIT_tmpvar_%d", *counter);
   node->flags |= MN_NSROOT;
 
   (*counter)++;

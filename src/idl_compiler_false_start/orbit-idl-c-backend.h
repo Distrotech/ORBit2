@@ -21,6 +21,8 @@ void orbit_idl_output_c_skelimpl(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, O
 
 void orbit_output_typecode(OIDL_C_Info *ci, IDL_tree ts);
 
+void c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
+void c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
 
 /* utils */
 typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;

@@ -2,7 +2,6 @@
 #include "orbit-idl-c-backend.h"
 
 /* TODO:
-   Inherited ops.
  */
 
 #include <string.h>
@@ -491,6 +490,12 @@ ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 }
 
 /************************/
+typedef struct {
+  FILE *of;
+  IDL_tree realif;
+} InheritedOutputInfo;
+static void ch_output_inherited_protos(IDL_tree curif, InheritedOutputInfo *ioi);
+
 static void
 ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
@@ -512,22 +517,88 @@ ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   case IDLN_INTERFACE:
     {
       IDL_tree sub;
+
+      if(IDL_INTERFACE(tree).inheritance_spec) {
+	InheritedOutputInfo ioi;
+	ioi.of = ci->fh;
+	ioi.realif = tree;
+	IDL_tree_traverse_parents(IDL_INTERFACE(tree).inheritance_spec, (GFunc)ch_output_inherited_protos, &ioi);
+      }
+
       for(sub = IDL_INTERFACE(tree).body; sub; sub = IDL_LIST(sub).next) {
 	IDL_tree cur;
 
 	cur = IDL_LIST(sub).data;
 
+	switch(IDL_NODE_TYPE(cur)) {
+	case IDLN_OP_DCL:
+	  orbit_cbe_op_write_proto(ci->fh, cur, "", FALSE);
+	  fprintf(ci->fh, ";\n");
+	  break;
+	case IDLN_ATTR_DCL:
+	  {
+	    OIDL_Attr_Info *ai;
+	    ai = cur->data;
 
-	if(IDL_NODE_TYPE(cur) != IDLN_OP_DCL) continue;
-
-	orbit_cbe_op_write_proto(ci->fh, cur, "", FALSE);
-	fprintf(ci->fh, ";\n");
+	    orbit_cbe_op_write_proto(ci->fh, ai->op1, "", FALSE);
+	    fprintf(ci->fh, ";\n");
+	    if(ai->op2) {
+	      orbit_cbe_op_write_proto(ci->fh, ai->op2, "", FALSE);
+	      fprintf(ci->fh, ";\n");
+	    }
+	  }
+	  break;
+	default:
+	  break;
+	}
       }
     }
     break;
   default:
     break;
   }
+}
+
+static void
+ch_output_inherited_protos(IDL_tree curif, InheritedOutputInfo *ioi)
+{
+  char *id, *realid;
+  IDL_tree curitem;
+
+  if(curif == ioi->realif)
+    return;
+
+  realid = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(ioi->realif).ident), "_", 0);
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(curif).ident), "_", 0);
+
+  for(curitem = IDL_INTERFACE(curif).body; curitem; curitem = IDL_LIST(curitem).next) {
+    IDL_tree curop = IDL_LIST(curitem).data;
+
+    switch(IDL_NODE_TYPE(curop)) {
+    case IDLN_OP_DCL:
+      fprintf(ioi->of, "#define %s_%s %s_%s\n",
+	      realid, IDL_IDENT(IDL_OP_DCL(curop).ident).str,
+	      id, IDL_IDENT(IDL_OP_DCL(curop).ident).str);
+      break;
+    case IDLN_ATTR_DCL:
+      {
+	OIDL_Attr_Info *ai = curop->data;
+	fprintf(ioi->of, "#define %s_%s %s_%s\n",
+		realid, IDL_IDENT(IDL_OP_DCL(ai->op1).ident).str,
+		id, IDL_IDENT(IDL_OP_DCL(ai->op1).ident).str);
+	if(ai->op2)
+	  fprintf(ioi->of, "#define %s_%s %s_%s\n",
+		  realid, IDL_IDENT(IDL_OP_DCL(ai->op2).ident).str,
+		  id, IDL_IDENT(IDL_OP_DCL(ai->op2).ident).str);
+      }
+      break;
+	default:
+	  break;
+    }
+  }
+
+  g_free(id);
+  g_free(realid);
 }
 
 static void
@@ -572,19 +643,19 @@ ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
       for(sub = IDL_INTERFACE(tree).body; sub; sub = IDL_LIST(sub).next) {
 	IDL_tree cur;
-	char *id;
 
 	cur = IDL_LIST(sub).data;
 
 	switch(IDL_NODE_TYPE(cur)) {
 	case IDLN_OP_DCL:
-	  doskel(cur);
+	  doskel(cur, ifid, ci);
 	  break;
 	case IDLN_ATTR_DCL:
 	  {
 	    OIDL_Attr_Info *ai = cur->data;
-	    doskel(ai->op1);
-	    if();
+	    doskel(ai->op1, ifid, ci);
+	    if(ai->op2)
+	      doskel(ai->op2, ifid, ci);
 	  }
 	  break;
 	default:
