@@ -35,11 +35,13 @@ GType linc_connection_get_type(void) G_GNUC_CONST;
 LINCConnection *linc_connection_from_fd(int fd, const LINCProtocolInfo *proto,
 					const char *remote_host_info,
 					const char *remote_serv_info,
-					gboolean was_initiated);
+					gboolean was_initiated,
+					LINCConnectionOptions options);
 
 LINCConnection *linc_connection_initiate(const char *proto_name,
 					 const char *remote_host_info,
-					 const char *remote_serv_info);
+					 const char *remote_serv_info,
+					 LINCConnectionOptions options);
 
 /* These do internal locking & caching */
 void linc_connection_ref(LINCConnection *cnx);

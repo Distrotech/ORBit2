@@ -1,5 +1,6 @@
 #include "config.h"
 #include <linc/linc-connection.h>
+#include <unistd.h>
 
 static void linc_connection_init       (LINCConnection      *cnx);
 static void linc_connection_destroy    (GObject             *obj);
@@ -94,7 +95,7 @@ linc_connection_class_init (LINCConnectionClass *klass)
 
   O_MUTEX_INIT(cnx_list.lock);
 
-  object_class->destroy = linc_connection_destroy;
+  object_class->shutdown = linc_connection_destroy;
 }
 
 static void
@@ -135,10 +136,11 @@ linc_connection_from_fd(int fd, const LINCProtocolInfo *proto,
 			LINCConnectionOptions options)
 {
   LINCConnection *cnx;
+  GIOChannel *gioc;
 
   cnx = g_object_new(linc_connection_get_type(), NULL);
 
-  cnx->gioc = g_io_channel_unix_new(fd);
+  gioc = g_io_channel_unix_new(fd);
   cnx->was_initiated = was_initiated;
   cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
   cnx->remote_host_info = g_strdup(remote_host_info);

@@ -1,16 +1,16 @@
-#ifndef GIOP_PRIVATE_H
-#define GIOP_PRIVATE_H 1
+#ifndef LINC_PRIVATE_H
+#define LINC_PRIVATE_H 1
 
 #include "config.h"
-#include <orbit/orbit-config.h>
-#include <orbit/IIOP/giop-types.h>
+#include <linc/linc-config.h>
+#include <linc/linc-types.h>
 
-extern GMainLoop *giop_loop;
+extern GMainLoop *linc_loop;
 
-#if ORBIT_SSL_SUPPORT
+#if LINC_SSL_SUPPORT
 #include <openssl/ssl.h>
-SSL_METHOD *giop_ssl_method;
-SSL_CTX *giop_ssl_ctx;
+extern SSL_METHOD *linc_ssl_method;
+extern SSL_CTX *linc_ssl_ctx;
 #endif
 
 #endif
