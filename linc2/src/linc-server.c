@@ -98,7 +98,7 @@ linc_server_dispose (GObject *obj)
 
 		cnx->priv->connections = l->next;
 		g_slist_free_1 (l);
-		linc_object_unref (o);
+		linc_connection_unref (o);
 	}
 
 	parent_class->dispose (obj);

@@ -45,6 +45,7 @@ typedef struct {
 void linc_exec_command (LINCCommand *cmd);
 void linc_connection_exec_disconnect (LINCCommandDisconnect *cmd);
 void linc_connection_exec_set_condition (LINCCommandSetCondition *cmd);
+void _linc_connection_thread_init (gboolean thread);
 
 /*
  * Really raw internals, exported for the tests
