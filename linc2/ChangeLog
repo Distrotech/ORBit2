@@ -1,10 +1,19 @@
+2001-11-26  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.1.10
+
+2001-11-23  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (linc_io_add_watch): fixup debugging.
+
 2001-11-25  Havoc Pennington  <hp@redhat.com>
 
 	* src/Makefile.am (liblinc_la_SOURCES): add linc-debug.h
 
 2001-11-22  Michael Meeks  <michael@ximian.com>
 
-	* src/linc.c (linc_io_add_watch): remove debug; doh.
+	* src/linc.c (linc_io_add_watch): remove
+	g_warning debug; doh.
 
 2001-11-22  Michael Meeks  <michael@ximian.com>
 

@@ -225,7 +225,6 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		break;
 
 	case LINC_DISCONNECTED:
-		d_printf ("State changed to disconnected\n");
 		linc_source_remove (cnx);
 		linc_close_fd (cnx);
 
