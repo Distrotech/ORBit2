@@ -669,9 +669,6 @@ linc_connection_flush_write_queue (LINCConnection *cnx)
 		}
 	}
 
-	fprintf (stderr, "Bogus double unlock ...\n");
-	LINC_MUTEX_UNLOCK (cnx->priv->write_lock);
-
 	d_printf ("Blocked write queue %s\n", done_writes ?
 		  "flushed & empty" : "still active");
 
