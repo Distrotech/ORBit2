@@ -18,10 +18,11 @@
  * Author: Phil Dawes <philipd@users.sourceforge.net>
  */
 
+#include <stdio.h>
+#include <string.h>
 
 #include "everything.h"
 #include "constants.h"
-#include <stdio.h>
 
 static  
 test_FixedLengthUnion
@@ -77,16 +78,52 @@ UnionServer_opVariable(PortableServer_Servant _servant,
   return retval;
 }
 
+static test_EnumUnion
+UnionServer_opMisc (PortableServer_Servant    servant,
+		    const test_unionSeq      *inSeq,
+		    const test_BooleanUnion  *inArg,
+		    test_ArrayUnion         **outArg,
+		    CORBA_Environment        *ev)
+{
+	test_EnumUnion retval;
+	int            i;
 
+	g_assert (inSeq->_length == 3);
+	g_assert (inSeq->_buffer [0]._d == 4);
+	g_assert (inSeq->_buffer [0]._u.z == CORBA_TRUE);
+	g_assert (inSeq->_buffer [1]._d == 2);
+	g_assert (!strcmp (inSeq->_buffer [1]._u.y, "blah"));
+	g_assert (inSeq->_buffer [2]._d == 55);
+	g_assert (inSeq->_buffer [2]._u.w == constants_LONG_IN);
 
-PortableServer_ServantBase__epv UnionServer_base_epv = {NULL,NULL,NULL};
+	g_assert (inArg->_d == 1);
+	g_assert (!strcmp (inArg->_u.y, "blah de blah"));
+
+	(*outArg) = test_ArrayUnion__alloc ();
+	(*outArg)->_d = 22;
+	for (i = 0; i < 20; i++) {
+		char *tmp;
+
+		tmp = g_strdup_printf ("Numero %d", i);
+		(*outArg)->_u.d [i] = CORBA_string_dup (tmp);
+		g_free (tmp);
+	}
+
+	retval._d   = test_red;
+	retval._u.x = constants_LONG_IN;
+
+	return retval;
+}
+
+PortableServer_ServantBase__epv UnionServer_base_epv = {NULL, NULL, NULL};
 
 POA_test_UnionServer__epv UnionServer_epv = {
-  NULL,
-  UnionServer_opFixed,
-  UnionServer_opVariable,
+	NULL,
+	UnionServer_opFixed,
+	UnionServer_opVariable,
+	UnionServer_opMisc,
 };
 
-POA_test_UnionServer__vepv UnionServer_vepv = {&UnionServer_base_epv,&UnionServer_epv};
+POA_test_UnionServer__vepv UnionServer_vepv = {&UnionServer_base_epv, &UnionServer_epv};
 
-POA_test_UnionServer UnionServer_servant = {NULL,&UnionServer_vepv};  /* Singleton */
+POA_test_UnionServer UnionServer_servant = {NULL, &UnionServer_vepv};  /* Singleton */
