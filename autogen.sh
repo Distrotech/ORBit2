@@ -54,6 +54,7 @@ done
 
 echo processing libIDL
 (cd libIDL; \
+    libtoolize --copy --force; \
     automake --add-missing; \
     aclocal; \
     autoconf)
