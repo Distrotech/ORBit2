@@ -1,3 +1,8 @@
+2002-09-17  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/orbit-idl-backend.c (orbit_idl_backend_output):
+	Warn if the specified idl compliler backend could not be found.
+
 2002-09-04  Mark McLoughlin  <mark@skynet.ie>
 
 	Re-implement the idl-compiler language backend loading.
