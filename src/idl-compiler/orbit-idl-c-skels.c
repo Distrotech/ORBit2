@@ -83,7 +83,8 @@ ck_output_skels(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci, int *idx)
       ck_output_skel(tree, ci);
     break;
   case IDLN_EXCEPT_DCL:
-    ck_output_except(tree, ci);
+    if (!rinfo->small_skels)
+      ck_output_except(tree, ci);
     break;
   default:
     break;

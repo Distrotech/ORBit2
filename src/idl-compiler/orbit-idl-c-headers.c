@@ -984,7 +984,7 @@ doskel(IDL_tree cur, OIDL_Run_Info *rinfo, char *ifid, OIDL_C_Info *ci)
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(cur).ident), "_", 0);
 
   if (rinfo->small_skels)
-    fprintf(ci->fh, "void _ORBIT_skel_%s("
+    fprintf(ci->fh, "void _ORBIT_skel_small_%s("
 	    "POA_%s *_ORBIT_servant, "
 	    "gpointer _ORBIT_retval, "
 	    "gpointer *_ORBIT_args, "

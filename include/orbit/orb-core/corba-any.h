@@ -37,5 +37,6 @@ void ORBit_marshal_value(GIOPSendBuffer *buf,
 			 gconstpointer *val,
 			 CORBA_TypeCode tc,
 			 ORBit_marshal_value_info *mi);
+size_t ORBit_gather_alloc_info(CORBA_TypeCode tc);
 
 #endif
