@@ -14,7 +14,8 @@ INCLUDES = \
 	-I$(top_srcdir)/src/orb		\
 	-I$(top_srcdir)/src		\
 	$(LINC_CFLAGS)			\
-	${GLIB_CFLAGS}
+	${GLIB_CFLAGS}			\
+	-DORBIT_STUB_DEBUG_LOCAL
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 	$(LINC_LIBS)					\

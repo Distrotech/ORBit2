@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #define DEBUG
+#define DEBUG_LOCAL_TEST
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -597,6 +598,16 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPConnection         *cnx;
 	GIOPMessageQueueEntry   mqe;
 
+#ifdef DEBUG_LOCAL_TEST
+	if (obj->bypass_obj) {
+		ORBit_small_invoke_skel (
+			ORBIT_STUB_GetServant (obj),
+			m_data, marshal_fn,
+			ret, args, ctx, ev);
+		return;
+	}
+#endif
+
 	g_return_if_fail (marshal_fn == NULL);
 
 	cnx = ORBit_object_get_connection (obj);
@@ -657,7 +668,24 @@ ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 			 CORBA_Context               ctx,
 			 CORBA_Environment          *ev)
 {
-	g_warning ("Stubbed - fill in for scripting");
+	ORBitSmallSkeleton        small_skel;
+	PortableServer_ClassInfo *klass;
+	ORBit_IMethod            *real_mdata;
+	gpointer                  imp;
+
+	klass = ORBIT_SERVANT_TO_CLASSINFO (servant);
+
+        small_skel = klass->small_relay_call(
+		servant, m_data->name, (gpointer *)&real_mdata, &imp);
+
+	if (real_mdata != m_data)
+		g_warning ("Wierd, new type data");
+
+	if (!imp) /* FIXME: is_a ? */
+		CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
+					    CORBA_COMPLETED_NO);
+	else
+		small_skel (servant, ret, args, ctx, ev, imp);
 }
 
 void

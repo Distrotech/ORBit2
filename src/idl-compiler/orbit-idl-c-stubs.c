@@ -92,6 +92,7 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 		fprintf (of, " " ORBIT_RETVAL_VAR_NAME ";\n");
 	}
 
+	fprintf (of, "#ifndef ORBIT_STUB_DEBUG_LOCAL\n");
 	{
 		IDL_tree curitem;
 		char *id;
@@ -118,8 +119,9 @@ cs_small_output_stub(IDL_tree tree, OIDL_C_Info *ci, int *idx)
 		fprintf(ci->fh, "ev);\n");
 	}
 
-	fprintf (of, "else { /* remote marshal */\n");
-
+	fprintf (of, "else");
+	fprintf (of, "#endif ORBIT_STUB_DEBUG_LOCAL\n");
+	fprintf (of, " { /* remote marshal */\n");
 	{
 		if (has_args)
 			cbe_small_flatten_args (tree, of, "_args");

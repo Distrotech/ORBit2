@@ -1,5 +1,9 @@
 2001-05-16  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_skel): impl.
+
+2001-05-16  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-object.c (CORBA_Object_non_existent): 
 	reverse polarity.
 
