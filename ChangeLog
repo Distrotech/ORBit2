@@ -1,3 +1,10 @@
+2002-01-09  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/test-performance.c: (create_mult_id_poa), (test_activation),
+	(main): add object activation/de-activation performance test.
+
+	* test/Makefile.am: upd.
+
 2002-01-07  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/services/name/Makefile.am: install idl files in

@@ -19,7 +19,12 @@ TESTS = test-dynany test-mem test-performance
 LDADD = $(top_builddir)/src/orb/libORBit-2.la
 
 test_mem_SOURCES=test-mem.c
-test_performance_SOURCES=test-performance.c
+
+test_performance_SOURCES = 	\
+	test-performance.c	\
+	test1.h			\
+	test1-skels.c		\
+	test1-common.c
 
 TEST_ANY_IDLOUT=test-any.h test-any-common.c test-any-stubs.c test-any-skels.c
 test_any_client_SOURCES=test-any-client.c $(TEST_ANY_IDLOUT)
