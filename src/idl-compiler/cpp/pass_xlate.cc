@@ -563,7 +563,7 @@ IDLPassXlate::exception_create_constructors (const IDLException &ex)
 			 << " (" << constructor_args << ")"
 			 << ';' << endl << endl;
 		
-		m_module << mod_indent << ex.get_cpp_typename ()
+		m_module << mod_indent << ex.get_cpp_method_prefix ()
 			 << "::" << ex.get_cpp_identifier ()
 			 << " (" << constructor_args << ")" << endl
 			 << mod_indent++ << '{' << endl;
@@ -587,7 +587,7 @@ IDLPassXlate::exception_create_converters (const IDLException &ex)
 	// _orbitcpp_set
 	m_header << indent << "void _orbitcpp_set (::CORBA_Environment *ev);" << endl;
 	
-	m_module << mod_indent << "void " << ex.get_cpp_typename ()
+	m_module << mod_indent << "void " << ex.get_cpp_method_prefix ()
 		 << "::_orbitcpp_set (::CORBA_Environment *ev)"
 		 << mod_indent++ << '{' << endl;
 	if (ex.size ())
