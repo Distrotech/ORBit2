@@ -1,3 +1,9 @@
+2001-07-13  Darin Adler  <darin@bentspoon.com>
+
+	* configure.in: Remove duplicate macros, and fix one of
+	the test invocations that was not using the x prefix
+	technique correctly.
+
 2001-07-13  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c (linc_connection_initiate): add
