@@ -455,7 +455,7 @@ cbe_stub_op_param_free(FILE *of, IDL_tree node, GString *tmpstr)
     if(orbit_cbe_type_is_fixed_length(ts))
       break;
     id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_TYPE_STRUCT(ts).ident), "_", 0);
-    fprintf(of, "%s__free(%s, NULL, CORBA_TRUE);\n", id, tmpstr->str);
+    fprintf(of, "%s__freekids(%s, NULL);\n", id, tmpstr->str);
     g_free(id);
     break;
   case IDLN_TYPE_STRING:
