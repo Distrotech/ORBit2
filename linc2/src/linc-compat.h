@@ -47,6 +47,10 @@
 #include <time.h>
 #ifdef HAVE_UTIME_H
 #  include <utime.h>
+#else
+#  ifdef HAVE_SYS_UTIME_H
+#    include <sys/utime.h>
+#  endif
 #endif
 #include <errno.h>
 #include <string.h>

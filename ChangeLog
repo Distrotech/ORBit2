@@ -1,5 +1,10 @@
 2005-01-26  Tor Lillqvist  <tml@novell.com>
 
+	* configure.in: Check also for utime.h, and sys/utime.h (where
+	MSVC keeps it, in case we some day want to be compileable by it).
+
+2005-01-26  Tor Lillqvist  <tml@novell.com>
+
 	* configure.in: Changes for Win32: Set automake conditional
 	OS_WIN32. Check for more headers and functions. Add WinSock
 	library to LIBS.

@@ -1,3 +1,8 @@
+2005-01-26  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-compat.h: Include sys/utime.h if that's where utime.h
+	is.
+
 2005-01-26  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
 
 	* src/linc-protocols.c: Add missing #include <utime.h>.
