@@ -1,3 +1,7 @@
+2001-08-27  Mark McLoughlin <mark@skynet.ie>
+
+	* linc.pc.in: require gobject and gthread.
+
 2001-08-24  Mark McLoughlin <mark@skynet.ie>
 	
 	* configure.in: remove unused --enable-linc-threadsafe
