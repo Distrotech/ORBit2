@@ -199,7 +199,7 @@ orbit_output_tcstruct_anon_subtypes_array (FILE     *fh,
 		if (!IDL_TYPE_STRUCT (node).member_list)
 			break;
 
-		fprintf (fh, "static CORBA_TypeCode anon_subtypes_array%d[] = {",
+		fprintf (fh, "static ORBIT2_MAYBE_CONST CORBA_TypeCode anon_subtypes_array%d[] = {",
 			 subtypes_id);
 
 		for (l = IDL_TYPE_STRUCT (node).member_list; l; l = IDL_LIST (l).next) {
@@ -250,7 +250,7 @@ orbit_output_tcstruct_anon_subtypes_array (FILE     *fh,
 		if (!IDL_TYPE_UNION (node).switch_body)
 			break;
 
-		fprintf (fh, "static CORBA_TypeCode anon_subtypes_array%d[] = {", subtypes_id);
+		fprintf (fh, "static ORBIT2_MAYBE_CONST CORBA_TypeCode anon_subtypes_array%d[] = {", subtypes_id);
 
 		for (l = IDL_TYPE_UNION (node).switch_body; l; l = IDL_LIST (l).next) {
 			IDL_tree  label, dcl;
@@ -293,7 +293,7 @@ orbit_output_tcstruct_anon_subtypes_array (FILE     *fh,
 
 		seqts = orbit_cbe_get_typespec (IDL_TYPE_SEQUENCE (node).simple_type_spec);
 
-		fprintf (fh, "static CORBA_TypeCode anon_subtypes_array%d[] = ", subtypes_id);
+		fprintf (fh, "static ORBIT2_MAYBE_CONST CORBA_TypeCode anon_subtypes_array%d[] = ", subtypes_id);
 
 		switch (IDL_NODE_TYPE (seqts)) {
 		case IDLN_INTERFACE:
@@ -317,7 +317,7 @@ orbit_output_tcstruct_anon_subtypes_array (FILE     *fh,
 		break;
 	case IDLN_TYPE_ARRAY:
 	case IDLN_IDENT:
-		fprintf (fh, "static CORBA_TypeCode anon_subtypes_array%d[] = ", subtypes_id);
+		fprintf (fh, "static ORBIT2_MAYBE_CONST CORBA_TypeCode anon_subtypes_array%d[] = ", subtypes_id);
 		fprintf (fh, "{(CORBA_TypeCode)&%s_struct};\n", substructname);
 		break;
 	default:
@@ -338,7 +338,7 @@ orbit_output_tcstruct_anon_sublabels_array (FILE     *fh,
 	    !IDL_TYPE_UNION (node).switch_body)
 		return default_index;
 
-	fprintf (fh, "static CORBA_long anon_sublabels_array%d[] = {", sublabels_id);
+	fprintf (fh, "static ORBIT2_MAYBE_CONST CORBA_long anon_sublabels_array%d[] = {", sublabels_id);
 
 	for (l = IDL_TYPE_UNION (node).switch_body; l; l = IDL_LIST (l).next)
 		for (label = IDL_CASE_STMT (IDL_LIST (l).data).labels; label;
@@ -968,7 +968,7 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 		fprintf (ci->fh, "#endif\n");
 	}
 
-	fprintf (ci->fh, "struct CORBA_TypeCode_struct %s_struct = {\n",
+	fprintf (ci->fh, "ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct %s_struct = {\n",
 				tci->structname);
 
 	orbit_output_tcstruct_parent (ci->fh);
