@@ -1,3 +1,8 @@
+2002-06-06  James M. Cape  <jcape@ignore-your.tv>
+
+	* include/linc/linc-connection.h
+	(LINC_CONNECTION_CLASS): fix typo in macro #84352
+
 2002-05-27  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.5.0
