@@ -1,3 +1,9 @@
+2001-09-21  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-typecode.c (CDR_get): remove
+	unused align param. Tidy up macros, hard code the 
+	CDR alignments. Fixes a forte build problem.
+
 2001-09-20  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/GIOP/giop-connection.c (giop_connection_handle_input):
