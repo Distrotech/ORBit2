@@ -1,3 +1,30 @@
+ORBit2-2.5.0
+
+	* bug fixes
+		+ HP/UX / ANSI fixes (Albert Chin)
+		+ imodule fixage (James Henstridge)
+			+ nested unions, structs, exceptions
+			+ fall-through case unions subnames
+			+ type mis-inclusion
+		+ request handler segv (Mark)
+		+ epv typecasts (Gergo)
+		+ improve generic marshaller (Michael)
+		+ fix TC_void's kind (Michael)
+		+ fix linc EOF locking interaction silly (Michael)
+		+ kill name server cruft (Mark)
+		+ fix linking for -pthread (Mark)
+		+ IDL compiler backend fix (Murray Cumming)
+		+ internal header / build fixes (Gergo Erdi)
+
+	* features
+		+ IDL compiler language backend API (Mark, Gergo)
+		  NB. see module 'orbitcpp' for C++ bindings [!]
+		+ CORBA_Typecode API (Gergo)
+		+ IDL -> IInterface converter (Mark)
+		+ improved imodule handling (Mark)
+		+ more regression tests (Michael, James)
+		+ de-bloated IDL compiler -6k LOBC (Mark)
+
 ORBit2-2.4.3
 
 	* bug fixes
