@@ -1,3 +1,8 @@
+2004-02-02  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/services/imodule/orbit-imodule.c: (build_cpp_args): Don't use
+	deprecated function. Closes bug #133168.
+
 2004-02-02  Michael Meeks  <michael@ximian.com>
 
 	* docs/internals/Makefile.am: add misc. bits.
