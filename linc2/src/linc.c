@@ -348,6 +348,8 @@ link_io_thread_fn (gpointer data)
 	 * c) unref all leakable resources.
 	 */
 
+	link_connections_close ();
+
 	/* A tad of shutdown */
 	LINK_MUTEX_LOCK (link_cmd_queue_lock);
 	if (LINK_WAKEUP_WRITE >= 0) {
