@@ -726,7 +726,7 @@ ORBit_classinfo_lookup_id(const char *type_id)
   if(!ci)
     return 0;
 
-  return ci->class_id;
+  return *ci->class_id;
 }
 
 void
@@ -1230,8 +1230,6 @@ ORBit_POA_set_policy(PortableServer_POA poa,
 		     CORBA_Policy policy,
 		     CORBA_Environment *ev)
 {
-  CORBA_unsigned_long value;
-
   switch(CORBA_Policy__get_policy_type(policy, ev))
     {
     case PortableServer_THREAD_POLICY_ID:

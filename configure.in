@@ -266,6 +266,7 @@ include/orbit/GIOP/Makefile
 include/orbit/util/Makefile
 include/orbit/orb-core/Makefile
 include/orbit/poa/Makefile
+include/orbit/dynamic/Makefile
 test/Makefile
 docs/Makefile
 docs/devel/Makefile

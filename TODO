@@ -1,10 +1,1 @@
 TODO:
-
-src/orb/IIOP:
-	I think it will need a rewrite :(
-	- Does not use GObject
-	- Doesn't handle different GIOP 1.0+ versions
-	- Not threaded
-	- No support for different transports
-
-. marshal funcs use g_alloca, very buggy.

@@ -40,6 +40,7 @@ struct CORBA_ORB_type {
   GPtrArray *poas;
   gpointer poa_current;
   gpointer poa_current_invocations;
+  gpointer default_ctx;
   GHashTable *initial_refs;
   ORBit_genrand genrand;
   guint life_flags;

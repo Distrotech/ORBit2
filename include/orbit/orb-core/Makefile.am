@@ -13,7 +13,9 @@ orbcoreinclude_HEADERS= \
 	orb-defs.h			\
 	orb-types.h			\
 	orbit-object.h			\
-	corba-defs.h
+	corba-defs.h			\
+	corba-context.h			\
+	corba-context-type.h
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT = corba-defs.h

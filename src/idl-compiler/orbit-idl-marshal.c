@@ -55,7 +55,7 @@ oidl_marshal_context_decide(OIDL_Marshal_Context *ctxt)
 static OIDL_Marshal_Method
 oidl_marshal_methods_avail(void)
 {
-  return MARSHAL_FUNC|MARSHAL_INLINE|MARSHAL_ANY;
+  return /* MARSHAL_FUNC| */ MARSHAL_INLINE|MARSHAL_ANY;
 }
 
 static gint

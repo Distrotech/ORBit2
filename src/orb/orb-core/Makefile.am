@@ -25,7 +25,8 @@ liborb_core_la_SOURCES=\
 	corba-any.c \
 	corba-context.c \
 	orb-core-private.h \
-	orb-core-export.h
+	orb-core-export.h \
+	corba-nvlist.c
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c
