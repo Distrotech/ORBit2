@@ -233,7 +233,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		case CORBA_tk_boolean:
 		case CORBA_tk_char:
 		case CORBA_tk_octet:
-			giop_send_buffer_append (buf, val, tc->length);
+			giop_send_buffer_append (buf, *val, tc->length);
 			break;
 		default: {
 			int align = tc->subtypes[0]->c_align;
