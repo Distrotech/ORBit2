@@ -1,3 +1,16 @@
+2003-03-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_sequence_alloc)
+	(ORBit_sequence_append, ORBit_sequence_set_size) 
+	(ORBit_sequence_concat): impl & stub sequence helpers.
+	(SKIP_ALIAS): use this throught.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_alloc_get_tcval): impl.
+
+	* src/orb/poa/poa.c (ORBit_POAObject_handle_request): 
+	only lookup CORBA_Object small skels in-proc.
+
 2003-03-03  Michael Meeks  <michael@localhost.localdomain>
 
 	* src/orb/poa/poa.c (ORBit_POA_handle_request):

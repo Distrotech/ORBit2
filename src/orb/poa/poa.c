@@ -1061,7 +1061,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		small_skel = klass->impl_finder (
 			pobj->servant, opname, (gpointer *)&m_data, &imp);
 
-	/* FIXME: we can only do that in-proc [!] */
+	/* FIXME: we can only do that in-proc (and for _is_a [and others?]) */
 	if (!small_skel)
 		small_skel = get_small_skel_CORBA_Object (
 			pobj->servant, opname,
