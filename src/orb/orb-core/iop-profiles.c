@@ -439,7 +439,7 @@ IOP_generate_profiles (CORBA_Object obj)
   }
 
   if (!obj->oki && adaptor_obj)
-    obj->oki = adaptor_obj->interface->object_to_objkey (adaptor_obj);
+    obj->oki = ORBit_OAObject_object_to_objkey (adaptor_obj);
 
   /* share the profiles between everyone. */
   if (common_profiles) {
