@@ -38,6 +38,9 @@ The ORBit2 FAQ - v 0.1
 		+ why should I not use _release ?
 		+ why can't I keep a pointer to an argument ?
 
+	+ Errors.
+		+ assertion failed: (ORBIT_ALIGNOF_CORBA_POINTER > 2) ?
+
 * What is ORBit2 ?
 
 	ORBit2 is the next revision in the ORBit development plan. It
@@ -485,3 +488,13 @@ function to copy any value, specified by type:
 }
 
 	is correct.
+
+* Errors.
+
+** assertion failed: (ORBIT_ALIGNOF_CORBA_POINTER > 2) ?
+
+	This error usually occurs when the compiler alignment
+configure check fails to work correctly. Have a look at the
+ORBIT_ALIGNOF defines in include/orbit/orbit-config.h. If these are
+all zeros, then you need to look at config.log and figure out why
+configure if coming up with these bogus values.
