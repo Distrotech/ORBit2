@@ -27,10 +27,13 @@ struct _GIOPRecvBuffer {
   GIOPMessageBufferState state;
   GIOPVersion giop_version;
   gulong left_to_read;
+  gboolean free_body : 1;
 };
 
 #define giop_msg_conversion_needed(msg) giop_endian_conversion_needed(GIOP_MSG(msg)->header.flags)
 GIOPRecvBuffer *giop_recv_buffer_use_buf(gboolean is_auth);
+GIOPRecvBuffer *giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf);
+GIOPRecvBuffer *giop_recv_buffer_use_encaps(guchar *mem, gulong len);
 
 GIOPRecvBuffer *giop_recv_buffer_use_reply(CORBA_unsigned_long request_id, gboolean block_for_reply);
 GIOPRecvBuffer *giop_recv_buffer_use_locate_reply(CORBA_unsigned_long request_id, gboolean block_for_reply);

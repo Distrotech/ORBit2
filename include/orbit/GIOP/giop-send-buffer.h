@@ -23,6 +23,7 @@ struct _GIOPSendBuffer {
   GIOPIndirectChunk *indirects;
   guint num_indirects_alloced, num_indirects_used;
   GIOPVersion giop_version;
+  guint header_size;
 };
 
 GIOPSendBuffer *giop_send_buffer_use(GIOPVersion giop_version);

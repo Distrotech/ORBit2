@@ -5,3 +5,4 @@
 #include "GIOP.idl"
 #include "BiDirPolicy.idl"
 #include "conv_frame.idl"
+#include "orbit-specific.idl"

@@ -54,6 +54,7 @@ giop_send_buffer_use(GIOPVersion giop_version)
   g_assert(sizeof(retval->msg.header) == 12);
   giop_send_buffer_append(retval, (guchar *)&retval->msg.header, 12);
   retval->msg.header.message_size = 0;
+  retval->header_size = 12;
 
   return retval;
 }
@@ -340,7 +341,7 @@ giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary)
   register gulong align_amt, ms;
 
   /* 1. Figure out how much to align by */
-  ms = buf->msg.header.message_size + 12 /* size of message header */;
+  ms = buf->msg.header.message_size + buf->header_size;
   align_amt = ALIGN_VALUE(ms, boundary);
 
   /* 2. Do the alignment */
@@ -363,7 +364,7 @@ giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx)
 
   O_MUTEX_LOCK(cnx->outgoing_mutex);
 
-  retval = linc_connection_writev((LINCConnection *)cnx, buf->iovecs, buf->num_used, buf->msg.header.message_size + 12);
+  retval = linc_connection_writev((LINCConnection *)cnx, buf->iovecs, buf->num_used, buf->msg.header.message_size + buf->header_size);
 
   O_MUTEX_UNLOCK(cnx->outgoing_mutex);
 

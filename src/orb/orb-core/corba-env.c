@@ -3,6 +3,20 @@
 #include <orbit/orb-core/corba-environment.h>
 
 void
+CORBA_exception_set_system(CORBA_Environment *ev,
+			   CORBA_char *except_repos_id,
+			   CORBA_completion_status completed)
+{
+  CORBA_SystemException *se;
+
+  se = CORBA_SystemException__alloc();
+  /* I have never seen a case where 'minor' is actually necessary */
+  se->minor = 0 /* minor */;
+  se->completed = completed;
+  CORBA_exception_set(ev, CORBA_SYSTEM_EXCEPTION, except_repos_id, se);
+}
+
+void
 CORBA_exception_set(CORBA_Environment *ev,
 		    CORBA_exception_type major,
 		    CORBA_char *except_repos_id,
@@ -13,8 +27,6 @@ CORBA_exception_set(CORBA_Environment *ev,
   ev->_major = major;
   if(major != CORBA_NO_EXCEPTION)
     {
-      CORBA_Environment subev = {CORBA_NO_EXCEPTION};
-
       ev->_id = CORBA_string_dup(except_repos_id);
       ev->_any._type = TC_null; /* CORBA sucks */
       ev->_any._value = param;

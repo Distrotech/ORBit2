@@ -24,4 +24,6 @@
 
 gulong ORBit_wchar_strlen(CORBA_wchar *wstr);
 
+#define num2hexdigit(n) (((n)>9)?((n)+'a'-10):((n)+'0'))
+
 #endif

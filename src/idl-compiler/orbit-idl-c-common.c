@@ -16,6 +16,7 @@ orbit_idl_output_c_common(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_I
 		   " */\n\n");
   fprintf(ci->fh, "#include <string.h>\n");
   fprintf(ci->fh, "#define ORBIT_IDL_C_COMMON\n");
+  fprintf(ci->fh, "#define %s_COMMON\n", ci->c_base_name);
   fprintf(ci->fh, "#include \"%s.h\"\n\n", ci->base_name);
   fprintf(ci->fh, "#include <orbit/GIOP/giop.h>\n");
 
@@ -492,7 +493,12 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
 
   ctmp = orbit_cbe_get_typespec_str(tree);
 
-  if(tmi->mtype & MARSHAL_FUNC)
+  fprintf(ci->fh, "#if ");
+  orbit_cbe_id_cond_hack(ci->fh, "MARSHAL_IMPL", ctmp, ci->c_base_name);
+  fprintf(ci->fh, " && !defined(ORBIT_MARSHAL_%s)\n", ctmp);
+  fprintf(ci->fh, "#define ORBIT_MARSHAL_%s 1\n\n", ctmp);
+
+  if(tmi->avail_mtype & MARSHAL_FUNC)
     {
       pi.flags = PI_BUILD_FUNC;
       pi.where = MW_Null|MW_Heap;
@@ -510,7 +516,7 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
       fprintf(ci->fh, "}\n");
     }
 
-  if(tmi->dmtype & MARSHAL_FUNC)
+  if(tmi->avail_dmtype & MARSHAL_FUNC)
     {
       pi.flags = PI_BUILD_FUNC;
       pi.where = MW_Null;
@@ -531,6 +537,7 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
       fprintf(ci->fh, "_ORBIT_demarshal_error:\nreturn TRUE;\n");
       fprintf(ci->fh, "}\n");
     }
+  fprintf(ci->fh, "#endif\n\n");
   g_free(ctmp);
 }
 

@@ -7,18 +7,18 @@ INCLUDES=-I. -I$(top_srcdir)/include \
 	@LINC_CFLAGS@
 
 liborb_core_la_SOURCES=\
+	$(IOP_IDLOUT) \
 	$(IDLOUT) \
 	$(POA_IDLOUT) \
-	$(IOP_IDLOUT) \
 	corba-orb.c \
 	orbhttp.c \
 	orbhttp.h \
 	orbit-object.c
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
-IDLOUT = corba-defs-common.c
-POA_IDLOUT = poa-defs-common.c
-IOP_IDLOUT = iop-defs-common.c
+IDLOUT=corba-defs-common.c
+POA_IDLOUT=poa-defs-common.c
+IOP_IDLOUT=iop-defs-common.c
 
 $(IDLOUT) runidl: corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
@@ -57,3 +57,5 @@ $(IOP_IDLOUT) runidl_iop: iop-defs.idl $(IDL)
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done
 	mv -f iop-defs.h $(top_builddir)/include/orbit/orb-core/iop-defs.h
+
+BUILT_SOURCES=$(IDLOUT) $(POA_IDLOUT) $(IOP_IDLOUT)

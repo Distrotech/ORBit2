@@ -455,6 +455,7 @@ giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state,
 	goto msg_error;
 
       buf->message_body = g_malloc(buf->msg.header.message_size+12);
+      buf->free_body = TRUE;
       buf->cur = buf->message_body + 12;
       buf->end = buf->cur + buf->msg.header.message_size;
       buf->left_to_read = buf->msg.header.message_size;
@@ -506,11 +507,44 @@ giop_recv_buffer_use_buf(gboolean is_auth)
   return retval;
 }
 
+GIOPRecvBuffer *
+giop_recv_buffer_use_encaps(guchar *mem, gulong len)
+{
+  GIOPRecvBuffer *buf = giop_recv_buffer_use_buf(FALSE);
+
+  buf->cur = buf->message_body = mem;
+  buf->end = buf->cur + len;
+  buf->msg.header.message_size = len;
+  buf->giop_version = GIOP_LATEST;
+  buf->left_to_read = 0;
+  buf->state = GIOP_MSG_READY;
+  buf->free_body = FALSE;
+
+  return buf;
+}
+
+GIOPRecvBuffer *
+giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
+{
+  CORBA_unsigned_long len;
+
+  buf->cur = ALIGN_ADDRESS(buf->cur, 4);
+  if((buf->cur + 4) >= buf->end)
+    return NULL;
+  len = *(CORBA_unsigned_long *)buf->cur;
+  buf->cur += 4;
+
+  return giop_recv_buffer_use_encaps(buf->cur, len);
+}
+
 void
 giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 {
   O_MUTEX_LOCK(recv_buffer_list_lock);
-  g_free(buf->message_body); buf->message_body = NULL;
+  if(buf->free_body)
+    {
+      g_free(buf->message_body); buf->message_body = NULL;
+    }
   recv_buffer_list = g_slist_prepend(recv_buffer_list, buf);
   O_MUTEX_UNLOCK(recv_buffer_list_lock);
 }

@@ -1,6 +1,7 @@
 #ifndef GIOP_SERVER_H
 #define GIOP_SERVER_H 1
 
+#include <orbit/GIOP/giop-basics.h>
 #include <linc/linc.h>
 
 #define GIOP_TYPE_SERVER (giop_server_get_type())
@@ -19,6 +20,7 @@
 
 typedef struct {
   LINCServer parent;
+  GIOPVersion giop_version;
 } GIOPServer;
 
 typedef struct {
@@ -26,7 +28,8 @@ typedef struct {
 } GIOPServerClass;
 
 GType giop_server_get_type(void) G_GNUC_CONST;
-GIOPServer *giop_server_new(const char *proto_name,
+GIOPServer *giop_server_new(GIOPVersion giop_version,
+			    const char *proto_name,
 			    const char *local_host_info, const char *local_serv_info,
 			    LINCConnectionOptions create_options);
 

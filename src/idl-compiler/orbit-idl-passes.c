@@ -277,6 +277,9 @@ oidl_get_tree_alignment(IDL_tree tree)
   case IDLN_TYPE_CHAR:
     itmp = ALIGNOF_CORBA_CHAR;
     break;
+  case IDLN_TYPE_WIDE_CHAR:
+    itmp = ALIGNOF_CORBA_SHORT;
+    break;
   case IDLN_TYPE_BOOLEAN:
     itmp = ALIGNOF_CORBA_BOOLEAN;
     break;
@@ -772,6 +775,7 @@ oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
   node->use_count--;
 }
 
+/* Return value of 0 means recvbuf, 1 means local, 2 means no change */
 static gint
 oidl_node_pass_set_first_curptr_usage(OIDL_Marshal_Node *node)
 {
@@ -814,7 +818,14 @@ oidl_node_pass_set_first_curptr_usage(OIDL_Marshal_Node *node)
   case MARSHAL_SWITCH:
     retval = oidl_node_pass_set_first_curptr_usage(node->u.switch_info.discrim);
     for(ltmp = node->u.switch_info.cases; ltmp; ltmp = g_slist_next(ltmp))
-      itmp = oidl_node_pass_set_first_curptr_usage(ltmp->data);
+      {
+	itmp = oidl_node_pass_set_first_curptr_usage(ltmp->data);
+	if(retval == 2)
+	  retval = itmp;
+      }
+    break;
+  case MARSHAL_CASE:
+    retval = oidl_node_pass_set_first_curptr_usage(node->u.case_info.contents);
     break;
   default:
     g_assert_not_reached();

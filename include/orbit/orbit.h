@@ -10,11 +10,8 @@
 #ifndef ORBIT_H
 #define ORBIT_H 1
 
-#include <orbit/util/orbit-util.h>
-#include <orbit/GIOP/giop-basics.h>
-#include <orbit/orb-core/orb-core.h>
-#ifndef ORBIT_IDL_C_COMMON
+#include <orbit/orbit-types.h>
 #include <orbit/GIOP/giop.h>
-#endif
+#include <orbit/orb-core/orb-core.h>
 
 #endif

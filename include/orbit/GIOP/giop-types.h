@@ -9,6 +9,7 @@
 
 #include <orbit/orb-core/corba-defs.h>
 #include <orbit/orb-core/iop-defs.h>
+
 #include <orbit/GIOP/giop-basics.h>
 
 #define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
@@ -16,14 +17,6 @@
 typedef enum {
   GIOP_CONNECTION_SSL
 } GIOPConnectionOptions;
-
-typedef enum {
-  GIOP_1_0,
-  GIOP_1_1,
-  GIOP_1_2,
-  GIOP_LATEST = GIOP_1_2,
-  GIOP_NUM_VERSIONS
-} GIOPVersion;
 
 extern const char giop_version_ids[GIOP_NUM_VERSIONS][2];
 
