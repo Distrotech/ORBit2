@@ -49,3 +49,4 @@ ORBit_RootObject_release(gpointer obj)
 
   O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
 }
+

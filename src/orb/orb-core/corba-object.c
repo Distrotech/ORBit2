@@ -99,7 +99,7 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   IOP_delete_profiles (&obj->forward_locations);
 
   if ( obj->pobj != NULL )
-    ORBit_RootObject_release (obj->pobj);
+    ORBit_RootObject_release_T (obj->pobj);
 
   g_free (obj);
 }
@@ -430,5 +430,5 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
 gpointer
 CORBA_Object__freekids(gpointer mem, gpointer dat)
 {
-  return mem + sizeof(CORBA_Object);
+  return CORBA_Object__freekids_T(mem, dat);
 }

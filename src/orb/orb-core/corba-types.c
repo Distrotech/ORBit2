@@ -8,7 +8,7 @@ CORBA_sequence__freekids(gpointer mem, gpointer dat)
   CORBA_sequence_CORBA_octet *seq = mem;
 
   if(seq->_release)
-    CORBA_free(seq->_buffer);
+    ORBit_free_T(seq->_buffer);
 
   return seq + 1;
 }

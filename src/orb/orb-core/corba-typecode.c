@@ -182,7 +182,7 @@ CORBA_TypeCode__freekids(gpointer mem, gpointer dat)
   tp = mem;
   t = *tp;
 
-  CORBA_Object_release((CORBA_Object)t, NULL);
+  ORBit_RootObject_release_T (t);
 
   return tp + 1;
 }
@@ -429,10 +429,10 @@ ORBit_TypeCode_free_fn(ORBit_RootObject obj_in)
 	g_free((char*)(tc->subnames[i]));
 
       if(tc->subtypes)
-	ORBit_RootObject_release(tc->subtypes[i]);
+	ORBit_RootObject_release_T(tc->subtypes[i]);
 
       if(tc->sublabels)
-	CORBA_any__freekids(&tc->sublabels[i], NULL);
+	CORBA_any__freekids_T(&tc->sublabels[i], NULL);
     }
 
   g_free(tc->subnames);
@@ -440,7 +440,7 @@ ORBit_TypeCode_free_fn(ORBit_RootObject obj_in)
   g_free(tc->sublabels);
 
   if(tc->discriminator)
-    ORBit_RootObject_release(tc->discriminator);
+    ORBit_RootObject_release_T(tc->discriminator);
 
   g_free(tc);
 }

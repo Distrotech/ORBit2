@@ -751,9 +751,9 @@ CORBA_any__freekids(gpointer mem, gpointer dat)
   CORBA_any *t;
   t = mem;
   if(t->_type)
-    ORBit_RootObject_release ((ORBit_RootObject)t->_type);
+    ORBit_RootObject_release_T ((ORBit_RootObject)t->_type);
   if(t->_release)
-    ORBit_free(t->_value);
+    ORBit_free_T(t->_value);
   return t + 1;
 }
 

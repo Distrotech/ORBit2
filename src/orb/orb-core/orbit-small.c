@@ -600,7 +600,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	CORBA_completion_status completion_status;
 	GIOPConnection         *cnx;
 	GIOPMessageQueueEntry   mqe;
-	ORBit_POAInvocation     invoke_rec;
+	ORBit_POAInvocation     invoke_rec G_GNUC_UNUSED;
 
 	ORBIT_STUB_PreCall (obj, invoke_rec);
 

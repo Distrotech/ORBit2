@@ -1,3 +1,29 @@
+2001-07-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POA_free_fn),
+	(ORBit_POACurrent_free_fn): fix deadlocks
+
+	* src/orb/poa/clean-poa.c (ORBit_POACurrent_free_fn),
+	(ORBit_POA_free_fn): ditto.
+
+	* src/orb/orb-core/corba-typecode.c (ORBit_TypeCode_free_fn):
+	kill deadlocks.
+
+	* src/orb/dynamic/dynany.c (DynamicAny_DynAny_release_fn):
+	use ORBit_free_T to stop deadlock & don't lock on invalidate.
+	(dynany_invalidate): add 'lock' argument.
+	update all references.
+
+	* src/orb/orb-core/allocators.c (ORBit_free): take
+	the RootObject_lifecycle_lock, and call
+	(ORBit_free_T): split out.
+	(ORBit_freekids_via_TypeCode): split out to
+	(ORBit_freekids_via_TypeCode_T): here & kill deadlock plague.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): use the non-locking
+	release on obj->pobj.
+
 2001-07-10  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: Bump version to 2.3.91
