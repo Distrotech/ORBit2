@@ -1,10 +1,11 @@
-Makefile
 Makefile.in
+Makefile
 .deps
 .libs
+*_built
 *-stubs.c
 *-skels.c
 *-common.c
-everything.h
-client
-server
+baa.h
+foo.h
+test-inhibit
