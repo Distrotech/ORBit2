@@ -1623,7 +1623,7 @@ testPingPong (test_TestFactory   factory,
 			"the write has failed & that the connection is "
 			"now saturated ";
 		char *str;
-		gboolean broken;
+		gboolean broken = FALSE;
 
 		g_assert (cnx != NULL);
 		ORBit_connection_set_max_buffer (cnx, 10000);

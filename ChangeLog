@@ -1,3 +1,8 @@
+2002-06-18  Alexander Larsson  <alla@lysator.liu.se>
+
+	* test/everything/client.c (testPingPong):
+	Initialize broken.
+
 2002-06-18  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-send-buffer.c
