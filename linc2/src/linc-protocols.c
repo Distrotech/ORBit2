@@ -423,7 +423,7 @@ linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
  */
 static gboolean
 linc_protocol_get_sockinfo_ipv46 (struct hostent  *host,
-				  in_port_t        port,
+				  guint            port,
 				  gchar          **hostname,
 				  char           **portnum)
 {
