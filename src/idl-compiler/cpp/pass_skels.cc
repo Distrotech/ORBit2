@@ -125,7 +125,7 @@ IDLPassSkels::create_method_skel (const IDLInterface &iface,
 void
 IDLPassSkels::create_method_proto (const IDLMethod &method)
 {
-	m_header << indent << "virtual " << method.stub_decl_proto ();
+	m_header << indent << "virtual " << method.stub_decl_proto () << endl;
 
 	m_header << ++indent << "throw (" IDL_CORBA_NS "::SystemException";
 

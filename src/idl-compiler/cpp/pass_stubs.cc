@@ -83,9 +83,11 @@ IDLPassStubs::create_method_stub (const IDLMethod &method)
 
 	// Prepare parameters and return value container
 	method.stub_do_pre (m_module, mod_indent);
-
+	m_module << endl;
+	
 	// Do the call
 	method.stub_do_call (m_module, mod_indent);
+	m_module << endl;
 	
 	// De-init parameters and return value container,
 	// FIXME: handle return value

@@ -170,6 +170,16 @@ public:
 				    const string     &cpp_id,
 				    const string     &c_id,
 				    const IDLTypedef *active_typedef = 0) const;
+private:
+	void fill_c_array (ostream      &ostr,
+			   Indent       &indent,
+			   const string &cpp_id,
+			   const string &c_id) const;
+
+	void fill_cpp_array (ostream      &ostr,
+			     Indent       &indent,
+			     const string &cpp_id,
+			     const string &c_id) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLARRAY
