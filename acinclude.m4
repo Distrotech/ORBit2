@@ -32,6 +32,9 @@ AC_DEFUN(AC_CHECK_ALIGNOF,
 			AC_CV_NAME=0, AC_CV_NAME=0)
 		])dnl
 	AC_MSG_RESULT($AC_CV_NAME)
+	if test "$AC_CV_NAME" = "0" ; then
+		AC_MSG_ERROR([Failed to find alignment. Check config.log for details.])
+	fi
 	LIBS="$align_save_libs"
 	AC_TYPE_NAME=$AC_CV_NAME
 	AC_SUBST(AC_TYPE_NAME)

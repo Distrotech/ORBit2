@@ -1,3 +1,10 @@
+2002-01-25  Mark McLoughlin  <mark@skynet.ie>
+
+	* acinclude.m4: (AC_CHECK_ALIGNOF): error out if an alignment
+	is found to be zero.
+
+	* test/everything/client.c: (make_large_str_seq): fix leak.
+
 2002-01-24  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-typecode.c
