@@ -19,6 +19,18 @@ void         ORBit_set_initial_reference (CORBA_ORB    orb,
 					  gchar       *identifier,
 					  gpointer     objref);
 
+CORBA_Object ORBit_object_by_corbaloc (CORBA_ORB          orb,
+				       const gchar       *corbaloc,
+				       CORBA_Environment *ev);
+
+CORBA_char*  ORBit_object_to_corbaloc (CORBA_Object       obj,
+				       CORBA_Environment *ev);
+
+CORBA_char* ORBit_corbaloc_from       (GSList            *profile_list, 
+				       ORBit_ObjectKey   *object_key);
+
+GSList*     ORBit_corbaloc_parse       (const gchar      *corbaloc);
+
 /* profile methods. */
 GSList          *IOP_start_profiles       (CORBA_ORB        orb);
 void             IOP_shutdown_profiles    (GSList          *profiles);

@@ -23,15 +23,21 @@ static GMutex *object_lock = NULL;
 static guint
 g_CORBA_Object_hash (gconstpointer key)
 {
-	guint        retval;
+	/*      "type_id" is not mandatory (might be ""), therefor it
+	 *      is not appropriate for comparison & hashing  */
+
+/* 	guint        retval; */
 	CORBA_Object obj = (gpointer) key;
 
-	retval = obj->type_qid;
+/* 	retval = obj->type_qid; */
+
+/* 	g_assert (obj->object_key != NULL); */
+/* 	retval ^= IOP_ObjectKey_hash (obj->object_key); */
+
+/* 	return retval; */
 
 	g_assert (obj->object_key != NULL);
-	retval ^= IOP_ObjectKey_hash (obj->object_key);
-
-	return retval;
+        return IOP_ObjectKey_hash (obj->object_key);
 }
 
 static gboolean
@@ -548,6 +554,68 @@ ORBit_demarshal_object (CORBA_Object   *obj,
 		*obj = CORBA_OBJECT_NIL;
 
 	return FALSE;
+}
+
+CORBA_char*
+ORBit_object_to_corbaloc (CORBA_Object       obj,
+                          CORBA_Environment *ev)
+{
+        CORBA_char      *retval = NULL;
+
+        if (!obj) {
+                dprintf (OBJECTS, "Corbaloc NIL object\n");
+                return g_strdup ("corbaloc::/");
+        }
+
+        OBJECT_LOCK (obj);
+
+        if (!obj->profile_list) {
+                IOP_generate_profiles (obj);
+                ORBit_register_objref (obj);
+        }
+
+        if (!(retval = ORBit_corbaloc_from (obj->profile_list,
+                                            obj->object_key))) {
+                CORBA_exception_set_system (
+                        ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO);
+                /* FIXME, set minor code with vendor specific id */
+        }
+ 
+        OBJECT_UNLOCK (obj);
+         
+        return retval;
+}
+
+
+CORBA_Object
+ORBit_object_by_corbaloc  (CORBA_ORB          orb,
+                           const gchar       *corbaloc,
+                           CORBA_Environment *ev)
+{
+        CORBA_Object  retval       = CORBA_OBJECT_NIL;
+        GSList       *profile_list = NULL;
+
+        g_return_val_if_fail (orb!=NULL,      CORBA_OBJECT_NIL);
+        g_return_val_if_fail (corbaloc!=NULL, CORBA_OBJECT_NIL);
+        g_return_val_if_fail (ev!=NULL,       CORBA_OBJECT_NIL);
+
+        if (!(profile_list = ORBit_corbaloc_parse (corbaloc)))  {
+                CORBA_exception_set_system (
+                        ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO);
+                /* FIXME, set minor code with vendor specific id */
+                return CORBA_OBJECT_NIL;
+        }
+
+        if (!(retval = ORBit_objref_find (orb, "", profile_list))) {
+                CORBA_exception_set_system (
+                        ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO);
+                /* FIXME, set minor code with vendor specific id */
+
+                IOP_delete_profiles (orb, &profile_list);
+                return CORBA_OBJECT_NIL;
+        }
+
+        return retval;
 }
 
 CORBA_boolean
