@@ -1,3 +1,26 @@
+2003-03-18  Shailesh Mittal  <shailesh.mittal@wipro.com>
+	* configure.in:
+	  Added checks for getaddrinfo() and getnameinfo().
+
+	* src/linc-connection.c (linc_connection_initiate):
+	  Modified so now it falls back to IPv4 if IPv6 address 
+	  is not there.
+
+	* src/linc-protocols.c 
+	  (linc_protocol_is_local_ipv46):It has been modified 
+	  in such a fashion that it works for IPv6 addresses as well.
+	  gethostbyname doesn't produce right results on all systems.
+	  (linc_protocol_get_sockaddr_ipv6):Also modified to work 
+	  with IPv6 addresses.
+	  (linc_protocol_get_sockinfo_ipv46):Signature changed.
+	  Added const char *host in place of struct hostent *host as
+	  the gethostbyname has been called twice for the same operation.
+	  (linc_protocol_get_sockinfo_ipv4):char *hname is passed
+	  in place of struct hostent to call for get_sockinfo_ipv46.
+	  (linc_protocol_get_sockinfo_ipv6):Modified to support IPv6
+	  addresses and char * is passed to linc_protocol_is_local_ipv46 
+	  in place of struct hostent *.
+
 2002-10-30  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-source.c (linc_io_add_watch_fd):

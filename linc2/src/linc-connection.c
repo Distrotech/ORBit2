@@ -340,6 +340,13 @@ linc_connection_initiate (LINCConnection        *cnx,
 	saddr = linc_protocol_get_sockaddr (
 		proto, host, service, &saddr_len);
 
+	if (!saddr && (strcmp (proto_name, "IPv6") ==0)) {/* Falling back to IPv4 */
+		proto = linc_protocol_find ("IPv4");
+		
+		saddr = linc_protocol_get_sockaddr (
+			proto, host, service, &saddr_len);
+	}
+
 	if (!saddr)
 		return FALSE;
 

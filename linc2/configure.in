@@ -112,6 +112,14 @@ AC_CHECK_FUNCS(poll basename)
 AC_CHECK_FUNC(res_init,,[AC_CHECK_LIB(resolv,res_init)])
 AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
+AC_CHECK_FUNC(getaddrinfo,,[AC_CHECK_LIB(nsl,getaddrinfo)])
+if test x"$ac_cv_func_getaddrinfo" = "xyes" ; then
+	AC_DEFINE(HAVE_GETADDRINFO)
+fi
+AC_CHECK_FUNC(getnameinfo,,[AC_CHECK_LIB(nsl,getnameinfo)])
+if test x"$ac_cv_func_getnameinfo" = "xyes" ; then
+	AC_DEFINE(HAVE_GETNAMEINFO)
+fi
 have_inet_pton=no
 AC_CHECK_FUNC(inet_pton,,)
 if test x"$ac_cv_func_inet_pton" = "xyes" ; then
