@@ -34,7 +34,7 @@
 #include <string.h>
 
 #define CHECK_URI(str) \
-(!strncmp(str, "IOR:", 4) \
+(!strncmp(str, "IOR:", strlen("IOR:")) \
  || !strncmp(str, "iiop://", strlen("iiop://")) \
  || !strncmp(str, "iioploc://", strlen("iioploc://")))
 
@@ -55,6 +55,7 @@ static void	orbHTTPClose	(void *ctx);
 #define ORB_HTTP_MAX_REDIR	10
 
 #define ORB_HTTP_CHUNK	4096
+#define ORB_TEMP_BUF_SIZE 4096
 
 #define ORB_HTTP_CLOSED	0
 #define ORB_HTTP_WRITE	1
@@ -125,7 +126,7 @@ done:
 static void
 orbHTTPScanURL(orbHTTPCtxtPtr ctxt, const char *URL) {
     const char *cur = URL;
-    char buf[4096];
+    char buf[ORB_TEMP_BUF_SIZE];
     int index = 0;
     int port = 0;
 
@@ -206,7 +207,7 @@ static void
 orbHTTPScanProxy(const char *URL)
 {
     const char *cur = URL;
-    char buf[4096];
+    char buf[ORB_TEMP_BUF_SIZE];
     int index = 0;
     int port = 0;
 
@@ -340,15 +341,12 @@ orbHTTPRecv (orbHTTPCtxtPtr ctxt)
     fd_set rfd;
     struct timeval tv;
 
+#define ORB_HTTP_DYN_BUFSIZE 65000
 
     while (ctxt->state & ORB_HTTP_READ) {
 	if (ctxt->in == NULL) {
-	    ctxt->in = (char *) g_malloc(65000 * sizeof(char));
-	    if (ctxt->in == NULL) {
-	        ctxt->last = -1;
-		return(-1);
-	    }
-	    ctxt->inlen = 65000;
+	    ctxt->in = (char *) g_malloc(ORB_HTTP_DYN_BUFSIZE * sizeof(char));
+	    ctxt->inlen = ORB_HTTP_DYN_BUFSIZE;
 	    ctxt->inptr = ctxt->content = ctxt->inrptr = ctxt->in;
 	}
 	if (ctxt->inrptr > ctxt->in + ORB_HTTP_CHUNK) {
@@ -367,10 +365,6 @@ orbHTTPRecv (orbHTTPCtxtPtr ctxt)
 
 	    ctxt->inlen *= 2;
             ctxt->in = (char *) g_realloc(ctxt->in, ctxt->inlen);
-	    if (ctxt->in == NULL) {
-	        ctxt->last = -1;
-		return(-1);
-	    }
             ctxt->inptr = ctxt->in + d_inptr;
             ctxt->content = ctxt->in + d_content;
             ctxt->inrptr = ctxt->in + d_inrptr;
@@ -412,10 +406,10 @@ orbHTTPRecv (orbHTTPCtxtPtr ctxt)
 
 static char *
 orbHTTPReadLine(orbHTTPCtxtPtr ctxt) {
-    char buf[4096];
+    char buf[ORB_TEMP_BUF_SIZE];
     char *bp=buf;
     
-    while(bp - buf < 4095) {
+    while(bp - buf < (ORB_TEMP_BUF_SIZE-1)) {
 	if(ctxt->inrptr == ctxt->inptr) {
 	    if (orbHTTPRecv(ctxt) == 0) {
 		if (bp == buf)
@@ -433,7 +427,7 @@ orbHTTPReadLine(orbHTTPCtxtPtr ctxt) {
 	if(*bp != '\r')
 	    bp++;
     }
-    buf[4095] = 0;
+    buf[ORB_TEMP_BUF_SIZE-1] = 0;
     return(g_strdup(buf));
 }
 
@@ -680,7 +674,7 @@ orbHTTPConnectHost(const char *host, int port)
 static void*
 orbHTTPOpen(const char *URL) {
     orbHTTPCtxtPtr ctxt;
-    char buf[4096];
+    char buf[ORB_TEMP_BUF_SIZE];
     int ret;
     char *p;
     int head;
@@ -854,7 +848,7 @@ char *
 orb_http_resolve(const char *URL)
 {
     orbHTTPCtxtPtr ctxt;
-    char buf[4096];
+    char buf[ORB_TEMP_BUF_SIZE];
     int len_read, len;
     char *content_type, *retval = NULL;
 
