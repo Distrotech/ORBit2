@@ -41,38 +41,20 @@ namespace CORBA {
 	
 	class Any {
 	private:
-		struct {
-			CORBA::TypeCode_ptr _type;
-			void* _value;
-			Boolean _release;
-		} m_target;
+		CORBA_any m_target;
 		
-		void copy(const Any& in) {
-			free();
-			CORBA_any__copy(_orbitcpp_get_c_any_ptr(),
-				in._orbitcpp_get_c_any_ptr() );
-		}
-		
-		void free() {
-			if(m_target._release)
-				CORBA_free(m_target._value);
-
-			::_orbitcpp::CEnvironment _ev;
-			CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_cobj()); // release typecode
-		}
+		void copy (const Any &in);
+		void free ();
 
 	public:		
 		// begin ORBitcpp extension
-		// this ugly one is especially for in parameters in the stubs
-		CORBA_any* _orbitcpp_get_c_any_ptr() const {
-			return const_cast<CORBA_any*>(reinterpret_cast<const CORBA_any*>(&m_target));
+		
+		CORBA_any* _orbitcpp_cobj () const {
+			return const_cast<CORBA_any*> (&m_target);
 		}
-		operator const CORBA_any&() const {
-			return reinterpret_cast<const CORBA_any&>(m_target);
-		}
-		operator CORBA_any&() {
-			return reinterpret_cast<CORBA_any&>(m_target);
-		}
+		
+		static Any _orbitcpp_wrap (CORBA_any *c_any);
+		
 		void insert_simple(CORBA::TypeCode_ptr, void*, Boolean v_copy = CORBA_TRUE);
 		void insert_simple(CORBA::TypeCode_ptr tc,const void* in,Boolean v_copy = CORBA_TRUE) {
 				insert_simple(tc, const_cast<void*>(in), v_copy);
@@ -80,76 +62,29 @@ namespace CORBA {
 
 		template <class T>
 		Boolean extract(CORBA::TypeCode_ptr tc, T& value) const {
-			if( !m_target._type->equal(tc))
+			if (m_target._type != tc->_orbitcpp_cobj ())
 				return CORBA_FALSE;
+			
 			value = *reinterpret_cast<T*>(m_target._value);
-				return CORBA_TRUE;
+			return CORBA_TRUE;
 		}
+		
 		template <class T>
 		Boolean extract_ptr(CORBA::TypeCode_ptr tc, const T*& value) const {
-			if( !m_target._type->equal(tc) )
-			if(tc != m_target._type)
+			if (m_target._type != tc->_orbitcpp_cobj ())
 				return CORBA_FALSE;
+			
 			value = reinterpret_cast<T*>(m_target._value);
-				return CORBA_TRUE;
+			return CORBA_TRUE;
 		}
 		// end ORBitcpp extension
+
+		Any();
+		~Any();
 		
-		void *operator new(size_t sz) {
-			g_assert(sz == sizeof(CORBA_any));
-			return (void*)CORBA_any_alloc();
-		}
-
-		void operator delete(void *c_mem) {
-			CORBA_free(c_mem);
-		}
-
-		Any() {
-			m_target._type = _tc_null;
-			m_target._value = NULL;
-			CORBA_any_set_release((CORBA_any *)&m_target,CORBA_FALSE);
-		}
-		Any(const Any& in) { 
-			CORBA_any__copy(_orbitcpp_get_c_any_ptr(),
-				in._orbitcpp_get_c_any_ptr() );
-		}
+		Any(const Any& in);
+		Any& operator =(const Any& in);
 		
-		/*Any(TypeCode_ptr tc, void *value, Boolean release = CORBA_FALSE) {
-			insert_simple(reinterpret_cast<CORBA::TypeCode>(TypeCode::_duplicate(tc)), value,
-				release);
-			m_target._release = release;
-		}
-		*/
-		~Any() {
-			free();
-			// dont want the ORBit freekids to 'free' these again
-			CORBA_any_set_release((CORBA_any *)&m_target,CORBA_FALSE);
-			m_target._value = NULL;
-			m_target._type = NULL;
-		}
-
-		Any& operator =(const Any& in) {
-			if( &in != this ) copy(in);
-			return *this;
-		}
-		
-		/*void replace(TypeCode_ptr tc, void* value, Boolean release = CORBA_FALSE) {
-			free();
-			insert_simple(reinterpret_cast<CORBA::TypeCode>(TypeCode::_duplicate(tc)), value,
-				release);
-			m_target._release = release;
-		}*/
-
-		/*TypeCode_ptr type() const {
-			return reinterpret_cast<TypeCode_ptr>
-				(ORBit_TypeCode_dup(m_target._type));
-		}*/
-
-		/*void type(TypeCode_ptr tc) {
-			ORBit_TypeCode_release(m_target._type));
-			m_target._type = reinterpret_cast<CORBA::TypeCode>(TypeCode::_duplicate(tc));
-		}
-		*/
 		const void *value() const {
 			return m_target._value;
 		}
@@ -336,6 +271,7 @@ namespace CORBA {
 		Boolean operator>>=(const WChar *& out) const {
 			return extract(_tc_wstring, const_cast<WChar*&>(out));
 		}
+		
 		Boolean operator>>=(to_boolean out) const {
 			return extract(_tc_boolean, out.ref);
 		}
@@ -348,21 +284,15 @@ namespace CORBA {
 		Boolean operator>>=(to_wchar out) const {
 			return extract(_tc_wchar, out.ref);
 		}
+		
 		Boolean operator>>=(to_string out) const;
 		Boolean operator>>=(to_wstring out) const;
-		Boolean operator>>=(to_object out) const {
-			g_warning("I'm not sure if any extraction to objects works or not with ORBit stable -PD");
-			// 1.16.5 widens any object reference and dupes
-			if( !m_target._type->equal(_tc_Object))     // should be m_target._type.equivilent()
-				if( _tc_Object != m_target._type)
-					return CORBA_FALSE;
-			out.ref = Object::_duplicate(
-				*reinterpret_cast<Object_ptr*>(m_target._value));
-			return CORBA_TRUE;
-		}
+
+		Boolean operator>>=(to_object out) const;
 		Boolean operator>>=(Object_ptr& out) const {
 			return extract(_tc_Object, out);
 		}
+		
 		// Begin Orbit-CPP Extension
 		Boolean operator>>=(Any & out) const {
 			return extract(_tc_any, out);

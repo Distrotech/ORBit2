@@ -77,6 +77,12 @@ CORBA::TypeCode_ptr CORBA::_tc_string =
 CORBA::TypeCode_ptr CORBA::_tc_wstring =
 	reinterpret_cast <CORBA::TypeCode_ptr> (TC_CORBA_wstring);
 
+CORBA::TypeCode_ptr
+CORBA::TypeCode::_orbitcpp_wrap (CORBA_TypeCode tc)
+{
+	return reinterpret_cast <CORBA::TypeCode_ptr> (tc);
+}
+
 CORBA::Boolean
 CORBA::TypeCode::equal(TypeCode_ptr tc) const
 {

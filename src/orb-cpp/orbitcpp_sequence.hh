@@ -168,7 +168,12 @@ namespace _orbitcpp {
 		     typename CSeq>
     class UnboundedSequence: public SequenceBase<CPPElem, CElem, ElemTraits, CSeq>
     {
+	public:
 		typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> Super;
+		typedef typename Super::self_t   super_t;
+
+		typedef typename Super::buffer_t buffer_t;
+		typedef typename Super::index_t  index_t;
 		
     public:
 		// Empty constructor
@@ -186,7 +191,7 @@ namespace _orbitcpp {
 			}
 		
 		// Copying
-		UnboundedSequence (const self_t &other):
+		UnboundedSequence (const super_t &other):
 			Super (other)
 			{
 			}
@@ -222,7 +227,11 @@ namespace _orbitcpp {
 		     typename CSeq, CORBA::ULong max>
     class BoundedSequence: public SequenceBase<CPPElem, CElem, ElemTraits, CSeq>
     {
+	public:
 		typedef SequenceBase<CPPElem, CElem, ElemTraits, CSeq> Super;
+		typedef typename Super::self_t   super_t;
+
+		typedef typename Super::buffer_t buffer_t;
 		
     public:
 		// Empty constructor
@@ -239,7 +248,7 @@ namespace _orbitcpp {
 			}
 		
 		// Copying
-		BoundedSequence (const self_t &other):
+		BoundedSequence (const super_t &other):
 			Super (other)
 			{
 			}

@@ -1,3 +1,14 @@
+2002-07-13  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/orb-cpp/orbitcpp_typecode.hh (_orbitcpp_wrap): new method to
+	wrap a CORBA_TypeCode in a C++ object
+
+	* src/orb-cpp/orbitcpp_any.h:: Made consistent with other wrappers
+	and cleaned up reinterpret_cast<> black magic
+
+	* src/orb-cpp/orbitcpp_sequence.hh: Duplicated a bunch of typedefs
+	in subclasses to surpress GCC 3.1 warnings
+
 2002-07-09  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/orb-cpp/orbitcpp_sequence.hh: Made single-argument
