@@ -50,12 +50,14 @@ IDLCompound::write_packing_impl (ostream &ostr,
 	// Implementation of _orbitcpp_pack that returns a newly
 	// allocated C structure on heap	
 	ostr << indent << c_id << " * "
-	     << get_cpp_typename () << "::_orbitcpp_pack () const" << endl
+	     << get_cpp_method_prefix () << "::_orbitcpp_pack () const" << endl
 	     << indent++ << '{' << endl;
 	ostr << indent << c_id << " *_c_struct = " << c_id << "__alloc ()"
-	     << ';' << endl;
-	ostr << indent++ << "if (!_c_struct)" << endl
-	     << indent-- << "throw CORBA::NO_MEMORY ();" << endl;
+	     << ';' << endl << endl;
+	ostr << indent << "if (!_c_struct)" << endl;
+	indent++;
+	ostr << indent << "throw CORBA::NO_MEMORY ();" << endl << endl;
+	indent--;
 	ostr << indent << "_orbitcpp_pack (*_c_struct);" << endl;
 	ostr << indent << "return _c_struct;" << endl
 	     << --indent << '}' << endl << endl;
@@ -64,7 +66,7 @@ IDLCompound::write_packing_impl (ostream &ostr,
 	
 	// Implementation of _orbitcpp_pack that fills a
 	// caller-supplied C structure
-	ostr << indent << "void " << get_cpp_typename () << "::_orbitcpp_pack "
+	ostr << indent << "void " << get_cpp_method_prefix () << "::_orbitcpp_pack "
 	     << "(" << c_id << " &_c_struct) const" << endl
 	     << indent++ << '{' << endl;
 
@@ -103,7 +105,7 @@ IDLCompound::write_packing_impl (ostream &ostr,
 
 
 	// Implementation of _orbitcpp_unpack
-	ostr << indent << "void " << get_cpp_typename () << "::_orbitcpp_unpack "
+	ostr << indent << "void " << get_cpp_method_prefix () << "::_orbitcpp_unpack "
 	     << "(const " << c_id << " &_c_struct)" << endl
 	     << indent++ << '{' << endl;
 

@@ -117,10 +117,10 @@ IDLOperation::stub_do_call (ostream &ostr,
 
 	if (m_raises.size ()) // Are there any known user exceptions?
 	{
-		ostr << indent << IDL_CORBA_NS "::RepositoryID const repo_id = "
+		ostr << indent << IDL_CORBA_NS "::RepositoryId const repo_id = "
 		     << "::CORBA_exception_id (_ev._orbitcpp_get_c_object ());" << endl;
 		ostr << indent << "void *value = "
-		     << "::CORBA_exception_value (_ev._orbitcpp_get_c_Object ());" << endl
+		     << "::CORBA_exception_value (_ev._orbitcpp_get_c_object ());" << endl
 		     << endl;
 		
 		for (ExceptionList::const_iterator i = m_raises.begin ();
