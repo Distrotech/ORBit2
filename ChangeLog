@@ -1,3 +1,15 @@
+2001-11-19  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/poa/poa-macros.h: new file with convience macros.
+
+	* src/orb/poa/poa.c: (PortableServer_POA_servant_to_id),
+	(PortableServer_POA_servant_to_reference),
+	(PortableServer_POA_reference_to_servant),
+	(PortableServer_POA_reference_to_id),
+	(PortableServer_POA_id_to_servant),
+	(PortableServer_POA_id_to_reference): update to use macros
+	to simplify policy checking, exception returning.
+
 2001-11-19  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-connection.c
