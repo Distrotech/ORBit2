@@ -1,3 +1,7 @@
+2002-03-04  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: version 2.3.106
+
 2002-03-01  jacob berkman  <jacob@ximian.com>
 
 	* autogen.sh: pass --copy to automake, and pass --include-deps
