@@ -34,7 +34,7 @@ enum {
 	LAST_SIGNAL
 };
 static guint   signals [LAST_SIGNAL];
-static GList  *initiated_list = NULL;
+static GList  *cnx_list = NULL;
 
 #define CNX_LOCK(cnx)    G_STMT_START { link_lock();   } G_STMT_END
 #define CNX_UNLOCK(cnx)  G_STMT_START { link_unlock(); } G_STMT_END
@@ -72,8 +72,8 @@ link_connection_unref (gpointer cnx)
 	if (((GObject *)cnx)->ref_count > 1)
 		g_object_unref (cnx);
 
-	else { /* FIXME: only do if initiated ? */
-		initiated_list = g_list_remove (initiated_list, cnx);
+	else {
+		cnx_list = g_list_remove (cnx_list, cnx);
 		tail_unref = TRUE;
 	}
 
@@ -230,7 +230,7 @@ static void
 link_source_remove (LinkConnection *cnx)
 {
 	if (cnx->priv->tag) {
-		LincWatch *thewatch = cnx->priv->tag;
+		LinkWatch *thewatch = cnx->priv->tag;
 		cnx->priv->tag = NULL;
 		link_io_remove_watch (thewatch);
 		d_printf ("Removed watch on %d\n", cnx->priv->fd);
@@ -353,6 +353,8 @@ link_connection_from_fd_T (LinkConnection         *cnx,
 #endif
 	g_assert (CNX_IS_LOCKED (0));
 	link_connection_state_changed_T (cnx, status);
+
+	cnx_list = g_list_prepend (cnx_list, cnx);
 }
 
 /*
@@ -403,7 +405,7 @@ link_connection_do_initiate (LinkConnection        *cnx,
 	int                     fd;
 	gboolean                retval = FALSE;
 	struct sockaddr        *saddr;
-	LincSockLen		saddr_len;
+	LinkSockLen		saddr_len;
 
 	proto = link_protocol_find (proto_name);
 
@@ -499,10 +501,10 @@ link_connection_initiate (GType                 derived_type,
 
 	CNX_LIST_LOCK();
 
-	for (l = initiated_list; l; l = l->next) {
+	for (l = cnx_list; l; l = l->next) {
 		LinkConnection *cnx = l->data;
 
-		if (cnx->proto == proto &&
+		if (cnx->was_initiated && cnx->proto == proto &&
 		    cnx->status != LINK_DISCONNECTED &&
 		    ((cnx->options & LINK_CONNECTION_SSL) == (options & LINK_CONNECTION_SSL)) &&
 		    !strcmp (remote_host_info, cnx->remote_host_info) &&
@@ -517,10 +519,9 @@ link_connection_initiate (GType                 derived_type,
 		cnx = LINK_CONNECTION
 			(g_object_new_valist (derived_type, first_property, args));
 
-		if ((initiated = link_connection_do_initiate
-				     (cnx, proto_name, remote_host_info,
-				      remote_serv_info, options)))
-			initiated_list = g_list_prepend (initiated_list, cnx);
+		initiated = link_connection_do_initiate
+			(cnx, proto_name, remote_host_info,
+			 remote_serv_info, options);
 	}
 	
 	CNX_LIST_UNLOCK();
@@ -1123,7 +1124,7 @@ link_connection_io_handler (GIOChannel  *gioc,
 
 	if (condition & (LINK_ERR_CONDS | G_IO_OUT)) {
 		int rv, n;
-		LincSockLen n_size = sizeof (n);
+		LinkSockLen n_size = sizeof (n);
 
 		switch (cnx->status) {
 		case LINK_CONNECTING:
@@ -1213,4 +1214,14 @@ link_connection_wait_connected (LinkConnection *cnx)
 		link_main_iteration (TRUE);
 
 	return cnx ? cnx->status : LINK_DISCONNECTED;
+}
+
+void
+link_connections_move_io_T (gboolean to_io_thread)
+{
+	GList *l;
+	for (l = cnx_list; l; l = l->next) {
+		LinkConnection *cnx = l->data;
+		link_watch_move_io (cnx->priv->tag, to_io_thread);
+	}
 }

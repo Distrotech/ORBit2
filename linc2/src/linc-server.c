@@ -31,6 +31,7 @@ enum {
 };
 static guint server_signals [LAST_SIGNAL] = { 0 };
 
+static GList *server_list = NULL;
 static GObjectClass *parent_class = NULL;
 
 static void
@@ -66,37 +67,39 @@ my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
 }
 
 static void
-link_server_init (LinkServer *cnx)
+link_server_init (LinkServer *srv)
 {
-	cnx->priv = g_new0 (LinkServerPrivate, 1);
+	srv->priv = g_new0 (LinkServerPrivate, 1);
 
-	cnx->priv->fd = -1;
+	srv->priv->fd = -1;
 }
 
 static void
 link_server_dispose (GObject *obj)
 {
 	GSList     *l;
-	LinkServer *cnx = (LinkServer *) obj;
+	LinkServer *srv = (LinkServer *) obj;
 
-	d_printf ("Dispose / close server fd %d\n", cnx->priv->fd);
+	server_list = g_list_remove (server_list, srv);
 
-	if (cnx->priv->tag) {
-		LincWatch *thewatch = cnx->priv->tag;
-		cnx->priv->tag = NULL;
+	d_printf ("Dispose / close server fd %d\n", srv->priv->fd);
+
+	if (srv->priv->tag) {
+		LinkWatch *thewatch = srv->priv->tag;
+		srv->priv->tag = NULL;
 		link_io_remove_watch (thewatch);
 	}
 
-	link_protocol_destroy_cnx (cnx->proto,
-				   cnx->priv->fd, 
-				   cnx->local_host_info,
-				   cnx->local_serv_info);
-	cnx->priv->fd = -1;
+	link_protocol_destroy_cnx (srv->proto,
+				   srv->priv->fd, 
+				   srv->local_host_info,
+				   srv->local_serv_info);
+	srv->priv->fd = -1;
 
-	while ((l = cnx->priv->connections)) {
+	while ((l = srv->priv->connections)) {
 		GObject *o = l->data;
 
-		cnx->priv->connections = l->next;
+		srv->priv->connections = l->next;
 		g_slist_free_1 (l);
 		link_connection_unref (o);
 	}
@@ -107,18 +110,18 @@ link_server_dispose (GObject *obj)
 static void
 link_server_finalize (GObject *obj)
 {
-	LinkServer *cnx = (LinkServer *)obj;
+	LinkServer *srv = (LinkServer *)obj;
 
-	g_free (cnx->local_host_info);
-	g_free (cnx->local_serv_info);
+	g_free (srv->local_host_info);
+	g_free (srv->local_serv_info);
 
-	g_free (cnx->priv);
+	g_free (srv->priv);
 
 	parent_class->finalize (obj);
 }
 
 static LinkConnection *
-link_server_create_connection (LinkServer *cnx)
+link_server_create_connection (LinkServer *srv)
 {
 	return g_object_new (link_connection_get_type (), NULL);
 }
@@ -222,7 +225,7 @@ link_server_handle_io (GIOChannel  *gioc,
 
 /**
  * link_server_setup:
- * @cnx: the connection to setup
+ * @srv: the connection to setup
  * @proto_name: the protocol to use
  * @local_host_info: the local hsot
  * @local_serv_info: remote server info
@@ -234,7 +237,7 @@ link_server_handle_io (GIOChannel  *gioc,
  * Return value: the initialized server
  **/
 gboolean
-link_server_setup (LinkServer            *cnx,
+link_server_setup (LinkServer            *srv,
 		   const char            *proto_name,
 		   const char            *local_host_info,
 		   const char            *local_serv_info,
@@ -243,7 +246,7 @@ link_server_setup (LinkServer            *cnx,
 	const LinkProtocolInfo *proto;
 	int                     fd, n;
 	struct sockaddr        *saddr;
-	LincSockLen             saddr_len;
+	LinkSockLen             saddr_len;
 	const char             *local_host;
 	char                   *service, *hostname;
 
@@ -337,26 +340,28 @@ link_server_setup (LinkServer            *cnx,
 
 	g_free (saddr);
 
-	cnx->proto = proto;
-	cnx->priv->fd = fd;
+	srv->proto = proto;
+	srv->priv->fd = fd;
 
 	if (create_options & LINK_CONNECTION_NONBLOCKING) {
-		g_assert (cnx->priv->tag == NULL);
+		g_assert (srv->priv->tag == NULL);
 
-		cnx->priv->tag = link_io_add_watch_fd (
+		srv->priv->tag = link_io_add_watch_fd (
 			fd, LINK_IN_CONDS | LINK_ERR_CONDS,
-			link_server_handle_io, cnx);
+			link_server_handle_io, srv);
 	}
 
-	cnx->create_options = create_options;
+	srv->create_options = create_options;
 
 	if (local_host_info) {
 		g_free (hostname);
-		cnx->local_host_info = g_strdup (local_host_info);
+		srv->local_host_info = g_strdup (local_host_info);
 	} else
-		cnx->local_host_info = hostname;
+		srv->local_host_info = hostname;
 
-	cnx->local_serv_info = service;
+	srv->local_serv_info = service;
+
+	server_list = g_list_prepend (server_list, srv);
 
 	d_printf ("Created a new server fd (%d) '%s', '%s', '%s'\n",
 		 fd, proto->name, 
@@ -417,4 +422,15 @@ link_server_get_type (void)
 	}  
 
 	return object_type;
+}
+
+void
+link_servers_move_io_T (gboolean to_io_thread)
+{
+	GList *l;
+
+	for (l = server_list; l; l = l->next) {
+		LinkServer *srv = l->data;
+		link_watch_move_io (srv->priv->tag, to_io_thread);
+	}
 }

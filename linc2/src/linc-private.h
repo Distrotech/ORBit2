@@ -51,7 +51,6 @@ typedef struct {
 void link_exec_command (LinkCommand *cmd);
 void link_connection_exec_disconnect (LinkCommandDisconnect *cmd);
 void link_connection_exec_set_condition (LinkCommandSetCondition *cmd);
-void _link_connection_thread_init (gboolean thread);
 
 /*
  * Really raw internals, exported for the tests
@@ -59,7 +58,7 @@ void _link_connection_thread_init (gboolean thread);
 
 struct _LinkServerPrivate {
 	int        fd;
-	LincWatch *tag;
+	LinkWatch *tag;
 	GSList    *connections;
 };
 
@@ -71,7 +70,7 @@ struct _LinkConnectionPrivate {
 #ifdef LINK_SSL_SUPPORT
 	SSL         *ssl;
 #endif
-	LincWatch   *tag;
+	LinkWatch   *tag;
 	int          fd;
 
 	gulong       max_buffer_bytes;
@@ -86,9 +85,10 @@ typedef struct {
 	GPollFD       pollfd;
 	GIOCondition  condition;
 	GIOFunc       callback;
-} LincUnixWatch;
+	gpointer      user_data;
+} LinkUnixWatch;
 
-struct _LincWatch {
+struct _LinkWatch {
 	GSource *main_source;
 	GSource *link_source;
 };
@@ -103,7 +103,7 @@ const char      *link_get_local_hostname    (void);
 struct sockaddr *link_protocol_get_sockaddr (const LinkProtocolInfo *proto,
 					     const char             *hostname,
 					     const char             *service,
-					     LincSockLen            *saddr_len);
+					     LinkSockLen            *saddr_len);
 
 gboolean         link_protocol_get_sockinfo (const LinkProtocolInfo *proto,
 					     const struct sockaddr  *saddr,
@@ -112,7 +112,7 @@ gboolean         link_protocol_get_sockinfo (const LinkProtocolInfo *proto,
 
 gboolean         link_protocol_is_local     (const LinkProtocolInfo  *proto,
 					     const struct sockaddr   *saddr,
-					     LincSockLen              saddr_len);
+					     LinkSockLen              saddr_len);
 
 void             link_protocol_destroy_cnx  (const LinkProtocolInfo  *proto,
 					     int                      fd,
@@ -123,21 +123,26 @@ void             link_protocol_destroy_addr (const LinkProtocolInfo  *proto,
 					     int                      fd,
 					     struct sockaddr         *saddr);
 
-LincWatch       *link_io_add_watch_fd       (int                     fd,
+LinkWatch       *link_io_add_watch_fd       (int                     fd,
 					     GIOCondition            condition,
 					     GIOFunc                 func,
 					     gpointer                user_data);
 
-void             link_io_remove_watch       (LincWatch              *w);
-void             link_watch_set_condition   (LincWatch              *w,
+void             link_io_remove_watch       (LinkWatch              *w);
+void             link_watch_set_condition   (LinkWatch              *w,
 					     GIOCondition            condition);
+void             link_watch_move_io         (LinkWatch              *w,
+					     gboolean                to_io_thread);
 
 GMainContext    *link_main_get_context      (void);
+GMainContext    *link_thread_io_context     (void);
 gboolean         link_get_threaded          (void);
 gboolean         link_in_io_thread          (void);
 gboolean         link_mutex_is_locked       (GMutex *lock);
 void             link_lock                  (void);
 void             link_unlock                (void);
 gboolean         link_is_locked             (void);
+void             link_servers_move_io_T     (gboolean to_io_thread);
+void             link_connections_move_io_T (gboolean to_io_thread);
 
 #endif /* _LINK_PRIVATE_H */

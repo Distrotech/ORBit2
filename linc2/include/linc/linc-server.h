@@ -45,15 +45,15 @@ typedef struct {
 typedef struct {
 	GObjectClass       parent_class;
 
-	LinkConnection *(* create_connection) (LinkServer     *server);
+	LinkConnection *(* create_connection) (LinkServer     *srv);
 
-	void            (* new_connection)    (LinkServer     *server,
+	void            (* new_connection)    (LinkServer     *srv,
 					       LinkConnection *cnx);
 } LinkServerClass;
 
 GType    link_server_get_type (void) G_GNUC_CONST;
 
-gboolean link_server_setup    (LinkServer *cnx,
+gboolean link_server_setup    (LinkServer *srv,
 			       const char *proto_name,
 			       const char *local_host_info,
 			       const char *local_serv_info,
