@@ -1,5 +1,18 @@
 2002-05-16  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_demarshal): add a parameter as to
+	whether we should release the recv buffer.
+
+	* src/orb/GIOP/giop-recv-buffer.c (handle_reply):
+	unuse the async buffer here.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_dispose): check we don't leak
+	a pending msg on cnx close.
+
+2002-05-16  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_recv_buffer_unuse): free GIOP_1_0 service
 	contexts in the same way as GIOP_1_1, that's how we
