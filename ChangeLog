@@ -1,5 +1,9 @@
 2004-01-16  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.9.6
+
+2004-01-16  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-any.c (ORBit_copy_value_core): 
 	fetch the union tag only after pre-aligning correctly,
 	vicious PPC snafu; thanks to Jeroen Zwartepoorte for
