@@ -9,8 +9,8 @@ Makefile
 *.o
 *.lo
 *.la
-name-client
-orbit-name-server
+name-client-2
+orbit-name-server-2
 name.h
 naming-client
 orbit-naming-server
