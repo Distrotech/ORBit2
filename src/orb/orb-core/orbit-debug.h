@@ -45,7 +45,7 @@ extern OrbitDebugFlags _orbit_debug_flags;
 		fprintf (stderr, __VA_ARGS__);		\
 	} G_STMT_END
 #elif defined(G_HAVE_GNUC_VARARGS)
-#  define dprintf(typem, args...) G_STMT_START {		\
+#  define dprintf(type, args...) G_STMT_START {		\
 	if (_orbit_debug_flags & ORBIT_DEBUG_##type)	\
 		fprintf (stderr, args);			\
 	} G_STMT_END
