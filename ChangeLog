@@ -1,3 +1,9 @@
+2002-07-01  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/orbit-idl3-types.h:
+	Applied Felix Breuer's "namespace -> ns" patch, and added
+	comment to code so that it won't be reverted again.
+
 2002-06-18  Murray Cumming  <murrayc@usa.net>
 
 	* src/orb/orb-core/corba-orb.c: make CORBA_Typecode_allocate
