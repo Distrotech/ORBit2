@@ -1,5 +1,5 @@
 dnl AM_PATH_ORBIT([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
-dnl Test for ORBIT, and define ORBIT_CFLAGS and ORBIT_LIBS
+dnl Test for ORBit, and define ORBIT_CFLAGS and ORBIT_LIBS
 dnl
 AC_DEFUN(AM_PATH_ORBIT,
 [dnl 
@@ -151,7 +151,7 @@ main ()
      AC_MSG_RESULT(no)
      if test "$ORBIT_CONFIG" = "no" ; then
        echo "*** The orbit-config script installed by ORBIT could not be found"
-       echo "*** If ORBIT was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** If ORBit was installed in PREFIX, make sure PREFIX/bin is in"
        echo "*** your path, or set the ORBIT_CONFIG environment variable to the"
        echo "*** full path to orbit-config."
      else
@@ -166,8 +166,8 @@ main ()
 #include <stdio.h>
 ],      [ return ((orbit_major_version) || (orbit_minor_version) || (orbit_micro_version)); ],
         [ echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding ORBIT or finding the wrong"
-          echo "*** version of ORBIT. If it is not finding ORBIT, you'll need to set your"
+          echo "*** that the run-time linker is not finding ORBit or finding the wrong"
+          echo "*** version of ORBit. If it is not finding ORBit, you'll need to set your"
           echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
           echo "*** to the installed location  Also, make sure you have run ldconfig if that"
           echo "*** is required on your system"
@@ -175,13 +175,13 @@ main ()
           echo "*** If you have an old version installed, it is best to remove it, although"
           echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
           echo "***"
-          echo "*** If you have a RedHat 5.0 system, you should remove the ORBIT package that"
+          echo "*** If you have a RedHat 5.0 system, you should remove the ORBit package that"
           echo "*** came with the system with the command"
           echo "***"
           echo "***    rpm --erase --nodeps orbit orbit-devel" ],
         [ echo "*** The test program failed to compile or link. See the file config.log for the"
           echo "*** exact error that occured. This usually means ORBIT was incorrectly installed"
-          echo "*** or that you have moved ORBIT since it was installed. In the latter case, you"
+          echo "*** or that you have moved ORBit since it was installed. In the latter case, you"
           echo "*** may want to edit the orbit-config script: $ORBIT_CONFIG" ])
           CFLAGS="$ac_save_CFLAGS"
           LIBS="$ac_save_LIBS"
@@ -191,8 +191,10 @@ main ()
      ORBIT_LIBS=""
      ifelse([$3], , :, [$3])
   fi
-  AC_PATH_PROG(ORBIT_IDL, orbit-idl, , ifelse([$3], , :, [$3]))
+
+  AC_PATH_PROG(ORBIT_IDL, orbit-idl, ifelse([$3], , :, [$3]))
   AC_SUBST(ORBIT_CFLAGS)
   AC_SUBST(ORBIT_LIBS)
+  AC_SUBST(ORBIT_IDL)
   rm -f conf.orbittest
 ])
