@@ -1,3 +1,13 @@
+2003-10-02  Alexander Larsson  <alexl@redhat.com>
+
+	* src/orb/GIOP/giop.c: (giop_thread_free):
+	Free all objects
+	* src/orb/poa/orbit-adaptor.c:
+	(ORBit_ObjectAdaptor_set_thread_hintv),
+	(ORBit_ObjectAdaptor_set_thread_hint):
+	Add ORBIT_THREAD_HINT_ON_CONTEXT to switch statement.
+	Don't recurse forever in ORBit_ObjectAdaptor_set_thread_hint.
+
 2003-09-30  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):

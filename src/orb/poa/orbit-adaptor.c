@@ -24,6 +24,7 @@ ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adaptor,
 	case ORBIT_THREAD_HINT_PER_REQUEST:
 	case ORBIT_THREAD_HINT_PER_POA:
 	case ORBIT_THREAD_HINT_PER_CONNECTION:
+	case ORBIT_THREAD_HINT_ON_CONTEXT:
 		if (link_thread_safe ())
 			link_set_io_thread (TRUE);
 		break;
@@ -42,7 +43,7 @@ ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
 	va_list args;
 
 	va_start (args, thread_hint);
-	ORBit_ObjectAdaptor_set_thread_hint (adaptor, thread_hint, args);
+	ORBit_ObjectAdaptor_set_thread_hintv (adaptor, thread_hint, args);
 	va_end (args);
 }
 
