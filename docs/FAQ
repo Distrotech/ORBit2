@@ -352,6 +352,8 @@ available flags are:
 	+ timings  : add microsecond time stamps to the trace.
 	+ types    : debug typelib loading.
 	+ objects  : enable object profile related messages.
+	+ giop     : enable dumping of all GIOP packets.
+	+ refs     : object ref-counting debugging info.
 	+ all      : enable all of the above flags.
 		
 ** how do I enable reference tracking ?
