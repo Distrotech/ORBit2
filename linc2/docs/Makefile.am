@@ -162,7 +162,7 @@ dist-check-gtkdoc:
 	@false
 endif
 
-dist-hook: dist-check-gtkdoc dist-hook-local
+dist-hook: dist-check-gtkdoc html-build.stamp dist-hook-local
 	mkdir $(distdir)/tmpl
 	mkdir $(distdir)/sgml
 	mkdir $(distdir)/html
