@@ -254,7 +254,9 @@ IDLArray::typedef_decl_write (ostream          &ostr,
 	     << m_element_type.get_cpp_member_typename () << " " << slice_id;
 
 	// An array slice is all the dims except the first one
-	for (const_iterator i = ++begin (); i != end (); i++)
+	const_iterator i = begin ();
+	i++;
+	for (; i != end (); i++)
 		ostr << '[' << *i << ']';
 	ostr << ';' << endl;
 
