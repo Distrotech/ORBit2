@@ -21,7 +21,6 @@
 #include <linc/linc-server.h>
 #include <linc/linc-connection.h>
 
-#include "linc-debug.h"
 #include "linc-private.h"
 #include "linc-compat.h"
 

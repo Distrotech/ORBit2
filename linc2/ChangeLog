@@ -1,3 +1,8 @@
+2004-02-02  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-private.h: include linc-debug.h here, after the
+	glib include, instead of all elsewhere.
+
 2004-01-14  The Written Word  <bugzilla-gnome@thewrittenword.com>
 
 	* src/linc-debug.h: don't assume vararg macros.
