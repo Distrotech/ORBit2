@@ -23,7 +23,6 @@
 typedef struct
 {
    POA_Test servant;
-   PortableServer_POA poa;
 
    /* ------ add private attributes here ------ */
    CORBA_octet buf[1024]; /* big enough to see mem-leaks fast*/ 
@@ -62,8 +61,6 @@ static POA_Test__vepv impl_Test_vepv = {
 static void
 impl_Test__destroy(impl_POA_Test * servant, CORBA_Environment * ev)
 {
-   CORBA_Object_release((CORBA_Object) servant->poa, ev);
- 
    POA_Test__fini((PortableServer_Servant) servant, ev);
    g_free(servant);
 }
@@ -131,7 +128,6 @@ test_activate_deactivate (PortableServer_POA poa, CORBA_Environment * ev)
 
    newservant = g_new0(impl_POA_Test, 1);
    newservant->servant.vepv = &impl_Test_vepv;
-   newservant->poa = NULL;
 
    POA_Test__init((PortableServer_Servant) newservant, ev);
 
@@ -164,7 +160,6 @@ get_procmem (void) {
 	char cmd[255];	
 	FILE *handle = NULL;
 	
-	//	sprintf (cmd, "ps --no-headers -o \"rss\" -p %d", getpid());
  	sprintf (cmd, "ps --no-headers -o \"rss\" -p %d 2>/dev/null", getpid());
 	handle = popen (cmd, "r");
 	if (!handle)
