@@ -1027,6 +1027,9 @@ return_exception (GIOPRecvBuffer    *recv_buffer,
 {
 	GIOPSendBuffer *send_buffer;
 
+	if (!recv_buffer) /* In Proc */
+		return;
+
 	g_return_if_fail (ev->_major == CORBA_SYSTEM_EXCEPTION);
 
 	if (m_data && m_data->flags & ORBit_I_METHOD_1_WAY) {

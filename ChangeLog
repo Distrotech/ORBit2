@@ -1,5 +1,11 @@
 2001-10-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/poa/poa.c (return_exception): if in-proc,
+	we have no valid recv_buffer, so just return - ev is
+	the actual exception context.
+
+2001-10-31  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-env.c
 	(CORBA_exception_free_T): impl & upd.
 	(CORBA_exception_free): do correct locking.
