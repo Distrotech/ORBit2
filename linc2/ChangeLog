@@ -1,3 +1,8 @@
+2002-08-05  Laurent Vivier  <Laurent.Vivier@bull.net>
+
+	* include/linc/linc-connection.h: sanitize remote_ info
+	to gchar *
+
 2002-08-05  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.5.2

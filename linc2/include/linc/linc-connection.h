@@ -44,8 +44,8 @@ typedef struct {
 	guint                   was_initiated : 1;
 	guint                   is_auth : 1;
 
-	guchar                 *remote_host_info;
-	guchar                 *remote_serv_info;
+	gchar                  *remote_host_info;
+	gchar                  *remote_serv_info;
 
 	LINCConnectionPrivate  *priv;
 } LINCConnection;
