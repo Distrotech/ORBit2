@@ -1255,7 +1255,7 @@ void
 testPingPong (test_TestFactory   factory, 
 	      CORBA_Environment *ev)
 {
-	test_PingPongServer r_objref, l_objref;
+	test_PingPongServer r_objref, l_objref, objref;
 
 	d_print ("Testing ping pong invocations ...\n");
 	r_objref = test_TestFactory_createPingPongServer (factory, ev);
@@ -1265,6 +1265,15 @@ testPingPong (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+	d_print ("Testing ping pong reg / lookup ...\n");
+	test_PingPongServer_set (r_objref, l_objref, "Foo", ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+	objref = test_PingPongServer_get (r_objref, "Foo", ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release (objref, ev);
 
 	CORBA_Object_release (r_objref, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);

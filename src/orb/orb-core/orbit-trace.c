@@ -147,9 +147,19 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		tprintf ("wstring");
 		break;
 
-	case CORBA_tk_string:
-		tprintf ("'%s'", *(char **)*val);
+	case CORBA_tk_string: {
+		char *p;
+
+		tprintf ("'");
+		for (p = *(char **)*val; p && *p; p++) {
+			if (isalnum ((int)*p))
+				tprintf ("%c", *p);
+			else
+				tprintf ("#");
+		}
+		tprintf ("'");
 		break;
+	}
 
 	case CORBA_tk_sequence: {
 		const CORBA_sequence_CORBA_octet *sval = *val;
@@ -217,7 +227,7 @@ ORBit_trace_header (CORBA_Object   object,
 		    ORBit_IMethod *m_data)
 {
 
-	tprintf ("p%4x ", getpid ());
+	tprintf ("p%5d ", getpid ());
 
 	tprintf_timestamp ();
 	tprintf (": (");

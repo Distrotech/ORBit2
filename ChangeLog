@@ -1,5 +1,20 @@
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_header): print pid in decimal.
+	(ORBit_trace_value): only print printable
+	characters.
+
+	* test/everything/client.c (testPingPong): upd.
+
+	* test/everything/pingServer.c
+	(PingPongServer_opOneWay),
+	(PingPongServer_pingPong): add method to try and
+	confuse - no joy.
+	(PingPongServer_set, PingPongServer_get): impl.
+
+2001-11-12  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/GIOP/giop-recv-buffer.c (handle_reply):
 	dump unexpected system exceptions silently.
 
