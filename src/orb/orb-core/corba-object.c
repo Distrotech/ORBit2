@@ -7,18 +7,12 @@
 
 #undef DEBUG
 
-static gboolean
-ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
-		    char **ret_type_id, GSList **ret_profiles);
-
-static void ORBit_profile_free(IOP_Profile_info *p);
-static guint g_CORBA_Object_hash(gconstpointer key);
 static gboolean g_CORBA_Object_equal(gconstpointer a, gconstpointer b);
-static IOP_Profile_info *IOP_profile_find(GSList *list, IOP_ProfileId type,
-					  GSList **pos);
-static IOP_Component_info *IOP_component_find(GSList *list, IOP_ComponentId type,
-					      GSList **pos);
-static void IOP_components_free(GSList *components);
+static guint    g_CORBA_Object_hash(gconstpointer key);
+static void     ORBit_delete_profiles(GSList **profiles);
+static void     ORBit_profile_free(IOP_Profile_info *p);
+static gboolean ORBit_demarshal_IOR(CORBA_ORB orb, GIOPRecvBuffer *buf,
+		                    char **ret_type_id, GSList **ret_profiles);
 
 static GHashTable *objrefs = NULL;
 
@@ -47,16 +41,6 @@ static void IOP_components_free(GSList *components)
 }
 
 static void
-ORBit_delete_profiles (GSList **profiles)
-{
-  if (profiles && *profiles) {
-    g_slist_foreach (*profiles, (GFunc) ORBit_profile_free, NULL);
-    g_slist_free (*profiles);
-    *profiles = NULL;
-  }
-}
-
-static void
 CORBA_Object_release_cb(ORBit_RootObject robj)
 {
   CORBA_Object obj = (CORBA_Object) robj;
@@ -71,13 +55,16 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   }
 
   g_free (obj->type_id);
-
-  ORBit_delete_profiles (&obj->profile_list);
+  
   ORBit_delete_profiles (&obj->forward_locations);
 
-  if (obj->pobj) {
+  /* obj->pobj != NULL, then obj is a POA generated reference */
+  if ( obj->pobj != NULL ) {
     ORBit_RootObject_release (obj->pobj);
+    obj->profile_list = NULL;
   }
+  else 
+    ORBit_delete_profiles (&obj->profile_list);
 
   g_free (obj);
 }
@@ -88,7 +75,7 @@ static ORBit_RootObject_Interface objref_if = {
 };
 
 CORBA_Object
-ORBit_objref_new(CORBA_ORB orb, const char *type_id, GSList *profiles)
+ORBit_objref_new(CORBA_ORB orb, const char *type_id)
 {
   CORBA_Object retval;
   retval = g_new0(struct CORBA_Object_type, 1);
@@ -96,14 +83,6 @@ ORBit_objref_new(CORBA_ORB orb, const char *type_id, GSList *profiles)
   ORBit_RootObject_init((ORBit_RootObject)retval, &objref_if);
   retval->type_id = g_strdup(type_id);
   retval->orb = orb;
-
-  if ( profiles != NULL )
-    {
-      retval->profile_list = profiles;
-      if(!objrefs)
-	objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
-      g_hash_table_insert (objrefs, retval, retval);
-    }
 
   return retval;
 }
@@ -121,8 +100,12 @@ ORBit_objref_find(CORBA_ORB orb, const char *type_id, GSList *profiles)
   if(!objrefs)
     objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
   retval = g_hash_table_lookup(objrefs, &fakeme);
-  if(!retval)
-    retval = ORBit_objref_new(orb, type_id, profiles);
+
+  if(retval == NULL) {
+    retval = ORBit_objref_new(orb, type_id);
+    retval->profile_list = profiles;
+    g_hash_table_insert (objrefs, retval, retval);
+  }
   else
     ORBit_delete_profiles (&profiles);
 
@@ -785,15 +768,14 @@ CORBA_Object_set_policy_overrides(CORBA_Object _obj,
   return CORBA_OBJECT_NIL;
 }
 
-static IOP_ObjectKey_info*
-IOP_ObjectKey_copy(IOP_ObjectKey_info *oki)
+static void
+ORBit_delete_profiles (GSList **profiles)
 {
-  guint len;
-
-  len = G_STRUCT_OFFSET(IOP_ObjectKey_info, object_key_data._buffer)
-    + oki->object_key._length;
-
-  return g_memdup(oki, len);
+  if (profiles && *profiles) {
+    g_slist_foreach (*profiles, (GFunc) ORBit_profile_free, NULL);
+    g_slist_free (*profiles);
+    *profiles = NULL;
+  }
 }
 
 static void
@@ -803,21 +785,32 @@ ORBit_generate_profiles( CORBA_Object obj )
   IOP_TAG_ORBIT_SPECIFIC_info      *osi = NULL;
   IOP_TAG_INTERNET_IOP_info        *iiop = NULL;
   gboolean                         need_objkey_component;
-  GSList                           *ltmp, *profiles = NULL;
+  GSList                           *ltmp;
+
+  static GSList                    *profiles = NULL;
 
   g_assert( obj && (obj->profile_list == NULL) );
 
   /*
    * no need to have any listening sockets until now.
+   * if the ORB has been shutdown and restarted,
+   * the profiles must be regenerated.
    */
-  if ( obj->orb->servers == NULL )
+  if ( obj->orb->servers == NULL ) {
     ORBit_start_servers( obj->orb );
+    if ( profiles != NULL )
+      ORBit_delete_profiles( &profiles );
+  }
 
-  /*
-   * only carry around one copy of the object key.
-   */
+  /* only carry around one copy of the object key. */
   if ( obj->oki == NULL )
     obj->oki = ORBit_POA_object_to_okey( obj->pobj );
+
+  /* share the profiles between everyone. */
+  if ( profiles != NULL ) {
+    obj->profile_list = profiles;
+    return;
+  }
 
   need_objkey_component = FALSE;
 

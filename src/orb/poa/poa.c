@@ -22,6 +22,7 @@
  *    o Don't generate the profile_list until the CORBA_Object
  *      is marshalled for the first time. This will reduce the
  *      memory usage for the in-proc case.
+ *        -> done.
  *
  *    o POAObject RootObject stuff.
  *        -> done I reckon.
@@ -1464,7 +1465,6 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
 		     CORBA_Environment *ev)
 {
   PortableServer_ObjectId *oid;
-  IOP_ObjectKey_info      *oki;
   CORBA_Object            objref;
   const char              *type_id = intf;
 
@@ -1480,7 +1480,7 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
 
   oid = pobj->object_id;
 
-  objref = ORBit_objref_new(poa->poa_manager->orb, type_id, NULL);
+  objref = ORBit_objref_new(poa->poa_manager->orb, type_id);
 
   /* released by CORBA_Object_release */
   objref->pobj = ORBit_RootObject_duplicate(pobj);

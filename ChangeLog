@@ -1,5 +1,13 @@
 2001-07-07  Mark McLoughlin <mark@skynet.ie>
 
+	* include/orbit/orb-core/corba-object.h,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/poa/poa.c: sharing is caring.
+	Make the POA generated references share their
+	profile_lists.
+
+2001-07-07  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-object.c: don't carry around
 	multiple copies of the object key. Only generate it when
 	it the ref is to be exported.
