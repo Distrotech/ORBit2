@@ -253,8 +253,8 @@ orbit_cbe_write_param_typespec_raw(FILE *of, IDL_tree ts, IDL_ParamRole role) {
 
 void
 orbit_cbe_write_param_typespec(FILE *of, IDL_tree tree) {
-    IDL_tree		ts;
-    IDL_ParamRole	role;
+    IDL_tree		ts = NULL /* Quiet gcc */;
+    IDL_ParamRole	role = 0 /* Quiet gcc */;
 
     switch ( IDL_NODE_TYPE(tree) ) {
     case IDLN_OP_DCL: /* means return value of method */
