@@ -88,6 +88,9 @@ protected:
 #endif
 
 	void struct_create_members (const IDLStruct &strct);
+	void struct_create_converters (const IDLStruct &strct);
+	void struct_create_typedefs (const IDLStruct &strct);
+	void struct_create_any (const IDLStruct &strct);
 };
 
 #if 0 //!!!
