@@ -1,6 +1,11 @@
 2001-08-08  Mark McLoughlin <mark@skynet.ie>
 
 	* test/everything/client.c
+	(testIInterface): free iinterface.
+
+2001-08-08  Mark McLoughlin <mark@skynet.ie>
+
+	* test/everything/client.c
 	(testUnboundedSequence): set _release.
 	(testBoundedSequence): ditto.
 	(testSequenceOfAny): ditto.
