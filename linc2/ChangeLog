@@ -1,3 +1,7 @@
+2001-12-11  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.1.11
+
 2001-12-08  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c (linc_connection_write),
