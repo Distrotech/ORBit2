@@ -1491,8 +1491,6 @@ main (int argc, char *argv [])
 
 	CORBA_exception_free (&ev);
 
-	sleep (10000);
-
 	d_print ("All tests passed successfully\n");
 
 	return 0;
