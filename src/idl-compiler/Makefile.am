@@ -16,9 +16,17 @@ INCLUDES =                                    \
 	$(ORBIT_IDL_CFLAGS)
 
 if ENABLE_CPP
+
 CPP_BACKEND_LIBS = cpp/libidl-cpp.la
+
+# Force C++ linker (hack lifted from Galeon)
+CXXLD = $(CXX)
+LINK = $(LIBTOOL) --mode=link $(CXXLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+
 else
+
 CPP_BACKEND_LIBS =
+
 endif
 
 orbit_idl_2_LDADD =                          \
@@ -49,6 +57,5 @@ orbit_idl_2_SOURCES=orbit-idl-main.c \
         orbit-idl-c-deps.c \
 	orbit-idl-marshal.c \
 	orbit-idl-marshal.h	\
-	orbit-idl2.h		\
-	foo.cc
+	orbit-idl2.h
 
