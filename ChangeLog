@@ -1,17 +1,25 @@
 2001-06-26  Michael Meeks  <michael@ximian.com>
 
-	* src/orb/GIOP/giop-connection.c
-	(giop_connection_handle_input): unuse the incoming
-	message off the cnx list as we handle it.
-
-	* src/orb/orb-core/corba-orb.c
-	(CORBA_ORB_run): just do a g_main_loop_run
+	* src/idl-compiler/orbit-idl-c-skels.c
+	(cbe_skel_interface_print_relayer): chop specious overall idx
+	calculation.
+	(cbe_skel_interface_print_relayers): calc. m_data idx per
+	interface so inheritance works, sigh.
 
 	* test/everything/everything.idl: inherit StructServer
 	from BasicServer to regression test method layout under
 	inheritance.
 
 	* test/everything/structServer.c (StructServer_vepv): upd.
+
+2001-06-26  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_handle_input): unuse the incoming
+	message off the cnx list as we handle it.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_run): just do a g_main_loop_run
 
 2001-06-25  Mark McLoughlin <mark@skynet.ie>
 

@@ -99,15 +99,6 @@ POA_test_StructServer__epv StructServer_epv = {
   StructServer_opCompound,
 };
 
-#if 0
-POA_test_BasicServer__epv null_BasicServer_epv = {
-  NULL,
-};
-
-
-POA_test_StructServer__vepv StructServer_vepv = {&StructServer_base_epv,&null_BasicServer_epv,&StructServer_epv};
-#else
-POA_test_StructServer__vepv StructServer_vepv = {&StructServer_base_epv,&StructServer_epv};
-#endif
+POA_test_StructServer__vepv StructServer_vepv = {&StructServer_base_epv,&BasicServer_epv,&StructServer_epv};
 
 POA_test_StructServer StructServer_servant = {NULL,&StructServer_vepv};  /* Singleton */
