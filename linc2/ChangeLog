@@ -1,3 +1,7 @@
+2002-07-24  Michael Meeks  <michael@ximian.com>
+
+	* Version 0.5.1
+
 2002-06-19  Michael Meeks  <michael@ximian.com>
 
 	* test/test-linc.c (test_local_ipv4): upd.

@@ -1,3 +1,13 @@
+Version 0.5.1
+
+	* fixes
+		+ connection macro typo (James M. Cape)
+		+ horrible IPv6 mess (Michael)
+	* featurelets (Michael)
+		+ linc_get_tmpdir for b-a-s
+		+ re-write IPv6 code
+		+ security audit for local only case
+
 Version 0.5.0
 
 	* fixes
