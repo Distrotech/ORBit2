@@ -581,17 +581,3 @@ IDL_tree_traverse_parents(IDL_tree p,
 
 	g_hash_table_destroy(visited_nodes);
 }
-
-gboolean
-oidl_node_aggregatable_p(OIDL_Marshal_Node *node)
-{
-  switch(node->type) {
-  case MARSHAL_DATUM:
-    return TRUE;
-    break;
-  default:
-    break;
-  }
-
-  return FALSE;
-}

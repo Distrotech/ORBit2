@@ -116,7 +116,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "&(_obj->active_profile->object_key_vec), &_ORBIT_operation_vec, &ORBit_default_principal_iovec);\n\n");
   fprintf(ci->fh, "if(!_ORBIT_send_buffer) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; goto _ORBIT_system_exception; }");
 
-  c_marshal_generate(oi->in, ci);
+  c_marshalling_generate(oi->in, ci);
 
   fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; _ORBIT_completion_status = CORBA_COMPLETED_MAYBE; goto _ORBIT_system_exception; }\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
@@ -131,7 +131,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; goto _ORBIT_system_exception; }");
 
-    c_demarshal_generate(oi->out, ci);
+    c_demarshalling_generate(oi->out, ci);
 
     fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
     if(IDL_OP_DCL(tree).op_type_spec)
