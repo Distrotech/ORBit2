@@ -1,3 +1,32 @@
+2002-06-25  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c (ORBit_adaptor_setup),
+	(ORBit_adaptor_find): upd.
+
+	* src/orb/poa/poa.c (ORBit_POA_new_system_objid),
+	(ORBit_POA_create_object, ORBit_POA_object_key_lookup): upd.
+
+	* src/orb/util/genrand.c (ORBit_genuid_init):
+	always do simple init, fallback to /dev/random
+	if we don't have /dev/urandom, return a status.
+	(ORBit_genuid_fini): upd.
+	(ORBit_genuid_buffer): update to pass a role in.
+	(genuid_simple): upd.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): split out
+	(genuid_init): this, and trap some of the more heinous
+	error cases we can catch.
+
+	* test/test-giop.c (test_cookie): add.
+
+2002-06-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/util/genrand.c (ORBit_genuid_init):
+	prune bits out.
+
+	* src/orb/poa/poa.c (ORBit_POA_new_system_objid):
+	update arithmetic.
+
 2002-06-24  Michael Meeks  <michael@ximian.com>
 
 	* test/test-giop.c: fix the non-debugging build.

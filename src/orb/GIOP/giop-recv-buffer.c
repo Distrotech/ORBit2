@@ -996,7 +996,7 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 	
 	switch (buf->msg.header.version [0]) {
 	case 1:
-		switch(buf->msg.header.version [1]) {
+		switch (buf->msg.header.version [1]) {
 		case 0:
 			buf->giop_version = GIOP_1_0;
 			break;

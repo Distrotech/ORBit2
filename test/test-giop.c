@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <orbit/orbit.h>
+#include <orbit/poa/orbit-adaptor.h>
 #include "GIOP/giop-debug.h"
 
 #include "test-giop-frag.h"
@@ -210,6 +211,29 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 	cnx = NULL;
 }
 
+static void
+test_cookie (CORBA_ORB orb)
+{
+	int i;
+	ORBit_ObjectAdaptor adaptor;
+	CORBA_sequence_CORBA_octet *seq;
+
+	adaptor = g_ptr_array_index (orb->adaptors, 0);
+	g_assert (adaptor != NULL);
+
+	seq = &adaptor->adaptor_key;
+	
+	g_assert (seq->_length > 8);
+
+	fprintf (stderr, "ORB cookie (%ld): ",
+		 (long) seq->_length);
+
+	for (i = 0; i < seq->_length; i++)
+		fprintf (stderr, "%.2x", seq->_buffer [i]);
+
+	fprintf (stderr, " - looks random ?\n");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -226,6 +250,8 @@ main (int argc, char *argv[])
 	run_test (orb, test_fragments, TRUE);
 	run_test (orb, test_spoofing, FALSE);
 	run_test (orb, test_spoofing, TRUE);
+
+	test_cookie (orb);
 
 	linc_write_options_free (non_blocking);
 	CORBA_ORB_destroy (orb, &ev);

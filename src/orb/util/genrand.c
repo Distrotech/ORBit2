@@ -14,53 +14,65 @@
 #include "orbit-purify.h"
 
 static ORBitGenUidType  genuid_type = ORBIT_GENUID_STRONG;
-static int              dev_urandom_fd = -1;
+static int              random_fd = -1;
 static GRand           *glib_prng = NULL;
 static pid_t            genuid_pid;
+static uid_t            genuid_uid;
 
-void
+/**
+ * ORBit_genuid_init:
+ * @type: how strong / weak we want to be
+ * 
+ * initializes randomness bits
+ * 
+ * Return value: TRUE if we achieve the strength desired
+ **/
+gboolean
 ORBit_genuid_init (ORBitGenUidType type)
 {
+	GTimeVal time;
+	gboolean hit_strength;
+	
+	genuid_pid = getpid ();
+	genuid_uid = getuid ();
+
+	glib_prng = g_rand_new ();
+	g_get_current_time (&time);
+	g_rand_set_seed (glib_prng, time.tv_sec ^ time.tv_usec);
+
 	genuid_type = type;
 
 	switch (genuid_type) {
-	case ORBIT_GENUID_STRONG: {
-		GTimeVal time;
+	case ORBIT_GENUID_STRONG:
+		random_fd = open ("/dev/urandom", O_RDONLY);
 
-		dev_urandom_fd = open ("/dev/urandom", O_RDONLY);
+		if (random_fd < 0)
+			random_fd = open ("/dev/random", O_RDONLY);
 
-		glib_prng = g_rand_new ();
-		g_get_current_time (&time);
-		g_rand_set_seed (glib_prng, time.tv_sec ^ time.tv_usec);
-
-		break;
-	}
-	case ORBIT_GENUID_SIMPLE:
-		genuid_pid = getpid ();
+		hit_strength = (random_fd >= 0);
+#if LINC_SSL_SUPPORT
+		hit_strength = TRUE; /* foolishly trust OpenSSL */
+#endif
 		break;
 	default:
-		g_assert_not_reached ();
+		hit_strength = TRUE;
 		break;
 	}
+
+	return hit_strength;
 }
 
 void
 ORBit_genuid_fini (void)
 {
-	switch (genuid_type) {
-	case ORBIT_GENUID_STRONG:
-		if (dev_urandom_fd >= 0)
-			close (dev_urandom_fd); 
-		dev_urandom_fd = 0;
-
+	if (random_fd >= 0) {
+		close (random_fd);
+		random_fd = -1;
+	}
+	
+	if (glib_prng) {
 		g_rand_free (glib_prng);
 		glib_prng = NULL;
-		break;
-	case ORBIT_GENUID_SIMPLE:
-		break;
-	default:
-		g_assert_not_reached ();
-		break;
 	}
 }
 
@@ -70,14 +82,14 @@ genuid_rand_device (guchar *buffer, int length)
 	int n;
 
 	for (; length > 0; ) {
-		n = read (dev_urandom_fd, buffer, length);
+		n = read (random_fd, buffer, length);
 
 		if (n < 0) {
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 			else {
-				close (dev_urandom_fd);
-				dev_urandom_fd = -1;
+				close (random_fd);
+				random_fd = -1;
 
 				return FALSE;
 			}  
@@ -129,14 +141,19 @@ genuid_simple (guchar *buffer, int length)
 {
 	static guint32 inc = 0;
 
-	g_assert (length >= 8);
+	g_assert (length >= 4);
 
 	p_memzero (buffer, length);
 
 	inc++;
 
 	memcpy (buffer, &inc, 4);
-	memcpy (buffer + 4, &genuid_pid, 4);
+
+	if (length > 4)
+		memcpy (buffer + 4, &genuid_pid, 4);
+
+	if (length > 8)
+		memcpy (buffer + 8, &genuid_uid, 4);
 
 	xor_buffer (buffer, length);
 }
@@ -160,13 +177,20 @@ genuid_glib_pseudo (guchar *buffer, int length)
 }
 
 void
-ORBit_genuid_buffer (guchar *buffer, int length)
+ORBit_genuid_buffer (guint8         *buffer,
+		     int             length,
+		     ORBitGenUidRole role)
 {
-	g_return_if_fail (length > 0);
+	ORBitGenUidType type = genuid_type;
 
-	switch (genuid_type) {
+	if (role == ORBIT_GENUID_OBJECT_ID)
+		type = ORBIT_GENUID_SIMPLE;
+
+	switch (type) {
+
 	case ORBIT_GENUID_STRONG:
-		if (genuid_rand_device (buffer, length))
+		if (random_fd >= 0 &&
+		    genuid_rand_device (buffer, length))
 			return;
 #if LINC_SSL_SUPPORT
 		else if (genuid_rand_openssl (buffer, length))
@@ -174,10 +198,13 @@ ORBit_genuid_buffer (guchar *buffer, int length)
 #endif
 		genuid_glib_pseudo (buffer, length);
 		break;
+
 	case ORBIT_GENUID_SIMPLE:
 		genuid_simple (buffer, length);
 		break;
+
 	default:
+		g_error ("serious randomnes failure");
 		break;
 	}
 }
