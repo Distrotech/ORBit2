@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <linc/linc.h>
 #include "linc-private.h"
+#include "linc-compat.h"
 
 #define SYS_SOCKET_BUFFER_MAX (512 * 1024)
 #define BUFFER_MAX 1024
