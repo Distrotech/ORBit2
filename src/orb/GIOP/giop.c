@@ -24,8 +24,8 @@ giop_init (void)
 	giop_recv_buffer_init ();
 }
 
-static void
-dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
+void
+giop_dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
 {
 	guint32 lp,lp2;
 	guint32 off;
@@ -62,7 +62,7 @@ giop_dump_send (GIOPSendBuffer *send_buffer)
 
 	fprintf (stderr, "Outgoing IIOP data:\n");
 	while (nvecs-- > 0) {
-		dump (stderr, curvec->iov_base, curvec->iov_len, offset);
+		giop_dump (stderr, curvec->iov_base, curvec->iov_len, offset);
 		offset += curvec->iov_len;
 		curvec++;
 	}
@@ -83,7 +83,7 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 
 	fprintf (stderr, "Incoming IIOP data: %s\n", status);
 
-	dump (stderr, recv_buffer->message_body,
-	      recv_buffer->msg.header.message_size +
-	      sizeof (GIOPMsgHeader), 0);
+	giop_dump (stderr, recv_buffer->message_body,
+		   recv_buffer->msg.header.message_size +
+		   sizeof (GIOPMsgHeader), 0);
 }

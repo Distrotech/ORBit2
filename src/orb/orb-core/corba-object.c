@@ -442,7 +442,6 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 {
 	GSList             *cur;
 	const char         *typeid;
-	CORBA_unsigned_long type_len;
 	CORBA_unsigned_long num_profiles;
 
 	if (obj)

@@ -1,1 +1,21 @@
 TODO:
+
+* Thread safety
+	+ apparently g_object_ref / unref are not thread safe
+	  we need linc_object_ref / unref instead that does
+	  a LINC_MUTEX_LOCK on the global object lifecycle lock
+	  that needs to move into linc ... sigh !
+
+	+ we need to ensure that linc does no signal emissions,
+	  since these are horribly slow and again not safe.
+
+* Optimization
+	+ we need some concept of align == native align flagged
+	  on TypeCodes, so we can blat things quickly with memcpy
+	  in a generic way - eg. sequences of octets.
+
+* Dragons:
+	+ giop_recv_buffer.c (giop_connection_handle_input)
+	  manages to go through the error condition a whole
+	  load; _why_ is this ? - is it a recursive effect on
+	  the method ? why are we called if there is no data ?

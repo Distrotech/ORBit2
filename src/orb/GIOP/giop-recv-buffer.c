@@ -518,115 +518,6 @@ giop_recv_buffer_demarshal(GIOPRecvBuffer *buf)
   return FALSE;
 }
 
-static GIOPMessageInfo
-giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
-				    GIOPConnection *cnx)
-{
-	/* FIXME: Drop fragmented packets on the floor for now */
-	g_warning ("Dropping a fragmented packed on the floor !");
-	buf->connection = cnx;
-	buf->end = buf->message_body + buf->msg.header.message_size;
-	giop_recv_buffer_unuse (buf);
-
-	return GIOP_MSG_INVALID;
-}
-
-GIOPMessageInfo
-giop_recv_buffer_state_change (GIOPRecvBuffer        *buf,
-			       GIOPMessageBufferState state,
-			       gboolean               is_auth,
-			       GIOPConnection        *cnx)
-{
-	GIOPMessageInfo retval = GIOP_MSG_UNDERWAY;
-
-	buf->state = state;
-
-	switch (state) {
-	case GIOP_MSG_READING_HEADER:
-		buf->cur = (guchar *)&buf->msg.header;
-		buf->left_to_read = 12;
-		break;
-
-	case GIOP_MSG_READING_BODY:
-		/* Check the header */
-		if (memcmp (buf->msg.header.magic, "GIOP", 4))
-			goto msg_error;
-		if (buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
-			goto msg_error;
-		switch (buf->msg.header.version [0]) {
-		case 1:
-			switch(buf->msg.header.version [1]) {
-			case 0:
-				buf->giop_version = GIOP_1_0;
-				break;
-			case 1:
-				buf->giop_version = GIOP_1_1;
-				break;
-			case 2:
-				buf->giop_version = GIOP_1_2;
-				break;
-			default:
-				goto msg_error;
-				break;
-			}
-			break;
-		default:
-			goto msg_error;
-			break;
-		}
-		if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) !=
-		    GIOP_FLAG_ENDIANNESS)
-			buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
-		if ((buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
-		    && !is_auth)
-			goto msg_error;
-
-		buf->message_body = g_malloc (buf->msg.header.message_size + 12);
-		buf->free_body = TRUE;
-		buf->cur = buf->message_body + 12;
-		buf->end = buf->cur + buf->msg.header.message_size;
-		buf->left_to_read = buf->msg.header.message_size;
-		break;
-
-	case GIOP_MSG_READY:
-		retval = GIOP_MSG_COMPLETE;
-		buf->cur = buf->message_body + 12;
-		if (giop_recv_buffer_demarshal (buf))
-			goto msg_error;
-		if (buf->msg.header.message_type == GIOP_FRAGMENT)
-			retval = giop_recv_buffer_handle_fragmented (buf, cnx);
-		else
-			giop_recv_list_push (buf, cnx);
-		break;
-
-	case GIOP_MSG_AWAITING_FRAGMENTS:
-		retval = GIOP_MSG_COMPLETE;
-		giop_recv_buffer_handle_fragmented (buf, cnx);
-		break;
-	}
-
-	return retval;
-
- msg_error:
-	buf->msg.header.message_type = GIOP_MESSAGEERROR;
-	buf->msg.header.message_size = 0;
-
-	return GIOP_MSG_INVALID;
-}
-
-GIOPRecvBuffer *
-giop_recv_buffer_use_buf (gboolean is_auth)
-{
-	GIOPRecvBuffer *retval = NULL;
-
-	retval = g_new0 (GIOPRecvBuffer, 1);
-
-	giop_recv_buffer_state_change (
-		retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
-
-	return retval;
-}
-
 GIOPRecvBuffer *
 giop_recv_buffer_use_encaps(guchar *mem, gulong len)
 {
@@ -931,42 +822,6 @@ giop_recv_buffer_use (void)
 	return retval;
 }
 
-GIOPMessageInfo
-giop_recv_buffer_data_read (GIOPRecvBuffer *buf,
-			    int             n,
-			    gboolean        is_auth,
-			    GIOPConnection *cnx)
-{
-	GIOPMessageBufferState new_state;
-
-	buf->left_to_read -= n;
-	buf->cur += n;
-
-	if (buf->left_to_read)
-		return GIOP_MSG_UNDERWAY;
-
-	switch (buf->state) {
-	case GIOP_MSG_READING_HEADER:
-		new_state = GIOP_MSG_READING_BODY;
-		break;
-
-	case GIOP_MSG_READING_BODY:
-		if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED)
-			new_state = GIOP_MSG_AWAITING_FRAGMENTS;
-		else
-			new_state = GIOP_MSG_READY;
-		break;
-
-	default:
-		new_state = 0;
-		g_assert_not_reached ();
-		break;
-	}
-
-	return giop_recv_buffer_state_change (
-		buf, new_state, is_auth, cnx);
-}
-
 ORBit_ObjectKey*
 giop_recv_buffer_get_objkey (GIOPRecvBuffer *buf)
 {
@@ -1016,4 +871,225 @@ giop_recv_buffer_init (void)
 #endif
 
 	giop_queued_messages_lock = linc_mutex_new ();
+}
+
+
+static GIOPMessageInfo
+giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
+				    GIOPConnection *cnx)
+{
+	/* FIXME: Drop fragmented packets on the floor for now */
+	g_warning ("Dropping a fragmented packed on the floor !");
+	buf->connection = cnx;
+	buf->end = buf->message_body + buf->msg.header.message_size;
+	giop_recv_buffer_unuse (buf);
+
+	return GIOP_MSG_INVALID;
+}
+
+/* FIXME: this should be split and folded back into _handle_input */
+static GIOPMessageInfo
+giop_recv_buffer_state_change (GIOPRecvBuffer        *buf,
+			       GIOPMessageBufferState state,
+			       gboolean               is_auth,
+			       GIOPConnection        *cnx)
+{
+	GIOPMessageInfo retval = GIOP_MSG_UNDERWAY;
+
+	buf->state = state;
+
+	switch (state) {
+	case GIOP_MSG_READING_HEADER:
+		buf->cur = (guchar *)&buf->msg.header;
+		buf->left_to_read = 12;
+		break;
+
+	case GIOP_MSG_READING_BODY:
+		/* Check the header */
+		if (memcmp (buf->msg.header.magic, "GIOP", 4))
+			goto msg_error;
+
+		if (buf->msg.header.message_type >= GIOP_NUM_MSG_TYPES)
+			goto msg_error;
+
+		switch (buf->msg.header.version [0]) {
+		case 1:
+			switch(buf->msg.header.version [1]) {
+			case 0:
+				buf->giop_version = GIOP_1_0;
+				break;
+			case 1:
+				buf->giop_version = GIOP_1_1;
+				break;
+			case 2:
+				buf->giop_version = GIOP_1_2;
+				break;
+			default:
+				goto msg_error;
+				break;
+			}
+			break;
+		default:
+			goto msg_error;
+			break;
+		}
+		if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) !=
+		    GIOP_FLAG_ENDIANNESS)
+			buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
+		if ((buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
+		    && !is_auth)
+			goto msg_error;
+
+		buf->message_body = g_malloc (buf->msg.header.message_size + 12);
+		buf->free_body = TRUE;
+		buf->cur = buf->message_body + 12;
+		buf->end = buf->cur + buf->msg.header.message_size;
+		buf->left_to_read = buf->msg.header.message_size;
+		break;
+
+	case GIOP_MSG_READY:
+		retval = GIOP_MSG_COMPLETE;
+		buf->cur = buf->message_body + 12;
+		if (giop_recv_buffer_demarshal (buf))
+			goto msg_error;
+		if (buf->msg.header.message_type == GIOP_FRAGMENT)
+			retval = giop_recv_buffer_handle_fragmented (buf, cnx);
+		else
+			giop_recv_list_push (buf, cnx);
+		break;
+
+	case GIOP_MSG_AWAITING_FRAGMENTS:
+		retval = GIOP_MSG_COMPLETE;
+		giop_recv_buffer_handle_fragmented (buf, cnx);
+		break;
+	}
+
+	return retval;
+
+ msg_error:
+	buf->msg.header.message_type = GIOP_MESSAGEERROR;
+	buf->msg.header.message_size = 0;
+
+	return GIOP_MSG_INVALID;
+}
+
+gboolean
+giop_connection_handle_input (LINCConnection *lcnx)
+{
+	GIOPConnection *cnx = (GIOPConnection *) lcnx;
+	int n;
+	GIOPMessageInfo info;
+	GIOPRecvBuffer *buf;
+
+	g_object_ref ((GObject *) cnx);
+	LINC_MUTEX_LOCK (cnx->incoming_mutex);
+
+	do {
+		GIOPMessageBufferState new_state;
+
+		if (!cnx->incoming_msg)
+			cnx->incoming_msg = giop_recv_buffer_use_buf (
+				cnx->parent.is_auth);
+
+		buf = cnx->incoming_msg;
+
+		/* FIXME: holding cnx->incoming_mutex here can deadlock ! */
+		n = linc_connection_read (
+			lcnx, buf->cur, buf->left_to_read, FALSE);
+
+		if (n < 0 || /* error on read */
+		    n == 0 || /* short read == HUP on some platforms */
+		    !buf->left_to_read) { /* odd error case ? */
+			/* FIXME: we hit this _far_ too much, this is a common
+			   path instead of an unusual incidental */
+/*			g_warning ("Died on read %d %ld",
+			n, buf->left_to_read); */
+			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
+			g_object_unref ((GObject *) cnx);
+			return TRUE;
+		}
+
+/*		fprintf (stderr, "Read %d\n", n);
+		giop_dump (stderr, buf->cur, n, 0); */
+
+		buf->left_to_read -= n;
+		buf->cur += n;
+
+		if (buf->left_to_read)
+			new_state = GIOP_MSG_UNDERWAY;
+		else {
+			switch (buf->state) {
+			case GIOP_MSG_READING_HEADER:
+				new_state = GIOP_MSG_READING_BODY;
+				break;
+
+			case GIOP_MSG_READING_BODY:
+				if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED)
+					new_state = GIOP_MSG_AWAITING_FRAGMENTS;
+				else
+					new_state = GIOP_MSG_READY;
+				break;
+			case GIOP_MSG_AWAITING_FRAGMENTS:
+			case GIOP_MSG_READY:
+				g_assert_not_reached ();
+				break;
+			}
+		}
+
+		info = giop_recv_buffer_state_change (
+			buf, new_state, cnx->parent.is_auth, cnx);
+
+	} while (cnx->incoming_msg && info == GIOP_MSG_UNDERWAY);
+
+	buf = cnx->incoming_msg;
+	cnx->incoming_msg = NULL;
+	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+
+	switch (info) {
+	case GIOP_MSG_COMPLETE:
+		if (buf && buf->msg.header.message_type == GIOP_REQUEST) {
+			ORBit_handle_request (cnx->orb_data, buf);
+			giop_recv_buffer_unuse (buf);
+		}
+		/* FIXME: we need to move the giop_recv_list_push code
+		 * here, and put all the msg handling into the same
+		 * switch so people have a chance of understanding what
+		 * is going on. */
+		break;
+
+	case GIOP_MSG_INVALID:
+		/* Zap it for badness.
+		 * XXX We should probably handle oversized
+		 * messages more graciously XXX */
+		giop_connection_close (cnx);
+
+		if (!cnx->parent.was_initiated)
+			/* If !was_initiated, then
+			   a refcount owned by a GIOPServer
+			   must be released */
+			g_object_unref (G_OBJECT (cnx));
+		break;
+
+	case GIOP_MSG_UNDERWAY:
+		g_assert_not_reached ();
+		break;
+	}
+
+	g_object_unref ((GObject *) cnx);
+
+	return TRUE;
+}
+
+GIOPRecvBuffer *
+giop_recv_buffer_use_buf (gboolean is_auth)
+{
+	GIOPRecvBuffer *retval = NULL;
+
+	retval = g_new0 (GIOPRecvBuffer, 1);
+
+	giop_recv_buffer_state_change (
+		retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
+
+	return retval;
 }

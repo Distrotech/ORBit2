@@ -382,6 +382,15 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
 	return indirect;
 }
 
+/**
+ * giop_send_buffer_write:
+ * @buf: the buffer to write
+ * @cnx: the connection to write it to.
+ * 
+ * Writes @buf to @cnx as a block.
+ * 
+ * Return value: 0 on sucess, non 0 on error.
+ **/
 int
 giop_send_buffer_write (GIOPSendBuffer *buf, GIOPConnection *cnx)
 {
