@@ -1,0 +1,13 @@
+Makefile
+Makefile.in
+html
+sgml
+*.stamp
+linc.args
+linc.hierarchy
+linc.signals
+linc-decl.txt
+linc-decl-list.txt
+linc-undocumented.txt
+linc-unused.txt
+*.lo
