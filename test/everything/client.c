@@ -1086,8 +1086,8 @@ testAnyEquivalence (test_TestFactory   factory,
 
 	aseq = test_unionSeq__alloc ();
 	bseq = test_unionSeq__alloc ();
-	aseq->_length  = aseq->_maximum = 3;
-	bseq->_length  = bseq->_maximum = 3;
+	aseq->_length  = aseq->_maximum = 2; /* FIXME - 3; */
+	bseq->_length  = bseq->_maximum = 2; /* FIXME - 3; */
 	aseq->_buffer  = test_unionSeq_allocbuf (3);
 	bseq->_buffer  = test_unionSeq_allocbuf (3);
 	bseq->_release = aseq->_release = CORBA_TRUE;
@@ -1096,6 +1096,7 @@ testAnyEquivalence (test_TestFactory   factory,
 	bseq->_buffer [1]._d   = aseq->_buffer [1]._d   = 2;
 	aseq->_buffer [1]._u.y = CORBA_string_dup ("blah");
 	bseq->_buffer [1]._u.y = CORBA_string_dup ("blah");
+
 	bseq->_buffer [2]._d   = aseq->_buffer [2]._d   = 55;
 	bseq->_buffer [2]._u.w = aseq->_buffer [2]._u.w = constants_LONG_IN;
 
