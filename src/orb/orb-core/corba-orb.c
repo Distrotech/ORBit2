@@ -16,16 +16,17 @@
 #endif
 #include "orbit-debug.h"
 
-#ifdef G_OS_WIN32
-#define STRICT
-#include <windows.h>
-#undef STRICT
-#endif
-
 extern const ORBit_option orbit_supported_options[];
 
 #ifdef G_ENABLE_DEBUG
 OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
+#endif
+
+#ifdef G_OS_WIN32
+/* Silence gcc warning about no prototype */
+BOOL WINAPI DllMain (HINSTANCE hinstDLL,
+		     DWORD     fdwReason,
+		     LPVOID    lpvReserved);
 #endif
 
 /*

@@ -416,7 +416,9 @@ test_local_ipv6 (void)
 static void
 test_local (void)
 {
+#ifndef G_OS_WIN32
 	LinkProtocolInfo *proto;
+#endif
 
 	fprintf (stderr, "Testing is_local checking ...\n");
 

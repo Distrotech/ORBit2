@@ -515,7 +515,7 @@ build_cpp_args (const char *path,
 		const char *cpp_args)
 {
 	char *ret;
-	const char *base;
+	char *base;
 	char *base_cpy;
 	int   i;
 

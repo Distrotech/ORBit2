@@ -1,3 +1,13 @@
+2005-03-10  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-protocols.c (link_get_local_hostname): Make sure
+	looking up the local hostname works on Win32. Try first dropping
+	the domain suffix, and then using the NetBIOS name.
+	(link_protocol_get_sockinfo_ipv4): Make sure looking up the
+	hostname to be returned works. If not, use IP address instead.
+
+	* test/test-linc.c (test_local): Ifdef out variable not used on Win32.
+
 2005-02-23  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-private.h

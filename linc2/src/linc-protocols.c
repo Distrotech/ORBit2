@@ -143,6 +143,27 @@ link_get_local_hostname (void)
 
 	if (gethostname (local_host, NI_MAXHOST) == -1)
 		return NULL;
+#ifdef G_OS_WIN32
+	{
+		/* Make sure looking up that name works */
+		struct hostent *he = gethostbyname (local_host);
+		char *dot;
+
+		if (he == NULL &&
+		    (dot = strchr (local_host, '.')) != NULL) {
+			*dot = '\0';
+			he = gethostbyname (local_host);
+		}
+		if (he == NULL) {
+			DWORD namelen = NI_MAXHOST;
+			if (!GetComputerName (local_host, &namelen))
+				return NULL;
+			he = gethostbyname (local_host);
+		}
+		if (he == NULL)
+			return NULL;
+	}
+#endif
 
 	return local_host;
 }
@@ -663,10 +684,23 @@ link_protocol_get_sockinfo_ipv4 (const LinkProtocolInfo  *proto,
                                       sizeof (struct in_addr), AF_INET);
 		if (!host)
 			return FALSE;
-		else
-			hname = host->h_name;
+		hname = host->h_name;
 	}
-
+#ifdef G_OS_WIN32
+	{
+		/* Make sure looking up that name works */
+		char *hname_copy = g_strdup (hname);
+		host = gethostbyname (hname_copy);
+		
+		g_free (hname_copy);
+		if (host == NULL) {
+			/* Nope, use IP address then */
+			hname = inet_ntoa (sa_in->sin_addr);
+		} else {
+			hname = host->h_name;
+		}
+	}
+#endif
 	return link_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
 						 hostname, portnum);
 }

@@ -1,3 +1,21 @@
+2005-03-10  Tor Lillqvist  <tml@novell.com>
+
+	* configure.in: Bump version to 2.13.0 to distinguish from the
+	gnome-2-10 branch. Call AC_CANONICAL_HOST before the Win32 test to
+	make sure $host is set up. Require GLib 2.6.
+
+	* src/idl-compiler/orbit-idl-main.c: Make the default not to show
+	CPP errors, so that --showcpperrors actually changes the
+	behaviour.
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value)
+	* src/services/imodule/orbit-imodule.c (build_cpp_args): Minor
+	const correctness fixes.
+
+	* src/orb/orb-core/corba-orb.c: Drop inclusion of <windows.h>, we
+	get it through <winsock2.h> in linc-protocol.h anyway. Add
+	prototype for DllMain() to silence gcc.
+
 2005-02-23  Tor Lillqvist  <tml@novell.com>
 
 	* orbit2-zip.in: Include also etc/orbitrc (even if it is
