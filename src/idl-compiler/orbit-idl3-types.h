@@ -36,6 +36,7 @@ typedef struct {
   char *backend_directory;
   char *deps_file;
   char *header_guard_prefix;
+  char *output_directory;
   gboolean onlytop;
   gboolean idata;
 

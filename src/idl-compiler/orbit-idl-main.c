@@ -53,6 +53,7 @@ static char *cl_header_guard_prefix = "";
 static char *cl_backend_dir = NULL;
 static gboolean cl_onlytop = FALSE;
 static char *cl_deps_file = NULL;
+static char *cl_output_directory = "";
 
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
 static GString *cl_cpp_args;
@@ -131,6 +132,7 @@ struct poptOption options[] = {
   {"nodefskels", '\0', POPT_ARG_NONE, &cl_disable_defs_skels, 0, "Don't output defs for skels in header", NULL},
   {"deps", '\0', POPT_ARG_STRING, &cl_deps_file, 0, "Generate dependency info suitable for inclusion in Makefile", "FILENAME"},
   {"headerguardprefix", '\0', POPT_ARG_STRING, &cl_header_guard_prefix, 0, "Prefix for #ifdef header guards. Sometimes useful to avoid conflicts.", NULL},
+  {"output-dir", '\0', POPT_ARG_STRING, &cl_output_directory, 0, "Where to put generated files. This directory must exist.", NULL},
   POPT_AUTOHELP
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
@@ -195,6 +197,7 @@ int main(int argc, const char *argv[])
   rinfo.output_formatter = c_output_formatter;
   rinfo.output_language = cl_output_lang;
   rinfo.header_guard_prefix = cl_header_guard_prefix;
+  rinfo.output_directory = cl_output_directory;
   rinfo.backend_directory = cl_backend_dir;
   rinfo.onlytop = cl_onlytop;
   rinfo.idata = !cl_disable_idata;

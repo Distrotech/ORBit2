@@ -125,7 +125,15 @@ out_for_pass (const char    *input_filename,
 	FILE *fp;
 	char *output_filename;
 	char *cmdline;
+	gchar *output_full_path = NULL;
 
+
+        if ((strlen(rinfo->output_directory)) && (!g_file_test (rinfo->output_directory, G_FILE_TEST_IS_DIR))) {
+		g_error ("ouput directory '%s' does not exist",
+			 rinfo->output_directory);
+		return NULL;
+	}
+	
 	if (pass == OUTPUT_DEPS) {
 		if (!g_file_test (".deps", G_FILE_TEST_IS_DIR)) {
 			if (mkdir (".deps", 0775) < 0) {
@@ -146,13 +154,15 @@ out_for_pass (const char    *input_filename,
 		
 	} else {
 		output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
+		output_full_path = g_build_path (G_DIR_SEPARATOR_S, rinfo->output_directory, output_filename, NULL);
+		g_free (output_filename);
 
 		cmdline = g_alloca (strlen (rinfo->output_formatter) +
-				    strlen (output_filename) +
+				    strlen (output_full_path) +
 				    sizeof(" > "));
-		sprintf (cmdline, "%s > %s", rinfo->output_formatter, output_filename);
+		sprintf (cmdline, "%s > %s", rinfo->output_formatter, output_full_path);
 
-		g_free (output_filename);
+		g_free (output_full_path);
 
 		/* Many versions of cpp do evil translating internal
 		* strings, producing bogus output, so clobber LC_ALL */
