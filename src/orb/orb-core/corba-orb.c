@@ -2,7 +2,6 @@
 #include <config.h>
 #include <ctype.h>
 #include <string.h>
-#include <popt.h>
 
 #include <orbit/orbit.h>
 
