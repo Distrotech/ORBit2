@@ -33,9 +33,12 @@ linc_set_threaded (gboolean threaded)
 void
 linc_init (gboolean init_threads)
 {
-	if (init_threads && !g_thread_supported ())
+	if ((init_threads || linc_threaded) &&
+	    !g_thread_supported ())
 		g_thread_init (NULL);
-	linc_set_threaded (init_threads);
+
+	if (!linc_threaded && init_threads)
+		linc_threaded = TRUE;
 
 	g_type_init ();
 
