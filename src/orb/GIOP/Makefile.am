@@ -10,7 +10,7 @@ noinst_LTLIBRARIES=libGIOP.la
 libGIOP_la_SOURCES=giop-connection.c \
 	giop-server.c \
 	giop.c \
-	gip-debug.h \
+	giop-debug.h \
 	giop-private.h \
 	giop-send-buffer.c \
 	giop-recv-buffer.c \
