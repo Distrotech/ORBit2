@@ -487,9 +487,7 @@ linc_connection_read (LINCConnection *cnx,
 
 /* Determine the maximum size of the iovec vector */
 
-#if defined (UIO_MAXIOV) /* Glibc */
-# define LINC_IOV_MAX (UIO_MAXIOV)
-#elif defined (MAXIOV) /* HPUX */
+#if defined (MAXIOV) /* HPUX */
 # define LINC_IOV_MAX (MAXIOV)
 #elif defined (IOV_MAX) /* AIX */
 # define LINC_IOV_MAX (IOV_MAX)
@@ -500,6 +498,8 @@ linc_connection_read (LINCConnection *cnx,
  * available if KERNEL is defined on MacOS X 10.1
  */
 #  define LINC_IOV_MAX 1024
+#elif defined (UIO_MAXIOV) /* Glibc */
+# define LINC_IOV_MAX (UIO_MAXIOV)
 #else /* Safe Guess */
 # define LINC_IOV_MAX 16
 #endif
