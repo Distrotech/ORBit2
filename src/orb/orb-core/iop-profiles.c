@@ -577,20 +577,13 @@ IOP_start_profiles (CORBA_ORB orb)
 	}
 
 	{
-		const CORBA_sequence_CONV_FRAME_CodeSetId empty_conv_codesets
-			= {0L,     /* _maximum */  
-			   0L,     /* _length  */
-			   NULL,   /* _buffer  */
-			   FALSE}; /* _release */  
 		IOP_TAG_CODE_SETS_info *csets;
 
 		csets = g_new0 (IOP_TAG_CODE_SETS_info, 1);
 		csets->parent.component_type = IOP_TAG_CODE_SETS;
 
-		csets->data.ForCharData.native_code_set = IOP_PROFILES_CODE_SET_UTF8;
-		csets->data.ForCharData.conversion_code_sets = empty_conv_codesets;
+		csets->data.ForCharData.native_code_set  = IOP_PROFILES_CODE_SET_UTF8;
 		csets->data.ForWcharData.native_code_set = IOP_PROFILES_CODE_SET_UTF16;
-		csets->data.ForWcharData.conversion_code_sets = empty_conv_codesets;
 
 		mci->components = g_slist_append (mci->components, csets);
 	}
@@ -1218,23 +1211,14 @@ static IOP_Component_info *
 IOP_TAG_CODE_SETS_demarshal (IOP_ComponentId  id,
 			     GIOPRecvBuffer  *buf)
 {
-	const CORBA_sequence_CONV_FRAME_CodeSetId empty_conv_codesets
-		= {0L,     /* _maximum */  
-		   0L,     /* _length  */
-		   NULL,   /* _buffer  */
-		   FALSE}; /* _release */  
 	IOP_TAG_CODE_SETS_info *retval;
 	GIOPRecvBuffer         *encaps;
-	encaps = giop_recv_buffer_use_encaps_buf (buf);
-	if (!encaps)
+
+	if (!(encaps = giop_recv_buffer_use_encaps_buf (buf)))
 		return NULL;
   
-	retval = g_new (IOP_TAG_CODE_SETS_info, 1);
+	retval = g_new0 (IOP_TAG_CODE_SETS_info, 1);
 	retval->parent.component_type = id;
-	retval->data.ForCharData.native_code_set       = 0L;
-	retval->data.ForCharData.conversion_code_sets  = empty_conv_codesets;
-	retval->data.ForWcharData.native_code_set      = 0L;
-	retval->data.ForWcharData.conversion_code_sets = empty_conv_codesets;
 
 	/* We don't care about the data much */
 	if (!CodeSetComponent_demarshal (encaps, &(retval->data.ForCharData)) ||
