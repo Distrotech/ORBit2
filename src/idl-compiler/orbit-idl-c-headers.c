@@ -448,38 +448,66 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
   fprintf(ci->fh, "#endif\n");
 
   if(do_alloc) {
+    gboolean extern_alloc = FALSE;
+    gboolean extern_freekids = FALSE;
+    char *ctmp2;
+
     tts = orbit_cbe_get_typespec(tree);
 
-    if((IDL_NODE_TYPE(tts) != IDLN_TYPE_FLOAT)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_INTEGER)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_BOOLEAN)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_CHAR)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_WIDE_CHAR)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_OCTET)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_ENUM)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_STRING)
-       && (IDL_NODE_TYPE(tts) != IDLN_TYPE_WIDE_STRING)) {
-      if((IDL_NODE_TYPE(tts) == IDLN_EXCEPT_DCL
-	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_STRUCT)
-	 && !IDL_TYPE_STRUCT(tts).member_list) {
+    switch (IDL_NODE_TYPE(tts)) {
+    case IDLN_TYPE_FLOAT:
+    case IDLN_TYPE_INTEGER:
+    case IDLN_TYPE_BOOLEAN:
+    case IDLN_TYPE_CHAR:
+    case IDLN_TYPE_WIDE_CHAR:
+    case IDLN_TYPE_OCTET:
+    case IDLN_TYPE_ENUM:
+      break;
+    case IDLN_TYPE_STRING:
+    case IDLN_TYPE_WIDE_STRING:
+      // No aliased alloc for strings
+      fprintf(ci->fh, "#define %s__freekids CORBA_string__freekids\n", ctmp);
+      break;
+    case IDLN_TYPE_ANY:
+      fprintf(ci->fh, "#define %s__alloc CORBA_any__alloc\n", ctmp);
+      fprintf(ci->fh, "#define %s__freekids CORBA_any__freekids\n", ctmp);
+      break;
+    case IDLN_TYPE_SEQUENCE:
+      ctmp2 = orbit_cbe_get_typename(tts);
+      //Use #define unless the sequence is at its most basic unaliased type.
+      if (strcmp(ctmp, ctmp2) != 0) {
+	fprintf(ci->fh, "#define %s__alloc (%s *) %s__alloc\n", ctmp, ctmp, ctmp2);
+      } else {
+	extern_alloc = TRUE;
+      }
+      fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
+      g_free(ctmp2);
+      break;
+    case IDLN_EXCEPT_DCL:
+    case IDLN_TYPE_STRUCT:
+      if (!IDL_TYPE_STRUCT(tts).member_list) {
 	fprintf(ci->fh, "#define %s__alloc() NULL\n", ctmp);
       } else {
-	fprintf(ci->fh, "extern %s%s* %s__alloc(void);\n", ctmp,
-		(IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"",
-		ctmp);
+	extern_alloc = TRUE;
       }
-      if ( IDL_NODE_TYPE(tts) != IDLN_TYPE_SEQUENCE ) {
-        fprintf(ci->fh,
-	      "extern gpointer %s__freekids(gpointer mem, gpointer dat); /* ORBit internal use */\n",
-	      ctmp);
-      }
+      extern_freekids = TRUE;
+      break;
+    default:
+      extern_alloc = TRUE;
+      extern_freekids = TRUE;
+      break;
     }
-    /* both of these next ones are special cases of aliases, I think */
-    if((IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING)
-       || (IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING))
-      fprintf(ci->fh, "#define %s__freekids CORBA_string__freekids\n", ctmp);
-    if( IDL_NODE_TYPE(tts) == IDLN_TYPE_SEQUENCE )
-      fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
+
+    if (extern_alloc)
+      fprintf(ci->fh, "extern %s%s* %s__alloc(void);\n", ctmp,
+	      (IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"",
+	      ctmp);
+
+    if (extern_freekids)
+      fprintf(ci->fh, 
+	      "extern gpointer %s__freekids(gpointer mem, gpointer dat); "
+	      "/* ORBit internal use */\n", 
+	      ctmp);
   }
 
   g_free(ctmp);
