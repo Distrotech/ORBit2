@@ -13,6 +13,7 @@
 #include "linc-private.h"
 
 static gboolean linc_threaded = FALSE;
+static gboolean linc_mutex_new_called = FALSE;
 GMainLoop      *linc_loop = NULL;
 GMainContext   *linc_context = NULL;
 
@@ -32,6 +33,8 @@ SSL_CTX    *linc_ssl_ctx;
 void
 linc_set_threaded (gboolean threaded)
 {
+	if (linc_mutex_new_called)
+		g_error ("You need to set this before using the ORB");
 	linc_threaded = threaded;
 }
 
@@ -187,10 +190,10 @@ linc_main_loop_run (void)
 GMutex *
 linc_mutex_new (void)
 {
+	linc_mutex_new_called = TRUE;
 #ifdef G_THREADS_ENABLED
 	if (linc_threaded && g_thread_supported ())
 		return g_mutex_new ();
 #endif
-
 	return NULL;
 }
