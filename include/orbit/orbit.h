@@ -10,7 +10,10 @@
 #ifndef ORBIT_H
 #define ORBIT_H 1
 
-extern unsigned int orbit_major_version, orbit_minor_version, orbit_micro_version;
+extern const char  *orbit_version;
+extern unsigned int orbit_major_version;
+extern unsigned int orbit_minor_version;
+extern unsigned int orbit_micro_version;
 
 #include <orbit/orbit-types.h>
 #include <orbit/GIOP/giop.h>

@@ -586,7 +586,6 @@ IOP_component_free(IOP_Component_info *c)
       g_free(((IOP_TAG_GENERIC_SSL_SEC_TRANS_info*)c)->service);
       break;
     case IOP_TAG_COMPLETE_OBJECT_KEY:
-      g_free(((IOP_TAG_COMPLETE_OBJECT_KEY_info*)c)->oki);
       break;
     case IOP_TAG_SSL_SEC_TRANS:
       break;
