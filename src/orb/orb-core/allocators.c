@@ -313,11 +313,37 @@ ORBit_realloc_tcval (gpointer       old,
 			    LONG_PREFIX_LEN +
 			    element_size * num_elements);
 
+	/* Initialize as yet unused memory to 'safe' values */
 	memset ((guchar *) prefix + LONG_PREFIX_LEN +
 		old_num_elements * element_size,
 		0, (num_elements - old_num_elements) * element_size);
 
 	return (guchar *) prefix + LONG_PREFIX_LEN;
+}
+
+CORBA_TypeCode
+ORBit_alloc_get_tcval (gpointer mem)
+{
+	ORBitMemHow how;
+	ORBit_MemPrefix *prefix;
+
+	if (!mem)
+		return NULL;
+
+	if ((gulong)mem & 0x1)
+		return TC_CORBA_string;
+
+	how = *(((ORBitMemHow *) mem) - 1);
+
+	if (ORBIT_MEMHOW_HOW (how) == ORBIT_MEMHOW_TYPECODE) {
+		prefix = (ORBit_MemPrefix *) 
+		  ((guchar *) mem - LONG_PREFIX_LEN);
+
+		return ORBit_RootObject_duplicate (prefix->u.tc);
+	} else
+		g_error ("Can't determine type of %p (%d)", mem, how);
+
+	return NULL;
 }
 
 gpointer

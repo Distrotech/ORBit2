@@ -3,12 +3,13 @@
 #include "orb-core-private.h"
 #include <string.h>
 
+#define SKIP_ALIAS(tc) \
+	while ((tc)->kind == CORBA_tk_alias) { (tc) = (tc)->subtypes [0]; }
+
 size_t
 ORBit_gather_alloc_info (CORBA_TypeCode tc)
 {
-
-	while (tc->kind == CORBA_tk_alias)
-		tc = tc->subtypes[0];
+	SKIP_ALIAS (tc);
 
 	switch (tc->kind) {
 	case CORBA_tk_long:
@@ -103,8 +104,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 	CORBA_unsigned_long i, ulval;
 	gconstpointer       subval;
 
-	while (tc->kind == CORBA_tk_alias)
-		tc = tc->subtypes[0];
+	SKIP_ALIAS (tc);
 
 	switch (tc->kind) {
 	case CORBA_tk_wchar:
@@ -278,8 +278,7 @@ ORBit_get_union_switch (CORBA_TypeCode  tc,
 {
 	glong retval = 0; /* Quiet gcc */
 
-	while (tc->kind == CORBA_tk_alias)
-		tc = tc->subtypes[0];
+	SKIP_ALIAS (tc);
 
 	switch (tc->kind) {
 	case CORBA_tk_ulong:
@@ -389,8 +388,7 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 {
 	CORBA_long i;
 
-	while (tc->kind == CORBA_tk_alias)
-		tc = tc->subtypes[0];
+	SKIP_ALIAS (tc);
 
 	switch (tc->kind) {
 	case CORBA_tk_short:
@@ -729,8 +727,7 @@ ORBit_copy_value_core (gconstpointer *val,
 	gconstpointer pval1; 
 	gpointer pval2;
 
-	while (tc->kind == CORBA_tk_alias)
-		tc = tc->subtypes[0];
+	SKIP_ALIAS (tc);
 
 	switch (tc->kind) {
 	case CORBA_tk_wchar:
@@ -936,8 +933,7 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	gboolean ret;
 	int i;
 
-	while (tc->kind == CORBA_tk_alias)
-		tc = tc->subtypes[0];
+	SKIP_ALIAS (tc);
 
 	switch (tc->kind) {
 	case CORBA_tk_null:
@@ -1129,4 +1125,136 @@ ORBit_any_equivalent (CORBA_any *obj, CORBA_any *any, CORBA_Environment *ev)
 	b = any->_value;
 
 	return ORBit_value_equivalent (&a, &b, any->_type, ev);
+}
+
+/* Friendly sequence allocators */
+
+#define BASE_TYPES \
+	     CORBA_tk_short: \
+	case CORBA_tk_long: \
+	case CORBA_tk_enum: \
+	case CORBA_tk_ushort: \
+	case CORBA_tk_ulong: \
+	case CORBA_tk_float: \
+	case CORBA_tk_double: \
+	case CORBA_tk_boolean: \
+	case CORBA_tk_char: \
+	case CORBA_tk_octet: \
+	case CORBA_tk_longlong: \
+	case CORBA_tk_ulonglong: \
+	case CORBA_tk_longdouble: \
+	case CORBA_tk_wchar
+
+gpointer
+ORBit_sequence_alloc (CORBA_TypeCode      sequence_tc,
+		      CORBA_unsigned_long length)
+{
+	CORBA_TypeCode tc = sequence_tc;
+  	CORBA_sequence_CORBA_octet *seq;
+
+	g_return_val_if_fail (sequence_tc != NULL, NULL);
+
+	SKIP_ALIAS (tc);
+	g_return_val_if_fail (tc->kind == CORBA_tk_sequence, NULL);
+	
+	seq = ORBit_alloc_by_tc (sequence_tc);
+	seq->_buffer = ORBit_small_allocbuf (tc, length);
+	seq->_length = length;
+	seq->_maximum = length;
+
+	g_assert (ORBit_alloc_get_tcval (seq) == sequence_tc);
+
+	return seq;
+}
+
+void
+ORBit_sequence_set_size (gpointer            sequence,
+			 CORBA_unsigned_long length)
+{
+	CORBA_TypeCode tc, subtc;
+	CORBA_sequence_CORBA_octet *seq = sequence;
+
+	g_return_if_fail (seq != NULL);
+	g_return_if_fail (seq->_length <= seq->_maximum);
+
+	if (seq->_length == length)
+		return;
+
+	tc = ORBit_alloc_get_tcval (sequence);
+	SKIP_ALIAS (tc);
+	g_return_if_fail (tc->kind == CORBA_tk_sequence);
+	subtc = tc->subtypes[0];
+
+	if (length < seq->_length) {
+		guint i;
+
+		switch (subtc->kind) {
+		case BASE_TYPES: /* leave some in-line values */
+			break;
+		default: {
+			guint element_size = ORBit_gather_alloc_info (subtc);
+
+			for (i = length; i < seq->_length; i++)
+				ORBit_freekids_via_TypeCode
+					(subtc, (guchar *)seq->_buffer + i * element_size);
+
+			/* Don't trust the API user not to poke at it again */
+			memset ((guchar *)seq->_buffer + length * element_size,
+				0, (seq->_length - length) * element_size);
+			break;
+		}
+		}
+	} else {
+		if (length > seq->_maximum) {
+			guint new_len = MAX (length, seq->_maximum * 2);
+
+			seq->_buffer = ORBit_realloc_tcval
+				(seq->_buffer, subtc,
+				 seq->_maximum, new_len);
+			seq->_maximum = new_len;
+		}
+	}
+	seq->_length = length;
+}
+
+void
+ORBit_sequence_append (gpointer      sequence,
+		       gconstpointer element)
+{
+	guint element_size;
+	guchar *dest;
+	CORBA_TypeCode tc, subtc;
+  	CORBA_sequence_CORBA_octet *seq = sequence;
+
+	g_return_if_fail (seq != NULL);
+	g_return_if_fail (seq->_length <= seq->_maximum);
+
+	tc = ORBit_alloc_get_tcval (sequence);
+	SKIP_ALIAS (tc);
+	subtc = tc->subtypes [0];
+	g_return_if_fail (tc->kind == CORBA_tk_sequence);
+
+	if (seq->_length == seq->_maximum) {
+		/* NB. extend maximum, not length */
+		seq->_buffer = ORBit_realloc_tcval
+			(seq->_buffer, subtc,
+			 seq->_maximum, seq->_maximum * 2);
+		seq->_maximum *= 2;
+	}
+
+	element_size = ORBit_gather_alloc_info (subtc);
+	
+	dest = seq->_buffer;
+	dest += element_size * seq->_length;
+	ORBit_copy_value_core (&element, (gpointer)&dest, subtc);
+
+	seq->_length++;
+}
+
+void
+ORBit_sequence_concat (gpointer      sequence,
+		       gconstpointer append)
+{
+	/* FIXME: implement me */
+	g_warning ("Implement me");
 }

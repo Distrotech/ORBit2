@@ -15,13 +15,24 @@ typedef struct {
 	CORBA_sequence_CORBA_TypeCode types;
 } ORBit_IModule;
 
-
+/* Builtin allocators */
 gpointer       ORBit_small_alloc       (CORBA_TypeCode      tc);
 gpointer       ORBit_small_allocbuf    (CORBA_TypeCode      tc,
 					CORBA_unsigned_long length);
 void           ORBit_small_freekids    (CORBA_TypeCode      tc,
 					gpointer            p,
 					gpointer            d);
+
+/* More friendly(?) sequence allocators */
+gpointer       ORBit_sequence_alloc    (CORBA_TypeCode      sequence_tc,
+					CORBA_unsigned_long length);
+void           ORBit_sequence_append   (gpointer            sequence,
+					gconstpointer       element);
+void           ORBit_sequence_set_size (gpointer            sequence,
+					CORBA_unsigned_long length);
+#define        ORBit_sequence_index(sequence,idx) (sequence)->_buffer[(idx)]
+void           ORBit_sequence_concat   (gpointer            sequence,
+					gconstpointer       append);
 
 typedef enum {
 	ORBIT_CONNECTION_CONNECTED,

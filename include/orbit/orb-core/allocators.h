@@ -71,6 +71,7 @@ gpointer    ORBit_alloc_by_tc        (CORBA_TypeCode tc);
 gpointer    ORBit_alloc_with_free_fn (size_t element_size,
 				      guint  num_elements,
 				      ORBit_Mem_free_fn free_fn);
+CORBA_TypeCode ORBit_alloc_get_tcval (gpointer mem);
 
 gpointer CORBA_any__freekids         (gpointer mem, gpointer dat);
 gpointer ORBit_freekids_via_TypeCode (CORBA_TypeCode tc, gpointer mem);

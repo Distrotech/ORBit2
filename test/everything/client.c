@@ -62,6 +62,32 @@ testConst (void)
 }
 
 static void
+testSequenceHelpers (void)
+{
+	CORBA_long l;
+	test_BoundedLongSeq *lseq;
+
+	lseq = ORBit_sequence_alloc (TC_test_BoundedLongSeq, 2);
+	g_assert (lseq != NULL);
+	g_assert (lseq->_length == 2);
+	g_assert (lseq->_maximum >= 2);
+
+	l = 1;
+	ORBit_sequence_append (lseq, &l);
+	l++;
+	ORBit_sequence_append (lseq, &l);
+	
+	g_assert (lseq->_length == 4);
+	g_assert (ORBit_sequence_index (lseq, 2) == 1);
+	g_assert (ORBit_sequence_index (lseq, 3) == 2);
+
+	ORBit_sequence_set_size (lseq, 100);
+	ORBit_sequence_set_size (lseq, 0);
+
+	CORBA_free (lseq);
+}
+
+static void
 testAttribute (test_TestFactory factory, 
 	       CORBA_Environment *ev)
 {  
@@ -1817,6 +1843,7 @@ run_tests (test_TestFactory   factory,
 	int i;
 
 	for (i = 0; i < NUM_RUNS; i++) {
+		testSequenceHelpers ();
 		testConst ();
 		testAttribute (factory, ev);
 		testString (factory, ev);
