@@ -454,7 +454,7 @@ IDLStruct::skel_impl_ret_post (ostream          &ostr,
 	if (!conversion_required ())
 	{
 		string cast = "(" + c_typename + "*)&";
-		if (!is_fixed ())
+		if (is_fixed ())
 			cast = "*" + cast;
 		
 		ostr << indent << "return " << cast << "_cpp_retval;"
