@@ -7,7 +7,7 @@ noinst_PROGRAMS=client server
 server_SOURCES= server.cc test-impl.cc test-impl.hh test.idl
 server_LDADD= generated/libsimpleSkels.a generated/libsimpleStubs.a $(testcpp_libs)
 
-# Client is linked with skels:
+# Client is linked with stubs:
 client_SOURCES= client.cc test.idl
 client_LDADD= generated/libsimpleStubs.a $(testcpp_libs)
 
