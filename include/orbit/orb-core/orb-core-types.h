@@ -5,7 +5,6 @@
 #include <orbit/orb-core/corba-typecode-type.h>
 #include <orbit/orb-core/corba-any-type.h>
 #include <orbit/orb-core/corba-environment-type.h>
-#include <orbit/orb-core/corba-pobj.h>
 #include <orbit/orb-core/corba-orb-type.h>
 #include <orbit/orb-core/orbit-object.h>
 #include <orbit/orb-core/corba-context-type.h>

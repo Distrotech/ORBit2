@@ -1,9 +1,6 @@
 #ifndef _POA_BASICS_H_
 #define _POA_BASICS_H_ 1
 
-typedef struct ORBit_POAObject_type *ORBit_POAObject;
-typedef struct ORBit_OAObject_type  *ORBit_OAObject;
-
 #if !defined(_PortableServer_Servant_defined)
 #define _PortableServer_Servant_defined 1
 	typedef gpointer PortableServer_Servant;
@@ -47,6 +44,11 @@ typedef PortableServer_ServantBase__epv  PortableServer_RefCountServantBase__epv
 typedef PortableServer_ServantBase__epv *PortableServer_RefCountServantBase__vepv;
 typedef PortableServer_ServantBase       PortableServer_RefCountServantBase;
 
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+
+typedef struct ORBit_POAObject_type *ORBit_POAObject;
+typedef struct ORBit_OAObject_type  *ORBit_OAObject;
+
 typedef gshort ORBit_VepvIdx;
 
 typedef void               (*ORBitSkeleton)      (PortableServer_ServantBase *servant,
@@ -70,5 +72,7 @@ typedef ORBitSmallSkeleton (*ORBit_small_impl_finder)
 						  const char                 *method,
 						  gpointer                   *m_data,
 						  gpointer                   *implementation);
+
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
 #endif /* _POA_BASICS_H_ 1 */

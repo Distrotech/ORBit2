@@ -1,3 +1,44 @@
+2001-10-30  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/*/*.h: wrap all internal defines in #ifdef
+	ORBIT2_INTERNAL_API and all defines for the benefits of
+	stubs/skels in #ifdef ORBIT2_STUBS_API.
+
+	* include/orbit/orb-core/Makefile.am: don't install empty
+	files.
+
+	* include/orbit/util/Makefile.am: ditto.
+
+	* src/idl-compiler/Makefile.am: define ORBIT2_INTERNAL_API.
+
+	* src/idl-compiler/orbit-idl-c-common.c:
+	(orbit_idl_output_c_common): define ORBIT2_STUBS_API in
+	generated code.
+
+	* src/idl-compiler/orbit-idl-c-skels.c:
+	(orbit_idl_output_c_skeletons): ditto.
+
+	* src/idl-compiler/orbit-idl-c-stubs.c:
+	* (orbit_idl_output_c_stubs): ditto.
+
+	* src/idl-compiler/orbit-idl-c-headers.c: (ch_output_types):
+	don't define exception marshallers in small mode.
+
+	* src/orb/GIOP/Makefile.am:
+	* src/orb/Makefile.am:
+	* src/orb/dynamic/Makefile.am:
+	* src/orb/orb-core/Makefile.am:
+	* src/orb/poa/Makefile.am:
+	* src/orb/util/Makefile.am: define ORBIT2_INTERNAL_API.
+
+	* src/orb/util/genrand.c: don't include genrand.h.
+
+	* src/orb/util/genrand.h: kill, duplicate of
+	include/orbit/util/orbit-genrand.h.
+
+	* test/Makefile.am:
+	* test/everything/Makefile.am: define ORBIT2_INTERNAL_API.
+
 2001-10-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/poa/poa.c (return_exception): if in-proc,

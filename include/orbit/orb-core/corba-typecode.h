@@ -26,6 +26,12 @@ struct CORBA_TypeCode_struct {
   CORBA_short c_align;
 };
 
+#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+
+extern const ORBit_RootObject_Interface ORBit_TypeCode_epv;
+
+#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+
 #define TC_null ((CORBA_TypeCode)&TC_null_struct)
 #define TC_void ((CORBA_TypeCode)&TC_void_struct)
 #define TC_CORBA_short ((CORBA_TypeCode)&TC_CORBA_short_struct)
@@ -70,10 +76,15 @@ extern const struct CORBA_TypeCode_struct TC_CORBA_long_double_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_long_long_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_long_struct;
 
-extern const ORBit_RootObject_Interface ORBit_TypeCode_epv;
+#ifdef ORBIT2_INTERNAL_API
 
-void ORBit_encode_CORBA_TypeCode(CORBA_TypeCode tc, GIOPSendBuffer* buf);
-gboolean ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf);
-const char *ORBit_tk_to_name (CORBA_unsigned_long tk);
+void        ORBit_encode_CORBA_TypeCode (CORBA_TypeCode  tc,
+					 GIOPSendBuffer *buf);
+gboolean    ORBit_decode_CORBA_TypeCode (CORBA_TypeCode *tc,
+					 GIOPRecvBuffer *buf);
+
+const char *ORBit_tk_to_name            (CORBA_unsigned_long tk);
+
+#endif /*  ORBIT2_INTERNAL_API */
 
 #endif

@@ -4,6 +4,8 @@
 #include <orbit/GIOP/giop-basics.h>
 #include <linc/linc.h>
 
+#ifdef ORBIT2_INTERNAL_API
+
 #define GIOP_TYPE_SERVER             (giop_server_get_type ())
 #define GIOP_TYPE_IS_SERVER(type)    (G_TYPE_FUNDAMENTAL (type) == GIOP_TYPE_SERVER)
 #define GIOP_SERVER(object)	     (                                                        \
@@ -43,5 +45,7 @@ GIOPServer *giop_server_new      (GIOPVersion            giop_version,
 				  const char            *local_serv_info,
 				  LINCConnectionOptions  create_options,
 				  gpointer               create_orb_data);
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

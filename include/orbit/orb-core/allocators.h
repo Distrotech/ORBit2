@@ -1,6 +1,13 @@
 #ifndef _ALLOCATORS_H_
 #define _ALLOCATORS_H_
 
+void CORBA_free (gpointer mem);
+
+#define CORBA_sequence_set_release(s,r) (s)->_release = r
+#define CORBA_sequence_get_release(s) (s)->_release
+
+#ifdef ORBIT2_INTERNAL_API
+
 #define PTR_TO_MEMINFO(x) (((ORBit_mem_info *)(x)) - 1)
 #define MEMINFO_TO_PTR(x) ((gpointer)((x) + 1))
 
@@ -79,17 +86,16 @@ gpointer ORBit_alloc_tcval(CORBA_TypeCode tc, guint nelements);
 
 #define ORBit_alloc(sz, len, fnc) ORBit_alloc_kidfnc( (sz), (len), (fnc))
 
-#define CORBA_sequence_set_release(s,r) (s)->_release = r
-#define CORBA_sequence_get_release(s) (s)->_release
-
-/* NB. freekids functions never do any locking ! */
+/*
+ * NB. freekids functions never do any locking !
+ */
 gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
 gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
 gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
 gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
 gpointer ORBit_freekids_via_TypeCode_T(CORBA_TypeCode tc, gpointer mem);
 
-void CORBA_free (gpointer mem);
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif /* _ALLOCATORS_H_ */
 

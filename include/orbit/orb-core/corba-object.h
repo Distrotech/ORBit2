@@ -1,6 +1,8 @@
 #ifndef CORBA_OBJECT_H
 #define CORBA_OBJECT_H 1
 
+#ifdef ORBIT2_INTERNAL_API
+
 void            ORBit_start_servers         (CORBA_ORB       orb);
 
 GIOPConnection *ORBit_object_get_connection (CORBA_Object    obj);
@@ -13,6 +15,8 @@ gboolean        ORBit_demarshal_object      (CORBA_Object   *obj,
 
 CORBA_Object    ORBit_objref_new            (CORBA_ORB       orb,
 					     GQuark          type_id);
+
+#endif /* ORBIT2_INTERNAL_API */
 
 /*
  * CORBA_Object interface type data.

@@ -17,6 +17,7 @@ INCLUDES =                                 \
 	-I$(top_builddir)/src/ORBitutil    \
 	-I$(top_srcdir)/src/orb            \
 	-I$(top_srcdir)/src                \
+	-DORBIT2_INTERNAL_API              \
 	$(ORBIT_CFLAGS)
 
 #	-DORBIT_STUB_DEBUG_LOCAL

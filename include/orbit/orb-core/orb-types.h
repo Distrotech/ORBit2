@@ -27,8 +27,8 @@
 #define ORBIT_ALIGNOF_CORBA_FIXED  MAX (    ORBIT_ALIGNOF_CORBA_SHORT,   \
 					    ORBIT_ALIGNOF_CORBA_STRUCT);
 
-typedef CORBA_char *CORBA_ORBid;
-typedef struct _CORBA_any CORBA_any;
+typedef CORBA_char              *CORBA_ORBid;
+typedef struct CORBA_any_struct  CORBA_any;
 
 typedef struct {
         CORBA_unsigned_short _digits;
@@ -38,8 +38,8 @@ typedef struct {
 } CORBA_fixed_d_s;
 
 struct CORBA_NVList_type {
-  CORBA_unsigned_long flags;	/* should be CORBA_Flags */
-  GArray *list;
+	CORBA_unsigned_long flags; /* should be CORBA_Flags */
+	GArray *list;
 };
 
 #define CORBA_OBJECT_NIL NULL

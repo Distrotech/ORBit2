@@ -8,6 +8,8 @@
 /* #define ORBIT_THREADED 1 */
 #endif
 
+#ifdef ORBIT2_INTERNAL_API
+
 typedef struct _GIOPRecvBuffer GIOPRecvBuffer;
 typedef struct _GIOPSendBuffer GIOPSendBuffer;
 typedef struct _GIOPConnection GIOPConnection;
@@ -19,5 +21,7 @@ typedef enum {
   GIOP_LATEST = GIOP_1_2,
   GIOP_NUM_VERSIONS
 } GIOPVersion;
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

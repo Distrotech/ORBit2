@@ -1,5 +1,3 @@
-#include "genrand.h"
-#include <orbit/util/orbit-util.h>
 #include <orbit/util/orbit-util.h>
 #include <linc/linc.h>
 #include <unistd.h>

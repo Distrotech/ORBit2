@@ -291,7 +291,9 @@ main (int argc, char *argv[])
   if (strcmp (argv[1], "--gnome") == 0)
     {
       guchar principal_str[2048];
+#if 0
       CORBA_Principal request_cookie;
+#endif
 
       FILE *infile = popen ("xprop -root GNOME_NAME_SERVER |"
 			    "awk '{print $5}' |"
@@ -308,10 +310,10 @@ main (int argc, char *argv[])
       g_strchug (principal_str);
       g_strchomp (principal_str);
 
+#if 0
       request_cookie._buffer = principal_str;
       request_cookie._length = strlen (principal_str) + 1;
 
-#if 0
       ORBit_set_default_principal (&request_cookie);
 #endif
     }

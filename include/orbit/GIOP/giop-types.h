@@ -12,6 +12,8 @@
 
 #include <orbit/GIOP/giop-basics.h>
 
+#ifdef ORBIT2_INTERNAL_API
+
 #define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
 
 typedef enum {
@@ -182,5 +184,7 @@ typedef struct {
 #define giop_endian_conversion_needed(to_endianness) ((to_endianness&GIOP_FLAG_LITTLE_ENDIAN)!=GIOP_FLAG_ENDIANNESS)
 
 #define GIOP_MSG(x) ((GIOPMsg *)(x))
+
+#endif /* ORBIT2_INTERNAL_API */
 
 #endif

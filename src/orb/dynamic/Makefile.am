@@ -5,11 +5,12 @@ liborb_dynamic_la_SOURCES= \
 	$(DYNAMIC_IDLOUT) \
 	dynany.c
 
-INCLUDES =                                      \
-	-I$(top_srcdir)/include                 \
-	-I$(top_srcdir)/src/orb                 \
-	-I$(top_builddir)/include               \
-	-I$(top_builddir)/include/orbit/dynamic \
+INCLUDES =						\
+	-I$(top_srcdir)/include				\
+	-I$(top_srcdir)/src/orb				\
+	-I$(top_builddir)/include			\
+	-I$(top_builddir)/include/orbit/dynamic		\
+	-DORBIT2_INTERNAL_API				\
 	$(ORBIT_CFLAGS)
 
 DYNAMIC_IDLOUT=dynamic-defs-common.c
