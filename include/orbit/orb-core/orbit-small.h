@@ -33,7 +33,7 @@ void           ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 void           ORBit_small_invoke_poa  (PortableServer_ServantBase *servant,
 					GIOPRecvBuffer             *recv_buffer,
 					ORBit_IMethod              *m_data,
-					ORBitSkeleton               skel,
+					ORBitSmallSkeleton          small_skel,
 					gpointer                    impl,
 					CORBA_Environment          *ev);
 

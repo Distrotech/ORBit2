@@ -34,11 +34,11 @@ CLEANFILES=$(BUILT_SOURCES)
 
 $(POA_IDLOUT): poa-defs.idl $(IDL)
 	-(rm -f $(POA_IDLOUT) || true) > /dev/null
-	$(IDL) --noidata -I$(top_srcdir)/src/idl/CORBA_PIDL \
+	$(IDL) -I$(top_srcdir)/src/idl/CORBA_PIDL \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
 	-I$(top_srcdir)/src/orb/orb-core \
-	--noskels --nodefskels --nostubs \
+	--noskels --nodefskels --nostubs --noidata \
 	--define=Object=OObject --define=TypeCode=TTypeCode \
                 --showcpperrors $(top_srcdir)/src/orb/poa/poa-defs.idl
 	for I in $(POA_IDLOUT) poa-defs.h; do \

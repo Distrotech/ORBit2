@@ -51,13 +51,14 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "\n/** more internals **/\n");
   ch_output_marshallers(ci);
 
-  if ( rinfo->idata ) {
+  if (rinfo->small && rinfo->idata) {
     /* FIXME: hackish ? */
     fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
+
     ch_output_itypes(tree->tree, ci);
   }
 
-  fprintf(ci->fh, "\n#ifdef __cplusplus\n");
+  fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");
   fprintf(ci->fh, "#endif /* __cplusplus */\n\n");
 
@@ -560,8 +561,6 @@ ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     }
   else
     {
-      char *tc;
-
       fprintf(ci->fh, "#if !defined(_%s_defined)\n#define _%s_defined 1\n",
 	      fullname, fullname);
       fprintf(ci->fh, "typedef struct { CORBA_unsigned_long _maximum, _length; ");
@@ -570,13 +569,25 @@ ch_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       orbit_cbe_write_typespec(ci->fh, tree);
       fprintf(ci->fh, ";\n#endif\n");
       ch_type_alloc_and_tc(tree, rinfo, ci, TRUE);
+
+      if (rinfo->small)
+        {
+	  char *tc;
 	  
-      tc = orbit_cbe_get_typecode_name (orbit_cbe_get_typespec (tree));
+	  tc = orbit_cbe_get_typecode_name (
+		  orbit_cbe_get_typespec (tree));
 
-      fprintf (ci->fh, "#define CORBA_sequence_%s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n",
-      orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp, tc);
+	  fprintf (ci->fh, "#define CORBA_sequence_%s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n",
+		   orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp, tc);
 
-      g_free (tc);
+	  g_free (tc);
+       }
+      else
+        {
+          orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
+          fprintf(ci->fh, " *CORBA_sequence_%s_allocbuf(CORBA_unsigned_long len);\n",
+          orbit_cbe_type_is_builtin(IDL_TYPE_SEQUENCE(tree).simple_type_spec)?(ctmp+strlen("CORBA_")):ctmp);
+        }
     }
 
   fprintf(ci->fh, "#endif\n");
@@ -592,6 +603,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 		     OIDL_C_Info *ci, gboolean do_alloc)
 {
   char *ctmp;
+  IDL_tree tts;
 
   ctmp = orbit_cbe_get_typespec_str(tree);
 
@@ -604,9 +616,8 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
   if ( ci->do_impl_hack )
       fprintf(ci->fh, "#endif\n");
 
-  if(do_alloc) {
+  if(do_alloc && rinfo->small) {
       char *tc;
-      IDL_tree tts;
 
       tts = orbit_cbe_get_typespec(tree);
 
@@ -621,6 +632,122 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
 	fprintf (ci->fh, "#define %s_allocbuf(l) ORBit_small_allocbuf (%s, (l))\n", ctmp, tc);
 
       g_free (tc);
+  } else if(do_alloc) {
+    gboolean extern_alloc = FALSE;
+    gboolean needs_allocbuf = FALSE;
+    gboolean extern_freekids = FALSE;
+    char *ctmp2, *ctmp3;
+    gboolean alias_alloc = FALSE, alias_freekids = FALSE;
+    IDL_tree unident = tree;
+
+    if(IDL_NODE_TYPE(tree) == IDLN_IDENT)
+      {
+	unident = IDL_NODE_UP(tree);
+	if(IDL_NODE_TYPE(unident) == IDLN_LIST)
+	unident = IDL_NODE_UP(unident);	  
+      }
+    tts = orbit_cbe_get_typespec(tree);
+
+    switch (IDL_NODE_TYPE(tts)) {
+    case IDLN_TYPE_FLOAT:
+    case IDLN_TYPE_INTEGER:
+    case IDLN_TYPE_BOOLEAN:
+    case IDLN_TYPE_CHAR:
+    case IDLN_TYPE_WIDE_CHAR:
+    case IDLN_TYPE_OCTET:
+    case IDLN_TYPE_ENUM:
+      break;
+    case IDLN_TYPE_STRING:
+    case IDLN_TYPE_WIDE_STRING:
+      /* No aliased alloc for strings */
+      fprintf(ci->fh, "#define %s__freekids CORBA_string__freekids\n", ctmp);
+      break;
+    case IDLN_TYPE_ANY:
+      fprintf(ci->fh, "#define %s__alloc CORBA_any__alloc\n", ctmp);
+      fprintf(ci->fh, "#define %s__freekids CORBA_any__freekids\n", ctmp);
+      break;
+    case IDLN_TYPE_SEQUENCE:
+      ctmp2 = orbit_cbe_get_typespec_str(orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tts).simple_type_spec));
+      ctmp3 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tts).simple_type_spec);
+      if(strcmp(ctmp2, ctmp3))
+	{
+	  fprintf(ci->fh, "#define %s__alloc() ((%s *)CORBA_sequence_%s__alloc())\n",
+		  ctmp, ctmp, ctmp2);
+	  if(IDL_NODE_TYPE(tree) != IDLN_IDENT)
+	    {
+	      fprintf(ci->fh, "#define %s_marshal(x,y,z) CORBA_sequence_%s_marshal((x),(y),(z))\n", ctmp, ctmp2);
+
+	      fprintf(ci->fh, "#define %s_demarshal(x,y,z,i) CORBA_sequence_%s_demarshal((x),(y),(z),(i))\n", ctmp, ctmp2);
+	    }
+	}
+      else
+	extern_alloc = needs_allocbuf = TRUE;
+      g_free(ctmp2);
+      g_free(ctmp3);
+      fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
+      break;
+    case IDLN_EXCEPT_DCL:
+    case IDLN_TYPE_STRUCT:
+      if (!IDL_TYPE_STRUCT(tts).member_list) {
+	fprintf(ci->fh, "#define %s__alloc() NULL\n", ctmp);
+      } else {
+	extern_alloc = TRUE;
+      }
+      extern_freekids = TRUE;
+      break;
+    case IDLN_TYPE_ARRAY:
+      /* FIXME: do we need to check for fixed length and set
+	 needs_allocbuf if not */
+    default:
+      extern_alloc = TRUE;
+      extern_freekids = TRUE;
+      break;
+    }
+    if(IDL_NODE_TYPE(unident) == IDLN_TYPE_DCL)
+      {
+	alias_alloc = TRUE;
+	alias_freekids = TRUE;
+      }
+
+    if (extern_alloc)
+      {
+	if(alias_alloc)
+	  {
+	    char *ctmp3;
+
+	    ctmp3 = orbit_cbe_get_typespec_str(IDL_TYPE_DCL(unident).type_spec);
+	    fprintf(ci->fh, "#define %s__alloc %s__alloc\n", ctmp,
+		    ctmp3);
+	    if (needs_allocbuf)
+	      fprintf(ci->fh, "#define %s_allocbuf %s_allocbuf\n", ctmp,
+		      ctmp3);
+	    g_free(ctmp3);
+	  }
+	else
+	  {
+	    fprintf(ci->fh, "extern %s%s* %s__alloc(void);\n", ctmp,
+		  (IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"",
+		  ctmp);
+	  }
+      }
+
+    if (extern_freekids)
+      {
+	if(alias_freekids)
+	  {
+	    char *ctmp3;
+
+	    ctmp3 = orbit_cbe_get_typespec_str(IDL_TYPE_DCL(unident).type_spec);
+	    fprintf(ci->fh, "#define %s__freekids %s__freekids\n", ctmp,
+		    ctmp3);
+	    g_free(ctmp3);
+	  }
+	else
+	  fprintf(ci->fh, 
+		  "extern gpointer %s__freekids(gpointer mem, gpointer dat); "
+		  "/* ORBit internal use */\n", 
+		  ctmp);
+      }
   }
 
   g_free(ctmp);
@@ -868,13 +995,18 @@ doskel(IDL_tree cur, OIDL_Run_Info *rinfo, char *ifid, OIDL_C_Info *ci)
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(cur).ident), "_", 0);
 
-  fprintf(ci->fh, "void _ORBIT_skel_%s("
+  if (rinfo->small_skels)
+    fprintf(ci->fh, "void _ORBIT_skel_small_%s("
 	    "POA_%s *_ORBIT_servant, "
 	    "gpointer _ORBIT_retval, "
 	    "gpointer *_ORBIT_args, "
 	    "CORBA_Context ctx,"
 	    "CORBA_Environment *ev, ", id, ifid);
-
+  else
+    fprintf(ci->fh, "void _ORBIT_skel_%s("
+	    "POA_%s *_ORBIT_servant, "
+	    "GIOPRecvBuffer *_ORBIT_recv_buffer,"
+	    "CORBA_Environment *ev, ", id, ifid);
   orbit_cbe_op_write_proto(ci->fh, cur, "_impl_", TRUE);
   fprintf(ci->fh, ");\n");
   g_free(id);
