@@ -1,3 +1,9 @@
+Version 0.5.2
+
+	* fixes
+		+ MacOS X writev issue (Jacob Berkman)
+		+ allow IPv[46] numeric addrs (Michael)
+
 Version 0.5.1
 
 	* fixes
