@@ -1,5 +1,11 @@
 2001-12-05  Mark McLoughlin  <mark@skynet.ie>
 
+	* src/orb/orb-core/iop-profiles.c:
+	(CodeSetComponent_demarshal): byte swap the code sets
+	if necessary and fix silly.
+
+2001-12-05  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-object.c:
 	(ORBit_handle_location_forward),
 	(ORBit_demarshal_object): intialise type_id and profiles.

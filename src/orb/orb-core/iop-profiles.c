@@ -1135,8 +1135,13 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 		return FALSE;
 
 	*native_code_set = *(CORBA_unsigned_long *)buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		native_code_set = GUINT32_SWAP_LE_BE (native_code_set);
 	buf->cur += 4;
+
 	sequence_length = *(CORBA_unsigned_long *)buf->cur;
+	if (giop_msg_conversion_needed (buf))
+		sequence_length = GUINT32_SWAP_LE_BE (sequence_length);
 	buf->cur += 4;
 
 	if (sequence_length > 0) {
@@ -1145,9 +1150,9 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 			g_warning ("Ignoring incoming code_sets component");
 
 		if (buf->cur + sequence_length * 4 < buf->end)
-			return FALSE;
-		else
 			buf->cur += sequence_length * 4;
+		else
+			return FALSE;
 	}
 	
 	return TRUE;
