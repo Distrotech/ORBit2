@@ -1,0 +1,2 @@
+Write our own GSource impl. for more efficiency.
+Deal with the blocking / buffering issues.
