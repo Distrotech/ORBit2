@@ -437,7 +437,7 @@ IDLPassSkels::doInterfaceFinalizer (IDLInterface &iface)
 		 <<  "::PortableServer_Servant servant, "
 		 <<  "::CORBA_Environment *ev);" << endl;
 
-	m_module << mod_indent << "void " << iface.get_cpp_poa_typename ()
+	m_module << mod_indent << "void " << iface.get_cpp_poa_method_prefix ()
 		 << "::_orbitcpp_fini ("
 		 <<  "::PortableServer_Servant servant, "
 		 <<  "::CORBA_Environment *ev)" << endl
