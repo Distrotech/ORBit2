@@ -439,49 +439,52 @@ CORBA_Object__freekids(gpointer mem, gpointer dat)
 }
 
 CORBA_boolean
-CORBA_Object_is_a(CORBA_Object       obj,
-                  const CORBA_char  *logical_type_id,
-                  CORBA_Environment *ev)
+CORBA_Object_is_a (CORBA_Object       obj,
+		   const CORBA_char  *logical_type_id,
+		   CORBA_Environment *ev)
 {
-  CORBA_boolean  retval;
-  gpointer      *arg = (gpointer *)&logical_type_id;
+	CORBA_boolean  retval;
+	gpointer       args[] = { (gpointer *)&logical_type_id };
 
-  if( strcmp(logical_type_id, "IDL:CORBA/Object:1.0") == 0 )
-    return CORBA_TRUE;
+	if (strcmp (logical_type_id, "IDL:CORBA/Object:1.0") == 0)
+		return CORBA_TRUE;
 
-  if( obj == NULL )
-    return CORBA_FALSE;
+	if (!obj)
+		return CORBA_FALSE;
 
-  if( strcmp(logical_type_id, obj->type_id) == 0 )
-    return CORBA_TRUE;
+	if (strcmp (logical_type_id, obj->type_id) == 0)
+		return CORBA_TRUE;
 
-  ORBit_small_invoke_stub(obj, &CORBA_Object__imethods[4], &retval, arg, NULL, ev);
+	ORBit_small_invoke_stub (
+		obj, &CORBA_Object__imethods[4],
+		&retval, args, NULL, ev);
 
-  return retval;
+	return retval;
 }
 
 static gboolean
-ORBit_IInterface_is_a( ORBit_IInterface *idata, const char *type_id ) {
- int idx;
+ORBit_IInterface_is_a( ORBit_IInterface *idata, const char *type_id )
+{
+	int idx;
 
- if ( strcmp(idata->tc->name, type_id) == 0 )
-   return TRUE;
+	if ( strcmp(idata->tc->repo_id, type_id) == 0 )
+		return TRUE;
 
- for ( idx = 0 ; idx < idata->base_interfaces._length ; idx++ )
-   if ( strcmp(idata->base_interfaces._buffer[idx].tc->name, type_id) == 0 )
-     return TRUE;
+	for ( idx = 0 ; idx < idata->base_interfaces._length ; idx++ )
+		if ( strcmp(idata->base_interfaces._buffer[idx].tc->repo_id, type_id) == 0 )
+			return TRUE;
 
- return FALSE;
- }
+	return FALSE;
+}
 
 static void
 ORBit_impl_CORBA_Object_is_a(PortableServer_ServantBase *servant,
-                             gpointer ret, gpointer *arg,
+                             gpointer ret, gpointer *args,
                              gpointer ctx, CORBA_Environment *ev,
                              gpointer imp)
 {
   PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
-  const char               *type_id = *(const char **)arg;
+  const char               *type_id = *(const char **)args[0];
 
   *(CORBA_boolean *)ret = ORBit_IInterface_is_a(ci->idata, type_id);
 }

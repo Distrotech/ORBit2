@@ -1673,113 +1673,135 @@ ORBit_small_handle_request(ORBit_POAObject    pobj,
 			   GIOPRecvBuffer    *recv_buffer,
 			   CORBA_Environment *ev)
 {
-  PortableServer_POA                   poa = pobj->poa;
-  PortableServer_ServantLocator_Cookie cookie;
-  PortableServer_ObjectId             *oid;
-  PortableServer_ClassInfo            *klass;
-  ORBit_IMethod                       *m_data;
-  ORBitSkeleton                        skel = NULL;
-  ORBitSmallSkeleton                   small_skel = NULL;
-  gpointer                             imp = NULL;
+	PortableServer_POA                   poa = pobj->poa;
+	PortableServer_ServantLocator_Cookie cookie;
+	PortableServer_ObjectId             *oid;
+	PortableServer_ClassInfo            *klass;
+	ORBit_IMethod                       *m_data;
+	ORBitSkeleton                        skel = NULL;
+	ORBitSmallSkeleton                   small_skel = NULL;
+	gpointer                             imp = NULL;
 
-  switch( poa->poa_manager->state ) {
-  case PortableServer_POAManager_HOLDING:
-    if ( recv_buffer != NULL )
-      poa->held_requests = g_slist_prepend(poa->held_requests,
-					   recv_buffer);
-    else
-      CORBA_exception_set_system(ev, ex_CORBA_TRANSIENT,
-				 CORBA_COMPLETED_NO);
-    return;
-  case PortableServer_POAManager_DISCARDING:
-    CORBA_exception_set_system(ev, ex_CORBA_TRANSIENT,
-			       CORBA_COMPLETED_NO);
-    return;
-  case PortableServer_POAManager_INACTIVE:
-    CORBA_exception_set_system(ev, ex_CORBA_OBJ_ADAPTER,
-			       CORBA_COMPLETED_NO);
-    return;
-  case PortableServer_POAManager_ACTIVE:
-    break;
-  default:
-    g_assert_not_reached();
-    break;
-  }
+	switch (poa->poa_manager->state) {
 
-  oid = pobj->object_id;
+	case PortableServer_POAManager_HOLDING:
+		if (recv_buffer)
+			poa->held_requests = g_slist_prepend (
+				poa->held_requests, recv_buffer);
+		else
+			CORBA_exception_set_system (
+				ev, ex_CORBA_TRANSIENT,
+				CORBA_COMPLETED_NO);
+		return;
 
-  if ( pobj->servant == NULL )
-    switch ( poa->p_request_processing ) {
-    case PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY:
-      CORBA_exception_set_system(ev, ex_CORBA_OBJECT_NOT_EXIST, 
-				 CORBA_COMPLETED_NO);
-      break;	
-    case PortableServer_USE_DEFAULT_SERVANT:
-      ORBit_POA_activate_object(poa, pobj, poa->default_servant, ev);
-      break;
-    case PortableServer_USE_SERVANT_MANAGER:
-      ORBit_POA_ServantManager_use_servant(poa, pobj, opname, 
-					  &cookie, oid, ev);
-      break;
-    default:
-      g_assert_not_reached();
-      break;
-  }
+	case PortableServer_POAManager_DISCARDING:
+		CORBA_exception_set_system (
+			ev, ex_CORBA_TRANSIENT,
+			CORBA_COMPLETED_NO);
+		return;
 
-  if ( ev->_major == CORBA_NO_EXCEPTION && pobj->servant == NULL )
-    CORBA_exception_set_system(ev, ex_CORBA_OBJECT_NOT_EXIST, 
-			       CORBA_COMPLETED_NO);
+	case PortableServer_POAManager_INACTIVE:
+		CORBA_exception_set_system (
+			ev, ex_CORBA_OBJ_ADAPTER,
+			CORBA_COMPLETED_NO);
+		return;
 
-  if ( ev->_major != CORBA_NO_EXCEPTION )
-    goto clean_out;
+	case PortableServer_POAManager_ACTIVE:
+		break;
 
-  klass = ORBIT_SERVANT_TO_CLASSINFO(pobj->servant);
-  if ( klass->relay_call )
-    skel = klass->relay_call(pobj->servant, recv_buffer, &imp);
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+	
+	oid = pobj->object_id;
+	
+	if (!pobj->servant) {
+		switch (poa->p_request_processing) {
 
-  if ( skel == NULL && klass->small_relay_call )
-    small_skel = klass->small_relay_call(pobj->servant, opname, 
-					 (gpointer *)&m_data, &imp);
+		case PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY:
+			CORBA_exception_set_system (
+				ev, ex_CORBA_OBJECT_NOT_EXIST, 
+				CORBA_COMPLETED_NO);
+			break;
 
-  if( skel == NULL && small_skel == NULL ) {
-    small_skel = get_small_skel_CORBA_Object(pobj->servant, opname,
-					     (gpointer *)&m_data, &imp);
-    if ( small_skel == NULL )
-      CORBA_exception_set_system(ev, ex_CORBA_BAD_OPERATION,
-				 CORBA_COMPLETED_NO);
-  }
-  else if ( imp == NULL )
-    CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT,
-			       CORBA_COMPLETED_NO);
+		case PortableServer_USE_DEFAULT_SERVANT:
+			ORBit_POA_activate_object (
+				poa, pobj, poa->default_servant, ev);
+			break;
 
-  if ( ev->_major != CORBA_NO_EXCEPTION )
-    goto clean_out;
+		case PortableServer_USE_SERVANT_MANAGER:
+			ORBit_POA_ServantManager_use_servant (
+				poa, pobj, opname,  &cookie, oid, ev);
+			break;
+		default:
+			g_assert_not_reached();
+			break;
+		}
+	}
+	
+	if (ev->_major == CORBA_NO_EXCEPTION && !pobj->servant)
+		CORBA_exception_set_system (
+			ev, ex_CORBA_OBJECT_NOT_EXIST, 
+			CORBA_COMPLETED_NO);
 
-  if ( skel != NULL )
-    skel(pobj->servant, recv_buffer, ev, imp);
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		goto clean_out;
 
-  else if ( recv_buffer != NULL )
-    ORBit_small_invoke_poa(pobj->servant, recv_buffer, m_data, 
-			   small_skel, imp, ev);
-  else
-    small_skel(pobj->servant, ret, args, ctx, ev, imp);
+	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
 
-  CORBA_exception_free(ev);
+	if (klass->relay_call)
+		skel = klass->relay_call (
+			pobj->servant, recv_buffer, &imp);
 
-clean_out:
-  if ( poa->p_servant_retention == PortableServer_NON_RETAIN )
-    switch ( poa->p_request_processing ) {
-    case PortableServer_USE_SERVANT_MANAGER:
-      ORBit_POA_ServantManager_unuse_servant(poa, pobj, opname, cookie, 
-					     oid, pobj->servant, ev);
-      break;
-    case PortableServer_USE_DEFAULT_SERVANT:
-      ORBit_POA_deactivate_object(poa, pobj, FALSE, FALSE);
-      break;
-    default:
-      g_assert_not_reached();
-      break;
-    }
+	if (!skel && klass->small_relay_call)
+		small_skel = klass->small_relay_call (
+			pobj->servant, opname, (gpointer *)&m_data, &imp);
+
+	if (!skel && !small_skel) {
+		small_skel = get_small_skel_CORBA_Object (
+			pobj->servant, opname,
+			(gpointer *)&m_data, &imp);
+		if (!small_skel)
+			CORBA_exception_set_system (
+				ev, ex_CORBA_BAD_OPERATION,
+				CORBA_COMPLETED_NO);
+
+	} else if (!imp)
+		CORBA_exception_set_system (
+			ev, ex_CORBA_NO_IMPLEMENT,
+			CORBA_COMPLETED_NO);
+
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		goto clean_out;
+
+	if (skel)
+		skel (pobj->servant, recv_buffer, ev, imp);
+
+	else if (recv_buffer)
+		ORBit_small_invoke_poa (
+			pobj->servant, recv_buffer, m_data, 
+			small_skel, imp, ev);
+	else
+		small_skel (pobj->servant, ret, args, ctx, ev, imp);
+
+	CORBA_exception_free (ev);
+
+ clean_out:
+	if (poa->p_servant_retention == PortableServer_NON_RETAIN)
+		switch (poa->p_request_processing) {
+		case PortableServer_USE_SERVANT_MANAGER:
+			ORBit_POA_ServantManager_unuse_servant (
+				poa, pobj, opname, cookie, 
+				oid, pobj->servant, ev);
+			break;
+		case PortableServer_USE_DEFAULT_SERVANT:
+			ORBit_POA_deactivate_object (poa, pobj, FALSE, FALSE);
+			break;
+		default:
+			g_assert_not_reached ();
+			break;
+		}
 }
 
 void
