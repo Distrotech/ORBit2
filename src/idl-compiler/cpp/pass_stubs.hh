@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  ORBit-C++: C++ bindings for ORBit.
  *
@@ -34,7 +35,7 @@
 
 #include <libIDL/IDL.h>
 #include "pass.hh"
-
+#include "types/IDLMethod.hh"
 
 
 
@@ -46,18 +47,19 @@ public:
 	}
 
 	void runPass();
-
+ 
 protected:
-#if 0 //!!!
 	void doAttributePrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
-	void doAttributeStub(IDLInterface &iface,IDLInterface
-			     &of,IDL_tree node);
-#endif
+	void doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node);
+
 	void doOperationPrototype(IDLInterface &iface,IDLInterface &of,IDL_tree node);
 	void doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node);
-	void doInterfaceDownCall(IDLInterface &iface,IDLInterface &of);
 
+	void doInterfaceDownCall(IDLInterface &iface,IDLInterface &of);
 	void doInterface(IDLInterface &iface);
+
+	void create_method_proto (const IDLMethod &method);
+	void create_method_stub (const IDLMethod &method);
 };
 
 

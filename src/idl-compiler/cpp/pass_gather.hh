@@ -58,11 +58,11 @@ protected:
 	void doUnion(IDL_tree node,IDLScope &scope);
 	void doNative(IDL_tree node,IDLScope &scope);
     
-	void doAttribute(IDL_tree node,IDLScope &scope);
 #endif //!!!
 	void doEnum(IDL_tree node,IDLScope &scope);
 	void doConstant(IDL_tree node,IDLScope &scope);
 	void doOperation(IDL_tree node,IDLScope &scope);
+	void doAttribute(IDL_tree node,IDLScope &scope);
 	void doMember(IDL_tree node,IDLScope &scope);
 	void doCaseStmt(IDL_tree node,IDLScope &scope);
 

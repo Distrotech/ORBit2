@@ -410,11 +410,9 @@ IDLPassXlate::doConstant (IDL_tree  node,
 
 
 
-#if 0
 void 
 IDLPassXlate::doAttribute(IDL_tree node,IDLScope &scope) {
 }
-#endif
 
 
 

@@ -37,6 +37,7 @@ class IDLAttribGetter: public IDLMethod
 public:
 	IDLAttribGetter (IDLAttribute &attr);
 
+	string skel_decl_proto () const;
 	string skel_decl_impl () const;
 
 	string get_cpp_methodname () const ;
@@ -49,6 +50,7 @@ class IDLAttribSetter: public IDLMethod
 public:
 	IDLAttribSetter (IDLAttribute &attr);
 
+	string skel_decl_proto () const;
 	string skel_decl_impl () const;
 
 	string get_cpp_methodname () const ;

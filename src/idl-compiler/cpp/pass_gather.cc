@@ -31,7 +31,7 @@
 #include "pass_gather.hh"
 
 #include "types/IDLTypedef.hh"
-
+#include "types/IDLOperation.hh"
 
 
 // IDLPassGather -------------------------------------------------------------
@@ -102,6 +102,7 @@ void
 IDLPassGather::doNative(IDL_tree node,IDLScope &scope) {
 	ORBITCPP_NYI("native")
 }
+#endif
 
 
 
@@ -124,7 +125,6 @@ IDLPassGather::doAttribute(IDL_tree node,IDLScope &scope) {
 		new IDLAttribute(id,node,type_dcl,&scope);
 	}
 }
-#endif
 
 void 
 IDLPassGather::doConstant(IDL_tree node,IDLScope &scope) {

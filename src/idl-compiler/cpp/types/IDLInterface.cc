@@ -353,7 +353,7 @@ IDLInterface::skel_impl_arg_pre (ostream        &ostr,
 	{
 	case IDL_PARAM_IN:
 	case IDL_PARAM_INOUT:
-		ostr << indent << get_cpp_typename_var () << " "
+		ostr << indent << get_cpp_typename_ptr () << " "
 		     << get_cpp_id (c_id) << " = " << get_cpp_stub_typename ()
 		     << "::_orbitcpp_wrap (" << c_id << ");" << endl;
 		break;

@@ -56,7 +56,6 @@ string idlTranslateConstant(IDL_tree const constant,IDLScope const &scope);
 
 #include "types/IDLElement.hh"
 #include "types/IDLScope.hh"
-#include "types/IDLOperation.hh"
 
 class IDLConstant : public IDLElement {
 protected:

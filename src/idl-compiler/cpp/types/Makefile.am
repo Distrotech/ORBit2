@@ -16,12 +16,14 @@ headers = 		\
 #  IDLAny.hh		\
 #  IDLArray.hh		\
 #  IDLArrayList.hh	\
+  IDLAttribAccessor.hh	\
   IDLBoolean.hh		\
   IDLCompound.hh	\
   IDLEnum.hh		\
   IDLElement.hh		\
   IDLException.hh	\
   IDLInterface.hh	\
+  IDLMethod.hh		\
   IDLObject.hh		\
   IDLOperation.hh	\
   IDLScope.hh		\
@@ -43,12 +45,14 @@ modules =		\
 #  IDLAny.cc		\
 #  IDLArray.cc		\
 #  IDLArrayList.cc	\
+  IDLAttribAccessor.cc	\
   IDLBoolean.cc		\
   IDLCompound.cc	\
   IDLEnum.cc		\
   IDLElement.cc		\
   IDLException.cc	\
   IDLInterface.cc	\
+  IDLMethod.cc		\
   IDLObject.cc		\
   IDLOperation.cc	\
   IDLScope.cc		\

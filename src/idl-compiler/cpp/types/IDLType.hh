@@ -29,7 +29,6 @@
 #ifndef ORBITCPP_TYPES_IDLTYPE
 #define ORBITCPP_TYPES_IDLTYPE
 
-//#include "IDLTypedef.hh"
 #include "error.hh"
 #include "language.hh"
 
@@ -53,6 +52,16 @@ public:
 				       const string     &cpp_id,
 				       const string     &value,
 				       const IDLTypedef *active_typedef = 0) const;
+
+#if 0
+	////////////////////////////////////////////
+	// Creating typedefs
+
+	virtual void typedef_decl_write (ostream    &ostr,
+					 Indent     &indent,
+					 IDLTypedef &target,
+					 IDLTypedef *active_typedef = 0) const = 0;
+#endif
 	
 	////////////////////////////////////////////
 	// Stubs
