@@ -641,6 +641,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	gpointer        retval = NULL;
 	GIOPSendBuffer *send_buffer;
 	CORBA_ORB       orb;
+	CORBA_TypeCode  tc;
 
 	dprintf ("Method '%s' on '%p'\n", m_data->name, servant);
 
@@ -668,10 +669,24 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 				recv_buffer, a->tc, TRUE, orb);
 		
 		else if (a->flags & ORBit_I_ARG_INOUT) {
-			args [i] = &scratch [i];
-			scratch [i] = ORBit_demarshal_arg (
-				recv_buffer, a->tc, TRUE, orb);
-			
+			tc = a->tc;
+ alias_on_inout:
+			switch (tc->kind) {
+				
+			case CORBA_tk_alias:
+				tc = tc->subtypes[0];
+				goto alias_on_inout;
+				
+			case CORBA_tk_array:
+				args [i] = ORBit_demarshal_arg (
+					recv_buffer, a->tc, TRUE, orb);
+				break;
+			default:
+				args [i] = &scratch [i];
+				scratch [i] = ORBit_demarshal_arg (
+					recv_buffer, a->tc, TRUE, orb);
+				break;
+			}
 		} else { /* OUT */
 			args [i] = &scratch [i];
 			scratch [i] = ORBit_alloc_tcval (a->tc, 1);
@@ -692,8 +707,6 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		ORBit_send_system_exception (send_buffer, ev);
 	
 	else { /* Marshal return values */
-		CORBA_TypeCode tc;
-
 		if ((tc = m_data->ret)) {
 			dprintf ("ret: ");
 
@@ -744,20 +757,29 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			dprintf ("\n");
 		}
 
-
 		for (i = 0; i < m_data->arguments._length; i++) {
 			ORBit_IArg *a = &m_data->arguments._buffer [i];
+
+			tc = a->tc;
+			while (tc->kind == CORBA_tk_alias)
+				tc = tc->subtypes [0];
 			
 			if (a->flags & ORBit_I_ARG_IN)
-				CORBA_free (args [i]);
+;//				CORBA_free (args [i]);
 			
-			else if (a->flags & ORBit_I_ARG_INOUT) {
-				ORBit_marshal_arg (send_buffer, scratch [i], a->tc);
-/* FIXME: deal with allocation fun */
-/*				CORBA_free (scratch [i]); */
+			else  if (a->flags & ORBit_I_ARG_INOUT) {
+				/* FIXME: deal with allocation fun */
+				if (tc->kind == CORBA_tk_array)
+					ORBit_marshal_arg (send_buffer, args [i], tc);
+				else
+					ORBit_marshal_arg (send_buffer, scratch [i], tc);
+//				CORBA_free (scratch [i]);
 			} else { /* OUT */
-				ORBit_marshal_arg (send_buffer, scratch [i], a->tc);
-				CORBA_free (scratch [i]);
+				if (tc->kind == CORBA_tk_array)
+					ORBit_marshal_arg (send_buffer, args [i], a->tc);
+				else
+					ORBit_marshal_arg (send_buffer, scratch [i], a->tc);
+//				CORBA_free (scratch [i]);
 			}
 		}
 	}

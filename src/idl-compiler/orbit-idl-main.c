@@ -42,6 +42,7 @@ static gboolean cl_disable_stubs = FALSE,
 static int cl_idlwarnlevel = 2;
 static int cl_debuglevel = 0;
 static int cl_is_pidl = 0;
+static int cl_enable_small = 0;
 static int cl_enable_small_stubs = 0;
 static int cl_enable_small_skels = 0;
 static gboolean cl_disable_defs_skels = FALSE;
@@ -110,8 +111,9 @@ struct poptOption options[] = {
   {"lang", 'l', POPT_ARG_STRING, &cl_output_lang, 0, "Output language (default is C)", NULL},
   {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4", NULL},
   {"idlwarnlevel", '\0', POPT_ARG_INT, &cl_idlwarnlevel, 0, "IDL warning level 0 to 4, default is 2", NULL},
-  {"small-stubs", '\0', POPT_ARG_NONE, &cl_enable_small_stubs, 0, "Optimize for size instead of speed (perhaps)", NULL},
-  {"small-skels", '\0', POPT_ARG_NONE, &cl_enable_small_skels, 0, "Optimize for size instead of speed (perhaps)", NULL},
+  {"small", '\0', POPT_ARG_NONE, &cl_enable_small, 0, "Optimize for size instead of speed", NULL},
+  {"small-stubs", '\0', POPT_ARG_NONE, &cl_enable_small_stubs, 0, "Optimize for size instead of speed in stubs", NULL},
+  {"small-skels", '\0', POPT_ARG_NONE, &cl_enable_small_skels, 0, "Optimize for size instead of speed in skels", NULL},
   {"showcpperrors", '\0', POPT_ARG_NONE, &cl_showcpperrors, 0, "Show CPP errors", NULL},
   {"nostubs", '\0', POPT_ARG_NONE, &cl_disable_stubs, 0, "Don't output stubs", NULL},
   {"noskels", '\0', POPT_ARG_NONE, &cl_disable_skels, 0, "Don't output skels", NULL},
@@ -155,6 +157,9 @@ int main(int argc, const char *argv[])
 		poptStrerror(rc));
     exit(0);
   }
+
+  if (cl_enable_small)
+	  cl_enable_small_stubs = cl_enable_small_skels = 1;
 
   /* Prep our run info for the backend */
   rinfo.cpp_args = cl_cpp_args->str;
