@@ -177,7 +177,7 @@ giop_connection_initiate (gpointer orb_data,
 	options |= LINK_CONNECTION_NONBLOCKING;
 
 	return (GIOPConnection *)
-		link_connection_initiate_list
+		link_connection_initiate
 			(giop_connection_get_type (),
 			 proto_name, remote_host_info,
 			 remote_serv_info, options,

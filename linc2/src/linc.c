@@ -21,8 +21,10 @@ static gboolean link_mutex_new_called = FALSE;
 GMainLoop      *link_loop = NULL;
 GMainContext   *link_context = NULL;
 
+static GMutex  *link_main_lock;
 /* commands for the I/O loop */
 static GMutex  *link_cmd_queue_lock = NULL;
+static GCond   *link_cmd_queue_cond = NULL;
 static GList   *link_cmd_queue = NULL;
 
 static int link_wakeup_fds[2] = { -1, -1 };
@@ -36,6 +38,8 @@ SSL_METHOD *link_ssl_method;
 SSL_CTX    *link_ssl_ctx;
 #endif
 
+static void link_dispatch_command (gpointer data);
+
 /**
  * link_get_threaded:
  * 
@@ -48,21 +52,10 @@ link_get_threaded (void)
 	return link_threaded;
 }
 
-static void
-link_dispatch_command (gpointer data)
+static gboolean
+cmd_is_sync (LinkCommand *cmd)
 {
-	LinkCommand *cmd = data;
-	switch (cmd->type) {
-	case LINK_COMMAND_SET_CONDITION:
-		link_connection_exec_set_condition (data);
-		break;
-	case LINK_COMMAND_DISCONNECT:
-		link_connection_exec_disconnect (data);
-		break;
-	default:
-		g_error ("Unimplemented (%d)", cmd->type);
-		break;
-	}
+	return cmd->type == LINK_COMMAND_SET_IO_THREAD;
 }
 
 static gboolean
@@ -74,17 +67,25 @@ link_mainloop_handle_input (GIOChannel   *source,
 	GList *l, *queue;
 
 	g_mutex_lock (link_cmd_queue_lock);
-	{
-		/* FIXME: read a big, non-blocking slurp here */
-		read (LINK_WAKEUP_POLL, &c, sizeof (c));
 
-		queue = link_cmd_queue;
-		link_cmd_queue = NULL;
-	}
+	read (LINK_WAKEUP_POLL, &c, sizeof (c));
+	queue = link_cmd_queue;
+	link_cmd_queue = NULL;
+
 	g_mutex_unlock (link_cmd_queue_lock);
 
-	for (l = queue; l; l = l->next)
+	for (l = queue; l; l = l->next) {
+		gboolean sync;
+
+		sync = cmd_is_sync (l->data);
+
 		link_dispatch_command (l->data);
+
+		if (sync) {
+			((LinkSyncCommand *)l->data)->complete = TRUE;
+			g_cond_signal (link_cmd_queue_cond);
+		}
+	}
 
 	g_list_free (queue);
 
@@ -94,10 +95,9 @@ link_mainloop_handle_input (GIOChannel   *source,
 void
 link_exec_command (LinkCommand *cmd)
 {
-	char c = 'A'; /* magic */
-	int  res;
+	int  res = 0;
 
-	if (!link_threaded) {
+	if (link_in_io_thread ()) {
 		link_dispatch_command (cmd);
 		return;
 	}
@@ -105,18 +105,27 @@ link_exec_command (LinkCommand *cmd)
 	LINK_MUTEX_LOCK (link_cmd_queue_lock);
 
 	if (LINK_WAKEUP_WRITE == -1) { /* shutdown main loop */
-		link_dispatch_command (cmd);
 		LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
+		link_dispatch_command (cmd);
 		return;
 	}
 
 	/* FIXME: if (link_cmd_queue) - no need to wake mainloop */
+	if (!link_cmd_queue) {
+		char c = 'A'; /* magic */
+		while ((res = write (LINK_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
+		       (errno == EAGAIN || errno == EINTR));
+	}
+
 	link_cmd_queue = g_list_append (link_cmd_queue, cmd);
 
-	while ((res = write (LINK_WAKEUP_WRITE, &c, sizeof (c))) < 0  &&
-	       (errno == EAGAIN || errno == EINTR));
+	if (cmd_is_sync (cmd))
+		while (!((LinkSyncCommand *)cmd)->complete)
+			g_cond_wait (link_cmd_queue_cond,
+				     link_cmd_queue_lock);
 
 	LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
+
 	if (res < 0)
 		g_error ("Failed to write to linc wakeup socket %d 0x%x(%d) (%d)",
 			 res, errno, errno, LINK_WAKEUP_WRITE);
@@ -167,10 +176,8 @@ link_init (gboolean init_threads)
 	    !g_thread_supported ())
 		g_thread_init (NULL);
 
-	if (!link_threaded && init_threads) {
+	if (!link_threaded && init_threads)
 		link_threaded = TRUE;
-		_link_connection_thread_init (TRUE);
-	}
 
 	g_type_init ();
 
@@ -225,7 +232,10 @@ link_init (gboolean init_threads)
 	link_ssl_ctx = SSL_CTX_new (link_ssl_method);
 #endif
 
-	link_cmd_queue_lock  = link_mutex_new ();
+	link_main_lock = link_mutex_new ();
+	link_cmd_queue_lock = link_mutex_new ();
+	if (link_threaded)
+		link_cmd_queue_cond = g_cond_new ();
 
 	if (init_threads) {
 		GError *error = NULL;
@@ -375,4 +385,68 @@ link_shutdown (void)
 		g_thread_join (link_io_thread);
 		link_io_thread = NULL;
 	}
+}
+
+static gboolean io_in_thread = FALSE;
+
+static void
+linc_exec_set_io_thread (gpointer data)
+{
+	g_warning ("FIXME: re-write watches");
+}
+
+void
+link_set_io_thread (gboolean new_thread)
+{
+	LinkCommand *cmd = g_new0 (LinkCommand, 1);
+
+	g_warning ("FIXME: guard from double entry");
+
+	if (io_in_thread)
+		return;
+	io_in_thread = TRUE;
+
+	cmd->type = LINK_COMMAND_SET_IO_THREAD;
+
+	link_exec_command (cmd);
+}
+
+static void
+link_dispatch_command (gpointer data)
+{
+	LinkCommand *cmd = data;
+	switch (cmd->type) {
+	case LINK_COMMAND_SET_CONDITION:
+		link_connection_exec_set_condition (data);
+		break;
+	case LINK_COMMAND_DISCONNECT:
+		link_connection_exec_disconnect (data);
+		break;
+	case LINK_COMMAND_SET_IO_THREAD:
+		linc_exec_set_io_thread (data);
+		break;
+	default:
+		g_error ("Unimplemented (%d)", cmd->type);
+		break;
+	}
+}
+
+void
+link_lock (void)
+{
+	if (link_main_lock)
+		g_mutex_lock (link_main_lock);
+}
+
+void
+link_unlock (void)
+{
+	if (link_main_lock)
+		g_mutex_unlock (link_main_lock);
+}
+
+gboolean
+link_is_locked (void)
+{
+	return link_mutex_is_locked (link_main_lock);
 }

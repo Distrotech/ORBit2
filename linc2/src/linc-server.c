@@ -173,15 +173,9 @@ link_server_accept_connection (LinkServer      *server,
 	d_printf ("accepted a new connection (%d) on server %d\n",
 		 fd, server->priv->fd);
 
-	if (!link_connection_from_fd (
-		*connection, fd, server->proto, NULL, NULL,
-		FALSE, LINK_CONNECTED, server->create_options)) {
-		
-		g_object_unref (G_OBJECT (*connection));
-		*connection = NULL;
-		LINK_CLOSE (fd);
-		return FALSE;
-	}
+	link_connection_from_fd
+		(*connection, fd, server->proto, NULL, NULL,
+		 FALSE, LINK_CONNECTED, server->create_options);
 
 	server->priv->connections = g_slist_prepend (
 		server->priv->connections, *connection);

@@ -27,9 +27,15 @@ extern SSL_CTX *link_ssl_ctx;
 typedef struct {
 	enum {
 		LINK_COMMAND_DISCONNECT,
-		LINK_COMMAND_SET_CONDITION
+		LINK_COMMAND_SET_CONDITION,
+		LINK_COMMAND_SET_IO_THREAD
 	} type;
 } LinkCommand;
+
+typedef struct {
+	LinkCommand     cmd;
+	gboolean        complete;
+} LinkSyncCommand;
 
 typedef struct {
 	LinkCommand     cmd;
@@ -130,5 +136,8 @@ GMainContext    *link_main_get_context      (void);
 gboolean         link_get_threaded          (void);
 gboolean         link_in_io_thread          (void);
 gboolean         link_mutex_is_locked       (GMutex *lock);
+void             link_lock                  (void);
+void             link_unlock                (void);
+gboolean         link_is_locked             (void);
 
 #endif /* _LINK_PRIVATE_H */
