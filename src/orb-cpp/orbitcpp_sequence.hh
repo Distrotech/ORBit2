@@ -129,7 +129,7 @@ namespace _orbitcpp {
 		
 		// Memory managment
 		static buffer_t allocbuf (size_t num_elems) { return new value_t[num_elems]; };
-		static void freebuf (buffer_t buffer)       { delete[] buffer;                 };    
+		static void     freebuf  (buffer_t buffer)  { delete[] buffer;               };
 		
 		// ORBit2/C++ extension: create C sequence
 		c_seq_t* _orbitcpp_pack () const {
@@ -141,7 +141,11 @@ namespace _orbitcpp {
 		// ORBit2/C++ extension: fill C sequence
 		void _orbitcpp_pack (c_seq_t &c_seq) const {
 			c_seq._length = _length;
+			if (c_seq._release)
+				CORBA_free (c_seq._buffer);
 			c_seq._buffer = alloc_c_buf (_length);
+			c_seq._release = 1;
+			
 			for (index_t i = 0; i < _length; i++)
 				elem_traits_t().pack_elem (_buffer[i], c_seq._buffer[i]);
 		}
@@ -204,7 +208,8 @@ namespace _orbitcpp {
 				
 				if (_release)
 					freebuf (_buffer);
-				
+
+				_release = true;
 				_buffer = buffer_tmp;
 				_max = new_length;
 			}
