@@ -54,3 +54,27 @@ ORBit_small_handle_request (ORBit_OAObject     adaptor_obj,
 	adaptor_obj->interface->handle_request (adaptor_obj, opname, ret, 
 					      args, ctx, recv_buffer, ev);
 }
+
+gboolean
+ORBit_OAObject_is_active (ORBit_OAObject adaptor_obj) 
+{
+	return adaptor_obj->interface->is_active (adaptor_obj);
+
+}
+
+IOP_ObjectKey_info*
+ORBit_OAObject_object_to_objkey (ORBit_OAObject  adaptor_obj)
+{
+	return adaptor_obj->interface->object_to_objkey (adaptor_obj);
+}
+
+void
+ORBit_OAObject_invoke (ORBit_OAObject     adaptor_obj,
+		       gpointer           ret,
+		       gpointer          *args,
+		       CORBA_Context      ctx,
+		       gpointer           data,
+		       CORBA_Environment *ev)
+{
+	return adaptor_obj->interface->invoke(adaptor_obj, ret, args, ctx, data, ev);
+}

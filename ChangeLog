@@ -1,3 +1,14 @@
+2001-08-01  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/poa/orbit-adaptor.h,
+	  src/orb/poa/orbit-adaptor.c
+	(ORBit_OAObject_invoke, 
+	ORBit_OAObject_object_to_objkey): impl.
+
+	* src/orb/orb-core/iop-profiles.c,
+	  src/orb/orb-core/orbit-small.c:
+	used the above.
+
 2001-07-31  Darin Adler  <darin@bentspoon.com>
 
 	* src/orb/orb-core/corba-object.c: (CORBA_Object_non_existent):

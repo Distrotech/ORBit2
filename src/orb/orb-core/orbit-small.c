@@ -747,7 +747,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			g_warning ("FIXME: handle context demarshaling failure");
 	}
 
-	adaptor_obj->interface->invoke (adaptor_obj, retval, args, &ctx, data, ev);
+	ORBit_OAObject_invoke (adaptor_obj, retval, args, &ctx, data, ev);
 
 	if (has_context)
 		ORBit_Context_server_free (&ctx);

@@ -1,15 +1,27 @@
 #ifndef __ORBIT_ADAPTOR_H__
 #define __ORBIT_ADAPTOR_H__
 
-void ORBit_handle_request       (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer);
+void                ORBit_handle_request            (CORBA_ORB orb, 
+						     GIOPRecvBuffer *recv_buffer);
 
-void ORBit_small_handle_request (ORBit_OAObject     adaptor_obj,
-				 CORBA_Identifier   opname,
-				 gpointer           ret,
-				 gpointer          *args, 
-				 CORBA_Context      ctx,
-				 GIOPRecvBuffer    *recv_buffer,
-				 CORBA_Environment *ev);
+void                ORBit_small_handle_request      (ORBit_OAObject     adaptor_obj,
+						     CORBA_Identifier   opname,
+						     gpointer           ret,
+						     gpointer          *args, 
+						     CORBA_Context      ctx,
+						     GIOPRecvBuffer    *recv_buffer,
+						     CORBA_Environment *ev);
+
+gboolean            ORBit_OAObject_is_active        (ORBit_OAObject adaptor_obj);
+
+IOP_ObjectKey_info* ORBit_OAObject_object_to_objkey (ORBit_OAObject adaptor_obj);
+
+void                ORBit_OAObject_invoke           (ORBit_OAObject     adaptor_obj,
+						     gpointer           ret,
+						     gpointer          *args,
+						     CORBA_Context      ctx,
+						     gpointer           data,
+						     CORBA_Environment *ev);
 
 /*
  * ORBit_OAObject
