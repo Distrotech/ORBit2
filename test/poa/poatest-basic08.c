@@ -71,7 +71,8 @@ poatest_run( PortableServer_POA rootpoa,
  CORBA_exception_init( &ev );
  
  /*
-  * Create child POA with default policies.
+  * Create child POA with MULTIPLE_ID Object Id Uniqueness policy and
+  * IMLICIT_ACTIVATION Implicit Activation policy.
   */
  poa_policies._maximum = 2;
  poa_policies._length = 2;

@@ -23,7 +23,7 @@ struct PortableServer_POA_type {
   PortableServer_POAManager poa_manager;
   PortableServer_AdapterActivator the_activator;
   PortableServer_ServantManager servant_manager;
-  ORBit_POAObject *default_pobj;
+  PortableServer_Servant default_servant;
 
   GHashTable *oid_to_obj_map;
   GPtrArray *num_to_koid_map;

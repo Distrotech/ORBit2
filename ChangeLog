@@ -1,3 +1,32 @@
+2001-07-10  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/poa/poa.h(ORBit_POAInvocation):
+	killed object_id and doUnuse members.
+
+	* include/orbit/poa/portableserver-poa-type.h
+	(PortableServer_POA): replaced default_pobj
+	member with default_servant;
+
+	* src/orb/poa/poa.c
+	(ORBit_POA_ServantManager_{un}use_servant): pass
+	a pobj instead of an iframe.
+	(ORBit_handle_request): split in two. Now
+	ORBit_small_handle_request can be used for local
+	calls and original function is a wrapper for
+	remote calls.
+	Also various default_servant fixes.
+
+	* src/orb/poa/orbit-poa-export.h: introduce
+	ORBit_small_handle_request.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): call 
+	ORBit_small_handle_request.
+
+	* test/poa/poatest-basic09.c,
+	  test/poa/poatest-basic10.c: commit default
+	servant tests.
+
 2001-07-09  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-object.c,

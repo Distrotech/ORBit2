@@ -26,8 +26,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../poa/orbit-poa-export.h"
+
 #undef DEBUG
-#undef DEBUG_LOCAL_TEST
+#define DEBUG_LOCAL_TEST
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -586,7 +588,6 @@ orbit_small_demarshal (CORBA_Object           obj,
 	}
 }
 
-
 void
 ORBit_small_invoke_stub (CORBA_Object       obj,
 			 ORBit_IMethod     *m_data,
@@ -605,9 +606,14 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 
 #ifdef DEBUG_LOCAL_TEST
 	if (obj->pobj) {
+#if 0
 		ORBit_small_invoke_skel (
 			ORBIT_STUB_GetServant (obj),
 			m_data, ret, args, ctx, ev);
+#endif
+
+		ORBit_small_handle_request(obj->pobj, m_data->name, ret,
+					   args, ctx, NULL, ev);
 		goto clean_out;
 	}
 #endif
@@ -667,6 +673,7 @@ retry_request:
 	goto clean_out;
 }
 
+#if 0
 void
 ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 			 ORBit_IMethod              *m_data,
@@ -694,6 +701,7 @@ ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
 	else
 		small_skel (servant, ret, args, ctx, ev, imp);
 }
+#endif
 
 void
 ORBit_small_invoke_poa (PortableServer_ServantBase *servant,

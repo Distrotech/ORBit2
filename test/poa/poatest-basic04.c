@@ -67,7 +67,7 @@ poatest_run( PortableServer_POA rootpoa,
  CORBA_exception_init( &ev );
  
  /*
-  * Create child POA with default policies.
+  * Create child POA with USER_ID Id Assignment policy.
   */
  poa_policies._maximum = 1;
  poa_policies._length = 1;

@@ -49,3 +49,18 @@
        from the same servant.
 
 
+ Test 9 : poatest-basic09.c
+     o POA with RETAIN servant retention policy, USE_DEFAULT_SERVANT
+       request processing policy and MULTIPLE_ID id uniqueness policy.
+     o activate an object.
+     o create a reference for an inactive object and invoke method
+       on this object.
+
+
+ Test 10 : poatest-basic10.c
+     o POA with NON_RETAIN servant retention policy, USE_DEFAULT_SERVANT
+       request processing policy and MULTIPLE_ID id uniqueness policy.
+     o create a reference for an inactive object and invoke method
+       on this object.
+
+
