@@ -1,3 +1,17 @@
+2004-05-08  Frank Rehberger  <frehberg@gnome-de.org>
+
+	* src/orb/orb-core/iop-profiles.c (IOP_start_profiles): orbit
+	generated profiles contain full codeset data structures
+	(IOP_component_free): freeing codeset structures
+	(CodeSetComponent_marshal): marshal codeset structures
+	(CodeSetComponent_demarshal): demarshal codeset structures
+	* src/orb/orb-core/iop-profiles.h (IOP_PROFILES_CODE_SET_*):
+	declare known code-sets, but UTF8 and UTF16 supported only.
+	(struct IOP_TAG_CODE_SETS_info): complete CodeSet data structure
+	using CONV_FRAME_CodeSetComponentInfo.
+	* src/orb/orb-core/corba-orb.c: variable orbit_use_corbaloc must
+	be of type gboolean.
+
 2004-05-07  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: bump version to 2.11.0 (after branch),

@@ -1,6 +1,13 @@
 #ifndef __IOP_PROFILES_H__
 #define __IOP_PROFILES_H__ 1
 
+#define IOP_PROFILES_CODE_SET_UTF8        ((CORBA_unsigned_long) 0x05010001)
+#define IOP_PROFILES_CODE_SET_UTF16       ((CORBA_unsigned_long) 0x00010109)
+#define IOP_PROFILES_CODE_SET_ISO_8859_1  ((CORBA_unsigned_long) 0x00010001)
+#define IOP_PROFILES_CODE_SET_ISO_8859_2  ((CORBA_unsigned_long) 0x00010002)
+#define IOP_PROFILES_CODE_SET_ISO_8859_3  ((CORBA_unsigned_long) 0x00010003)
+#define IOP_PROFILES_CODE_SET_ISO_8859_4  ((CORBA_unsigned_long) 0x00010004)
+
 typedef struct {
 	IOP_ProfileId               profile_type;
 } IOP_Profile_info;
@@ -65,12 +72,13 @@ typedef struct {
 
 typedef struct {
 	IOP_Component_info          parent;
-
+	
 	ORBit_ObjectKey            *object_key;
 } IOP_TAG_COMPLETE_OBJECT_KEY_info;
 
 typedef struct {
-	IOP_Component_info          parent;
+	IOP_Component_info              parent;
+	CONV_FRAME_CodeSetComponentInfo data;
 } IOP_TAG_CODE_SETS_info;
 
 typedef struct {
