@@ -19,8 +19,7 @@ INCLUDES = \
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 	$(LINC_LIBS)					\
-	${GLIB_LIBS}
-# -lefence
+	${GLIB_LIBS} 
 
 LDFLAGS = -static
 
