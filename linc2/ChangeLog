@@ -1,3 +1,16 @@
+2002-01-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/linc-connection.c: (linc_connection_read): disconnect
+	on receipt of EOF.
+
+	* test/test-linc.c: (broken_cb), (test_server_create_connection),
+	(create_client), (test_broken_cnx_handle_input),
+	(test_broken_cnx_class_init), (test_get_broken_cnx_type),
+	(test_broken), (test_blocking_cnx_handle_input),
+	(test_blocking_cnx_class_init), (test_get_blocking_cnx_type),
+	(test_blocking): re-jig the 'broken' test to test this code
+	path.
+
 2002-01-17  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.15
