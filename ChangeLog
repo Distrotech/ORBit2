@@ -1,3 +1,36 @@
+2002-10-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_destroy_queue_entry): kill
+	bogus thread stuff.
+	(handle_reply): queue up reply recv's on
+	the right thread for processing elsewhere.
+
+	* src/orb/GIOP/giop.c
+	(giop_thread_push_recv): impl.
+
+2002-10-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_setup_queue_entry_async),
+	(giop_recv_list_setup_queue_entry): upd.
+	(giop_connection_handle_input): hobble for
+
+	* include/orbit/GIOP/giop-recv-buffer.h
+	(GIOPMessageQueueEntry): bin bogus thread bits,
+	add thread id.
+
+	* src/orb/GIOP/giop.c (giop_init): pass threaded,
+	setup main thread / context wakeup.
+	(giop_thread_new, giop_thread_self): impl.
+
+	* test/everything/client.c (main): don't use
+	linc threaded whatnot.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): check for orbit-local-mt-orb
+	profile.
+
 2002-10-28  Marion Schuenemann <schuenemann@fokus.gmd.de>
 
 	* src/services/name/boot.c (main): move ORB

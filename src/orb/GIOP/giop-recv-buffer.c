@@ -617,12 +617,6 @@ giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 	g_warning ("Pop XX:%p:NULL - %d", ent, g_list_length (giop_queued_messages));
 #endif
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-
-#ifdef ORBIT_THREADED
-	/* FIXME: Fix this mess */
-	pthread_cond_destroy(&ent->condvar);
-	LINC_MUTEX_DESTROY(ent->condvar_lock);
-#endif
 }
 
 void
@@ -631,14 +625,8 @@ giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
 				  CORBA_unsigned_long    msg_type,
 				  CORBA_unsigned_long    request_id)
 {
-#ifdef ORBIT_THREADED
-	/* FIXME: fix this mess */
-	LINC_MUTEX_INIT (ent->condvar_lock);
-	pthread_cond_init (&ent->condvar, NULL);
-	LINC_MUTEX_LOCK (ent->condvar_lock);
-#else
-	ent->u.unthreaded.cb = NULL;
-#endif
+	ent->src_thread = giop_thread_self ();
+	ent->async_cb = NULL;
 
 	ent->cnx = cnx;
 	ent->msg_type = msg_type;
@@ -660,7 +648,7 @@ giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
 {
 	g_return_if_fail (ent != NULL);
 
-	ent->u.unthreaded.cb = cb;
+	ent->async_cb = cb;
 }
 
 GIOPRecvBuffer *
@@ -980,23 +968,26 @@ handle_reply (GIOPRecvBuffer *buf)
 
 			dprintf (ERRORS, "We received a bogus reply\n");
 
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 			giop_recv_buffer_unuse (buf);
 			return TRUE;
 		}
 
 		ent->buffer = buf;
-#ifdef ORBIT_THREADED
-		pthread_cond_signal (&ent->condvar);
-#else
-		if (ent->u.unthreaded.cb)
-			giop_queued_messages = g_list_delete_link (
-				giop_queued_messages, l);
+		if (giop_threaded ()) {
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+			giop_thread_push_recv (ent->src_thread, buf);
+		} else {
+			if (ent->u.unthreaded.cb)
+				giop_queued_messages = g_list_delete_link (
+					giop_queued_messages, l);
 
-		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-		if (ent->u.unthreaded.cb) {
-			ent->u.unthreaded.cb (ent);
-			giop_recv_buffer_unuse (buf);
+			if (ent->u.unthreaded.cb) {
+				ent->u.unthreaded.cb (ent);
+				giop_recv_buffer_unuse (buf);
+			}
 		}
 #endif
 	} else {
@@ -1199,7 +1190,10 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		break;
 
 	case GIOP_REQUEST:
-		ORBit_handle_request (cnx->orb_data, buf);
+		if (giop_threaded ())
+			g_warning ("Binning incoming requests in threaded mode");
+		else
+			ORBit_handle_request (cnx->orb_data, buf);
 		giop_recv_buffer_unuse (buf);
 		break;
 
@@ -1261,4 +1255,21 @@ giop_recv_buffer_use_buf (void)
 	buf->left_to_read = 12;
 
 	return buf;
+}
+
+
+/*
+ * This thread handles all input when in threaded mode.
+ */
+gpointer
+giop_recv_thread_fn (gpointer data)
+{
+	/* FIXME: we need to be able to tell this
+	   thread to cleanup it's act and quit */
+	gboolean exit_signal = FALSE;
+
+	while (!exit_signal)
+		linc_main_iterate (TRUE);
+
+	return NULL;
 }

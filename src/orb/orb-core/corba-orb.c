@@ -225,6 +225,7 @@ CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORBid orb_identifier,
 		CORBA_Environment *ev)
 {
+	gboolean threaded;
 	CORBA_ORB retval;
 	static ORBit_RootObject_Interface orb_if = {
 		ORBIT_ROT_ORB,
@@ -239,6 +240,9 @@ CORBA_ORB_init (int *argc, char **argv,
 	/* the allocation code uses the bottom bit of any pointer */
 	g_assert (ORBIT_ALIGNOF_CORBA_DOUBLE > 2);
 
+	threaded = (orb_identifier &&
+		    strstr (orb_identifier, "orbit-local-mt-orb") != NULL);
+
 	ORBit_option_parse (argc, argv, orbit_supported_options);
 
 #ifdef G_ENABLE_DEBUG
@@ -247,7 +251,8 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	genuid_init ();
 	
-	giop_init (orbit_use_ipv4 || orbit_use_ipv6 ||
+	giop_init (threaded,
+		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
 
 	ORBit_locks_initialize ();

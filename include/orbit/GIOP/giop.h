@@ -15,7 +15,11 @@ G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API
 
-void giop_init (gboolean blank_wire_data);
+void        giop_init             (gboolean threaded,
+				   gboolean blank_wire_data);
+gboolean    giop_threaded         (void);
+GIOPThread *giop_thread_self      (void);
+void        giop_thread_push_recv (GIOPMessageQueueEntry *ent);
 
 #endif /* ORBIT2_INTERNAL_API */
 

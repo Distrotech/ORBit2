@@ -11,6 +11,14 @@ TODO:
 		b) not expanding the lookup of the vepv offset at all.
 
 * Thread safety
+	+ need an 'ORBit_small_add_mainloop_for_thread' method
+	  so that the mainloop will get woken up incoming CORBA
+	  calls happen. ( and they'll get processed ).
+
+	+ Can we just hook this into the default main context,
+	  and apply whatever we like when we wake it up ( that
+	  applies to the current thread ).
+
 	+ For independent clients, we need some way to
 	  arbitrate the giop_recv_buffer_get method - so
 	  that either: a single thread does the poll and the

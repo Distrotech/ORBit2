@@ -25,18 +25,9 @@ struct _GIOPMessageQueueEntry {
 	GIOPConnection     *cnx;
 	CORBA_unsigned_long msg_type;
 	CORBA_unsigned_long request_id;
-	union {
-#ifdef ORBIT_THREADED
-		struct {
-			pthread_mutex_t *condvar_lock;
-			pthread_cond_t *condvar;
-		} threaded;
-#endif
-		struct {
-			GIOPAsyncCallback cb;
-			gpointer          unused;
-		} unthreaded;
-	} u;
+	GIOPThread         *src_thread;
+
+	GIOPAsyncCallback   async_cb;
 };
 
 struct _GIOPRecvBuffer {
@@ -83,6 +74,8 @@ CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey     (GIOPRecvBuffer *buf
 void                        giop_recv_list_zap              (GIOPConnection *cnx);
 gboolean                    giop_connection_handle_input    (LINCConnection *lcnx);
 void                        giop_connection_destroy_frags   (GIOPConnection *cnx);
+
+gpointer                    giop_recv_thread_fn             (gpointer data);
 
 #endif /* ORBIT2_INTERNAL_API */
 
