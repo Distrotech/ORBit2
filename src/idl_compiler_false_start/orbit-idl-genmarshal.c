@@ -195,6 +195,8 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
 {
   OIDL_Marshal_Node *retval = NULL;
 
+  if(!tree) return NULL;
+
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_INTEGER:
     retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL);
@@ -367,8 +369,11 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
       retval->u.switch_info.discrim = marshal_populate(IDL_TYPE_UNION(tree).switch_type_spec, retval, is_out, pi);
       retval->u.switch_info.discrim->name = "_d";
       for(ntmp = IDL_TYPE_UNION(tree).switch_body; ntmp; ntmp = IDL_LIST(ntmp).next) {
-	retval->u.switch_info.cases = g_slist_append(retval->u.switch_info.cases,
-						     marshal_populate(IDL_LIST(ntmp).data, retval, is_out, pi));
+	OIDL_Marshal_Node * newnode;
+
+	newnode = marshal_populate(IDL_LIST(ntmp).data, retval, is_out, pi);
+
+	retval->u.switch_info.cases = g_slist_append(retval->u.switch_info.cases, newnode);
       }
     }
     break;
@@ -378,9 +383,13 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
       retval = oidl_marshal_node_new(parent, MARSHAL_CASE, "_u");
       retval->u.case_info.contents = marshal_populate(IDL_CASE_STMT(tree).element_spec, retval, is_out, pi);
       for(ntmp = IDL_CASE_STMT(tree).labels; ntmp; ntmp = IDL_LIST(ntmp).next) {
-	retval->u.case_info.labels = g_slist_append(retval->u.case_info.labels,
-						    marshal_populate(IDL_LIST(ntmp).data, retval, is_out, pi));
+	OIDL_Marshal_Node * newnode;
+
+	newnode = marshal_populate(IDL_LIST(ntmp).data, retval, is_out, pi);
+
+	retval->u.case_info.labels = g_slist_append(retval->u.case_info.labels, newnode);
       }
+
       retval->tree = tree;
     }
     break;
