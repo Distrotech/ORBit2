@@ -1,9 +1,13 @@
 config.guess
 config.sub
+config.log
+config.status
 ltconfig
 ltmain.sh
 aclocal.m4
 stamp-h.in
+stamp-h
+config.h
 Makefile
 Makefile.in
 configure
