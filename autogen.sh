@@ -59,8 +59,15 @@ echo processing libIDL
     aclocal $ACLOCAL_FLAGS; \
     autoconf)
 
-echo "Running ./configure --enable-maintainer-mode" "$@"
-./configure --enable-maintainer-mode "$@"
+if [ -z "$OBJ_DIR" ]; then
+	echo "Running ./configure --enable-maintainer-mode" "$@"
+	./configure --enable-maintainer-mode "$@"
+else
+	mkdir -p "$OBJ_DIR"
+	cd "$OBJ_DIR"
+	echo "Running ../configure --enable-maintainer-mode" "$@"
+	../configure --enable-maintainer-mode "$@"
+fi
 
 echo 
 echo "Now type 'make' to compile ORBit."
