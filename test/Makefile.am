@@ -2,6 +2,7 @@ SUBDIRS = everything inhibit poa
 
 INCLUDES =                          \
 	-I$(top_srcdir)/include     \
+	-I$(top_srcdir)/src/orb     \
 	-I$(top_builddir)/include   \
 	-DORBIT2_INTERNAL_API       \
 	$(WARN_CFLAGS)              \

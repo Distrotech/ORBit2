@@ -22,6 +22,11 @@ TODO:
 	  since these are horribly slow and again not safe.
 
 * Optimization
+	+ we need 2 de-marshalling routines, 1 with (slow)
+	  byteswap and 1 without it, save scads and scads of
+	  branch cache misses; easy to do too; make it a virtual
+	  method on the recv buffer (?) [ for easy chaining ]
+
 	+ we need some concept of align == native align flagged
 	  on TypeCodes, so we can blat things quickly with memcpy
 	  in a generic way - eg. sequences of octets.
