@@ -200,7 +200,7 @@ AC_SUBST(pkglibdir)
 
 AC_OUTPUT([
 Makefile
-orbit-config
+orbit2-config
 ORBit-2.0.pc
 ORBit-CosNaming-2.0.pc
 ORBit.spec

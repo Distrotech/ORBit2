@@ -59,7 +59,7 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-for i in . libIDL
+for i in .
 do 
   echo processing $i
   (cd $i; \

@@ -37,10 +37,7 @@ main_src = \
 	orbit-debug.h
 
 liborb_core_la_SOURCES= \
-	$(DEFS_IDLOUT) \
-	$(IDLOUT) \
-	$(OPS_IDLOUT) \
-	$(IFACE_IDLOUT) \
+	$(BUILT_SOURCES) \
 	$(main_src)
 
 IDLOUT=corba-defs-common.c
@@ -82,3 +79,11 @@ EXTRA_DIST = $(IDL_FILES)
 
 dist-hook:
 	cd $(distdir); rm -f $(BUILT_SOURCES)
+
+$(IDL_COMPILER): update-orbitidl
+	@true
+
+update-orbitidl:
+	@cd $(top_builddir)/src/idl-compiler && $(MAKE) $(AM_MAKEFLAGS)
+
+.PHONY: update-orbitidl
