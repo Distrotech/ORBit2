@@ -1,3 +1,8 @@
+1999-01-02  Jeff Garzik  <jgarzik@pobox.com>
+
+	* configure.in:
+	Removed snprintf check.
+
 1999-1-2  Raffaele Sena <raff@aromatic.com> via Russell Nelson <nelson@crynwr.com>
 
 	* Some compilers (e.g. ARM gcc) align structures even if
