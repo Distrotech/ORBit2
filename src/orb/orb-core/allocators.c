@@ -85,7 +85,7 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 	case CORBA_tk_string: {
 		CORBA_char **pval = mem;
 		ORBit_free_T (*pval);
-		*pval = 0;
+		*pval = NULL;
 		retval = (guchar *)mem + sizeof (*pval);
 		break;
 	}
@@ -93,7 +93,7 @@ ORBit_freekids_via_TypeCode_T (gpointer       mem,
 		CORBA_sequence_CORBA_octet *pval = mem;
 		if (pval->_release)
 			ORBit_free_T (pval->_buffer);
-		pval->_buffer = 0;
+		pval->_buffer = NULL;
 		retval = (guchar *)mem + sizeof(*pval);
 		break;
 	}
