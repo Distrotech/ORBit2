@@ -347,7 +347,8 @@ giop_thread_request_push_key (gpointer  key,
 	giop_thread_request_push (tdata, poa_object, recv_buffer);
 
 	if (new_tdata) {
-		g_hash_table_insert (giop_pool_hash, key, new_tdata);
+		if (key)
+			g_hash_table_insert (giop_pool_hash, key, new_tdata);
 		g_thread_pool_push (giop_thread_pool, tdata, NULL);
 	}
 

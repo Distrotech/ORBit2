@@ -1,5 +1,9 @@
 2003-05-22  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c (giop_thread_request_push_key):
+	fix HINT_PER_REQUEST policy by not inserting NULL into
+	the hash table (thanks to AlexL).
+
 	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): fix
 	non-debugging build; thanks to Christophe.
 
