@@ -1,3 +1,9 @@
+2001-07-04  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): add ORBIT_STUB_PostCall/PreCall
+	ref counting checks.
+
 2001-07-05  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-object-type.h,
