@@ -23,80 +23,97 @@
 #include "constants.h"
 #include <stdio.h>
 
-static  
-test_FixedLengthStruct
-StructServer_opFixed(PortableServer_Servant _servant,
-					 const test_FixedLengthStruct *inArg,
-					 test_FixedLengthStruct *inoutArg,
-					 test_FixedLengthStruct *outArg,
-					 CORBA_Environment * ev){
-  test_FixedLengthStruct retval;
-  g_assert(inArg->a == constants_SHORT_IN);
-  g_assert(inoutArg->a == constants_SHORT_INOUT_IN);
+static test_FixedLengthStruct
+StructServer_opFixed (PortableServer_Servant        servant,
+		      const test_FixedLengthStruct *inArg,
+		      test_FixedLengthStruct       *inoutArg,
+		      test_FixedLengthStruct       *outArg,
+		      CORBA_Environment            *ev)
+{
+	test_FixedLengthStruct retval;
+	g_assert (inArg->a == constants_SHORT_IN);
+	g_assert (inoutArg->a == constants_SHORT_INOUT_IN);
   
-  inoutArg->a = constants_SHORT_INOUT_OUT;
-  outArg->a = constants_SHORT_OUT;
-  retval.a = constants_SHORT_RETN;
-  return retval;
+	inoutArg->a = constants_SHORT_INOUT_OUT;
+	outArg->a   = constants_SHORT_OUT;
+	retval.a    = constants_SHORT_RETN;
+
+	return retval;
 }
 
 
 
-static  
-test_VariableLengthStruct*
-StructServer_opVariable(PortableServer_Servant _servant,
-					 const test_VariableLengthStruct *inArg,
-					 test_VariableLengthStruct *inoutArg,
-					 test_VariableLengthStruct **outArg,
-					 CORBA_Environment * ev){
-  test_VariableLengthStruct *retval;
-  g_assert(strcmp(inArg->a,constants_STRING_IN) == 0);
-  g_assert(strcmp(inoutArg->a,constants_STRING_INOUT_IN)==0);
+static test_VariableLengthStruct*
+StructServer_opVariable (PortableServer_Servant          servant,
+			const test_VariableLengthStruct *inArg,
+			test_VariableLengthStruct       *inoutArg,
+			test_VariableLengthStruct      **outArg,
+			CORBA_Environment               *ev)
+{
+	test_VariableLengthStruct *retval;
+	g_assert (!strcmp (inArg->a,constants_STRING_IN));
+	g_assert (!strcmp (inoutArg->a,constants_STRING_INOUT_IN));
   
-  *outArg = test_VariableLengthStruct__alloc();
-  retval = test_VariableLengthStruct__alloc();
+	*outArg = test_VariableLengthStruct__alloc ();
+	retval  = test_VariableLengthStruct__alloc ();
   
-  CORBA_free(inoutArg->a);
+	CORBA_free (inoutArg->a);
 
-  inoutArg->a = CORBA_string_dup(constants_STRING_INOUT_OUT);
-  (*outArg)->a = CORBA_string_dup(constants_STRING_OUT);
-  retval->a = CORBA_string_dup(constants_STRING_RETN);
+	inoutArg->a  = CORBA_string_dup (constants_STRING_INOUT_OUT);
+	(*outArg)->a = CORBA_string_dup (constants_STRING_OUT);
+	retval->a    = CORBA_string_dup (constants_STRING_RETN);
   
-  return retval;
+	return retval;
 }
 
+static test_CompoundStruct *
+StructServer_opCompound (PortableServer_Servant     servant,
+			 const test_CompoundStruct *inArg,
+			 test_CompoundStruct       *inoutArg,
+			 test_CompoundStruct      **outArg,
+			 CORBA_Environment         *ev)
+{
+	test_CompoundStruct *retval;
+	g_assert (!strcmp (inArg->a.a,constants_STRING_IN));
+	g_assert (!strcmp (inoutArg->a.a,constants_STRING_INOUT_IN));
+  
+	*outArg = test_CompoundStruct__alloc ();
+	retval  = test_CompoundStruct__alloc ();
+  
+	CORBA_free (inoutArg->a.a);
 
-static  
-test_CompoundStruct*
-StructServer_opCompound(PortableServer_Servant _servant,
-					 const test_CompoundStruct *inArg,
-					 test_CompoundStruct *inoutArg,
-					 test_CompoundStruct **outArg,
-					 CORBA_Environment * ev){
-  test_CompoundStruct *retval;
-  g_assert(strcmp(inArg->a.a,constants_STRING_IN) == 0);
-  g_assert(strcmp(inoutArg->a.a,constants_STRING_INOUT_IN)==0);
+	inoutArg->a.a = CORBA_string_dup (constants_STRING_INOUT_OUT);
+	(*outArg)->a.a = CORBA_string_dup (constants_STRING_OUT);
+	retval->a.a = CORBA_string_dup (constants_STRING_RETN);
   
-  *outArg = test_CompoundStruct__alloc();
-  retval = test_CompoundStruct__alloc();
-  
-  CORBA_free(inoutArg->a.a);
-
-  inoutArg->a.a = CORBA_string_dup(constants_STRING_INOUT_OUT);
-  (*outArg)->a.a = CORBA_string_dup(constants_STRING_OUT);
-  retval->a.a = CORBA_string_dup(constants_STRING_RETN);
-  
-  return retval;
+	return retval;
 }
 
+static test_StructAny *
+StructServer_opStructAny (PortableServer_Servant servant,
+			  CORBA_Environment     *ev)
+{
+	test_StructAny   *a = test_StructAny__alloc ();
+	static CORBA_long l;
+
+	a->a = CORBA_string_dup (constants_STRING_IN);
+
+	l = constants_LONG_IN;
+	a->b._release = FALSE;
+	a->b._value = &l;
+	a->b._type  = TC_CORBA_long;
+
+	return a;
+}
 
 PortableServer_ServantBase__epv StructServer_base_epv = {NULL,NULL,NULL};
 
 POA_test_StructServer__epv StructServer_epv = {
-  NULL,
-  StructServer_opFixed,
-  StructServer_opVariable,
-  StructServer_opCompound,
+	NULL,
+	StructServer_opFixed,
+	StructServer_opVariable,
+	StructServer_opCompound,
+	StructServer_opStructAny
 };
 
 POA_test_StructServer__vepv StructServer_vepv = {&StructServer_base_epv,&BasicServer_epv,&StructServer_epv};

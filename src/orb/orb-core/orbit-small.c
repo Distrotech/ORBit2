@@ -30,6 +30,7 @@
 #include "../poa/orbit-poa-export.h"
 
 #undef DEBUG
+#define TYPE_DEBUG
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -1123,11 +1124,13 @@ load_module (const char *fname)
 	GModule *handle;
 	ORBit_IModule *module;
 
-	g_warning ("About to load '%s'", fname);
-
-	if (!(handle = g_module_open (fname, G_MODULE_BIND_LAZY)))
-		/* Didn't exist probably */
+	if (!(handle = g_module_open (fname, G_MODULE_BIND_LAZY))) {
+#ifdef TYPE_DEBUG
+		g_warning ("Failed to load '%s': '%s'", fname,
+			   g_module_error ());
+#endif
 		return FALSE;
+	}
 
 	else if (!g_module_symbol (handle, "orbit_imodule_data",
 				     (gpointer *)&module)) {
@@ -1184,9 +1187,6 @@ ORBit_small_load_typelib (const char *libname)
 		g_strfreev (paths);
 	} else
 		loaded = load_module (fname);
-
-	if (!loaded)
-		g_warning ("Failed to find '%s'", libname);
 
 	return loaded;
 }
