@@ -14,7 +14,7 @@
 
 #include <glib/gmacros.h>
 #include <glib/gthread.h>
-#include <gobject/gobject.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
