@@ -105,7 +105,7 @@ ORBit_objref_find(CORBA_ORB orb, const char *type_id, GSList *profiles)
 static gboolean
 ORBit_try_connection(CORBA_Object obj)
 {
-  while(1)
+  while(obj->connection)
     switch(LINC_CONNECTION(obj->connection)->status)
       {
       case LINC_CONNECTING:
@@ -119,6 +119,7 @@ ORBit_try_connection(CORBA_Object obj)
 	return FALSE;
 	break;
       }
+
   return FALSE;
 }
 
@@ -265,7 +266,7 @@ _ORBit_object_get_connection(CORBA_Object obj)
   if(!plist)
     plist = obj->profile_list;
 
-  if(obj->connection && ORBit_try_connection(obj))
+  if(ORBit_try_connection(obj))
     return obj->connection;
   
   for(cur = plist; cur; cur = cur->next)
@@ -277,6 +278,9 @@ _ORBit_object_get_connection(CORBA_Object obj)
 	  obj->connection =
 	    giop_connection_initiate(proto, host, service,
 				     is_ssl?LINC_CONNECTION_SSL:0, iiop_version);
+	  g_assert(obj->connection);
+	  obj->oki = oki;
+
 	  if(ORBit_try_connection(obj))
 	    return obj->connection;
 	}
@@ -567,7 +571,6 @@ static void
 IOP_TAG_SSL_SEC_TRANS_marshal(GIOPSendBuffer *buf,
 			      IOP_Component_info *ci)
 {
-  CORBA_unsigned_long len;
   IOP_TAG_SSL_SEC_TRANS_info *ssli = (IOP_TAG_SSL_SEC_TRANS_info *)ci;
 
   giop_send_buffer_align(buf, 4);

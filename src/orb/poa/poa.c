@@ -1199,6 +1199,7 @@ ORBit_POA_destroy(PortableServer_POA poa,
 		  CORBA_boolean etherealize_objects,
 		  CORBA_Environment *ev)
 {
+  ORBit_POAManager_unregister_poa(poa->poa_manager, poa, ev);
   return FALSE;
 }
 
@@ -1354,6 +1355,9 @@ ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
 	g_ptr_array_set_size(poa->num_to_koid_map, 1);
 	g_ptr_array_index(poa->num_to_koid_map, 0) = NULL;
       }
+
+  
+  ORBit_POAManager_register_poa(manager, poa, ev);
 
   return poa;
 error:

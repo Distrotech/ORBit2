@@ -10,7 +10,6 @@ ORBit_handle_system_exception(CORBA_Environment *ev,
 			      GIOPRecvBuffer *buf,
 			      GIOPSendBuffer *sendbuf)
 {
-  g_assert(ev->_major == CORBA_SYSTEM_EXCEPTION);
   CORBA_exception_set_system(ev, nom, status);
   giop_recv_buffer_unuse(buf);
   giop_send_buffer_unuse(sendbuf);
@@ -110,4 +109,5 @@ ORBit_handle_location_forward(GIOPRecvBuffer *buf,
 void
 ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev)
 {
+  g_assert(ev->_major == CORBA_SYSTEM_EXCEPTION);
 }
