@@ -1,3 +1,9 @@
+2003-05-14  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/GIOP/giop-recv-buffer.h: make
+	free_body a guchar not a (signed) gboolean;
+	thanks to Morten.
+
 2003-05-13  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/client.c (testDerivedServer): impl.
