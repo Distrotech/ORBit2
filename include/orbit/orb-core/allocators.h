@@ -82,5 +82,6 @@ gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
 gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
 gpointer CORBA_any__freekids(gpointer mem, gpointer data);
 gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
+void CORBA_free(gpointer mem);
 
 #endif

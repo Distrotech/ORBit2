@@ -8,6 +8,10 @@ module CORBA {
     /* Vendor PolicyType ValueSet ID */
     const unsigned long VPVID_OMG = OMGVMCID;
     const unsigned long VPVID_ORBit0 = VMCID_ORBit0;
+  struct SystemException {
+    unsigned long minor;
+    completion_status completed;
+  };
 };
 
 #pragma pidl push

@@ -15,12 +15,18 @@ liborb_core_la_SOURCES=\
 	orbhttp.h \
 	orbit-object.c \
 	corba-object.c \
-	corba-policy.c
+	corba-policy.c \
+	corba-env.c \
+	corba-string.c \
+	allocators.c \
+	corba-typecode.c \
+	corba-types.c \
+	corba-any.c
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 IDLOUT=corba-defs-common.c
 IOP_IDLOUT=iop-defs-common.c
-OPS_IDLOUT=corba-ops-stubs.c corba-ops.h corba-ops-skels.c
+OPS_IDLOUT=corba-ops-stubs.c corba-ops-common.c corba-ops.h corba-ops-skels.c
 
 $(IDLOUT) runidl: corba-defs.idl $(IDL)
 	-(rm -f $(IDLOUT) || true) > /dev/null
@@ -49,7 +55,7 @@ $(IOP_IDLOUT) runidl_iop: iop-defs.idl $(IDL)
 
 $(OPS_IDLOUT) runidl_ops: corba-ops.idl $(IDL)
 	-(rm -f $(IOP_IDLOUT) || true) > /dev/null
-	$(IDL) --nocommon \
+	$(IDL) \
                 --showcpperrors $(top_srcdir)/src/orb/orb-core/corba-ops.idl
 	for I in $(OPS_IDLOUT); do \
 		sed -e 's,ZZZis_a,_is_a,g' -e 's,ZZis_a,is_a,g' $$I > $$I.out; mv $$I.out $$I; \

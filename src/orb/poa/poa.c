@@ -632,7 +632,9 @@ PortableServer_Current_get_object_id(PortableServer_Current obj,
 
     if ( (invoke=ORBit_POACurrent_get_invocation(obj, ev))==0 )
 	return 0;
-    return ORBit_sequence_octet_dup(invoke->object_id 
+    return
+      (PortableServer_ObjectId *)
+      ORBit_sequence_octet_dup(invoke->object_id 
       ? invoke->object_id : invoke->pobj->object_id);
 }
 
@@ -791,3 +793,79 @@ PortableServer_ServantLocator_postinvoke(PortableServer_ServantLocator _obj,
 {
 }
 #endif
+
+void
+ORBit_classinfo_register(PortableServer_ClassInfo *ci)
+{
+}
+
+gboolean
+ORBit_POA_is_inuse(PortableServer_POA poa,
+		   CORBA_boolean consider_children,
+		   CORBA_Environment *ev)
+{
+}
+
+ORBit_POAObject *ORBit_POA_create_object(PortableServer_POA poa,
+					 const PortableServer_ObjectId *oid,
+					 CORBA_boolean isDefault,
+					 CORBA_Environment *ev)
+{
+  return NULL;
+}
+
+void
+ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
+{
+}
+
+CORBA_Object
+ORBit_POA_oid_to_ref(PortableServer_POA poa,
+		     const PortableServer_ObjectId *oid,
+		     const CORBA_RepositoryId intf,
+		     CORBA_Environment *ev)
+{
+}
+
+ORBit_POAObject *ORBit_POA_oid_to_obj(PortableServer_POA poa,
+				      const PortableServer_ObjectId *oid,
+				      gboolean active,
+				      CORBA_Environment *ev)
+{
+}
+
+gboolean ORBit_POA_destroy(PortableServer_POA poa,
+			   CORBA_boolean etherealize_objects,
+			   CORBA_Environment *ev)
+{
+}
+
+void ORBit_POA_add_child(PortableServer_POA poa,
+			 PortableServer_POA child, 
+			 CORBA_Environment *ev)
+{
+}
+
+void ORBit_POA_deactivate(PortableServer_POA poa,
+			  CORBA_boolean etherealize_objects,
+			  CORBA_Environment *ev)
+{
+}
+
+void ORBit_POA_handle_held_requests(PortableServer_POA poa)
+{
+}
+
+PortableServer_POA ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
+				 const PortableServer_POAManager manager,
+				 const CORBA_PolicyList *policies,
+				 CORBA_Environment *ev)
+{
+}
+
+CORBA_Object ORBit_POA_obj_to_ref(PortableServer_POA poa,
+				  ORBit_POAObject *pobj,
+				  const CORBA_RepositoryId intf,
+				  CORBA_Environment *ev)
+{
+}

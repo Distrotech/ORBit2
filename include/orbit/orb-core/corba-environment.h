@@ -7,18 +7,20 @@ void CORBA_exception_set(CORBA_Environment *ev,
 			 void *param);
 CORBA_char *CORBA_exception_id(CORBA_Environment *ev);
 void *CORBA_exception_value(CORBA_Environment *ev);
+void CORBA_exception_init(CORBA_Environment *ev);
 void CORBA_exception_free(CORBA_Environment *ev);
 CORBA_any *CORBA_exception_as_any(CORBA_Environment *ev);
 void CORBA_exception_set_system(CORBA_Environment *ev,
 				CORBA_char *except_repos_id,
 				CORBA_completion_status completed);
 void ORBit_handle_system_exception(CORBA_Environment *ev,
-				   const CORBA_char *ex_name,
+				   const CORBA_char *nom,
 				   CORBA_completion_status status,
 				   GIOPRecvBuffer *buf, GIOPSendBuffer *sendbuf);
 void ORBit_handle_exception(GIOPRecvBuffer *buf, CORBA_Environment *ev,
 			    gpointer ex_info, CORBA_ORB orb);
 GIOPConnection *ORBit_handle_location_forward(GIOPRecvBuffer *buf,
 					      CORBA_Object obj);
+void ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev);
 
 #endif

@@ -12,4 +12,10 @@ struct ORBit_POAInvocation {
 #include <orbit/poa/portableserver-poa-type.h>
 #include <orbit/poa/portableserver-current-type.h>
 
+void PortableServer_ServantBase__init(PortableServer_Servant p_servant,
+				      CORBA_Environment *ev);
+void PortableServer_ServantBase__fini(PortableServer_Servant p_servant,
+				      CORBA_Environment *ev);
+void ORBit_classinfo_register(PortableServer_ClassInfo *ci);
+#define ORBIT_SERVANT_SET_CLASSINFO(x, y)
 #endif

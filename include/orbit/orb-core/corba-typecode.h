@@ -30,7 +30,7 @@ extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_short_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_short_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_octet_struct;
-extern const struct CORBA_TypeCode_struct TC_Object_struct;
+#define TC_Object_struct TC_CORBA_Object_struct
 extern const struct CORBA_TypeCode_struct TC_CORBA_Object_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_any_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_TypeCode_struct;
@@ -39,8 +39,6 @@ extern const struct CORBA_TypeCode_struct TC_CORBA_float_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_double_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_long_long_struct;
 extern const struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_long_struct;
-extern const struct CORBA_TypeCode_struct TC_CORBA__struct;
-extern const struct CORBA_TypeCode_struct TC_CORBA__struct;
 
 extern const ORBit_RootObject_Interface ORBit_TypeCode_epv;
 

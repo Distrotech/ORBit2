@@ -1,12 +1,16 @@
 #include "config.h"
 
-#include <orbit/orb-core/corba-environment.h>
+#include <orbit/orbit.h>
+#include <string.h>
 
 void
 ORBit_handle_system_exception(CORBA_Environment *ev,
+			      const CORBA_char *nom,
 			      CORBA_completion_status status,
 			      GIOPRecvBuffer *buf,
-			      GIOPSendBuffer *sendbuf);
+			      GIOPSendBuffer *sendbuf)
+{
+}
 
 void
 CORBA_exception_set_system(CORBA_Environment *ev,
@@ -34,7 +38,7 @@ CORBA_exception_set(CORBA_Environment *ev,
   if(major != CORBA_NO_EXCEPTION)
     {
       ev->_id = CORBA_string_dup(except_repos_id);
-      ev->_any._type = TC_null; /* CORBA sucks */
+      ev->_any._type = NULL; /* CORBA sucks */
       ev->_any._value = param;
       ev->_any._release = CORBA_TRUE;
     }
@@ -58,6 +62,14 @@ CORBA_exception_value(CORBA_Environment *ev)
   return NULL;
 }
 
+/* An ORBit extension that seems to be perpetuated */
+void
+CORBA_exception_init(CORBA_Environment *ev)
+{
+  memset(ev, 0, sizeof(CORBA_Environment));
+  ev->_major = CORBA_NO_EXCEPTION;
+}
+
 void
 CORBA_exception_free(CORBA_Environment *ev)
 {
@@ -65,7 +77,7 @@ CORBA_exception_free(CORBA_Environment *ev)
     {
       CORBA_free(ev->_id);
       CORBA_any__freekids(&ev->_any, NULL);
-      ev->_any._type = TC_null;
+      ev->_any._type = NULL;
       ev->_any._value = NULL;
       ev->_any._release = CORBA_FALSE;
     }
@@ -75,4 +87,22 @@ CORBA_any *
 CORBA_exception_as_any(CORBA_Environment *ev)
 {
   return &ev->_any;
+}
+
+void
+ORBit_handle_exception(GIOPRecvBuffer *buf, CORBA_Environment *ev,
+		       gpointer ex_info, CORBA_ORB orb)
+{
+}
+
+GIOPConnection *
+ORBit_handle_location_forward(GIOPRecvBuffer *buf,
+			      CORBA_Object obj)
+{
+  return NULL;
+}
+
+void
+ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev)
+{
 }
