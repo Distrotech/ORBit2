@@ -2,6 +2,7 @@
 #include <orbit/orbit.h>
 #include <string.h>
 #include <stdio.h>
+#include "../poa/orbit-poa-export.h"
 #include "corba-ops.h"
 
 #undef DEBUG
@@ -196,7 +197,7 @@ IOP_ObjectKey_dump (IOP_ObjectKey_info *oki)
 }
 
 static G_GNUC_UNUSED gchar * 
-IOP_Profile_dump(gpointer p)
+IOP_Profile_dump(CORBA_Object obj, gpointer p)
 {
 	IOP_ProfileId t;
 	char         *key = NULL;
@@ -207,8 +208,11 @@ IOP_Profile_dump(gpointer p)
 	switch (t) {
 	case IOP_TAG_INTERNET_IOP: {
 		IOP_TAG_INTERNET_IOP_info *iiop = p;
+		IOP_ObjectKey_info        *oki;
+
+		oki = iiop->oki != NULL ? iiop->oki : obj->oki;
 		
-		key = IOP_ObjectKey_dump (iiop->oki);
+		key = IOP_ObjectKey_dump (oki);
 		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
 				 iiop->host, iiop->port, key);
 		break;
@@ -225,7 +229,10 @@ IOP_Profile_dump(gpointer p)
 	
 	case IOP_TAG_ORBIT_SPECIFIC: {
 		IOP_TAG_ORBIT_SPECIFIC_info *os = p;
+		IOP_ObjectKey_info          *oki;
 		
+		oki = os->oki != NULL ? os->oki : obj->oki;
+
 		key = IOP_ObjectKey_dump (os->oki);
 		g_string_printf (str, "P-OS %s:0x%x '%s'",
 				 os->unix_sock_path, os->ipv6_port,
@@ -259,7 +266,7 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
   {
     char *str;
     fprintf (stderr, "profile for object '%p' '%s'\n",
-	     obj, (str = IOP_Profile_dump (pi)));
+	     obj, (str = IOP_Profile_dump (obj, pi)));
     g_free (str);
   }
 #endif
@@ -502,7 +509,8 @@ IOP_ObjectKey_equal(IOP_ObjectKey_info *a, IOP_ObjectKey_info *b)
 }
 
 static gboolean
-IOP_Profile_equal(gpointer d1, gpointer d2,
+IOP_Profile_equal(CORBA_Object obj1, CORBA_Object obj2,
+		  gpointer d1, gpointer d2,
 		  IOP_TAG_MULTIPLE_COMPONENTS_info *mci1,
 		  IOP_TAG_MULTIPLE_COMPONENTS_info *mci2)
 {
@@ -518,10 +526,15 @@ IOP_Profile_equal(gpointer d1, gpointer d2,
 	case IOP_TAG_INTERNET_IOP: {
 		IOP_TAG_INTERNET_IOP_info *iiop1 = d1;
 		IOP_TAG_INTERNET_IOP_info *iiop2 = d2;
+		IOP_ObjectKey_info        *oki1, *oki2;
 
 		if (iiop1->port != iiop2->port)
 			return FALSE;
-		if (!IOP_ObjectKey_equal (iiop1->oki, iiop2->oki))
+
+		oki1 = iiop1->oki != NULL ? iiop1->oki : obj1->oki;
+		oki2 = iiop2->oki != NULL ? iiop2->oki : obj2->oki;
+
+		if (!IOP_ObjectKey_equal (oki1, oki2))
 			return FALSE;
 		if (strcmp (iiop1->host, iiop2->host))
 			return FALSE;
@@ -544,6 +557,7 @@ IOP_Profile_equal(gpointer d1, gpointer d2,
 
 		{ /* Oh, the ugliness */
 			IOP_TAG_COMPLETE_OBJECT_KEY_info *c1, *c2;
+			IOP_ObjectKey_info               *oki1, *oki2;
 
 			c1 = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
 				IOP_component_find(mci1->components,
@@ -553,10 +567,14 @@ IOP_Profile_equal(gpointer d1, gpointer d2,
 				IOP_component_find(mci2->components,
 						   IOP_TAG_COMPLETE_OBJECT_KEY,
 						   NULL);
+
 			if (!(c1 || c2))
 				return FALSE;
 
-			if (!IOP_ObjectKey_equal (c1->oki, c2->oki))
+			oki1 = c1->oki != NULL ? c1->oki : obj1->oki;
+			oki2 = c2->oki != NULL ? c2->oki : obj2->oki;
+
+			if (!IOP_ObjectKey_equal (oki1, oki2))
 				return FALSE;
 		}
 		break;
@@ -565,10 +583,15 @@ IOP_Profile_equal(gpointer d1, gpointer d2,
 	case IOP_TAG_ORBIT_SPECIFIC: {
 		IOP_TAG_ORBIT_SPECIFIC_info *os1 = d1;
 		IOP_TAG_ORBIT_SPECIFIC_info *os2 = d2;
+		IOP_ObjectKey_info               *oki1, *oki2;
 
 		if (os1->ipv6_port != os2->ipv6_port)
 			return FALSE;
-		if (!IOP_ObjectKey_equal (os1->oki, os2->oki))
+
+		oki1 = os1->oki != NULL ? os1->oki : obj1->oki;
+		oki2 = os2->oki != NULL ? os2->oki : obj2->oki;
+
+		if (!IOP_ObjectKey_equal (oki1, oki2))
 			return FALSE;
 		if (strcmp (os1->unix_sock_path, os2->unix_sock_path))
 			return FALSE;
@@ -622,12 +645,13 @@ g_CORBA_Object_equal(gconstpointer a, gconstpointer b)
     {
       for(cur2 = other_object->profile_list; cur2; cur2 = cur2->next)
 	{
-           if(IOP_Profile_equal(cur1->data, cur2->data,
+           if(IOP_Profile_equal(_obj, other_object,
+				cur1->data, cur2->data,
 				mci1, mci2))
 	     {
 /*                char *a, *b;
-		a = IOP_Profile_dump (cur1->data);
-		b = IOP_Profile_dump (cur2->data);
+		a = IOP_Profile_dump (_obj, cur1->data);
+		b = IOP_Profile_dump (other_object, cur2->data);
 		fprintf (stderr, "Profiles match:\n'%s':%s\n'%s':%s\n",
 		_obj->type_id, a, other_object->type_id, b);*/
 		return TRUE;
@@ -789,6 +813,12 @@ ORBit_generate_profiles( CORBA_Object obj )
   if ( obj->orb->servers == NULL )
     ORBit_start_servers( obj->orb );
 
+  /*
+   * only carry around one copy of the object key.
+   */
+  if ( obj->oki == NULL )
+    obj->oki = ORBit_POA_object_to_okey( obj->pobj );
+
   need_objkey_component = FALSE;
 
   for(ltmp = obj->orb->servers ; ltmp != NULL ; ltmp = ltmp->next)
@@ -805,7 +835,6 @@ ORBit_generate_profiles( CORBA_Object obj )
         {
           osi = g_new0(IOP_TAG_ORBIT_SPECIFIC_info, 1);
           osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
-          osi->oki = IOP_ObjectKey_copy(obj->oki);
         }
 
       if(uds && osi->unix_sock_path == NULL )
@@ -838,7 +867,6 @@ ORBit_generate_profiles( CORBA_Object obj )
             {
               g_assert(!iiop->port);
               iiop->port = atoi(serv->local_serv_info);
-              iiop->oki = IOP_ObjectKey_copy(obj->oki);
               iiop->iiop_version = obj->orb->default_giop_version;
             }
         }
@@ -901,7 +929,6 @@ ORBit_generate_profiles( CORBA_Object obj )
           IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
           coki = g_new0(IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
           coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
-          coki->oki = IOP_ObjectKey_copy(obj->oki);
           mci->components = g_slist_append(mci->components, coki);
         }
       profiles = g_slist_append(profiles, mci);
@@ -914,15 +941,19 @@ ORBit_generate_profiles( CORBA_Object obj )
  }
 
 static void
-IOP_ObjectKey_marshal(GIOPSendBuffer *buf, IOP_ObjectKey_info *oki)
+IOP_ObjectKey_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
+		      IOP_ObjectKey_info *oki)
 {
+  if ( oki == NULL )
+    oki = obj->oki;
+
   giop_send_buffer_align(buf, 4);
   giop_send_buffer_append(buf, oki->object_key_vec.iov_base,
 			  oki->object_key._length + 4 /* cant use iov_len because it includes tail alignment */);
 }
 
 static void
-IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(GIOPSendBuffer *buf,
+IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 				      IOP_Component_info *ci)
 {
   CORBA_unsigned_long len;
@@ -935,7 +966,7 @@ IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(GIOPSendBuffer *buf,
 }
 
 static void
-IOP_TAG_SSL_SEC_TRANS_marshal(GIOPSendBuffer *buf,
+IOP_TAG_SSL_SEC_TRANS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 			      IOP_Component_info *ci)
 {
   IOP_TAG_SSL_SEC_TRANS_info *ssli = (IOP_TAG_SSL_SEC_TRANS_info *)ci;
@@ -945,16 +976,17 @@ IOP_TAG_SSL_SEC_TRANS_marshal(GIOPSendBuffer *buf,
 }
 
 static void
-IOP_TAG_COMPLETE_OBJECT_KEY_marshal(GIOPSendBuffer *buf,
+IOP_TAG_COMPLETE_OBJECT_KEY_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 				    IOP_Component_info *ci)
 {
   IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)ci;
 
-  IOP_ObjectKey_marshal(buf, coki->oki);
+  IOP_ObjectKey_marshal(obj, buf, coki->oki);
 }
 
 static void
-IOP_UnknownComponent_marshal(GIOPSendBuffer *buf, IOP_Component_info *ci)
+IOP_UnknownComponent_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
+			     IOP_Component_info *ci)
 {
   IOP_UnknownComponent_info *uci = (IOP_UnknownComponent_info *)ci;
 
@@ -962,7 +994,8 @@ IOP_UnknownComponent_marshal(GIOPSendBuffer *buf, IOP_Component_info *ci)
 }
 
 static void
-IOP_components_marshal(GIOPSendBuffer *buf, GSList *components)
+IOP_components_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
+		       GSList *components)
 {
   CORBA_unsigned_long len, *lenptr;
   GSList *cur;
@@ -996,16 +1029,16 @@ IOP_components_marshal(GIOPSendBuffer *buf, GSList *components)
       switch(ci->component_type)
 	{
 	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
-	  IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(buf, ci);
+	  IOP_TAG_GENERIC_SSL_SEC_TRANS_marshal(obj, buf, ci);
 	  break;
 	case IOP_TAG_SSL_SEC_TRANS:
-	  IOP_TAG_SSL_SEC_TRANS_marshal(buf, ci);
+	  IOP_TAG_SSL_SEC_TRANS_marshal(obj, buf, ci);
 	  break;
 	case IOP_TAG_COMPLETE_OBJECT_KEY:
-	  IOP_TAG_COMPLETE_OBJECT_KEY_marshal(buf, ci);
+	  IOP_TAG_COMPLETE_OBJECT_KEY_marshal(obj, buf, ci);
 	  break;
 	default:
-	  IOP_UnknownComponent_marshal(buf, ci);
+	  IOP_UnknownComponent_marshal(obj, buf, ci);
 	  break;
 	}
 
@@ -1015,7 +1048,8 @@ IOP_components_marshal(GIOPSendBuffer *buf, GSList *components)
 }
 
 static void
-IOP_TAG_INTERNET_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
+IOP_TAG_INTERNET_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
+			     IOP_Profile_info *profile)
 {
   IOP_TAG_INTERNET_IOP_info *iiop = (IOP_TAG_INTERNET_IOP_info *)profile;
   CORBA_unsigned_long len;
@@ -1029,13 +1063,14 @@ IOP_TAG_INTERNET_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &iiop->port, 2);
 
-  IOP_ObjectKey_marshal(buf, iiop->oki);
+  IOP_ObjectKey_marshal(obj, buf, iiop->oki);
 
-  IOP_components_marshal(buf, iiop->components);
+  IOP_components_marshal(obj, buf, iiop->components);
 }
 
 static void
-IOP_TAG_GENERIC_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
+IOP_TAG_GENERIC_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
+			    IOP_Profile_info *profile)
 {
   IOP_TAG_GENERIC_IOP_info *giop = (IOP_TAG_GENERIC_IOP_info *)profile;
   CORBA_unsigned_long len;
@@ -1056,21 +1091,21 @@ IOP_TAG_GENERIC_IOP_marshal(GIOPSendBuffer *buf, IOP_Profile_info *profile)
   giop_send_buffer_append_indirect(buf, &len, 4);
   giop_send_buffer_append(buf, giop->service, len);
 
-  IOP_components_marshal(buf, giop->components);
+  IOP_components_marshal(obj, buf, giop->components);
 }
 
 static void
-IOP_TAG_MULTIPLE_COMPONENTS_marshal(GIOPSendBuffer *buf,
+IOP_TAG_MULTIPLE_COMPONENTS_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 				    IOP_Profile_info *profile)
 {
   IOP_TAG_MULTIPLE_COMPONENTS_info *mci = (IOP_TAG_MULTIPLE_COMPONENTS_info*)
     profile;
 
-  IOP_components_marshal(buf, mci->components);
+  IOP_components_marshal(obj, buf, mci->components);
 }
 
 static void
-IOP_TAG_ORBIT_SPECIFIC_marshal(GIOPSendBuffer *buf,
+IOP_TAG_ORBIT_SPECIFIC_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 			       IOP_Profile_info *profile)
 {
   CORBA_unsigned_long len;
@@ -1082,11 +1117,12 @@ IOP_TAG_ORBIT_SPECIFIC_marshal(GIOPSendBuffer *buf,
   giop_send_buffer_append(buf, osi->unix_sock_path, len);
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &osi->ipv6_port, 2);
-  IOP_ObjectKey_marshal(buf, osi->oki);
+  IOP_ObjectKey_marshal(obj, buf, obj->oki);
 }
 
 static void
-IOP_UnknownProfile_marshal(GIOPSendBuffer *buf, IOP_Profile_info *pi)
+IOP_UnknownProfile_marshal(CORBA_Object obj, GIOPSendBuffer *buf, 
+			   IOP_Profile_info *pi)
 {
   IOP_UnknownProfile_info *upi = (IOP_UnknownProfile_info *)pi;
 
@@ -1094,7 +1130,8 @@ IOP_UnknownProfile_marshal(GIOPSendBuffer *buf, IOP_Profile_info *pi)
 }
 
 static void
-ORBit_marshal_profile(GIOPSendBuffer *buf, IOP_Profile_info *profile)
+ORBit_marshal_profile(CORBA_Object obj, GIOPSendBuffer *buf, 
+		      IOP_Profile_info *profile)
 {
   CORBA_unsigned_long *seqlen, dumb;
   giop_send_buffer_align(buf, 4);
@@ -1108,22 +1145,22 @@ ORBit_marshal_profile(GIOPSendBuffer *buf, IOP_Profile_info *profile)
     {
     case IOP_TAG_INTERNET_IOP:
       giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_INTERNET_IOP_marshal(buf, profile);
+      IOP_TAG_INTERNET_IOP_marshal(obj, buf, profile);
       break;
     case IOP_TAG_ORBIT_SPECIFIC:
       giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_ORBIT_SPECIFIC_marshal(buf, profile);
+      IOP_TAG_ORBIT_SPECIFIC_marshal(obj, buf, profile);
       break;
     case IOP_TAG_GENERIC_IOP:
       giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_GENERIC_IOP_marshal(buf, profile);
+      IOP_TAG_GENERIC_IOP_marshal(obj, buf, profile);
       break;
     case IOP_TAG_MULTIPLE_COMPONENTS:
       giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
-      IOP_TAG_MULTIPLE_COMPONENTS_marshal(buf, profile);
+      IOP_TAG_MULTIPLE_COMPONENTS_marshal(obj, buf, profile);
       break;
     default:
-      IOP_UnknownProfile_marshal(buf, profile);
+      IOP_UnknownProfile_marshal(obj, buf, profile);
       break;
     }
   *seqlen = buf->msg.header.message_size - dumb;
@@ -1162,9 +1199,9 @@ ORBit_marshal_object(GIOPSendBuffer *buf, CORBA_Object obj)
     for(cur = obj->profile_list; cur; cur = cur->next)
       {
 #ifdef DEBUG
-        fprintf (stderr, "%s\n", IOP_Profile_dump (cur->data));
+        fprintf (stderr, "%s\n", IOP_Profile_dump (obj, cur->data));
 #endif
-	ORBit_marshal_profile(buf, cur->data);
+	ORBit_marshal_profile(obj, buf, cur->data);
       }
 }
 
