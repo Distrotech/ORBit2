@@ -1,5 +1,7 @@
 2004-08-19  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.11.2
+
 	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_recv_list_destroy_queue_entry): unref the
 	ent's connection without the message queue lock
