@@ -1,110 +1,55 @@
 #include <orbit/orbit.h>
 
-PortableServer_ThreadPolicyValue
-PortableServer_ThreadPolicy__get_value(PortableServer_ThreadPolicy _obj,
-				       CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+#define POLICY__get_value(name)                                              \
+	name##Value                                                          \
+	name##__get_value (name policy,                                      \
+			   CORBA_Environment *ev)                            \
+	{                                                                    \
+		return ORBit_Policy_get ((CORBA_Policy)policy);              \
+	}
 
-PortableServer_LifespanPolicyValue
-PortableServer_LifespanPolicy__get_value(PortableServer_LifespanPolicy _obj,
-					 CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+POLICY__get_value (PortableServer_ThreadPolicy)
+POLICY__get_value (PortableServer_LifespanPolicy)
+POLICY__get_value (PortableServer_IdUniquenessPolicy)
+POLICY__get_value (PortableServer_IdAssignmentPolicy)
+POLICY__get_value (PortableServer_ServantRetentionPolicy)
+POLICY__get_value (PortableServer_RequestProcessingPolicy)
+POLICY__get_value (PortableServer_ImplicitActivationPolicy)
 
-PortableServer_IdUniquenessPolicyValue
-PortableServer_IdUniquenessPolicy__get_value
-(PortableServer_IdUniquenessPolicy _obj, CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+#define PortableServer_POA_create_POLICY(name, str, id)                      \
+	name                                                                 \
+	PortableServer_POA_create_##str##_policy (PortableServer_POA  poa,   \
+						  const name##Value   value, \
+						  CORBA_Environment  *ev)    \
+	{                                                                    \
+		return (name)ORBit_Policy_new (id, value);                   \
+	}
 
-PortableServer_IdAssignmentPolicyValue
-PortableServer_IdAssignmentPolicy__get_value
-(PortableServer_IdAssignmentPolicy _obj, CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+PortableServer_POA_create_POLICY (PortableServer_ThreadPolicy, thread,
+				  PortableServer_THREAD_POLICY_ID)
 
-PortableServer_ImplicitActivationPolicyValue
-PortableServer_ImplicitActivationPolicy__get_value
-(PortableServer_ImplicitActivationPolicy _obj, CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+PortableServer_POA_create_POLICY (PortableServer_LifespanPolicy, lifespan,
+				  PortableServer_LIFESPAN_POLICY_ID)
 
-PortableServer_ServantRetentionPolicyValue
-PortableServer_ServantRetentionPolicy__get_value
-(PortableServer_ServantRetentionPolicy _obj, CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+PortableServer_POA_create_POLICY (PortableServer_IdUniquenessPolicy, 
+				  id_uniqueness,
+				  PortableServer_ID_UNIQUENESS_POLICY_ID)
 
-PortableServer_RequestProcessingPolicyValue
-PortableServer_RequestProcessingPolicy__get_value
-(PortableServer_RequestProcessingPolicy _obj, CORBA_Environment * ev)
-{
-  return ORBit_Policy_get((CORBA_Policy)_obj);
-}
+PortableServer_POA_create_POLICY (PortableServer_IdAssignmentPolicy, 
+				  id_assignment,
+				  PortableServer_ID_ASSIGNMENT_POLICY_ID)
 
+PortableServer_POA_create_POLICY (PortableServer_ServantRetentionPolicy, 
+				  servant_retention,
+				  PortableServer_SERVANT_RETENTION_POLICY_ID)
 
-PortableServer_ThreadPolicy
-PortableServer_POA_create_thread_policy(PortableServer_POA _obj,
-					const PortableServer_ThreadPolicyValue value,
-					CORBA_Environment * ev)
-{
-  return (PortableServer_ThreadPolicy)ORBit_Policy_new(PortableServer_THREAD_POLICY_ID, value);
-}
+PortableServer_POA_create_POLICY (PortableServer_RequestProcessingPolicy, 
+				  request_processing,
+				  PortableServer_REQUEST_PROCESSING_POLICY_ID)
 
-PortableServer_LifespanPolicy
-PortableServer_POA_create_lifespan_policy(PortableServer_POA _obj,
-					  const PortableServer_LifespanPolicyValue value,
-					  CORBA_Environment * ev)
-{
-  return (PortableServer_LifespanPolicy)ORBit_Policy_new(PortableServer_LIFESPAN_POLICY_ID, value);
-}
-
-PortableServer_IdUniquenessPolicy
-PortableServer_POA_create_id_uniqueness_policy(PortableServer_POA _obj,
-					       const PortableServer_IdUniquenessPolicyValue value,
-					       CORBA_Environment * ev)
-{
-  return (PortableServer_IdUniquenessPolicy)ORBit_Policy_new(PortableServer_ID_UNIQUENESS_POLICY_ID, value);
-}
-
-PortableServer_IdAssignmentPolicy
-PortableServer_POA_create_id_assignment_policy(PortableServer_POA _obj,
-					       const PortableServer_IdAssignmentPolicyValue value,
-					       CORBA_Environment * ev)
-{
-  return (PortableServer_IdAssignmentPolicy)ORBit_Policy_new(PortableServer_ID_ASSIGNMENT_POLICY_ID, value);
-}
-
-PortableServer_ImplicitActivationPolicy
-PortableServer_POA_create_implicit_activation_policy(PortableServer_POA _obj,
-						     const PortableServer_ImplicitActivationPolicyValue value,
-						     CORBA_Environment *ev)
-{
-  return (PortableServer_ImplicitActivationPolicy)ORBit_Policy_new(PortableServer_IMPLICIT_ACTIVATION_POLICY_ID, value);
-}
-
-PortableServer_ServantRetentionPolicy
-PortableServer_POA_create_servant_retention_policy(PortableServer_POA _obj,
-						   const PortableServer_ServantRetentionPolicyValue value,
-						   CORBA_Environment *ev)
-{
-  return (PortableServer_ServantRetentionPolicy)ORBit_Policy_new(PortableServer_SERVANT_RETENTION_POLICY_ID, value);
-}
-
-PortableServer_RequestProcessingPolicy
-PortableServer_POA_create_request_processing_policy(PortableServer_POA _obj,
-						    const PortableServer_RequestProcessingPolicyValue value,
-						    CORBA_Environment *ev)
-{
-  return (PortableServer_RequestProcessingPolicy)ORBit_Policy_new(PortableServer_REQUEST_PROCESSING_POLICY_ID, value);
-}
+PortableServer_POA_create_POLICY (PortableServer_ImplicitActivationPolicy, 
+				  implicit_activation,
+				  PortableServer_IMPLICIT_ACTIVATION_POLICY_ID)
 
 ORBit_PortableServer_OkeyrandPolicy
 PortableServer_POA_create_okeyrand_policy (PortableServer_POA         poa,
