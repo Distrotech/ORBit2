@@ -1,3 +1,10 @@
+2002-08-23  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_demarshal_value): don't do expensive re-allocs
+	on every sequence from length 1 upwards, re-assuring
+	this works though, start with 4096 elements.
+
 2002-08-18  Havoc Pennington  <hp@pobox.com>
 
 	* autogen.sh: hardcode aclocal-1.4/automake-1.4 so that users with
