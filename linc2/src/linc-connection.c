@@ -34,24 +34,15 @@ enum {
 	LAST_SIGNAL
 };
 static guint   signals [LAST_SIGNAL];
-static GMutex *cnx_lock = NULL;
-static GCond  *cnx_condition = NULL;
 static GList  *initiated_list = NULL;
 
-#define CNX_LOCK(cnx)      G_STMT_START { \
-	LINK_MUTEX_LOCK (cnx_lock); \
-	/* g_warning ("Lock"); */ \
-} G_STMT_END
-#define CNX_UNLOCK(cnx)    G_STMT_START { \
-	LINK_MUTEX_UNLOCK (cnx_lock); \
-	/* g_warning ("Unlock"); */ \
-} G_STMT_END
-
+#define CNX_LOCK(cnx)    G_STMT_START { link_lock();   } G_STMT_END
+#define CNX_UNLOCK(cnx)  G_STMT_START { link_unlock(); } G_STMT_END
 #define CNX_LIST_LOCK()      CNX_LOCK(0);   /* for now */
 #define CNX_LIST_UNLOCK()    CNX_UNLOCK(0); /* for now */
 #define CNX_AND_LIST_LOCK(cnx)   CNX_LOCK(cnx);   /* for now */
 #define CNX_AND_LIST_UNLOCK(cnx) CNX_UNLOCK(cnx); /* for now */
-#define CNX_IS_LOCKED(cnx) link_mutex_is_locked (cnx_lock)
+#define CNX_IS_LOCKED(cnx) link_is_locked()
 
 static gboolean link_connection_io_handler (GIOChannel  *gioc,
 					    GIOCondition condition,
@@ -382,7 +373,7 @@ link_connection_from_fd_T (LinkConnection         *cnx,
  *
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
-gboolean
+void
 link_connection_from_fd (LinkConnection         *cnx,
 			 int                     fd,
 			 const LinkProtocolInfo *proto,
@@ -398,109 +389,14 @@ link_connection_from_fd (LinkConnection         *cnx,
 				   remote_serv_info, remote_serv_info,
 				   was_initiated, status, options);
 	CNX_UNLOCK (cnx);
-
-  	return TRUE;
 }
 
-/**
- * link_connection_initiate_list:
- * @derived_type: a #LinkConnection derived type
- * @proto_name: the name of the protocol to use.
- * @host: protocol dependant host information.
- * @service: protocol dependant service information(e.g. port number).
- * @options: combination of #LinkConnectionOptions.
- * @opt_construct_fn: optional constructor fn for new cnx's or NULL
- * @user_data: optional user data for constructor
- * 
- * Looks up a connection in our cnx. list to see if we already
- * have a matching connection; if so returns it, otherwise
- * constructs a new cnx. and retursn that
- * 
- * Return value: an incremented cnx ref.
- **/
-LinkConnection *
-link_connection_initiate_list (GType                 derived_type,
-			       const char           *proto_name,
-			       const char           *remote_host_info,
-			       const char           *remote_serv_info,
-			       LinkConnectionOptions options,
-			       const char           *first_property,
-			       ...)
-{
-	va_list args;
-	GList *l;
-	gboolean initiated = TRUE;
-	LinkConnection *cnx = NULL;
-	const LinkProtocolInfo *proto;
-
-	va_start (args, first_property);
-
-	proto = link_protocol_find (proto_name);
-
-	CNX_LIST_LOCK();
-
-	g_assert (CNX_IS_LOCKED (0));
-
-	for (l = initiated_list; l; l = l->next) {
-		LinkConnection *cnx = l->data;
-
-		if (cnx->proto == proto &&
-		    cnx->status != LINK_DISCONNECTED &&
-		    ((cnx->options & LINK_CONNECTION_SSL) == (options & LINK_CONNECTION_SSL)) &&
-		    !strcmp (remote_host_info, cnx->remote_host_info) &&
-		    !strcmp (remote_serv_info, cnx->remote_serv_info)) {
-			cnx = link_connection_ref_T (cnx);
-			/* FIXME: pull last hit to head of list ? */
-			break;
-		}
-	}
-
-	if (!cnx) {
-		g_assert (CNX_IS_LOCKED (0));
-
-		cnx = LINK_CONNECTION
-			(g_object_new_valist (derived_type, first_property, args));
-
-		g_assert (CNX_IS_LOCKED (0));
-		if ((initiated = link_connection_initiate
-				     (cnx, proto_name, remote_host_info,
-				      remote_serv_info, options)))
-			initiated_list = g_list_prepend (initiated_list, cnx);
-	}
-	
-	CNX_LIST_UNLOCK();
-
-	if (!initiated) {
-		link_connection_unref (cnx);
-		cnx = NULL;
-	}
-
-	va_end (args);
-
-	return cnx;
-}
-
-/*
- * link_connection_initiate:
- * @cnx: a #LinkConnection.
- * @proto_name: the name of the protocol to use.
- * @host: protocol dependant host information.
- * @service: protocol dependant service information(e.g. port number).
- * @options: combination of #LinkConnectionOptions.
- *
- * Initiate a connection to @service on @host using the @proto_name protocol.
- *
- * Note: this function may be successful without actually having connected
- *       to @host - the connection handshake may not have completed.
- *
- * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
- */
-gboolean
-link_connection_initiate (LinkConnection        *cnx,
-			  const char            *proto_name,
-			  const char            *host,
-			  const char            *service,
-			  LinkConnectionOptions  options)
+static gboolean
+link_connection_do_initiate (LinkConnection        *cnx,
+			     const char            *proto_name,
+			     const char            *host,
+			     const char            *service,
+			     LinkConnectionOptions  options)
 {
 	const LinkProtocolInfo *proto;
 	int                     rv;
@@ -564,6 +460,79 @@ link_connection_initiate (LinkConnection        *cnx,
 	g_free (saddr);
 
 	return retval;
+}
+
+/**
+ * link_connection_initiate_list:
+ * @derived_type: a #LinkConnection derived type
+ * @proto_name: the name of the protocol to use.
+ * @host: protocol dependant host information.
+ * @service: protocol dependant service information(e.g. port number).
+ * @options: combination of #LinkConnectionOptions.
+ * @opt_construct_fn: optional constructor fn for new cnx's or NULL
+ * @user_data: optional user data for constructor
+ * 
+ * Looks up a connection in our cnx. list to see if we already
+ * have a matching connection; if so returns it, otherwise
+ * constructs a new cnx. and retursn that
+ * 
+ * Return value: an incremented cnx ref.
+ **/
+LinkConnection *
+link_connection_initiate (GType                 derived_type,
+			  const char           *proto_name,
+			  const char           *remote_host_info,
+			  const char           *remote_serv_info,
+			  LinkConnectionOptions options,
+			  const char           *first_property,
+			  ...)
+{
+	va_list args;
+	GList *l;
+	gboolean initiated = TRUE;
+	LinkConnection *cnx = NULL;
+	const LinkProtocolInfo *proto;
+
+	va_start (args, first_property);
+
+	proto = link_protocol_find (proto_name);
+
+	CNX_LIST_LOCK();
+
+	for (l = initiated_list; l; l = l->next) {
+		LinkConnection *cnx = l->data;
+
+		if (cnx->proto == proto &&
+		    cnx->status != LINK_DISCONNECTED &&
+		    ((cnx->options & LINK_CONNECTION_SSL) == (options & LINK_CONNECTION_SSL)) &&
+		    !strcmp (remote_host_info, cnx->remote_host_info) &&
+		    !strcmp (remote_serv_info, cnx->remote_serv_info)) {
+			cnx = link_connection_ref_T (cnx);
+			/* FIXME: pull last hit to head of list ? */
+			break;
+		}
+	}
+
+	if (!cnx) {
+		cnx = LINK_CONNECTION
+			(g_object_new_valist (derived_type, first_property, args));
+
+		if ((initiated = link_connection_do_initiate
+				     (cnx, proto_name, remote_host_info,
+				      remote_serv_info, options)))
+			initiated_list = g_list_prepend (initiated_list, cnx);
+	}
+	
+	CNX_LIST_UNLOCK();
+
+	if (!initiated) {
+		link_connection_unref (cnx);
+		cnx = NULL;
+	}
+
+	va_end (args);
+
+	return cnx;
 }
 
 /*
@@ -1244,12 +1213,4 @@ link_connection_wait_connected (LinkConnection *cnx)
 		link_main_iteration (TRUE);
 
 	return cnx ? cnx->status : LINK_DISCONNECTED;
-}
-
-void
-_link_connection_thread_init (gboolean thread)
-{
-	cnx_lock = link_mutex_new ();
-	if (cnx_lock)
-		cnx_condition = g_cond_new();
 }

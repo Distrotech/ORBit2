@@ -92,16 +92,14 @@ create_server (LinkServer **server)
 static void
 create_client (LinkServer *server, LinkConnection **client)
 {
-	*client = g_object_new (
-			test_client_cnx_type ? test_client_cnx_type :
-					       link_connection_get_type (),
-			NULL);
-	
-	g_assert (link_connection_initiate (
-		*client, "UNIX",
-		server->local_host_info,
-		server->local_serv_info,
-		LINK_CONNECTION_NONBLOCKING));
+	*client = link_connection_initiate
+		(test_client_cnx_type ? test_client_cnx_type :
+		 link_connection_get_type (), "UNIX",
+		 server->local_host_info,
+		 server->local_serv_info,
+		 LINK_CONNECTION_NONBLOCKING,
+		 NULL);
+	g_assert (*client != NULL);
 
 	g_object_add_weak_pointer (G_OBJECT (*client),
 				   (gpointer *) client);

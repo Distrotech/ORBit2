@@ -70,7 +70,7 @@ typedef struct {
 
 GType    link_connection_get_type (void) G_GNUC_CONST;
 
-gboolean link_connection_from_fd  (LinkConnection       *cnx,
+void     link_connection_from_fd  (LinkConnection       *cnx,
 				   int                   fd,
 				   const LinkProtocolInfo *proto,
 				   gchar                *remote_host_info,
@@ -79,19 +79,13 @@ gboolean link_connection_from_fd  (LinkConnection       *cnx,
 				   LinkConnectionStatus  status,
 				   LinkConnectionOptions options);
 
-gboolean link_connection_initiate (LinkConnection       *cnx,
-				   const char           *proto_name,
-				   const char           *remote_host_info,
-				   const char           *remote_serv_info,
-				   LinkConnectionOptions options);
-
-LinkConnection *link_connection_initiate_list (GType                 derived_type,
-					       const char           *proto_name,
-					       const char           *remote_host_info,
-					       const char           *remote_serv_info,
-					       LinkConnectionOptions options,
-					       const char           *first_property,
-					       ...);
+LinkConnection *link_connection_initiate (GType                 derived_type,
+					  const char           *proto_name,
+					  const char           *remote_host_info,
+					  const char           *remote_serv_info,
+					  LinkConnectionOptions options,
+					  const char           *first_property,
+					  ...);
 
 gpointer link_connection_ref   (gpointer cnx);
 void     link_connection_unref (gpointer cnx);

@@ -1,3 +1,8 @@
+2003-06-03  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): upd.
+
 2003-05-31  Michael Meeks  <michael@ximian.com>
 
 	* ORBit-2.0.pc.in: remove 'linc' in Requires,

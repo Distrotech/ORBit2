@@ -1,3 +1,26 @@
+2003-06-03  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-server.c
+	(link_server_accept_connection): upd.
+
+	* src/linc-connection.c
+	(link_connection_initiate): internalize and rename
+	to (link_connection_do_initiate).
+	(link_connection_initiate): rename from initiate_list.
+
+	* src/linc.c (link_init): upd.
+	(link_lock, link_unlock): face reality -
+	a global lock for everything.
+
+	* src/linc-connection.c
+	(_link_connection_thread_init): bin it.
+
+	* src/linc.c (cmd_is_sync): impl.
+	(link_exec_command): impl. sync methods.
+	(link_init): create condition.
+	(linc_exec_set_io_thread): stub.
+	(link_set_io_thread): stub.
+
 2003-06-02  Michael Meeks  <michael@ximian.com>
 
 	* test/test-linc.c (verify_addr_is_loopback):

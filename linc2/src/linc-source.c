@@ -132,10 +132,6 @@ link_source_create_watch (GMainContext *context,
 	return source;
 }
 
-/*
- * Wrappers to make listening on two mainloops simpler
- */
-
 LincWatch *
 link_io_add_watch_fd (int          fd,
 		      GIOCondition condition,
@@ -143,8 +139,8 @@ link_io_add_watch_fd (int          fd,
 		      gpointer     user_data)
 {
 	LincWatch *w;
-  
-	w = g_new (LincWatch, 1);
+
+	w = g_new0 (LincWatch, 1);
 
 	/* Linc loop */
 	w->link_source = link_source_create_watch (
@@ -191,3 +187,4 @@ link_watch_set_condition (LincWatch   *w,
 			w->main_source, condition);
 	}
 }
+

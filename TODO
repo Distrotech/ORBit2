@@ -1,5 +1,7 @@
 TODO:
 
+* Ensure that we can have our 'non-threaded' thread be any thread.
+
 * Turn off the global 'fast_calls' variable, to knobble
   old stubs, and go with the new ABI.
 
