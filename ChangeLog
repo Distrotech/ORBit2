@@ -1,3 +1,7 @@
+2002-02-11  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: version 2.3.105
+
 2002-02-08  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/idl-compiler/orbit-idl-c-typecode.c:
