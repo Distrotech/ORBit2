@@ -1,3 +1,23 @@
+2003-03-28  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c (giop_send_buffer_write): 
+	do the nasty re-entering connection wait phase here
+	instead of in linc, so we can make it thread safe later.
+
+2003-03-28  Michael Haubenwallner  <michael.haubenwallner@salomon.at>
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_marshal_value): fix silly marshalling packed types.
+
+2003-03-28  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c
+	(testFixedLengthArray): split into (testLongArray)
+	add (testOctetArray).
+
+	* test/everything/arrayServer.c
+	(ArrayServer_opOctetArray): add.
+
 2003-03-27  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-send-buffer.c

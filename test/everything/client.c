@@ -585,7 +585,7 @@ testUnboundedSequence (test_TestFactory   factory,
 		       CORBA_Environment *ev)
 {
   test_SequenceServer objref;
-  test_StrSeq inArg, inoutArg, *outArg, *retn;
+  test_StrSeq *outArg = NULL, inArg, inoutArg, *retn;
   guint i;
   d_print ("Testing unbounded sequences...\n");
   objref = test_TestFactory_getSequenceServer (factory, ev);
@@ -815,17 +815,12 @@ testMiscUnions (test_TestFactory   factory,
 }
 
 static void
-testFixedLengthArray (test_TestFactory   factory, 
-		      CORBA_Environment *ev)
+testLongArray (test_ArrayServer   objref,
+	       CORBA_Environment *ev)
 {
-  
-  test_ArrayServer objref;
+  int i;
   test_LongArray inArg, inoutArg, outArg;
   test_LongArray_slice *retn;
-  int i;
-  d_print ("Testing arrays with fixed length members...\n");
-  objref = test_TestFactory_getArrayServer (factory, ev);
-  g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
   for (i=0;i<test_SequenceLen;i++)
 	inArg[i] = constants_SEQ_LONG_IN[i];
@@ -846,6 +841,50 @@ testFixedLengthArray (test_TestFactory   factory,
 	g_assert (retn[i]==constants_SEQ_LONG_RETN[i]);
 
   CORBA_free (retn);
+}
+
+static void
+testOctetArray (test_ArrayServer   objref,
+		CORBA_Environment *ev)
+{
+  int i;
+  test_OctetArray inArg, inoutArg, outArg;
+  test_OctetArray_slice *retn;
+
+  for (i=0;i<test_SequenceLen;i++)
+	inArg[i] = constants_SEQ_OCTET_IN[i];
+
+  for (i=0;i<test_SequenceLen;i++)
+	inoutArg[i] = constants_SEQ_OCTET_INOUT_IN[i];
+
+  retn = test_ArrayServer_opOctetArray (objref, inArg, inoutArg, outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inArg[i]==constants_SEQ_OCTET_IN[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (inoutArg[i]==constants_SEQ_OCTET_INOUT_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (outArg[i]==constants_SEQ_OCTET_OUT[i]);
+  for (i=0;i<test_SequenceLen;i++)
+	g_assert (retn[i]==constants_SEQ_OCTET_RETN[i]);
+
+  CORBA_free (retn);
+}
+
+static void
+testFixedLengthArray (test_TestFactory   factory, 
+		      CORBA_Environment *ev)
+{
+  
+  test_ArrayServer objref;
+  d_print ("Testing arrays with fixed length members...\n");
+  objref = test_TestFactory_getArrayServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  testLongArray (objref, ev);
+  testOctetArray (objref, ev);
+
   CORBA_Object_release (objref, ev);
   g_assert (ev->_major == CORBA_NO_EXCEPTION);
 }

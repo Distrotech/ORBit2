@@ -139,6 +139,7 @@ module test {
 
 	const long SequenceLen = 4;
 
+	typedef octet OctetArray[SequenceLen];
 	typedef long LongArray[SequenceLen];
 	typedef string StrArray[SequenceLen];
 	typedef string StrArrayMultiDimensional[SequenceLen][3][5];
@@ -146,6 +147,7 @@ module test {
 
 	interface ArrayServer {
 		LongArray opLongArray(in LongArray inArg, inout LongArray inoutArg, out LongArray outArg);
+		OctetArray opOctetArray(in OctetArray inArg, inout OctetArray inoutArg, out OctetArray outArg);
 		StrArray opStrArray(in StrArray inArg, inout StrArray inoutArg, out StrArray outArg);
 	};
   

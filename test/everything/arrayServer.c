@@ -45,6 +45,34 @@ ArrayServer_opLongArray(PortableServer_Servant _servant,
   return retn; 
 }
 
+static test_OctetArray_slice *
+ArrayServer_opOctetArray (PortableServer_Servant _servant,
+			  const test_OctetArray  inArg,
+			  test_OctetArray        inoutArg,
+			  test_OctetArray        outArg,
+			  CORBA_Environment     *ev)
+{
+  int i;
+  test_OctetArray_slice *retn;
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inArg[i]==constants_SEQ_OCTET_IN[i]);
+  for(i=0;i<test_SequenceLen;i++)
+	g_assert(inoutArg[i]==constants_SEQ_OCTET_INOUT_IN[i]);
+
+  for(i=0;i<test_SequenceLen;i++)
+	inoutArg[i] = constants_SEQ_OCTET_INOUT_OUT[i];
+  
+  for(i=0;i<test_SequenceLen;i++)
+	outArg[i] = constants_SEQ_OCTET_OUT[i];
+	
+  retn = test_OctetArray__alloc();
+
+  for(i=0;i<test_SequenceLen;i++)
+	retn[i] = constants_SEQ_OCTET_RETN[i];
+      
+  return retn; 
+}
+
 
 static test_StrArray_slice *
 ArrayServer_opStrArray(PortableServer_Servant _servant,
@@ -82,6 +110,7 @@ PortableServer_ServantBase__epv ArrayServer_base_epv = {NULL,NULL,NULL};
 POA_test_ArrayServer__epv ArrayServer_epv = {
   NULL,
   ArrayServer_opLongArray,
+  ArrayServer_opOctetArray,
   ArrayServer_opStrArray,
 };
 
