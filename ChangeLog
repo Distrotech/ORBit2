@@ -1,3 +1,9 @@
+2004-06-22  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/allocators.c (ORBit_freekids_via_TypeCode_T):
+	add missing pre-align for struct/except types. Complicate the
+	union alignment rules.
+
 2004-05-30  Christophe Saout  <christophe@saout.de>
 
 	* src/orb/orb-core/corba-any.c:
