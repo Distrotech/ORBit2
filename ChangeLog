@@ -1,3 +1,8 @@
+2001-12-03  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/GIOP/giop.c: (giop_dump): tidy up
+	output a little.
+
 2001-12-02  Laszlo Peter  <laca@ireland.sun.com>
 
 	* src/idl-compiler/orbit-idl-c-typecode.c
