@@ -86,6 +86,7 @@ PortableServer_ServantBase__epv Simple_base_epv = {NULL, simple_finalize, NULL};
 #include "anyServer.c"
 #include "contextServer.c"
 #include "deadReference.c"
+#include "lifeCycle.c"
 #include "pingServer.c"
 #include "derivedServer.c"
 
@@ -226,11 +227,9 @@ TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 			CORBA_ORB_resolve_initial_references (global_orb,
 							      "POACurrent",
 							      ev);
-
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
         poa = PortableServer_Current_get_POA (poa_current, ev);
-
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	obj = create_object (poa, SIMPLE_SERVANT_NEW (DeadReferenceObj), ev);
@@ -240,6 +239,14 @@ TestFactory_createDeadReferenceObj (PortableServer_Servant  servant,
 
 	/* Note: Not duping - ORB will free it and reference
 	 * should dangle. */
+	return obj;
+}
+
+static test_LifeCycleServer
+TestFactory_createLifeCycleServer (PortableServer_Servant  servant,
+				   CORBA_Environment      *ev)
+{
+	CORBA_Object obj = create_object (global_poa, SIMPLE_SERVANT_NEW (LifeCycleServer), ev);
 	return obj;
 }
 
@@ -306,6 +313,7 @@ static POA_test_TestFactory__epv TestFactory_epv = {
 	NULL,                         /* createTransientObj           */
 	TestFactory_createDeadReferenceObj,
 	TestFactory_createPingPongServer,
+	TestFactory_createLifeCycleServer,
 	TestFactory_noOp
 };
 
@@ -475,7 +483,9 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 	i++; \
 	} G_STMT_END
 
+	/* This order matches that in the IDL file */
 	CLOBBER_SYM (test_TestFactory__iinterface);
+	CLOBBER_SYM (test_LifeCycleServer__iinterface);
 	CLOBBER_SYM (test_DeadReferenceObj__iinterface);
 	CLOBBER_SYM (test_TransientObj__iinterface);
 	CLOBBER_SYM (test_SequenceServer__iinterface);

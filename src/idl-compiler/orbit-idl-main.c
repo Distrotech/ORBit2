@@ -139,7 +139,7 @@ struct poptOption options[] = {
 int main(int argc, const char *argv[])
 {
   poptContext pcon;
-  int rc;
+  int rc, retval = 0;
   const char *arg;
   OIDL_Run_Info rinfo;
 
@@ -215,9 +215,10 @@ int main(int argc, const char *argv[])
     rinfo.input_filename = g_strdup (arg); /* g_path_get_basename(arg); - what !? */
     if (!orbit_idl_to_backend(arg, &rinfo)) {
       g_warning("%s compilation failed", arg);
+      retval = 1;
     }
     g_free(rinfo.input_filename);
   }
 
-  return 0;
+  return retval;
 }
