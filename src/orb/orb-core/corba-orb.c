@@ -3,14 +3,13 @@
 #include <string.h>
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
+#include "orbhttp.h"
 
 static void
 CORBA_ORB_release_fn(ORBit_RootObject robj)
 {
   CORBA_ORB orb = (CORBA_ORB)robj;
 
-  g_slist_foreach(orb->servers, (GFunc)g_object_unref, NULL);
-  g_slist_free(orb->servers);
   g_ptr_array_free(orb->poas, TRUE);
 
   g_free(orb);
@@ -136,26 +135,34 @@ CORBA_ORB_string_to_object(CORBA_ORB _obj,
 			  const CORBA_char * str,
 			  CORBA_Environment * ev)
 {
-  CORBA_Object retval;
+  CORBA_Object retval = CORBA_OBJECT_NIL;
   GIOPRecvBuffer *buf;
   CORBA_unsigned_long len;
   int i;
   char *tbuf;
+  char *realstr = NULL;
 
+  if(strstr(str, "://"))
+    {
+      realstr = orb_http_resolve(str);
+      if(!realstr)
+	goto out;
+      str = realstr;
+    }
   if(strncmp(str, "IOR:", 4))
     {
       CORBA_exception_set_system(ev,
 				 ex_CORBA_BAD_PARAM,
 				 CORBA_COMPLETED_NO);
-      return CORBA_OBJECT_NIL;
+      goto out;
     }
 
   str += 4;
   len = strlen(str);
   while(len > 0 && !isxdigit(str[len-1])) len--;
   if(len % 2)
-    /* XXX raise ex_CORBA_MARSHAL */
-    return CORBA_OBJECT_NIL;
+    goto out;
+
   tbuf = g_alloca(len / 2);
 #define HEXDIGIT(c) (isdigit((guchar)(c))?(c)-'0':tolower((guchar)(c))-'a'+10)
 #define HEXOCTET(a,b) ((HEXDIGIT((a)) << 4) | HEXDIGIT((b)))
@@ -174,6 +181,10 @@ CORBA_ORB_string_to_object(CORBA_ORB _obj,
     }
 
   giop_recv_buffer_unuse(buf);
+
+ out:
+  if(realstr)
+    g_free(realstr);
 
   return retval;
 }
@@ -229,8 +240,7 @@ CORBA_ORB_get_next_response(CORBA_ORB _obj, CORBA_Request * req,
 
 CORBA_boolean
 CORBA_ORB_get_service_information(CORBA_ORB _obj,
-				  const CORBA_ServiceType
-				  service_type,
+				  const CORBA_ServiceType service_type,
 				  CORBA_ServiceInformation **
 				  service_information,
 				  CORBA_Environment * ev)
@@ -478,15 +488,60 @@ CORBA_ORB_run(CORBA_ORB _obj, CORBA_Environment * ev)
 }
 
 void
-CORBA_ORB_shutdown(CORBA_ORB _obj,
+CORBA_ORB_shutdown(CORBA_ORB orb,
 		   const CORBA_boolean wait_for_completion,
 		   CORBA_Environment * ev)
 {
+  if ( g_ptr_array_index(orb->poas, 0) ) /* Root POA */
+    {
+      PortableServer_POA_destroy( g_ptr_array_index(orb->poas, 0), 
+				  TRUE, wait_for_completion, ev);
+      if (ev->_major)
+	/* This is prob. an INV_ORDER exception */
+	return;
+    }
+
+  g_slist_foreach(orb->servers, (GFunc)g_object_unref, NULL);
+  g_slist_free(orb->servers); orb->servers = NULL;
+  giop_connection_remove_by_orb(orb);
 }
 
 void
-CORBA_ORB_destroy(CORBA_ORB _obj, CORBA_Environment * ev)
+CORBA_ORB_destroy(CORBA_ORB orb, CORBA_Environment * ev)
 {
+  PortableServer_POA root_poa;
+
+  if ( orb->life_flags & ORBit_LifeF_Destroyed )
+    return;
+
+  CORBA_ORB_shutdown(orb, TRUE, ev);
+  if ( ev->_major )
+    return;
+  root_poa = g_ptr_array_index(orb->poas, 0);
+  if ( root_poa )
+    {
+      if ( root_poa->parent.refs != 1 )
+	{
+	  g_warning("CORBA_ORB_destroy: Application still has %d refs to RootPOA.",
+		    root_poa->parent.refs-1);
+	}
+
+      ORBit_RootObject_release(root_poa);
+      g_ptr_array_index(orb->poas, 0) = NULL;
+    }
+
+#ifndef G_DISABLE_ASSERT
+  {
+    int pi;
+    for (pi = 0; pi < orb->poas->len; pi++)
+      {
+	PortableServer_POA *poa = g_ptr_array_index(orb->poas,pi);
+	g_assert(poa == NULL);
+      }
+  }
+#endif
+  orb->life_flags |= ORBit_LifeF_Destroyed;
+  ORBit_RootObject_release(orb);
 }
 
 CORBA_Policy
