@@ -382,9 +382,12 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 static void
 cleanup_sweep (void)
 {
+#if 0
 	int removed = 0, to_remove;
-	DIR *dirh = opendir (linc_tmpdir);
+	DIR *dirh;
 	struct dirent *dent;
+
+	dirh = opendir (linc_tmpdir);
 
 #ifdef G_ENABLE_DEBUG
 	to_remove = G_MAXINT;
@@ -421,6 +424,7 @@ cleanup_sweep (void)
 		removed++;
 	}
 	closedir (dirh);
+#endif
 }
 
 /*
