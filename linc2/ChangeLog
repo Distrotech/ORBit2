@@ -1,3 +1,11 @@
+2003-08-12  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-source.c: staticize linc_source_watch_funcs.
+
+2003-08-11  Michael Meeks  <michael@ximian.com>
+	
+	* Version 2.7.6
+
 2003-07-30  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-protocols.c (link_protocol_get_sockinfo_irda) 
