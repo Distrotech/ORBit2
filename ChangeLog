@@ -1,3 +1,7 @@
+2001-12-10  jacob berkman  <jacob@ximian.com>
+
+	* src/orb/GIOP/Makefile.am (libGIOP_la_SOURCES): add giop-debug.h
+
 2001-12-08  Kristian Rietveld  <kris@gtk.org>
 
 	* src/orb/GIOP/giop-send-buffer.c: move down sys/uio.h, so it
