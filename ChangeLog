@@ -8,6 +8,15 @@
 	* src/idl-compiler/Makefile.am
 	* test/Makefile.am: No separate -lm on Win32.
 
+	* src/idl-compiler/orbit-idl-c-backend.c: mkdir() has different
+	prototype in Microsoft's C library.
+
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_type_alloc_and_tc)
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(orbit_output_tcstruct_anon_subtypes_array,
+	orbit_output_tcstruct_anon_sublabels_array, cbe_tc_generate): Drop
+	constness from generated code, for Win32 DLL reasons as above.
+
 2005-01-26  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Check also for utime.h, and sys/utime.h (where
