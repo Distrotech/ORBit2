@@ -10,53 +10,8 @@
  *                 Sun Microsystems, Inc.
  */
 #include <config.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <time.h>
-#include <utime.h>
-#include <errno.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-#ifdef HAVE_LINUX_IRDA_H
-#include <asm/types.h>
-#include <linux/irda.h>
-#endif
-
-#include <arpa/nameser.h>
-#include <resolv.h>
-
-#if !defined (NI_MAXSERV) || !defined (NI_MAXHOST)
-#  include <netdb.h>
-#  include <sys/param.h>
-#endif
-
-#if !defined (NI_MAXHOST)
-#  define NI_MAXHOST MAXHOSTNAMELEN
-#endif
-
-#if !defined (NI_MAXSERV)
-#  define NI_MAXSERV 64
-#endif
-
+#include "linc-compat.h"
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 
@@ -225,7 +180,7 @@ get_local_hostname (void)
 static gboolean
 linc_protocol_is_local_ipv46 (const LINCProtocolInfo *proto,
 			      const struct sockaddr   *saddr,
-			      socklen_t                saddr_len)
+			      LincSockLen              saddr_len)
 {
 	int i;
 	static int warned = 0;
@@ -280,7 +235,7 @@ static struct sockaddr *
 linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *portnum,
-				 socklen_t              *saddr_len)
+				 LincSockLen            *saddr_len)
 {
 	struct sockaddr_in *saddr;
 	struct hostent     *host;
@@ -337,7 +292,7 @@ static struct sockaddr *
 linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *portnum,
-				 socklen_t              *saddr_len)
+				 LincSockLen            *saddr_len)
 {
 	struct sockaddr_in6 *saddr;
 	struct hostent      *host;
@@ -446,7 +401,7 @@ static struct sockaddr *
 linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 				 const char             *dummy,
 				 const char             *path,
-				 socklen_t              *saddr_len)
+				 LincSockLen            *saddr_len)
 {
 	struct sockaddr_un *saddr;
 	int                 pathlen;
@@ -522,7 +477,7 @@ static struct sockaddr *
 linc_protocol_get_sockaddr_irda (const LINCProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *service,
-				 socklen_t              *saddr_len)
+				 LincSockLen            *saddr_len)
 {
 	g_assert (proto->family == AF_IRDA);
 
@@ -547,8 +502,7 @@ struct sockaddr *
 linc_protocol_get_sockaddr (const LINCProtocolInfo *proto,
 			    const char             *hostname,
 			    const char             *service,
-			    socklen_t              *saddr_len)
-		   
+			    LincSockLen            *saddr_len)		   
 {
 	if (proto && proto->get_sockaddr)
 		return proto->get_sockaddr (proto, hostname, service, saddr_len);
@@ -799,7 +753,7 @@ linc_protocol_get_sockinfo (const LINCProtocolInfo  *proto,
 gboolean
 linc_protocol_is_local (const LINCProtocolInfo  *proto,
 			const struct sockaddr   *saddr,
-			socklen_t                saddr_len)
+			LincSockLen              saddr_len)
 {
 	if (proto && proto->is_local)
 		return proto->is_local (proto, saddr, saddr_len);
@@ -827,7 +781,7 @@ linc_protocol_unix_destroy (int         fd,
 static gboolean
 linc_protocol_unix_is_local (const LINCProtocolInfo *proto,
 			     const struct sockaddr   *saddr,
-			     socklen_t                saddr_len)
+			     LincSockLen              saddr_len)
 {
 	return TRUE;
 }
@@ -1075,41 +1029,42 @@ irda_getaddrinfo (const char             *nodename,
 }
 
 static int
-irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
-		 char *host, size_t hostlen, char *serv, size_t servlen,
-		 int flags)
+irda_getnameinfo (const struct sockaddr *sa,
+		  LincSockLen            sa_len,
+		  char                  *host,
+		  size_t                 hostlen,
+		  char                  *serv,
+		  size_t                 servlen,
+		  int                    flags)
 {
-  struct sockaddr_irda *sai = (struct sockaddr_irda *)sa;
-  gboolean got_host = FALSE;
-  /* Here, we talk to the host specified, and ask it for its name */
+	struct sockaddr_irda *sai = (struct sockaddr_irda *) sa;
+	gboolean got_host = FALSE;
+	/* Here, we talk to the host specified, and ask it for its name */
 
-  if(sa_len != sizeof(struct sockaddr_irda))
-    return -1;
+	if (sa_len != sizeof (struct sockaddr_irda))
+		return -1;
 
-  /* It doesn't seem like the sir_lsap_sel is supposed to be taken into consideration when connecting... */
-  if(!(flags & NI_NUMERICHOST))
-    {
-      char hostbuf[IRDA_NICKNAME_MAX];
-      guint32 daddr;
+	/* It doesn't seem like the sir_lsap_sel is supposed to be taken into consideration when connecting... */
+	if (!(flags & NI_NUMERICHOST)) {
+		guint32 daddr;
+		char hostbuf [IRDA_NICKNAME_MAX];
 
-      daddr = sai->sir_addr;
-      if(!irda_find_device(&daddr, hostbuf, FALSE))
-	{
-	  g_snprintf(host, hostlen, "%s", hostbuf);
-	  got_host = TRUE;
+		daddr = sai->sir_addr;
+		if (!irda_find_device (&daddr, hostbuf, FALSE)) {
+			g_snprintf (host, hostlen, "%s", hostbuf);
+			got_host = TRUE;
+		}
 	}
-    }
-  if(!got_host)
-    {
-      if(flags & NI_NAMEREQD)
-	return -1;
+	if (!got_host) {
+		if (flags & NI_NAMEREQD)
+			return -1;
 
-      g_snprintf(host, hostlen, IRDA_PREFIX "%#08x", sai->sir_addr);
-    }
+		g_snprintf (host, hostlen, IRDA_PREFIX "%#08x", sai->sir_addr);
+	}
 
-  g_snprintf(serv, servlen, "%s", sai->sir_name);
+	g_snprintf(serv, servlen, "%s", sai->sir_name);
 
-  return 0;
+	return 0;
 }
 #endif /* AF_IRDA */
 #endif /* 0 */

@@ -23,6 +23,7 @@
 
 #include "linc-debug.h"
 #include "linc-private.h"
+#include "linc-compat.h"
 
 enum {
 	NEW_CONNECTION,
@@ -246,7 +247,7 @@ linc_server_setup (LINCServer            *cnx,
 	const LINCProtocolInfo *proto;
 	int                     fd, n;
 	struct sockaddr        *saddr;
-	socklen_t               saddr_len;
+	LincSockLen             saddr_len;
 	char                    hnbuf[NI_MAXHOST];
 	const char             *local_host;
 	char                   *service, *hostname;
