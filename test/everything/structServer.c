@@ -89,6 +89,25 @@ StructServer_opCompound (PortableServer_Servant     servant,
 	return retval;
 }
 
+static void
+StructServer_opObjectStruct (PortableServer_Servant   servant,
+			     const test_ObjectStruct *inArg,
+			     CORBA_Environment       *ev)
+{
+	CORBA_Object    objref;
+	test_StructAny *val;
+
+	objref = CORBA_Object_duplicate (inArg->serv, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	val = test_StructServer_opStructAny (inArg->serv, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	
+	CORBA_free (val);
+
+	CORBA_Object_release (objref, ev);
+}
+
 static test_StructAny *
 StructServer_opStructAny (PortableServer_Servant servant,
 			  CORBA_Environment     *ev)
@@ -113,6 +132,7 @@ POA_test_StructServer__epv StructServer_epv = {
 	StructServer_opFixed,
 	StructServer_opVariable,
 	StructServer_opCompound,
+	StructServer_opObjectStruct,
 	StructServer_opStructAny
 };
 

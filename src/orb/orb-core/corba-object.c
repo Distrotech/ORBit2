@@ -343,24 +343,20 @@ CORBA_Object_non_existent (CORBA_Object       obj,
 	return ORBit_object_get_connection (obj) ? CORBA_FALSE : CORBA_TRUE;
 }
 
+/*
+ * We already ensure uniqueness of the CORBA_Object structure
+ */
 CORBA_boolean
 CORBA_Object_is_equivalent (CORBA_Object       obj,
 			    CORBA_Object       other_object,
 			    CORBA_Environment *ev)
 {
-	if (obj == other_object)
-		return TRUE;
-
-	if (!(obj && other_object))
-		return FALSE;
-
-	/* local - have never been exposed; but not both local */
-	if (!obj->object_key || !other_object->object_key)
-		return FALSE;
-
-	return g_CORBA_Object_equal (obj, other_object);
+	return obj == other_object;
 }
 
+/*
+ * We already ensure uniqueness of the CORBA_Object structure
+ */
 CORBA_unsigned_long
 CORBA_Object_hash (CORBA_Object              obj,
 		   const CORBA_unsigned_long maximum,
@@ -368,7 +364,7 @@ CORBA_Object_hash (CORBA_Object              obj,
 {
 	CORBA_unsigned_long retval;
 
-	retval = g_CORBA_Object_hash (obj);
+	retval = GPOINTER_TO_UINT (obj);
 
 	return maximum ? (retval % maximum) : retval;
 }
