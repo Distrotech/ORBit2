@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 
-Name: ORBit-imodle-2.0
+Name: ORBit-imodule-2.0
 Description: ORBit runtime typelib generation service.
 Version: @ORBIT_VERSION@
 Requires: ORBit-2.0 libIDL-2.0
