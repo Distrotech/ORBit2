@@ -186,9 +186,9 @@ IOP_profiles_sync_objkey (GSList *profiles)
 		 *    We might want to remove this check after a while.
 		 */
 		if (!match)
-			g_error ("Object Keys in different profiles don't match.\n"
-				 "Scream and Shout on orbit-list@gnome\n."
-				 "You might want to mention what ORB you're using\n");
+			g_warning ("Object Keys in different profiles don't match.\n"
+				   "Scream and Shout on orbit-list@gnome\n."
+				   "You might want to mention what ORB you're using\n");
 	}
 	
 	return objkey;
