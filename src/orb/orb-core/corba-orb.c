@@ -947,12 +947,7 @@ void
 CORBA_ORB_run (CORBA_ORB          orb,
 	       CORBA_Environment *ev)
 {
-	if (linc_get_threaded ()) {
-		/* FIXME: should shutdown ... */
-		while (1)
-			g_main_context_iteration (NULL, TRUE);
-	} else
-		linc_main_loop_run ();
+	giop_main_run ();
 }
 
 void

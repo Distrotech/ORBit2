@@ -1311,6 +1311,8 @@ giop_recv_thread_fn (gpointer data)
 	/* a) - needs re-structuring of cnx creation */
 	giop_connections_shutdown ();
 
+	g_warning ("Quit GIOP recv thread fn");
+
 	return NULL;
 }
 

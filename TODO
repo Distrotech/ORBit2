@@ -12,6 +12,7 @@ TODO:
 			POAObject
 				POA (OAObject)
 					ORB lock
+	+ 'shutdown' not working; - kills I/O thread, but not the main
 	+ bin redundant forwards in poa.c
 	+ ** ERROR **: Need to handle zapped cnx' async callbacks
 
