@@ -327,9 +327,9 @@ ORBit_small_load_typelib (const char *libname)
 
 	g_return_val_if_fail (libname != NULL, FALSE);
 
-	if (libname [0] != '/' &&
+	if (!g_path_is_absolute (libname) &&
 	    !(libname [0] == '.' &&
-	      libname [1] == '/')) {
+	      G_IS_DIR_SEPARATOR (libname [1]))) {
 		char   **paths;
 		int      i;
 
@@ -337,7 +337,7 @@ ORBit_small_load_typelib (const char *libname)
 
 		for (i = 0; paths && paths [i]; i++) {
 			fname = g_strconcat (
-				paths [i], "/", libname, "_module", NULL);
+				paths [i], G_DIR_SEPARATOR_S, libname, "_module", NULL);
 
 			if ((loaded = load_module (fname, libname)))
 				break;

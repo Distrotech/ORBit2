@@ -56,12 +56,16 @@ ORBit_genuid_init (ORBitGenUidType type)
 
 	switch (genuid_type) {
 	case ORBIT_GENUID_STRONG:
+#ifndef G_OS_WIN32
 		random_fd = open ("/dev/urandom", O_RDONLY);
 
 		if (random_fd < 0)
 			random_fd = open ("/dev/random", O_RDONLY);
 
 		hit_strength = (random_fd >= 0);
+#else
+		hit_strength = FALSE;
+#endif
 #if LINK_SSL_SUPPORT
 		hit_strength = TRUE; /* foolishly trust OpenSSL */
 #endif

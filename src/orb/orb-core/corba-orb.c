@@ -16,6 +16,12 @@
 #endif
 #include "orbit-debug.h"
 
+#ifdef G_OS_WIN32
+#define STRICT
+#include <windows.h>
+#undef STRICT
+#endif
+
 extern const ORBit_option orbit_supported_options[];
 
 #ifdef G_ENABLE_DEBUG
@@ -1350,3 +1356,77 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBCorbaloc",        ORBIT_OPTION_BOOLEAN, &orbit_use_corbaloc},
 	{ NULL,                 0,                    NULL },
 };
+
+#ifdef G_OS_WIN32
+
+const gchar *ORBit_win32_typelib_dir;
+const gchar *ORBit_win32_system_rcfile;
+
+/* DllMain function needed to fetch the DLL name and deduce the
+ * installation directory from that, and then form the pathnames for
+ * the typelib directory and system orbitrc file.
+ */
+BOOL WINAPI
+DllMain (HINSTANCE hinstDLL,
+	 DWORD     fdwReason,
+	 LPVOID    lpvReserved)
+{
+  wchar_t wcbfr[1000];
+  char cpbfr[1000];
+  char *dll_name = NULL;
+  gchar *prefix;
+  
+  switch (fdwReason) {
+  case DLL_PROCESS_ATTACH:
+	  if (GLIB_CHECK_VERSION (2, 6, 0)) {
+		  /* GLib 2.6 uses UTF-8 file names */
+		  if (GetVersion () < 0x80000000) {
+			  /* NT-based Windows has wide char API */
+			  if (GetModuleFileNameW ((HMODULE) hinstDLL,
+						  wcbfr, G_N_ELEMENTS (wcbfr)))
+			      dll_name = g_utf16_to_utf8 (wcbfr, -1,
+							  NULL, NULL, NULL);
+		  } else {
+			  /* Win9x, yecch */
+			  if (GetModuleFileNameA ((HMODULE) hinstDLL,
+						  cpbfr, G_N_ELEMENTS (cpbfr)))
+				  dll_name = g_locale_to_utf8 (cpbfr, -1,
+							       NULL, NULL, NULL);
+		  }
+	  } else {
+		  /* Earlier GLibs use system codepage file names */
+		  if (GetModuleFileNameA ((HMODULE) hinstDLL,
+					  cpbfr, G_N_ELEMENTS (cpbfr)))
+			  dll_name = g_strdup (cpbfr);
+	  }
+
+	  if (dll_name) {
+		  gchar *p = strrchr (dll_name, '\\');
+		  
+		  if (p != NULL)
+			  *p = '\0';
+
+		  p = strrchr (dll_name, '\\');
+		  if (p && (g_ascii_strcasecmp (p + 1, "bin") == 0 ||
+			    g_ascii_strcasecmp (p + 1, "lib") == 0))
+			  *p = '\0';
+		  
+		  prefix = dll_name;
+	  } else {
+		  prefix = g_strdup ("");
+	  }
+
+	  ORBit_win32_typelib_dir = g_strconcat (prefix,
+						 "\\lib\\orbit-2.0",
+						 NULL);
+	  ORBit_win32_system_rcfile = g_strconcat (prefix,
+						   "\\etc\\orbitrc",
+						   NULL);
+	  g_free (prefix);
+	  break;
+  }
+
+  return TRUE;
+}
+
+#endif

@@ -4,7 +4,18 @@
 #include <string.h>
 #include <stdio.h>
 
+#if GLIB_CHECK_VERSION (2,6,0)
+#include <glib/gstdio.h>
+#endif
+
 #include "orbit-options.h"
+
+#ifdef G_OS_WIN32
+extern const gchar *ORBit_win32_system_rcfile;
+
+#undef ORBIT_SYSTEM_RCFILE
+#define ORBIT_SYSTEM_RCFILE ORBit_win32_system_rcfile
+#endif
 
 #undef DEBUG
 
@@ -106,7 +117,11 @@ ORBit_option_rc_parse (const gchar         *rcfile,
 	gchar  line [1024];
 	FILE  *fh;
 
+#if GLIB_CHECK_VERSION (2,6,0)
+	fh = g_fopen (rcfile, "r");
+#else
 	fh = fopen (rcfile, "r");
+#endif
 	if (!fh)
 		return;
 
@@ -282,12 +297,13 @@ ORBit_option_parse (int                 *argc,
 
 	if (!no_userrc) {
 		gchar *rcfile;
+		const gchar *home = g_get_home_dir ();
 
-		rcfile = g_strdup_printf ("%s/%s", g_get_home_dir (), ORBIT_USER_RCFILE);
-
-		ORBit_option_rc_parse (rcfile, option_list);
-
-		g_free (rcfile);
+		if (home != NULL) {
+			rcfile = g_strdup_printf ("%s" G_DIR_SEPARATOR_S "%s", home, ORBIT_USER_RCFILE);
+			ORBit_option_rc_parse (rcfile, option_list);
+			g_free (rcfile);
+		}
 	}
 
 	ORBit_option_command_line_parse (argc, argv, option_list);

@@ -74,4 +74,18 @@ char   **ORBit_get_typelib_paths   (void);
 gboolean ORBit_proto_use           (const char *name);
 void     _ORBit_object_init        (void);
 
+#ifndef G_IS_DIR_SEPARATOR	/* In GLib 2.6 */
+#  ifdef G_OS_WIN32
+#    define G_IS_DIR_SEPARATOR(c) ((c) == G_DIR_SEPARATOR || (c) == '/')
+#  else
+#    define G_IS_DIR_SEPARATOR(c) ((c) == G_DIR_SEPARATOR)
+#  endif
+#endif
+
+#ifdef G_OS_WIN32
+extern const gchar *ORBit_win32_typelib_dir;
+#undef ORBIT_TYPELIB_DIR
+#define ORBIT_TYPELIB_DIR ORBit_win32_typelib_dir
+#endif
+
 #endif
