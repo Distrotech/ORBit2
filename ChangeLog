@@ -4,6 +4,10 @@
 	empty). Don't include lib/orbit-2.0, just the Everything_module
 	gets installed there by ORBit2, and that's just for testing.
 
+	* configure.in: Drop the -DPOPT_STATIC. The version of popt that
+	we recommend is used on Windows doesn't cause import of variables
+	from libpopt. Using a libpopt DLL works fine.
+
 	* test/test-giop.c (run_test): Use IPv4 instead of UNIX domain
 	sockets on Win32.
 
