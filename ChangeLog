@@ -1,3 +1,8 @@
+2003-04-01  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_demarshal): add comment for Rich Burridge.
+
 2003-03-31  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
