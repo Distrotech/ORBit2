@@ -27,6 +27,8 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
     if(!isalnum((guchar)ci.c_base_name[i])) ci.c_base_name[i] = '_';
   }
 
+  ci.ext_dcls = g_string_new(0);
+
   for(i = 0; i < 5; i++) {
     if( (1 << i) & rinfo->enabled_passes) {
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
@@ -51,6 +53,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
       pclose(ci.fh);
     }
   }
+  g_string_free(ci.ext_dcls,TRUE);
 }
 
 static FILE *

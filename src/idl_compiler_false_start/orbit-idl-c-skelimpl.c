@@ -233,8 +233,7 @@ cbe_ski_do_op_dcl(CBESkelImplInfo *ski)
   case PASS_PROTOS:
   case PASS_IMPLSTUBS:
     fprintf(ski->of, "static ");
-    orbit_cbe_write_typespec(ski->of, IDL_OP_DCL(ski->tree).op_type_spec);
-    orbit_cbe_param_printptrs(ski->of, IDL_OP_DCL(ski->tree).op_type_spec, DATA_RETURN);
+    orbit_cbe_write_param_typespec(ski->of, ski->tree);
     
     id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(ski->tree).ident), "_", 0);
     
@@ -259,8 +258,7 @@ cbe_ski_do_op_dcl(CBESkelImplInfo *ski)
     if(ski->pass == PASS_IMPLSTUBS) {
       fprintf(ski->of, "\n{\n");
       if(IDL_OP_DCL(op).op_type_spec) {
-	orbit_cbe_write_typespec(ski->of, IDL_OP_DCL(ski->tree).op_type_spec);
-	orbit_cbe_param_printptrs(ski->of, IDL_OP_DCL(ski->tree).op_type_spec, DATA_RETURN);
+	orbit_cbe_write_param_typespec(ski->of, ski->tree);
 	fprintf(ski->of, " retval;\n\nreturn retval;\n");
       }
       fprintf(ski->of, "}\n\n");
@@ -298,8 +296,7 @@ cbe_ski_do_inherited_op_dcl(CBESkelImplInfo *ski, IDL_tree current_interface)
   case PASS_PROTOS:
   case PASS_IMPLSTUBS:
     fprintf(ski->of, "static ");
-    orbit_cbe_write_typespec(ski->of, IDL_OP_DCL(ski->tree).op_type_spec);
-    orbit_cbe_param_printptrs(ski->of, IDL_OP_DCL(ski->tree).op_type_spec, DATA_RETURN);
+    orbit_cbe_write_param_typespec(ski->of, ski->tree);
     
     curitem = IDL_get_parent_node(ski->tree, IDLN_INTERFACE, &level);
     g_assert(curitem);
@@ -320,8 +317,7 @@ cbe_ski_do_inherited_op_dcl(CBESkelImplInfo *ski, IDL_tree current_interface)
     if(ski->pass == PASS_IMPLSTUBS) {
       fprintf(ski->of, "\n{\n");
       if(IDL_OP_DCL(op).op_type_spec) {
-	orbit_cbe_write_typespec(ski->of, IDL_OP_DCL(ski->tree).op_type_spec);
-	orbit_cbe_param_printptrs(ski->of, IDL_OP_DCL(ski->tree).op_type_spec, DATA_RETURN);
+	orbit_cbe_write_param_typespec(ski->of, ski->tree);
 	fprintf(ski->of, " retval;\n\nreturn retval;\n");
       }
       fprintf(ski->of, "}\n\n");
@@ -345,21 +341,7 @@ cbe_ski_do_inherited_op_dcl(CBESkelImplInfo *ski, IDL_tree current_interface)
 static void
 cbe_ski_do_param_dcl(CBESkelImplInfo *ski)
 {
-  IDL_ParamRole r = DATA_IN;
-
-  orbit_cbe_write_typespec(ski->of,
-			   IDL_PARAM_DCL(ski->tree).param_type_spec);
-
-  switch(IDL_PARAM_DCL(ski->tree).attr) {
-  case IDL_PARAM_IN: r = DATA_IN; break;
-  case IDL_PARAM_INOUT: r = DATA_INOUT; break;
-  case IDL_PARAM_OUT: r = DATA_OUT; break;
-  default:
-    g_error("Unknown IDL_PARAM type");
-  }
-
-  orbit_cbe_param_printptrs(ski->of,
-			    IDL_PARAM_DCL(ski->tree).param_type_spec, r);
+  orbit_cbe_write_param_typespec(ski->of, ski->tree);
   fprintf(ski->of, " %s,\n", IDL_IDENT(IDL_PARAM_DCL(ski->tree).simple_declarator).str);
 }
 

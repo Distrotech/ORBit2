@@ -689,7 +689,7 @@ orbit_cbe_get_typeoffsets_table (void)
 }
 
 
-/*******
+/**
 	This is a rather hairy function. Its purpose is to output the
 	required number of *'s that indicate the amount of indirection
 	for input, output, & input-output parameters, and return
@@ -697,10 +697,9 @@ orbit_cbe_get_typeoffsets_table (void)
 	each type and purpose (nptrrefs_required), taken from 19.20
 	of the CORBA 2.2 spec, and then having a table that translates
 	from the IDLN_* enums into an index into nptrrefs_required (typeoffsets)
-
- *******/
+**/
 gint
-oidl_param_numptrs(IDL_tree param, IDL_ParamRole role)
+oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice)
 {
   const int * const typeoffsets = orbit_cbe_get_typeoffsets_table ();
   const int nptrrefs_required[][4] = {
@@ -723,50 +722,77 @@ oidl_param_numptrs(IDL_tree param, IDL_ParamRole role)
     {1,1,2,1} /* any 16 */
   };
   int retval = 0;
+  int typeidx;
 
-  if(!param) /* void */
-    return 0;
+  *isSlice = FALSE;
+
+  if(!param)
+    return 0; /* void */
 
   /* Now, how do we use this table? :) */
   param = orbit_cbe_get_typespec(param);
 
   g_assert(param);
 
-  switch(IDL_NODE_TYPE(param))
-    {
+    switch(IDL_NODE_TYPE(param)) {
     case IDLN_TYPE_STRUCT:
     case IDLN_TYPE_UNION:
-      if(((role == DATA_RETURN) || (role == DATA_OUT))
-	 && !orbit_cbe_type_is_fixed_length(param))
+    	if(((role == DATA_RETURN) || (role == DATA_OUT))
+	    && !orbit_cbe_type_is_fixed_length(param))
 	retval++;
-
-      break;
+        break;
     case IDLN_TYPE_ARRAY:
-      if(!orbit_cbe_type_is_fixed_length(param) && role == DATA_OUT)
-	retval++;
-      break;
+        if ( role == DATA_RETURN ) {
+            *isSlice = TRUE;
+	    retval = 1;
+ 	} else if (role==DATA_OUT && !orbit_cbe_type_is_fixed_length(param)) {
+            *isSlice = TRUE;
+	    retval = 2;
+	}
+        break;
     default:
       break;
     }
 
-  g_assert(typeoffsets[IDL_NODE_TYPE(param)] >= 0);
+  typeidx = typeoffsets[IDL_NODE_TYPE(param)];
+  g_assert(typeidx >= 0);
 
   switch(role) {
   case DATA_IN: role = 0; break;
   case DATA_INOUT: role = 1; break;
   case DATA_OUT: role = 2; break;
   case DATA_RETURN: role = 3; break;
+  default: g_assert_not_reached();
   }
 
-  retval+=nptrrefs_required[typeoffsets[IDL_NODE_TYPE(param)]][role];
-
+  retval+=nptrrefs_required[typeidx][role];
   return retval;
 }
 
+gint
+oidl_param_numptrs(IDL_tree param, IDL_ParamRole role)
+{
+    gboolean isSlice;
+    return oidl_param_info(param, role, &isSlice);
+}
 
-/* This is fixed length as far as memory allocation & CORBA goes, not as far as "can we bulk-marshal it?" goes.
- *   Memory allocation fixed == nothing to free in this node
- */
+/**
+    Fixed-length-ness is a property that CORBA defines, and it is
+    a property of each type, not each kind.  Furthermore, it doesnt
+    depend on the language mapping. Generally, the GIOP coding
+    a fixed length variable will be a known length (determined by the TC),
+    regardless of the data within the variable.
+
+    With the C mapping, fixed --> nothing to free in this node
+    Note that in the C mapping, everything is a struct and is
+    fixed length in that sense. Thus variable length types show
+    up in C as pointers.
+
+    Recursive types introduced by sequences are not a problem for this
+    func, because sequences are not fixed length, and terminate
+    the recursion.
+**/
+ 
 gboolean
 orbit_cbe_type_is_fixed_length(IDL_tree ts)
 {
@@ -829,6 +855,15 @@ orbit_cbe_type_is_fixed_length(IDL_tree ts)
   }
 }
 
+#if 0
+/**
+    I have no idea what is meant by "complex" here. CORBA/GIOP defines
+    a type as being "empty", "simple" or "complex", and basically
+    describes how much info the TC has. But in that definition,
+    a sequnce is always complex, regardless of what it is a sequence of.
+    We need to research the caller's of this func, and see what
+    they really mean.
+**/
 gboolean
 orbit_cbe_type_contains_complex(IDL_tree ts)
 {
@@ -892,6 +927,7 @@ orbit_cbe_type_contains_complex(IDL_tree ts)
     return FALSE;
   }
 }
+#endif
 
 IDL_tree
 orbit_cbe_get_typespec(IDL_tree node)
