@@ -1,3 +1,9 @@
+ORBit2-2.8.0
+
+	* bug fixes
+		+ sequence_concat helper (Frank)
+		+ corbaloc fixes (Frank)
+
 ORBit2-2.7.6
 
 	* bug fixes
