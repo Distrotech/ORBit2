@@ -4,7 +4,7 @@
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
-PKG_NAME="libbonobo"
+PKG_NAME="linc"
 REQUIRED_AUTOMAKE_VERSION=1.6
 REQUIRED_AUTOCONF_VERSION=2.12
 
