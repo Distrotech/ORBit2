@@ -519,7 +519,8 @@ ck_output_poastuff(IDL_tree tree, OIDL_C_Info *ci)
 /* Blatantly copied from the old IDL compiler. (A few fixes to the
    get_skel generation stuff to do proper checking of the opname...) */
 
-void
+#if 0
+static void
 cbe_skel_print_skelptr(FILE *of, IDL_tree tree)
 {
   char *id = NULL;
@@ -548,6 +549,7 @@ cbe_skel_print_skelptr(FILE *of, IDL_tree tree)
   }
   g_free(id);
 }
+#endif
 
 static gint
 cbe_skel_compare_op_dcls(CBESkelOpInfo *op1, CBESkelOpInfo *op2)
@@ -690,6 +692,7 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_C_Info *ci)
   g_free(id);
 }
 
+#if 0
 static void
 cbe_skel_interface_print_initializer(IDL_tree node,
 				     OIDL_C_Info *ci)
@@ -708,7 +711,7 @@ cbe_skel_interface_print_initializer(IDL_tree node,
 
   g_free(id);
 }
-
+#endif
 
 static void
 cbe_skel_interface_print_vepvmap_line(IDL_tree node, OIDL_C_Info *ci)
@@ -727,7 +730,7 @@ cbe_skel_interface_print_vepvmap_initializer(IDL_tree tree, OIDL_C_Info *ci)
 {
   char *id;
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
-  fprintf(ci->fh, "static void init_vepvmap_%s(ORBit_VepvIdx *map)\n", id, id);
+  fprintf(ci->fh, "static void init_vepvmap_%s(ORBit_VepvIdx *map)\n", id);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh, "    POA_%s__vepv *fakevepv = 0;", id);
   IDL_tree_traverse_parents(tree,

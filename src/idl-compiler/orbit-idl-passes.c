@@ -209,7 +209,7 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
 static guint8
 oidl_get_tree_alignment(IDL_tree tree)
 {
-  guint8 itmp;
+  guint8 itmp = 0; /* Quiet gcc */
 
   g_assert(tree);
 
@@ -411,7 +411,7 @@ oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
 {
   gboolean elements_ok;
   OIDL_Marshal_Node *sub;
-  gint retval;
+  gint retval = 0; /* Quiet gcc */
   gboolean check_marshal;
 
   if(!node) return prev_alignment;
@@ -449,7 +449,7 @@ oidl_pass_set_coalescibility_2(OIDL_Marshal_Node *node, gint prev_alignment)
   case MARSHAL_SET:
     {
       GSList *ltmp;
-      int tv;
+      int tv = 0; /* Quiet gcc */
 
       elements_ok = TRUE;
 

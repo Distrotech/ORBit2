@@ -118,11 +118,11 @@ struct poptOption options[] = {
 };
 
 /********** main routines **********/
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
   poptContext pcon;
   int rc;
-  char *arg;
+  const char *arg;
   OIDL_Run_Info rinfo;
 
   /* Argument parsing, etc. */

@@ -236,7 +236,7 @@ ch_output_type_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 static void
 ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  char *ctmp;
+  char *ctmp = NULL; /* Quiet gcc */
   IDL_tree curitem, ent, sub;
 
   ch_prep(IDL_TYPE_DCL(tree).type_spec, ci);
