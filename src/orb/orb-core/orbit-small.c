@@ -1054,7 +1054,8 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 		CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 					    aqe->completion_status);
 
-	aqe->fn (aqe->obj, aqe->m_data, aqe, aqe->user_data, ev);
+	if (aqe->fn)
+		aqe->fn (aqe->obj, aqe->m_data, aqe, aqe->user_data, ev);
 
 	ORBit_RootObject_release (aqe->obj);
 /*	ORBit_RootObject_release (aqe->m_data); */

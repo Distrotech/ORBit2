@@ -7,6 +7,7 @@ INCLUDES =						\
 	-DORBIT2_INTERNAL_API				\
 	$(WARN_CFLAGS)					\
 	$(ORBIT_DEBUG_CFLAGS)				\
+	$(DISABLE_DEPRECATED_CFLAGS)			\
 	$(ORBIT_CFLAGS)
 
 liborb_util_la_SOURCES= \
