@@ -30,6 +30,7 @@ static gboolean     orbit_use_irda          = FALSE;
 static gboolean     orbit_use_ssl           = FALSE;
 static gboolean     orbit_use_genuid_simple = FALSE;
 static gboolean     orbit_allow_local       = FALSE;
+static gboolean     orbit_use_http_iors     = FALSE;
 static char        *orbit_ipsock            = NULL;
 static char        *orbit_ipname            = NULL;
 static char        *orbit_debug_options     = NULL;
@@ -244,8 +245,8 @@ CORBA_ORB_init (int *argc, char **argv,
 
 CORBA_char *
 CORBA_ORB_object_to_string (CORBA_ORB          orb,
-			   const CORBA_Object  obj,
-			   CORBA_Environment  *ev)
+			    const CORBA_Object obj,
+			    CORBA_Environment *ev)
 {
 	GIOPSendBuffer *buf;
 	CORBA_octet     endianness = GIOP_FLAG_ENDIANNESS;
@@ -315,7 +316,10 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 	int                  i;
 
 	if (strncmp (string, "IOR:", 4)) {
-		if (strstr (string, "://")) {
+
+		if (orbit_use_http_iors &&
+		    strstr (string, "://")) {
+			/* FIXME: this code is a security hazard */
 			ior = orb_http_resolve (string);
 			if (!ior)
 				return CORBA_OBJECT_NIL;
@@ -1237,13 +1241,17 @@ static ORBit_option orbit_supported_options[] = {
 	{ "ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
  	{ "ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname },
  	{ "ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock },
-	{ "ORBAllowLocal",   ORBIT_OPTION_BOOLEAN, &orbit_allow_local },
+	{ "ORBLocalOnly",    ORBIT_OPTION_BOOLEAN, &orbit_allow_local },
+	/* warning: this option is a security risk unless used with LocalOnly */
 	{ "ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
 	{ "ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },
 	{ "ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
 	{ "ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
 	{ "ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda },
 	{ "ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl },
+	/* warning: this option is a security risk */
+	{ "ORBHTTPIORs",     ORBIT_OPTION_BOOLEAN, &orbit_use_http_iors },
+	/* warning: this option is a security risk */
 	{ "ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
 	{ "ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options },
 	{ NULL,              0,                    NULL },

@@ -1923,7 +1923,7 @@ main (int argc, char *argv [])
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 
 		if (CORBA_Object_non_existent (factory, &ev))
-			g_error  ("Start the server before running the client");
+			g_error  ("Can't contact the server");
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 	}
 	run_tests (factory, &ev);

@@ -225,7 +225,7 @@ ORBit_get_typelib_paths (void)
 		g_strfreev (strv);
 	}
 
-	if ((path = g_getenv ("GNOME_PATH"))) {
+	if ((path = g_getenv ("GNOME2_PATH"))) {
 		char **strv;
 
 		strv = g_strsplit (path, ":", -1);
@@ -305,6 +305,17 @@ load_module (const char *fname, const char *libname)
 }
 
 
+/**
+ * ORBit_small_load_typelib:
+ * @libname: the name of the type library to load
+ * 
+ * This method has security issues if you do not use
+ * an absolute path in @libname. The environment variables
+ * ORBIT_TYPELIB_PATH and GNOME2_PATH are used to scan for
+ * type libraries.
+ * 
+ * Return value: FALSE if load failed.
+ **/
 gboolean
 ORBit_small_load_typelib (const char *libname)
 {
