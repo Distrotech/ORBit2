@@ -1,3 +1,21 @@
+2001-09-19  Mark McLoughlin <mark@skynet.ie>
+
+	Implement orbitrc option handling.
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_proto_use): fix typo.
+	(orbit_supported_options): move orbitrc options.
+
+	* src/orb/util/Makefile.am: define ORBIT_SYSTEM_RCFILE.
+
+	* src/orb/util/orbit-options.c,
+	  src/orb/util/orbit-options.h
+	(ORBit_option_set): change options_list to const.
+	(ORBit_option_rc_parse): impl.
+	(ORBit_option_parse): rename to ORBit_option_command_line_parse.
+	(ORBit_option_parse): impl.
+	(orbit_sysrc_options): add orbitrc options.
+
 2001-09-19  Raja R Harinath  <harinath@cs.umn.edu>
 
 	* src/orb/orb-core/corba-typecode.c: Have 
@@ -5,6 +23,8 @@
 	in include/orbit/orb-core/corba-typecode.h.
 
 2001-09-19  Raja R Harinath  <harinath@cs.umn.edu>
+
+	Fixes bug #60730
 
 	* Makefile.shared: Make dependency output file name
 	agree with pattern used for IDL_DEPS_MAGIC.

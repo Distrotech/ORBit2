@@ -1,8 +1,11 @@
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "orbit-options.h"
+
+#undef DEBUG
 
 /*
  * ORBit_option_set:
@@ -17,13 +20,18 @@
  * be treated as a boolean option of value TRUE.
  */
 static void
-ORBit_option_set (ORBit_option *option,
-		  const gchar  *val)
+ORBit_option_set (const ORBit_option *option,
+		  const gchar        *val)
 {
 	g_assert (option != NULL);
 
 	if (!option->arg)
 		return;
+
+#ifdef DEBUG
+	fprintf (stderr, "Setting option %s to %s\n", option->name, 
+	                                              val ? val : "(none)" );
+#endif
 
 	switch (option->type) {
 	case ORBIT_OPTION_NONE:
@@ -51,7 +59,68 @@ ORBit_option_set (ORBit_option *option,
 }
 
 /*
- * ORBit_option_parse:
+ * ORBit_option_rc_parse:
+ * @rcfile: the path of the orbitrc file.
+ * @option_list: the #ORBit_options to parse from the file.
+ *
+ * Parses @rcfile for any of the options in @option_list. The syntax
+ * of rcfile is simple : 'option=value'.
+ *
+ * Note: leading or trailing whitespace is allowed for both the option 
+ *       and its value.
+ */
+static void
+ORBit_option_rc_parse (const gchar         *rcfile,
+		       const ORBit_option  *option_list)
+{
+	gchar  line [1024];
+	FILE  *fh;
+
+	fh = fopen (rcfile, "r");
+	if (!fh)
+		return;
+
+#ifdef DEBUG
+	fprintf (stderr, "Parsing file %s for options\n", rcfile);
+#endif
+
+	while (fgets (line, sizeof (line), fh)) {
+		const ORBit_option  *option = NULL;
+		gchar              **strvec;
+		gchar               *key;
+		gchar               *value;
+
+		if (line [0] == '#')
+			continue;
+
+		strvec = g_strsplit (line, "=", 3);
+
+		if (!strvec || !strvec[0] || !strvec[1])
+			continue;
+
+		key = g_strchomp (g_strchug (strvec[0]));
+
+                for (option = option_list; option->name; option++)
+			if (!strcmp (key, option->name))
+				break;
+
+		if (!option->name) {
+			option = NULL;
+			continue;
+		}
+
+		value = g_strchomp (g_strchug (strvec[1]));
+
+		ORBit_option_set (option, value);
+
+		g_strfreev (strvec);
+	}
+
+	fclose (fh);
+}
+
+/*
+ * ORBit_option_command_line_parse:
  * @argc: main's @argc param.
  * @argv: main's @argv param.
  * @option_list: list of #ORBit_options to parse from @argv.
@@ -60,24 +129,29 @@ ORBit_option_set (ORBit_option *option,
  * setting values as appropriate. Also strip these options from
  * @argv and adjust @argc.
  */
-void 
-ORBit_option_parse (int           *argc,
-		    char         **argv,
-		    ORBit_option  *option_list)
+static void 
+ORBit_option_command_line_parse (int                 *argc,
+				 char               **argv,
+				 const ORBit_option  *option_list)
 {
-	ORBit_option *option = NULL;
-        gboolean     *erase;
-	gint          i, j, numargs;
-	gchar         name [1024];
-	gchar        *tmpstr;
+	gboolean *erase;
+	gint      i, j, numargs;
+	gchar     name [1024];
+	gchar    *tmpstr;
+
+#ifdef DEBUG
+	fprintf (stderr, "Parsing command line for options\n");
+#endif
 
 	erase = g_new0 (gboolean, *argc);
 
 	for (i = 1, numargs = *argc; i < *argc; i++) {
+		const ORBit_option *option = NULL;
+
 		if (argv [i][0] != '-') {
-                        if (!option)
-                                continue;
-                        
+			if (!option)
+				continue;
+
 			erase [i] = TRUE;
 			numargs--;
 
@@ -137,4 +211,51 @@ ORBit_option_parse (int           *argc,
         *argc = numargs;
 
         g_free (erase);
+}
+
+static gboolean no_sysrc  = FALSE;
+static gboolean no_userrc = FALSE;
+
+static ORBit_option orbit_sysrc_options [] = {
+        {"ORBNoSystemRC", ORBIT_OPTION_NONE, &no_sysrc},
+        {"ORBNoUserRC",   ORBIT_OPTION_NONE, &no_userrc},
+	{NULL,            0,                 NULL}
+};
+
+/*
+ * ORBit_option_parse:
+ * @argc: main's @argc param.
+ * @argv: main's @argv param.
+ * @option_list: list of #ORBit_options.
+ *
+ * First parses the command line - @argv - to check for orbitrc related
+ * options, then parses the relevant orbitrc files and finally parse the
+ * command line for all other ORB related options.
+ *
+ * All ORBit options are stripped from @argv and @argc is adjusted.
+ *
+ * Note: Command line arguments override orbitrc options and ~/.orbitrc
+ *       overrides ${sysconfdir}/orbitrc.
+ */
+void 
+ORBit_option_parse (int                 *argc,
+		    char               **argv,
+		    const ORBit_option  *option_list)
+{
+	ORBit_option_command_line_parse (argc, argv, orbit_sysrc_options);
+
+	if (!no_sysrc)
+		ORBit_option_rc_parse (ORBIT_SYSTEM_RCFILE, option_list);
+
+	if (!no_userrc) {
+		gchar *rcfile;
+
+		rcfile = g_strdup_printf ("%s/%s", g_get_home_dir (), ORBIT_USER_RCFILE);
+
+		ORBit_option_rc_parse (rcfile, option_list);
+
+		g_free (rcfile);
+	}
+
+	ORBit_option_command_line_parse (argc, argv, option_list);
 }
