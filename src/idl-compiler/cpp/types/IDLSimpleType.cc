@@ -61,18 +61,20 @@ IDLSimpleType::stub_decl_arg_get (const string     &cpp_id,
 				  IDL_param_attr    direction,
 				  const IDLTypedef *active_typedef) const
 {
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_fixed_cpp_typename ();
 	string retval;
 	
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		retval = get_fixed_cpp_typename () + " " + cpp_id;
+		retval = cpp_typename + " " + cpp_id;
 		break;
 	case IDL_PARAM_INOUT:
-		retval = get_fixed_cpp_typename () + " &" + cpp_id;
+		retval = cpp_typename + " &" + cpp_id;
 		break;
 	case IDL_PARAM_OUT:
-		retval = get_fixed_cpp_typename () + "_out " + cpp_id;
+		retval = cpp_typename + "_out " + cpp_id;
 		break;
 	}
 
@@ -126,7 +128,10 @@ IDLSimpleType::stub_impl_arg_post (ostream        &ostr,
 string
 IDLSimpleType::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 {
-	return get_fixed_cpp_typename ();
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_fixed_cpp_typename ();
+
+	return cpp_typename;
 }
 
 void
@@ -143,7 +148,10 @@ IDLSimpleType::stub_impl_ret_call (ostream      &ostr,
 				   const string &c_call_expression,
 				   const IDLTypedef *active_typedef) const
 {
-	ostr << indent << get_fixed_cpp_typename () << " _retval = "
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_fixed_cpp_typename ();
+
+	ostr << indent << cpp_typename << " _retval = "
 	     << c_call_expression << ";" << endl;
 }
 
@@ -163,16 +171,18 @@ IDLSimpleType::skel_decl_arg_get (const string     &c_id,
 				  IDL_param_attr    direction,
 				  const IDLTypedef *active_typedef) const
 {
+	string c_typename = active_typedef ?
+		active_typedef->get_c_typename () : get_fixed_c_typename ();
 	string retval;
 	
 	switch (direction)
 	{
 	case IDL_PARAM_IN:
-		retval = "const " + get_fixed_c_typename () + " " + c_id;
+		retval = "const " + c_typename + " " + c_id;
 		break;
 	case IDL_PARAM_INOUT:
 	case IDL_PARAM_OUT:
-		retval = get_fixed_c_typename () + " *" + c_id;
+		retval = c_typename + " *" + c_id;
 		break;
 	}
 
@@ -228,7 +238,10 @@ IDLSimpleType::skel_impl_arg_post (ostream        &ostr,
 string
 IDLSimpleType::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
-	return get_fixed_c_typename ();
+	string c_typename = active_typedef ?
+		active_typedef->get_c_typename () : get_fixed_c_typename ();
+
+	return c_typename;
 }
 
 void
@@ -236,7 +249,10 @@ IDLSimpleType::skel_impl_ret_pre (ostream &ostr,
 				  Indent  &indent,
 				  const IDLTypedef *active_typedef) const
 {
-	ostr << indent << get_fixed_c_typename () << " _retval = 0"
+	string c_typename = active_typedef ?
+		active_typedef->get_c_typename () : get_fixed_c_typename ();
+
+	ostr << indent << c_typename << " _retval = 0"
 	     << ';' << endl;
 }
 
@@ -260,19 +276,28 @@ IDLSimpleType::skel_impl_ret_post (ostream &ostr,
 string
 IDLSimpleType::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
-	return get_fixed_cpp_typename ();
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_fixed_cpp_typename ();
+
+	return cpp_typename;
 }
 
 string
 IDLSimpleType::get_c_member_typename (const IDLTypedef *active_typedef) const
 {
-	return get_fixed_c_typename ();
+	string c_typename = active_typedef ?
+		active_typedef->get_c_typename () : get_fixed_c_typename ();
+
+	return c_typename;
 }
 
 string
 IDLSimpleType::member_decl_arg_get (const IDLTypedef *active_typedef) const
 {
-	return get_fixed_cpp_typename ();
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_fixed_cpp_typename ();
+
+	return cpp_typename;
 }
 
 void
