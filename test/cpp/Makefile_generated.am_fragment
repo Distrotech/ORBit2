@@ -1,0 +1,46 @@
+ORBIT_IDL = $(top_srcdir)/src/idl-compiler/orbit-idl-2
+
+LDADDS = $(top_builddir)/src/orb/libORBit-2.la		\
+	$(ORBIT_LIBS)
+
+INCLUDES =                                 \
+	-I$(top_srcdir)/include            \
+	-I$(top_builddir)/include          \
+	-I$(top_builddir)/src              \
+	-I$(top_builddir)/src/ORBitutil    \
+	-I$(top_srcdir)/src/orb            \
+	-I$(top_srcdir)/src                \
+	-DORBIT2_INTERNAL_API              \
+	$(WARN_CFLAGS)SU                     \
+	$(ORBIT_CFLAGS) \
+  -Igenerated
+
+
+c_common = $(idlname).h $(idlname)-common.c
+c_stub = $(idlname)-stubs.c
+c_skel = $(idlname)-skels.c
+c_all = $(c_common) $(c_stub) $(c_skel)
+
+cpp_common = $(idlname)-cpp-common.hh $(idlname)-cpp-common.cc
+cpp_stub = $(idlname)-cpp-stubs.hh $(idlname)-cpp-stubs.cc
+cpp_skel = $(idlname)-cpp-skels.hh $(idlname)-cpp-skels.cc
+cpp_lump = $(idlname)-cpp.hh $(idlname)-cpp.cc
+cpp_all = $(cpp_common) $(cpp_stub) $(cpp_skel) $(cpp_lump)
+
+stub_sources = 	$(c_common) $(cpp_common) $(c_stub) $(cpp_stub)
+skel_sources = $(c_common) $(cpp_common) $(c_skel) $(cpp_skel)
+idl_built = $(c_all) $(cpp_all)
+
+idl_file =$(srcdir)/../$(idlname).idl
+
+$(idl_built): $(idl_file)
+	$(ORBIT_IDL) -l c $(idl_file)
+	$(ORBIT_IDL) -l c++ $(idl_file)
+
+CLEANFILES = $(idl_built)
+
+maintainer-clean-local:
+	rm -f `cat .cvsignore`
+
+dist-hook:
+	cd $(distdir); touch $(CLEANFILES); rm $(CLEANFILES)

@@ -260,6 +260,9 @@ include/orbit/orb-core/Makefile
 include/orbit/poa/Makefile
 include/orbit/dynamic/Makefile
 test/Makefile
+test/cpp/Makefile
+test/cpp/helloworld/Makefile
+test/cpp/helloworld/generated/Makefile
 test/everything/Makefile
 test/inhibit/Makefile
 test/poa/Makefile
