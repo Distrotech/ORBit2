@@ -16,43 +16,22 @@
         fly with ZLIB if found at compile-time */
 
 #include "config.h"
+#include <glib.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETDB_H
 #include <netdb.h>
-#endif
-#ifdef HAVE_FCNTL_H
 #include <fcntl.h> 
-#endif
-#ifdef HAVE_ERRNO_H
 #include <errno.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
+#include <string.h>
 
 #define CHECK_URI(str) \
 (!strncmp(str, "IOR:", 4) \
@@ -60,21 +39,11 @@
  || !strncmp(str, "iioploc://", strlen("iioploc://")))
 
 static void	orbHTTPInit		(void);
-static void	orbHTTPCleanup	(void);
 static void	orbHTTPScanProxy	(const char *URL);
-static void *	orbHTTPMethod	(const char *URL,
-			 const char *method,
-			 const char *input,
-			 char **contentType,
-			 const char *headers);
-static void *	orbHTTPOpen		(const char *URL,
-				 char **contentType);
-static int	orbHTTPReturnCode	(void *ctx);
+static void *	orbHTTPOpen		(const char *URL);
 static int	orbHTTPRead		(void *ctx,
 				 void *dest,
 				 int len);
-static int	orbHTTPSave		(void *ctxt,
-				 const char *filename);
 static void	orbHTTPClose	(void *ctx);
 
 #include "orbhttp.h"
@@ -142,19 +111,6 @@ orbHTTPInit(void)
     }
 done:
     initialized = 1;
-}
-
-/**
- * orbHTTPClenup:
- *
- * Cleanup the HTTP protocol layer.
- */
-
-static void
-orbHTTPCleanup(void)
-{
-  g_free(proxy);
-  initialized = 0;
 }
 
 /**
@@ -321,7 +277,7 @@ orbHTTPNewCtxt(const char *URL)
 {
     orbHTTPCtxtPtr ret;
 
-    ret = (orbHTTPCtxtPtr) xmlMalloc(sizeof(orbHTTPCtxt));
+    ret = g_new(orbHTTPCtxt, 1);
     if (ret == NULL) return(NULL);
 
     memset(ret, 0, sizeof(orbHTTPCtxt));
@@ -387,7 +343,7 @@ orbHTTPRecv(orbHTTPCtxtPtr ctxt) {
 
     while (ctxt->state & ORB_HTTP_READ) {
 	if (ctxt->in == NULL) {
-	    ctxt->in = (char *) xmlMalloc(65000 * sizeof(char));
+	    ctxt->in = (char *) g_malloc(65000 * sizeof(char));
 	    if (ctxt->in == NULL) {
 	        ctxt->last = -1;
 		return(-1);
@@ -410,7 +366,7 @@ orbHTTPRecv(orbHTTPCtxtPtr ctxt) {
 	    int d_inrptr = ctxt->inrptr - ctxt->in;
 
 	    ctxt->inlen *= 2;
-            ctxt->in = (char *) xmlRealloc(ctxt->in, ctxt->inlen);
+            ctxt->in = (char *) g_realloc(ctxt->in, ctxt->inlen);
 	    if (ctxt->in == NULL) {
 	        ctxt->last = -1;
 		return(-1);
@@ -911,224 +867,6 @@ orbHTTPClose(void *ctx) {
 #ifndef DEBUG_HTTP
 #define DEBUG_HTTP
 #endif
-/**
- * orbHTTPMethod:
- * @URL:  The URL to load
- * @method:  the HTTP method to use
- * @input:  the input string if any
- * @contentType:  the Content-Type information IN and OUT
- * @headers:  the extra headers
- *
- * This function try to open a connection to the indicated resource
- * via HTTP using the given @method, adding the given extra headers
- * and the input buffer for the request content.
- *
- * Returns NULL in case of failure, otherwise a request handler.
- *     The contentType, if provided must be freed by the caller
- */
-
-static void*
-orbHTTPMethod(const char *URL, const char *method, const char *input,
-	      char **contentType, const char *headers)
-{
-    orbHTTPCtxtPtr ctxt;
-    char buf[20000];
-    int ret;
-    char *p;
-    int head;
-    int nbRedirects = 0;
-    char *redirURL = NULL;
-    
-    if (URL == NULL) return(NULL);
-    if (method == NULL) method = "GET";
-    if (contentType != NULL) *contentType = NULL;
-
-retry:
-    if (redirURL == NULL)
-	ctxt = orbHTTPNewCtxt(URL);
-    else {
-	ctxt = orbHTTPNewCtxt(redirURL);
-	g_free(redirURL);
-	redirURL = NULL;
-    }
-
-    if ((ctxt->protocol == NULL) || (strcmp(ctxt->protocol, "http"))) {
-        orbHTTPFreeCtxt(ctxt);
-	if (redirURL != NULL) g_free(redirURL);
-        return(NULL);
-    }
-    if (ctxt->hostname == NULL) {
-        orbHTTPFreeCtxt(ctxt);
-        return(NULL);
-    }
-    ret = orbHTTPConnectHost(ctxt->hostname, ctxt->port);
-    if (ret < 0) {
-        orbHTTPFreeCtxt(ctxt);
-        return(NULL);
-    }
-    ctxt->fd = ret;
-
-    if (input == NULL) {
-        if (headers == NULL) {
-	    if ((contentType == NULL) || (*contentType == NULL)) {
-		g_snprintf(buf, sizeof(buf),
-		         "%s %s HTTP/1.0\r\nHost: %s\r\n\r\n",
-			 method, ctxt->path, ctxt->hostname);
-	    } else {
-		g_snprintf(buf, sizeof(buf),
-		     "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Type: %s\r\n\r\n",
-			 method, ctxt->path, ctxt->hostname, *contentType);
-	    }
-	} else {
-	    if ((contentType == NULL) || (*contentType == NULL)) {
-		g_snprintf(buf, sizeof(buf),
-		         "%s %s HTTP/1.0\r\nHost: %s\r\n%s\r\n",
-			 method, ctxt->path, ctxt->hostname, headers);
-	    } else {
-		g_snprintf(buf, sizeof(buf),
-		 "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Type: %s\r\n%s\r\n",
-			 method, ctxt->path, ctxt->hostname, *contentType,
-			 headers);
-	    }
-	}
-    } else {
-        int len = strlen(input);
-        if (headers == NULL) {
-	    if ((contentType == NULL) || (*contentType == NULL)) {
-		g_snprintf(buf, sizeof(buf),
-		 "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Length: %d\r\n\r\n%s",
-			 method, ctxt->path, ctxt->hostname, len, input);
-	    } else {
-		g_snprintf(buf, sizeof(buf),
-"%s %s HTTP/1.0\r\nHost: %s\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s",
-			 method, ctxt->path, ctxt->hostname, *contentType, len,
-			 input);
-	    }
-	} else {
-	    if ((contentType == NULL) || (*contentType == NULL)) {
-		g_snprintf(buf, sizeof(buf),
-	     "%s %s HTTP/1.0\r\nHost: %s\r\nContent-Length: %d\r\n%s\r\n%s",
-			 method, ctxt->path, ctxt->hostname, len,
-			 headers, input);
-	    } else {
-		g_snprintf(buf, sizeof(buf),
-"%s %s HTTP/1.0\r\nHost: %s\r\nContent-Type: %s\r\nContent-Length: %d\r\n%s\r\n%s",
-			 method, ctxt->path, ctxt->hostname, *contentType,
-			 len, headers, input);
-	    }
-	}
-    }
-#ifdef DEBUG_HTTP
-    printf("-> %s", buf);
-#endif
-    ctxt->outptr = ctxt->out = g_strdup(buf);
-    ctxt->state = ORB_HTTP_WRITE;
-    orbHTTPSend(ctxt);
-    ctxt->state = ORB_HTTP_READ;
-    head = 1;
-
-    while ((p = orbHTTPReadLine(ctxt)) != NULL) {
-        if (head && (*p == 0)) {
-	    head = 0;
-	    ctxt->content = ctxt->inrptr;
-	    if (p != NULL) g_free(p);
-	    break;
-	}
-	orbHTTPScanAnswer(ctxt, p);
-
-#ifdef DEBUG_HTTP
-	if (p != NULL) printf("<- %s\n", p);
-#endif
-        if (p != NULL) g_free(p);
-    }
-
-    if ((ctxt->location != NULL) && (ctxt->returnValue >= 300) &&
-        (ctxt->returnValue < 400)) {
-#ifdef DEBUG_HTTP
-	printf("\nRedirect to: %s\n", ctxt->location);
-#endif
-	while (orbHTTPRecv(ctxt)) ;
-        if (nbRedirects < ORB_HTTP_MAX_REDIR) {
-	    nbRedirects++;
-	    redirURL = g_strdup(ctxt->location);
-	    orbHTTPFreeCtxt(ctxt);
-	    goto retry;
-	}
-	orbHTTPFreeCtxt(ctxt);
-#ifdef DEBUG_HTTP
-	printf("Too many redirrects, aborting ...\n");
-#endif
-	return(NULL);
-
-    }
-
-    if ((contentType != NULL) && (ctxt->contentType != NULL))
-        *contentType = g_strdup(ctxt->contentType);
-    else if (contentType != NULL)
-        *contentType = NULL;
-
-#ifdef DEBUG_HTTP
-    if (ctxt->contentType != NULL)
-	printf("\nCode %d, content-type '%s'\n\n",
-	       ctxt->returnValue, ctxt->contentType);
-    else
-	printf("\nCode %d, no content-type\n\n",
-	       ctxt->returnValue);
-#endif
-
-    return((void *) ctxt);
-}
-
-/**
- * orbHTTPSave:
- * @ctxt:  the HTTP context
- * @filename:  the filename where the content should be saved
- *
- * This function saves the output of the HTTP transaction to a file
- * It closes and free the context at the end
- *
- * Returns -1 in case of failure, 0 incase of success.
- */
-static int
-orbHTTPSave(void *ctxt, const char *filename) {
-    char buf[4096];
-    int fd;
-    int len;
-    
-    if (ctxt == NULL) return(-1);
-
-    if (!strcmp(filename, "-")) 
-        fd = 0;
-    else {
-        fd = open(filename, O_CREAT | O_WRONLY);
-	if (fd < 0) {
-	    orbHTTPClose(ctxt);
-	    return(-1);
-	}
-    }
-
-    while ((len = orbHTTPRead(ctxt, buf, sizeof(buf))) > 0) {
-	write(fd, buf, len);
-    }
-
-    orbHTTPClose(ctxt);
-    return(0);
-}
-
-/**
- * orbHTTPReturnCode:
- * @ctx:  the HTTP context
- *
- * Returns the HTTP return code for the request.
- */
-static int
-orbHTTPReturnCode(void *ctx) {
-    orbHTTPCtxtPtr ctxt = (orbHTTPCtxtPtr) ctx;
-
-    if (ctxt == NULL) return(-1);
-
-    return(ctxt->returnValue);
-}
 
 char *
 orb_http_resolve(const char *URL)
@@ -1145,7 +883,7 @@ orb_http_resolve(const char *URL)
 
     if(ctxt->location
        && CHECK_URI(ctxt->location)) /* Was a redirect to an IOR */
-      retval = g_strdup(ctxt->location;
+      retval = g_strdup(ctxt->location);
     else
       {
 	for(len_read = len = 0; len >= 0; len_read += len)
