@@ -112,8 +112,8 @@ cc_output_typecodes (IDL_tree     tree,
 
 static void
 cc_output_class_id (IDL_tree       tree,
-			   OIDL_Run_Info *rinfo,
-			   OIDL_C_Info   *ci)
+		    OIDL_Run_Info *rinfo,
+		    OIDL_C_Info   *ci)
 {
 	char *iface_id;
 
@@ -535,7 +535,8 @@ orbit_idl_output_c_common (IDL_tree       tree,
 
 	cc_output_typecodes (tree, ci);
 
-	cc_output_class_ids (tree, rinfo, ci);
+	if (rinfo->target_poa)
+		cc_output_class_ids (tree, rinfo, ci);
 
 	if (rinfo->idata) {
 		GSList *list = NULL;

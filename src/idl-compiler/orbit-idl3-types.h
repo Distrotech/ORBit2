@@ -39,6 +39,9 @@ typedef struct {
   gboolean onlytop;
   gboolean idata;
 
+  gboolean target_poa;
+  gboolean target_goa;
+
   IDL_ns ns; /* Use ns instead of namespace because that's a C++ reserved keyword */
 } OIDL_Run_Info;
 

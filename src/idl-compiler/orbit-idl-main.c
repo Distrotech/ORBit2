@@ -53,6 +53,8 @@ static char *cl_header_guard_prefix = "";
 static char *cl_backend_dir = NULL;
 static gboolean cl_onlytop = FALSE;
 static char *cl_deps_file = NULL;
+static gboolean cl_target_poa = FALSE;
+static gboolean cl_target_goa = FALSE;
 
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
 static GString *cl_cpp_args;
@@ -131,6 +133,8 @@ struct poptOption options[] = {
   {"nodefskels", '\0', POPT_ARG_NONE, &cl_disable_defs_skels, 0, "Don't output defs for skels in header", NULL},
   {"deps", '\0', POPT_ARG_STRING, &cl_deps_file, 0, "Generate dependency info suitable for inclusion in Makefile", "FILENAME"},
   {"headerguardprefix", '\0', POPT_ARG_STRING, &cl_header_guard_prefix, 0, "Prefix for #ifdef header guards. Sometimes useful to avoid conflicts.", NULL},
+  {"target-poa", '\0', POPT_ARG_NONE, &cl_target_poa, 0, "Target the Portable Object Adaptor (POA)", NULL},
+  {"target-goa", '\0', POPT_ARG_NONE, &cl_target_goa, 0, "Target the GObject Adaptor (GOA)", NULL},
   POPT_AUTOHELP
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
@@ -198,10 +202,17 @@ int main(int argc, const char *argv[])
   rinfo.backend_directory = cl_backend_dir;
   rinfo.onlytop = cl_onlytop;
   rinfo.idata = !cl_disable_idata;
-  
+
+  rinfo.target_poa = cl_target_poa;
+  rinfo.target_goa = cl_target_goa;
+
+  if (!rinfo.target_poa && !rinfo.target_goa)
+    rinfo.target_poa = TRUE;
+
   fprintf (stderr, "orbit-idl-2 " VERSION " compiling\n");
-  fprintf (stderr, " %s mode, %s preprocessor errors, passes: %s%s%s%s%s%s\n\n",
+  fprintf (stderr, " %s mode, target the %s, %s preprocessor errors, passes: %s%s%s%s%s%s\n\n",
 	   rinfo.is_pidl ? "pidl" : "",
+	   rinfo.target_poa ? rinfo.target_goa ? "POA and GOA" : "POA" : "GOA",
 	   rinfo.show_cpp_errors ? "show" : "hide",
 	   cl_disable_stubs ? "" : "stubs ",
 	   cl_disable_skels ? "" : "skels ",

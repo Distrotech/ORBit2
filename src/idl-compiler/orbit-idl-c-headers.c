@@ -5,11 +5,21 @@
 #include <ctype.h>
 
 /* ch = C header */
-static void ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-static void ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-static void ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci);
-static void ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
-static void ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void ch_output_types         (IDL_tree       tree,
+				     OIDL_Run_Info *rinfo,
+				     OIDL_C_Info   *ci);
+static void ch_output_itypes        (IDL_tree       tree,
+				     OIDL_C_Info   *ci,
+				     const char    *iface_id);
+static void ch_output_stub_protos   (IDL_tree       tree,
+				     OIDL_Run_Info *rinfo,
+				     OIDL_C_Info   *ci);
+static void ch_output_poa_skel_defs (IDL_tree       tree,
+				     OIDL_Run_Info *rinfo,
+				     OIDL_C_Info   *ci);
+static void ch_output_goa_skel_defs (IDL_tree       tree,
+				     OIDL_Run_Info *rinfo,
+				     OIDL_C_Info   *ci);
 
 void
 orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -29,15 +39,13 @@ orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
   /* Do all the typedefs, etc. */
   fprintf(ci->fh, "\n/** typedefs **/\n");
   ch_output_types(tree, rinfo, ci);
-  
-  if ( ci->do_skel_defs ) {
-  	/* Do all the POA structures, etc. */
-  	fprintf(ci->fh, "\n/** POA structures **/\n");
-  	ch_output_poa(tree, rinfo, ci);
+ 
+  if (ci->do_skel_defs && rinfo->target_poa)
+	ch_output_poa_skel_defs (tree, rinfo, ci);
 
-  	fprintf(ci->fh, "\n/** skel prototypes **/\n");
-  	ch_output_skel_protos(tree, rinfo, ci);
-  }
+  if (ci->do_skel_defs && rinfo->target_goa)
+	ch_output_goa_skel_defs (tree, rinfo, ci);
+
   fprintf(ci->fh, "\n/** stub prototypes **/\n");
   ch_output_stub_protos(tree, rinfo, ci);
 
@@ -46,9 +54,9 @@ orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
 
   if (rinfo->idata) {
     /* FIXME: hackish ? */
-    fprintf(ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
+    fprintf (ci->fh, "#include <orbit/orb-core/orbit-interface.h>\n\n");
 
-    ch_output_itypes(tree, ci);
+    ch_output_itypes (tree, ci, NULL);
   }
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
@@ -720,7 +728,7 @@ ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
 	switch(IDL_NODE_TYPE(cur)) {
 	case IDLN_OP_DCL:
-	  orbit_cbe_op_write_proto(ci->fh, cur, "", TRUE);
+	  orbit_cbe_op_write_proto(ci->fh, cur, "", NULL, TRUE);
 	  fprintf(ci->fh, ";\n");
 	  break;
 	case IDLN_ATTR_DCL:
@@ -731,11 +739,11 @@ ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	    for(curitem = IDL_ATTR_DCL(cur).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
 	      ai = IDL_LIST(curitem).data->data;
 	      
-	      orbit_cbe_op_write_proto(ci->fh, ai->op1, "", TRUE);
+	      orbit_cbe_op_write_proto(ci->fh, ai->op1, "", NULL, TRUE);
 	      fprintf(ci->fh, ";\n");
 	      
 	      if(ai->op2) {
-		orbit_cbe_op_write_proto(ci->fh, ai->op2, "", TRUE);
+		orbit_cbe_op_write_proto(ci->fh, ai->op2, "", NULL, TRUE);
 		fprintf(ci->fh, ";\n");
 	      }
 	    }
@@ -771,6 +779,100 @@ ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   default:
     break;
   }
+}
+
+static void
+doskel(IDL_tree cur, OIDL_Run_Info *rinfo, char *ifid, OIDL_C_Info *ci)
+{
+  char *id;
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(cur).ident), "_", 0);
+
+  fprintf(ci->fh, "void _ORBIT_skel_small_%s("
+	    "POA_%s *_ORBIT_servant, "
+	    "gpointer _ORBIT_retval, "
+	    "gpointer *_ORBIT_args, "
+	    "CORBA_Context ctx,"
+	    "CORBA_Environment *ev, ", id, ifid);
+  orbit_cbe_op_write_proto(ci->fh, cur, "_impl_", NULL, TRUE);
+  fprintf(ci->fh, ");\n");
+
+  g_free(id);
+}
+
+static void
+ch_output_poa_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+{
+  if(!tree) return;
+
+  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
+	return;
+
+  switch(IDL_NODE_TYPE(tree)) {
+  case IDLN_MODULE:
+    ch_output_poa_skel_protos(IDL_MODULE(tree).definition_list, rinfo, ci);
+    break;
+  case IDLN_LIST:
+    {
+      IDL_tree sub;
+
+      for(sub = tree; sub; sub = IDL_LIST(sub).next) {
+	ch_output_poa_skel_protos(IDL_LIST(sub).data, rinfo, ci);
+      }
+    }
+    break;
+  case IDLN_INTERFACE:
+    {
+      IDL_tree sub;
+      char *ifid;
+
+      ifid = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
+
+      for(sub = IDL_INTERFACE(tree).body; sub; sub = IDL_LIST(sub).next) {
+	IDL_tree cur;
+
+	cur = IDL_LIST(sub).data;
+
+	switch(IDL_NODE_TYPE(cur)) {
+	case IDLN_OP_DCL:
+	  doskel(cur, rinfo, ifid, ci);
+	  break;
+	case IDLN_ATTR_DCL:
+	  {
+	    OIDL_Attr_Info *ai = cur->data;
+	    IDL_tree curitem;
+
+	    for(curitem = IDL_ATTR_DCL(cur).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
+	      ai = IDL_LIST(curitem).data->data;
+	      
+	      doskel(ai->op1, rinfo, ifid, ci);
+	      if(ai->op2)
+		doskel(ai->op2, rinfo, ifid, ci);
+	    }
+	  }
+	  break;
+	default:
+	  break;
+	}
+      }
+      g_free(ifid);
+    }
+    break;
+  default:
+    break;
+  }
+}
+
+static void
+ch_output_poa_skel_defs (IDL_tree       tree,
+			 OIDL_Run_Info *rinfo,
+			 OIDL_C_Info   *ci)
+{
+	fprintf (ci->fh, "\n/** POA structures **/\n");
+	ch_output_poa (tree, rinfo, ci);
+
+	fprintf (ci->fh, "\n/** POA skel prototypes **/\n");
+	ch_output_poa_skel_protos (tree, rinfo, ci);
 }
 
 /************************/
@@ -818,7 +920,7 @@ ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	switch(IDL_NODE_TYPE(cur)) {
 	case IDLN_OP_DCL:
 	  orbit_idl_check_oneway_op (cur);
-	  orbit_cbe_op_write_proto(ci->fh, cur, "", FALSE);
+	  orbit_cbe_op_write_proto(ci->fh, cur, "", NULL, FALSE);
 	  fprintf(ci->fh, ";\n");
 	  break;
 	case IDLN_ATTR_DCL:
@@ -829,11 +931,11 @@ ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	    for(curitem = IDL_ATTR_DCL(cur).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
 	      ai = IDL_LIST(curitem).data->data;
 	      
-	      orbit_cbe_op_write_proto(ci->fh, ai->op1, "", FALSE);
+	      orbit_cbe_op_write_proto(ci->fh, ai->op1, "", NULL, FALSE);
 	      fprintf(ci->fh, ";\n");
 	      
 	      if(ai->op2) {
-		orbit_cbe_op_write_proto(ci->fh, ai->op2, "", FALSE);
+		orbit_cbe_op_write_proto(ci->fh, ai->op2, "", NULL, FALSE);
 		fprintf(ci->fh, ";\n");
 	      }
 	    }
@@ -904,89 +1006,9 @@ ch_output_inherited_protos(IDL_tree curif, InheritedOutputInfo *ioi)
 }
 
 static void
-doskel(IDL_tree cur, OIDL_Run_Info *rinfo, char *ifid, OIDL_C_Info *ci)
-{
-  char *id;
-
-  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(cur).ident), "_", 0);
-
-  fprintf(ci->fh, "void _ORBIT_skel_small_%s("
-	    "POA_%s *_ORBIT_servant, "
-	    "gpointer _ORBIT_retval, "
-	    "gpointer *_ORBIT_args, "
-	    "CORBA_Context ctx,"
-	    "CORBA_Environment *ev, ", id, ifid);
-  orbit_cbe_op_write_proto(ci->fh, cur, "_impl_", TRUE);
-  fprintf(ci->fh, ");\n");
-
-  g_free(id);
-}
-
-static void
-ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
-{
-  if(!tree) return;
-
-  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
-	return;
-
-  switch(IDL_NODE_TYPE(tree)) {
-  case IDLN_MODULE:
-    ch_output_skel_protos(IDL_MODULE(tree).definition_list, rinfo, ci);
-    break;
-  case IDLN_LIST:
-    {
-      IDL_tree sub;
-
-      for(sub = tree; sub; sub = IDL_LIST(sub).next) {
-	ch_output_skel_protos(IDL_LIST(sub).data, rinfo, ci);
-      }
-    }
-    break;
-  case IDLN_INTERFACE:
-    {
-      IDL_tree sub;
-      char *ifid;
-
-      ifid = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
-
-      for(sub = IDL_INTERFACE(tree).body; sub; sub = IDL_LIST(sub).next) {
-	IDL_tree cur;
-
-	cur = IDL_LIST(sub).data;
-
-	switch(IDL_NODE_TYPE(cur)) {
-	case IDLN_OP_DCL:
-	  doskel(cur, rinfo, ifid, ci);
-	  break;
-	case IDLN_ATTR_DCL:
-	  {
-	    OIDL_Attr_Info *ai = cur->data;
-	    IDL_tree curitem;
-
-	    for(curitem = IDL_ATTR_DCL(cur).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
-	      ai = IDL_LIST(curitem).data->data;
-	      
-	      doskel(ai->op1, rinfo, ifid, ci);
-	      if(ai->op2)
-		doskel(ai->op2, rinfo, ifid, ci);
-	    }
-	  }
-	  break;
-	default:
-	  break;
-	}
-      }
-      g_free(ifid);
-    }
-    break;
-  default:
-    break;
-  }
-}
-
-static void
-ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
+ch_output_itypes (IDL_tree     tree,
+		  OIDL_C_Info *ci,
+		  const char  *iface_id)
 {
 	static int num_methods = 0;
 
@@ -995,12 +1017,12 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 
 	switch(IDL_NODE_TYPE(tree)) {
 	case IDLN_MODULE:
-		ch_output_itypes (IDL_MODULE(tree).definition_list, ci);
+		ch_output_itypes (IDL_MODULE(tree).definition_list, ci, iface_id);
 		break;
 	case IDLN_LIST: {
 		IDL_tree sub;
 		for (sub = tree; sub; sub = IDL_LIST(sub).next)
-			ch_output_itypes (IDL_LIST(sub).data, ci);
+			ch_output_itypes (IDL_LIST(sub).data, ci, iface_id);
 	}
 	break;
 	case IDLN_ATTR_DCL: {
@@ -1012,20 +1034,24 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 		    curitem = IDL_LIST(curitem).next) {
 			ai = IDL_LIST(curitem).data->data;
 	
-			ch_output_itypes (ai->op1, ci);
+			ch_output_itypes (ai->op1, ci, iface_id);
 			if(ai->op2)
-				ch_output_itypes (ai->op2, ci);
+				ch_output_itypes (ai->op2, ci, iface_id);
 		}
 	}
 	break;
 
 	case IDLN_INTERFACE: {
-		char  *id;
+		char *id;
 
 		id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
 			IDL_INTERFACE (tree).ident), "_", 0);
 
-		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
+		fprintf (ci->fh, "enum {\n");
+
+		ch_output_itypes (IDL_INTERFACE (tree).body, ci, id);
+
+		fprintf (ci->fh, "\t%s_IMETHODS_LEN = %d\n};\n", id, num_methods);
       
 		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
 		fprintf (ci->fh, "static \n");
@@ -1033,8 +1059,6 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 		fprintf (ci->fh, "extern \n");
 		fprintf (ci->fh, "#endif\n");
 		fprintf (ci->fh, "ORBit_IInterface %s__iinterface;\n", id);
-
-		fprintf (ci->fh, "#define %s_IMETHODS_LEN %d\n", id, num_methods);
 
 		if (num_methods == 0)
 			fprintf (ci->fh, "#define %s__imethods (ORBit_IMethod*) NULL\n", id);
@@ -1054,9 +1078,96 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 	}
 
 	case IDLN_OP_DCL:
+		g_assert (iface_id != NULL);
+		fprintf (ci->fh, "\t%s_IMETHODS_%s = %d,\n",
+			 iface_id, IDL_IDENT (IDL_OP_DCL (tree).ident).str, num_methods);
 		num_methods++;
 		break;
 	default:
 		break;
 	}
+}
+
+static void
+ch_output_goa_skel_proto (IDL_tree       op,
+			  OIDL_Run_Info *rinfo,
+			  OIDL_C_Info   *ci)
+{
+	char *id;
+
+	id = IDL_ns_ident_to_qstring (
+			IDL_IDENT_TO_NS (IDL_OP_DCL (op).ident), "_", 0);
+
+	fprintf (ci->fh, "void %s__skeleton("
+			 "ORBitGServant *_ORBIT_servant, "
+			 "gpointer _ORBIT_retval, "
+			 "gpointer *_ORBIT_args, "
+			 "CORBA_Context ctx,"
+			 "CORBA_Environment *ev, ", id);
+
+	orbit_cbe_op_write_proto (ci->fh, op, "_impl_", "ORBitGServant *", TRUE);
+	fprintf (ci->fh, ");\n");
+
+	g_free (id);
+}
+
+static void
+ch_output_goa_skel_protos (IDL_tree       tree,
+			   OIDL_Run_Info *rinfo,
+			   OIDL_C_Info   *ci)
+{
+	if (!tree || tree->declspec & IDLF_DECLSPEC_PIDL)
+		return;
+
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_MODULE:
+		ch_output_goa_skel_protos (IDL_MODULE (tree).definition_list, rinfo, ci);
+		break;
+	case IDLN_LIST: {
+		IDL_tree node;
+
+		for (node = tree; node; node = IDL_LIST (node).next)
+			ch_output_goa_skel_protos (IDL_LIST (node).data, rinfo, ci);
+		}
+		break;
+	case IDLN_INTERFACE: {
+		IDL_tree node;
+
+		for (node = IDL_INTERFACE (tree).body; node; node = IDL_LIST (node).next) {
+			IDL_tree dcl;
+
+			dcl = IDL_LIST (node).data;
+
+			if (IDL_NODE_TYPE (dcl) == IDLN_OP_DCL)
+				ch_output_goa_skel_proto (dcl, rinfo, ci);
+
+			else if (IDL_NODE_TYPE (dcl) == IDLN_ATTR_DCL) {
+				IDL_tree attr;
+
+				for (attr = IDL_ATTR_DCL (dcl).simple_declarations; attr;
+				     attr = IDL_LIST (attr).next) {
+					OIDL_Attr_Info *attr_info;
+
+					attr_info = IDL_LIST (attr).data->data;
+	      
+					ch_output_goa_skel_proto (attr_info->op1, rinfo, ci);
+					if (attr_info->op2)
+						ch_output_goa_skel_proto (attr_info->op2, rinfo, ci);
+				}
+			}
+		}
+		break;
+		}
+	default:
+		break;
+	}
+}
+
+static void
+ch_output_goa_skel_defs (IDL_tree       tree,
+			 OIDL_Run_Info *rinfo,
+			 OIDL_C_Info   *ci)
+{
+	fprintf (ci->fh, "\n/** GOA skel prototypes **/\n");
+	ch_output_goa_skel_protos (tree, rinfo, ci);
 }

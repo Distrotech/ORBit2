@@ -38,7 +38,6 @@ G_BEGIN_DECLS
 #define ORBIT_IS_GSERVANT_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), ORBIT_TYPE_GSERVANT))
 #define ORBIT_GSERVANT_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), ORBIT_TYPE_GSERVANT, ORBitGServantClass))
 
-typedef struct _ORBitGServant        ORBitGServant;
 typedef struct _ORBitGServantClass   ORBitGServantClass;
 typedef struct _ORBitGServantPrivate ORBitGServantPrivate;
 

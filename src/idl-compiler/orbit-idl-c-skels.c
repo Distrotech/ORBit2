@@ -17,10 +17,16 @@ typedef struct {
 	int       idx;
 } CBESkelOpInfo;
 
+typedef enum {
+	TARGET_POA,
+	TARGET_GOA
+} CBEAdaptorTarget;
+
 static void
-ck_output_skel (IDL_tree     tree,
-		OIDL_C_Info *ci,
-		int         *idx)
+ck_output_skel (IDL_tree           tree,
+		OIDL_C_Info       *ci,
+		CBEAdaptorTarget   target,
+		int               *idx)
 {
 	IDL_tree  intf;
 	gboolean  has_args;
@@ -38,16 +44,29 @@ ck_output_skel (IDL_tree     tree,
 	opname = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_OP_DCL (tree).ident), "_", 0);
 	ifname = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_INTERFACE (intf).ident), "_", 0);
 
-	fprintf (ci->fh, "void _ORBIT_skel_small_%s("
-				"POA_%s             *_o_servant, "
-				"gpointer            _o_retval,"
-				"gpointer           *_o_args,"
-				"CORBA_Context       _o_ctx,"
-				"CORBA_Environment  *_o_ev,\n", opname, ifname);
+	g_assert (target == TARGET_POA || target == TARGET_GOA);
 
-	orbit_cbe_op_write_proto (ci->fh, tree, "_impl_", NULL, TRUE);
+	if (target == TARGET_POA) {
+		fprintf (ci->fh, "void _ORBIT_skel_small_%s("
+				 "POA_%s             *_o_servant, "
+				 "gpointer            _o_retval,"
+				 "gpointer           *_o_args,"
+				 "CORBA_Context       _o_ctx,"
+				 "CORBA_Environment  *_o_ev,\n", opname, ifname);
 
-	fprintf (ci->fh, ") {\n");
+		orbit_cbe_op_write_proto (ci->fh, tree, "_impl_", NULL, TRUE);
+		fprintf (ci->fh, ") {\n");
+	} else {
+		fprintf (ci->fh, "void %s__skeleton("
+				 "ORBitGServant      *_o_servant, "
+				 "gpointer            _o_retval,"
+				 "gpointer           *_o_args,"
+				 "CORBA_Context       _o_ctx,"
+				 "CORBA_Environment  *_o_ev,\n", opname);
+
+		orbit_cbe_op_write_proto (ci->fh, tree, "_impl_", "ORBitGServant *", TRUE);
+		fprintf (ci->fh, ") {\n");
+	}
 
 	if (has_retval) {
 		fprintf (ci->fh, "*(");
@@ -112,7 +131,12 @@ ck_output_skels (IDL_tree       tree,
 		}
 		break;
 	case IDLN_OP_DCL:
-		ck_output_skel (tree, ci, idx);
+		/* FIXME: handle the 'both' case a lot more elegantly */
+		if (rinfo->target_poa)
+			ck_output_skel (tree, ci, TARGET_POA, idx);
+
+		if (rinfo->target_goa)
+			ck_output_skel (tree, ci, TARGET_GOA, idx);
 		break;
 	default:
 		break;
@@ -401,5 +425,6 @@ orbit_idl_output_c_skeletons (IDL_tree       tree,
 
 	ck_output_skels (tree, rinfo, ci, NULL);
 
-	ck_output_poastuff (tree, rinfo, ci);
+	if (rinfo->target_poa)
+		ck_output_poastuff (tree, rinfo, ci);
 }

@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 	typedef struct _ORBit_GOA *ORBit_GOA;
 #endif
 
+typedef struct _ORBitGServant ORBitGServant;
+
 G_END_DECLS
 
 #endif /* __GOA_BASICS_H__ */

@@ -1,3 +1,23 @@
+2002-09-05  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/goa/goa-basics.h: define ORBitGServant here.
+
+	* include/orbit/goa/orbit-gservant.h: remove it from here.
+
+	* src/idl-compiler/orbit-idl-c-common.c:
+	* src/idl-compiler/orbit-idl-c-headers.c:
+	* src/idl-compiler/orbit-idl-c-skels.c:
+	* src/idl-compiler/orbit-idl-c-stubs.c:
+	* src/idl-compiler/orbit-idl-main.c:
+	* src/idl-compiler/orbit-idl3-types.h: add --target-poa
+	and --target-goa command line options and generate stubs,
+	skels and headers for the goa if requested.
+
+	* test/everything/Makefile.am: use --target-poa and --target-goa.
+
+	* test/everything/test-basic-server.[ch]:
+	* test/everything/test-struct-server.[ch]: kill handwritten skels.
+
 2002-09-04  Mark McLoughlin  <mark@skynet.ie>
 
 	Re-implement the idl-compiler language backend loading.

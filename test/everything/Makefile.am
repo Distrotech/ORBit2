@@ -61,8 +61,8 @@ server.c : $(included_src)
 	touch server.c
 server_DEPENDENCIES=${EVERYTHING_BUILT} $(included_src)
 
-IDL_FLAGS= --showcpperrors --add-imodule
-IDL_FILES= everything.idl
+IDL_FLAGS = --target-poa --target-goa --showcpperrors --add-imodule
+IDL_FILES = everything.idl
 include $(top_srcdir)/Makefile.shared
 
 BUILT_SOURCES = ${EVERYTHING_BUILT} everything-imodule.c
