@@ -336,7 +336,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
 	  retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
      	  retval->u.complex_info.type = CX_CORBA_ANY;	// XXXX
     	  retval->tree = tree;
-	  g_error("Recursive type not yet supported (%s).", 
+	  g_warning("Recursive type not yet supported (%s).", 
 	    IDL_IDENT(ident).str);
       } else {
 	  retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
