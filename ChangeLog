@@ -1,24 +1,2 @@
-1999-01-02  Jeff Garzik  <jgarzik@pobox.com>
-
-	* configure.in:
-	Removed snprintf check.
-
-1999-1-2  Raffaele Sena <raff@aromatic.com> via Russell Nelson <nelson@crynwr.com>
-
-	* Some compilers (e.g. ARM gcc) align structures even if
-	composed of only characters.  Declare the structure packed.
-
-1998-12-14  Federico Mena Quintero  <federico@nuclecu.unam.mx>
-
-	* test/Makefile.am (EXTRA_DIST): Added test-ir.idl to EXTRA_DIST.
-
-1998-12-13  Miguel de Icaza  <miguel@nuclecu.unam.mx>
-
-	* src/IIOP/giop-msg-buffer.c (giop_recv_message_buffer_use):
-	Denial of service prevention.  Do not allocate more than 8k on the
-	initial message.
-
-	This code still has issues.  The attacker can just telnet to the
-	local port and start typing, he will be able to freeze any
-	CORBA-aware application if he keeps the connection open and never
-	finishes. 
+Do not touch this file for now. Run 'rcs2log' or use bonsai
+(http://cvs.gnome.org/)
