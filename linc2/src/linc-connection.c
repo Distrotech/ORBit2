@@ -30,6 +30,14 @@ linc_source_remove (LINCConnection *cnx, gboolean unref)
 }
 
 static void
+linc_close_fd (LINCConnection *cnx)
+{
+	if (cnx->fd >= 0)
+		close (cnx->fd);
+	cnx->fd = -1;
+}
+
+static void
 linc_connection_dispose (GObject *obj)
 {
 	LINCConnection *cnx = (LINCConnection *)obj;
@@ -46,9 +54,7 @@ linc_connection_dispose (GObject *obj)
 		g_io_channel_unref (cnx->gioc);
 	cnx->gioc = NULL;
 
-	if (cnx->fd >= 0)
-		close (cnx->fd);
-	cnx->fd = -1;
+	linc_close_fd (cnx);
 
 	if (parent_class->dispose)
 		parent_class->dispose (obj);
@@ -134,9 +140,8 @@ linc_connection_real_state_changed (LINCConnection      *cnx,
 /*      g_warning ("Linc disconnected tag %d fd '%d'",
 	cnx->tag, cnx->fd);*/
       linc_source_remove (cnx, TRUE);
-      if (cnx->fd >= 0)
-        close(cnx->fd);
-      cnx->fd = -1;
+      linc_close_fd (cnx);
+
       g_signal_emit (G_OBJECT (cnx), linc_connection_signals [BROKEN], 0);
       break;
     }
