@@ -611,7 +611,7 @@ giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 	{
 	  ent->buffer = buf;
 #ifdef ORBIT_THREADED
-	  pthread_cond_signal(ent->condvar);
+	  pthread_cond_signal(&ent->condvar);
 #endif
 	}
       else
@@ -661,11 +661,11 @@ giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 		      msg.u.reply_1_2.request_id)},
     /* GIOP_CANCELREQUEST */
     { G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.cancel_request_1_0.request_id),
+		      msg.u.cancel_request.request_id),
       G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.cancel_request_1_1.request_id),
+		      msg.u.cancel_request.request_id),
       G_STRUCT_OFFSET(GIOPRecvBuffer,
-		      msg.u.cancel_request_1_2.request_id)},
+		      msg.u.cancel_request.request_id)},
     /* GIOP_LOCATEREQUEST */
     { G_STRUCT_OFFSET(GIOPRecvBuffer,
 		      msg.u.locate_request_1_0.request_id),
@@ -693,21 +693,32 @@ giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 }
 
 void
-giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent)
+giop_recv_list_destroy_queue_entry(GIOPMessageQueueEntry *ent)
+{
+  O_MUTEX_LOCK(giop_queued_messages_lock);
+  giop_queued_messages = g_list_remove(giop_queued_messages, &ent);
+  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+
+#ifdef ORBIT_THREADED
+  pthread_cond_destroy(&ent->condvar);
+  O_MUTEX_DESTROY(ent->condvar_lock);
+#endif
+}
+
+void
+giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
+				 CORBA_unsigned_long msg_type,
+				 CORBA_unsigned_long request_id)
 {
   
 #ifdef ORBIT_THREADED
-  pthread_cond_t condvar;
-  pthread_mutex_t condvar_lock;
-  O_MUTEX_INIT(condvar_lock);
-  condvar = PTHREAD_COND_INITIALIZER;
-  ent.condvar_lock = &condvar_lock;
-  ent.condvar = &condvar;
-  O_MUTEX_LOCK(condvar_lock);
+  O_MUTEX_INIT(ent->condvar_lock);
+  pthread_cond_init(&ent->condvar, NULL);
+  O_MUTEX_LOCK(ent->condvar_lock);
 #endif
 
-  ent.msg_type = msg_type;
-  ent.request_id = request_id;
+  ent->msg_type = msg_type;
+  ent->request_id = request_id;
 
   O_MUTEX_LOCK(giop_queued_messages_lock);
   giop_queued_messages = g_list_prepend(giop_queued_messages, &ent);
@@ -716,42 +727,27 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent)
   ent->buffer = NULL;
 }
 
-static GIOPRecvBuffer *
-giop_recv_list_get(CORBA_unsigned_long msg_type,
-		   CORBA_unsigned_long request_id,
-		   gboolean block_for_reply)
+GIOPRecvBuffer *
+giop_recv_buffer_get(GIOPMessageQueueEntry *ent,
+		     GIOPConnection *cnx,
+		     gboolean block_for_reply)
 {
 #ifdef ORBIT_THREADED
-  pthread_cond_wait(&condvar, &condvar_lock);
-  O_MUTEX_UNLOCK(condvar_lock);
+  g_warning("FIXME: we need a way to bomb out if cnx becomes invalid");
+  pthread_cond_wait(&ent->condvar, &ent->condvar_lock);
+  O_MUTEX_UNLOCK(ent->condvar_lock);
 #else
-  while(!ent.buffer)
-    g_main_iteration(TRUE);
+  g_main_iteration(block_for_reply);
+  if(block_for_reply)
+    {
+      while(!ent->buffer && (cnx->parent.status != LINC_DISCONNECTED))
+	g_main_iteration(block_for_reply);
+    }
 #endif
 
-  O_MUTEX_LOCK(giop_queued_messages_lock);
-  giop_queued_messages = g_list_remove(giop_queued_messages, &ent);
-  O_MUTEX_UNLOCK(giop_queued_messages_lock);
+  giop_recv_list_destroy_queue_entry(ent);
 
-#ifdef ORBIT_THREADED
-  pthread_cond_destroy(&condvar);
-  O_MUTEX_DESTROY(condvar_lock);
-#endif
-
-  return ent.buffer;
-}
-
-GIOPRecvBuffer *
-giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id,
-			   gboolean block_for_reply)
-{
-  return giop_recv_list_get(GIOP_REPLY, request_id, block_for_reply);
-}
-
-GIOPRecvBuffer *
-giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply)
-{
-  return giop_recv_list_get(GIOP_LOCATEREPLY, request_id, block_for_reply);
+  return ent->buffer;
 }
 
 static GIOPRecvBuffer *
