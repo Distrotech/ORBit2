@@ -187,10 +187,17 @@ int main(int argc, const char *argv[])
   rinfo.small_stubs = cl_enable_small_stubs;
   rinfo.small_skels = cl_enable_small_skels;
   rinfo.idata = !cl_disable_idata;
-
-  if (rinfo.small)
-	  fprintf (stderr, "\n---\n\nIn small C mode\n\n\n---\n");
-
+  
+  fprintf (stderr, "orbit-idl " VERSION " compiling\n");
+  fprintf (stderr, " %s mode, %s preprocessor errors, passes: %s%s%s%s%s\n\n",
+	   rinfo.is_pidl ? "pidl" : rinfo.small ? "small" : "large",
+	   rinfo.show_cpp_errors ? "show" : "hide",
+	   cl_disable_stubs ? "" : "stubs ",
+	   cl_disable_skels ? "" : "skels ",
+	   cl_disable_common ? "" : "common ",
+	   cl_disable_headers ? "" : "headers ",
+	   cl_enable_skeleton_impl ? "" : "skel_impl");
+	   
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {
     rinfo.input_filename = g_path_get_basename(arg);

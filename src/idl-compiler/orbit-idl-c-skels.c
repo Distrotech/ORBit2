@@ -820,7 +820,6 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	return;
   }
 
-
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
 
   cbe_skel_interface_print_relayer(tree, rinfo, ci);

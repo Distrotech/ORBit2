@@ -43,10 +43,7 @@ module ORBit {
 	struct IInterface {
 		TypeCode             tc;
 		IMethods             methods;
-#if 0
 		sequence<string>     base_interfaces;
-#endif
-		sequence<IInterface> base_interfaces;
 	};
 
 	exception NoIInterface {};

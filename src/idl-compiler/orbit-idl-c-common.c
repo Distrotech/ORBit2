@@ -887,22 +887,13 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 static void
 cc_small_output_base_itypes(IDL_tree node, CCSmallInterfaceTraverseInfo *iti)
 {
-	char      *id;
+	if (iti->cur_node == node)
+		return;
 
-	if ( iti->cur_node == node ) return;
-
-	id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
-			IDL_INTERFACE (node).ident), "_", 0);
-
-	fprintf (iti->of, "{TC_%s,", id);
-	fprintf (iti->of, "{%s_IMETHODS_LEN, %s_IMETHODS_LEN,\n", id, id );
-	fprintf (iti->of, " %s__imethods, FALSE},\n", id);
-	fprintf (iti->of, "{0, 0, NULL, FALSE}\n");
-	fprintf (iti->of, "},\n");
+	fprintf (iti->of, "\"%s\",\n",
+		 IDL_IDENT(IDL_INTERFACE(node).ident).repo_id);
 
 	iti->parents++;
-
-	g_free(id);
 }
 
 static void
@@ -930,7 +921,7 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 
 		fprintf (of, "};\n");
 
-		fprintf (of, "static ORBit_IInterface %s__base_itypes[] = {\n", id);
+		fprintf (of, "static CORBA_string %s__base_itypes[] = {\n", id);
 
 		iti.of = of;
 		iti.cur_node = i->tree;
@@ -938,9 +929,7 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 		iti.parents = 0;
 		IDL_tree_traverse_parents(i->tree, (GFunc)cc_small_output_base_itypes, &iti);
 
-		fprintf (of, "{ TC_CORBA_Object, {CORBA_Object_IMETHODS_LEN, CORBA_Object_IMETHODS_LEN,\n");
-		fprintf (of, "CORBA_Object__imethods, FALSE},\n");
-		fprintf (of, "{0, 0, NULL, FALSE}}\n};");
+		fprintf (of, "\"IDL:CORBA/Object:1.0\"\n};");
 
 		fprintf (of, "ORBit_IInterface %s__itype = {\n", id);
 		fprintf (of, "TC_%s,", id);
@@ -949,7 +938,7 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 			 g_slist_length (i->methods), id);
 
 		fprintf (of, "{%d, %d, %s__base_itypes, FALSE}\n", 
-					iti.parents, iti.parents, id);
+			 iti.parents + 1, iti.parents + 1, id);
 
 		fprintf (of, "};\n\n");
 

@@ -606,14 +606,9 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 
 #ifdef DEBUG_LOCAL_TEST
 	if (obj->pobj) {
-#if 0
-		ORBit_small_invoke_skel (
-			ORBIT_STUB_GetServant (obj),
-			m_data, ret, args, ctx, ev);
-#endif
-
-		ORBit_small_handle_request(obj->pobj, m_data->name, ret,
-					   args, ctx, NULL, ev);
+		ORBit_small_handle_request(
+			obj->pobj, m_data->name, ret,
+			args, ctx, NULL, ev);
 		goto clean_out;
 	}
 #endif
@@ -673,35 +668,42 @@ retry_request:
 	goto clean_out;
 }
 
-#if 0
+
 void
-ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
-			 ORBit_IMethod              *m_data,
-			 gpointer                    ret,
-			 gpointer                   *args,
-			 CORBA_Context               ctx,
-			 CORBA_Environment          *ev)
+ORBit_small_invoke (CORBA_Object                object,
+		    ORBit_IMethod              *m_data,
+		    gpointer                    ret,
+		    gpointer                   *args,
+		    CORBA_Context               ctx,
+		    CORBA_Environment          *ev)
 {
-	ORBitSmallSkeleton        small_skel;
-	PortableServer_ClassInfo *klass;
-	ORBit_IMethod            *real_mdata;
-	gpointer                  imp;
+	if (object->pobj && object->pobj->servant) {
+		PortableServer_ServantBase *servant;
+		ORBitSmallSkeleton          small_skel;
+		PortableServer_ClassInfo   *klass;
+		ORBit_IMethod              *real_mdata;
+		gpointer                    imp;
 
-	klass = ORBIT_SERVANT_TO_CLASSINFO (servant);
+		servant = object->pobj->servant;
 
-        small_skel = klass->small_relay_call(
-		servant, m_data->name, (gpointer *)&real_mdata, &imp);
+		klass = ORBIT_SERVANT_TO_CLASSINFO (servant);
+		
+		small_skel = klass->small_relay_call(
+			servant, m_data->name, (gpointer *)&real_mdata, &imp);
+		
+		if (real_mdata != m_data)
+			g_warning ("Wierd, new type data");
+		
+		if (!imp) /* is_a ? */
+			CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
+						    CORBA_COMPLETED_NO);
+		else
+			small_skel (servant, ret, args, ctx, ev, imp);
 
-	if (real_mdata != m_data)
-		g_warning ("Wierd, new type data");
-
-	if (!imp) /* FIXME: is_a ? */
-		CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
-					    CORBA_COMPLETED_NO);
-	else
-		small_skel (servant, ret, args, ctx, ev, imp);
+	} else
+		ORBit_small_invoke_stub (
+			object, m_data, ret, args, ctx, ev);
 }
-#endif
 
 void
 ORBit_small_invoke_poa (PortableServer_ServantBase *servant,

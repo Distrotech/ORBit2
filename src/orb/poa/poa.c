@@ -722,7 +722,7 @@ ORBit_classinfo_lookup_id(const char *type_id)
 	PortableServer_ClassInfo *ci;
 
 	if (!ORBit_class_assignments)
-		return NULL;
+		return 0;
 
 	ci = g_hash_table_lookup (ORBit_class_assignments, type_id);
 

@@ -15,21 +15,19 @@ void           ORBit_small_freekids    (CORBA_TypeCode      tc,
 					gpointer            p,
 					gpointer            d);
 
-void           ORBit_small_invoke_stub (CORBA_Object        object,
-					ORBit_IMethod      *m_data,
-					gpointer            ret,
-					gpointer           *args,
-					CORBA_Context       ctx,
-					CORBA_Environment  *ev);
-
-
-void           ORBit_small_invoke_skel (PortableServer_ServantBase *servant,
+void           ORBit_small_invoke      (CORBA_Object                object,
 					ORBit_IMethod              *m_data,
 					gpointer                    ret,
 					gpointer                   *args,
 					CORBA_Context               ctx,
 					CORBA_Environment          *ev);
 
+void           ORBit_small_invoke_stub (CORBA_Object        object,
+					ORBit_IMethod      *m_data,
+					gpointer            ret,
+					gpointer           *args,
+					CORBA_Context       ctx,
+					CORBA_Environment  *ev);
 
 void           ORBit_small_invoke_poa  (PortableServer_ServantBase *servant,
 					GIOPRecvBuffer             *recv_buffer,
