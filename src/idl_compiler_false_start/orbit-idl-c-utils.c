@@ -511,7 +511,8 @@ orbit_cbe_write_node_typespec(FILE *of, OIDL_Marshal_Node *node)
 
 gboolean
 orbit_cbe_type_is_builtin(IDL_tree tree)
-{
+{ 
+  return FALSE;
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
   case IDLN_GENTREE:
