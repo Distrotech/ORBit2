@@ -58,8 +58,7 @@ void            giop_recv_list_setup_queue_entry   (GIOPMessageQueueEntry *ent,
 void            giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
 							GIOPAsyncCallback      cb);
 
-GIOPRecvBuffer *giop_recv_buffer_get               (GIOPMessageQueueEntry *ent,
-						    gboolean               block_for_reply);
+GIOPRecvBuffer *giop_recv_buffer_get               (GIOPMessageQueueEntry *ent);
 void            giop_recv_buffer_unuse             (GIOPRecvBuffer        *buf);
 
 #define giop_recv_buffer_reply_status(buf) (                                            \
@@ -75,7 +74,8 @@ void                        giop_recv_list_zap              (GIOPConnection *cnx
 gboolean                    giop_connection_handle_input    (LINCConnection *lcnx);
 void                        giop_connection_destroy_frags   (GIOPConnection *cnx);
 
-gpointer                    giop_recv_thread_fn             (gpointer data);
+gpointer                    giop_recv_thread_fn             (gpointer        data);
+gboolean                    giop_recv_handle_queued_input   (void);
 
 #endif /* ORBIT2_INTERNAL_API */
 

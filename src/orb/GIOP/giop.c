@@ -246,7 +246,7 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 }
 
 G_LOCK_DEFINE_STATIC (giop_thread_list);
-static GList *giop_thread_list = NULL
+static GList *giop_thread_list = NULL;
 
 static GIOPThread *
 giop_thread_new (GMainContext *context)
@@ -255,14 +255,16 @@ giop_thread_new (GMainContext *context)
 
 	tdata->lock = g_mutex_new ();
 	tdata->incoming = g_cond_new ();
-	tdata->context = contect;
+	tdata->wake_context = context;
 
 	G_LOCK (giop_thread_list);
 	giop_thread_list = g_list_prepend (giop_thread_list, tdata);
 	G_UNLOCK (giop_thread_list);
+
+	return tdata;
 }
 
-static const char *giop_tdata_key = "GIOPThread";
+static GPrivate *giop_tdata_private = NULL;
 
 GIOPThread *
 giop_thread_self (void)
@@ -272,9 +274,9 @@ giop_thread_self (void)
 	if (!giop_is_threaded)
 		return NULL;
 
-	if (!(tdata = g_private_get (giop_tdata_key))) {
+	if (!(tdata = g_private_get (giop_tdata_private))) {
 		tdata = giop_thread_new (NULL);
-		g_private_set (giop_tdata_key, tdata);
+		g_private_set (giop_tdata_private, tdata);
 	}
 
 	return tdata;
@@ -285,6 +287,19 @@ static int      corba_wakeup_fds[2];
 #define WAKEUP_WRITE (corba_wakeup_fds [0])
 #define WAKEUP_POLL  (corba_wakeup_fds [1])
 static GSource *corba_main_source = NULL;
+
+static gboolean
+giop_mainloop_handle_input (GIOChannel     *source,
+			    GIOCondition    condition,
+			    gpointer        data)
+{
+	char c;
+
+	read (WAKEUP_POLL, &c, sizeof (c));
+	giop_recv_handle_queued_input ();
+
+	return TRUE;
+}
 
 void
 giop_init (gboolean threaded, gboolean blank_wire_data)
@@ -297,6 +312,9 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 	if (threaded) {
 		GIOPThread *tdata;
 
+		/* FIXME: should really cleanup with descructor */
+		giop_tdata_private = g_private_new (NULL);
+
 		tdata = giop_thread_new ( /* main thread */
 			g_main_context_default ());
 
@@ -305,9 +323,10 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 		corba_main_source = linc_source_create_watch (
 			g_main_context_default (), WAKEUP_POLL,
-			NULL, 
+			NULL, (G_IO_IN | G_IO_PRI),
+			giop_mainloop_handle_input, NULL);
 		
-		g_private_set (giop_tdata_key, tdata);
+		g_private_set (giop_tdata_private, tdata);
 	}
 
 	giop_tmpdir_init ();
@@ -316,6 +335,13 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 	giop_send_buffer_init (blank_wire_data);
 	giop_recv_buffer_init ();
+}
+
+static void
+wakeup_mainloop (void)
+{
+	char c = 'A'; /* magic */
+	write (WAKEUP_WRITE, &c, sizeof (c));
 }
 
 void
@@ -329,17 +355,18 @@ giop_thread_push_recv (GIOPMessageQueueEntry *ent)
 
 	tdata = ent->src_thread;
 
-	G_LOCK (tdata->mutex);
-	tdata->recv_buffers = g_list_append (
+	g_mutex_lock (tdata->lock);
+	tdata->recv_buffers = g_slist_append (
 		tdata->recv_buffers, ent->buffer);
 
 	/* wakeup thread ... */
-	g_cond_signal (tdata->cond);
-	if (tdata->wake_context)
-		/* FIXME: waking is not enough, we need someone
-		   to handle the new data in that thread - if
-		   they are not in the get_recv_buffer path
-		 */
-		g_main_context_wakeup (tdata->wake_context);
-	G_UNLOCK (tdata->mutex);
+	g_cond_signal (tdata->incoming);
+
+	if (ent->async_cb) {
+		if (!tdata->wake_context)
+			g_error ("Can't do async code outside of main thread");
+		wakeup_mainloop ();
+	}
+	g_mutex_unlock (tdata->lock);
 }
+

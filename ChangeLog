@@ -1,10 +1,15 @@
 2002-10-31  Michael Meeks  <michael@ximian.com>
 
+	* test/echo-client-t.c (main): init mt orb.
+
 	* src/orb/GIOP/giop-recv-buffer.c
 	(giop_recv_list_destroy_queue_entry): kill
 	bogus thread stuff.
 	(handle_reply): queue up reply recv's on
 	the right thread for processing elsewhere.
+	(giop_recv_buffer_get): kill unused non-blocking
+	mode, substantially re-write.
+	(giop_recv_list_zap): use locking.
 
 	* src/orb/GIOP/giop.c
 	(giop_thread_push_recv): impl.
