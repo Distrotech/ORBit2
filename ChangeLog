@@ -1,3 +1,14 @@
+2003-03-18  Archana Shah  <archana.shah@wipro.com>
+
+	* /configure.in: Put a check to read the argument for, 
+	whether to enable orbhttp compilation.
+
+	* /src/orb/orb-core/Makefile.am: Changed so that orbhttp.c 
+	and orbhttp.h will be compiled only if mentioned.
+	
+	* /src/orb/orb-core/corba-orb.c (CORBA_ORB_init):
+	Put checks for compilation of http-ior segment.
+
 2003-03-18  Shailesh Mittal  <shailesh.mittal@wipro.com>
 
 	* src/orb/orb-core/iop-profiles.c (IOP_start_profiles):
