@@ -11,22 +11,28 @@ INCLUDES = -I$(top_srcdir)/include            \
 	-I$(top_srcdir)/src                \
 	-DORBIT2_INTERNAL_API              \
 	$(ORBIT_CFLAGS) \
-  -Igenerated
+  -Igenerated \
+  -D_ORBITCPP_TESTCODE
 
-
-c_common = $(idlname).h $(idlname)-common.c
+c_common_h = $(idlname).h
+c_common = $(c_common_h) $(idlname)-common.c
 c_stub = $(idlname)-stubs.c
 c_skel = $(idlname)-skels.c
 c_all = $(c_common) $(c_stub) $(c_skel)
 
-cpp_common = $(idlname)-cpp-common.hh $(idlname)-cpp-common.cc
+cpp_common_hh = $(idlname)-cpp-common.hh
+cpp_common = $(cpp_common_hh) $(idlname)-cpp-common.cc
 cpp_stub = $(idlname)-cpp-stubs.hh $(idlname)-cpp-stubs.cc
 cpp_skel = $(idlname)-cpp-skels.hh $(idlname)-cpp-skels.cc
 cpp_lump = $(idlname)-cpp.hh $(idlname)-cpp.cc
 cpp_all = $(cpp_common) $(cpp_stub) $(cpp_skel) $(cpp_lump)
 
+# Stubs are built from common .h/.cc, and stubs h/.cc
 stub_sources = 	$(c_common) $(cpp_common) $(c_stub) $(cpp_stub)
-skel_sources = $(c_common) $(cpp_common) $(c_skel) $(cpp_skel)
+
+# Skels are built from common headers, and stubs h/.cc, and linked to stubs.
+skel_sources = $(c_common_h) $(cpp_common_hh) $(c_skel) $(cpp_skel)
+
 idl_built = $(c_all) $(cpp_all)
 
 idl_file =$(srcdir)/../$(idlname).idl

@@ -226,7 +226,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		m_module << first->Type->getCPPStubParameterTerm(first->Direction,first->Identifier) << ',';
 		first++;
 	}
-	m_module << "_ev);" << endl;
+	m_module << "_ev._orbitcpp_get_c_object());" << endl;
 
 	// handle exceptions
 	m_module
@@ -358,10 +358,9 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	m_header << indent << "//  to stop the compiler from generating warnings" << endl;
 	m_header << indent << "protected:" << endl;
 
-	// constructors (no public ones, esp. no copy constructor)
+	// constructors
 	m_header 
 	<< indent << iface.getCPPStub() << "();" << endl
-	<< indent << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject);" << endl
   << indent << iface.getCPPStub() << "(" << iface.getCPPStub() << " const &src);" << endl;
 
 	// end orbitcpp internal section
@@ -369,6 +368,8 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	// begin public section
 	m_header << --indent << "public:" << endl;
 	indent++;
+
+	m_header << indent << iface.getCPPStub() << "(" << iface.getCTypeName() << " cobject); //orbitcpp-specific" << endl << endl;
 		
 	// make cast operators for all mi base classes
  	IDLInterface::BaseList::const_iterator
@@ -422,7 +423,7 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
 	// *** FIXME try _is_a query before narrowing
 	
-  	string ifname = iface.getCPPIdentifier();
+	string ifname = iface.getCPPIdentifier();
 
 	m_header
 	<< indent << "inline " << iface.getQualifiedCPP_ptr() << " "
@@ -430,19 +431,15 @@ void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
 	<< iface.getQualifiedCPP_ptr() << " obj)" << endl
 	<< indent << "{" << endl;
 
-	if(iface.requiresSmartPtr()) {
-		m_header
-		<< ++indent << "CORBA::Object_ptr ptr = obj;" << endl;
-		m_header
-		<< indent << iface.getNSScopedCTypeName()
-		<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
-		<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
-		<< indent << "return new " << iface.getQualifiedCPPIdentifier() << "(cobj);" << endl;
-	} else {	
-		m_header
-		<< ++indent << "return "
-		<< iface.getQualifiedCPPCast(IDL_IMPL_NS "::duplicate_guarded(*obj)") << ';' << endl;
-	}
+ 	m_header
+ 	<< ++indent << "CORBA::Object_ptr ptr = obj;" << endl;
+
+ 	m_header
+ 	<< indent << iface.getNSScopedCTypeName()
+ 	<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
+ 	<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
+ 	<< indent << "return new " << iface.getQualifiedCPPStub() << "(cobj);" << endl;
+
 	m_header
 	<< --indent << '}' << endl << endl
 	  
@@ -452,15 +449,19 @@ void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
 	<< indent << "{" << endl;
 
 	// Are we using smart pointers for _ptrs?
-	if(iface.requiresSmartPtr()) {
+	if(iface.requiresSmartPtr())
+	{
 		m_header
 		<< ++indent << "return _duplicate(reinterpret_cast< "
 		<< iface.getQualifiedCPPStub() << " *>(obj));" << endl;
-	} else {
+	}
+	else
+	{
 		m_header
 		<< ++indent << "return _duplicate(static_cast< "
 		<< iface.getQualifiedCPP_ptr() << ">(obj));" << endl;
 	}
+
 	m_header
 	<< --indent << '}' << endl << endl;
 }

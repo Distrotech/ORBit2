@@ -58,7 +58,7 @@ namespace CORBA {
 				CORBA_free(m_target._value);
 
 			::_orbitcpp::CEnvironment _ev;
-			CORBA_Object_release((CORBA_Object)m_target._type,_ev); // release typecode
+			CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_get_c_object()); // release typecode
 		}
 
 	public:		

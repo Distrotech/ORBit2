@@ -8,12 +8,12 @@
 namespace hellomodule
 {
 
+//Inherit from abstract Skeleton:
 class Hello_impl : public POA_hellomodule::Hello
 {
 public:
-
+	//Implement pure virtual method:
 	char* helloWorld(const char* greeting) throw(CORBA::SystemException);
-
 };
 
 }; // namespace hellomodule

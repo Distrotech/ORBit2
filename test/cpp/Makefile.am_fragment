@@ -11,7 +11,8 @@ INCLUDES =                                 \
 	-I$(top_srcdir)/src                \
 	-DORBIT2_INTERNAL_API              \
 	$(ORBIT_CFLAGS) \
-  -Igenerated
+  -Igenerated \
+  -D_ORBITCPP_TESTCODE
 
 idl_file = $(idlname).idl
 

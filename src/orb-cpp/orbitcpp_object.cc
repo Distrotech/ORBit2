@@ -37,10 +37,6 @@ using namespace _orbitcpp;
 
 
 
-CORBA::Object::operator CORBA_Object() {
-	return m_target;
-}
-
 CORBA_Object CORBA::Object::_orbitcpp_get_c_object() {
 	return m_target;
 }
@@ -52,7 +48,7 @@ CORBA::Object::Object()
 CORBA::Object::Object(CORBA_Object cobject)
 {
   ::_orbitcpp::CEnvironment ev;
-	m_target = CORBA_Object_duplicate(cobject, ev);
+	m_target = CORBA_Object_duplicate(cobject, ev._orbitcpp_get_c_object());
 }
 
 CORBA::Object::~Object()
@@ -76,7 +72,7 @@ void
 CORBA::Object::operator delete(void* cpp_objref) {
 	Object* pObject = static_cast<Object*>(cpp_objref);
 	CEnvironment ev;
-	CORBA_Object_release(pObject->_orbitcpp_get_c_object(), ev);
+	CORBA_Object_release(pObject->_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 }
 
@@ -86,7 +82,7 @@ CORBA::Object::operator delete(void* cpp_objref) {
 CORBA::Boolean 
 CORBA::Object::_is_a(CORBA::RepositoryId const repoid) {
 	_orbitcpp::CEnvironment ev;
-	Boolean result = CORBA_Object_is_a(*this,repoid,ev);
+	Boolean result = CORBA_Object_is_a(_orbitcpp_get_c_object(), repoid, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return result;
 }
@@ -97,7 +93,7 @@ CORBA::Object::_is_a(CORBA::RepositoryId const repoid) {
 CORBA::Boolean 
 CORBA::Object::_non_existent() {
 	_orbitcpp::CEnvironment ev;
-	Boolean result = CORBA_Object_non_existent(*this,ev);
+	Boolean result = CORBA_Object_non_existent(_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return result;
 }
@@ -108,7 +104,7 @@ CORBA::Object::_non_existent() {
 CORBA::Boolean 
 CORBA::Object::_is_equivalent(::CORBA::Object_ptr other_object) {
 	_orbitcpp::CEnvironment ev;
-	Boolean result = CORBA_Object_is_equivalent(*this,*other_object,ev);
+	Boolean result = CORBA_Object_is_equivalent(_orbitcpp_get_c_object(), other_object->_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return result;
 }
@@ -119,7 +115,7 @@ CORBA::Object::_is_equivalent(::CORBA::Object_ptr other_object) {
 CORBA::ULong 
 CORBA::Object::_hash(::CORBA::ULong maximum) {
 	_orbitcpp::CEnvironment ev;
-	ULong result = CORBA_Object_hash(*this,maximum,ev);
+	ULong result = CORBA_Object_hash(_orbitcpp_get_c_object(), maximum, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return result;
 }
@@ -130,7 +126,7 @@ CORBA::Object::_hash(::CORBA::ULong maximum) {
 CORBA::Boolean
 CORBA::is_nil(Object_ptr o) {
 	_orbitcpp::CEnvironment ev;
-	Boolean result = CORBA_Object_is_nil(*o,ev);
+	Boolean result = CORBA_Object_is_nil(o->_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return result;
 }

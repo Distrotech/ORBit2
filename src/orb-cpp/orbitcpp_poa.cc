@@ -99,7 +99,7 @@ PortableServer::POA::POA(PortableServer_POA cobject)
 PortableServer::POAManager_ptr
 PortableServer::POA::the_POAManager() {
 	CEnvironment ev;
-	PortableServer_POAManager mgr = PortableServer_POA__get_the_POAManager(_orbitcpp_get_c_object(),ev);
+	PortableServer_POAManager mgr = PortableServer_POA__get_the_POAManager(_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return new PortableServer::POAManager(mgr);
 }
@@ -112,7 +112,7 @@ PortableServer::POA::_duplicate( PortableServer::POA_ptr _obj ) {
 	CEnvironment ev;
 	PortableServer_POA newcpoa =
 		(PortableServer_POA)
-	    CORBA_Object_duplicate((CORBA_Object)_obj->_orbitcpp_get_c_object(), ev);
+	    CORBA_Object_duplicate((CORBA_Object)_obj->_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 
 	return new PortableServer::POA(newcpoa);
@@ -145,7 +145,7 @@ PortableServer::POA::activate_object (PortableServer::Servant srv) {
 	PortableServer_Servant c_servant = srv->_orbitcpp_get_c_servant();
 	PortableServer_ObjectId* coid =
 	    PortableServer_POA_activate_object(_orbitcpp_get_c_object(),
-														 c_servant, ev);
+														 c_servant, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return reinterpret_cast<PortableServer::ObjectId *>(coid);
 }
@@ -169,13 +169,13 @@ PortableServer::POA::deactivate_object(PortableServer::ObjectId const &oid) {
 		reinterpret_cast<PortableServer_ObjectId *>(const_cast<PortableServer::ObjectId*>(&oid));
 
 #ifdef ORBIT_05X
-	PortableServer_ServantBase	*servant = (PortableServer_ServantBase*) PortableServer_POA_id_to_servant(_orbitcpp_get_c_object(), coid, ev);
+	PortableServer_ServantBase	*servant = (PortableServer_ServantBase*) PortableServer_POA_id_to_servant(_orbitcpp_get_c_object(), coid, ev._orbitcpp_get_c_object());
 	
 	//PortableServer_Servant_var servant = id_to_servant(oid);
 	//PortableServer_ServantBase 
 #endif
 
-	PortableServer_POA_deactivate_object(_orbitcpp_get_c_object(), coid,ev);
+	PortableServer_POA_deactivate_object(_orbitcpp_get_c_object(), coid, ev._orbitcpp_get_c_object());
 
 #ifdef ORBIT_05X
 	PortableServer_ServantBase__epv *epv = servant->vepv[0];
@@ -184,7 +184,7 @@ PortableServer::POA::deactivate_object(PortableServer::ObjectId const &oid) {
 	 * applications we dont insist on it.
 	 */
 	if ( epv && epv->finalize ) {
-		(*(epv->finalize))(servant, ev);
+		(*(epv->finalize))(servant, ev._orbitcpp_get_c_object());
 	}
 #endif
 
@@ -198,7 +198,7 @@ PortableServer::POA::servant_to_id(PortableServer::Servant srv) {
 	CEnvironment ev;
 	PortableServer_Servant c_servant = srv->_orbitcpp_get_c_servant();
 	PortableServer_ObjectId* coid =
-	    PortableServer_POA_servant_to_id(_orbitcpp_get_c_object(), c_servant,ev);
+	    PortableServer_POA_servant_to_id(_orbitcpp_get_c_object(), c_servant, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return reinterpret_cast<PortableServer::ObjectId *>(coid);
 }
@@ -211,7 +211,7 @@ PortableServer::POA::servant_to_reference(PortableServer::Servant srv) {
 	CEnvironment ev;
 	PortableServer_Servant c_servant = srv->_orbitcpp_get_c_servant();
 	CORBA_Object o =
-	    PortableServer_POA_servant_to_reference(_orbitcpp_get_c_object(), c_servant,ev);
+	    PortableServer_POA_servant_to_reference(_orbitcpp_get_c_object(), c_servant, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	
 	return new CORBA::Object(o);
@@ -238,7 +238,7 @@ PortableServer::Servant
 PortableServer::POA::reference_to_servant(CORBA::Object_ptr obj) {
 	CEnvironment ev;
 	CORBA_Object cobj = obj->_orbitcpp_get_c_object();
-	PortableServer_Servant c_servant = PortableServer_POA_reference_to_servant(_orbitcpp_get_c_object(),cobj,ev);
+	PortableServer_Servant c_servant = PortableServer_POA_reference_to_servant(_orbitcpp_get_c_object(),cobj, ev._orbitcpp_get_c_object());
 	PortableServer::Servant srv = ((_orbitcpp_Servant *)c_servant)->m_cppservant;
 	return srv;
 }
@@ -249,7 +249,7 @@ PortableServer::ObjectId *
 PortableServer::POA::reference_to_id(CORBA::Object_ptr obj) {
 	CEnvironment ev;
 	PortableServer_ObjectId* coid =
-	    PortableServer_POA_reference_to_id(_orbitcpp_get_c_object(),*obj,ev);
+	    PortableServer_POA_reference_to_id(_orbitcpp_get_c_object(), obj->_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	return reinterpret_cast<PortableServer::ObjectId *>(coid);
 }
@@ -261,7 +261,7 @@ PortableServer::Servant
 PortableServer::POA::id_to_servant(PortableServer::ObjectId const &oid) {
 	CEnvironment ev;
 	PortableServer_ObjectId* c_oid = oid._orbitcpp_get_c_sequence_ptr();
-	PortableServer_Servant c_servant = PortableServer_POA_id_to_servant(_orbitcpp_get_c_object(),c_oid,ev);
+	PortableServer_Servant c_servant = PortableServer_POA_id_to_servant(_orbitcpp_get_c_object(),c_oid, ev._orbitcpp_get_c_object());
 	PortableServer::Servant srv = ((_orbitcpp_Servant *)c_servant)->m_cppservant;
 	return srv;
 }
@@ -274,7 +274,7 @@ PortableServer::POA::id_to_reference(ObjectId const &oid) {
 	CEnvironment ev;
 	PortableServer_ObjectId* c_oid = oid._orbitcpp_get_c_sequence_ptr();
 	CORBA_Object o =
-	    PortableServer_POA_id_to_reference(_orbitcpp_get_c_object(), c_oid,ev);
+	    PortableServer_POA_id_to_reference(_orbitcpp_get_c_object(), c_oid, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 	
 	return new CORBA::Object(o);
@@ -318,7 +318,7 @@ PortableServer::POAManager::_nil() {
 void
 PortableServer::POAManager::activate() {
 	CEnvironment ev;
-	PortableServer_POAManager_activate(_orbitcpp_get_c_object(), ev);
+	PortableServer_POAManager_activate(_orbitcpp_get_c_object(), ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 }
 
@@ -328,7 +328,7 @@ PortableServer::POAManager::activate() {
 void
 PortableServer::POAManager::hold_requests(CORBA::Boolean wait) {
 	CEnvironment ev;
-	PortableServer_POAManager_hold_requests(_orbitcpp_get_c_object(), wait, ev);
+	PortableServer_POAManager_hold_requests(_orbitcpp_get_c_object(), wait, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 }
 
@@ -338,14 +338,14 @@ PortableServer::POAManager::hold_requests(CORBA::Boolean wait) {
 void
 PortableServer::POAManager::discard_requests (CORBA::Boolean wait) {
 	CEnvironment ev;
-	PortableServer_POAManager_discard_requests(_orbitcpp_get_c_object(), wait, ev);
+	PortableServer_POAManager_discard_requests(_orbitcpp_get_c_object(), wait, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 }
 
 void
 PortableServer::POAManager::deactivate(CORBA::Boolean etherealize,CORBA::Boolean wait) {
 	CEnvironment ev;
-	PortableServer_POAManager_deactivate(_orbitcpp_get_c_object(), etherealize, wait, ev);
+	PortableServer_POAManager_deactivate(_orbitcpp_get_c_object(), etherealize, wait, ev._orbitcpp_get_c_object());
 	ev.propagate_sysex();
 }
 
