@@ -401,6 +401,7 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 {
   int retval;
   char *fakehost = host;
+  socklen_t fakelen = hostlen;
 
   switch(sa->sa_family)
     {
@@ -414,6 +415,7 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 	    {
 	      strcpy(host, "0.0.0.0");
 	      fakehost = NULL;
+	      fakelen = 0;
 	    }
 	}
 #endif
@@ -429,11 +431,12 @@ sys_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 	    {
 	      strcpy(host, "::");
 	      fakehost = NULL;
+	      fakelen = 0;
 	    }
 	}
 #endif
     default:
-      retval = getnameinfo(sa, sa_len, fakehost, hostlen, serv, servlen, flags);
+      retval = getnameinfo(sa, sa_len, fakehost, fakelen, serv, servlen, flags);
       break;
     }
 
