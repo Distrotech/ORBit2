@@ -692,7 +692,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	gboolean        has_context;
 	struct CORBA_Context_type ctx;
 
-	dprintf ("Method '%s' on '%p'\n", m_data->name, servant);
+/*	fprintf (stderr, "Method '%s' on '%p'\n", m_data->name, servant); */
 
 	giop_dump_recv (recv_buffer);
 
@@ -772,9 +772,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			switch (tc->kind) {
 			case BASE_TYPES:
 			case OBJ_STRING_TYPES:
-				retval = alloca (ORBit_gather_alloc_info (tc));
-				/* FIXME: could be alloca */
-				scratch [i] = ORBit_alloc_tcval (tc, 1);
+				scratch [i] = alloca (ORBit_gather_alloc_info (tc));
 				break;
 			case STRUCT_UNION_TYPES:
 			case CORBA_tk_array:

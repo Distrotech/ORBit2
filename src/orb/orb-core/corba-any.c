@@ -290,13 +290,16 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
 	    *val = ((guchar *)*val) + sizeof(CORBA_sequence_CORBA_octet);
 	}
 	break;
-    case CORBA_tk_array:
+    case CORBA_tk_array: {
+        int align = ORBit_find_alignment(tc->subtypes[0]);
 	submi.alias_element_type = tc->subtypes[0];
+	/* FIXME: we possibly need to special case octets etc. here */
 	for(i = 0; i < tc->length; i++) {
 	  ORBit_marshal_value(buf, val, submi.alias_element_type, &submi);
-	  *val = ALIGN_ADDRESS(*val, ORBit_find_alignment(tc->subtypes[0]));
+	  *val = ALIGN_ADDRESS(*val, align);
 	}
 	break;
+    }
     case CORBA_tk_alias:
 	submi.alias_element_type = tc->subtypes[0];
 	ORBit_marshal_value(buf, val, submi.alias_element_type, &submi);
