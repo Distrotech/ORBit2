@@ -1,0 +1,16 @@
+Makefile
+Makefile.in
+.deps
+.libs
+*-stubs.c
+*-skels.c
+*-common.c
+poatest.h
+poatest-basic01
+poatest-basic02
+poatest-basic03
+poatest-basic04
+poatest-basic05
+poatest-basic06
+poatest-basic07
+poatest-basic08

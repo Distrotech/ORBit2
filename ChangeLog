@@ -1,5 +1,9 @@
 2001-06-25  Mark McLoughlin <mark@skynet.ie>
 
+	 * test/poa/.cvsignore: added.
+
+2001-06-25  Mark McLoughlin <mark@skynet.ie>
+
 	* test/poa/*: import.
 
 	* configure.in, test/Makefile.am: add poa.
