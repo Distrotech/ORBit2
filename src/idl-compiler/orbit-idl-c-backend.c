@@ -8,6 +8,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifdef G_OS_WIN32
+#  include <io.h>
+#  define mkdir(path, mode) _mkdir (path)
+#endif
+
 static FILE *out_for_pass(const char *input_filename, int pass, 
 			  OIDL_Run_Info *rinfo);
 
