@@ -60,7 +60,6 @@ PingPongServer_opOneWayCallback (PortableServer_Servant servant,
 				 test_PingPongServer    remote_obj,
 				 CORBA_Environment     *ev)
 {
-	int i;
 	static int depth = 0;
 
 	depth++;
