@@ -107,6 +107,15 @@ module test {
 		DerivedServer serv;
 	};
 
+	struct AlignHoleInnerStruct {
+		double a;
+		octet  b;
+	};
+	struct AlignHoleStruct {
+		AlignHoleInnerStruct a;
+		char b;
+	};
+
 	typedef sequence<string> StrSeq;
 	typedef sequence<string> AnotherStrSeq;
 	typedef sequence<CompoundStruct,2> BoundedStructSeq;
@@ -190,6 +199,9 @@ module test {
 		CompoundStruct opCompound       (in CompoundStruct          inArg, 
 						 inout CompoundStruct       inoutArg,
 						 out CompoundStruct         outArg);
+		AlignHoleStruct opAlignHole     (in AlignHoleStruct         inArg,
+						 inout AlignHoleStruct      inoutArg,
+						 out AlignHoleStruct        outArg);
 		oneway void    opObjectStruct   (in ObjectStruct            inArg);
 		StructAny opStructAny           ();
 	};

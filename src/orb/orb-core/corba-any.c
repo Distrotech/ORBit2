@@ -170,6 +170,7 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		for (i = 0; i < tc->sub_parts; i++)
 			ORBit_marshal_value (buf, val, tc->subtypes[i]);
+		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		break;
 	case CORBA_tk_union: {
 		gconstpointer	discrim, body;
@@ -554,6 +555,7 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, orb))
 				return TRUE;
 		}
+		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		break;
 	case CORBA_tk_union: {
 		CORBA_TypeCode  subtc;
@@ -837,6 +839,8 @@ ORBit_copy_value_core (gconstpointer *val,
 		*newval = ALIGN_ADDRESS (*newval, tc->c_align);
 		for (i = 0; i < tc->sub_parts; i++)
 			ORBit_copy_value_core (val, newval, tc->subtypes[i]);
+		*val = ALIGN_ADDRESS (*val, tc->c_align);
+		*newval = ALIGN_ADDRESS (*newval, tc->c_align);
 		break;
 	case CORBA_tk_union: {
 		CORBA_TypeCode utc;
@@ -1029,6 +1033,8 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 			if (!ORBit_value_equivalent (a, b, tc->subtypes [i], ev))
 				return FALSE;
 
+		*a = ALIGN_ADDRESS (*a, tc->c_align);
+		*b = ALIGN_ADDRESS (*b, tc->c_align);
 		return TRUE;
 	}
 

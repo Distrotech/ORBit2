@@ -600,6 +600,49 @@ testCompoundStruct (test_TestFactory   factory,
 }
 
 static void
+testAlignHoleStruct (test_TestFactory   factory, 
+		    CORBA_Environment *ev)
+{
+  test_StructServer objref;
+  test_AlignHoleStruct inArg, inoutArg, outArg, retn;
+  d_print ("Testing structs with aligning holes...\n");
+  objref = test_TestFactory_getStructServer (factory, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+  inArg.a.a = constants_DOUBLE_IN;
+  inArg.a.b = constants_OCTET_IN;
+  inArg.b = constants_CHAR_IN;
+
+  inoutArg.a.a = constants_DOUBLE_INOUT_IN;
+  inoutArg.a.b = constants_OCTET_INOUT_IN;
+  inoutArg.b = constants_CHAR_INOUT_IN;
+  
+  memset(&outArg, 0, sizeof(outArg));
+
+  retn = test_StructServer_opAlignHole (objref, &inArg, &inoutArg, &outArg, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+  
+  g_assert (inArg.a.a == constants_DOUBLE_IN);
+  g_assert (inArg.a.b == constants_OCTET_IN);
+  g_assert (inArg.b == constants_CHAR_IN);
+
+  g_assert (inoutArg.a.a == constants_DOUBLE_INOUT_OUT);
+  g_assert (inoutArg.a.b == constants_OCTET_INOUT_OUT);
+  g_assert (inoutArg.b == constants_CHAR_INOUT_OUT);
+
+  g_assert (outArg.a.a == constants_DOUBLE_OUT);
+  g_assert (outArg.a.b == constants_OCTET_OUT);
+  g_assert (outArg.b == constants_CHAR_OUT);
+
+  g_assert (retn.a.a == constants_DOUBLE_RETN);	
+  g_assert (retn.a.b == constants_OCTET_RETN);	
+  g_assert (retn.b == constants_CHAR_RETN);	
+  
+  CORBA_Object_release (objref, ev);
+  g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
 testObjectStruct (test_TestFactory   factory, 
 		  CORBA_Environment *ev)
 {
@@ -2197,6 +2240,7 @@ run_tests (test_TestFactory   factory,
 		testFixedLengthStruct (factory, ev);
 		testVariableLengthStruct (factory, ev);
 		testCompoundStruct (factory, ev);
+		testAlignHoleStruct (factory, ev);
 		testObjectStruct (factory, ev);
 		testStructAny (factory, ev);
 		testUnboundedSequence (factory, ev);
