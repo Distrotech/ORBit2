@@ -1,0 +1,9 @@
+module ORBitTestSuite {
+      exception EmptyException {};
+      exception ValueException { long minor_code; string mesg; };
+      
+      interface ExcptionFactory {
+	    void trigger_empty_exception(in long pid) raises (EmptyException);
+	    void trigger_value_exception(in long pid) raises (ValueException);
+      };
+};
