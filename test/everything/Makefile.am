@@ -16,7 +16,7 @@ INCLUDES = \
 	$(LINC_CFLAGS)			\
 	${GLIB_CFLAGS}
 
-LDADD = $(top_builddir)/src/orb/libORBit.la		\
+LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 	$(LINC_LIBS)					\
 	${GLIB_LIBS}
 

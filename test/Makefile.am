@@ -13,32 +13,32 @@ noinst_PROGRAMS=test1 \
 
 TEST_ANY_IDLOUT=test-any.h test-any-common.c test-any-stubs.c test-any-skels.c
 test_any_client_SOURCES=test-any-client.c $(TEST_ANY_IDLOUT)
-test_any_client_LDADD=$(top_builddir)/src/orb/libORBit.la
+test_any_client_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 test_any_server_SOURCES=test-any-server.c $(TEST_ANY_IDLOUT)
-test_any_server_LDADD=$(top_builddir)/src/orb/libORBit.la
+test_any_server_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 $(srcdir)/test-any-client.c $(srcdir)/test-any-server.c: test-any.h
 
 ECHO_IDLOUT=echo.h echo-common.c echo-stubs.c echo-skels.c
 echo_client_SOURCES=echo-client.c $(ECHO_IDLOUT)
-echo_client_LDADD=$(top_builddir)/src/orb/libORBit.la
+echo_client_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 echo_server_SOURCES=echo-server.c echo-srv.c $(ECHO_IDLOUT) echo-share.h
-echo_server_LDADD=$(top_builddir)/src/orb/libORBit.la
+echo_server_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 $(srcdir)/echo-client.c $(srcdir)/echo-server.c $(srcdir)/echo-srv.c: echo.h
 
 EMPTY_IDLOUT=empty.h empty-common.c empty-stubs.c empty-skels.c
 empty_client_SOURCES=empty-client.c $(EMPTY_IDLOUT)
-empty_client_LDADD=$(top_builddir)/src/orb/libORBit.la
+empty_client_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 empty_server_SOURCES=empty-server.c $(EMPTY_IDLOUT)
-empty_server_LDADD=$(top_builddir)/src/orb/libORBit.la
+empty_server_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 $(srcdir)/empty-client.c $(srcdir)/empty-server.c: empty.h
 
 IDLOUT=test1-stubs.c test1-skels.c test1-common.c test1.h
 test1_SOURCES=test1.c $(IDLOUT)
-test1_LDADD=$(top_builddir)/src/orb/libORBit.la
+test1_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 $(srcdir)/test1.c: test1.h
 
 ior_decode_SOURCES=ior-decode.c
-ior_decode_LDADD=$(top_builddir)/src/orb/libORBit.la
+ior_decode_LDADD=$(top_builddir)/src/orb/libORBit-2.la
 
 $(ECHO_IDLOUT): echo_built
 

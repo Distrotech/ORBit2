@@ -1,12 +1,12 @@
 libORBitservicesincludedir = $(includedir)/ORBitservices
 
-lib_LTLIBRARIES=libORBitCosNaming.la
+lib_LTLIBRARIES=libORBitCosNaming-2.la
 
 bin_PROGRAMS = name-client orbit-name-server
 
 lib_LIBRARIES = libname-server.a
 
-libORBitCosNaming_la_SOURCES = 						\
+libORBitCosNaming_2_la_SOURCES = 						\
 	CosNaming-common.c 						\
 	CosNaming-stubs.c
 
@@ -15,7 +15,7 @@ libORBitservicesinclude_HEADERS = 					\
 	CosNaming_impl.h						\
 	CosNaming.idl
 
-libORBitCosNaming_la_LDFLAGS = \
+libORBitCosNaming_2_la_LDFLAGS = \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
 INCLUDES = -I. \
@@ -41,12 +41,12 @@ my_cosnaming_built: CosNaming.idl $(IDL)
 
 CLEANFILES=my_cosnaming_built
 
-DEPS = 	$(top_builddir)/src/orb/libORBit.la			\
-	libORBitCosNaming.la
+DEPS = 	$(top_builddir)/src/orb/libORBit-2.la			\
+	libORBitCosNaming-2.la
 
 LDADDS = \
-	$(top_builddir)/src/orb/libORBit.la			\
-	libORBitCosNaming.la					\
+	$(top_builddir)/src/orb/libORBit-2.la			\
+	libORBitCosNaming-2.la					\
 	@GLIB_LIBS@ 						\
 	-lm
 

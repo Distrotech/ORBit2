@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+
+Name: ORBit-CosNaming
+Description: High-performance CORBA Object Request Broker - Naming Service.
+Version: @VERSION@
+Requires: ORBit-2.0
+Libs: -L${libdir} -lORBitCosNaming-2
+Cflags: -I${includedir}

@@ -290,4 +290,6 @@ test/everything/Makefile
 docs/Makefile
 docs/devel/Makefile
 docs/internals/Makefile
+ORBit-2.0.pc
+ORBit-CosNaming-2.0.pc
 ])
