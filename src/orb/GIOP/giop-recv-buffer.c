@@ -508,6 +508,20 @@ giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 	g_free (buf);
 }
 
+static void
+ent_lock (GIOPMessageQueueEntry *ent)
+{
+	if (ent->src_thread)
+		g_mutex_lock (ent->src_thread->lock);
+}
+
+static void
+ent_unlock (GIOPMessageQueueEntry *ent)
+{
+	if (ent->src_thread)
+		g_mutex_unlock (ent->src_thread->lock);
+}
+
 void
 giop_recv_list_zap (GIOPConnection *cnx)
 {
@@ -522,15 +536,15 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		next = l->next;
 
 		if (ent->cnx == cnx) {
+			ent_lock (ent);
+
 			giop_recv_buffer_unuse (ent->buffer);
 			ent->buffer = NULL;
 			ent->cnx = NULL;
-#ifdef ORBIT_THREADED
-			notify = g_slist_prepend (notify, ent);
-#else
-			if (ent->u.unthreaded.cb)
+
+			ent_unlock (ent);
+			if (ent->async_cb)
 				notify = g_slist_prepend (notify, ent);
-#endif
 			giop_queued_messages = g_list_delete_link (
 				giop_queued_messages, l);
 		}
@@ -541,18 +555,16 @@ giop_recv_list_zap (GIOPConnection *cnx)
 	for (sl = notify; sl; sl = sl->next) {
 		GIOPMessageQueueEntry *ent = sl->data;
 
-#ifdef ORBIT_THREADED
-		pthread_cond_signal (&ent->condvar);
-#else
+		if (giop_threaded ())
+			g_error ("Need to handle zapped cnx' async callbacks");
 
-		if (ent->u.unthreaded.cb) {
+		if (ent->async_cb) {
 #ifdef DEBUG
-			g_warning ("About to invoke %p:%p:%p", l, ent, ent->u.unthreaded.cb);
+			g_warning ("About to invoke %p:%p:%p", l, ent, ent->async_cb);
 #endif
-			ent->u.unthreaded.cb (ent);
+			ent->async_cb (ent);
 		} else
 			g_warning ("Extraordinary recv list re-enterancy");
-#endif
 	}
 	g_slist_free (notify);
 }
@@ -617,12 +629,6 @@ giop_recv_list_destroy_queue_entry (GIOPMessageQueueEntry *ent)
 	g_warning ("Pop XX:%p:NULL - %d", ent, g_list_length (giop_queued_messages));
 #endif
 	LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
-
-#ifdef ORBIT_THREADED
-	/* FIXME: Fix this mess */
-	pthread_cond_destroy(&ent->condvar);
-	LINC_MUTEX_DESTROY(ent->condvar_lock);
-#endif
 }
 
 void
@@ -631,14 +637,8 @@ giop_recv_list_setup_queue_entry (GIOPMessageQueueEntry *ent,
 				  CORBA_unsigned_long    msg_type,
 				  CORBA_unsigned_long    request_id)
 {
-#ifdef ORBIT_THREADED
-	/* FIXME: fix this mess */
-	LINC_MUTEX_INIT (ent->condvar_lock);
-	pthread_cond_init (&ent->condvar, NULL);
-	LINC_MUTEX_LOCK (ent->condvar_lock);
-#else
-	ent->u.unthreaded.cb = NULL;
-#endif
+	ent->src_thread = giop_thread_self ();
+	ent->async_cb = NULL;
 
 	ent->cnx = cnx;
 	ent->msg_type = msg_type;
@@ -660,24 +660,41 @@ giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
 {
 	g_return_if_fail (ent != NULL);
 
-	ent->u.unthreaded.cb = cb;
+	ent->async_cb = cb;
+}
+
+static inline gboolean
+check_got (GIOPMessageQueueEntry *ent)
+{
+	return (ent->buffer || !ent->cnx ||
+		(ent->cnx->parent.status == LINC_DISCONNECTED));
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
+giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 {
-#ifdef ORBIT_THREADED
-	/* FIXME: fix this mess */
-	pthread_cond_wait (&ent->condvar, &ent->condvar_lock);
-	LINC_MUTEX_UNLOCK (ent->condvar_lock);
-#else
-	if (block_for_reply) {
+	GIOPThread *tdata = giop_thread_self ();
+
+	if (tdata) {
+		ent_lock (ent);
+
+		for (; !check_got (ent); ) {
+			g_cond_wait (tdata->incoming, tdata->lock);
+			if (!check_got (ent)) {
+				ent_unlock (ent);
+				giop_recv_handle_queued_input ();
+				ent_lock (ent);
+			}
+		}
+		
+		ent_unlock (ent);
+
+	} else { /* non-threaded */
+
 		while (!ent->buffer && ent->cnx &&
 		       (ent->cnx->parent.status != LINC_DISCONNECTED))
-			linc_main_iteration (block_for_reply);
-	} else
-		linc_main_iteration (FALSE);
-#endif
+			linc_main_iteration (TRUE);
+	}
 
 	giop_recv_list_destroy_queue_entry (ent);
 
@@ -948,7 +965,7 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 }
 
 static gboolean
-handle_reply (GIOPRecvBuffer *buf)
+handle_reply (GIOPRecvBuffer *buf, gboolean process_now)
 {
 	GList                 *l;
 	gboolean               error;
@@ -980,25 +997,34 @@ handle_reply (GIOPRecvBuffer *buf)
 
 			dprintf (ERRORS, "We received a bogus reply\n");
 
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 			giop_recv_buffer_unuse (buf);
 			return TRUE;
 		}
-
+		
+		ent_lock (ent);
 		ent->buffer = buf;
-#ifdef ORBIT_THREADED
-		pthread_cond_signal (&ent->condvar);
-#else
-		if (ent->u.unthreaded.cb)
-			giop_queued_messages = g_list_delete_link (
-				giop_queued_messages, l);
 
-		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+		if (giop_threaded () && !process_now) {
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+			ent_unlock (ent);
 
-		if (ent->u.unthreaded.cb) {
-			ent->u.unthreaded.cb (ent);
-			giop_recv_buffer_unuse (buf);
+			giop_thread_push_recv (ent);
+
+		} else {
+			if (ent->async_cb)
+				giop_queued_messages = g_list_delete_link (
+					giop_queued_messages, l);
+
+			LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+			ent_unlock (ent);
+
+			if (ent->async_cb) {
+				ent->async_cb (ent);
+				giop_recv_buffer_unuse (buf);
+			}
 		}
-#endif
+
 	} else {
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
@@ -1091,7 +1117,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	GIOPRecvBuffer *buf;
 	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 
-	g_object_ref ((GObject *) cnx);
+	linc_object_ref (cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
 
 	do {
@@ -1107,14 +1133,14 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 		if (n == 0) { /* We'll be back */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
-			g_object_unref ((GObject *) cnx);
+			linc_object_unref (cnx);
 			return TRUE;
 		}
 
 		if (n < 0 || !buf->left_to_read) { /* HUP */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
-			g_object_unref ((GObject *) cnx);
+			linc_object_unref (cnx);
 			return TRUE;
 		}
 
@@ -1194,13 +1220,14 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	switch (buf->msg.header.message_type) {
 	case GIOP_REPLY:
 	case GIOP_LOCATEREPLY:
-		if (handle_reply (buf)) /* dodgy inbound data, pull the cnx */
+		dprintf (MESSAGES, "handling reply\n");
+		if (handle_reply (buf, FALSE)) /* dodgy inbound data, pull the cnx */
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 		break;
 
 	case GIOP_REQUEST:
+		dprintf (MESSAGES, "handling request\n");
 		ORBit_handle_request (cnx->orb_data, buf);
-		giop_recv_buffer_unuse (buf);
 		break;
 
 	case GIOP_CANCELREQUEST:
@@ -1212,6 +1239,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		break;
 
 	case GIOP_CLOSECONNECTION:
+		dprintf (MESSAGES, "received close connection\n");
 		giop_recv_buffer_unuse (buf);
 		linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 		break;
@@ -1226,7 +1254,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	}
 
  frag_out:	
-	g_object_unref ((GObject *) cnx);
+	linc_object_unref (cnx);
 
 	return TRUE;
 
@@ -1244,7 +1272,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	 * messages more graciously XXX */
 	linc_connection_state_changed (LINC_CONNECTION (cnx),
 				       LINC_DISCONNECTED);
-	g_object_unref ((GObject *) cnx);
+	linc_object_unref (cnx);
 
 	return TRUE;
 }
@@ -1261,4 +1289,73 @@ giop_recv_buffer_use_buf (void)
 	buf->left_to_read = 12;
 
 	return buf;
+}
+
+
+/*
+ * This thread handles all input when in threaded mode.
+ */
+gpointer
+giop_recv_thread_fn (gpointer data)
+{
+	linc_main_loop_run ();
+
+	/* FIXME: need to be able to quit without waiting ... */
+
+	/* Asked to quit - so ...
+	 * a) stop accepting inputs [ kill servers ]
+	 * b) flush outgoing queued data etc. (oneways)
+	 * c) unref all leakable resources.
+	 */
+
+	/* a) - needs re-structuring of cnx creation */
+	giop_connections_shutdown ();
+	
+
+	return NULL;
+}
+
+gboolean
+giop_recv_handle_queued_input (void)
+{
+	gboolean handled = FALSE;
+	GIOPThread *tdata = giop_thread_self ();
+
+	dprintf (MESSAGES, "handle queued input\n");
+
+	for (;;) {
+		GIOPRecvBuffer *buf;
+
+		LINC_MUTEX_LOCK (tdata->lock); /* ent_lock */
+		if (tdata->recv_buffers) {
+			buf = tdata->recv_buffers->data;
+			tdata->recv_buffers = g_slist_delete_link (
+				tdata->recv_buffers, tdata->recv_buffers);
+		} else
+			buf = NULL;
+		LINC_MUTEX_UNLOCK (tdata->lock); /* ent_unlock */
+		
+		if (!buf)
+			return handled;
+
+		handled = TRUE;
+		
+		/* rather similar to giop_connection_handle_input */
+		switch (buf->msg.header.message_type) {
+		case GIOP_REPLY:
+		case GIOP_LOCATEREPLY:
+			if (handle_reply (buf, TRUE))
+				g_error ("Reply failed on 2nd validation, "
+					 "but not first (wierd)");
+			break;
+		case GIOP_REQUEST:
+			g_warning ("Really ought to handle requests");
+			break;
+		default:
+			g_error ("Out of band recv in handling");
+			break;
+		}
+	}
+
+	return handled;
 }

@@ -9,6 +9,7 @@
 #include "../util/orbit-purify.h"
 #include "../orb-core/orbit-debug.h"
 #include "../GIOP/giop-debug.h"
+#include "../GIOP/giop-recv-buffer.h"
 #include "poa-macros.h"
 
 #include "orbit-poa.h"
@@ -222,7 +223,9 @@ static ORBit_POAObject
 ORBit_POA_object_id_lookup (PortableServer_POA             poa,
 			    const PortableServer_ObjectId *oid)
 {
-	return g_hash_table_lookup (poa->oid_to_obj_map, oid);
+	/* FIXME: needs some locking action */
+	return ORBit_RootObject_duplicate (
+		g_hash_table_lookup (poa->oid_to_obj_map, oid));
 }
 
 static void
@@ -283,6 +286,8 @@ ORBit_POA_destroy (PortableServer_POA  poa,
 
 	if (poa->life_flags & (ORBit_LifeF_Deactivating|ORBit_LifeF_Destroying))
 		return FALSE;	/* recursion */
+
+	/* FIXME: this needs some hard-core thread safety work ... */
 
 	poa->life_flags |= ORBit_LifeF_Destroying;
 
@@ -536,7 +541,8 @@ ORBit_POA_set_policies (PortableServer_POA      poa,
 {
 	CORBA_unsigned_long i;
 
-	poa->p_thread              = PortableServer_ORB_CTRL_MODEL;
+	poa->p_thread              = PortableServer_SINGLE_THREAD_MODEL;
+/*	poa->p_thread              = PortableServer_ORB_CTRL_MODEL; */
 	poa->p_lifespan            = PortableServer_TRANSIENT;
 	poa->p_id_uniqueness       = PortableServer_UNIQUE_ID;
 	poa->p_id_assignment       = PortableServer_SYSTEM_ID;
@@ -574,7 +580,7 @@ ORBit_POA_new (CORBA_ORB                  orb,
 	ORBit_RootObject_init ((ORBit_RootObject) poa, &ORBit_POA_epv);
 	/* released in ORBit_POA_destroy */
 	ORBit_RootObject_duplicate (poa);
-
+	
 	ORBit_POA_set_policies (poa, policies, ev);
 	if (ev->_major != CORBA_NO_EXCEPTION) {
 		ORBit_RootObject_release (poa);
@@ -966,7 +972,6 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 	PortableServer_ObjectId             *oid;
 	PortableServer_ClassInfo            *klass;
 	ORBit_IMethod                       *m_data = NULL;
-	ORBitSkeleton                        skel = NULL;
 	ORBitSmallSkeleton                   small_skel = NULL;
 	gpointer                             imp = NULL;
 
@@ -1053,21 +1058,18 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 
 	klass = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant);
 
-	if (klass->relay_call)
-		skel = klass->relay_call (
-			pobj->servant, recv_buffer, &imp);
-
-	if (!skel && klass->small_relay_call)
-		small_skel = klass->small_relay_call (
+	if (klass->impl_finder)
+		small_skel = klass->impl_finder (
 			pobj->servant, opname, (gpointer *)&m_data, &imp);
 
-	if (!skel && !small_skel)
+	/* FIXME: we can only do that in-proc [!] */
+	if (!small_skel)
 		small_skel = get_small_skel_CORBA_Object (
 			pobj->servant, opname,
 			(gpointer *)&m_data, &imp);
 	
-	if ((!small_skel && !skel) || !imp) {
-		if (!imp && (small_skel || skel)) {
+	if (!small_skel || !imp) {
+		if (!imp && small_skel) {
 			tprintf ("'%s' not implemented on %p",
 				 opname, pobj);
 			CORBA_exception_set_system (
@@ -1087,10 +1089,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		goto clean_out;
 	}
 
-	if (skel)
-		skel (pobj->servant, recv_buffer, ev, imp);
-
-	else if (recv_buffer) {
+	if (recv_buffer) {
 		struct ORBit_POA_invoke_data invoke_data;
 
 		invoke_data.small_skel = small_skel;
@@ -1144,14 +1143,66 @@ ORBit_POA_object_key_lookup (PortableServer_POA       poa,
 }
 
 static void
+ORBit_POAObject_invoke_incoming_request (ORBit_POAObject    pobj,
+					 GIOPRecvBuffer    *recv_buffer,
+					 CORBA_Environment *opt_ev)
+{
+	CORBA_Environment real_ev, *ev;
+	
+	if (!opt_ev)
+		CORBA_exception_init ((ev = &real_ev));
+	else
+		ev = opt_ev;
+
+	if (ev->_major == CORBA_NO_EXCEPTION &&
+	    pobj != CORBA_OBJECT_NIL) {
+		CORBA_Identifier opname;
+
+		opname = giop_recv_buffer_get_opname (recv_buffer);
+		ORBit_POAObject_handle_request (pobj, opname, NULL, NULL, 
+						NULL, recv_buffer, ev);
+	}
+
+	ORBit_RootObject_release (pobj);
+
+	if (ev->_major != CORBA_NO_EXCEPTION) {
+		tprintf ("p %d, Method '%p' invoked with exception '%s'",
+			 getpid (), giop_recv_buffer_get_opname (recv_buffer), ev->_id);
+
+		return_exception (recv_buffer, NULL, ev);
+	}
+
+	if (!opt_ev)
+		CORBA_exception_free (ev);
+
+	giop_recv_buffer_unuse (recv_buffer);
+}
+
+typedef struct {
+	ORBit_POAObject pobj;
+	GIOPRecvBuffer *recv_buffer;
+} LocalClosure;
+
+static gboolean
+local_main_handle (gpointer data)
+{
+	LocalClosure *lc = data;
+
+	ORBit_POAObject_invoke_incoming_request (lc->pobj, lc->recv_buffer, NULL);
+
+	g_free (lc);
+
+	return FALSE;
+}
+
+static void
 ORBit_POA_handle_request (PortableServer_POA poa,
 			  GIOPRecvBuffer    *recv_buffer,
 			  ORBit_ObjectKey   *objkey)
 {
-	PortableServer_ObjectId object_id;
 	ORBit_POAObject         pobj;
-	CORBA_Identifier        opname;
 	CORBA_Environment       env;
+	PortableServer_ObjectId object_id;
 
 	CORBA_exception_init (&env);
 
@@ -1175,27 +1226,43 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 			g_assert_not_reached ();
 			break;
 		}
-
+	
 	if (!pobj)
 		CORBA_exception_set_system (
 			&env, ex_CORBA_OBJECT_NOT_EXIST, 
 			CORBA_COMPLETED_NO);
 	else {
-		opname = giop_recv_buffer_get_opname (recv_buffer);
-		
-		ORBit_POAObject_handle_request (pobj, opname, NULL, NULL, 
-						NULL, recv_buffer, &env);
+		if (giop_threaded ()) {
+			switch (poa->p_thread) {
+			case PortableServer_SINGLE_THREAD_MODEL: {
+				/* Utter hack ... */
+				LocalClosure *lc = g_new0 (LocalClosure, 1);
+				lc->pobj = pobj;
+				lc->recv_buffer = recv_buffer;
+				g_idle_add (local_main_handle, lc);
+				break;
+			}
+
+			case PortableServer_ORB_CTRL_MODEL:
+			case PortableServer_THREAD_PER_OBJECT:
+				/* Impl. the above first */
+			case PortableServer_THREAD_PER_REQUEST:
+			case PortableServer_THREAD_PER_POA:
+			case PortableServer_THREAD_PER_CONNECTION:
+				g_warning ("Binning incoming requests in threaded mode");
+				giop_recv_buffer_unuse (recv_buffer);
+				break;
+			default:
+				g_assert_not_reached ();
+				break;
+			}
+			recv_buffer = NULL;
+			pobj = NULL;
+		}
 	}
 
  send_sys_ex:
-	if (env._major != CORBA_NO_EXCEPTION) {
-		tprintf ("p %d, Method '%p' invoked with exception '%s'",
-			 getpid (), giop_recv_buffer_get_opname (recv_buffer), env._id);
-
-		return_exception (recv_buffer, NULL, &env);
-	}
-
-	CORBA_exception_free (&env);
+	ORBit_POAObject_invoke_incoming_request (pobj, recv_buffer, &env);
 }
 
 static PortableServer_Servant
@@ -1671,8 +1738,8 @@ PortableServer_POA_activate_object_with_id (PortableServer_POA             poa,
 					    const PortableServer_Servant   p_servant,
 					    CORBA_Environment             *ev)
 {
+	ORBit_POAObject pobj;
 	PortableServer_ServantBase *servant = p_servant;
-	ORBit_POAObject             newobj;
 
 	poa_sys_exception_if_fail (poa != NULL, ex_CORBA_INV_OBJREF);
 	poa_sys_exception_if_fail (objid != NULL, ex_CORBA_BAD_PARAM);
@@ -1680,26 +1747,29 @@ PortableServer_POA_activate_object_with_id (PortableServer_POA             poa,
 
 	poa_exception_if_fail (IS_RETAIN (poa), ex_PortableServer_POA_WrongPolicy);
 
-	newobj = ORBit_POA_object_id_lookup (poa, objid);
+	pobj = ORBit_POA_object_id_lookup (poa, objid);
 
-	if (newobj && newobj->servant) {
+	if (pobj && pobj->servant)
 		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 				     ex_PortableServer_POA_ObjectAlreadyActive, 
 				     NULL);
-		return;
-	}
 
-	if (IS_UNIQUE_ID (poa) && servant->_private != NULL) {
+	else if (IS_UNIQUE_ID (poa) && servant->_private != NULL)
 		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 				     ex_PortableServer_POA_ServantAlreadyActive,
 				     NULL);
-		return;
+	else {
+		ORBit_POAObject newobj;
+
+		if (!pobj)
+			newobj = ORBit_POA_create_object (poa, objid, ev);
+		else
+			newobj = pobj;
+
+		ORBit_POA_activate_object (poa, newobj, servant, ev);
 	}
 
-	if (!newobj)
-		newobj = ORBit_POA_create_object(poa, objid, ev);
-
-	ORBit_POA_activate_object (poa, newobj, servant, ev);
+	ORBit_RootObject_release (pobj);
 }
 
 void
@@ -1718,6 +1788,8 @@ PortableServer_POA_deactivate_object (PortableServer_POA             poa,
 
 	if (pobj && pobj->servant)
 		ORBit_POA_deactivate_object (poa, pobj, CORBA_TRUE, CORBA_FALSE);
+
+	ORBit_RootObject_release (pobj);
 }
 
 CORBA_Object
@@ -1742,16 +1814,24 @@ PortableServer_POA_create_reference_with_id (PortableServer_POA             poa,
 					     const CORBA_char              *intf,
 					     CORBA_Environment             *ev)
 {
-	ORBit_POAObject	pobj;
+	CORBA_Object obj;
+	ORBit_POAObject	pobj, newobj;
 
 	poa_sys_exception_val_if_fail (poa != NULL, ex_CORBA_INV_OBJREF, NULL);
 	poa_sys_exception_val_if_fail (oid != NULL, ex_CORBA_BAD_PARAM, NULL);
 
 	pobj = ORBit_POA_object_id_lookup (poa, oid);
 	if (!pobj)
-		pobj = ORBit_POA_create_object (poa, oid, ev);
+		newobj = ORBit_POA_create_object (poa, oid, ev);
+	else
+		newobj = CORBA_OBJECT_NIL;
 
-	return ORBit_POA_obj_to_ref (poa, pobj, intf, ev);
+	obj = ORBit_POA_obj_to_ref (poa, pobj, intf, ev);
+
+	if (!newobj)
+		ORBit_RootObject_release (pobj);
+
+	return obj;
 }
 
 PortableServer_ObjectId *
@@ -1932,9 +2012,15 @@ PortableServer_POA_id_to_servant (PortableServer_POA             poa,
 
 	if (IS_RETAIN (poa)) {
 		ORBit_POAObject pobj = ORBit_POA_object_id_lookup (poa, object_id);
+		PortableServer_Servant servant = NULL;
 
 		if (pobj && pobj->servant)
-			return pobj->servant;
+			servant = pobj->servant;
+
+		ORBit_RootObject_release (pobj);
+
+		if (servant)
+			return servant;
 
 	} else if (poa->default_servant)
 		return poa->default_servant;
@@ -1951,6 +2037,7 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 				    const PortableServer_ObjectId *object_id,
 				    CORBA_Environment             *ev)
 {
+	CORBA_Object obj;
 	ORBit_POAObject pobj;
 
 	poa_sys_exception_val_if_fail (poa != NULL, ex_CORBA_INV_OBJREF, NULL);
@@ -1962,11 +2049,14 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 	if (!pobj || !pobj->servant) {
 		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 				     ex_PortableServer_POA_ObjectNotActive, NULL);
-		return CORBA_OBJECT_NIL;
+		obj = CORBA_OBJECT_NIL;
+	} else {
+		if (pobj->base.objref)
+			obj = ORBit_RootObject_duplicate (pobj->base.objref);
+		else
+			obj = ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 	}
-
-	if (pobj->base.objref)
-		return ORBit_RootObject_duplicate (pobj->base.objref);
-
-	return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
+	ORBit_RootObject_release (pobj);
+	
+	return obj;
 }

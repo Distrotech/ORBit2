@@ -15,10 +15,14 @@ ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
 	int adaptor_id;
 	CORBA_long *tptr;
 
-	adaptor_id = orb->adaptors->len;
+	LINC_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	{
+		adaptor_id = orb->adaptors->len;
 
-	g_ptr_array_set_size (orb->adaptors, adaptor_id + 1);
-	g_ptr_array_index    (orb->adaptors, adaptor_id) = adaptor;
+		g_ptr_array_set_size (orb->adaptors, adaptor_id + 1);
+		g_ptr_array_index    (orb->adaptors, adaptor_id) = adaptor;
+	}
+	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	adaptor->adaptor_key._length  = ORBIT_ADAPTOR_PREFIX_LEN;
 	adaptor->adaptor_key._buffer  =
@@ -51,12 +55,18 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 	if (adaptorId < 0 || adaptorId >= orb->adaptors->len)
 		return NULL;
 
-	adaptor = g_ptr_array_index (orb->adaptors, adaptorId);
+	LINC_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	{
+		adaptor = g_ptr_array_index (orb->adaptors, adaptorId);
 
-	if (memcmp (objkey->_buffer,
-		    adaptor->adaptor_key._buffer,
-	            ORBIT_ADAPTOR_PREFIX_LEN))
-		return NULL;
+		if (memcmp (objkey->_buffer,
+			    adaptor->adaptor_key._buffer,
+			    ORBIT_ADAPTOR_PREFIX_LEN))
+			adaptor = NULL;
+		else
+			ORBit_RootObject_duplicate_T (adaptor);
+	}
+	LINC_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
 	return adaptor;
 }
@@ -93,6 +103,8 @@ ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 
 		adaptor->handle_request (adaptor, recv_buffer, objkey);
 	}
+
+	ORBit_RootObject_release (adaptor);
 }
 
 void

@@ -1,5 +1,13 @@
 TODO:
 
+* Threading 
+	ST mode: - push all into the main thread ...
+	Otherwise: queue per thread: 'RecvBuffer, pobj', etc.
+		All types: POA, Obj, Connection need a queue
+	=> bin that for now; setup the 'Request' type, impl. THREAD_PER_OBJECT.
+
+
+
 * linc/ORBit2 tmpdir issue for Unix sockets, test.sh must not
   rm -Rf /tmp/foo
 
