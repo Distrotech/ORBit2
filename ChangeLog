@@ -1,3 +1,15 @@
+2001-08-07  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-policy.c
+	(ORBit_Policy_release): impl.
+	(ORBit_Policy_new): ref the policy.
+	(CORBA_Policy_destroy): unref the policy.
+
+	* include/orbit/orb-core/corba-policy-type.h: killed
+	CORBA_Policy_t, POLICY_CAST_OUT, POLICY_CAST_IN.
+
+	* src/orb/poa/poa.c(ORBit_POA_setup_root): cleaned up.
+
 2001-08-07  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-trace.c
