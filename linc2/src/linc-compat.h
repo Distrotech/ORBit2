@@ -6,45 +6,91 @@
 #ifndef LINK_HACKS_H
 #define LINK_HACKS_H
 
+#ifdef HAVE_WINSOCK2_H
+#  include <winsock2.h>
+#else
+#  ifdef HAVE_SYS_SOCKET_H
+#    include <sys/socket.h>
+#  endif
+#  ifdef HAVE_NETINET_IN_H
+#    include <netinet/in.h>
+#  endif
+#  ifdef HAVE_NETDB_H
+#    include <netdb.h>
+#  endif
+#  ifdef HAVE_NETINET_TCP_H
+#    include <netinet/tcp.h>
+#  endif
+#  ifdef HAVE_SYS_UN_H
+#    include <sys/un.h>
+#  endif
+#  ifdef HAVE_ARPA_INET_H
+#    include <arpa/inet.h>
+#  endif
+#  ifdef HAVE_ARPA_NAMESER_H
+#    include <arpa/nameser.h>
+#  endif
+#  ifdef HAVE_RESOLV_H
+#    include <resolv.h>
+#  endif
+#endif
+
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <time.h>
-#include <utime.h>
+#ifdef HAVE_UTIME_H
+#  include <utime.h>
+#endif
 #include <errno.h>
 #include <string.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
 #ifdef HAVE_LINUX_IRDA_H
-#include <asm/types.h>
-#include <linux/irda.h>
+#  include <asm/types.h>
+#  include <linux/irda.h>
 #endif
 
-#include <arpa/inet.h>
-#ifdef HAVE_ARPA_NAMESER_H
-#include <arpa/nameser.h>
+#ifndef MAXHOSTNAMELEN
+#  define MAXHOSTNAMELEN 255
 #endif
-#ifdef HAVE_RESOLV_H
-#include <resolv.h>
+
+#ifdef HAVE_WINSOCK2_H
+   /* Define fake errno values for socket stuff. These aren't defined
+    * in the Microsoft C library. Use the WSAE* error codes as such,
+    * as they don't overlap with errno values. Define only those that
+    * actually are used by the linc2 code.
+    */
+#  ifndef ECONNREFUSED
+#    define ECONNREFUSED WSAECONNREFUSED
+#  endif
+#  ifndef EADDRINUSE
+#    define EADDRINUSE WSAEADDRINUSE
+#  endif
+#  ifndef EINPROGRESS
+#    define EINPROGRESS WSAEINPROGRESS
+#  endif
+
+   /* Undefine address families that aren't really present, as the
+    * linc code checks for these macros being defined when it
+    * determines whether they are supported. (It would be more correct
+    * to check at run-time.)
+    */
+#  undef AF_UNIX		/* No Unix domain sockets */
+#  undef AF_INET6		/* Doesn't have sockaddr_in6 */
+
+void linc_map_winsock_error_to_errno (void);
+
+int  linc_socketpair (int *handles);
+
 #endif
 
 #if !defined (NI_MAXSERV) || !defined (NI_MAXHOST)
-#  include <netdb.h>
 #  include <sys/param.h>
 #endif
 
@@ -66,5 +112,7 @@
 #else
 #  define LINK_UNIX_PATH_MAX UNIX_PATH_MAX
 #endif
+
+const char *linc_strerror (int);
 
 #endif /* LINK_HACKS_H */

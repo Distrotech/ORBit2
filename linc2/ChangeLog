@@ -3,6 +3,14 @@
 	* include/linc/linc-connection.h
 	* include/linc/linc-protocol.h: Restructure includes for Win32.
 
+	* src/linc-compat.c: New file, Win32 portability functions.
+
+	* src/linc-compat.h: Win32 additions, restructuring.
+
+	* src/Makefile.am (bin_PROGRAMS): Don't build linc-cleanup-sockets
+	on Win32, where there are no Unix domain sockets to clean up. Add
+	linc-compat.c
+
 2004-09-27  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c
