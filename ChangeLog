@@ -1,3 +1,8 @@
+1999-1-2  Raffaele Sena <raff@aromatic.com> via Russell Nelson <nelson@crynwr.com>
+
+	* Some compilers (e.g. ARM gcc) align structures even if
+	composed of only characters.  Declare the structure packed.
+
 1998-12-14  Federico Mena Quintero  <federico@nuclecu.unam.mx>
 
 	* test/Makefile.am (EXTRA_DIST): Added test-ir.idl to EXTRA_DIST.
