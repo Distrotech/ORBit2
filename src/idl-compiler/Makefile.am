@@ -14,9 +14,9 @@ INCLUDES =							\
 	$(DISABLE_DEPRECATED_CFLAGS)				\
 	$(ORBIT_IDL_CFLAGS)
 
-orbit_idl_2_LDADD =                          \
-	-lpopt -lm                           \
-	$(ORBIT_IDL_LIBS)
+orbit_idl_2_LDADD =                     \
+	$(ORBIT_IDL_LIBS)               \
+	-lpopt -lm
 
 orbit_idl_2_SOURCES =			\
 	orbit-idl-main.c		\

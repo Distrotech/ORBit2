@@ -1,3 +1,7 @@
+2004-10-19  Paolo Borelli  <pborelli@katamail.com>
+
+	* src/idl-compiler/Makefile.am: fix linking, patch by Jimmy Do.
+
 2004-10-02  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* src/orb/orb-core/corba-env.c (CORBA_exception_set): Before
