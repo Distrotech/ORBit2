@@ -1,4 +1,9 @@
 2002-06-18  Murray Cumming  <murrayc@usa.net>
+	
+	* src/orb/orb-core/corba-orb.c: make CORBA_Typecode_allocate
+	non-static again.
+	
+2002-06-18  Murray Cumming  <murrayc@usa.net>
 
 	* Restored the -lc++ command-line argument, lost during the merge.
 
