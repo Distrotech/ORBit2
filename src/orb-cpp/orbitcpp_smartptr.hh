@@ -36,6 +36,7 @@
 #include "orbitcpp_types.hh"
 #include "orbitcpp_tools.hh"
 
+
 namespace CORBA {
 	class Object;
 }
@@ -654,20 +655,14 @@ namespace _orbitcpp {
 			return m_data[index];
 	  	}
 
-#if 0
-		operator const T_slice *() const {
+
+#if !(defined(__GNUC__) && (__GNUC__ >= 3))
+		operator T_slice*& () {
 			return m_data;
 		}
 		
-/*
-  // GCC spews warnings if we include this
-		operator T_slice const *() const {
+		operator T_slice* const& () const {
 			return m_data;
-		}
-*/
-
-		operator T_slice *&() {
-			return out();
 		}
 #endif
 		
