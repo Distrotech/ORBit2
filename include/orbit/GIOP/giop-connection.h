@@ -50,7 +50,7 @@ void            giop_connection_set_orb_n_ver (GIOPConnection       *cnx,
 					       gpointer              orb_data,
 					       GIOPVersion           version);
 					       
-void            giop_connection_remove_by_orb (gpointer              match_orb_data);
+void            giop_connections_shutdown     (void);
 void            giop_connection_close         (GIOPConnection       *cnx);
 void            giop_connection_unref         (GIOPConnection       *cnx);
 

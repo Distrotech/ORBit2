@@ -400,7 +400,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 	GIOPRecvBuffer *recv_buffer;
 	CORBA_ORB       orb = obj->orb;
 
-	recv_buffer = giop_recv_buffer_get (mqe, TRUE);
+	recv_buffer = giop_recv_buffer_get (mqe);
 	if (!recv_buffer) {
 		dprintf (MESSAGES, "No recv buffer ...\n");
 		return MARSHAL_SYS_EXCEPTION_INCOMPLETE;
@@ -1076,7 +1076,7 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 	CORBA_exception_init (ev);
 
 	/* So we don't get invoked again */
-	aqe->mqe.u.unthreaded.cb = NULL;
+	aqe->mqe.async_cb = NULL;
 
 	if (!aqe->mqe.cnx ||
 	    aqe->mqe.cnx->parent.status == LINC_DISCONNECTED)

@@ -1,3 +1,126 @@
+2003-02-10  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop.c (wakeup_mainloop): spew
+	errors on error.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): add more helpful
+	messages.
+
+	* configure.in: make the "can't link" message more
+	generally helpful.
+
+2003-01-26  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (wait_till_done):
+	split out, and add thread safe path.
+
+	* src/orb/poa/poa.c (ORBit_POA_handle_request):
+	free the recv buffer if we've handled it
+	immediately in this thread.
+	(ORBit_POA_object_id_lookup): return a ref.
+	(PortableServer_POA_create_reference_with_id),
+	(PortableServer_POA_activate_object_with_id),
+	(PortableServer_POA_id_to_reference),
+	(PortableServer_POA_id_to_servant): tool up
+	with matching releases.
+	(ORBit_POA_handle_request): hold the pobj
+	during the scope.
+	(ORBit_POA_set_policies): init threading type
+	to STM by default.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): let
+	ORBit_handle_request free the recv buffer when
+	convenient.
+
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_adaptor_find): dup the returned ref,
+	and hold lifecycle lock over orb->adaptors
+	manipulation.
+	(ORBit_handle_request): release the ref.
+	(ORBit_adaptor_setup): hold lifecycle lock
+	over adaptor setup.
+
+2002-11-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_list_lookup),
+	(giop_connection_initiate),
+	(giop_connections_shutdown): use linc_object_[un]ref.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): ditto.
+	
+2002-10-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_ORB_start_servers): lock the ORB
+	while setting up the profiles.
+	(ORBit_ORB_shutdown_servers): guard with
+	locks.
+
+	* src/orb/GIOP/giop.c (giop_shutdown): impl.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_remove_by_orb): rename to
+	(giop_connections_shutdown): this & upd.
+	(giop_connection_unref): use linc_object_unref.
+	
+	* src/orb/GIOP/giop.c (giop_init): 
+	actually start the IO thread ;-)
+
+2002-10-31  Michael Meeks  <michael@ximian.com>
+
+	* test/echo-client-t.c (main): init mt orb.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_destroy_queue_entry): kill
+	bogus thread stuff.
+	(handle_reply): queue up reply recv's on
+	the right thread for processing elsewhere.
+	(giop_recv_buffer_get): kill unused non-blocking
+	mode, substantially re-write.
+	(giop_recv_list_zap): use locking.
+
+	* src/orb/GIOP/giop.c
+	(giop_thread_push_recv): impl.
+
+2002-10-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_setup_queue_entry_async),
+	(giop_recv_list_setup_queue_entry): upd.
+	(giop_connection_handle_input): upd.
+
+	* include/orbit/GIOP/giop-recv-buffer.h
+	(GIOPMessageQueueEntry): bin bogus thread bits,
+	add thread id.
+
+	* src/orb/GIOP/giop.c (giop_init): pass threaded,
+	setup main thread / context wakeup.
+	(giop_thread_new, giop_thread_self): impl.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): check for orbit-local-mt-orb
+	profile.
+
+2003-01-26  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/server.c (main),
+	* test/everything/client.c (main): add --threaded
+	option to enable threading.
+
+2002-12-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/poa.c (ORBit_POAObject_handle_request): upd.
+
+	* include/orbit/poa/poa-types.h: make the first
+	element a 'dummy' - reflecting reality.
+
+	* include/orbit/poa/poa-basics.h: bin the old
+	relay_call. Rename the impl_finder.
+
 2003-01-09  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_create_struct_tc),

@@ -59,6 +59,9 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 
 struct CORBA_ORB_type {
 	struct ORBit_RootObject_struct  root_object;
+
+	GMutex                         *lock;
+
 	GIOPVersion                     default_giop_version;
 
 	GSList                         *servers;

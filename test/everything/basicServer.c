@@ -53,7 +53,7 @@ BasicServer_opString (PortableServer_Servant   servant,
 {
 	g_assert (!strcmp (inArg, constants_STRING_IN));
 	g_assert (!strcmp (*inoutArg, constants_STRING_INOUT_IN));
-  
+
 	CORBA_free (*inoutArg);
 	*inoutArg = CORBA_string_dup (constants_STRING_INOUT_OUT);
 	*outArg = CORBA_string_dup (constants_STRING_OUT);

@@ -471,6 +471,8 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 	CORBA_Environment *ev = &real_ev;
 	ORBit_IInterfaces *interfaces = NULL;
 	gboolean           gen_imodule = FALSE;
+	gboolean           threaded = FALSE;
+	const char        *orb_name;
 	int                i;
 
 /*	g_mem_set_vtable (glib_mem_profiler_table); */
@@ -479,16 +481,20 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 
 	CORBA_exception_init(&real_ev);
 
-	/* Initialize threads first - so we get a threaded ORB */
-	if (!g_thread_supported ())
-		g_thread_init (NULL);
-
-	global_orb = CORBA_ORB_init (&argc, argv, "", ev);
-	g_assert (ev->_major == CORBA_NO_EXCEPTION);
-
-	for (i = 0; i < argc; i++)
+	for (i = 0; i < argc; i++) {
 		if (!strcmp (argv [i], "--gen-imodule"))
 			gen_imodule = TRUE;
+		if (!strcmp (argv [i], "--threaded"))
+			threaded = TRUE;
+	}
+
+	if (threaded)
+		orb_name = "orbit-local-mt-orb";
+	else
+		orb_name = "orbit-local-orb";
+
+	global_orb = CORBA_ORB_init (&argc, argv, orb_name, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	if (gen_imodule) {
 		interfaces = ORBit_iinterfaces_from_file (TEST_SRCDIR "/everything.idl", NULL, NULL);

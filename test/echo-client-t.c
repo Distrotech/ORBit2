@@ -64,10 +64,7 @@ main (int argc, char *argv[])
 
 	CORBA_exception_init ((ev = &real_ev));
 
-	/* Tell linc we want a threaded ORB */
-	linc_set_threaded (TRUE);
-
-	orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", ev);
+	orb = CORBA_ORB_init (&argc, argv, "orbit-local-mt-orb", ev);
 
 	if (argc < 2) {
 		g_error ("Syntax: %s <server IOR> [<niters> [<nthreads>] ]\n",

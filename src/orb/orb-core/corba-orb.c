@@ -42,6 +42,13 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 	LINCProtocolInfo     *info;
 	LINCConnectionOptions create_options = 0;
 
+	LINC_MUTEX_LOCK (orb->lock);
+	
+	if (orb->servers) { /* beaten to it */
+		LINC_MUTEX_UNLOCK (orb->lock);
+		return;
+	}
+
 	if (orbit_local_only)
 		create_options |= LINC_CONNECTION_LOCAL_ONLY;
 
@@ -82,17 +89,25 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 	}
 
 	orb->profiles = IOP_start_profiles (orb);
+
+	LINC_MUTEX_UNLOCK (orb->lock);
 }
 
 static void
 ORBit_ORB_shutdown_servers (CORBA_ORB orb)
 {
+	LINC_MUTEX_LOCK (orb->lock);
+
 	IOP_shutdown_profiles (orb->profiles);
 	orb->profiles = NULL;
 
+	if (giop_threaded ())
+		g_warning ("FIXME: this needs delaying till worker thread exit");
 	g_slist_foreach (orb->servers, (GFunc) g_object_unref, NULL);
 	g_slist_free (orb->servers); 
 	orb->servers = NULL;
+
+	LINC_MUTEX_UNLOCK (orb->lock);
 }
 
 static ORBitGenUidType
@@ -225,6 +240,7 @@ CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORBid orb_identifier,
 		CORBA_Environment *ev)
 {
+	gboolean threaded;
 	CORBA_ORB retval;
 	static ORBit_RootObject_Interface orb_if = {
 		ORBIT_ROT_ORB,
@@ -239,6 +255,9 @@ CORBA_ORB_init (int *argc, char **argv,
 	/* the allocation code uses the bottom bit of any pointer */
 	g_assert (ORBIT_ALIGNOF_CORBA_DOUBLE > 2);
 
+	threaded = (orb_identifier &&
+		    strstr (orb_identifier, "orbit-local-mt-orb") != NULL);
+
 	ORBit_option_parse (argc, argv, orbit_supported_options);
 
 #ifdef G_ENABLE_DEBUG
@@ -247,7 +266,8 @@ CORBA_ORB_init (int *argc, char **argv,
 
 	genuid_init ();
 	
-	giop_init (orbit_use_ipv4 || orbit_use_ipv6 ||
+	giop_init (threaded,
+		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
 
 	ORBit_locks_initialize ();
@@ -257,6 +277,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_RootObject_init (&retval->root_object, &orb_if);
 	/* released by CORBA_ORB_destroy */
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
+	_ORBit_orb->lock = linc_mutex_new ();
 	g_atexit (shutdown_orb);
 
 	retval->default_giop_version = GIOP_LATEST;
@@ -943,9 +964,7 @@ CORBA_ORB_shutdown (CORBA_ORB           orb,
 
 	ORBit_ORB_shutdown_servers (orb);
 
-	giop_connection_remove_by_orb (orb);
-
-	g_main_loop_quit (linc_loop);
+	giop_shutdown ();
 }
 
 void
