@@ -608,6 +608,9 @@ ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   if(!tree) return;
 
+  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
+	return;
+
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:
     ch_output_poa(IDL_MODULE(tree).definition_list, rinfo, ci);
@@ -706,6 +709,7 @@ static void
 ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   if(!tree) return;
+
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:
@@ -842,6 +846,9 @@ static void
 ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   if(!tree) return;
+
+  if ( tree->declspec & IDLF_DECLSPEC_PIDL )
+	return;
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:
