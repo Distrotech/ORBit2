@@ -564,7 +564,7 @@ ORBit_object_to_corbaloc (CORBA_Object       obj,
 
         if (!obj) {
                 dprintf (OBJECTS, "Corbaloc NIL object\n");
-                return g_strdup ("corbaloc::/");
+                return CORBA_string_dup ("corbaloc::/");
         }
 
         OBJECT_LOCK (obj);
@@ -598,6 +598,9 @@ ORBit_object_by_corbaloc  (CORBA_ORB          orb,
         g_return_val_if_fail (orb!=NULL,      CORBA_OBJECT_NIL);
         g_return_val_if_fail (corbaloc!=NULL, CORBA_OBJECT_NIL);
         g_return_val_if_fail (ev!=NULL,       CORBA_OBJECT_NIL);
+
+	if (!strncmp (corbaloc, "corbaloc::/", 1 + strlen ("corbaloc::/")))
+		return CORBA_OBJECT_NIL;  
 
         if (!(profile_list = ORBit_corbaloc_parse (corbaloc)))  {
                 CORBA_exception_set_system (

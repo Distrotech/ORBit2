@@ -1,3 +1,16 @@
+2003-08-19  Frank Rehberger  <Frank.Rehberger@xtradyne.de>
+
+	* src/orb/orb-core/corba-loc.c (ORBit_corbaloc_from): encode
+	giop-version in corbaloc
+	
+	* src/orb/orb-core/corba-object.c (ORBit_object_to_corbaloc):
+	representation for empty object reference
+	(ORBit_object_by_corbaloc): accept corbaloc representation for
+	empty object
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_object_to_string): if
+	corbaloc fails, fallback to common marshalling
+
 2003-08-11  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.7.6

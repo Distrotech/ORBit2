@@ -303,10 +303,6 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 		
 	g_return_val_if_fail (corbaloc,        NULL);
 
-
-	if (!strncmp (corbaloc, "corbaloc::/", 1 + strlen ("corbaloc::/")))
-		return CORBA_OBJECT_NIL;
-
 	if (!strchr (corbaloc, '/'))   /* any object key ? */
 		goto ret_error;  
 
@@ -420,6 +416,18 @@ get_ssl_component (GSList *components)
 	return NULL;
 }
 	
+static gchar* 
+giop_version_str (GIOPVersion ver) {
+	static gchar  *str[] = {"1.0", "1.1", "1.2"};
+
+	g_return_val_if_fail (ver == GIOP_1_0 || 
+			      ver == GIOP_1_1 || 
+			      ver == GIOP_1_2,
+			      str [2]);
+
+	return str [ver];
+}
+ 
 CORBA_char*
 ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 {
@@ -427,7 +435,7 @@ ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 	GString         *str;
 	GSList          *cur;
 	gboolean         first_profile;
-	
+
 	if (!as_corbaloc (profile_list))
 		return NULL;
 
@@ -452,12 +460,14 @@ ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 			if ((ssl_info = get_ssl_component (iiop->components))) {
 				g_assert (ssl_info->port != 0);
 
-				g_string_append_printf (str, "ssliop:%s:%d/",
+				g_string_append_printf (str, "ssliop:%s@%s:%d/",
+						        giop_version_str (iiop->iiop_version),
 							iiop->host, 
 							ssl_info->port);
 
 			} else
-				g_string_append_printf (str, "iiop:%s:%d/",
+				g_string_append_printf (str, "iiop:%s@%s:%d/",
+						        giop_version_str (iiop->iiop_version),
 							iiop->host, 
 							iiop->port);
 
