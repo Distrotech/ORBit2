@@ -1,10 +1,11 @@
 2002-08-23  Elliot Lee  <sopwith@redhat.com>
 
-	* src/linc-protocols.c: Don't turn on IPv6 name resolution when we
-	are trying to resolve an IPv4 host name - instead, turn it off. Also
-	try to make use of all addresses that gethostbyname returns, not
-	just the first. (Fixes a bug with connecting to a host that
-	has both IPv6 and IPv4 addresses.)
+	* src/linc-protocols.c (linc_protocol_get_sockaddr_ipv4): Don't
+	turn on IPv6 name resolution when we are trying to resolve an IPv4
+	host name - instead, turn it off. Also try to make use of all
+	addresses that gethostbyname returns, not just the first. (Fixes a
+	bug with connecting to a host that has both IPv6 and IPv4
+	addresses.)
 
 2002-08-23  Michael Meeks  <michael@ximian.com>
 
