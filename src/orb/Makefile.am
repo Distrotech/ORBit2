@@ -1,4 +1,4 @@
-SUBDIRS=util GIOP orb-core poa dynamic
+SUBDIRS=orb-core util GIOP poa dynamic
 
 lib_LTLIBRARIES=libORBit.la
 

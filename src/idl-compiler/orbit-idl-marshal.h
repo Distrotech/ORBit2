@@ -9,7 +9,7 @@ typedef enum { MARSHAL_INLINE=1<<0, MARSHAL_FUNC=1<<1, MARSHAL_ANY=1<<2,
 #define INLINE_SIZE_THRESHOLD 5
 
 typedef struct {
-  OIDL_Marshal_Method mtype, dmtype;
+  OIDL_Marshal_Method mtype, dmtype, avail_mtype, avail_dmtype;
   int use_count;
   int size;
   IDL_tree tree;

@@ -5,7 +5,6 @@
 #define ORBIT_SSL_SUPPORT LINC_SSL_SUPPORT
 
 #include <orbit/GIOP/giop-types.h>
-#include <orbit/GIOP/giop-msg-buffer.h>
 #include <orbit/GIOP/giop-send-buffer.h>
 #include <orbit/GIOP/giop-recv-buffer.h>
 #include <orbit/GIOP/giop-connection.h>

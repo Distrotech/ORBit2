@@ -25,7 +25,7 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
 
   fprintf(ci->fh, "#include <glib.h>\n");
   fprintf(ci->fh, "#define ORBIT_IDL_SERIAL %d\n", ORBIT_CONFIG_SERIAL);
-  fprintf(ci->fh, "#include <orbit/orbit.h>\n\n");
+  fprintf(ci->fh, "#include <orbit/orbit-types.h>\n\n");
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "extern \"C\" {\n");
@@ -56,6 +56,10 @@ orbit_idl_output_c_headers(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");
   fprintf(ci->fh, "#endif /* __cplusplus */\n\n");
+
+  fprintf(ci->fh, "#ifndef EXCLUDE_ORBIT_H\n");
+  fprintf(ci->fh, "#include <orbit/orbit.h>\n\n");
+  fprintf(ci->fh, "#endif /* EXCLUDE_ORBIT_H */\n");
 
   fprintf(ci->fh, "#endif\n");
 
@@ -926,19 +930,25 @@ print_marshal_funcs(gpointer key, gpointer value, gpointer data)
 
   ctmp = orbit_cbe_get_typespec_str(tree);
 
-  if(tmi->mtype & MARSHAL_FUNC)
+  if ( ci->do_impl_hack ) {
+      fprintf(ci->fh, "#if !defined(MARSHAL_IMPL_%s_0)\n", ctmp);
+      orbit_cbe_id_define_hack(ci->fh, "MARSHAL_IMPL", ctmp, ci->c_base_name);
+  }
+  if(tmi->avail_mtype & MARSHAL_FUNC)
     {
       fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
       orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
       fprintf(ci->fh, " _ORBIT_val, CORBA_Environment *ev);\n");
     }
 
-  if(tmi->dmtype & MARSHAL_FUNC)
+  if(tmi->avail_dmtype & MARSHAL_FUNC)
     {
       fprintf(ci->fh, "gboolean %s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
       orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
       fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev);\n");
     }
+  if ( ci->do_impl_hack )
+      fprintf(ci->fh, "#endif\n");
 
   g_free(ctmp);
 }

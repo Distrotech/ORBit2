@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <orbit/orbit.h>
 
 static void
@@ -29,17 +30,21 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
 
   ORBit_RootObject_init((ORBit_RootObject)retval, &orb_if);
 
+  retval->default_giop_version = GIOP_LATEST;
+
   for(info = linc_protocol_all(); info->name; info++)
     {
       GIOPServer *server;
 
-      server = giop_server_new(info->name, NULL, NULL, 0);
+      server = giop_server_new(retval->default_giop_version,
+			       info->name, NULL, NULL, 0);
       if(server)
 	{
 	  retval->servers = g_list_prepend(retval->servers, server);
 	  if(!(info->flags & LINC_PROTOCOL_SECURE))
 	    {
-	      server = giop_server_new(info->name, NULL, NULL, LINC_CONNECTION_SSL);
+	      server = giop_server_new(retval->default_giop_version, info->name,
+				       NULL, NULL, LINC_CONNECTION_SSL);
 	      if(server)
 		retval->servers = g_list_prepend(retval->servers, server);
 	    }
@@ -56,6 +61,11 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
 			   const CORBA_Object obj,
 			   CORBA_Environment * ev)
 {
+  GIOPSendBuffer *buf;
+  CORBA_octet endianness = GIOP_FLAG_ENDIANNESS;
+  CORBA_char *out;
+  int i, j, k;
+
   g_return_val_if_fail(ev, NULL);
 
   if(!obj
@@ -68,7 +78,33 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
       return NULL;
     }
 
-  return NULL;
+  buf = giop_send_buffer_use(_obj->default_giop_version);
+  buf->header_size = 0;
+  g_assert(buf->num_used == 1);
+  buf->num_used = 0; /* we don't want the header in there */
+  giop_send_buffer_append(buf, &endianness, 1);
+  ORBit_marshal_object(buf, obj);
+  out = CORBA_string_alloc(4 + (buf->msg.header.message_size * 2) + 1);
+
+  strcpy(out, "IOR:");
+  k = 4;
+  for(i = 0; i < buf->num_used; i++)
+    {
+      struct iovec *curvec = &buf->iovecs[i];
+      guchar *ptr = curvec->iov_base;
+
+      for(j = 0; j < curvec->iov_len; j++, ptr++)
+	{
+	  int n1 = (*ptr & 0xF0) >> 4, n2 = (*ptr & 0xF);
+	  out[k++] = num2hexdigit(n1);
+	  out[k++] = num2hexdigit(n2);
+	}
+    }
+  out[k++] = '\0';
+  
+  giop_send_buffer_unuse(buf);
+
+  return out;
 }
 
 CORBA_Object
@@ -76,7 +112,39 @@ ORBA_ORB_string_to_object(CORBA_ORB _obj,
 			  const CORBA_char * str,
 			  CORBA_Environment * ev)
 {
-  return CORBA_OBJECT_NIL;
+  CORBA_Object retval;
+  GIOPRecvBuffer *buf;
+  CORBA_unsigned_long len;
+  int i;
+
+  if(!strncmp(str, "IOR:", 4))
+    /* XXX raise ex_CORBA_MARSHAL */
+    return CORBA_OBJECT_NIL;
+
+  str += 4;
+  len = strlen(str);
+  while(len > 0 && !isxdigit(str[len-1])) len--;
+  if(len % 2)
+    /* XXX raise ex_CORBA_MARSHAL */
+    return CORBA_OBJECT_NIL;
+  buf = giop_recv_buffer_use_encaps(g_alloca(len / 2), len / 2);
+  
+  buf->msg.header.flags = *(buf->cur++);
+
+#define HEXDIGIT(c) (isdigit((guchar)(c))?(c)-'0':tolower((guchar)(c))-'a'+10)
+#define HEXOCTET(a,b) ((HEXDIGIT((a)) << 4) | HEXDIGIT((b)))
+
+  for(i = 0; i < len; i += 2)
+    buf->message_body[i/2] = HEXOCTET(str[i],str[i+1]);
+  
+  if(!ORBit_demarshal_object(&retval, buf, _obj))
+    {
+      /* XXX raise ex_CORBA_MARSHAL */
+      retval = CORBA_OBJECT_NIL;
+    }
+  giop_recv_buffer_unuse(buf);
+
+  return retval;
 }
 
 void

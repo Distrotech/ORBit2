@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include <orbit/orbit-config.h>
-#include <orbit/GIOP/giop-types.h>
+#include <orbit/GIOP/giop.h>
 #include <linc/linc.h>
 
 void giop_send_buffer_init(void);

@@ -1,6 +1,5 @@
 #include "config.h"
-#include <orbit/GIOP/giop-server.h>
-#include <orbit/GIOP/giop-connection.h>
+#include <orbit/GIOP/giop.h>
 
 static void giop_server_init       (GIOPServer      *server);
 static void giop_server_class_init (GIOPServerClass *klass);
@@ -50,11 +49,14 @@ giop_server_class_init (GIOPServerClass *klass)
 }
 
 GIOPServer *
-giop_server_new(const char *proto_name, const char *local_host_info, const char *local_serv_info,
+giop_server_new(GIOPVersion giop_version,
+		const char *proto_name, const char *local_host_info,
+		const char *local_serv_info,
 		LINCConnectionOptions create_options)
 {
   GIOPServer *server = (GIOPServer *)g_object_new(giop_server_get_type(), NULL);
 
+  server->giop_version = giop_version;
   if(!linc_server_setup((LINCServer *)server, proto_name, local_host_info, local_serv_info,
 			create_options))
     {
@@ -68,8 +70,9 @@ static LINCConnection *
 giop_server_handle_create_connection(LINCServer *server)
 {
   GIOPConnection *retval = g_object_new(giop_connection_get_type(), NULL);
+  GIOPServer *gserver = (GIOPServer *)server;
 
-  retval->giop_version = GIOP_LATEST;
+  retval->giop_version = gserver->giop_version;
 
   return (LINCConnection *)retval;
 }

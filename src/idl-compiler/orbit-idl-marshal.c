@@ -22,6 +22,8 @@ decide_tmi(gpointer key, gpointer value, gpointer data)
   OIDL_Type_Marshal_Info *tmi = value;
   int i, n;
 
+  tmi->mtype = tmi->avail_mtype;
+  tmi->dmtype = tmi->avail_dmtype;
   if(tmi->use_count > 1)
     {
       tmi->mtype &= ~MARSHAL_INLINE;
@@ -64,7 +66,7 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
   OIDL_Type_Marshal_Info *tmi = NULL;
   gint add_size = 0;
   gint retval = 1;
-  IDL_tree realnode = node;
+  IDL_tree realnode = node, ttmp;
 
   if(!node)
     return 0;
@@ -109,8 +111,8 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
       if(!tmi)
 	{
 	  tmi = g_new0(OIDL_Type_Marshal_Info, 1);
-	  tmi->mtype = mtype;
-	  tmi->dmtype = dmtype;
+	  tmi->avail_mtype = mtype;
+	  tmi->avail_dmtype = dmtype;
 	  tmi->tree = node;
 	  g_hash_table_insert(ctxt->type_marshal_info, realnode, tmi);
 	}
@@ -134,7 +136,11 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
     case IDLN_TYPE_UNION:
       add_size = 1; /* Overhead for the switch() */
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_UNION(node).switch_type_spec, count_add, FALSE);
-      add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_UNION(node).switch_body, count_add, FALSE);
+      for(ttmp = IDL_TYPE_UNION(node).switch_body; ttmp; ttmp = IDL_LIST(ttmp).next)
+	{
+	  add_size += oidl_marshal_type_info(ctxt, IDL_CASE_STMT(IDL_LIST(ttmp).data).element_spec,
+					     count_add, FALSE);
+	}
       break;
     case IDLN_TYPE_STRUCT:
       add_size += oidl_marshal_type_info(ctxt, IDL_TYPE_STRUCT(node).member_list, count_add, FALSE);
@@ -234,9 +240,20 @@ oidl_marshal_context_populate(OIDL_Marshal_Context *ctxt, IDL_tree node)
       oidl_marshal_context_populate(ctxt, IDL_MODULE(node).definition_list);
       break;
 
+    case IDLN_TYPE_DCL:
+    case IDLN_TYPE_STRUCT:
+    case IDLN_TYPE_UNION:
+      oidl_marshal_type_info(ctxt, node, 0, FALSE);
+
     default:
       break;
     }
+}
+
+static int
+idl_type_normalize(int type)
+{
+  return type;
 }
 
 static IDL_tree
@@ -282,7 +299,8 @@ idl_tree_equal(gconstpointer k1, gconstpointer k2)
   t1 = idl_tree_normalize(t1);
   t2 = idl_tree_normalize(t2);
 
-  if(IDL_NODE_TYPE(t1) != IDL_NODE_TYPE(t2))
+  if(idl_type_normalize(IDL_NODE_TYPE(t1))
+     != idl_type_normalize(IDL_NODE_TYPE(t2)))
     return FALSE;
 
   switch(IDL_NODE_TYPE(t1))
@@ -300,20 +318,23 @@ idl_tree_equal(gconstpointer k1, gconstpointer k2)
     case IDLN_TYPE_CHAR:
     case IDLN_TYPE_WIDE_CHAR:
     case IDLN_TYPE_WIDE_STRING:
+    case IDLN_TYPE_ENUM:
       return TRUE;
       break;
 
     case IDLN_TYPE_FLOAT:
+      return (IDL_TYPE_FLOAT(t1).f_type == IDL_TYPE_FLOAT(t2).f_type);
       break;
 
     case IDLN_TYPE_INTEGER:
+      return (IDL_TYPE_INTEGER(t1).f_type == IDL_TYPE_INTEGER(t2).f_type);
       break;
 
     default:
       break;
     }
 
-  return (k1 == k2);
+  return (t1 == t2);
 }
 
 OIDL_Marshal_Context *

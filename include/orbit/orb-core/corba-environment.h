@@ -9,5 +9,8 @@ CORBA_char *CORBA_exception_id(CORBA_Environment *ev);
 void *CORBA_exception_value(CORBA_Environment *ev);
 void CORBA_exception_free(CORBA_Environment *ev);
 CORBA_any *CORBA_exception_as_any(CORBA_Environment *ev);
+void CORBA_exception_set_system(CORBA_Environment *ev,
+				CORBA_char *except_repos_id,
+				CORBA_completion_status completed);
 
 #endif

@@ -29,8 +29,8 @@ struct _GIOPConnection {
 
   gpointer orb_data;
 
-  guint incoming_tag;
   GIOPVersion giop_version;
+  guint incoming_tag;
 };
 
 typedef struct {

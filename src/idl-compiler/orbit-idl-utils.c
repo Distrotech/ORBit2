@@ -1009,7 +1009,7 @@ orbit_cbe_get_typespec(IDL_tree node)
     return orbit_cbe_get_typespec(IDL_get_parent_node(node, IDLN_ANY, NULL));
     break;
   default:
-    g_warning("Unhandled node type %s!", IDL_tree_type_names[IDL_NODE_TYPE(node)]);
+    g_error("Unhandled node type %s!", IDL_tree_type_names[IDL_NODE_TYPE(node)]);
     return NULL;
   }
 }

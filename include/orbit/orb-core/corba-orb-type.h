@@ -34,6 +34,7 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 
 struct CORBA_ORB_type {
   struct ORBit_RootObject_struct root_object;
+  GIOPVersion default_giop_version;
 
   GList *servers;
   GPtrArray *poas;

@@ -5,14 +5,18 @@
 typedef gpointer ORBit_POAObject;
 
 typedef struct {
+  IOP_ProfileId profile_type;
+  gpointer data;
+} IOP_Profile_info;
+
+typedef struct {
+  IOP_Profile_info profile;
   CORBA_octet iiop_major, iiop_minor;
 
-  IOP_ProfileId profile_type;
-  
   CORBA_sequence_octet object_key;
   struct { CORBA_unsigned_long _length; char _buffer[1]; } *object_key_data;
   struct iovec object_key_vec;
-} IOP_Profile_info;
+} IOP_AddressProfile_info;
 
 struct CORBA_Object_type {
   struct ORBit_RootObject_struct parent;
