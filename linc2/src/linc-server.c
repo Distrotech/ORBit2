@@ -107,8 +107,8 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 	LINCServerClass *klass;
 	struct sockaddr *saddr;
 	int              addrlen, fd;
-	char             hnbuf   [NI_MAXHOST];
-	char             servbuf [NI_MAXSERV];
+	char            *hostname;
+	char            *service;
 	
 	g_return_val_if_fail (connection != NULL, FALSE);
 
@@ -116,14 +116,10 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 	saddr = g_alloca (addrlen);
 
 	fd = accept (server->fd, saddr, &addrlen);
-
 	if (fd < 0)
 		return FALSE; /* error */
 
-	if (linc_getnameinfo (saddr, server->proto->addr_len,
-			      hnbuf, sizeof (hnbuf),
-			      servbuf, sizeof (servbuf),
-			      NI_NUMERICSERV)) {
+	if (!linc_protocol_get_sockinfo (server->proto, saddr, &hostname, &service)) {
 		close (fd);
 		return FALSE;
 	}
@@ -136,11 +132,15 @@ linc_server_accept_connection (LINCServer *server, LINCConnection **connection)
 	g_return_val_if_fail (*connection != NULL, FALSE);
 
 	if (!linc_connection_from_fd (
-		*connection, fd, server->proto, hnbuf, servbuf,
+		*connection, fd, server->proto, hostname, service,
 		FALSE, LINC_CONNECTED, server->create_options)) {
 
 		g_object_unref (G_OBJECT (*connection));
 		*connection = NULL;
+
+		g_free (hostname);
+		g_free (service);
+
 		return FALSE;
 	}
 
@@ -202,7 +202,7 @@ linc_server_setup (LINCServer            *cnx,
 	struct sockaddr        *saddr;
 	socklen_t               saddr_len;
 	char                    hnbuf[NI_MAXHOST];
-	char                    servbuf[256];
+	char                   *service, *hostname;
 
 #if !LINC_SSL_SUPPORT
 	if (create_options & LINC_CONNECTION_SSL)
@@ -288,19 +288,6 @@ linc_server_setup (LINCServer            *cnx,
 		perror ("listen failed");
 #endif
 
-	if (linc_getnameinfo (saddr, saddr_len, hnbuf, 
-			      sizeof (hnbuf), servbuf, sizeof (servbuf), 
-			      NI_NUMERICSERV)) {
-
-		g_free (saddr);
-#ifdef DEBUG
-		fprintf (stderr, "linc_getnameinfo '%s' failed.\n", servbuf);
-#endif
-		return FALSE;
-	}
-
-	g_free (saddr);
-
 	if (n) {
 		close(fd);
 #ifdef DEBUG
@@ -308,6 +295,17 @@ linc_server_setup (LINCServer            *cnx,
 #endif
 		return FALSE;
 	}
+
+	if (!linc_protocol_get_sockinfo (proto, saddr, &hostname, &service)) {
+
+		g_free (saddr);
+#ifdef DEBUG
+		fprintf (stderr, "linc_getsockinfo failed.\n");
+#endif
+		return FALSE;
+	}
+
+	g_free (saddr);
 
 	cnx->proto = proto;
 	cnx->fd = fd;
@@ -326,8 +324,8 @@ linc_server_setup (LINCServer            *cnx,
 	}
 
 	cnx->create_options = create_options;
-	cnx->local_host_info = g_strdup (hnbuf);
-	cnx->local_serv_info = g_strdup (servbuf);
+	cnx->local_host_info = hostname;
+	cnx->local_serv_info = service;
 
 	return TRUE;
 }

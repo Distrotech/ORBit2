@@ -161,8 +161,8 @@ linc_connection_real_state_changed (LINCConnection      *cnx,
 gboolean
 linc_connection_from_fd (LINCConnection *cnx, int fd,
 			 const LINCProtocolInfo *proto,
-			 const char *remote_host_info,
-			 const char *remote_serv_info,
+			 char *remote_host_info,
+			 char *remote_serv_info,
 			 gboolean was_initiated,
 			 LINCConnectionStatus status,
 			 LINCConnectionOptions options)
@@ -171,8 +171,8 @@ linc_connection_from_fd (LINCConnection *cnx, int fd,
   cnx->gioc = g_io_channel_unix_new (fd);
   cnx->was_initiated = was_initiated;
   cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
-  cnx->remote_host_info = g_strdup(remote_host_info);
-  cnx->remote_serv_info = g_strdup(remote_serv_info);
+  cnx->remote_host_info = remote_host_info;
+  cnx->remote_serv_info = remote_serv_info;
   cnx->options = options;
 
   if(proto->setup)
@@ -233,9 +233,10 @@ linc_connection_initiate (LINCConnection        *cnx,
 		goto out;
 
 	retval = linc_connection_from_fd (
-				cnx, fd, proto, remote_host_info, 
-				remote_serv_info, TRUE, 
-				rv ? LINC_CONNECTING : LINC_CONNECTED,
+				cnx, fd, proto, 
+				g_strdup (remote_host_info),
+				g_strdup (remote_serv_info),
+				TRUE, rv ? LINC_CONNECTING : LINC_CONNECTED,
 				options);
 
  out:
