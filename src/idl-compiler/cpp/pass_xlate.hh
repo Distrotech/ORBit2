@@ -92,9 +92,12 @@ protected:
 	void struct_create_typedefs   (const IDLStruct &strct);
 	void struct_create_any        (const IDLStruct &strct);
 
-	void union_create_internal (const IDLUnion &un);
-	void union_create_discr    (const IDLUnion &un);
-	void union_create_members  (const IDLUnion &un);
+	void union_create_internal   (const IDLUnion &un);
+	void union_create_discr      (const IDLUnion &un);
+	void union_create_members    (const IDLUnion &un);
+	void union_create_converters (const IDLUnion &un);
+	void union_create_typedefs   (const IDLUnion &un);
+	void union_create_any        (const IDLUnion &un);
 
 	void exception_create_members      (const IDLException &ex);
 	void exception_create_constructors (const IDLException &ex);
@@ -153,26 +156,23 @@ public:
 	void run();
 };
 
-class IDLWriteStructAnyFuncs : public IDLWriteAnyFuncs
+class IDLWriteCompoundAnyFuncs : public IDLWriteAnyFuncs
 {
 	IDLElement const & m_element;
 public:
-	IDLWriteStructAnyFuncs (const IDLStruct  &_struct,
-				IDLCompilerState &state,
-				IDLOutputPass    &pass);
-#if 0
-	IDLWriteStructAnyFuncs (const IDLUnion   &_union,
-				IDLCompilerState &state,
-				IDLOutputPass    &pass);
-#endif
+	IDLWriteCompoundAnyFuncs (const IDLStruct  &_struct,
+				  IDLCompilerState &state,
+				  IDLOutputPass    &pass);
+	
+	IDLWriteCompoundAnyFuncs (const IDLUnion   &_union,
+				  IDLCompilerState &state,
+				  IDLOutputPass    &pass);
 
 	void run();
 };
 
-
-#if 0 //!!!
-typedef IDLWriteUnionAnyFuncs IDLWriteStructAnyFuncs;
-#endif
+typedef IDLWriteCompoundAnyFuncs IDLWriteStructAnyFuncs;
+typedef IDLWriteCompoundAnyFuncs IDLWriteUnionAnyFuncs;
 
 class IDLWriteExceptionAnyFuncs : public IDLWriteAnyFuncs
 {

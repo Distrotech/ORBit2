@@ -1,3 +1,12 @@
+2002-07-21  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/types/IDLUnion.cc: Implemented IN
+	parameters (both skels and stubs). Bonobomm can now be compiled
+	without any manual fidgeting!
+
+	* src/idl-compiler/cpp/pass_xlate.cc (union_create_members): wrote
+	packer and unpacker
+
 2002-07-20  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/types/IDLString.cc (typedef_decl_write):

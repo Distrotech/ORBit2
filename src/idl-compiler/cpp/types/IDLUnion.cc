@@ -66,10 +66,24 @@ IDLUnion::stub_decl_arg_get (const string     &cpp_id,
 			     IDL_param_attr    direction,
 			     const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::stub_decl_arg_get" << endl;
-	return get_cpp_typename () + " " + cpp_id;
+	string cpp_typename = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+	string retval;
 	
-#warning "WRITE ME"
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		retval = "const " + cpp_typename + " &" + cpp_id;
+		break;
+	case IDL_PARAM_INOUT:
+		retval = cpp_typename + " &" + cpp_id;
+		break;
+	case IDL_PARAM_OUT:
+		retval = cpp_typename + "_out " + cpp_id;
+		break;
+	}
+
+	return retval;
 }
 
 void
@@ -79,9 +93,16 @@ IDLUnion::stub_impl_arg_pre (ostream          &ostr,
 			     IDL_param_attr    direction,
 			     const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::stub_impl_arg_pre" << endl;
-
 #warning "WRITE ME"
+	
+	if (direction != IDL_PARAM_IN)
+		cerr << "IDLUnion::stub_impl_arg_pre: only IN parameters are handled" << endl;
+
+	const string c_type = active_typedef ?
+		active_typedef->get_c_typename () : get_c_typename ();
+	
+	ostr << indent << c_type << " *_c_" << cpp_id
+	     << " = " << cpp_id << "._orbitcpp_pack ();" << endl;
 }
 	
 string
@@ -89,22 +110,27 @@ IDLUnion::stub_impl_arg_call (const string     &cpp_id,
 			      IDL_param_attr    direction,
 			      const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::stub_impl_arg_call" << endl;
-	return cpp_id;
-	
 #warning "WRITE ME"
+	
+	if (direction != IDL_PARAM_IN)
+		cerr << "IDLUnion::stub_impl_arg_call: only IN parameters are handled" << endl;
+
+	return "_c_" + cpp_id;
 }
 	
 void
 IDLUnion::stub_impl_arg_post (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &cpp_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::stub_impl_arg_post" << endl;
-
 #warning "WRITE ME"
+	
+	if (direction != IDL_PARAM_IN)
+		cerr << "IDLUnion::stub_impl_arg_post: only IN parameters are handled" << endl;
+
+	ostr << indent << "CORBA_free (_c_" << cpp_id << ");" << endl;
 }
 
 
@@ -126,17 +152,17 @@ IDLUnion::stub_impl_ret_pre (ostream &ostr,
 
 void
 IDLUnion::stub_impl_ret_call (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &c_call_expression,
-			    const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const string     &c_call_expression,
+			      const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
 
 void
 IDLUnion::stub_impl_ret_post (ostream          &ostr,
-			    Indent           &indent,
-			    const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -146,51 +172,72 @@ IDLUnion::stub_impl_ret_post (ostream          &ostr,
 
 string
 IDLUnion::skel_decl_arg_get (const string     &c_id,
-			   IDL_param_attr    direction,
-			   const IDLTypedef *active_typedef) const
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::skel_decl_arg_get" << endl;
+	string c_typename = active_typedef ?
+		active_typedef->get_c_typename () : get_c_typename ();
+	string retval;
+	
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		retval = "const " + c_typename + " *" + c_id;
+		break;
+	case IDL_PARAM_INOUT:
+		retval = c_typename + " *" + c_id;
+		break;
+	case IDL_PARAM_OUT:
+		retval = c_typename + " **" + c_id;
+		break;
+	}
 
-	return "const " + get_c_typename () + "* " + c_id;
-	
-	
-#warning "WRITE ME"
+	return retval;
 }
 
 void
 IDLUnion::skel_impl_arg_pre (ostream          &ostr,
-			   Indent           &indent,
-			   const string     &c_id,
-			   IDL_param_attr    direction,
-			   const IDLTypedef *active_typedef) const
+			     Indent           &indent,
+			     const string     &c_id,
+			     IDL_param_attr    direction,
+			     const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::skel_impl_arg_pre" << endl;
-
 #warning "WRITE ME"
+	
+	if (direction != IDL_PARAM_IN)
+		cerr << "IDLUnion::skel_impl_arg_pre: only IN parameters are handled" << endl;
+
+	const string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+	
+	ostr << indent << cpp_type << " _cpp_" << c_id
+	     << " (*" << c_id << ");" << endl;
 }
 	
 string
 IDLUnion::skel_impl_arg_call (const string     &c_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::skel_impl_arg_call" << endl;
-
-	return c_id;
-	
 #warning "WRITE ME"
+	
+	if (direction != IDL_PARAM_IN)
+		cerr << "IDLUnion::skel_impl_arg_call: only IN parameters are handled" << endl;
+
+	return "_cpp_" + c_id;
 }
 	
 void
 IDLUnion::skel_impl_arg_post (ostream          &ostr,
-			    Indent           &indent,
-			    const string     &c_id,
-			    IDL_param_attr    direction,
-			    const IDLTypedef *active_typedef) const
+			      Indent           &indent,
+			      const string     &c_id,
+			      IDL_param_attr    direction,
+			      const IDLTypedef *active_typedef) const
 {
-	cerr << "IDLUnion::skel_impl_arg_pre" << endl;
-
 #warning "WRITE ME"
+	
+	if (direction != IDL_PARAM_IN)
+		cerr << "IDLUnion::skel_impl_arg_post: only IN parameters are handled" << endl;
 }
 
 

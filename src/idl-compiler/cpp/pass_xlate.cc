@@ -260,9 +260,9 @@ void IDLPassXlate::struct_create_typedefs (const IDLStruct &strct)
 			 << strct.get_cpp_identifier () << "_out;"
 			 << endl;
 	} else {
-		string data_prefix = IDL_IMPL_NS "::Data";
-		string data_var = data_prefix + "_var< " + strct.get_cpp_identifier () + ">";
-		string data_out = data_prefix + "_out< " + strct.get_cpp_identifier () + ">";
+		const string data_prefix = IDL_IMPL_NS "::Data";
+		const string data_var = data_prefix + "_var< " + strct.get_cpp_identifier () + ">";
+		const string data_out = data_prefix + "_out< " + strct.get_cpp_identifier () + ">";
 		
 		m_header << indent << "typedef " << data_var << " "
 			 << strct.get_cpp_identifier () << "_var;"
@@ -313,79 +313,12 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope)
 	// Create member accessors
 	union_create_members (un);
 
+	// Create converters
+	union_create_converters (un);
+	
 	m_header << --indent << "};" << endl << endl;
 	
 #if 0
-	m_header	
-	<< indent << "void _clear_member() {" << endl;
-	m_header	
-	  << ++indent << idlUnion.getNSScopedCTypeName() << "__freekids(&m_target, NULL);  // actually frees the children, but not the union itself" << endl;
-	m_header	
-	<< --indent << "}" << endl << endl;
-
-	m_header
-	<< --indent << "public:" << endl;
-	indent++;
-
-	m_header	
-	<< indent << idlUnion.getCPPIdentifier() << "() {" << endl;
-	m_header
-	<< ++indent << "// This is a hack to ensure that freeing variable length members of a union" << endl
-	<< indent <<   "// allocated on the stack doesn't result in a crash" << endl
-	<< indent << "memset(this, \'\\0\', sizeof(" << idlUnion.getNSScopedCTypeName() << "));" << endl;
-	m_header	
-	<< --indent << "}" << endl << endl;
-
-	m_header	
-	<< indent << "~" << idlUnion.getCPPIdentifier() << "() {" << endl;
-	m_header
-	<< ++indent << "_clear_member();" << endl
-	<< indent << "// 0 the buffer so that CORBA_free (called by operator delete) doesn't free this again" << endl
-	<< indent << "memset(this, \'\\0\', sizeof(" << idlUnion.getNSScopedCTypeName() << "));" << endl;
-	m_header
-	<< --indent << "}" << endl << endl;
-
-
-	m_header	
-	  << indent++ << idlUnion.getCPPIdentifier()
-	  << "("<<idlUnion.getCPPIdentifier() <<" const &u) {" << endl;
-	idlUnion.writeCDeepCopyCode(m_header,indent,"m_target","u.m_target");
-	m_header	
-	<< --indent << "}" << endl << endl;
-
-
-	m_header	
-	<< indent++ << idlUnion.getCPPIdentifier() << " &operator=("<<idlUnion.getCPPIdentifier() <<" const &u) {" << endl;
-	idlUnion.writeCDeepCopyCode(m_header,indent,"m_target","u.m_target");
-	m_header	
-	<< indent << "return *this;" << endl;
-	m_header	
-	<< --indent << "}" << endl << endl;
-
-	
-	const IDLType &desc = idlUnion.getDiscriminatorType();
-	string dcl, typespec;
-	
-	IDLUnion::const_iterator first = idlUnion.begin(),last = idlUnion.end();
-
-	while (first != last) {
-		IDLCaseStmt &casestmt = (IDLCaseStmt &) **first++;
-		IDLMember const &member = casestmt.getMember();
-		const IDLType &type = *member.getType();
-
-		string descVal;
-		if(casestmt.isDefault() == true){
-			descVal = idlUnion.getDefaultDiscriminatorValue();
-		} else {
-			descVal = *(casestmt.labelsBegin());
-		}
-		
-		type.writeUnionAccessors(m_header,indent,member.getCPPIdentifier(),descVal);
-		type.writeUnionModifiers(m_header,indent,member.getCPPIdentifier(),descVal);
-		type.writeUnionReferents(m_header,indent,member.getCPPIdentifier(),descVal);
-		ORBITCPP_MEMCHECK( new IDLWriteCPPSpecCode(type, m_state, *this) );
-	}
-
 	if(idlUnion.hasExplicitDefault() == false){
 		m_header
 		<< indent << "void _default()" << endl
@@ -397,54 +330,21 @@ IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope)
 		m_header	
 		<< --indent << "}" << endl;
 	}
-	
-	if(idlUnion.isVariableLength()) {
-		m_header
-		<< endl
-		<< indent << "void* operator new(size_t)" << endl
-		<< indent++ << "{" << endl
-		<< indent << "return "
-		<< IDL_IMPL_C_NS_NOTUSED
-		<< idlUnion.getQualifiedCIdentifier() << "__alloc();" << endl;
-		m_header
-		<< --indent << "};" << endl << endl;
-		m_header
-		<< indent << "void operator delete(void* c_union)" << endl
-		<< indent++ << "{" << endl
-		<< indent <<  "::CORBA_free(c_union);" << endl;
-		m_header
-		  << --indent << "};" << endl << endl;
-	}
-	
-	m_header
-	  << --indent << "};" << endl << endl;
-
-	if(!idlUnion.isVariableLength()){
-		m_header
-		<< indent << "typedef " << idlUnion.getCPPIdentifier()
-		<< "& " << idlUnion.getCPP_out() << ";" << endl << endl;
-	} else {
-		m_header
-		<< indent << "typedef "IDL_IMPL_NS "::Data_var<"
-		<< idlUnion.getCPPIdentifier() << "> " 
-		<< idlUnion.getCPP_var() <<";" << endl;
-		m_header
-		<< indent << "typedef "IDL_IMPL_NS "::Data_out<"
-		<< idlUnion.getCPPIdentifier() << "> " 
-		<< idlUnion.getCPP_out() <<";" << endl << endl;
-	}
-	
-	m_header
-	<< indent << "const CORBA::TypeCode_ptr _tc_" << idlUnion.getCPPIdentifier() << " = " 
-	<< "(CORBA::TypeCode_ptr)TC_" + idlUnion.getQualifiedCIdentifier() + ";" << endl;
-
-	ORBITCPP_MEMCHECK( new IDLWriteUnionAnyFuncs(idlUnion, m_state, *this) );
 #endif
+
+	// Create smart ptr typedefs
+	union_create_typedefs (un);
+
+	union_create_any (un);
 }
 
 void
 IDLPassXlate::union_create_internal (const IDLUnion &un)
 {
+#warning "WRITE ME"
+	
+	cerr << "union_create_internal: write assignment operators" << endl;
+	
 	// _clear_member
 	m_header << indent << "void _clear_member ();" << endl;
 
@@ -455,9 +355,24 @@ IDLPassXlate::union_create_internal (const IDLUnion &un)
 		 << "&m_target, 0);" << endl;
 	m_module << --mod_indent << "}" << endl << endl;
 
-	// Destructor
 	m_header << --indent << "public: " << endl;
-	m_header << ++indent << "~" << un.get_cpp_identifier ()
+	++indent;
+
+	// Wrapper constructor
+	m_header << indent << "explicit " << un.get_cpp_identifier ()
+		 << "(const " << un.get_c_typename () << " &_c_un);"
+		 << endl << endl;
+
+	m_module << mod_indent << un.get_cpp_method_prefix ()
+		 << "::" << un.get_cpp_identifier ()
+		 << " (const " << un.get_c_typename () << " &_c_un)" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "_orbitcpp_unpack (_c_un);" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	
+	// Destructor
+	m_header << indent << "~" << un.get_cpp_identifier ()
 		 << " ();" << endl << endl;
 	
 	m_module << mod_indent << un.get_cpp_method_prefix ()
@@ -550,6 +465,163 @@ IDLPassXlate::union_create_members (const IDLUnion &un)
 
 		m_module << --mod_indent << "}" << endl << endl;
 	}
+}
+
+void
+IDLPassXlate::union_create_converters (const IDLUnion &un)
+{
+	string c_type = un.get_c_typename ();
+	string method_pref = un.get_cpp_method_prefix ();
+
+	// FIXME: Since we already store an internal C struct, maybe
+	// we could short-circuit all these conversions -- Cactus
+
+	// _orbitcpp_pack that returns a newly allocated C structure on heap
+	m_header << indent << c_type << "* _orbitcpp_pack () const;" << endl;
+
+	m_module << mod_indent << c_type << "* " << method_pref
+		 << "::_orbitcpp_pack () const" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << c_type << " *_c_un = "
+		 << c_type << "__alloc ();" << endl;
+	m_module << mod_indent << "if (!_c_un)" << endl
+		 << ++mod_indent << "throw CORBA::NO_MEMORY ();" << endl << endl;
+	m_module << --mod_indent << "_orbitcpp_pack (*_c_un);" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+	
+	// _orbitcpp_pack that works on an existing C struct
+	m_header << indent << "void _orbitcpp_pack ("
+		 << c_type << " &_c_un) const;" << endl;
+
+	m_module << mod_indent << "void " << method_pref
+		 << "::_orbitcpp_pack (" << c_type << " &_c_un) const" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "_c_un._d = m_target._d;" << endl << endl;
+	m_module << mod_indent << "switch (_d())" << endl
+		 << mod_indent << "{" << endl;
+
+	for (IDLUnion::const_iterator i = un.begin (); i != un.end (); ++i)
+	{
+		const IDLCaseStmt &case_stmt = static_cast<const IDLCaseStmt&> (**i);
+		const IDLMember   &member = case_stmt.get_member ();
+
+		const string member_cpp = member.get_cpp_identifier () + "()";
+		const string member_c = "_c_un._u." + member.get_c_identifier ();
+
+		// Write case branches
+		for (IDLCaseStmt::const_iterator j = case_stmt.labelsBegin ();
+		     j != case_stmt.labelsEnd (); ++j)
+		{
+			m_module << mod_indent << "case " << *j << ":" << endl;
+		}
+		if (case_stmt.isDefault ())
+			m_module << mod_indent << "default:" << endl;
+		
+		// Pack member to C union
+		++mod_indent;
+		member.getType ()->member_pack_to_c (m_module, mod_indent,
+						     member_cpp, member_c);
+		m_module << mod_indent << "break;" << endl;
+		--mod_indent;
+	}
+	
+	m_module << mod_indent << "}" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+
+	
+	// _orbitcpp_unpack for converting a C union back to a C++ one
+	m_header << indent << "void _orbitcpp_unpack (const "
+		 << c_type << " &_c_un);" << endl << endl;
+
+	m_module << mod_indent << "void " << method_pref
+		 << "::_orbitcpp_unpack (const " << c_type << " &_c_un)" << endl
+		 << mod_indent++ << "{" << endl;
+	m_module << mod_indent << "_clear_member ();" << endl;
+	m_module << mod_indent << "m_target._d = _c_un._d;" << endl << endl;
+	
+	// Declare temporary variables
+	for (IDLUnion::const_iterator i = un.begin (); i != un.end (); ++i)
+	{
+		const IDLCaseStmt &case_stmt = static_cast<const IDLCaseStmt&> (**i);
+		const IDLMember   &member = case_stmt.get_member ();
+
+		m_module << mod_indent << member.getType ()->get_cpp_member_typename ()
+			 << " _cpp_" << member.get_cpp_identifier ()
+			 << ";" << endl;
+	}
+	m_module << endl;
+		
+	m_module << mod_indent << "switch (_d())" << endl
+		 << mod_indent << "{" << endl;
+	
+	for (IDLUnion::const_iterator i = un.begin (); i != un.end (); ++i)
+	{
+		const IDLCaseStmt &case_stmt = static_cast<const IDLCaseStmt&> (**i);
+		const IDLMember   &member = case_stmt.get_member ();
+
+		const string member_cpp = "_cpp_" + member.get_cpp_identifier ();
+		const string member_c = "_c_un._u." + member.get_c_identifier ();
+		const string set_cpp = member.get_cpp_identifier () + " (" + member_cpp + ")";
+		
+		// Write case branches
+		for (IDLCaseStmt::const_iterator j = case_stmt.labelsBegin ();
+		     j != case_stmt.labelsEnd (); ++j)
+		{
+			m_module << mod_indent << "case " << *j << ":" << endl;
+		}
+		if (case_stmt.isDefault ())
+			m_module << mod_indent << "default:" << endl;
+
+		// Pack member to C union
+		++mod_indent;
+		member.getType ()->member_unpack_from_c (m_module, mod_indent,
+							 member_cpp, member_c);
+		m_module << mod_indent << set_cpp << ";" << endl;
+		m_module << mod_indent << "break;" << endl;
+		--mod_indent;
+	}
+	
+	m_module << mod_indent << "}" << endl;
+	m_module << --mod_indent << "}" << endl << endl;
+}
+
+void
+IDLPassXlate::union_create_typedefs (const IDLUnion &un)
+{
+	if (un.is_fixed ())
+	{
+		m_header << indent << "typedef "
+			 << un.get_cpp_identifier () << "& "
+			 << un.get_cpp_identifier () << "_out;"
+			 << endl;
+	} else {
+		const string data_prefix = IDL_IMPL_NS "::Data";
+		const string data_var = data_prefix + "_var< " + un.get_cpp_identifier () + ">";
+		const string data_out = data_prefix + "_out< " + un.get_cpp_identifier () + ">";
+		
+		m_header << indent << "typedef " << data_var << " "
+			 << un.get_cpp_identifier () << "_var;"
+			 << endl;
+
+		m_header << indent << "typedef " << data_out << " "
+			 << un.get_cpp_identifier () << "_out;"
+			 << endl;
+	}
+}
+
+void IDLPassXlate::union_create_any (const IDLUnion &un)
+{
+	m_header << indent;
+	if (un.getTopLevelInterface())
+		m_header << "static ";
+	
+	string cpp_typecode = "_tc_" + un.get_c_identifier ();
+	string c_typecode = "TC_" + un.get_c_typename ();
+	
+	m_header << "const CORBA::TypeCode_ptr " << cpp_typecode << " = "
+		 << "(CORBA::TypeCode_ptr)" << c_typecode << ";" << endl;
+
+	ORBITCPP_MEMCHECK (new IDLWriteUnionAnyFuncs (un, m_state, *this));
 }
 
 void 
@@ -1180,24 +1252,22 @@ void IDLWriteEnumAnyFuncs::run()
 }
 
 
-// IDLWriteStructAnyFuncs -------------------------------------------------------
-IDLWriteStructAnyFuncs::IDLWriteStructAnyFuncs (const IDLStruct  &_struct,
-						IDLCompilerState &state,
-						IDLOutputPass    &pass):
+// IDLWriteCompoundAnyFuncs -------------------------------------------------------
+IDLWriteCompoundAnyFuncs::IDLWriteCompoundAnyFuncs (const IDLStruct  &_struct,
+						    IDLCompilerState &state,
+						    IDLOutputPass    &pass):
 	IDLWriteAnyFuncs (state, pass),
 	m_element (_struct)
 {
 }
 
-#if 0 //!!!
-IDLWriteStructAnyFuncs::IDLWriteStructAnyFuncs (const IDLUnion   &_union,
-						IDLCompilerState &state,
-						IDLOutputPass    &pass):
+IDLWriteCompoundAnyFuncs::IDLWriteCompoundAnyFuncs (const IDLUnion   &_union,
+						    IDLCompilerState &state,
+						    IDLOutputPass    &pass):
 	IDLWriteAnyFuncs (state, pass),
 	m_element (_union)
 {
 }
-#endif
 
 void
 IDLWriteStructAnyFuncs::run()
