@@ -1,4 +1,4 @@
-SUBDIRS = everything inhibit
+SUBDIRS = everything inhibit poa
 
 IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 INCLUDES=-I$(top_srcdir)/include \
