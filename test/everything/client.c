@@ -1323,6 +1323,9 @@ main (int argc, char *argv [])
 	CORBA_ORB_destroy (global_orb, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
+	CORBA_Object_release ((CORBA_Object) global_orb, &ev);
+	g_assert (ev._major == CORBA_NO_EXCEPTION);
+
 	CORBA_exception_free (&ev);
 
 	d_print ("All tests passed successfully\n");

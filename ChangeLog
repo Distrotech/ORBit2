@@ -1,3 +1,72 @@
+2001-10-27  Michael Meeks  <michael@ximian.com>
+
+	* test/test-dynany.c (main): shutdown the ORB correctly.
+
+	* test/everything/server.c (TestFactory_segv): use exit
+	instead of a segv - more friendly.
+
+	* test/poa/poatest-basic*.c: include poatest-basic-shell.h
+	create into the global child_poa so we can destroy it later.
+	don't unref the child_poa, leave that to the shell.
+
+	* test/poa/poatest-basic-shell.h: add.
+
+	* test/poa/poatest-basic-shell.c (main): destroy any child
+	poas we have created.
+
+	* src/orb/poa/poa.c (ORBit_POA_new): duplicate the poa we
+	return, one ref is released by 'POA_destroy' and another
+	by CORBA_Object_release.
+	(ORBit_POAObject_handle_request): survive even if the
+	poa manager is dead.
+	(PortableServer_POA_create_POA): remove extra duplicate.
+
+	* src/orb/orbit-init.c (ORBit_init_internals): release the
+	references after set_initial_reference.
+
+	* src/orb/poa/poa.c (ORBit_POA_destroy): remove superstition
+	about the RootPOA entry.
+
+2001-10-26  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_release_fn): don't
+	destroy the initial refs here - some of them are poas and hold
+	refs on the ORB so we never get here ...
+	(ORBit_service_list_free_ref): use locking mode.
+	(CORBA_ORB_destroy): unref the initial_refs here instead,
+	we don't need to explicitely kill the poas ourselves here.
+	(CORBA_ORB_shutdown): destroy the current poa as well.
+
+	* test/everything/client.c (main): release the orb
+	after destroy.
+
+	* test/everything/server.c (main): ditto.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): split out static ORB variable, so
+	we can NULL it on destroy and seek leaks.
+	(CORBA_ORB_destroy): check we are destroying the right
+	thing, NULL the pointer.
+	(CORBA_ORB_release_fn): call ORBit_RootObject_shutdown,
+	to see if we leaked anything.
+
+	* src/orb/orb-core/corba-object.c (ORBit_objref_find):
+	kill deadlock.
+
+	* src/orb/orb-core/orbit-object.c
+	(ORBit_RootObject_duplicate): actualy do some locking !
+	(ORBit_RootObject_duplicate_T): impl.
+	(ORBit_RootObject_release_T): duplicate into
+	(ORBit_RootObject_release): here - for more speed, we
+	gamble that robj->refs == ORBIT_REFCOUNT_STATIC is not
+	a likely intermediate for an incomplete set of a normal
+	ref count: garenteed pretty much.
+	(do_unref): split out the guts, add alive object count.
+	(ORBit_RootObject_init): count live objects if there is
+	no locking.
+	(ORBit_RootObject_shutdown): impl.
+
+
 2001-10-26  Michael Meeks  <michael@ximian.com>
 
 	* docs/FAQ: add a first pass at a FAQ.

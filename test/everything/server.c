@@ -170,8 +170,8 @@ TestFactory_segv (PortableServer_Servant servant,
 		  const CORBA_char      *when,
 		  CORBA_Environment     *ev)
 {
-	/* A very cunning bit of code */
-	*((guchar *) NULL) = 0;
+	/* Emulate a SegV */
+	exit (0);
 
 	return CORBA_string_dup ("I'm dead");
 }
@@ -433,6 +433,9 @@ test_TestFactory_Servant servant;
 	}
 
 	CORBA_ORB_destroy (global_orb, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_Object_release ((CORBA_Object) global_orb, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	
 	CORBA_exception_free (ev);

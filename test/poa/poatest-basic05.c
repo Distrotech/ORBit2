@@ -32,8 +32,7 @@
 
 #include <orbit/orbit.h>
 
-#include "poatest.h"
-#include "poatest-exception.h"
+#include "poatest-basic-shell.h"
 
 void poatest_test_impl (PortableServer_Servant servant, CORBA_Environment *ev) { }
 
@@ -65,7 +64,6 @@ poatest_run (PortableServer_POA        rootpoa,
 	CORBA_Environment        ev;
 	poatest                  poatest_obj;
 	CORBA_PolicyList        *poa_policies;
-	PortableServer_POA       child_poa;
 	PortableServer_ObjectId *objid;
 
 	CORBA_exception_init (&ev);
@@ -189,8 +187,6 @@ poatest_run (PortableServer_POA        rootpoa,
 		POATEST_PRINT_EX ("POAManager_activate : ", &ev);
 		return CORBA_OBJECT_NIL;
 	}
-
-	CORBA_Object_release ((CORBA_Object)child_poa, &ev);
 
 	return poatest_obj;
 }

@@ -603,9 +603,11 @@ main (int argc, char *argv[])
 	d_printf      ("Testing DynStruct...\n");
 	test_struct   (orb, &ev);
 
+	CORBA_ORB_destroy (orb, &ev);
+	CHECK_OK (&ev);
 	CORBA_Object_release ((CORBA_Object) orb, &ev);
 	CHECK_OK (&ev);
-  
+
 	d_printf ("all DynAny tests passed ok.\n");
 
 	return 0;
