@@ -8,7 +8,7 @@ INCLUDES=-I$(top_srcdir)/include \
 	$(GLIB_CFLAGS)
 
 POA_IDLOUT=poa-defs-common.c
-liborb_poa_la_SOURCES=poa.c $(POA_IDLOUT)
+liborb_poa_la_SOURCES=poa.c $(POA_IDLOUT) orbit-poa-export.h orbit-poa.h
 
 BUILT_SOURCES=$(POA_IDLOUT)
 
