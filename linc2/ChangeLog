@@ -1,3 +1,18 @@
+2003-07-09  Michael Meeks  <michael@ximian.com>
+
+	* test/test-linc.c (test_connected): impl.
+
+	* src/linc-connection.c (link_connection_wait_connected):
+	use link_wait, and work for threading cases.
+
+	* src/linc.c (link_wait, link_signal): impl.
+
+2003-07-08  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (link_set_io_thread): move set of
+	(link_exec_set_io_thread): is_io_in_thread to here - so we
+	can't race elsewhere.
+
 2003-06-29  Dave Camp  <dave@ximian.com>
 
 	* src/linc-connection.c (link_connection_broken_idle): Pass

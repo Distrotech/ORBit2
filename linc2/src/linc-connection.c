@@ -33,8 +33,8 @@ enum {
 	BLOCKING,
 	LAST_SIGNAL
 };
-static guint   signals [LAST_SIGNAL];
-static GList  *cnx_list = NULL;
+static guint  signals [LAST_SIGNAL];
+static GList *cnx_list = NULL;
 
 #define CNX_LOCK(cnx)    G_STMT_START { link_lock();   } G_STMT_END
 #define CNX_UNLOCK(cnx)  G_STMT_START { link_unlock(); } G_STMT_END
@@ -235,6 +235,7 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 	klass = (LinkConnectionClass *)G_OBJECT_GET_CLASS (cnx);
 
 	if (klass->state_changed) {
+		link_signal ();
 		CNX_UNLOCK (cnx);
 		klass->state_changed (cnx, status);
 		CNX_LOCK (cnx);
@@ -1252,13 +1253,18 @@ link_connection_disconnect (LinkConnection *cnx)
 LinkConnectionStatus
 link_connection_wait_connected (LinkConnection *cnx)
 {
-	g_return_val_if_fail (!link_thread_safe (),
-			      LINK_CONNECTED);
-	
-	while (cnx && cnx->status == LINK_CONNECTING) 
-		link_main_iteration (TRUE);
+	LinkConnectionStatus status;
 
-	return cnx ? cnx->status : LINK_DISCONNECTED;
+	CNX_LOCK (cnx);
+
+	while (cnx && cnx->status == LINK_CONNECTING)
+		link_wait ();
+
+	status = cnx ? cnx->status : LINK_DISCONNECTED;
+
+	CNX_UNLOCK (cnx);
+
+	return status;
 }
 
 void
