@@ -1,5 +1,7 @@
 lib_LTLIBRARIES=liblinc.la
 
+bin_PROGRAMS = linc-cleanup-sockets
+
 INCLUDES =                         \
 	-I$(top_builddir)/include  \
 	-I$(top_srcdir)/include    \
@@ -23,3 +25,9 @@ liblinc_la_LDFLAGS =                 \
 	$(LINC_LIBS)                 \
 	$(SSL_LIBS)                  \
 	-version-info $(LT_VERSION)
+
+linc_cleanup_sockets_SOURCES = \
+	cleanup.c
+
+linc_cleanup_sockets_LDFLAGS = \
+	$(LINC_LIBS)

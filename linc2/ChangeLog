@@ -1,3 +1,13 @@
+2002-05-21  Michael Meeks  <michael@ximian.com>
+
+	* src/Makefile.am: add linc-cleanup-sockets.
+
+	* src/cleanup.c: add.
+
+	* src/linc-connection.c
+	(linc_connection_writev): make status an int,
+	so we return the enum more pleasantly.
+
 2002-05-20  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.22

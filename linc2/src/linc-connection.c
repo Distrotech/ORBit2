@@ -622,7 +622,7 @@ linc_connection_writev (LINCConnection       *cnx,
 			const LINCWriteOpts  *opt_write_opts)
 {
 	QueuedWrite qw;
-	glong       status;
+	int         status;
 
 	/* FIXME: need an option to turn this off ? */
 	if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
