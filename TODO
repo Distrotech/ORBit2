@@ -1,6 +1,7 @@
 TODO:
 
 * Threading 
+	+ GIOPMessageQueueEntry needs to hold a cnx ref.
 	+ orb->current_invocations needs to be per-thread ...
 	  also, we should push a stack-data pointer.
 	+ Need to emit 'broken' connection - via the listen/unlisten

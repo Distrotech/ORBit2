@@ -382,27 +382,19 @@ typedef enum {
 	MARSHAL_CLEAN
 } DeMarshalRetType;
 
-typedef enum {
-	RECV_BUFFER_RELEASE,
-	RECV_BUFFER_KEEP
-} DeMarshalRecvRelease;
-
 static DeMarshalRetType
 orbit_small_demarshal (CORBA_Object           obj,
 		       GIOPConnection       **cnx,
-		       GIOPMessageQueueEntry *mqe,
+		       GIOPRecvBuffer        *recv_buffer,
 		       CORBA_Environment     *ev,
 		       gpointer               ret,
 		       ORBit_IMethod         *m_data,
-		       gpointer              *args,
-		       DeMarshalRecvRelease   recv_release)
+		       gpointer              *args)
 {
 	gpointer        data, p;
 	CORBA_TypeCode  tc;
-	GIOPRecvBuffer *recv_buffer;
 	CORBA_ORB       orb = obj->orb;
 
-	recv_buffer = giop_recv_buffer_get (mqe);
 	if (!recv_buffer) {
 		dprintf (MESSAGES, "No recv buffer ...\n");
 		return MARSHAL_SYS_EXCEPTION_INCOMPLETE;
@@ -525,9 +517,6 @@ orbit_small_demarshal (CORBA_Object           obj,
 			tprintf (" )");
 	}
 
-	if (recv_release == RECV_BUFFER_RELEASE)
-		giop_recv_buffer_unuse (recv_buffer);
-
 	return MARSHAL_CLEAN;
 
  demarshal_exception:
@@ -543,16 +532,10 @@ orbit_small_demarshal (CORBA_Object           obj,
 		*cnx = ORBit_handle_location_forward (recv_buffer, obj);
 		tprintf (" Exception: forward");
 
-		if (recv_release == RECV_BUFFER_RELEASE)
-			giop_recv_buffer_unuse (recv_buffer);
-
 		return MARSHAL_RETRY;
 	} else {
 		ORBit_handle_exception_array (
 			recv_buffer, ev, &m_data->exceptions, obj->orb);
-
-		if (recv_release == RECV_BUFFER_RELEASE)
-			giop_recv_buffer_unuse (recv_buffer);
 
 #ifdef G_ENABLE_DEBUG
 		if (_orbit_debug_flags & ORBIT_DEBUG_TRACES) {
@@ -595,6 +578,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPConnection         *cnx = NULL;
 	GIOPMessageQueueEntry   mqe;
 	ORBit_OAObject          adaptor_obj;
+	GIOPRecvBuffer         *recv_buffer = NULL;
 
 	if (!obj) {
 		dprintf (MESSAGES, "Cannot invoke method on null object\n");
@@ -639,9 +623,11 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 		goto clean_out;
 	}
 
-	switch (orbit_small_demarshal (obj, &cnx, &mqe, ev,
-				       ret, m_data, args,
-				       RECV_BUFFER_RELEASE))
+	giop_recv_buffer_unuse (recv_buffer);
+	recv_buffer = giop_recv_buffer_get (&mqe);
+
+	switch (orbit_small_demarshal (obj, &cnx, recv_buffer, ev,
+				       ret, m_data, args))
 	{
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		completion_status = CORBA_COMPLETED_YES;
@@ -666,6 +652,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	};
 
  clean_out:
+	giop_recv_buffer_unuse (recv_buffer);
+
 	tprintf_end_method ();
 	if (cnx)
 		linc_object_unref (cnx);
@@ -1049,8 +1037,10 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 			     gpointer             *args,
 			     CORBA_Environment    *ev)
 {
-	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, &aqe->mqe, ev,
-				       ret, aqe->m_data, args, RECV_BUFFER_KEEP)) {
+	g_return_if_fail (aqe->mqe.buffer != NULL);
+
+	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, aqe->mqe.buffer, ev,
+				       ret, aqe->m_data, args)) {
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		aqe->completion_status = CORBA_COMPLETED_YES;
 		dprintf (MESSAGES, "Sys exception completed on id 0x%x\n\n",

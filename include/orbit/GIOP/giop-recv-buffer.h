@@ -75,7 +75,7 @@ gboolean                    giop_connection_handle_input    (LINCConnection *lcn
 void                        giop_connection_destroy_frags   (GIOPConnection *cnx);
 
 gpointer                    giop_recv_thread_fn             (gpointer        data);
-gboolean                    giop_recv_handle_queued_input   (void);
+void                        giop_recv_handle_queued_input   (void);
 
 #endif /* ORBIT2_INTERNAL_API */
 
