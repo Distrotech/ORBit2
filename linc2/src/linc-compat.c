@@ -41,7 +41,7 @@ link_pipe (int *handles)
 {
 #ifndef G_OS_WIN32
 
-  return pipe (nhandles);
+  return pipe (handles);
 
 #else
 
