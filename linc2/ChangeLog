@@ -1,5 +1,9 @@
 2001-11-22  Michael Meeks  <michael@ximian.com>
 
+	* src/linc.c (linc_io_add_watch): remove debug; doh.
+
+2001-11-22  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-connection.c (linc_source_unwatch_out): fix
 	brainless not listening for input.
 

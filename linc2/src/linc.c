@@ -149,12 +149,9 @@ linc_io_add_watch (GIOChannel    *channel,
 
 	/* Linc loop */
 	source = g_io_create_watch (channel, condition);
-	g_warning ("Done Create watch");
 	g_source_set_can_recurse (source, TRUE);
 	g_source_set_callback (source, (GSourceFunc)func, user_data, NULL);
-	g_warning ("Start attach");
 	w->linc_id = g_source_attach (source, linc_context);
-	g_warning ("Done attach");
 	g_source_unref (source);
 
 	/* Main loop */
