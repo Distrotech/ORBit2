@@ -2,6 +2,9 @@
 
 	* src/idl-compiler/cpp/types.cc: Use proper wrapper creation
 	instead of reinterpret_cast
+	* src/idl-compiler/cpp/types.cc (IDLSequence::writeCDeepCopyCode):
+	static_cast the return value of _alloc since _alloc always returns
+	void* 
 
 2002-03-09  Murray Cumming  <murrayc@usa.net>
 
