@@ -1,3 +1,9 @@
+2003-07-28  Frank Rehberger  <frehberg@localhost.localdomain>
+
+	* src/orb/orb-core/corba-orb.c (ORBit_initial_references_by_user):
+	protect initial references "RootPOA" and "POACurrent" from being
+	set by user
+
 2003-07-25  Dan Winship  <danw@ximian.com>
 
 	* src/idl-compiler/orbit-idl-main.c (main): Don't print version

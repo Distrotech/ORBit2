@@ -253,6 +253,14 @@ shutdown_orb (void)
 	CORBA_exception_free (&ev);
 }
 
+static
+gboolean
+ORBit_initial_reference_protected_id (gchar* id)
+{
+        return (!strncmp (id, "RootPOA", strlen("RootPOA")) ||
+                !strncmp (id, "POACurrent", strlen("POACurrent")));
+}
+  
 static void 
 ORBit_initial_references_by_user (CORBA_ORB          orb, 
 				  gchar             *naming_ref,
@@ -298,8 +306,13 @@ ORBit_initial_references_by_user (CORBA_ORB          orb,
 			g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
 				   tuple->key, tuple->value);
 			CORBA_exception_free (ev);
-		} else
-			ORBit_set_initial_reference (orb, tuple->key, objref);
+		}  else if (ORBit_initial_reference_protected_id(tuple->key)) {
+                        g_warning ("Option ORBInitRef permission denied: %s=%s",
+
+                                   tuple->key, tuple->value);
+                } else {
+                        ORBit_set_initial_reference (orb, tuple->key, objref);
+                }
 	}
 
 }
