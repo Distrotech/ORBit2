@@ -1,8 +1,18 @@
 2001-11-12  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-recv-buffer.c (handle_reply):
+	dump unexpected system exceptions silently.
+
+	* test/everything/client.c (testMisc): add ops. on
+	a deactivated object.
+
+2001-11-12  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/poa/poa.c (ORBit_POAObject_handle_request):
 	only free exceptions iff we're not in proc, we
 	need to return them otherwise.
+
+2001-11-12  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-server.c (giop_server_new):
 	always pass non blocking flag.
