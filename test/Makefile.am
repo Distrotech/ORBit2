@@ -15,13 +15,15 @@ noinst_PROGRAMS=test1 \
 	echo-client echo-client-t echo-server \
 	empty-client empty-server \
 	test-any-client test-any-server \
-	test-dynany test-mem test-performance test-giop
+	test-dynany test-mem test-performance test-giop test-corbaloc
 
 TESTS = test-dynany test-mem test-performance test-giop
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
 test_mem_SOURCES=test-mem.c
+
+test_corbaloc_SOURCES = test-corbaloc.c
 
 test_performance_SOURCES = 	\
 	test-performance.c	\
