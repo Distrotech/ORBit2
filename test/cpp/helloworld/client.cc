@@ -21,7 +21,7 @@ main(int argc, char *argv[])
   	  hellomodule::Hello_var ptr = hellomodule::Hello::_narrow(obj);
 
   	  const char* message = "Hello server, from client!";
-  	  const char* reply = ptr->helloWorld(message);
+  	  CORBA::String_var reply = ptr->helloWorld(message);
 
   	  std::cout << "Client: Reply was \"" << reply << "\"" << std::endl;
     }
