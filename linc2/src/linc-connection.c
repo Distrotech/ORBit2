@@ -103,8 +103,11 @@ queue_signal_T (LINCConnection *cnx,
 		if (new_size == 0 ||
 		    (old_size < (cnx->priv->max_buffer_bytes >> 1) &&
 		     new_size >= (cnx->priv->max_buffer_bytes >> 1)) ||
-		    new_size >= cnx->priv->max_buffer_bytes)
+		    new_size >= cnx->priv->max_buffer_bytes) {
+			CNX_UNLOCK (cnx);
 			g_signal_emit (cnx, signals [BLOCKING], 0, new_size);
+			CNX_LOCK (cnx);
+		}
 	}
 
 	if (cnx->priv->max_buffer_bytes &&
@@ -276,9 +279,11 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		linc_source_remove (cnx);
 		linc_close_fd (cnx);
 		/* don't free pending queue - we could get re-connected */
-		if (changed)
-			g_signal_emit (G_OBJECT (cnx),
-				       signals [BROKEN], 0);
+		if (changed) {
+			CNX_UNLOCK (cnx);
+			g_signal_emit (cnx, signals [BROKEN], 0);
+			CNX_LOCK (cnx);
+		}
 		break;
 	}
 }

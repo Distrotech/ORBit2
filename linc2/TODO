@@ -6,6 +6,8 @@
 	  calls linc_main_iteration / linc_main_loop_run
 	  from the main thread [ ... ]
 	+ and/or screw people using the 'linc_*' apis ...
+	+ deprecate linc_io_add_watch ...
+	  linc_main_get_loop etc.
 
 Incoming foo
 	+ need to treat the poll atomically,
