@@ -7,7 +7,8 @@ G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API
 
-GIOPConnection *ORBit_object_get_connection (CORBA_Object    obj);
+GIOPConnection *ORBit_object_get_connection  (CORBA_Object    obj);
+GIOPConnection *ORBit_object_peek_connection (CORBA_Object   obj);
 
 
 void            ORBit_marshal_object        (GIOPSendBuffer *buf,

@@ -1,3 +1,26 @@
+2004-08-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_destroy_queue_entry): unref the
+	ent's connection without the message queue lock
+	held.
+
+	* test/everything/client.c: bin stderr printfs
+	during thread tests, to avoid unhelpful rescheduling.
+	
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_unlisten_for_broken_full): use the
+	peek method, no need to try re-connecting just to
+	disconnect the 'broken' signal.
+
+	* src/orb/orb-core/corba-object.c
+	(CORBA_Object_release_cb): after a long audit;
+	unlock / lock around the giop connection unref;
+	this avoids the final connection release
+	deadlocking vs. a pending call in the I/O
+	thread needing this lock.
+	(ORBit_object_peek_connection): impl.
+
 2004-08-19  Magnus Therning  <magnus@therning.org>
 
 	* src/idl-compiler/orbit-idl-backend.c: fix
