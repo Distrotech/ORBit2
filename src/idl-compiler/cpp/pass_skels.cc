@@ -29,7 +29,8 @@
 #include "error.hh"
 #include "pass_skels.hh"
 
-
+#include <iostream>
+#include <sstream>
 
 
 // IDLPassSkels --------------------------------------------------------------
@@ -232,9 +233,48 @@ IDLPassSkels::doAttributeSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 
 
-
+/** @brief      Write to the output stream, the skeleton code to unmarshal a CORBA
+ *              method and make the call into the corresponding C++ servant.
+ *
+ *  @param      iface   The orbitcpp interface object which this method belongs to
+ *  @param      of      Document Me
+ *  @param      node    The IDL tree node which contains info about this method.
+ *
+ *  This routine contains considerable complexity to account for the different 
+ *  memory management schemes employed by CORBA.
+ *  The routine is responsible for writing the implementation of a skeleton routine
+ *  starting from the method prototype, including the code to unmarshal the C 
+ *  structures passed through ORBit to the skeleton. Then the routine must write code
+ *  which makes a call to the appropriate C++ servant method.
+ *
+ *  Because of the memory management issues associated with fixed and variable length
+ *  CORBA types, there are two distinct ways of passing a parameter to the servant 
+ *  method.
+ *
+ *  For in and inout types, the type passed through the C skel can be passed directly 
+ *  to the servant. For out types, there is typically a need to construct a proxy 
+ *  or manager object, as denote by the _out_type of the CORBA type.
+ *  The exception to this is arrays of fixed length objects. In this case the _out is
+ *  simply a typedef to a T_slice * type. Because the client is responsible for
+ *  allocation of the object this gives all the required access to modify individual 
+ *  elements inside the servant.
+ *  Because variable lenth arrays require a manager object they fall under the general
+ *  case.
+ *
+ *  In terms of the code which is written, T_out object must be constructed from the C
+ *  argument passed in. However, for arrays of fixed length objects, the _out is a typedef
+ *  to T_slice * so a pointer assignment is required to make the code syntactically 
+ *  correct C++.
+ *
+ *  To determine if the parameter passed is an Array of fixed length objects requires
+ *  first dereferencing any aliasing done through typedefs. Then there are simple methods
+ *  to determine if the code is an array (dynamic_cast to IDLArray) and contains fixed 
+ *  length types (isVariableLength() ).
+ */
 void 
-IDLPassSkels::doOperationSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node) {
+IDLPassSkels::doOperationSkel(IDLInterface & iface,
+							  IDLInterface & of,
+							  IDL_tree node) {
 	IDLOperation &op = (IDLOperation &) *of.getItem(node);
 
 	// print header
@@ -278,8 +318,8 @@ IDLPassSkels::doOperationSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node
 	}
 	else {
 		// unmarshal parameters
-		IDLOperation::ParameterList::const_iterator
-		firstp = op.m_parameterinfo.begin(),lastp = op.m_parameterinfo.end();
+		IDLOperation::ParameterList::const_iterator firstp = 
+			op.m_parameterinfo.begin(),lastp = op.m_parameterinfo.end();
 	
 		while (firstp != lastp) {
 			firstp->Type->writeCPPSkelDemarshalCode(firstp->Direction,firstp->Identifier,m_module,mod_indent);
@@ -291,27 +331,111 @@ IDLPassSkels::doOperationSkel(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		<< mod_indent << "bool _results_valid = true;" << endl << endl;
 	
 		// do the call
-		m_module
-		<< mod_indent << "try {" << endl;
+		m_module << mod_indent << "try {" << endl; // open try block
+
 		mod_indent++;
-		m_module
-		<< mod_indent << iface.getQualifiedCPP_POA() << " *_self = "
-		<< "((_orbitcpp_Servant *)_servant)->m_cppimpl;" << endl
-		<< mod_indent << op.m_returntype->getCPPSkelReturnAssignment()
-		<< "_self->" << op.getCPPIdentifier() << '(';
-	
+		m_module << mod_indent << iface.getQualifiedCPP_POA() << " *_self = ";
+		m_module << "((_orbitcpp_Servant *)_servant)->m_cppimpl;" << endl;
+
+		// RJA inserted code
+
+		m_module << endl;
+
 		firstp = op.m_parameterinfo.begin();
 		lastp = op.m_parameterinfo.end();
-	
-		while (firstp != lastp) {
-			m_module
-			<< firstp->Type->getCPPSkelParameterTerm(firstp->Direction,firstp->Identifier);
-			firstp++;
-			if (firstp != lastp) m_module << ',';
+
+		std::vector<std::string> servantArgs;
+
+		unsigned int wrapperCounter = 0;
+
+		while (firstp != lastp) 
+		{
+			string typespec;
+			string decl;
+			firstp->Type->getCPPStubDeclarator( firstp->Direction, 
+												firstp->Identifier,
+												typespec,
+												decl );
+
+			bool makeWrapper = false;
+
+			if ( firstp->Direction == IDL_PARAM_OUT )
+			{
+				makeWrapper = true;
+			}
+
+			// Remove any aliasing due to typedefs
+			IDLType const & realType = (firstp->Type)->getResolvedType();
+			
+			// At this point we can guarantee that realType is not a typedef
+			// so we can get information about the real type represented in the arg.
+
+			bool pointerAssignment = false; // true when we don't have a real _out type
+			
+			if ( 0 != dynamic_cast<const IDLArray *>(&realType) ) {
+				if ( !( realType.isVariableLength() ) )	{
+					pointerAssignment = true;
+				}
+			}
+
+
+			if ( makeWrapper && (false == pointerAssignment) ) {
+				// In this case define a local var, named <arg> of the type expected 
+				// by the servant operation and then pass <arg> as an argument later
+
+				std::ostringstream arg; // stringstream to convert integer type to string
+				arg << string("orbitcppSkelWrapper_out_");
+				arg << wrapperCounter;
+
+				m_module << mod_indent << typespec << " " << arg.str();
+				m_module << "( ";
+
+
+				m_module << firstp->Type->getCPPSkelParameterTerm( firstp->Direction,
+																   firstp->Identifier );
+
+				m_module << " )";
+				m_module << ";" << endl; // end of the call
+
+				servantArgs.push_back( arg.str() );
+			}
+			else {
+				// In this case no local var is necessary so just pass the whole 
+				// ugly string through to the servant operation.
+				// This is necessary when the arg is an array of fixed length type.
+				string arg( firstp->Type->getCPPSkelParameterTerm( firstp->Direction,
+																   firstp->Identifier ) );
+
+				servantArgs.push_back(arg);
+			}
+
+			++firstp;
+			++wrapperCounter;
 		}
-		m_module
-		<< ");" << endl
-		<< --mod_indent << '}' << endl;
+
+
+		// some_type _retval = _self->opName( arg0, arg1, .... );
+		m_module << mod_indent << op.m_returntype->getCPPSkelReturnAssignment();
+
+		m_module << "_self->" << op.getCPPIdentifier() << '(';
+	
+		typedef std::vector<std::string>::const_iterator args_iterator;
+		args_iterator argsIt = servantArgs.begin();
+		args_iterator argsEnd = servantArgs.end();
+		
+
+		while (argsIt != argsEnd) {
+			m_module << (*argsIt);
+
+			++argsIt;
+			if (argsIt != argsEnd) {
+				m_module << ", ";
+			}
+		}
+
+		m_module << ");" << endl; // close parameter list
+
+		m_module << --mod_indent << '}' << endl; // close try block
 	
 		// handle exceptions
 		m_module
