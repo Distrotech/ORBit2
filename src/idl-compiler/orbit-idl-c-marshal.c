@@ -239,6 +239,16 @@ c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     fprintf(cmi->ci->fh, "ORBit_Context_marshal(_ctx, _context_items, %d, _ORBIT_send_buffer);\n",
 	    node->u.complex_info.context_item_count);
     break;
+  case CX_RECURSIVE:
+    {
+	char *tname = orbit_cbe_get_typespec_str(node->tree);
+    	fprintf(cmi->ci->fh, 
+	  "ORBit_marshal_arg(_ORBIT_send_buffer, &(%s), TC_%s);\n", 
+	  	ctmp, tname);
+        g_free(tname);
+    }
+    break;
+
   }
 
   g_free(ctmp);

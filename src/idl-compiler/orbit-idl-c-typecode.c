@@ -71,7 +71,7 @@ cbe_tc_generate_tcstruct_name(IDL_tree ts)
   case IDLN_INTERFACE:
   case IDLN_FORWARD_DCL:
   case IDLN_TYPE_OBJECT:
-    retval = orbit_cbe_get_typename(ts);
+    retval = orbit_cbe_get_typespec_str(ts);
     g_string_sprintf(tmpstr, "TC_%s", retval);
     g_free(retval);
     break;
@@ -154,7 +154,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
   /* Do magic here - make some values to be used in the anys of sublabels */
   if(IDL_NODE_TYPE(tci->ts) == IDLN_TYPE_UNION
      && IDL_TYPE_UNION(tci->ts).switch_body) {
-    ctmp = orbit_cbe_get_typename(IDL_TYPE_UNION(tci->ts).switch_type_spec);
+    ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_UNION(tci->ts).switch_type_spec);
     union_sublabels_array_ctr = random_id++;
     fprintf(tci->of, "static const %s anon_sublabel_values_array%d[] = {", ctmp,
 	    union_sublabels_array_ctr);
@@ -289,7 +289,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
 	  break;
 	}
       default:
-	ctmp = orbit_cbe_get_typename(IDL_MEMBER(IDL_LIST(curitem).data).type_spec);
+	ctmp = orbit_cbe_get_typespec_str(IDL_MEMBER(IDL_LIST(curitem).data).type_spec);
       }
 
       g_assert(IDL_NODE_TYPE(IDL_LIST(curitem).data) == IDLN_MEMBER);
@@ -327,7 +327,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
 	ctmp = g_strdup("Object");
 	break;
       default:
-	ctmp = orbit_cbe_get_typename(curdcl);
+	ctmp = orbit_cbe_get_typespec_str(curdcl);
       }
 
       for(curlabel = IDL_CASE_STMT(IDL_LIST(curitem).data).labels;
@@ -356,7 +356,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
 	ctmp = g_strdup("Object");
 	break;
       default:
-	ctmp = orbit_cbe_get_typename(IDL_TYPE_SEQUENCE(tci->ts).simple_type_spec);
+	ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tci->ts).simple_type_spec);
       }
     }
     fprintf(tci->of, "{(CORBA_TypeCode)&TC_%s_struct};\n", ctmp);
@@ -380,7 +380,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
     n = 0;
     fprintf(tci->of, "static const CORBA_any anon_sublabels_array%d[] = {",
 	    sublabels_id);
-    ctmp = orbit_cbe_get_typename(IDL_TYPE_UNION(tci->ts).switch_type_spec);
+    ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_UNION(tci->ts).switch_type_spec);
     for(curitem = IDL_TYPE_UNION(tci->ts).switch_body; curitem;
 	curitem = IDL_LIST(curitem).next) {
       IDL_tree curlabel;
@@ -397,7 +397,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
 	  n++;
 	} else {
 	  /* default case */
-	  fprintf(tci->of, "{(CORBA_TypeCode)&TC_CORBA_octet_struct, (int *)&zero_int, CORBA_FALSE}");
+	  fprintf(tci->of, "{(CORBA_TypeCode)&TC_CORBA_octet_struct, (int *)&ORBit_zero_int, CORBA_FALSE}");
 	}
 
 	if(IDL_LIST(curlabel).next || IDL_LIST(curitem).next)
@@ -725,7 +725,7 @@ cbe_tc_generate(CBETCGenInfo *tci)
 
   switch(IDL_NODE_TYPE(tci->ts)) {
   case IDLN_TYPE_UNION:
-    ctmp = orbit_cbe_get_typename(IDL_TYPE_UNION(tci->ts).switch_type_spec);
+    ctmp = orbit_cbe_get_typespec_str(IDL_TYPE_UNION(tci->ts).switch_type_spec);
     fprintf(tci->of, "(CORBA_TypeCode)&TC_%s_struct", ctmp);
     g_free(ctmp);
     break;

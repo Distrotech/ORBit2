@@ -68,7 +68,6 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
 }
 
 /* Here's the fun part ;-) */
-static void cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
 static void cs_stub_alloc_params(IDL_tree tree, OIDL_C_Info *ci);
 static void cs_free_inout_params(IDL_tree tree, OIDL_C_Info *ci);
 static void cs_stub_print_return(IDL_tree tree, OIDL_C_Info *ci);
@@ -91,7 +90,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
       char *id;
       IDL_tree curnode = IDL_LIST(curitem).data;
 
-      id = orbit_cbe_get_typename(curnode);
+      id = orbit_cbe_get_typespec_str(curnode);
       fprintf(ci->fh, "{(const CORBA_TypeCode)&TC_%s_struct, (gpointer)_ORBIT_%s_demarshal},",
 	      id, id);
       g_free(id);
@@ -117,7 +116,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
 
   if(oi->out_stubs) /* Lame hack to ensure we get _ORBIT_retval available */
-    cs_stub_alloc_tmpvars(oi->out_stubs, ci);
+    orbit_cbe_alloc_tmpvars(oi->out_stubs, ci);
 
   /* Check if we can do a direct call, and if so, do it */
   {
@@ -183,7 +182,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	  sizeof(CORBA_unsigned_long) +
 	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1);
 
-  cs_stub_alloc_tmpvars(oi->in_stubs, ci);
+  orbit_cbe_alloc_tmpvars(oi->in_stubs, ci);
 
   fprintf(ci->fh, "_ORBIT_send_buffer = \n");
   fprintf(ci->fh, "giop_send_request_buffer_use(_cnx, NULL, _ORBIT_request_id, %s,\n",
@@ -285,9 +284,13 @@ cbe_stub_op_param_alloc(FILE *of, IDL_tree node, GString *tmpstr)
   int n, i;
   char *id;
   IDL_tree ts = orbit_cbe_get_typespec(node);
+  gboolean isSlice;
 
-  n = oidl_param_numptrs(node, 
-			 oidl_attr_to_paramrole(IDL_PARAM_DCL(node).attr));
+  n = oidl_param_info(node, 
+			 oidl_attr_to_paramrole(IDL_PARAM_DCL(node).attr),
+			 &isSlice);
+  if ( isSlice )
+  	n -= 1;
 
   if(((n - 1) <= 0) && IDL_NODE_TYPE(ts) != IDLN_TYPE_ARRAY)
     return;
@@ -319,7 +322,7 @@ cbe_stub_op_param_alloc(FILE *of, IDL_tree node, GString *tmpstr)
   g_string_sprintfa(tmpstr, "%s",
 		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
 
-  id = orbit_cbe_get_typename(IDL_PARAM_DCL(node).param_type_spec);
+  id = orbit_cbe_get_typespec_str(IDL_PARAM_DCL(node).param_type_spec);
   fprintf(of, "%s = %s__alloc();\n", tmpstr->str, id);
   g_free(id);
 }
@@ -352,7 +355,7 @@ cbe_stub_op_retval_alloc(FILE *of, IDL_tree node, GString *tmpstr)
     return;
   }
 
-  id = orbit_cbe_get_typename(node);
+  id = orbit_cbe_get_typespec_str(node);
   fprintf(of, "%s = %s__alloc();\n", tmpstr->str, id);
   g_free(id);
 }
@@ -378,44 +381,6 @@ cs_stub_alloc_params(IDL_tree tree, OIDL_C_Info *ci)
   }
 
   g_string_free(tmpstr, TRUE);
-}
-
-static void
-cs_stub_alloc_tmpvar(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
-{
-  if(!(node->flags & MN_NEED_TMPVAR))
-    return;
-
-  if(node->flags & MN_NOMARSHAL)
-    fprintf(ci->fh, "register "); /* Help the compiler out */
-
-  if(node->tree) {
-    int i;
-    orbit_cbe_write_typespec(ci->fh, node->tree);
-
-    if(IDL_NODE_TYPE(node->tree) != IDLN_PARAM_DCL) {
-      IDL_tree ts = orbit_cbe_get_typespec(node->tree);
-      if(IDL_NODE_TYPE(ts) == IDLN_TYPE_ARRAY)
-	fprintf(ci->fh, "_slice*");
-    }
-    for(i = 0; i < node->nptrs; i++)
-      fprintf(ci->fh, "*");
-    fprintf(ci->fh, " %s;\n", node->name);
-  } else if(node->type == MARSHAL_DATUM) {
-    const char * ctmp;
-    static const char * const size_names[] = {NULL, "CORBA_unsigned_char", "CORBA_unsigned_short", NULL, "CORBA_unsigned_long",
-					      NULL, NULL, NULL, "CORBA_unsigned_long_long"};
-    ctmp = size_names[node->u.datum_info.datum_size];
-    g_assert(ctmp);
-    fprintf(ci->fh, "%s %s;\n", ctmp, node->name);
-  } else
-    g_error("Don't know how to handle tmpvar %s", node->name);
-}
-
-static void
-cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
-{
-  orbit_idl_node_foreach(node, (GFunc)cs_stub_alloc_tmpvar, ci);
 }
 
 /* This param freeing stuff really could be done better - perhaps shared code with the skels generation. */
@@ -507,7 +472,7 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
     fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
-    cs_stub_alloc_tmpvars(ei->demarshal, ci);
+    orbit_cbe_alloc_tmpvars(ei->demarshal, ci);
     fprintf(ci->fh, "%s *_ORBIT_exdata = %s__alloc();\n", id, id);
     c_demarshalling_generate(ei->demarshal, ci, FALSE);
   }

@@ -190,14 +190,14 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
     break;
   case IDLN_ATTR_DCL:
     {
-      IDL_tree curnode, attr_name;
+      IDL_tree curnode;
 
       for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
-	attr_name = IDL_LIST(curnode).data;
-
-	oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op1, func, is_out);
-	if(((OIDL_Attr_Info *)attr_name->data)->op2)
-	  oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op2, func, is_out);
+	IDL_tree attr_name = IDL_LIST(curnode).data;
+	OIDL_Attr_Info *ai = attr_name->data;
+	oidl_pass_run_for_ops(ai->op1, func, is_out);
+	if(ai->op2)
+	  oidl_pass_run_for_ops(ai->op2, func, is_out);
       }
     }
     break;
@@ -384,6 +384,9 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
       node->arch_head_align = node->arch_tail_align = sizeof(CORBA_unsigned_long);
       node->iiop_head_align = sizeof(CORBA_unsigned_long); /* sequence<string> length */
       node->iiop_tail_align = 1;
+      break;
+    case CX_RECURSIVE:
+      /* XXX: Im not sure what we should do! */
       break;
     }
     break;

@@ -53,6 +53,14 @@ typedef struct {
  */
 typedef struct _OIDL_Marshal_Node OIDL_Marshal_Node;
 
+
+/**
+    LOOP is the (de)marshalling equivalent of IDL sequence, array, string,
+    and wstring.  In all cases, there is a single underlying type ("subtype").
+    The variable (parameter) consists of zero or more elements of the
+    subtype.
+**/
+
 typedef enum { MARSHAL_DATUM = 0,
 	       MARSHAL_LOOP = 1,
 	       MARSHAL_SWITCH = 2,
@@ -76,6 +84,42 @@ typedef enum {
   MN_DEMARSHAL_CORBA_ALLOC = 1<<10, /* Set if we can never allocate this thingie on the stack (i.e. an inout param) */
   MN_DEMARSHAL_USER_MOD = 1<<11 /* OK, so this is just a hack to fix usage of the above flag */
 } OIDL_Marshal_Node_Flags;
+
+
+
+/**
+    When demarshalling a message (both stub and skel), each of the
+    parameters must be extracted into local memory. This local memory
+    may be of the following types:
+    	Auto		The variable is declared explicitly as a
+			C automatic variable, e.g. "int x;",
+			and thus the value of the variable is stored
+			on the stack.
+    	Alloca		A pointer variable is declared on the stack,
+			and space for the variable value is
+			allocated using alloca().
+	Msg		A pointer variable is declared on the stack,
+			and is set to point "into" the recieved message.
+    	Heap		A pointer variable is declared on the stack,
+			and space for the variable value is allocated
+			allocated using some varient of CORBA_alloc,
+			and it must be freed using CORBA_free.
+	
+    In addition, the following two are defined:
+    	Virtual		This is a collection of variables, and memory
+			for the collection is not allocated together.
+	Within		Memory for this variable is allocated within
+			its parent. (e.g., this is used for simple members
+			of a structure).
+**/
+
+enum OIDL_Marshal_Where {
+    MW_Null,
+    MW_Auto,
+    MW_Alloca,
+    MW_Msg,
+    MW_Heap
+};
 
 struct _OIDL_Marshal_Node {
   OIDL_Marshal_Node *up;
@@ -106,7 +150,13 @@ struct _OIDL_Marshal_Node {
       guint32 amount;
     } const_info;
     struct {
-      enum { CX_CORBA_FIXED, CX_CORBA_ANY, CX_CORBA_OBJECT, CX_CORBA_TYPECODE, CX_CORBA_CONTEXT } type;
+      enum {	CX_CORBA_FIXED, 
+      		CX_CORBA_ANY, 
+		CX_CORBA_OBJECT, 
+        	CX_CORBA_TYPECODE, 
+		CX_CORBA_CONTEXT,
+		CX_RECURSIVE
+	} type;
       int context_item_count;
     } complex_info;
     struct {
@@ -165,6 +215,8 @@ void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
 gboolean orbit_cbe_type_contains_complex(IDL_tree ts);
 
 typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
+gint oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice);
+
 gint oidl_param_numptrs(IDL_tree param, IDL_ParamRole role);
 gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 IDL_tree orbit_cbe_get_typespec(IDL_tree node);

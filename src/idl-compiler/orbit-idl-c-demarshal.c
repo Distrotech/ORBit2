@@ -140,6 +140,18 @@ c_demarshal_datum(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   g_free(ctmp);
 }
 
+/**
+    LOOP is the (de)marshalling equivalent of IDL sequence, array, string,
+    and wstring.  In all cases, there is a single underlying type ("subtype").
+    Here, we are generating code which demarshals from a variable
+    of a given type, which consists of elements of the type's subtype.
+    There are 3 issues:
+    - Where is the memory allocated?
+    - Does the variable data need to be munged, either for endianness,
+      format or alignment reasons?
+    - Can the elements be agregated?
+    All of these questions interact with each other.
+**/
 static void
 c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
@@ -161,14 +173,16 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 	if(node->flags & MN_ISSEQ)
 	  fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
       } else {
-	/* Array - no alloc needed */
+	/* Array: entire array is already allocated on stack! */
       }
+    } else {
+       /* Presumably it is completely allocated on stack already, ... */
     }
   } else {
     char *tname, *tcname;
     
-    tname = orbit_cbe_get_typename(node->tree);
-    tcname = orbit_cbe_get_typename(node->u.loop_info.contents->tree);
+    tname = orbit_cbe_get_typespec_str(node->tree);
+    tcname = orbit_cbe_get_typespec_str(node->u.loop_info.contents->tree);
 
     if(node->flags & MN_ISSEQ) {
       IDL_tree seq = orbit_cbe_get_typespec(node->tree);
@@ -231,7 +245,9 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   } else {
     cmi->last_tail_align = MIN(cmi->last_tail_align, node->u.loop_info.contents->iiop_tail_align);
     fprintf(cmi->ci->fh, "for(%s = 0; %s < %s; %s++) {\n", ctmp_loop, ctmp_loop, ctmp_len, ctmp_loop);
+    /* XXX: what does the next line (loop_var) do? Anything useful? */
     c_demarshal_generate(node->u.loop_info.loop_var, cmi);
+    /* this next line does the element-by-element work! */
     c_demarshal_generate(node->u.loop_info.contents, cmi);
     fprintf(cmi->ci->fh, "}\n\n");
   }
@@ -297,9 +313,13 @@ static void
 c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
   char *ctmp;
+  const char *do_dup;
 
   c_demarshal_store_curptr(cmi);
   ctmp = oidl_marshal_node_valuestr(node);
+
+  do_dup = (cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC))
+    ?"CORBA_FALSE":"CORBA_TRUE";
 
   switch(node->u.complex_info.type) {
   case CX_CORBA_FIXED:
@@ -307,7 +327,7 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     break;
   case CX_CORBA_ANY:
     fprintf(cmi->ci->fh, "ORBit_demarshal_any(_ORBIT_recv_buffer, &(%s), %s, %s);\n",
-	    ctmp, (cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC))?"CORBA_FALSE":"CORBA_TRUE", cmi->orb_name);
+	    ctmp, do_dup, cmi->orb_name);
     break;
   case CX_CORBA_OBJECT:
     fprintf(cmi->ci->fh, "%s = ORBit_demarshal_object(_ORBIT_recv_buffer, %s);\n",
@@ -319,6 +339,17 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   case CX_CORBA_CONTEXT:
     if(cmi->in_skels)
       fprintf(cmi->ci->fh, "ORBit_Context_demarshal(NULL, &_ctx, _ORBIT_recv_buffer);\n");
+    break;
+  case CX_RECURSIVE:
+    {
+    	char *tname = orbit_cbe_get_typespec_str(node->tree);
+    	fprintf(cmi->ci->fh, "{ gpointer _valref = &(%s); ", ctmp);
+    	fprintf(cmi->ci->fh, "%s(TC_%s, &_valref, %s, %s, %s); ",
+	  "ORBit_TypeCode_demarshal_value",
+	  tname, "_ORBIT_recv_buffer", do_dup, cmi->orb_name);
+    	fprintf(cmi->ci->fh, "}\n");
+    	g_free(tname);
+    }
     break;
   }
 

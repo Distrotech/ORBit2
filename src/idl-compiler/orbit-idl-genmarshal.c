@@ -53,11 +53,14 @@ oidl_marshal_node_is_arrayel(OIDL_Marshal_Node *node, OIDL_Marshal_Node **loopva
   return retval;
 }
 
-/* If we are trying to produce C code to access a specific variable,
-   then we need to be able get the C-compilable string that refers to
-   that var.
- */
-/* This routine is one of the most difficult ones to get right. Dragons be here. */
+/**
+   Returns the name, with the C language of a C variable
+   that exists within some function. Used within C code (marshalling
+   and unmarshalling) to read/write the variable.
+
+  This routine is one of the most difficult ones to get right. 
+  Dragons be here.
+**/
 char *
 oidl_marshal_node_fqn(OIDL_Marshal_Node *node)
 {
@@ -260,6 +263,11 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
     }
     retval->tree = tree;
     break;
+  case IDLN_TYPE_ENUM:
+    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
+    retval->u.datum_info.datum_size = sizeof(CORBA_long);
+    retval->tree = tree;
+    break;
   case IDLN_TYPE_STRING:
   case IDLN_TYPE_WIDE_STRING:
     retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL);
@@ -274,11 +282,6 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
     retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_octet);
     retval->tree = tree;
     retval->flags &= ~(parent->flags & MN_LOOPED);
-    break;
-  case IDLN_TYPE_ENUM:
-    retval = oidl_marshal_node_new(parent, MARSHAL_DATUM, NULL);
-    retval->u.datum_info.datum_size = sizeof(CORBA_long);
-    retval->tree = tree;
     break;
   case IDLN_TYPE_ARRAY:
     {
@@ -329,25 +332,48 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
   case IDLN_EXCEPT_DCL:
     {
       IDL_tree curitem;
-      IDL_tree ident = IDL_NODE_TYPE(tree)==IDLN_TYPE_STRUCT 
-        ? IDL_TYPE_STRUCT(tree).ident : IDL_EXCEPT_DCL(tree).ident;
+      /* IDL_tree ident = IDL_NODE_TYPE(tree)==IDLN_TYPE_STRUCT 
+       * ? IDL_TYPE_STRUCT(tree).ident : IDL_EXCEPT_DCL(tree).ident; */
       gboolean isRecur = IDL_tree_is_recursive( tree, /*hasRecur*/NULL);
       if ( isRecur ) {
 	  retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
-     	  retval->u.complex_info.type = CX_CORBA_ANY;	// XXXX
+     	  retval->u.complex_info.type = CX_RECURSIVE;
     	  retval->tree = tree;
-	  g_warning("Recursive type not yet supported (%s).", 
-	    IDL_IDENT(ident).str);
       } else {
 	  retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
 	  for(curitem = IDL_TYPE_STRUCT(tree).member_list; curitem; curitem = IDL_LIST(curitem).next) {
-	    retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes,
-							 marshal_populate(IDL_LIST(curitem).data, retval, is_out, pi));
+	    OIDL_Marshal_Node *newnode
+	     = marshal_populate(IDL_LIST(curitem).data, retval, is_out, pi);
+	    retval->u.set_info.subnodes 
+	      = g_slist_append(retval->u.set_info.subnodes, newnode);
 	  }
       }
     }
     retval->tree = tree;
     break;
+  case IDLN_TYPE_UNION:
+    {
+      IDL_tree ntmp;
+      gboolean isRecur = IDL_tree_is_recursive( tree, /*hasRecur*/NULL);
+      if ( isRecur ) {
+	  retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+     	  retval->u.complex_info.type = CX_RECURSIVE;
+    	  retval->tree = tree;
+      } else {
+	  retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
+	  retval->tree = tree;
+	  retval->u.switch_info.discrim = marshal_populate(IDL_TYPE_UNION(tree).switch_type_spec, retval, is_out, pi);
+	  retval->u.switch_info.discrim->name = "_d";
+	  for(ntmp = IDL_TYPE_UNION(tree).switch_body; ntmp; ntmp = IDL_LIST(ntmp).next) {
+	    OIDL_Marshal_Node * newnode
+	      = marshal_populate(IDL_LIST(ntmp).data, retval, is_out, pi);
+	    retval->u.switch_info.cases 
+	      = g_slist_append(retval->u.switch_info.cases, newnode);
+	  }
+      }
+    }
+    break;
+
   case IDLN_MEMBER:
     {
       IDL_tree curitem, curnode;
@@ -370,22 +396,6 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
       }
     }
     retval->tree = tree;
-    break;
-  case IDLN_TYPE_UNION:
-    {
-      IDL_tree ntmp;
-      retval = oidl_marshal_node_new(parent, MARSHAL_SWITCH, NULL);
-      retval->tree = tree;
-      retval->u.switch_info.discrim = marshal_populate(IDL_TYPE_UNION(tree).switch_type_spec, retval, is_out, pi);
-      retval->u.switch_info.discrim->name = "_d";
-      for(ntmp = IDL_TYPE_UNION(tree).switch_body; ntmp; ntmp = IDL_LIST(ntmp).next) {
-	OIDL_Marshal_Node * newnode;
-
-	newnode = marshal_populate(IDL_LIST(ntmp).data, retval, is_out, pi);
-
-	retval->u.switch_info.cases = g_slist_append(retval->u.switch_info.cases, newnode);
-      }
-    }
     break;
   case IDLN_CASE_STMT:
     {
@@ -460,6 +470,21 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
   return retval;
 }
 
+/**
+    For each parameter, there is generally a parameter reference
+    and the parameter value (roughly corresponding to a pointer
+    and what is pointed to).  Some params are passed by value,
+    in which case the reference (pointer) is implicit.
+
+    STUB IN		Parameters treated read-only.
+    			Client allocs reference (poss. implicit) and 
+    			value.
+    STUB OUT		Always by pass-by-reference; client defines reference,
+			stub may need to alloc value. Client will free.
+    SKEL IN		Alloc required; freed by skel.
+    SKEL OUT		Freed by skel after marshalling.
+**/
+
 OIDL_Marshal_Node *
 orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
 {
@@ -491,19 +516,27 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels)
 
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
+#if 0
       if(is_skels) {
 	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
-      } else {
+      } else
+#endif
 	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
-      }
       sub->flags |= MN_DEMARSHAL_CORBA_ALLOC|MN_DEMARSHAL_USER_MOD;
       break;
     case IDL_PARAM_IN:
+#if 0
       if(is_skels) {
 	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_IN) - 1, 0);
+#if 0
+	/* The complexity of the underlying type should not affect
+	 * how we alloc memory for it!
+	 */
 	if(orbit_cbe_type_contains_complex(IDL_PARAM_DCL(curparam).param_type_spec))
 	  sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
+#endif
       } else
+#endif
 	sub->nptrs = oidl_param_numptrs(curparam, DATA_IN);
       break;
     default:
@@ -537,6 +570,7 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels)
   OIDL_Marshal_Node *retval, *rvnode;
   IDL_tree curitem, curparam;
   OIDL_Populate_Info pi;
+  gboolean isSlice;
 
   g_assert(IDL_NODE_TYPE(tree) == IDLN_OP_DCL);
 
@@ -548,8 +582,13 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels)
     g_hash_table_destroy(pi.visited);
     if(!rvnode) goto out1;
 
-    rvnode->nptrs = oidl_param_numptrs(IDL_OP_DCL(tree).op_type_spec, DATA_RETURN);
-    rvnode->flags |= MN_NEED_TMPVAR|MN_DEMARSHAL_CORBA_ALLOC;
+    rvnode->nptrs = oidl_param_info(IDL_OP_DCL(tree).op_type_spec, DATA_RETURN,
+      &isSlice);
+    if ( isSlice )
+    	rvnode->nptrs -= 1;
+    if ( !is_skels )
+        rvnode->flags |= MN_NEED_TMPVAR;
+    rvnode->flags |= MN_DEMARSHAL_CORBA_ALLOC;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, rvnode);
 
@@ -575,16 +614,22 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels)
     switch(IDL_PARAM_DCL(curparam).attr) {
     case IDL_PARAM_INOUT:
       sub->flags |= MN_DEMARSHAL_CORBA_ALLOC;
+#if 0
       if(is_skels)
 	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_INOUT) - 1, 0);
       else
+#endif
 	sub->nptrs = oidl_param_numptrs(curparam, DATA_INOUT);
       break;
     case IDL_PARAM_OUT:
+#if 0
       if(is_skels)
-	sub->nptrs = MAX(oidl_param_numptrs(curparam, DATA_OUT) - 1, 0);
+	sub->nptrs = MAX(oidl_param_info(curparam, DATA_OUT, &isSlice) - 1, 0);
       else
-	sub->nptrs = oidl_param_numptrs(curparam, DATA_OUT);
+#endif
+	sub->nptrs = oidl_param_info(curparam, DATA_OUT, &isSlice);
+      if ( isSlice )
+      	sub->nptrs -= 1;
       break;
     default:
       g_error("Weird param direction for out pass.");

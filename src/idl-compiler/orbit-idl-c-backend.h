@@ -10,6 +10,7 @@
 typedef struct {
   char *base_name, *c_base_name;
   FILE *fh;
+  GString *ext_dcls;
 } OIDL_C_Info;
 
 typedef struct {
@@ -36,8 +37,10 @@ void c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean o
 void c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_skels);
 
 /* utils */
+char * orbit_cbe_get_typespec_str(IDL_tree tree);
 void orbit_cbe_write_typespec(FILE *of, IDL_tree tree);
-char * orbit_cbe_get_typename(IDL_tree tree);
+void orbit_cbe_write_param_typespec_raw(FILE *of, IDL_tree ts, IDL_ParamRole role);
+void orbit_cbe_write_param_typespec(FILE *of, IDL_tree tree);
 void orbit_cbe_op_write_proto(FILE *of, IDL_tree op, const char *nom_prefix, gboolean for_epv);
 IDL_tree orbit_cbe_get_typespec(IDL_tree node);
 void orbit_cbe_write_const(FILE *of, IDL_tree tree);
@@ -49,5 +52,7 @@ gboolean orbit_cbe_type_is_builtin(IDL_tree);
 void orbit_cbe_param_printptrs(FILE *of, IDL_tree param, IDL_ParamRole role);
 void orbit_cbe_id_define_hack(FILE *fh, const char *def_prefix, const char *def_name, const char *def_value);
 void orbit_cbe_id_cond_hack(FILE *fh, const char *def_prefix, const char *def_name, const char *def_value);
+
+void orbit_cbe_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
 
 #endif
