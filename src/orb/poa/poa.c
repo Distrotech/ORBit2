@@ -489,15 +489,6 @@ PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
 
 }
 
-/**
-    Actually, all profiles have the same okey, so the loop is kind of silly.
-**/
-static CORBA_sequence_CORBA_octet*
-POA_find_ref_okey(CORBA_Object ref)
-{
-  return ref->oki?&ref->oki->object_key:NULL;
-}
-
 PortableServer_Servant
 PortableServer_POA_reference_to_servant(PortableServer_POA _obj,
 					const CORBA_Object reference,
@@ -960,15 +951,16 @@ ORBit_POA_make_sysoid(PortableServer_POA poa, PortableServer_ObjectId *oid)
 }
 
 IOP_ObjectKey_info*
-ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
-			/*in*/const PortableServer_ObjectId *oid)
+ORBit_POA_object_to_okey( ORBit_POAObject *pobj )
 {
-  gint32	keynum, *iptr;
-  int			restlen;
-  CORBA_octet*	restbuf;
-  IOP_ObjectKey_info *retval;
+  PortableServer_POA         poa = (PortableServer_POA)pobj->poa;
+  PortableServer_ObjectId    *oid = (PortableServer_ObjectId *)pobj->object_id;
+  CORBA_octet*	             restbuf;
+  IOP_ObjectKey_info         *retval;
   CORBA_sequence_CORBA_octet *okey;
-  gulong okey_len, rlen;
+  gulong                     okey_len, rlen;
+  gint32	             keynum, *iptr;
+  int			     restlen;
 
   if ( poa->num_to_koid_map )
     {
@@ -1487,11 +1479,8 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
   g_assert(type_id);
 
   oid = pobj->object_id;
-  oki = ORBit_POA_oid_to_okey(poa, oid);
 
   objref = ORBit_objref_new(poa->poa_manager->orb, type_id, NULL);
-
-  objref->oki = oki;
 
   /* released by CORBA_Object_release */
   objref->pobj = ORBit_RootObject_duplicate(pobj);

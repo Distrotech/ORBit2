@@ -81,7 +81,7 @@ struct CORBA_Object_type {
   GIOPConnection *connection;
   CORBA_char *type_id;
   GSList *profile_list, *forward_locations;
-  IOP_ObjectKey_info *oki; /* points into profile_list */
+  IOP_ObjectKey_info *oki;
 
   ORBit_POAObject *pobj;
 };
