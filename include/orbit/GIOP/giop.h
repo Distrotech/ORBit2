@@ -22,6 +22,7 @@ void        giop_shutdown         (void);
 gboolean    giop_threaded         (void);
 GIOPThread *giop_thread_self      (void);
 void        giop_thread_push_recv (GIOPMessageQueueEntry *ent);
+void        giop_recv_set_limit   (glong limit);
 
 typedef struct _GIOPQueue GIOPQueue;
 GIOPThread *giop_thread_get_main  (void);

@@ -875,6 +875,15 @@ concat_frags (GList *list)
 	return FALSE;
 }
 
+static glong giop_initial_msg_size_limit = GIOP_INITIAL_MSG_SIZE_LIMIT;
+
+void
+giop_recv_set_limit (glong limit)
+{
+	if (limit > 256) /* Something slightly sensible ? */
+		giop_initial_msg_size_limit = limit;
+}
+
 /**
  * giop_recv_buffer_handle_fragmented:
  * @buf: pointer to recv buffer pointer
@@ -946,7 +955,7 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 		g_list_append (list, buf);
 
 		if (!cnx->parent.is_auth &&
-		    buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT) {
+		    buf->msg.header.message_size > giop_initial_msg_size_limit) {
 			error = TRUE;
 			giop_connection_remove_frag (cnx, list);
 		}
@@ -1092,7 +1101,7 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 	if ((buf->msg.header.flags & GIOP_FLAG_LITTLE_ENDIAN) != GIOP_FLAG_ENDIANNESS)
 		buf->msg.header.message_size = GUINT32_SWAP_LE_BE (buf->msg.header.message_size);
 
-	if (!is_auth && buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT)
+	if (!is_auth && buf->msg.header.message_size > giop_initial_msg_size_limit)
 		return TRUE;
 
 	if (alloc_buffer (buf, NULL, buf->msg.header.message_size))

@@ -26,17 +26,18 @@ OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
 /*
  * Command line option handling.
  */
-static gboolean     orbit_use_ipv4          = FALSE;
-static gboolean     orbit_use_ipv6          = FALSE; 
-static gboolean     orbit_use_usocks        = TRUE;
-static gboolean     orbit_use_irda          = FALSE;
-static gboolean     orbit_use_ssl           = FALSE;
-static gboolean     orbit_use_genuid_simple = FALSE;
-static gboolean     orbit_local_only       = FALSE;
-static gboolean     orbit_use_http_iors     = FALSE;
-static char        *orbit_ipsock            = NULL;
-static char        *orbit_ipname            = NULL;
-static char        *orbit_debug_options     = NULL;
+static gboolean     orbit_use_ipv4           = FALSE;
+static gboolean     orbit_use_ipv6           = FALSE; 
+static gboolean     orbit_use_usocks         = TRUE;
+static gint         orbit_initial_recv_limit = -1;
+static gboolean     orbit_use_irda           = FALSE;
+static gboolean     orbit_use_ssl            = FALSE;
+static gboolean     orbit_use_genuid_simple  = FALSE;
+static gboolean     orbit_local_only         = FALSE;
+static gboolean     orbit_use_http_iors      = FALSE;
+static char        *orbit_ipsock             = NULL;
+static char        *orbit_ipname             = NULL;
+static char        *orbit_debug_options      = NULL;
 
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
@@ -280,7 +281,8 @@ CORBA_ORB_init (int *argc, char **argv,
 #endif /* G_ENABLE_DEBUG */
 
 	genuid_init ();
-	
+
+	giop_recv_set_limit (orbit_initial_recv_limit);
 	giop_init (threaded,
 		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
@@ -1148,25 +1150,26 @@ ORBit_proto_use (const char *name)
 }
 
 const ORBit_option orbit_supported_options[] = {
-	{ "ORBid",           ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
-	{ "ORBImplRepoIOR",  ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
-	{ "ORBIfaceRepoIOR", ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
-	{ "ORBNamingIOR",    ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
-	{ "ORBRootPOAIOR",   ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
- 	{ "ORBIIOPIPName",   ORBIT_OPTION_STRING,  &orbit_ipname },
- 	{ "ORBIIOPIPSock",   ORBIT_OPTION_STRING,  &orbit_ipsock },
-	{ "ORBLocalOnly",    ORBIT_OPTION_BOOLEAN, &orbit_local_only },
+	{ "ORBid",              ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBImplRepoIOR",     ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBIfaceRepoIOR",    ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBNamingIOR",       ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
+	{ "ORBRootPOAIOR",      ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
+ 	{ "ORBIIOPIPName",      ORBIT_OPTION_STRING,  &orbit_ipname },
+ 	{ "ORBIIOPIPSock",      ORBIT_OPTION_STRING,  &orbit_ipsock },
+	{ "ORBInitialMsgLimit", ORBIT_OPTION_INT,     &orbit_initial_recv_limit },
+	{ "ORBLocalOnly",       ORBIT_OPTION_BOOLEAN, &orbit_local_only },
 	/* warning: this option is a security risk unless used with LocalOnly */
-	{ "ORBIIOPIPv4",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
-	{ "ORBIIOPIPv6",     ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },
-	{ "ORBIIOPUSock",    ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
-	{ "ORBIIOPUNIX",     ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
-	{ "ORBIIOPIrDA",     ORBIT_OPTION_BOOLEAN, &orbit_use_irda },
-	{ "ORBIIOPSSL",      ORBIT_OPTION_BOOLEAN, &orbit_use_ssl },
+	{ "ORBIIOPIPv4",        ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
+	{ "ORBIIOPIPv6",        ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },
+	{ "ORBIIOPUSock",       ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
+	{ "ORBIIOPUNIX",        ORBIT_OPTION_BOOLEAN, &orbit_use_usocks },
+	{ "ORBIIOPIrDA",        ORBIT_OPTION_BOOLEAN, &orbit_use_irda },
+	{ "ORBIIOPSSL",         ORBIT_OPTION_BOOLEAN, &orbit_use_ssl },
 	/* warning: this option is a security risk */
-	{ "ORBHTTPIORs",     ORBIT_OPTION_BOOLEAN, &orbit_use_http_iors },
+	{ "ORBHTTPIORs",        ORBIT_OPTION_BOOLEAN, &orbit_use_http_iors },
 	/* warning: this option is a security risk */
-	{ "ORBSimpleUIDs",   ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
-	{ "ORBDebugFlags",   ORBIT_OPTION_STRING,  &orbit_debug_options },
-	{ NULL,              0,                    NULL },
+	{ "ORBSimpleUIDs",      ORBIT_OPTION_BOOLEAN, &orbit_use_genuid_simple },
+	{ "ORBDebugFlags",      ORBIT_OPTION_STRING,  &orbit_debug_options },
+	{ NULL,                 0,                    NULL },
 };
