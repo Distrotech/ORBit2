@@ -1,3 +1,12 @@
+2002-06-18  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/pingServer.c
+	(PingPongServer_opOneWayCallback): kill warning.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_use): paranoid checks on
+	the giop version we are passed
+
 2002-06-18  Alexander Larsson  <alla@lysator.liu.se>
 
 	* test/everything/client.c (testPingPong):

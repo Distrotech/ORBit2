@@ -45,7 +45,7 @@ giop_send_buffer_use_request (GIOPVersion giop_version,
 			      const struct iovec *operation_vec,
 			      const struct iovec *principal_vec)
 {
-  GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
+  GIOPSendBuffer *buf = giop_send_buffer_use (giop_version);
   struct iovec zerovec;
 
   if(!principal_vec)
@@ -429,6 +429,10 @@ GIOPSendBuffer *
 giop_send_buffer_use (GIOPVersion giop_version)
 {
 	GIOPSendBuffer *retval;
+
+	g_return_val_if_fail (
+		((int) giop_version) >= 0 &&
+		giop_version < GIOP_NUM_VERSIONS, NULL);
 
 	LINC_MUTEX_LOCK (send_buffer_list_lock);
 	if (send_buffer_list) {
