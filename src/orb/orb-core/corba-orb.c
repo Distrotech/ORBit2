@@ -122,8 +122,8 @@ CORBA_ORB_init (int *argc, char **argv,
 	if ((retval = _ORBit_orb))
 		return ORBit_RootObject_duplicate (retval);
 
-	/* the allocation code uses the bottom bit of this pointer */
-	g_assert (ORBIT_ALIGNOF_CORBA_POINTER > 2);
+	/* the allocation code uses the bottom bit of any pointer */
+	g_assert (ORBIT_ALIGNOF_CORBA_DOUBLE > 2);
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
 
