@@ -724,30 +724,30 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 		      const CORBA_char   *intf,
 		      CORBA_Environment  *ev)
 {
-  PortableServer_ObjectId *oid;
-  CORBA_Object             objref;
-  const char              *type_id = intf;
+	PortableServer_ObjectId *oid;
+	CORBA_Object             objref;
+	const char              *type_id = intf;
 
-  g_assert( pobj && ((ORBit_OAObject)pobj)->objref == NULL );
+	g_assert (pobj && ((ORBit_OAObject) pobj)->objref == NULL);
 
-  if(!type_id)
-    {
-      g_assert( pobj->servant );
-      type_id = ORBIT_SERVANT_TO_CLASSINFO(pobj->servant)->class_name;
-    }
+	if (!type_id) {
+		g_assert (pobj->servant);
+		type_id = ORBIT_SERVANT_TO_CLASSINFO (pobj->servant)->class_name;
+	}
 
-  g_assert(type_id);
+	g_assert (type_id != NULL);
 
-  oid = pobj->object_id;
+	oid = pobj->object_id;
 
-  objref = ORBit_objref_new(poa->poa_manager->orb, type_id);
+	objref = ORBit_objref_new (poa->poa_manager->orb,
+				   g_quark_from_string (type_id));
 
-  /* released by CORBA_Object_release */
-  objref->adaptor_obj = ORBit_RootObject_duplicate(pobj);
+	/* released by CORBA_Object_release */
+	objref->adaptor_obj = ORBit_RootObject_duplicate (pobj);
 
-  ((ORBit_OAObject)pobj)->objref = ORBit_RootObject_duplicate(objref);
+	((ORBit_OAObject)pobj)->objref = ORBit_RootObject_duplicate (objref);
 
-  return objref;
+	return objref;
 }
 
 PortableServer_POA
@@ -755,19 +755,16 @@ ORBit_POA_setup_root (CORBA_ORB orb, CORBA_Environment *ev)
 {
 	PortableServer_POA poa;
 	CORBA_Policy       policybuf[1];
-	CORBA_PolicyList   policies = {1, 1, (CORBA_Object *)policybuf, CORBA_FALSE};
+	CORBA_PolicyList   policies = {1, 1, (CORBA_Object *) policybuf, CORBA_FALSE};
 
-	policies._buffer[0] = (CORBA_Policy)
+	policies._buffer [0] = (CORBA_Policy)
 		PortableServer_POA_create_implicit_activation_policy (
-							NULL,
-							PortableServer_IMPLICIT_ACTIVATION,
-							ev);
-
+			NULL, PortableServer_IMPLICIT_ACTIVATION, ev);
 
 	poa = ORBit_POA_new (orb, "RootPOA", CORBA_OBJECT_NIL, &policies, ev);
  
-	CORBA_Policy_destroy (policies._buffer[0], ev);
-	CORBA_Object_release (policies._buffer[0], ev);
+	CORBA_Policy_destroy (policies._buffer [0], ev);
+	CORBA_Object_release (policies._buffer [0], ev);
 
 	return poa;
 }

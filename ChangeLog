@@ -1,3 +1,14 @@
+2001-10-18  Michael Meeks  <michael@ximian.com>
+
+	* include/orbit/orb-core/corba-object-type.h: make type_id
+	a GQuark to save space, and time.
+
+	* src/orb/poa/poa.c (ORBit_POA_obj_to_ref): upd.
+
+	* src/orb/orb-core/corba-object.c (g_CORBA_Object_hash),
+	(CORBA_Object_release_cb, ORBit_objref_new, ORBit_objref_find):,
+	(ORBit_marshal_object, CORBA_Object_is_a): upd.
+
 2001-10-17  jacob berkman  <jacob@ximian.com>
 
 	* Makefile.am: orbit-config is no more

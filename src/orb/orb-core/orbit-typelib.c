@@ -17,7 +17,7 @@ ORBit_small_get_type_id (CORBA_Object       object,
 
 	/* We stay always maximaly qualified localy */
 	if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
-		return CORBA_string_dup (object->type_id);
+		return CORBA_string_dup (g_quark_to_string (object->type_qid));
 
 	else {
 		CORBA_char *retval = NULL;

@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 	      CORBA_exception_id(&ev));
       return 2;
     }
-  printf("Object ID: %s\n", obj->type_id);
+  printf("Object ID: %s\n", g_quark_to_string (obj->type_qid));
   for(ltmp = obj->profile_list; ltmp; ltmp = ltmp->next)
     {
       IOP_Profile_info *pi = ltmp->data;
