@@ -93,6 +93,8 @@ orbit_idl_tree_populate(IDL_tree tree)
 {
   IDL_tree node;
 
+  if(!tree) return;
+
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
@@ -109,10 +111,19 @@ orbit_idl_tree_populate(IDL_tree tree)
     orbit_idl_op_populate(tree);
     break;
   case IDLN_ATTR_DCL:
-    orbit_idl_attr_fake_ops(tree);
-    orbit_idl_tree_populate(((OIDL_Attr_Info *)tree->data)->op1);
-    if(((OIDL_Attr_Info *)tree->data)->op2)
-      orbit_idl_tree_populate(((OIDL_Attr_Info *)tree->data)->op2);
+    {
+      IDL_tree curnode, attr_name;
+
+      orbit_idl_attr_fake_ops(tree);
+
+      for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
+	attr_name = IDL_LIST(curnode).data;
+
+	orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op1);
+	if(((OIDL_Attr_Info *)attr_name->data)->op2)
+	  orbit_idl_tree_populate(((OIDL_Attr_Info *)attr_name->data)->op2);
+      }
+    }
     break;
   default:
     break;

@@ -3,6 +3,7 @@
 #include "orbit-idl-c-backend.h"
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 static FILE *out_for_pass(const char *input_filename, int pass);
 
@@ -19,6 +20,13 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
   ctmp = strrchr(ci.base_name, '.');
   g_assert(ctmp);
   *ctmp = '\0';
+
+  ci.c_base_name = g_strdup(ci.base_name);
+  if(!isalpha(ci.c_base_name[0]))
+    ci.c_base_name[0] = '_';
+  for(i = 0; ci.c_base_name[i]; i++) {
+    if(!isalnum(ci.c_base_name[i])) ci.c_base_name[i] = '_';
+  }
 
   for(i = 0; i < 5; i++) {
     ci.fh = out_for_pass(rinfo->input_filename, 1 << i);

@@ -54,6 +54,8 @@ oidl_pass_tmpvars(IDL_tree tree)
 {
   IDL_tree node;
 
+  if(!tree) return;
+
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
     for(node = tree; node; node = IDL_LIST(node).next) {
@@ -75,9 +77,17 @@ oidl_pass_tmpvars(IDL_tree tree)
     }
     break;
   case IDLN_ATTR_DCL:
-    oidl_pass_tmpvars(((OIDL_Attr_Info *)tree->data)->op1);
-    if(((OIDL_Attr_Info *)tree->data)->op2)
-      oidl_pass_tmpvars(((OIDL_Attr_Info *)tree->data)->op2);
+    {
+      IDL_tree curnode, attr_name;
+
+      for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
+	attr_name = IDL_LIST(curnode).data;
+
+	oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op1);
+	if(((OIDL_Attr_Info *)attr_name->data)->op2)
+	  oidl_pass_tmpvars(((OIDL_Attr_Info *)attr_name->data)->op2);
+      }
+    }
     break;
   default:
     break;
@@ -88,6 +98,8 @@ static void
 oidl_pass_run_for_ops(IDL_tree tree, GFunc func)
 {
   IDL_tree node;
+
+  if(!tree) return;
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_LIST:
@@ -103,14 +115,27 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func)
     break;
   case IDLN_OP_DCL:
     {
-      func(((OIDL_Op_Info *)tree->data)->in, NULL);
-      func(((OIDL_Op_Info *)tree->data)->out, NULL);
+      OIDL_Op_Info *oi = (OIDL_Op_Info *)tree->data;
+
+      if(oi->in)
+	func(oi->in, NULL);
+
+      if(oi->out)
+	func(oi->out, NULL);
     }
     break;
   case IDLN_ATTR_DCL:
-    oidl_pass_run_for_ops(((OIDL_Attr_Info *)tree->data)->op1, func);
-    if(((OIDL_Attr_Info *)tree->data)->op2)
-      oidl_pass_run_for_ops(((OIDL_Attr_Info *)tree->data)->op2, func);
+    {
+      IDL_tree curnode, attr_name;
+
+      for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
+	attr_name = IDL_LIST(curnode).data;
+
+	oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op1, func);
+	if(((OIDL_Attr_Info *)attr_name->data)->op2)
+	  oidl_pass_run_for_ops(((OIDL_Attr_Info *)attr_name->data)->op2, func);
+      }
+    }
     break;
   default:
     break;
