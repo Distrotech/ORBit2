@@ -32,7 +32,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
   ci.do_impl_hack = 1;
   ci.do_skel_defs = rinfo->do_skel_defs;
   ci.ctxt = tree->ctxt;
-  for(i = 0; i < 5; i++) {
+  for(i = 0; i < 6; i++) {
     if( (1 << i) & rinfo->enabled_passes) {
       ci.fh = out_for_pass(rinfo->input_filename, 1 << i, rinfo);
       
@@ -51,6 +51,9 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
 	break;
       case OUTPUT_SKELIMPL:
 	orbit_idl_output_c_skelimpl(tree, rinfo, &ci);
+	break;
+      case OUTPUT_IMODULE:
+	orbit_idl_output_c_imodule(tree, rinfo, &ci);
 	break;
       }
       pclose(ci.fh);
@@ -93,6 +96,9 @@ out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
     break;
   case OUTPUT_SKELIMPL:
     tack_on = "-skelimpl.c";
+    break;
+  case OUTPUT_IMODULE:
+    tack_on = "-imodule.c";
     break;
   default:
     g_error("Unknown output pass");

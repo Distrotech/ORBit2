@@ -22,7 +22,8 @@ typedef struct {
 	 OUTPUT_SKELS=1<<1,
 	 OUTPUT_COMMON=1<<2,
 	 OUTPUT_HEADERS=1<<3,
-	 OUTPUT_SKELIMPL=1<<4 } enabled_passes;
+	 OUTPUT_SKELIMPL=1<<4,
+	 OUTPUT_IMODULE=1<<5 } enabled_passes;
 
   char *output_formatter;
 

@@ -1,3 +1,27 @@
+2001-07-24  Martin Baulig  <baulig@suse.de>
+
+	The IDL compiler now creates a -imodule.c file which
+	contains a `ORBit_IModule orbit_imodule_data' struct.
+	We'll compile these -imodule.c files into shared
+	libraries which can be dlopen()ed by scripting languages.
+	There is a --noimodule command line option to turn this
+	feature off.
+
+	* src/orb/orb-core/orbit-interface.idl
+	(IModuleVersion, IInterfaces): New typedefs.
+	(IModule): New struct type.
+
+	* configure.in: Bump ORBIT_SERIAL to 14.
+
+	* src/idl-compiler/orbit-idl3-types.h (enabled_passes):
+	Added OUTPUT_IMODULE.
+
+	* src/idl-compiler/orbit-idl-main.c: Added "--noimodule"
+	command line option to disable output of the -imodule.c
+	files.
+
+	* src/idl-compiler/orbit-idl-c-imodule.c: New file.
+
 2001-07-23  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-main.c (main): add version
