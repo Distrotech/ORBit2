@@ -133,7 +133,7 @@ module test {
 		void opException() raises(TestException);
 	};
 
-	interface StructServer {
+	interface StructServer : BasicServer {
 		FixedLengthStruct opFixed(in FixedLengthStruct inArg, 
 					  inout FixedLengthStruct inoutArg,
 					  out FixedLengthStruct outArg);

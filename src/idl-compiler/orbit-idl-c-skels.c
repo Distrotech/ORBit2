@@ -7,7 +7,6 @@ typedef struct {
   GSList *oplist;
   gint curlevel;
   gboolean small;
-  int idx;
 } CBESkelInterfaceTraverseInfo;
 
 typedef struct {
@@ -630,14 +629,11 @@ cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
   CBESkelOpInfo *newopi;
   IDL_tree curitem, curdcl, curattr, curattrdcl;
   char *iface_id;
+  int   idx = 0;
 
   iface_id =
     IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(intf).ident),
 			    "_", 0);
-
-#warning The IDX calc here is out of step with everything else - particularly
-#warning the method ordering on dump ... so that we get broken offsets
-#warning see Bonobo-skels.c PropertyBag_epv->getKeys vs. the m_data offset.
 
   for(curitem = IDL_INTERFACE(intf).body; curitem;
       curitem = IDL_LIST(curitem).next) {
@@ -648,7 +644,7 @@ cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
       newopi = g_new0(CBESkelOpInfo, 1);
       newopi->iface_id = g_strdup(iface_id);
       newopi->opname = g_strdup(IDL_IDENT(IDL_OP_DCL(curdcl).ident).str);
-      newopi->idx = iti->idx++;
+      newopi->idx = idx++;
       iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
 					  (GCompareFunc)cbe_skel_compare_op_dcls);
       break;
@@ -660,14 +656,14 @@ cbe_skel_interface_add_relayer(IDL_tree intf, CBESkelInterfaceTraverseInfo *iti)
 	newopi = g_new0(CBESkelOpInfo, 1);
 	newopi->iface_id = g_strdup(iface_id);
 	newopi->opname = g_strdup_printf("_get_%s", IDL_IDENT(curattrdcl).str);
-	newopi->idx = iti->idx++;
+	newopi->idx = idx++;
 	iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
 					    (GCompareFunc)cbe_skel_compare_op_dcls);
 	if(!IDL_ATTR_DCL(curdcl).f_readonly) {
 	  newopi = g_new0(CBESkelOpInfo, 1);
 	  newopi->iface_id = g_strdup(iface_id);
 	  newopi->opname = g_strdup_printf("_set_%s", IDL_IDENT(curattrdcl).str);
-	  newopi->idx = iti->idx++;
+	  newopi->idx = idx++;
 	  iti->oplist = g_slist_insert_sorted(iti->oplist, newopi,
 					      (GCompareFunc)cbe_skel_compare_op_dcls);
 	}
@@ -755,7 +751,6 @@ cbe_skel_interface_print_relayer(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Inf
   iti.oplist = NULL;
   iti.curlevel = 0;
   iti.small = rinfo->small_skels;
-  iti.idx = 0;
 
   IDL_tree_traverse_parents(tree,
 			    (GFunc)cbe_skel_interface_add_relayer, &iti);
