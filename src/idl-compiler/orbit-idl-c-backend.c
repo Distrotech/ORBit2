@@ -153,7 +153,7 @@ out_for_pass (const char    *input_filename,
 		output_full_path = g_build_path (G_DIR_SEPARATOR_S, rinfo->output_directory, output_filename, NULL);
 		g_free (output_filename);
 
-		fp = fopen (output_full_path, "w");
+		fp = fopen (output_full_path, "w+");
 		if (fp == NULL)
 			g_error ("failed to fopen '%s': %s\n", output_full_path, strerror(errno));
 
