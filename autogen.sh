@@ -13,7 +13,7 @@ DIE=0
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
 	echo
 	echo "You must have at minimum autoconf version 2.12 installed"
-	echo "to compile ORBit. Download the appropriate package for"
+	echo "to compile ORBit2. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
 	echo "ftp://ftp.gnu.org/pub/gnu/"
 	DIE=1
@@ -23,7 +23,7 @@ DIE=0
 (libtool --version | egrep "1.[2-9]") > /dev/null || {
 	echo
 	echo "You must have at minimum libtool version 1.3 installed"
-	echo "to compile ORBit. Download the appropriate package for"
+	echo "to compile ORBit2. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
 	echo "ftp://alpha.gnu.org/gnu/libtool-1.4.tar.gz"
 	DIE=1
@@ -33,7 +33,7 @@ DIE=0
 (automake --version) < /dev/null > /dev/null 2>&1 ||{
 	echo
 	echo "You must have at minimum automake version 1.4 installed"
-	echo "to compile ORBit. Download the appropriate package for"
+	echo "to compile ORBit2. Download the appropriate package for"
 	echo "your distribution, or get the source tarball at"
 	echo "ftp://ftp.cygnus.com/pub/home/tromey/automake-1.4.tar.gz"
 	DIE=1
@@ -77,4 +77,4 @@ echo "Running $srcdir/configure --enable-maintainer-mode" "$@"
 $srcdir/configure --enable-maintainer-mode "$@"
 
 echo 
-echo "Now type 'make' to compile ORBit."
+echo "Now type 'make' to compile ORBit2."

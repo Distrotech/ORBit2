@@ -1,3 +1,9 @@
+2001-10-02  Glynn Foster <glynn.foster@sun.com>
+
+	* autogen.sh, configure.in: Dumb commit to fix
+	  spelling mistake and remove build fail references to
+	  ORBit and replace with ORBit2. Yeah, this is lame.
+
 2001-10-02  Laszlo Peter  <laca@ireland.sun.com>
 
 	* src/orb/orb-core/iop-profiles.c:
