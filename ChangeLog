@@ -1,3 +1,13 @@
+2003-07-29  Frank Rehberger  <Frank.Rehberger@web.de>
+
+	* src/orb/orb-core/corba-loc.c (corbaloc_profile_iiop_parse):
+	polishing comments and layout (true K&R)
+	(corbaloc_profile_iiop): target supports full security features,
+	target requires at least integrity and confidentiality
+
+	* src/orb/orb-core/corba-object.c (g_CORBA_Object_hash): polishing
+	comments
+
 2003-07-28  Frank Rehberger  <Frank.Rehberger@web.de>
 
 	* test/everything/test.sh (SAMPLE_NAME): regression test for corbaloc

@@ -13,13 +13,24 @@
 #include "iop-profiles.h"
 #include "orb-core-private.h"
 
+#define OMG_LOCATOR "2809"
+
+#define NO_PROTECTION                1
+#define INTEGRITY                    2
+#define CONFIDENTIALITY              4
+#define DETECT_REPLAY                8
+#define DETECT_MISORDERING          16
+#define ESTABLISH_TRUST_IN_TARGET   32
+#define ESTABLISH_TRUST_IN_CLIENT   64
+#define NO_DELEGATION              128
+#define SIMPLE_DELEGATION          256
+#define COMPOSITE_DELEGATION       512
 
 /* does not preserve @profile string, inserts '\0' as seperator,
  * @return FALSE on failure and TRUE otherwise, on success restults
  * will be assigned to @ver and @host and @port, do not _free_
  * @host  */ 
-static 
-gboolean
+static gboolean
 corbaloc_profile_iiop_parse (gchar  *profile,
 			     GIOPVersion     *ver,
 			     gchar          **host,
@@ -50,7 +61,8 @@ corbaloc_profile_iiop_parse (gchar  *profile,
 	_token++;           /* point right of ':' */
 	
 	/* skip leading '/' */ 
-	while (*_token == '/') ++_token; 
+	while (*_token == '/') 
+		++_token; 
  
 	if (strchr (_token, '@')) {
 		_ver  = _token;
@@ -71,8 +83,7 @@ corbaloc_profile_iiop_parse (gchar  *profile,
 		++_port;
 	}
 	else {
-		/* default port for OMG locator service */ 
-		_port = "2809";
+		_port = OMG_LOCATOR;
 	}
 	
 	/* asure strings are not empty */ 
@@ -90,7 +101,7 @@ corbaloc_profile_iiop_parse (gchar  *profile,
 		if (!isdigit (*_port++))
 			goto ret_error;
 	
-	/* verify @_ver is of GIOP 1.0, 1.1. or 1.2 */
+	/* verify @_ver is one of GIOP 1.0, 1.1. or 1.2 */
 	if (!strncmp (_ver, "1.0", strlen ("1.0")))      *ver =  GIOP_1_0;
 	else if (!strncmp (_ver, "1.1", strlen ("1.1"))) *ver =  GIOP_1_1;
 	else if (!strncmp (_ver, "1.2", strlen ("1.2"))) *ver =  GIOP_1_2;
@@ -104,8 +115,7 @@ corbaloc_profile_iiop_parse (gchar  *profile,
 	return FALSE; 
 }
 
-static 
-gboolean
+static gboolean
 corbaloc_profile_uiop_parse (gchar           *profile,
 			     gchar          **socket_path,
 			     gushort         *ipv6_port )
@@ -132,12 +142,9 @@ corbaloc_profile_uiop_parse (gchar           *profile,
 
 	if (!(profile = strrchr (profile, ':')))
 		goto ret_error;
+	*profile++ = '\0'; 
 	
-	*profile++ = '\0'; /* terminate sock-path */ 
-	
-	if (strlen (profile))
-	{
-		/* verify it is ushort */ 
+	if (strlen (profile)) {
 		if (atoi(profile) < 0 || atoi (profile) > USHRT_MAX)
 			goto ret_error;
 		*ipv6_port = atoi (profile);
@@ -146,8 +153,7 @@ corbaloc_profile_uiop_parse (gchar           *profile,
 			if (!isdigit (*profile++))
 				goto ret_error;
 	} 
-	else
-	{
+	else {
 		*ipv6_port = 0;
 	}
 
@@ -160,8 +166,7 @@ corbaloc_profile_uiop_parse (gchar           *profile,
 	return FALSE; 
 }
 
-static 
-IOP_TAG_INTERNET_IOP_info*
+static IOP_TAG_INTERNET_IOP_info*
 corbaloc_profile_iiop (gchar           *token, 
 		       ORBit_ObjectKey *objkey)
 {	
@@ -179,7 +184,6 @@ corbaloc_profile_iiop (gchar           *token,
 	if (ssl && ver < GIOP_1_1) 
 		return NULL;
 
-	/* FIXME, read @ssl and make profile for SSLIOP */ 
 	iiop = g_new0 (IOP_TAG_INTERNET_IOP_info, 1);
 	iiop->parent.profile_type = IOP_TAG_INTERNET_IOP;
 	iiop->iiop_version = ver;
@@ -192,11 +196,17 @@ corbaloc_profile_iiop (gchar           *token,
 	if (ssl) {
 		IOP_TAG_SSL_SEC_TRANS_info *sslsec;
 		
-		sslsec = g_new0 (IOP_TAG_SSL_SEC_TRANS_info, 1);                                sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
-		/* FIXME, set also flag "trust in server" */ 
-		/* integrity & confidentiality */
-		sslsec->target_supports =  127;
-		sslsec->target_requires =  2|4;   
+		sslsec = g_new0 (IOP_TAG_SSL_SEC_TRANS_info, 1);     
+		sslsec->parent.component_type = IOP_TAG_SSL_SEC_TRANS;
+		sslsec->target_supports =  /* NO_PROTECTION             | */
+			                   INTEGRITY                 |
+			                   CONFIDENTIALITY           |
+                                           DETECT_REPLAY             |
+			                   DETECT_MISORDERING        |
+                                           ESTABLISH_TRUST_IN_TARGET |
+			                   ESTABLISH_TRUST_IN_CLIENT;
+		sslsec->target_requires =  INTEGRITY                 |
+			                   CONFIDENTIALITY;
 		sslsec->port = port;
 
 		iiop->components = g_slist_append (
@@ -206,10 +216,9 @@ corbaloc_profile_iiop (gchar           *token,
 	return iiop;
 }
 
-static 
-IOP_TAG_ORBIT_SPECIFIC_info*
+static IOP_TAG_ORBIT_SPECIFIC_info*
 corbaloc_profile_uiop (gchar           *token, 
-		      ORBit_ObjectKey *objkey)
+		       ORBit_ObjectKey *objkey)
 {	
 	IOP_TAG_ORBIT_SPECIFIC_info* osi = NULL;
 	gchar   *socket_path = NULL;
@@ -219,7 +228,6 @@ corbaloc_profile_uiop (gchar           *token,
 	if (!corbaloc_profile_uiop_parse (token, &socket_path, &ipv6_port))
 		return NULL;
 
-	/* FIXME, what about ip6-port in osi-profile */ 
 	osi = g_new0 (IOP_TAG_ORBIT_SPECIFIC_info, 1);
 	osi->parent.profile_type = IOP_TAG_ORBIT_SPECIFIC;
 	osi->unix_sock_path      = g_strdup (socket_path);
@@ -230,8 +238,7 @@ corbaloc_profile_uiop (gchar           *token,
 }
 
 /* taken from Mico ORB */ 
-static 
-gchar
+static gchar
 orbit_from_xdigit(gchar c)
 {
 	c = tolower (c);
@@ -240,8 +247,7 @@ orbit_from_xdigit(gchar c)
 }
 
 /* taken from Mico ORB */ 
-static
-ORBit_ObjectKey*
+static ORBit_ObjectKey*
 orbit_url_decode (const char * ptr)
 {
 	ORBit_ObjectKey *retval  = NULL;
@@ -255,8 +261,7 @@ orbit_url_decode (const char * ptr)
 
 	buf = retval->_buffer;
 
-	while (*ptr) 
-	{
+	while (*ptr) {
 		if (*ptr == '%') {
 			if (!isxdigit((unsigned char)ptr[1]) ||
 			    !isxdigit((unsigned char)ptr[2])) {
@@ -291,36 +296,32 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 	GSList            *profiles = NULL;
 	ORBit_ObjectKey   *objkey   = NULL;
 
-/* 	gchar   *type_id  = "";   /\* type unknown *\/  */
 	gchar   *loc      = NULL;
 	gchar  **token    = NULL;
 	gchar   *okey     = NULL;
 	glong    i        = 0;
 		
-	g_return_val_if_fail (corbaloc,        FALSE);
+	g_return_val_if_fail (corbaloc,        NULL);
 
 
 	if (!strncmp (corbaloc, "corbaloc::/", 1 + strlen ("corbaloc::/")))
 		return CORBA_OBJECT_NIL;
 
-	if (!strchr (corbaloc, '/')) /* any object key ? */
+	if (!strchr (corbaloc, '/'))   /* any object key ? */
 		goto ret_error;  
-
-	/* skip prefix 'corbaloc:' if any */ 
 
 	if (!strncmp (corbaloc, "corbaloc:", strlen("corbaloc:"))) 
 		corbaloc += strlen("corbaloc:");
 	
-	/* dup. string containing multi profile and object key */ 
+	/* dup. multi profile + object key */ 
 	loc = g_strdup (corbaloc);
 
-	/* reverse search of '/' and seperate object key from protocol
-	 * list */ 
+	/* split at last '/' */ 
 	okey = strrchr (loc, '/');
 	if (!okey || strlen (okey)==0)
 		goto ret_error;
 	*okey = '\0'; 
-	++okey;       /* set to first char of object key */ 
+	++okey;       
 
 	if (!strlen(okey)) 
 		goto ret_error;
@@ -335,14 +336,11 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 	/* [ 'iiops' ]  ':' [ '//' ] [ version '@' ] host [ ':' port ] */
 	/* [ 'ssliop' ] ':' [ '//' ] [ version '@' ] host [ ':' port ] */
 	/* [ 'uiop' ]   ':' [ '//' ] socket ':' [ port ]               */
-	for (i=0; token[i]; ++i)
-	{
-		switch (token [i][0]) 
-		{
+	for (i=0; token[i]; ++i) {
+		switch (token [i][0]) {
 		case ':':
 		case 'i':
-		case 's': 
-		{
+		case 's': {
 			IOP_TAG_INTERNET_IOP_info *iiop_profile 
 				= corbaloc_profile_iiop (token[i], objkey);
 			if (!iiop_profile) 
@@ -350,8 +348,7 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 			profiles = g_slist_append (profiles, iiop_profile);
 			break;
 		}
-		case 'u':
-		{
+		case 'u': {
 			IOP_TAG_ORBIT_SPECIFIC_info *osi_profile
 				= corbaloc_profile_uiop (token[i], objkey);
 			if (!osi_profile) 
@@ -370,7 +367,7 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 	return profiles;
 	
  ret_error:
-	if (loc)    g_free (loc);        /* frees okey, too */
+	if (loc)    g_free (loc);        /* also free's okey */
 	if (token)  g_strfreev (token);
 	if (objkey) CORBA_free (objkey);
 	if (profiles) IOP_delete_profiles (NULL, &profiles);
@@ -402,8 +399,6 @@ as_corbaloc (GSList *profile_list)
 
 	return valid;
 }
-
-
 
 CORBA_char*
 ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
@@ -439,22 +434,12 @@ ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 			g_string_append_printf (str, "iiop:%s:%d/",
 						      iiop->host, iiop->port);
 
+			/* url encoding */ 
 			for (i = 0; i < object_key->_length; i++)
 				g_string_append_printf (str, "%%%02x", 
 							      object_key->_buffer [i]);
 			break;
 		}
-         /* FIXME, parser not does not support this currently  */
-/* 		case  IOP_TAG_GENERIC_IOP: { */
-/* 			IOP_TAG_GENERIC_IOP_info *giop = cur->data; */
-			
-/* 			g_string_append_printf (str, "giop:%s:%s/%s", */
-/* 					 giop->proto, */
-/* 					 giop->host,  */
-/* 					 giop->service); */
-/* 			break; */
-/* 		} */
-
 		case IOP_TAG_ORBIT_SPECIFIC: {
 			IOP_TAG_ORBIT_SPECIFIC_info *os = cur->data;
 			gint i = 0;
@@ -474,12 +459,15 @@ ORBit_corbaloc_from (GSList *profile_list, ORBit_ObjectKey *object_key)
 				g_string_append_printf (str, "uiop:%s:/",
 							os->unix_sock_path);
 				
+			/* url encoding */ 
 			for (i = 0; i < object_key->_length; i++)
 				g_string_append_printf (str, "%%%02x", 
 							object_key->_buffer [i]);			
 			break;
 		}
+		case  IOP_TAG_GENERIC_IOP: 
 		default:
+			/* ignore */ 
 			break;
 		}
         }

@@ -406,8 +406,7 @@ CORBA_ORB_object_to_string (CORBA_ORB          orb,
 	}
 
 	/* FIXME, do nice integration */ 
-	if (orbit_use_corbaloc)
-	{
+	if (orbit_use_corbaloc) {
 		return ORBit_object_to_corbaloc (obj, ev);
 	}
 	
