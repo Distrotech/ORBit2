@@ -464,11 +464,10 @@ IDLStruct::skel_impl_ret_post (ostream          &ostr,
 		{
 			ostr << indent << c_typename << " _c_retval;" << endl;
 			ostr << indent << "_cpp_retval._orbitcpp_pack (_c_retval);" << endl;
+			ostr << indent << "return _c_retval;" << endl;
 		} else {
 			ostr << indent << "return _cpp_retval->_orbitcpp_pack ();" << endl;
 		}
-
-		ostr << indent << "return _c_retval;" << endl;
 	}
 }
 
