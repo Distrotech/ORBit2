@@ -422,7 +422,7 @@ giop_recv_buffer_demarshal (GIOPRecvBuffer *buf)
 GIOPRecvBuffer *
 giop_recv_buffer_use_encaps (guchar *mem, gulong len)
 {
-	GIOPRecvBuffer *buf = giop_recv_buffer_use_buf ();
+	GIOPRecvBuffer *buf = giop_recv_buffer_use_buf (NULL);
 
 	buf->cur = buf->message_body = mem;
 	buf->end = buf->cur + len;
@@ -506,7 +506,8 @@ giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 	default:
 		break;
 	}
-
+	if(buf->connection)
+		giop_connection_unref (buf->connection);
 	g_free (buf);
 }
 
@@ -1179,7 +1180,7 @@ giop_connection_handle_input (LinkConnection *lcnx)
 		int n;
 
 		if (!cnx->incoming_msg)
-			cnx->incoming_msg = giop_recv_buffer_use_buf ();
+			cnx->incoming_msg = giop_recv_buffer_use_buf (cnx);
 
 		buf = cnx->incoming_msg;
 
@@ -1263,8 +1264,6 @@ giop_connection_handle_input (LinkConnection *lcnx)
 
 	cnx->incoming_msg = NULL;
 
-	buf->connection = cnx;
-
 	switch (buf->msg.header.message_type) {
 	case GIOP_REPLY:
 	case GIOP_LOCATEREPLY:
@@ -1326,15 +1325,19 @@ giop_connection_handle_input (LinkConnection *lcnx)
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_buf (void)
+giop_recv_buffer_use_buf (GIOPConnection *cnx)
 {
 	GIOPRecvBuffer *buf = NULL;
-
+	
+	if(cnx)
+		giop_connection_ref (cnx);
+	
 	buf = g_new0 (GIOPRecvBuffer, 1);
 
 	buf->state = GIOP_MSG_READING_HEADER;
 	buf->cur = (guchar *)&buf->msg.header;
 	buf->left_to_read = 12;
+	buf->connection = cnx;
 
 	return buf;
 }
