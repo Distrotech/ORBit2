@@ -119,8 +119,9 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 	attr.getType()->getCPPStubReturnDeclarator(
 		   iface.getQualifiedCPPStub(iface.getRootScope()) + "::" + attr.getCPPIdentifier(),
 		   ret_typespec,ret_typedcl);
-	m_module <<
-	mod_indent << ret_typespec << ' ' << ret_typedcl << "() {" << endl;
+	m_module
+	<< mod_indent << ret_typespec << ' ' << ret_typedcl << "()" << endl
+	<< mod_indent << "{" << endl;
 	mod_indent++;
 	attr.getType()->writeCPPStubReturnPrepCode(m_module,mod_indent);
 
@@ -150,8 +151,8 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		
 		m_module
 		 <<	mod_indent << "void "
-		 << iface.getQualifiedCPPStub(iface.getRootScope()) << "::" << attr.getCPPIdentifier()
-		 << '(' << type << ' ' << dcl << ") {" << endl;
+		 << iface.getQualifiedCPPStub(iface.getRootScope()) << "::" << attr.getCPPIdentifier() << '(' << type << ' ' << dcl << ")" << endl
+		 << mod_indent << "{" << endl;
 
 		mod_indent++;
 		// marshal the parameter
@@ -194,7 +195,8 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << ret_typespec << ' ' << ret_typedcl
-	<< '(' << op.getCPPOpParameterList() << ") {" << endl;
+	<< '(' << op.getCPPOpParameterList() << ")" << endl
+	<< mod_indent << "{" << endl;
 	mod_indent++;
 
 
@@ -320,15 +322,15 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 {
 	string ifname = iface.getCPPIdentifier();
 
-	string ns_begin,ns_end;
-	iface.getParentScope()->getCPPNamespaceDecl(ns_begin,ns_end);
+	string ns_begin, ns_end;
+	iface.getParentScope()->getCPPNamespaceDecl(ns_begin, ns_end);
 
 	// begin namespace
 	m_header
 	<< indent << "namespace " IDL_IMPL_NS_ID " { "
-	<< "namespace " IDL_IMPL_STUB_NS_ID " { "
-	<< ns_begin << endl;
-	indent++;
+	<< "namespace " IDL_IMPL_STUB_NS_ID " { " << endl << endl
+	<< ns_begin << endl << endl;
+	
 
 	// class declaration
 	m_header
@@ -348,13 +350,13 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	// have a non-empty binary footprint (size 1). thus they must go at
 	// the end, or else all we get is segfaults.
 	m_header
-	<< ", public " << iface.getQualifiedCPPIdentifier() << " {" << endl;
+	<< ", public " << iface.getQualifiedCPPIdentifier() << endl
+	<< indent << "{" << endl;
 	
 	// begin orbitcpp internal section
-	m_header << indent << "// These should really be private, but we make them protected" << endl;
+	m_header << ++indent << "// These should really be private, but we make them protected" << endl;
 	m_header << indent << "//  to stop the compiler from generating warnings" << endl;
 	m_header << indent << "protected:" << endl;
-	indent++;
 
 	// constructors (no public ones, esp. no copy constructor)
 	m_header 
@@ -363,10 +365,9 @@ IDLPassStubs::doInterface(IDLInterface &iface)
   << indent << iface.getCPPStub() << "(" << iface.getCPPStub() << " const &src);" << endl;
 
 	// end orbitcpp internal section
-	indent--;
 
 	// begin public section
-	m_header << indent << "public:" << endl;
+	m_header << --indent << "public:" << endl;
 	indent++;
 		
 	// make cast operators for all mi base classes
@@ -408,11 +409,10 @@ IDLPassStubs::doInterface(IDLInterface &iface)
 	indent--;
 
 	// end main class
-	m_header << indent << "};" << endl;
+	m_header << indent << "};" << endl << endl;
 
 	// end namespace
-	indent--;
-	m_header << indent << ns_end << "}}" << endl;
+	m_header << indent << ns_end << "}} //namespaces" << endl << endl;
 
 	// write the static method definitions
 	doInterfaceStaticMethodDefinitions(iface);
@@ -427,7 +427,8 @@ void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
 	m_header
 	<< indent << "inline " << iface.getQualifiedCPP_ptr() << " "
 	<< iface.getQualifiedCPPIdentifier(iface.getRootScope()) << "::_duplicate("
-	<< iface.getQualifiedCPP_ptr() << " obj) {" << endl;
+	<< iface.getQualifiedCPP_ptr() << " obj)" << endl
+	<< indent << "{" << endl;
 
 	if(iface.requiresSmartPtr()) {
 		m_header
@@ -443,11 +444,12 @@ void IDLPassStubs::doInterfaceStaticMethodDefinitions(IDLInterface &iface) {
 		<< iface.getQualifiedCPPCast(IDL_IMPL_NS "::duplicate_guarded(*obj)") << ';' << endl;
 	}
 	m_header
-	<< --indent << '}' << endl
+	<< --indent << '}' << endl << endl
 	  
 	<< indent << "inline " << iface.getQualifiedCPP_ptr() << " "
 	<< iface.getQualifiedCPPIdentifier(iface.getRootScope())
-	<< "::_narrow(CORBA::Object_ptr obj) {" << endl;
+	<< "::_narrow(CORBA::Object_ptr obj)" << endl
+	<< indent << "{" << endl;
 
 	// Are we using smart pointers for _ptrs?
 	if(iface.requiresSmartPtr()) {

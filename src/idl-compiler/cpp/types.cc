@@ -1917,8 +1917,8 @@ IDLSequence::writeCPPSpecCode(ostream &ostr, Indent &indent, IDLCompilerState &s
 //	ostr
 //	<< --indent << "}" << endl << endl;
 
-	string typespec,dcl;
-	m_elementType.getCPPMemberDeclarator(id,typespec,dcl);
+	string typespec, dcl;
+	m_elementType.getCPPMemberDeclarator(id, typespec, dcl);
 
 //	if(m_elementType.isVariableLength()) {		
 //		ostr

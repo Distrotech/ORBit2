@@ -558,7 +558,8 @@ IDLPassSkels::doOperationTie(IDLInterface &iface,IDL_tree node) {
 void 
 IDLPassSkels::doInterfaceAppServant(IDLInterface &iface) {
 	m_header
-	<< indent << "struct _orbitcpp_Servant {" << endl;
+	<< indent << "struct _orbitcpp_Servant" << endl
+	<< indent << "{" << endl;
 	indent++;
 	m_header
 	<< indent << IDL_IMPL_C_NS_NOTUSED
@@ -729,15 +730,14 @@ IDLPassSkels::doInterface(IDLInterface &iface) {
 
 	if (ns_begin.size()) {
 		m_header
-		<< indent << ns_begin << endl;
-		indent++;
+		<< indent << ns_begin << endl << endl;
 	}
 
 	doInterfaceDerive(iface);
 	doInterfaceDelegate(iface);
 
 	if (ns_begin.size())
-		m_header << --indent << ns_end << endl << endl;		
+		m_header << indent << ns_end << endl << endl;		
 }
 
 
@@ -756,11 +756,13 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 		
 		while (first != last)
 			m_header << ", public virtual " << (*first++)->getQualifiedCPP_POA();
-		m_header << " {" << endl;
+
+		m_header << endl << " {" << endl;
 	}
 	else
 		m_header
-		<< ", public virtual "IDL_POA_NS "::ServantBase {" << endl;
+		<< ", public virtual "IDL_POA_NS "::ServantBase" << endl
+		<< "{" << endl;
 
 	// C interface
 	m_header
@@ -815,12 +817,14 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 
 	// destructor
 	m_header
-	<< indent << "virtual ~" << iface.getCPP_POA() << "() {"
-	<< indent << "}" << endl;
+	<< indent << "virtual ~" << iface.getCPP_POA() << "()" << endl
+	<< indent << "{"
+	<< indent << "}" << endl << endl;
 
 	// C++ methods
 	m_header
-	<< indent <<  "::PortableServer_Servant *_orbitcpp_get_c_servant() {" << endl;
+	<< indent <<  "::PortableServer_Servant *_orbitcpp_get_c_servant()" << endl
+	<< indent << "{" << endl;
 	m_header
 	<< ++indent << "return reinterpret_cast< " 
 	<< "::PortableServer_Servant *>(&m_target);" << endl;
@@ -845,7 +849,7 @@ IDLPassSkels::doInterfaceDerive(IDLInterface &iface) {
 
 	// end of class
 	m_header
-	<< --indent << "};" << endl;
+	<< --indent << "};" << endl << endl;
 }
 
 
