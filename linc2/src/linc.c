@@ -413,7 +413,9 @@ link_set_io_thread (gboolean io_in_thread)
 {
 	LinkCommand *cmd = g_new0 (LinkCommand, 1);
 
+#ifdef G_ENABLE_DEBUG
 	g_warning ("FIXME: guard from double entry");
+#endif
 
 	if (link_is_io_in_thread)
 		return;

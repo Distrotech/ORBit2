@@ -1,3 +1,8 @@
+2003-10-09  Michael Meeks  <michael@ximian.com>
+
+	* src/linc.c (link_set_io_thread): only spew
+	warning with debug enabled.
+
 2003-08-22  Michael Meeks  <michael@ximian.com>
 
 	* src/cleanup.c (read_sockets): cope with opendir
