@@ -1,3 +1,14 @@
+2002-10-17  Albert Chin  <china@thewrittenword.com>
+
+	* src/orb/orb-core/orbit-debug.h
+	(dprintf): add ERRORS define for ugly
+	non-varargs case.
+
+	* test/everything/client.c
+	(test_BasicServer_opStringA_cb),
+	(test_BasicServer_opStringA): kill duff
+	array inits in decl.
+
 2002-10-16  James Henstridge  <james@daa.com.au>
 
 	* src/idl-compiler/orbit-idl-c-imodule.c (ci_build_types): handle
