@@ -1,7 +1,7 @@
 2001-07-13  Peter Williams  <peterw@ximian.com>
 
 	* configure.in (ACLOCAL): Preserve ACLOCAL_FLAGS in
-	ACLOCAL.
+	ACLOCAL. (Update: whoops, typo! Fixed.)
 
 2001-07-14  Martin Baulig  <baulig@suse.de>
 

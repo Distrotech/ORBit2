@@ -63,9 +63,9 @@ AM_MAINTAINER_MODE
 
 dnl Useful for automating stuff
 AC_CACHE_CHECK([for aclocal flags], ac_cv_orbit_aclocal_flags,[
-   ac_cv_orbit_aclocal_flags=""
+   ac_cv_orbit_aclocal_flags="$ACLOCAL_FLAGS"
 ])
-ACLOCAL=" "
+ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 
 dnl Checks for programs.
 AC_PROG_CC
