@@ -337,7 +337,8 @@ giop_thread_free (GIOPThread *tdata)
 	if (tdata->request_queue)
 		g_warning ("Leaked request queue");
 #endif
-	g_queue_free (tdata->invoke_policies);
+	if (tdata->invoke_policies)
+		g_queue_free (tdata->invoke_policies);
 	
 	g_free (tdata);
 }
