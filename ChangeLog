@@ -1,3 +1,7 @@
+2001-08-18  Mark McLoughlin <mark@skynet.ie>
+
+	* configure.in: kill AC_CONFIG_SUBDIRS(popt)
+
 2001-08-18 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 
 	* src/idl-compiler/orbit-idl-c-backend.c
