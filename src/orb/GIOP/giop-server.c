@@ -2,6 +2,7 @@
 #include <orbit/GIOP/giop.h>
 
 static void giop_server_init       (GIOPServer      *server);
+static void giop_server_destroy    (GObject *obj);
 static void giop_server_class_init (GIOPServerClass *klass);
 static LINCConnection *giop_server_handle_create_connection(LINCServer *server);
 
@@ -34,15 +35,26 @@ giop_server_get_type(void)
   return object_type;
 }
 
+static GObjectClass *parent_class = NULL;
+
+static void
+giop_server_class_init (GIOPServerClass *klass)
+{
+  parent_class = g_type_class_peek_parent(klass);
+  G_OBJECT_CLASS(klass)->shutdown = giop_server_destroy;
+  klass->parent_class.create_connection = giop_server_handle_create_connection;
+}
+
 static void
 giop_server_init       (GIOPServer      *server)
 {
 }
 
 static void
-giop_server_class_init (GIOPServerClass *klass)
+giop_server_destroy    (GObject *obj)
 {
-  klass->parent_class.create_connection = giop_server_handle_create_connection;
+  if(parent_class->shutdown)
+    parent_class->shutdown(obj);
 }
 
 GIOPServer *
@@ -61,7 +73,9 @@ giop_server_new(GIOPVersion giop_version,
       g_object_unref((GObject *)server); server = NULL;
     }
   else
-    server->orb_data = create_orb_data;
+    {
+      server->orb_data = create_orb_data;
+    }
 
   return server;
 }

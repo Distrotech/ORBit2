@@ -23,7 +23,6 @@
 struct _GIOPConnection {
   LINCConnection parent;
 
-  O_THREAD_DEFINE(handler);
   O_MUTEX_DEFINE(incoming_mutex);
   GIOPRecvBuffer *incoming_msg;
   O_MUTEX_DEFINE(outgoing_mutex);
