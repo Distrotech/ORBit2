@@ -1,0 +1,132 @@
+IDL Compiler Design
+-------------------
+
+
+It is modeled around the basic notion of an IDLElement (language.hh), which
+can be nearly everything that is a named entity of IDL, e.g.
+an operation, an interface, a type, but not an argument of an operation.
+The most important subclass of IDLElement is IDLScope. An IDLScope can
+contain several (distinctly named) IDLElements (which can in turn be
+IDLScopes, of course). With this model, we represent the entire scoping
+hierarchy brought about in the IDL file in a tree-like manner. 
+
+
+For example, consider
+
+  module A {
+    interface B {
+      void opb1();
+      void opb2();
+    }
+    interface C {
+      void opc1();
+      void opc2();
+    }
+  }
+  
+  which would result in the following tree, rooted at the root scope:
+  
+  + Root
+  |
+  +--+ module A (scope)
+     |
+     +--+ interface B (scope)
+     |  |
+     | 	+-- operation opb1() (element)
+     |	|
+     |	`-- operation opb2() (element)
+     |
+     `--+ interface C (scope)
+        |
+       	+-- operation opc1() (element)
+      	|
+      	`-- operation opc2() (element)
+     
+As you can see, scopes form the inner nodes of the tree, whereas the leaf
+nodes feature elements.
+
+The root scope is part of the compiler state (in pass.hh), but it can be 
+accessed from any IDLElement by simply calling its getRootScope() method.
+
+Elements (and thus also scopes) have tool functions to get canonicalized
+names for them in various naming conventions, whether unqualified or not.
+Those are get(C|CPP|IDL)Identifier and getQualified(C|CPP|IDL)Identifier,
+both of which are pretty self-explanatory if called without parameters.
+
+e.g.  opc2.getCPPIdentifier() = opc2
+
+
+The *Qualified* functions however leave room for tweaking. E.g., the
+up_to parameter lets you specify up to (but not including) which scope
+the qualified name should be built. (default being NULL, meaning gobble
+up everything, terminate when there are no more scopes to go, which 
+automatically puts some equivalent to "::" in front. If you want to avoid
+this, specify the root scope for this parameter). 
+
+e.g.  opc2.getQualifiedCPPIdentifier() = ::a::c::opc2
+ 	  opc2.getQualifiedCIdentifier(opc2.getRootScope()) = a::c::opc2
+
+Scopes can do (recursive) name lookup for you. (lookup(),
+lookupLocal()) Scopes also have STL-style iterator functions to enable
+you to iterate over their member nodes. (begin() and end())
+
+
+
+
+The next important notion in the compiler is IDLType. A class derived
+from IDLType defines all the methods necessary for the code generation passes
+to know how to marshal and demarshal it. (all declared pure virtual in 
+IDLType, see types.hh)
+
+All type representations in the compiler inherit from IDLType. If you 
+want to parse a type, you typically have two IDL_trees, typespec and dcl, 
+which you may pass to the type parser (declared in types.hh, instantiated 
+in the compiler state) to obtain an IDLType. If you add a built-in type,
+you must of course ammend the type parser.
+
+IDL has user-named types, such as structs and enums, which implies that 
+there can be classes which inherit from both IDLType and 
+IDLElement or IDLScope. If you want to make your own such type, be sure
+to override IDLElement's isType, a feature to enable the type parser
+to determine whether some resolved name really corresponds to a type
+before doing a cast (this is a bit like typeid).
+
+The compiler works in four passes, in the following order:
+
+- Information gathering (pass_gather.*)
+  builds the aforementioned scope tree
+- Type translation (pass_xlate.*)
+  writes a c++ mapping of user-defined IDL types
+- Stub production (pass_stubs.*)
+- Skel production (pass_skels.*)
+
+Only the first two passes iterate over libIDL's IDL_tree (which is
+why they inherit from IDLIteratingPass, from pass_idl_it.hh), the other
+two just iterate over the interface list (in the compiler state)
+
+This may give you an impression on what is where in the compiler.
+I suspect this explanation is not too good, feel free to mail the list
+with improvements.
+
+
+
+Misc stuff
+==========
+
+The following docs need sorting out.
+
+
+* Any inserters and extractors in foo-cpp-common.cc
+---------------------------------------------------
+
+These are written by a bunch of classes in pass_xlate.hh
+
+IDLWriteAnyFuncs
+IDLWriteEnumAnyFuncs
+IDLWriteStructAnyFuncs  etc.. etc..
+
+The IDLWriteAnyFuncs base class provides a default implementation of
+writeInsertFunc() & writeExtractFunc(), and the subclasses override
+with their own versions.
+
+
