@@ -1,12 +1,12 @@
 #ifndef _ALLOCATORS_H_
 #define _ALLOCATORS_H_
 
-void CORBA_free (gpointer mem);
-
 #define CORBA_sequence_set_release(s,r) (s)->_release = r
 #define CORBA_sequence_get_release(s) (s)->_release
 
-gpointer ORBit_alloc_tcval (CORBA_TypeCode tc, guint nelements);
+void     CORBA_free        (gpointer mem);
+gpointer ORBit_alloc_tcval (CORBA_TypeCode tc,
+			    guint          nelements);
 
 #ifdef ORBIT2_INTERNAL_API
 
@@ -32,69 +32,46 @@ gpointer ORBit_alloc_tcval (CORBA_TypeCode tc, guint nelements);
 
     Below, some magic values of the fnc ptr are defined.
 **/
-typedef gpointer (* ORBit_free_kidvals)(gpointer mem, gpointer func_data);
-typedef void	 (* ORBit_free_blk)(gpointer mem, gpointer prefix);
+typedef gpointer (*ORBit_free_kidvals) (gpointer mem,
+					gpointer func_data);
 
-#ifdef ORBIT_DEBUG
-#define ORBIT_MAGIC_MEMPREFIX		0x1234fedc
-#define	ORBIT_MEM_MAGICDEF(name)	gulong name 
-#define ORBIT_MEM_MAGICSET(name)	(name) = ORBIT_MAGIC_MEMPREFIX
-#else
-#define ORBIT_MEM_MAGICDEF(name)
-#define ORBIT_MEM_MAGICSET(name)
-#endif
+#define ORBIT_MEMHOW_HOW(how)      ((how) & 0x3)
+#define ORBIT_MEMHOW_ELEMENTS(how) ((how) >> 2)
+#define ORBIT_MEMHOW_MAKE(how,elements) (((elements) << 2) | (how))
 
-typedef gulong ORBit_MemHow;
+typedef enum {
+	ORBIT_MEMHOW_NONE     = 0, /* don't free */
+	ORBIT_MEMHOW_SIMPLE   = 1, /* plain g_free */
+	ORBIT_MEMHOW_TYPECODE = 2, /* free via typecode */
+	ORBIT_MEMHOW_FREEFNC  = 3  /* free via a method */
+} ORBitMemHow;
 
-#define ORBIT_MEMHOW_PRELEN_MASK	(0xF<<28)
-#define ORBIT_MEMHOW_CODE_MASK		(0xF<<24)
-#define ORBIT_MEMHOW_NUMELS_MASK	((1<<24)-1)
+typedef struct ORBit_Memprefix {
+	union {
+		CORBA_TypeCode     tc;
+		ORBit_free_kidvals free_fn;
+	} u;
+	ORBitMemHow how;
+} ORBit_MemPrefix;
 
-#define ORBIT_MEMHOW_NONE	(1<<24)
-#define ORBIT_MEMHOW_SIMPLE	(2<<24)
+void     ORBit_free   (gpointer mem);
+void     ORBit_free_T (gpointer mem);
 
-#define ORBIT_MEMHOW_TYPECODE	(3<<24)
-typedef struct ORBit_MemPrefix_TypeCode_type {
-    ORBIT_MEM_MAGICDEF(magic);
-    CORBA_TypeCode	tc;
-} ORBit_MemPrefix_TypeCode;
+CORBA_char *ORBit_alloc_string (size_t             string_length);
+gpointer    ORBit_alloc_simple (size_t             block_size);
+gpointer    ORBit_alloc_kidfnc (size_t             element_size,
+				guint              num_elements,
+				ORBit_free_kidvals free_fn);
 
-#define ORBIT_MEMHOW_KIDFNC1	(4<<24)
-typedef struct ORBit_MemPrefix_KidFnc1_type {
-    ORBIT_MEM_MAGICDEF(magic);
-    ORBit_free_kidvals	freekids;
-} ORBit_MemPrefix_KidFnc1;
+#define  ORBit_alloc(sz, len, fnc) \
+                            ORBit_alloc_kidfnc ((sz), (len), (fnc))
 
-#define ORBIT_MEMHOW_FREEFNC1	(5<<24)
-typedef struct ORBit_MemPrefix_FreeFnc1_type {
-    ORBIT_MEM_MAGICDEF(magic);
-    ORBit_free_blk	freeblk;
-} ORBit_MemPrefix_FreeFnc1;
-
-
-extern gpointer ORBit_alloc_core(size_t block_size,
-				 ORBit_MemHow how,
-				 size_t prefix_size,
-				 gpointer *prefix_ref,
-				 guint8 align);
-
-extern void ORBit_free(gpointer mem);
-extern void ORBit_free_T(gpointer mem);
-
-gpointer ORBit_alloc_simple(size_t block_size);
-gpointer ORBit_alloc_kidfnc(size_t element_size, guint num_elements,
-				   ORBit_free_kidvals free_fnc);
-
-#define ORBit_alloc(sz, len, fnc) ORBit_alloc_kidfnc( (sz), (len), (fnc))
-
-/*
- * NB. freekids functions never do any locking !
- */
-gpointer CORBA_sequence__freekids(gpointer mem, gpointer data);
-gpointer CORBA_Object__freekids(gpointer mem, gpointer data);
-gpointer CORBA_TypeCode__freekids(gpointer mem, gpointer data);
-gpointer ORBit_freekids_via_TypeCode(CORBA_TypeCode tc, gpointer mem);
-gpointer ORBit_freekids_via_TypeCode_T(CORBA_TypeCode tc, gpointer mem);
+/* NB. freekids functions never do any locking ! */
+gpointer CORBA_sequence__freekids      (gpointer mem, gpointer data);
+gpointer CORBA_Object__freekids        (gpointer mem, gpointer data);
+gpointer CORBA_TypeCode__freekids      (gpointer mem, gpointer data);
+/* except this one */
+gpointer ORBit_freekids_via_TypeCode   (CORBA_TypeCode tc, gpointer mem);
 
 #endif /* ORBIT2_INTERNAL_API */
 

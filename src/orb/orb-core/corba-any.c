@@ -582,7 +582,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		if (dup_strings) {
 			*(char **)*val = CORBA_string_dup (buf->cur);
 		} else {
-			*(((ORBit_MemHow*) (buf->cur))-1) = ORBIT_MEMHOW_NONE;
+			*(((ORBitMemHow *) (buf->cur))-1) = ORBIT_MEMHOW_NONE;
 			*(char **)*val = buf->cur;
 		}
 		*val = ((guchar *)*val) + sizeof (CORBA_char *);

@@ -1,3 +1,40 @@
+2001-11-20  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-string.c
+	(CORBA_string_alloc, CORBA_string_dup): use alloc_string.
+	(CORBA_string__freekids): kill, unused.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_alloc_string): impl.
+
+	* test/Makefile.am: add test-mem
+
+	* test/test-mem.c: add.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_alloc_core): kill.
+	(ORBit_free_T): re-write.
+	(ORBit_freekids_via_TypeCode_T): re-order args to
+	make it a freekids fn, privatize.
+	(ORBit_freekids_via_TypeCode): upd.
+	(ORBit_alloc_tcval): re-write.
+	(ORBit_alloc_kidfnc): re-write.
+	(ORBit_alloc_simple): re-write.
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_demarshal_value): upd.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): check
+	our processor is a real processor.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_alloc):
+	use ORBit_small_alloc.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_IOP_ServiceContextList_free): use CORBA_free
+	(giop_IOP_ServiceContextList_demarshal): do it genericaly
+	by typecode.
+
 2001-11-19  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/poa/poa-macros.h: new file with convience macros.

@@ -46,7 +46,7 @@ CORBA_exception__alloc (void)
 {
 	CORBA_Environment *retval = ORBit_alloc (
 		sizeof (CORBA_Environment), 1, 
-		&CORBA_exception__freekids);
+		CORBA_exception__freekids);
 
 	CORBA_exception_init (retval);
 
