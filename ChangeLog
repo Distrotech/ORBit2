@@ -1,3 +1,25 @@
+2001-07-03  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orbit-init.c (ORBit_init_internals): seed
+	the random number generator once, properly.
+
+	* src/orb/GIOP/giop-connection.c s/shutdown/dispose/
+
+	* include/orbit/util/basic_types.h: include
+	glib/gunicode.h Mark needs to update his glib :-)
+
+2001-06-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(IOP_TAG_INTERNET_IOP_demarshal): NULL components if
+	version is !> GIOP_1_0.
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_get_typespec_str): return CORBA_wstring not
+	CORBA_wchar *.
+
+	* include/orbit/util/basic_types.h: add CORBA_wstring.
+
 2001-06-29  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/util/basic_types.h: include gunicode.h,

@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 static void giop_connection_init       (GIOPConnection      *cnx);
-static void giop_connection_shutdown    (GObject             *obj);
+static void giop_connection_dispose    (GObject             *obj);
 static void giop_connection_class_init (GIOPConnectionClass *klass);
 static void giop_connection_real_state_changed(LINCConnection *cnx, LINCConnectionStatus status);
 
@@ -94,7 +94,7 @@ giop_connection_class_init (GIOPConnectionClass *klass)
   GObjectClass *object_class = (GObjectClass *)klass;
 
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
-  object_class->shutdown = giop_connection_shutdown;
+  object_class->dispose = giop_connection_dispose;
   klass->parent_class.state_changed = giop_connection_real_state_changed;
 }
 
@@ -126,7 +126,7 @@ giop_connection_close (GIOPConnection *cnx)
 }
 
 static void
-giop_connection_shutdown (GObject *obj)
+giop_connection_dispose (GObject *obj)
 {
   GIOPConnection *cnx = (GIOPConnection *)obj;
 
@@ -138,8 +138,8 @@ giop_connection_shutdown (GObject *obj)
   giop_connection_list_remove(cnx);
   O_MUTEX_UNLOCK(cnx_list.lock);
 
-  if(parent_class->shutdown)
-    parent_class->shutdown(obj);
+  if(parent_class->dispose)
+    parent_class->dispose(obj);
 }
 
 #ifdef ORBIT_THREADED

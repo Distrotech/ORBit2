@@ -42,8 +42,8 @@ giop_server_handle_create_connection(LINCServer *server)
 static void
 giop_server_destroy (GObject *obj)
 {
-  if(parent_class->shutdown)
-    parent_class->shutdown(obj);
+  if(parent_class->dispose)
+    parent_class->dispose(obj);
 }
 
 static void
@@ -51,7 +51,7 @@ giop_server_class_init (GIOPServerClass *klass)
 {
   parent_class = g_type_class_peek_parent(klass);
 
-  G_OBJECT_CLASS(klass)->shutdown = giop_server_destroy;
+  G_OBJECT_CLASS(klass)->dispose = giop_server_destroy;
 
   klass->parent_class.create_connection = giop_server_handle_create_connection;
 }
