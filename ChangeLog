@@ -1,3 +1,14 @@
+2001-07-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_poa): don't send
+	anything back for oneway methods ...
+	(giop_dump_recv, giop_dump_send): robustify and publicise.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_handle_fragmented): 
+	add a warning for the broken fragmentation case ...
+	(giop_recv_buffer_use_noblock): kill.
+	(giop_recv_list_push): add conditional debug
+
 2001-07-24  Martin Baulig  <baulig@suse.de>
 
 	* src/idl-compiler/orbit-idl-c-imodule.c: Correctly calculate

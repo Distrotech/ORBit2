@@ -6,6 +6,8 @@
 #include <orbit/GIOP/giop-types.h>
 #include <orbit/GIOP/giop-recv-buffer.h>
 
+#undef DEBUG
+
 /* A list of GIOPMessageQueueEntrys */
 O_MUTEX_DEFINE_STATIC(giop_queued_messages_lock);
 static GList *giop_queued_messages;
@@ -663,6 +665,11 @@ giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
   GList *ltmp;
   GIOPMessageQueueEntry *ent;
 
+#ifdef DEBUG
+  fprintf (stderr, "Giop recv_list push: ");
+  giop_dump_recv (buf);
+#endif
+
   buf->connection = cnx;
   switch(buf->msg.header.message_type)
     {
@@ -673,7 +680,7 @@ giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 	{
 	  GIOPMessageQueueEntry *tmpent = ltmp->data;
 	  if(tmpent->msg_type == buf->msg.header.message_type
-	     && tmpent->request_id == giop_recv_buffer_get_request_id(buf))
+	     && tmpent->request_id == giop_recv_buffer_get_request_id (buf))
 	    {
 	      ent = tmpent;
 	      break;
@@ -869,20 +876,14 @@ giop_recv_buffer_use(void)
   return retval;
 }
 
-GIOPRecvBuffer *
-giop_recv_buffer_use_noblock (void)
-{	
-	/* FIXME: this sucks */
-	return giop_recv_list_pop();
-}
-
 static void
 giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
-  /* Drop fragmented packets on the floor for now */
-  buf->connection = cnx;
-  buf->end = buf->message_body + buf->msg.header.message_size;
-  giop_recv_buffer_unuse(buf);
+	/* Drop fragmented packets on the floor for now */
+	g_warning ("Dropping a fragmented packed on the floor !");
+	buf->connection = cnx;
+	buf->end = buf->message_body + buf->msg.header.message_size;
+	giop_recv_buffer_unuse (buf);
 }
 
 GIOPMessageInfo
