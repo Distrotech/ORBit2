@@ -293,9 +293,6 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fixlen = orbit_cbe_type_is_fixed_length(ts);
 
-  if(fixlen)
-    return;
-
   for(sub = IDL_TYPE_DCL(tree).dcls; sub; sub = IDL_LIST(sub).next) {
     IDL_tree node, ident, ttmp;
     char *tname;
@@ -304,6 +301,8 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
     switch(IDL_NODE_TYPE(node)) {
     case IDLN_IDENT:
+      if(fixlen)
+	continue;
       ident = node;
       if(IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
 	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) continue;
@@ -327,23 +326,28 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       break;
     case IDLN_TYPE_ARRAY:
       n = IDL_list_length(IDL_TYPE_ARRAY(node).size_list);
-      for(i = 0; i < n; i++) {
-	fprintf(ci->fh, "int n%d;\n", i);
-      }
 
-      fprintf(ci->fh, "gpointer retval = mem;\n");
-      for(i = 0, ttmp = IDL_TYPE_ARRAY(node).size_list; i < n; i++, ttmp = IDL_LIST(ttmp).next) {
-	fprintf(ci->fh, "for(n%d = 0; n%d < %" IDL_LL "d; n%d++) {\n",
-		i, i, IDL_INTEGER(IDL_LIST(ttmp).data).value, i);
-      }
+      if(fixlen) {
+	fprintf(ci->fh, "gpointer retval = ((guchar *)mem) + sizeof(%s);\n", tname);
+      } else {
+	fprintf(ci->fh, "gpointer retval = mem;\n");
+	for(i = 0; i < n; i++) {
+	  fprintf(ci->fh, "int n%d;\n", i);
+	}
+
+	for(i = 0, ttmp = IDL_TYPE_ARRAY(node).size_list; i < n; i++, ttmp = IDL_LIST(ttmp).next) {
+	  fprintf(ci->fh, "for(n%d = 0; n%d < %" IDL_LL "d; n%d++) {\n",
+		  i, i, IDL_INTEGER(IDL_LIST(ttmp).data).value, i);
+	}
       
-      fprintf(ci->fh, "retval = %s__free(&((%s_slice *)retval)", ctmp, tname);
-      for(i = 0; i < n; i++)
-	fprintf(ci->fh, "[n%d]", i);
-      fprintf(ci->fh, ", NULL, free_strings);\n");
+	fprintf(ci->fh, "retval = %s__free(&((%s_slice *)retval)", ctmp, tname);
+	for(i = 0; i < n; i++)
+	  fprintf(ci->fh, "[n%d]", i);
+	fprintf(ci->fh, ", NULL, free_strings);\n");
       
-      for(i = 0; i < n; i++) {
-	fprintf(ci->fh, "}\n");
+	for(i = 0; i < n; i++) {
+	  fprintf(ci->fh, "}\n");
+	}
       }
 
       fprintf(ci->fh, "return retval;\n");
