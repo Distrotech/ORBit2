@@ -634,7 +634,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
   fprintf (ci->fh, "#else\n");
   fprintf (ci->fh, "extern\n");
   fprintf (ci->fh, "#endif\n");
-  fprintf (ci->fh, "struct CORBA_TypeCode_struct TC_%s_struct;\n", ctmp);
+  fprintf (ci->fh, "ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_%s_struct;\n", ctmp);
 
   fprintf (ci->fh, "#define TC_%s ((CORBA_TypeCode)&TC_%s_struct)\n", ctmp, ctmp);
   if (ci->do_impl_hack)

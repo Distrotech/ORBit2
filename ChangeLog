@@ -1,3 +1,19 @@
+2005-03-11  Tor Lillqvist  <tml@novell.com>
+
+	* include/orbit/orb-core/orbit-object.h: Add macro
+	ORBIT2_MAYBE_CONST which expands to "const" on Unix, empty on
+	Win32.
+
+	* src/orb/orb-core/corba-typecode.c
+	* include/orbit/orb-core/corba-orb-type.h
+	* include/orbit/orb-core/corba-typecode.h
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_type_alloc_and_tc)
+	* src/idl-compiler/orbit-idl-c-typecode.c
+	(orbit_output_tcstruct_anon_subtypes_array,
+	orbit_output_tcstruct_anon_sublabels_array, cbe_tc_generate): Use
+	ORBIT2_MAYBE_CONST. This reintroduces constness on Unix, saving
+	some memory. (#169428)
+	
 2005-03-10  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Bump version to 2.13.0 to distinguish from the
