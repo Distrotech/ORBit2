@@ -24,6 +24,7 @@ ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adaptor,
 	case ORBIT_THREAD_HINT_PER_REQUEST:
 	case ORBIT_THREAD_HINT_PER_POA:
 	case ORBIT_THREAD_HINT_PER_CONNECTION:
+	case ORBIT_THREAD_HINT_ON_CONTEXT:
 		if (link_thread_safe ())
 			link_set_io_thread (TRUE);
 		break;
@@ -42,7 +43,7 @@ ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
 	va_list args;
 
 	va_start (args, thread_hint);
-	ORBit_ObjectAdaptor_set_thread_hint (adaptor, thread_hint, args);
+	ORBit_ObjectAdaptor_set_thread_hintv (adaptor, thread_hint, args);
 	va_end (args);
 }
 
@@ -54,6 +55,49 @@ ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor)
 
 	return adaptor->thread_hint;
 }
+
+
+/*
+ * Tie a object adaptor object to the current thread. This means that
+ * incomming requests to the servant will be handled by this thread only.
+ * The object must be created by a POA with the ORBIT_THREAD_HINT_PER_OBJECT
+ * hint set, and if the thread exits the behaviour will fallback to the
+ * default for HINT_PER_OBJECT, i.e. a new thread will be spawned to handle the
+ * all calls for the object. You need to call this function before any
+ * requests for the object arrive, since otherwise a thread for the
+ * object will be created.
+ */
+void
+ORBit_ObjectAdaptor_object_bind_to_current_thread (CORBA_Object obj)
+{
+	ORBit_OAObject adaptor_obj;
+	ORBit_POAObject pobj;
+	ORBit_ObjectAdaptor adaptor;
+	
+	g_return_if_fail (obj != NULL);
+
+	adaptor_obj = obj->adaptor_obj;
+	
+	g_return_if_fail (adaptor_obj != NULL);
+	g_return_if_fail (adaptor_obj->interface != NULL);
+	g_return_if_fail (adaptor_obj->interface->adaptor_type & ORBIT_ADAPTOR_POA);
+
+	pobj = (ORBit_POAObject) adaptor_obj;
+	
+	adaptor = (ORBit_ObjectAdaptor) pobj->poa;
+
+	if (adaptor->thread_hint != ORBIT_THREAD_HINT_PER_OBJECT) {
+		g_warning ("POA thread policy must be ORBIT_THREAD_HINT_PER_OBJECT for thread binding to work");
+	}
+
+	/* The GIOPThread will allocated in a user thread will be freed by
+	 * the TLS destructor, which will also release the key to the pobj.
+	 * If the pobj is destroyed before this ORBit_POAObject_release_cb
+	 * will release the key.
+	 */
+	giop_thread_key_add (giop_thread_self (), pobj);
+}
+
 
 CORBA_long
 ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor,
