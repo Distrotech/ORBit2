@@ -11,6 +11,8 @@
 	have to move the import library libpopt.dll.a away so that the
 	linker won't find it, and perhaps edit libpopt.la.
 
+	Remove leftover AC_MSG_WARN([host is $host]).
+
 2005-02-14  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: New autoconf variable LIBM, set to -lm on Unix,
