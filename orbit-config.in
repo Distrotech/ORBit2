@@ -5,7 +5,6 @@ exec_prefix=@exec_prefix@
 exec_prefix_set=no
 includedir=@includedir@
 libdir=@libdir@
-pkglibdir=$libdir/ORBit
 
 usage()
 {
@@ -89,7 +88,7 @@ while test $# -gt 0; do
 
     client|server)
 	the_libs="$the_libs -L$libdir -lORBit -lIIOP -lORBitutil `glib-config --libs` @LIBS@ -lm"
-	the_flags="$the_flags `glib-config --cflags` -I$includedir -I$pkglibdir/include "
+	the_flags="$the_flags `glib-config --cflags` -I$includedir "
 	;;
 
    --use-service=*)
