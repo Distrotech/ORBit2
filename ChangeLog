@@ -1,3 +1,17 @@
+2001-07-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (quick_compare): impl.
+	(ORBit_small_invoke): use it instead of a hard pointer
+	compare - since we can make new multiple IInterfaces
+	to point to the same data.
+
+2001-07-26  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c (get_typelib_paths):
+	add to the search path.
+
+	* src/orb/orb-core/Makefile.am: define ORBIT_TYPELIB_DIR
+
 2001-07-26  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-typecode.c

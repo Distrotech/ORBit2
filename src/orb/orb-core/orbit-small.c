@@ -634,6 +634,16 @@ retry_request:
 	goto clean_out;
 }
 
+static gboolean
+quick_compare (ORBit_IMethod *a,
+	       ORBit_IMethod *b)
+{
+	return (a->name_len == b->name_len &&
+		a->arguments._length == b->arguments._length &&
+		a->contexts._length  == b->contexts._length &&
+		a->flags == b->flags &&
+		a->exceptions._length == b->exceptions._length);
+}
 
 void
 ORBit_small_invoke (CORBA_Object                object,
@@ -657,8 +667,9 @@ ORBit_small_invoke (CORBA_Object                object,
 		small_skel = klass->small_relay_call(
 			servant, m_data->name, (gpointer *)&real_mdata, &imp);
 		
-		if (real_mdata != m_data)
-			g_warning ("Wierd, new type data");
+		if (!quick_compare (real_mdata, m_data))
+			g_warning ("Wierd, different type data '%s' '%s'",
+				   real_mdata->name, m_data->name);
 		
 		if (!imp) /* is_a ? */
 			CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
@@ -1081,6 +1092,8 @@ get_typelib_paths (void)
 
 	paths = g_ptr_array_sized_new (8);
 
+	g_ptr_array_add (paths, g_strdup (ORBIT_TYPELIB_DIR));
+
 	if ((path = getenv ("ORBIT_TYPELIB_PATH"))) {
 		char **strv;
 
@@ -1110,13 +1123,13 @@ load_module (const char *fname)
 	GModule *handle;
 	ORBit_IModule *module;
 
-	if (!(handle = g_module_open (fname, G_MODULE_BIND_LAZY))) {
-		g_warning ("Can't load type library '%s': %s",
-			   fname, g_module_error ());
+	g_warning ("About to load '%s'", fname);
 
+	if (!(handle = g_module_open (fname, G_MODULE_BIND_LAZY)))
+		/* Didn't exist probably */
 		return FALSE;
 
-	} else if (!g_module_symbol (handle, "orbit_imodule_data",
+	else if (!g_module_symbol (handle, "orbit_imodule_data",
 				     (gpointer *)&module)) {
 		g_warning ("type library '%s' has no stored types", fname);
 			
@@ -1159,28 +1172,21 @@ ORBit_small_load_typelib (const char *libname)
 			fname = g_strconcat (
 				paths [i], "/", libname, "_module", NULL);
 
-			if (g_file_test (fname, G_FILE_TEST_IS_REGULAR |
-					 G_FILE_TEST_EXISTS))
+			if ((loaded = load_module (fname)))
 				break;
 
-			g_free (fname);
+			else {
+				g_free (fname);
+				fname = NULL;
+			}
 		}
 
 		g_strfreev (paths);
-
-	} else {
-		if (g_file_test (libname, G_FILE_TEST_IS_REGULAR |
-				 G_FILE_TEST_EXISTS))
-			fname = g_strdup (libname);
-	}
-
-	if (!fname) {
-		g_warning ("Failed to find '%s'", libname);
-		loaded = FALSE;
-	} else {
+	} else
 		loaded = load_module (fname);
-		g_free (fname);
-	}
+
+	if (!loaded)
+		g_warning ("Failed to find '%s'", libname);
 
 	return loaded;
 }

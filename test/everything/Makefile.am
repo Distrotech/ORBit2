@@ -1,7 +1,5 @@
 noinst_PROGRAMS = client server
 
-orbittypelibdir = $(libdir)/orbit
-
 EVERYTHING_BUILT = \
 	everything.h        \
 	everything-skels.c  \
@@ -24,11 +22,10 @@ LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
 	${GLIB_LIBS}
 #  -lefence
 
-LDFLAGS = -static
-
 client_SOURCES=${EVERYTHING_BUILT} client.c everything.idl constants.h
 client_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
 client_LDADD = $(LDADD)
+client_LDFLAGS = -static -module
 
 included_src = \
 	basicServer.c    \
@@ -38,12 +35,17 @@ included_src = \
 	arrayServer.c    \
 	anyServer.c
 
+orbittypelibdir = $(libdir)/orbit
 orbittypelib_LTLIBRARIES = Everything_module.la
-Everything_module_la_SOURCES = everything-imodule.c
-Everything_module_la_LDFLAGS = --export-dynamic -module
+
+Everything_module_la_LDFLAGS = \
+	-export-dynamic -module
+Everything_module_la_SOURCES = \
+	everything-imodule.c
 
 server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
 server_DEPENDENCES=${EVERYTHING_BUILT} $(included_src)
+server_LDFLAGS = -static -module
 
 ORBIT_IDL = $(top_builddir)/src/idl-compiler/orbit-idl
 
