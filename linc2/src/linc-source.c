@@ -148,7 +148,6 @@ link_io_add_watch_fd (int          fd,
 
 	if ((thread_ctx = link_thread_io_context ())) {
 		/* Have a dedicated I/O worker thread */
-
 		w->link_source = link_source_create_watch
 			(thread_ctx, fd, NULL, condition, func, user_data);
 
@@ -160,11 +159,8 @@ link_io_add_watch_fd (int          fd,
 			(link_main_get_context (), fd, NULL,
 			 condition, func, user_data);
 		
-		if (!link_get_threaded ()) /* Main loop too */
-			w->main_source = link_source_create_watch
-				(NULL, fd, NULL, condition, func, user_data);
-		else
-			w->main_source = NULL;
+		w->main_source = link_source_create_watch
+			(NULL, fd, NULL, condition, func, user_data);
 	}
 
 	return w;
@@ -173,18 +169,19 @@ link_io_add_watch_fd (int          fd,
 static void
 link_watch_unlisten (LinkWatch *w)
 {
-	link_source_set_condition (w->main_source, 0);
-	link_source_set_condition (w->link_source, 0);
-
 	if (w->main_source) {
+		link_source_set_condition (w->main_source, 0);
 		g_source_destroy (w->main_source);
 		g_source_unref   (w->main_source);
 		w->main_source = NULL;
-	} /* else - threaded */
-		
-	g_source_destroy (w->link_source);
-	g_source_unref   (w->link_source);	
-	w->link_source = NULL;
+	}
+
+	if (w->link_source) {
+		link_source_set_condition (w->link_source, 0);
+		g_source_destroy (w->link_source);
+		g_source_unref   (w->link_source);	
+		w->link_source = NULL;
+	}
 }
 
 void

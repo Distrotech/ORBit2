@@ -1883,7 +1883,7 @@ testDerivedServer (test_TestFactory   factory,
 	g_assert (test_B2__classid != 0);
 	g_assert (test_DerivedServer__classid != 0);
 
-	pobj = obj->adaptor_obj;
+	pobj = (ORBit_POAObject) obj->adaptor_obj;
 	g_assert (pobj->vepvmap_cache [test_DerivedServer__classid] != 0);
 	g_assert (pobj->vepvmap_cache [test_C1__classid] != 0);
 	g_assert (pobj->vepvmap_cache [test_B1__classid] != 0);
@@ -2027,7 +2027,8 @@ main (int argc, char *argv [])
 	test_TestFactory   factory;
 	ORBit_IInterfaces *interfaces = NULL;
 	gboolean           gen_imodule = FALSE;
-	gboolean           threaded = FALSE;
+	gboolean           thread_safe = FALSE;
+	gboolean           thread_tests = FALSE;
 	const char        *orb_name;
 	int                i;
 
@@ -2042,17 +2043,26 @@ main (int argc, char *argv [])
 	for (i = 0; i < argc; i++) {
 		if (!strcmp (argv [i], "--gen-imodule"))
 			gen_imodule = TRUE;
-		if (!strcmp (argv [i], "--threaded"))
-			threaded = TRUE;
+		if (!strcmp (argv [i], "--thread-safe"))
+			thread_safe = TRUE;
+		if (!strcmp (argv [i], "--thread-tests")) {
+			thread_safe = TRUE;
+			thread_tests = TRUE;
+		}
 	}
 
-	if (threaded)
+	if (thread_safe)
 		orb_name = "orbit-local-mt-orb";
 	else
 		orb_name = "orbit-local-orb";
 
 	global_orb = CORBA_ORB_init (&argc, argv, orb_name, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	/*	if (thread_tests) {
+		g_warning ("FIXME: testing only");
+		link_set_io_thread (TRUE);
+		} */
 
 	if (gen_imodule) {
 		CORBA_sequence_CORBA_TypeCode *typecodes = NULL;
@@ -2084,7 +2094,7 @@ main (int argc, char *argv [])
 
 	test_time_noop (factory, ev);
 	run_tests (factory, FALSE, ev);
-	if (threaded)
+	if (thread_tests)
 		g_warning ("FIXME: disabled in-proc threaded tests for now");
 /*		run_threaded_tests (factory, ev); */
 
@@ -2115,7 +2125,7 @@ main (int argc, char *argv [])
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	}
 	run_tests (factory, FALSE, ev);
-	if (threaded)
+	if (thread_tests)
 		run_threaded_tests (factory, ev);
 	testSegv (factory, ev);
 

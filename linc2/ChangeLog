@@ -1,9 +1,40 @@
 2003-06-04  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-connection.c
+	(link_connection_exec_set_condition): only take lock
+	if not immediate.
+	(link_connection_unref_T_): impl.
+	(link_connection_exec_set_condition): use it in
+	the immediate case.
+	(link_connection_unref_unlock): split out from
+	(link_connection_unref): here, and use all over.
+
+	* src/linc.c (link_dispatch_command): add / propagate
+	the immediate flag.
+
+	* src/linc-source.c (link_io_add_watch_fd):
+	always add to the main_source in non thread_io mode.
+	(link_watch_unlisten): beef up.
+
 	* src/linc-protocols.c,
 	* test/test-linc.c: fix Linc->Link sanfu's -
 	autotools dependency tracking gets progressively
 	more wonderful.
+
+2003-06-03  Michael Meeks  <michael@ximian.com>
+
+	* src/*.[ch]: update to get_thread_safe.
+
+	* src/linc.c (link_get_threaded): bin it.
+	(link_thread_io, link_thread_safe): replace 
+	with these.
+	(link_mutex_new): bin link_mutex_new_called etc.
+	(link_main_idle_add): bin - unused.
+	(link_main_get_loop): bin it.
+
+	* src/linc-connection.c (queue_flattened_T_R):
+	only update the poll if we didn't have a queue
+	already; remove assert.
 
 2003-06-03  Michael Meeks  <michael@ximian.com>
 

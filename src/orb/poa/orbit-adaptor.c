@@ -18,6 +18,19 @@ ORBit_ObjectAdaptor_set_thread_hint (ORBit_ObjectAdaptor adaptor,
 			  thread_hint <= ORBIT_THREAD_HINT_ALL_AT_IDLE);
 
 	adaptor->thread_hint = thread_hint;
+	switch (thread_hint) {
+	case ORBIT_THREAD_HINT_PER_OBJECT:
+	case ORBIT_THREAD_HINT_PER_REQUEST:
+	case ORBIT_THREAD_HINT_PER_POA:
+	case ORBIT_THREAD_HINT_PER_CONNECTION:
+		if (link_thread_safe ())
+			link_set_io_thread (TRUE);
+		break;
+	case ORBIT_THREAD_HINT_NONE:
+	case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
+	case ORBIT_THREAD_HINT_ALL_AT_IDLE:
+		break;
+	}
 }
 
 ORBitThreadHint

@@ -19,7 +19,6 @@ libORBit_2_la_SOURCES=orbit-init.c orbit-init.h
 libORBit_2_la_LDFLAGS =               \
 	-version-info $(LT_VERSION)   \
 	-no-undefined		      \
-	$(LOCAL_LINC_LIBS)            \
 	$(ORBIT_LIBS)                 \
 	-lpopt
 
@@ -28,6 +27,7 @@ libORBit_2_la_LIBADD= \
 	GIOP/libGIOP.la \
 	orb-core/liborb-core.la \
 	poa/liborb-poa.la \
-	dynamic/liborb-dynamic.la
+	dynamic/liborb-dynamic.la \
+	$(LOCAL_LINC_LIBS)
 
 inst-lib: all-recursive install-libLTLIBRARIES

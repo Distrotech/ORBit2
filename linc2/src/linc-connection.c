@@ -60,14 +60,18 @@ link_connection_ref (gpointer cnx)
 	return cnx;
 }
 
-void
-link_connection_unref (gpointer cnx)
+/* Only call if we are _certain_ that we don't hold the last ref */
+static void
+link_connection_unref_T_ (gpointer cnx)
+{
+	g_assert (((GObject *)cnx)->ref_count > 1);
+	g_object_unref (cnx);
+}
+
+static void
+link_connection_unref_unlock (gpointer cnx)
 {
 	gboolean tail_unref = FALSE;
-
-	g_return_if_fail (cnx != NULL);
-
-	CNX_AND_LIST_LOCK (cnx);
 
 	if (((GObject *)cnx)->ref_count > 1)
 		g_object_unref (cnx);
@@ -81,6 +85,16 @@ link_connection_unref (gpointer cnx)
 
 	if (tail_unref)
 		g_object_unref (cnx);
+}
+
+void
+link_connection_unref (gpointer cnx)
+{
+	g_return_if_fail (cnx != NULL);
+
+	CNX_AND_LIST_LOCK (cnx);
+
+	link_connection_unref_unlock (cnx);
 }
 
 static void
@@ -169,6 +183,7 @@ queue_flattened_T_R (LinkConnection *cnx,
 	int     i;
 	guchar *p;
 	gulong  total_size;
+	gboolean new_queue;
 	QueuedWrite *qw = g_new (QueuedWrite, 1);
 
 	total_size = calc_size (src_vecs, nvecs);
@@ -191,13 +206,12 @@ queue_flattened_T_R (LinkConnection *cnx,
 	d_printf ("Queueing write of %ld bytes on fd %d\n",
 		  total_size, cnx->priv->fd);
 
+	new_queue = cnx->priv->write_queue == NULL;
 	cnx->priv->write_queue = g_list_append (cnx->priv->write_queue, qw);
 	queue_signal_T_R (cnx, total_size);
 
-	if (update_poll) {
+	if (update_poll && new_queue) {
 		LinkCommandSetCondition *cmd;
-
-		g_assert (link_get_threaded ());
 
 		cmd = g_new (LinkCommandSetCondition, 1);
 		cmd->cmd.type = LINK_COMMAND_SET_CONDITION;
@@ -370,8 +384,6 @@ link_connection_from_fd_T (LinkConnection         *cnx,
  *
  * Fill in @cnx, call protocol specific initialisation methonds and then
  * call link_connection_state_changed.
- *
- * Must be called from the I/O thread.
  *
  * Return Value: #TRUE if the function succeeds, #FALSE otherwise.
  */
@@ -560,7 +572,6 @@ link_connection_state_changed (LinkConnection      *cnx,
  * @block_for_full_read: whether to block for a full read
  * 
  * Warning, block_for_full_read is of limited usefullness.
- * Can only be used from the main thread / with the cnx locked.
  *
  * Return value: number of bytes written on success; negative on error.
  **/
@@ -783,7 +794,7 @@ link_connection_should_block (LinkConnection      *cnx,
 	return FALSE;
 }
 
-/* Always called in main thread */
+/* Always called in the I/O thread */
 static void
 link_connection_flush_write_queue_T_R (LinkConnection *cnx)
 {
@@ -832,15 +843,22 @@ link_connection_flush_write_queue_T_R (LinkConnection *cnx)
 }
 
 void
-link_connection_exec_set_condition (LinkCommandSetCondition *cmd)
+link_connection_exec_set_condition (LinkCommandSetCondition *cmd, gboolean immediate)
 {
 	d_printf ("Exec defered set condition on %p -> 0x%x",
 		  cmd->cnx, cmd->condition);
 
-	CNX_LOCK (cmd->cnx);
+	if (!immediate)
+		CNX_LOCK (cmd->cnx);
+
 	link_watch_set_condition (cmd->cnx->priv->tag, cmd->condition);
-	CNX_UNLOCK (cmd->cnx);
-	link_connection_unref (cmd->cnx);
+
+	if (!immediate)
+		link_connection_unref_unlock (cmd->cnx);
+
+	else /* special */
+		link_connection_unref_T_ (cmd->cnx);
+
 	g_free (cmd);
 }
 
@@ -871,20 +889,18 @@ link_connection_writev (LinkConnection       *cnx,
 	CNX_LOCK (cnx);
 	link_connection_ref_T (cnx);
 
-	if (link_get_threaded ()) {
-		d_printf ("Transfer output to main thread\n");
+	if (link_thread_safe ()) {
+		d_printf ("Thread safe writev\n");
 		if (cnx->status == LINK_CONNECTING) {
 			queue_flattened_T_R (cnx, vecs, nvecs, TRUE);
-			CNX_UNLOCK (cnx);
-			link_connection_unref (cnx);
+			link_connection_unref_unlock (cnx);
 			return LINK_IO_QUEUED_DATA;
 		}
 	} else if (cnx->options & LINK_CONNECTION_NONBLOCKING)
 		link_connection_wait_connected (cnx);
 
 	if (cnx->status == LINK_DISCONNECTED) {
-		CNX_UNLOCK (cnx);
-		link_connection_unref (cnx);
+		link_connection_unref_unlock (cnx);
 		return LINK_IO_FATAL_ERROR;
 	}
 
@@ -892,8 +908,7 @@ link_connection_writev (LinkConnection       *cnx,
 		/* FIXME: we should really retry the write here, but we'll
 		 * get a POLLOUT for this lot at some stage anyway */
 		queue_flattened_T_R (cnx, vecs, nvecs, FALSE);
-		CNX_UNLOCK (cnx);
-		link_connection_unref (cnx);
+		link_connection_unref_unlock (cnx);
 		return LINK_IO_QUEUED_DATA;
 	}
 
@@ -904,10 +919,9 @@ link_connection_writev (LinkConnection       *cnx,
 	status = write_data_T (cnx, &qw);
 
 	if (status == LINK_IO_QUEUED_DATA) {
-		if (link_get_threaded ()) {
+		if (link_thread_safe ()) {
 			queue_flattened_T_R (cnx, qw.vecs, qw.nvecs, TRUE);
-			CNX_UNLOCK (cnx);
-			link_connection_unref (cnx);
+			link_connection_unref_unlock (cnx);
 			return LINK_IO_QUEUED_DATA;
 		}
 
@@ -918,8 +932,7 @@ link_connection_writev (LinkConnection       *cnx,
 
 		if (!link_connection_should_block (cnx, opt_write_opts)) {
 			queue_flattened_T_R (cnx, qw.vecs, qw.nvecs, FALSE);
-			CNX_UNLOCK (cnx);
-			link_connection_unref (cnx);
+			link_connection_unref_unlock (cnx);
 			return LINK_IO_QUEUED_DATA;
 
 		} else {
@@ -930,8 +943,7 @@ link_connection_writev (LinkConnection       *cnx,
 	} else if (status >= LINK_IO_OK)
 		status = LINK_IO_OK;
 
-	CNX_UNLOCK (cnx);
-	link_connection_unref (cnx);
+	link_connection_unref_unlock (cnx);
 
 	return status;
 }
@@ -1101,6 +1113,9 @@ link_connection_io_handler (GIOChannel  *gioc,
 	LinkConnection      *cnx = data;
 	LinkConnectionClass *klass;
 
+	d_printf ("linc_connection_io_handler fd %d, 0x%x\n",
+		  cnx->priv->fd, condition);
+
 	CNX_LOCK (cnx);
 	link_connection_ref_T (cnx);
 
@@ -1161,8 +1176,7 @@ link_connection_io_handler (GIOChannel  *gioc,
 		}
 	}
 
-	CNX_UNLOCK (cnx);
-	link_connection_unref (cnx);
+	link_connection_unref_unlock (cnx);
 
 	return TRUE;
 }
@@ -1182,7 +1196,7 @@ link_connection_get_status (LinkConnection *cnx)
 }
 
 void
-link_connection_exec_disconnect (LinkCommandDisconnect *cmd)
+link_connection_exec_disconnect (LinkCommandDisconnect *cmd, gboolean immediate)
 {
 	d_printf ("Exec defered disconnect on %p", cmd->cnx);
 
@@ -1207,7 +1221,7 @@ link_connection_disconnect (LinkConnection *cnx)
 LinkConnectionStatus
 link_connection_wait_connected (LinkConnection *cnx)
 {
-	g_return_val_if_fail (!link_get_threaded (),
+	g_return_val_if_fail (!link_thread_safe (),
 			      LINK_CONNECTED);
 	
 	while (cnx && cnx->status == LINK_CONNECTING) 

@@ -1,3 +1,55 @@
+2003-06-04  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/test.sh,
+	* test/everything/client.c: run more tests.
+
+	* src/orb/GIOP/giop.c (giop_thread_new_check): impl.
+
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_ObjectAdaptor_set_thread_hint): spawn the
+	I/O thread when we set an interesting hint
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): ensure we check to
+	see if we're in another thread.
+
+	* src/orb/poa/poa.c
+	(ORBit_poa_allow_cross_thread_call): add check
+	to invoke switch to threaded io for XT case.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_get): use giop_thread_io instead
+	of tdata != NULL.
+
+	* src/orb/poa/poa.c (pool_push_request_for_T) 
+	(ORBit_POA_handle_request, ORBit_POA_handle_request):
+	use giop_thread_io.
+	(ORBit_POA_handle_request): invoke_incoming_req
+	outside the poa lock.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection): use giop_thread_safe (?),
+	we don't want to drop into
+	link_connection_wait_connected via re-enterancy.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(handle_reply): switch on giop_thread_io.
+
+	* src/orb/GIOP/giop.c (giop_threaded): rename to
+	(giop_thread_safe): this, (giop_thread_io): add.
+	(giop_shutdown, giop_thread_set_main_handler),
+	(giop_thread_self, giop_thread_key_release),
+	(giop_invoke_async, giop_main_run): upd.
+	
+	* src/orb/Makefile.am (libORBit_2_la_LIBADD): 
+	libadd the link library.
+
+2003-06-03  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): move genuid_init lower than
+	giop_init (which does a linc_init).
+
 2003-06-03  Alexander Larsson  <alexl@redhat.com>
 
 	* src/orb/GIOP/giop.c (giop_request_handler_fn):

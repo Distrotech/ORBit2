@@ -49,8 +49,8 @@ typedef struct {
 } LinkCommandDisconnect;
 
 void link_exec_command (LinkCommand *cmd);
-void link_connection_exec_disconnect (LinkCommandDisconnect *cmd);
-void link_connection_exec_set_condition (LinkCommandSetCondition *cmd);
+void link_connection_exec_disconnect (LinkCommandDisconnect *cmd, gboolean immediate);
+void link_connection_exec_set_condition (LinkCommandSetCondition *cmd, gboolean immediate);
 
 /*
  * Really raw internals, exported for the tests
@@ -136,7 +136,6 @@ void             link_watch_move_io         (LinkWatch              *w,
 
 GMainContext    *link_main_get_context      (void);
 GMainContext    *link_thread_io_context     (void);
-gboolean         link_get_threaded          (void);
 gboolean         link_in_io_thread          (void);
 gboolean         link_mutex_is_locked       (GMutex *lock);
 void             link_lock                  (void);
