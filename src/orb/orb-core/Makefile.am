@@ -25,7 +25,9 @@ main_src = \
 	orb-core-private.h \
 	orb-core-export.h \
 	corba-nvlist.c \
-	corba-request.c
+	corba-request.c \
+	iop-profiles.c \
+	iop-profiles.h
 
 liborb_core_la_SOURCES= \
 	$(IOP_IDLOUT) \
