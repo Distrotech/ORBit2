@@ -1,5 +1,27 @@
 2003-03-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_get): integrate the request
+	processing into the same condition.
+
+	* src/orb/GIOP/giop.c (giop_thread_get_main): impl.
+
+	* test/everything/client.c (run_tests): shunt
+	testMisc belong pingPong.
+
+	* src/orb/GIOP/giop.c: massive threading re-hash,
+	realised a seprate GIOPQueue to the GIOPThread was
+	a painful waste of time.
+
+	* src/orb/poa/poa.c (queue_request, local_main_handle)
+	(LocalClosure): kill old hacks.
+	(ORBit_POA_handle_request): use new external hacks.
+
+	* src/orb/poa/poa.c (ORBit_poa_init): add.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init):
+	do the poa_init.
+
 	* src/orb/GIOP/giop.c (scan_socket_dir): handle
 	non-existant directories gracefully.
 

@@ -1141,7 +1141,7 @@ ORBit_POA_object_key_lookup (PortableServer_POA       poa,
 	return ORBit_POA_object_id_lookup (poa, object_id);
 }
 
-static void
+void
 ORBit_POAObject_invoke_incoming_request (ORBit_POAObject    pobj,
 					 GIOPRecvBuffer    *recv_buffer,
 					 CORBA_Environment *opt_ev)
@@ -1175,46 +1175,6 @@ ORBit_POAObject_invoke_incoming_request (ORBit_POAObject    pobj,
 		CORBA_exception_free (ev);
 
 	giop_recv_buffer_unuse (recv_buffer);
-}
-
-typedef struct {
-	ORBit_POAObject pobj;
-	GIOPRecvBuffer *recv_buffer;
-} LocalClosure;
-
-static gboolean
-local_main_handle (gpointer data)
-{
-	LocalClosure *lc = data;
-
-	ORBit_POAObject_invoke_incoming_request (lc->pobj, lc->recv_buffer, NULL);
-
-	g_free (lc);
-
-	return FALSE;
-}
-
-/* Utter hack ... */
-static void
-queue_request (ORBit_POAObject *pobj,
-	       GIOPRecvBuffer **recv_buffer)
-{
-	LocalClosure *lc;
-
-	lc = g_new0 (LocalClosure, 1);
-
-	lc->pobj = *pobj;
-	lc->recv_buffer = *recv_buffer;
-
-	/* FIXME: this is the cause of ping-pong
-	   failure in threaded mode; the main thread is
-	   not running a loop, but instead blocking on a
-	   condition - we need to signal that condition,
-	   and make the re-enterancy happen there */
-	g_idle_add (local_main_handle, lc);
-
-	*pobj = NULL;
-	*recv_buffer = NULL;
 }
 
 static void
@@ -1257,7 +1217,9 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 		switch (poa->p_thread) {
 			case PortableServer_SINGLE_THREAD_MODEL:
 				if (giop_threaded ())
-					queue_request (&pobj, &recv_buffer);
+					giop_thread_request_push
+						(giop_thread_get_main (),
+						 &pobj, &recv_buffer);
 				break;
 			case PortableServer_ORB_CTRL_MODEL: {
 				ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
@@ -1268,11 +1230,15 @@ ORBit_POA_handle_request (PortableServer_POA poa,
 						/* FIXME: we need to lookup the
 						   method name, and cf. the oneway flag */
 					case ORBIT_THREAD_HINT_ALL_AT_IDLE:
-						queue_request (&pobj, &recv_buffer);
+						giop_thread_request_push
+							(giop_thread_get_main (),
+							 &pobj, &recv_buffer);
 						break;
 					case ORBIT_THREAD_HINT_NONE:
 						if (giop_threaded ())
-							queue_request (&pobj, &recv_buffer);
+							giop_thread_request_push
+								(giop_thread_get_main (),
+								 &pobj, &recv_buffer);
 						break;
 					default:
 						g_warning ("Binning incoming requests in threaded mode");
@@ -2087,4 +2053,10 @@ PortableServer_POA_id_to_reference (PortableServer_POA             poa,
 	ORBit_RootObject_release (pobj);
 	
 	return obj;
+}
+
+void
+ORBit_poa_init (void)
+{
+	giop_thread_set_main_handler (ORBit_POAObject_invoke_incoming_request);
 }
