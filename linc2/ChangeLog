@@ -1,5 +1,7 @@
 2001-11-13  jacob berkman  <jacob@ximian.com>
 
+	* docs/Makefile.am (dist-hook): depend on docs being built
+
 	* docs/linc-sections.txt:
 	* docs/linc.types: these files are needed to dist
 
