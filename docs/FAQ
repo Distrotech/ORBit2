@@ -1,6 +1,37 @@
 The ORBit2 FAQ - v 0.1
   Michael Meeks (michael@ximian.com)
 
+* Contents
+
+	+ What is ORBit2
+		+ who is responsible
+		+ how is ORBit2 better than ORBit 'stable'
+
+	+ What can ORBit2 do ?
+		+ is ORBit2 thread safe ?
+			+ how do I enable a threaded ORB ?
+			+ what is this re-enterancy thing ?
+			+ can I have each invocation handled by a
+			  different thread ?
+			+ can I receive invocations in multiple
+			  threads ?
+			+ can I invoke methods from multiple threads ?
+
+		+ how does the new 'type' system work ?
+			+ what do you mean by 'type' data ?
+			+ how do we get type data for an interface ?
+			+ what is a type library (or imodule) ?
+			+ how do I find which type libraries are installed ?
+			+ why bother generating type information from
+			  an interface ?
+			+ why is a type based ORB better ?
+			+ why is a type based ORB potentialy faster ?
+	+ Misc.
+		+ where can I find out more about CORBA ?
+		+ what is the purify cleanliness option ?
+		+ how do I enable reference tracking ?
+		+ my skels leak memory - why ?
+		+ why should I not use _release ?
 
 * What is ORBit2 ?
 
@@ -11,7 +42,7 @@ separate 'linc' library. This allows features such as SSL operation
 and multiple new connection types.
 
 
-* Who is responsible ?
+** Who is responsible ?
 
         The bulk of the initial work is down to Elliot Lee, and
 various people whose ideas he fused liberaly Kennard White, Sebastian
@@ -19,7 +50,7 @@ Wilhelmi - the polishing and recent work down to Mark McLoughlin,
 Martin Baulig and myself.
 
 
-* How is ORBit2 better than ORBit 'stable' ?
+** How is ORBit2 better than ORBit 'stable' ?
 
 In many ways:
 
@@ -44,37 +75,40 @@ In many ways:
         + Lots of bugs fixed, and new ones created.
 
 
-* Is ORBit2 thread safe ?
+* What can ORBit2 do ?
+
+** Is ORBit2 thread safe ?
 
 	ORBit2 is theoreticaly thread safe, ie. we thought about it a
 bit during the design - which is nominaly thread safe, we added a lot
 of locks, and we fixed deadlocks when they were found. It has yet to
 be tested in anger in a multi-threaded environment.
 
-** How do I enable a threaded ORB ?
+*** How do I enable a threaded ORB ?
 
 	Before you initialize the ORB ( or bonobo ) you need to call
 linc_set_threaded (TRUE), this will cause all the locking to be setup
 correctly. Calling this after locks have been created will not work.
 
-** What is this re-enterancy thing ?
+*** What is this re-enterancy thing ?
 
 	When a method is invoked, while the ORB is waiting for a
 return value or exception (if applicable) the ORB processes any other
 incoming requests in a re-enterant fashion. This occurs even during
 threaded operation currently.
 
-** Can I invoke methods from multiple threads ?
+*** Can I invoke methods from multiple threads ?
 
 	Yes, this should present no particular problem.
 
-** Can I receive invocations in multiple threads ?
+*** Can I receive invocations in multiple threads ?
+
 
 	Yes - assuming you have a glib mainloop ( or a linc_mainloop )
 running in one or several of your threads. The precice thread that the
 invocation is recieved in is unpredictable.
 
-** Can I have each invocation handled by a different thread ?
+*** Can I have each invocation handled by a different thread ?
 
 	Currently no - there is tentative compile time support in the
 ORB for this mode of operation, but currently no effort has been put
@@ -82,18 +116,18 @@ into this. If the compile time support for this is enabled, the
 mainloop and re-enterant processing is disabled.
 
 
-* How does the new 'type' system work ?
+** How does the new 'type' system work ?
 
 	The new type system forms a fundamental part of ORBit2 and
 presents a major simplification.
 
-** What do you mean by 'type' data ?
+*** What do you mean by 'type' data ?
 
 	By type data we mean not only structure layout information,
 but also full interface and method information. ie. not just value
 class types but interfaces as well.
 
-** How do we get type data for an interface ?
+*** How do we get type data for an interface ?
 
 	There are two answers to this. Firstly, if you have a pointer
 to an Object reference and you know nothing more than that it is a
@@ -104,7 +138,7 @@ request it's type id, and from this, a full interface description.
 	and ORBit2/include/orb/orb-core/orbit-iinterface.h (from)
 	    ORBit2/src/orb/orb-core/orbit-iinterface.idl
 
-*** Type data from an object reference ?
+**** Type data from an object reference ?
 
 	CORBA_char *type_id;
 	ORBit_IInterface *iface;
@@ -112,7 +146,7 @@ request it's type id, and from this, a full interface description.
 	type_id = ORBit_small_get_type_id (obj, ev);
 	iface   = ORBit_small_get_iinterface (obj, type_id, ev);
 
-*** Type data from a type library ?
+**** Type data from a type library ?
 
 	If we wish to implement an interface in our scripting language
 that is not currently registered with the ORB, then we can load it
@@ -126,7 +160,7 @@ out of the library, in order to construct local language bound peers:
 CORBA_sequence_CORBA_TypeCode   *ORBit_small_get_types ("Bonobo");
 CORBA_sequence_ORBit_IInterface *ORBit_small_get_iinterfaces (...);
 
-** What is a type library (or imodule) ?
+*** What is a type library (or imodule) ?
 
 	Type libraries are essentialy the same generic interface
 information that the ORB uses to marshal and de-marshal information in
@@ -157,7 +191,7 @@ When a typelib is loaded, an explicit path can be passed in, otherwise
 the ':' delimited path environment variables ORBIT_TYPELIB_PATH and
 GNOME_PATH are searched.
 
-** How do I find what type libraries are installed ?
+*** How do I find what type libraries are installed ?
 
 	There is a utility ORBit2/test/typelib-dump that will display
 a list of available libraries for your path setup:
@@ -172,7 +206,7 @@ a list of available libraries for your path setup:
 
 	It can also rudimantarily dump the contents of a type library.
 
-** Why bother generating type information from an interface ?
+*** Why bother generating type information from an interface ?
 
 	With ORBit stable, language bindings had to load and parse the
 IDL definitions for the interface. This had several disadvantages.
@@ -195,7 +229,7 @@ pleasant to link against, or code to.
 structure, or method of reliably locating all the relevant IDL files.
 Now at least there is an ad-hoc shared standard.
 
-** Why is a type based ORB better ?
+*** Why is a type based ORB better ?
 
 	Firstly ABI reduction, in ORBit stable the API usage by the
 stubs was very considerable - many methods were called, and there was
@@ -241,7 +275,7 @@ method type data pointer and handle the invocation fully yourself.
 passing, as well as the C CORBA semantics are lucidly documented in
 ORBit2/docs/internals/interface-indirection.gnumeric.
 
-** Why is a type based ORB potentialy faster ?
+*** Why is a type based ORB potentialy faster ?
 
 	Well - partly due to encapsulation. Encapsulation often
 carries a cost; in ORBit stable there are several layers. Even though
@@ -265,12 +299,14 @@ suggest that ORBit2 is ~20% slower than ORBit stable, it will be
 possible ( in a totaly binary compatible fashion ) to tweak and
 optimize the marshal / de-marshal process to make it arbitarily fast.
 
-* Where can I find out more about CORBA ?
+* Misc.
+
+** Where can I find out more about CORBA ?
 
 	See the OMG website at http://www.omg.org. Alternatively read
 the ORBit headers, and pseudo IDL available in ORBit2/src/idl/.
 
-* What is the "purify cleanliness" autoconf option ?
+** What is the "purify cleanliness" autoconf option ?
 
 	This (unfinished) option allows the ORB to be configured to
 run in a slightly slower, but 'cleaner' mode. Purify is a tool that
@@ -283,6 +319,85 @@ This also applies to initializing return values before returning them,
 even on exceptions - a case where CORBA specifies an uninitialized
 return value.
 
-	The performance impact of having a putify clean ORB is
+	The performance impact of having a purify clean ORB is
 probably fairly minimal, perhaps ~10% slower max., finger in the air
 guestimation.
+
+	This option also enables the blanking of freed ORB resources
+which can be helpful for poorer man's memory debugging tools, such as
+memprof.
+
+** how do I enable reference tracking ?
+
+	The ORB by default accounts for all it's object resouces, and
+it can be most helpful to have correct referencing from the beggining
+of a project. How best to use the tracking depends on how you are
+using ORBit2. At the most basic level - directly; you need to do:
+
+		orb = CORBA_ORB_init (...)
+		... the program ...
+		CORBA_ORB_destroy (orb, ev);
+
+	if references are leaked CORBA_ORB_destroy will flag this fact
+and some information about the type of references to the console, and
+return an exception in ev.
+
+	If you use libbonobo, then it is considerably easier to simply
+add 'return bonobo_debug_shutdown ()' at the end of your program. This
+will also flag bonobo object references and other bonbo internal
+resouce managment problems.
+
+** my skels leak memory - why ?
+
+	Sometimes people post to the list saying I'm doing:
+
+CORBA_sequence_CORBA_string *
+get_StringSequence (PortableServer_Servant servant,
+                    CORBA_Environment     *ev)
+{
+	int i;
+	CORBA_sequence_CORBA_string *s;
+         
+	s = CORBA_sequence_CORBA_string__alloc ();
+	s->_buffer = CORBA_sequence_CORBA_string_allocbuf (100);
+	s->_length = 100;
+
+	for (i = 0; i < 100; i++)
+		s->_buffer[i] = CORBA_string_dup ("A string");
+
+	return s;        
+}
+
+	Why am I leaking huge chunks of memory ? The answer is the
+_release feature. This field is set to FALSE when the sequence is
+allocated (s->_release), and when you return from the implementation
+to the skel, the skel marshals the sequence, and then CORBA_free's it.
+However, if the _release flag is FALSE, the _buffer and it's contents
+are not freed. This allows people to return static copies of their
+data which can be a big efficiency win.
+
+	In this case you want the release flag set; this can be done
+by:
+	 s->_release = TRUE;
+
+before you return, or
+
+	CORBA_sequence_set_release (s, TRUE);
+
+	A similar scheme is used for the value of a CORBA_any being
+returned.
+
+
+** why should I not use _release ?
+
+	While _release works really well out of process, if you are
+writing library code, or code that might be used by another component
+in process - then the _release flag is a nightmare. The reason is
+quite simple; in the remote case, the data is copied to the wire, and
+the client receives a copy of which he controls the lifecycle. The
+problem is that in-proc, the client receives only a shallow copy and
+has no control ( or idea ) of it's lifecycle.
+
+	Thus you might return some data, and then in a later method
+alter the data - the client's copy then would contain bad information.
+
