@@ -426,9 +426,9 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 	} else 
 		actual_path = (char *)path;
 
-	pathlen = strlen (actual_path);
+	pathlen = strlen (actual_path) + 1;
 
-	if (pathlen >= sizeof (saddr->sun_path))
+	if (pathlen > sizeof (saddr->sun_path))
 		return NULL;
 
 	saddr = g_new0 (struct sockaddr_un, 1);
