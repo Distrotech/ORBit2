@@ -6,7 +6,7 @@
 
 static GTimer *timer;
 static double  bogomark = 0.0;
-static double  time;
+static double  elapsed_time;
 
 static void
 test_copy (void)
@@ -34,9 +34,11 @@ test_copy (void)
 			gpointer foo = ORBit_copy_value (data [i], tc [i]);
 			CORBA_free (foo);
 		}
-		time = g_timer_elapsed (timer, NULL);
-		bogomark += time;
-		fprintf (stderr, " copy %20s : %g(ms)\n", tc[i]->repo_id, time);
+		elapsed_time = g_timer_elapsed (timer, NULL);
+		bogomark += elapsed_time;
+		fprintf (stderr, " copy %20s : %g(ms)\n",
+			tc[i]->repo_id == NULL ? "(null)" : tc[i]->repo_id,
+			elapsed_time);
 	}
 
 	fprintf (stderr, "Testing strdup ...\n");
@@ -47,9 +49,9 @@ test_copy (void)
 		char *str = CORBA_string_dup (test_string);
 		CORBA_free (str);
 	}
-	time = g_timer_elapsed (timer, NULL);
-	bogomark += time;
-	fprintf (stderr, " strdup : %g(ms)\n", time);
+	elapsed_time = g_timer_elapsed (timer, NULL);
+	bogomark += elapsed_time;
+	fprintf (stderr, " strdup : %g(ms)\n", elapsed_time);
 }
 
 int
@@ -69,8 +71,8 @@ main (int argc, char *argv[])
 	orb = CORBA_ORB_init (NULL, NULL, "orbit-local-orb", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	fprintf (stderr, "ORB: init took %g(ms)\n",
-		 (time = g_timer_elapsed (timer, NULL)) * 1000.0);
-	bogomark += time;
+		 (elapsed_time = g_timer_elapsed (timer, NULL)) * 1000.0);
+	bogomark += elapsed_time;
 
 	test_copy ();
 
@@ -78,8 +80,8 @@ main (int argc, char *argv[])
 	CORBA_ORB_destroy (orb, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	fprintf (stderr, "ORB: destroy took %g(ms)\n",
-		 (time = g_timer_elapsed (timer, NULL)) * 1000.0);
-	bogomark += time;
+		 (elapsed_time = g_timer_elapsed (timer, NULL)) * 1000.0);
+	bogomark += elapsed_time;
 	g_timer_reset (timer);
 
 	CORBA_Object_release ((CORBA_Object) orb, &ev);
