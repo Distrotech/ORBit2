@@ -252,7 +252,7 @@ ORBit_try_connection (CORBA_Object obj)
 	gboolean retval = FALSE;
 	gboolean disconnect = FALSE;
 
-	if (giop_threaded ()) {
+	if (giop_thread_safe ()) {
 		if (!obj->connection)
 			retval = FALSE;
 		else {
