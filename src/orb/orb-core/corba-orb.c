@@ -15,7 +15,6 @@ CORBA_ORB_release_fn(ORBit_RootObject robj)
   g_free(orb);
 }
 
-
 static void
 ORBit_locks_initialize(void)
 {
@@ -212,8 +211,7 @@ CORBA_ORB_send_multiple_requests_oneway(CORBA_ORB _obj,
 
 void
 CORBA_ORB_send_multiple_requests_deferred(CORBA_ORB _obj,
-					  const CORBA_RequestSeq *
-					  req,
+					  const CORBA_RequestSeq *req,
 					  CORBA_Environment * ev)
 {
 }
@@ -238,6 +236,7 @@ CORBA_ORB_get_service_information(CORBA_ORB _obj,
 				  CORBA_ServiceInformation **service_information,
 				  CORBA_Environment * ev)
 {
+  *service_information = NULL;
   return CORBA_FALSE;
 }
 
