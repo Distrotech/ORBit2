@@ -977,15 +977,23 @@ ch_output_inherited_protos(IDL_tree curif, InheritedOutputInfo *ioi)
 }
 
 static void
-doskel(IDL_tree cur, char *ifid, OIDL_C_Info *ci)
+doskel(IDL_tree cur, OIDL_Run_Info *rinfo, char *ifid, OIDL_C_Info *ci)
 {
   char *id;
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_OP_DCL(cur).ident), "_", 0);
-  
-  fprintf(ci->fh,
-	  "void _ORBIT_skel_%s(POA_%s *_ORBIT_servant, GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev, ",
-	  id, ifid);
+
+  if (rinfo->small_skels)
+    fprintf(ci->fh, "void _ORBIT_skel_%s("
+	    "POA_%s *_ORBIT_servant, "
+	    "gpointer _ORBIT_retval, "
+	    "gpointer *_ORBIT_args, "
+	    "CORBA_Environment *ev, ", id, ifid);
+  else
+    fprintf(ci->fh, "void _ORBIT_skel_%s("
+	    "POA_%s *_ORBIT_servant, "
+	    "GIOPRecvBuffer *_ORBIT_recv_buffer,"
+	    "CORBA_Environment *ev, ", id, ifid);
   orbit_cbe_op_write_proto(ci->fh, cur, "_impl_", TRUE);
   fprintf(ci->fh, ");\n");
   g_free(id);
@@ -1026,7 +1034,7 @@ ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
 	switch(IDL_NODE_TYPE(cur)) {
 	case IDLN_OP_DCL:
-	  doskel(cur, ifid, ci);
+	  doskel(cur, rinfo, ifid, ci);
 	  break;
 	case IDLN_ATTR_DCL:
 	  {
@@ -1036,9 +1044,9 @@ ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	    for(curitem = IDL_ATTR_DCL(cur).simple_declarations; curitem; curitem = IDL_LIST(curitem).next) {
 	      ai = IDL_LIST(curitem).data->data;
 	      
-	      doskel(ai->op1, ifid, ci);
+	      doskel(ai->op1, rinfo, ifid, ci);
 	      if(ai->op2)
-		doskel(ai->op2, ifid, ci);
+		doskel(ai->op2, rinfo, ifid, ci);
 	    }
 	  }
 	  break;

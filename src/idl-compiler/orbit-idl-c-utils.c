@@ -830,11 +830,16 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 			retval = g_strdup_printf ("*(%s *)", typestr);
 			break;
 
+
+		case IDLN_TYPE_ARRAY:
+                        /* Kill any unwanted array size specifiers in cast */
+			retval = g_strdup ("");
+			break;
+
 		case IDLN_TYPE_STRUCT:
 		case IDLN_TYPE_UNION:
 		case IDLN_TYPE_ANY:
 		case IDLN_TYPE_SEQUENCE:
-		case IDLN_TYPE_ARRAY:
 		case IDLN_TYPE_TYPECODE:
 			retval = g_strdup_printf ("(%s)", typestr);
 			break;
@@ -882,13 +887,14 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 			retval = g_strdup_printf ("*(%s *)", typestr);
 			break;
 
+		case IDLN_TYPE_ARRAY:
 		case IDLN_TYPE_STRUCT:
 		case IDLN_TYPE_UNION:
-		case IDLN_TYPE_ARRAY:
 			if (is_fixed) {
 				retval = g_strdup_printf ("*(%s *)", typestr);
 				break;
 			}
+			/* drop through */
 
 		case IDLN_TYPE_SEQUENCE:
 		case IDLN_TYPE_ANY:

@@ -106,5 +106,5 @@ typedef struct {
 #define ORBIT_STUB_PostCall(x,y)
 #define ORBIT_STUB_GetServant(x) NULL
 #define ORBIT_STUB_GetEpv(x,y) \
-	ORBIT_POAOBJECT_TO_EPVPTR( (obj)->bypass_obj, (clsid))
+	ORBIT_POAOBJECT_TO_EPVPTR( (x)->bypass_obj, (y))
 #endif
