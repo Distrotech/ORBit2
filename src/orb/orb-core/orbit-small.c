@@ -82,7 +82,7 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 		len = GUINT32_SWAP_LE_BE (len);
 
 	if (len) {
-		my_repoid = rb->cur;
+		my_repoid = (char *) rb->cur;
 		rb->cur += len;
 	} else
 		my_repoid = NULL;
@@ -1278,7 +1278,7 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 			g_signal_handlers_disconnect_matched (
 				G_OBJECT (connection), 
 				G_SIGNAL_MATCH_FUNC,
-				0, 0, NULL, fn, NULL);
+				0, 0, NULL, G_CALLBACK (fn), NULL);
 		} else
 			ret = ORBIT_CONNECTION_DISCONNECTED;
 	}

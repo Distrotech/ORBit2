@@ -26,7 +26,7 @@ typedef struct {
 	 OUTPUT_HEADERS=1<<3,
 	 OUTPUT_SKELIMPL=1<<4,
 	 OUTPUT_IMODULE=1<<5,
-	 OUTPUT_DEPS=1<<6, /* Make sure this is always the last pass or dep output will break. */
+	 OUTPUT_DEPS=1<<6 /* Make sure this is always the last pass or dep output will break. */
   } enabled_passes;
 
   char *output_formatter;

@@ -14,7 +14,7 @@ BAA_IDLOUT=baa.h baa-stubs.c baa-skels.c baa-common.c
 
 test_inhibit_SOURCES=$(FOO_IDLOUT) $(BAA_IDLOUT) test-inhibit.c
 
-IDL_FLAGS=--showcpperrors
+IDL_FLAGS=--showcpperrors -I$(srcdir)
 IDL_FILES=foo.idl baa.idl
 include $(top_srcdir)/Makefile.shared
 

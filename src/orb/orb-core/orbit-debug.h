@@ -24,7 +24,16 @@ typedef enum {
 #  define dprintf(args...)
 #  define tprintf(args...)
 #else
-#  error No suitable pre-processor vararg support
+#define MESSAGES (OrbitDebugFlags)0
+#define TYPES (OrbitDebugFlags)0
+#define OBJECTS (OrbitDebugFlags)0
+#define GIOP (OrbitDebugFlags)0
+static inline void dprintf (OrbitDebugFlags flags, const char *format, ...)
+{
+}
+static inline void tprintf (const char *format, ...)
+{
+}
 #endif
 
 #define dump_arg(a,b)

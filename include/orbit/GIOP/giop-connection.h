@@ -44,7 +44,7 @@ GIOPConnection *giop_connection_initiate      (gpointer              orb_data,
 					       const char           *proto_name,
 					       const char           *remote_host_info,
 					       const char           *remote_serv_info,
-					       LINCConnectionOptions options,
+					       GIOPConnectionOptions options,
 					       GIOPVersion           giop_version);
 void            giop_connection_set_orb_n_ver (GIOPConnection       *cnx,
 					       gpointer              orb_data,

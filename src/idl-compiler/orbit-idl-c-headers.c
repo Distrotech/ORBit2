@@ -121,6 +121,7 @@ ch_output_types (IDL_tree       tree,
 		id = IDL_ns_ident_to_qstring (
 			IDL_IDENT_TO_NS (IDL_EXCEPT_DCL (tree).ident), "_", 0);
 
+		fprintf (ci->fh, "#undef ex_%s\n", id);
 		fprintf (ci->fh, "#define ex_%s \"%s\"\n",
 				id, IDL_IDENT (IDL_EXCEPT_DCL (tree).ident).repo_id);
 
@@ -645,10 +646,17 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_Run_Info *rinfo,
       fprintf(ci->fh, "#if !defined(TC_IMPL_TC_%s_0)\n", ctmp);
       orbit_cbe_id_define_hack(ci->fh, "TC_IMPL_TC", ctmp, ci->c_base_name);
   }
-  fprintf(ci->fh, "extern const struct CORBA_TypeCode_struct TC_%s_struct;\n", ctmp);
-  fprintf(ci->fh, "#define TC_%s ((CORBA_TypeCode)&TC_%s_struct)\n", ctmp, ctmp);
-  if ( ci->do_impl_hack )
-      fprintf(ci->fh, "#endif\n");
+
+  fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+  fprintf (ci->fh, "static ");
+  fprintf (ci->fh, "#else\n");
+  fprintf (ci->fh, "extern ");
+  fprintf (ci->fh, "#endif\n");
+  fprintf (ci->fh, "const struct CORBA_TypeCode_struct TC_%s_struct;\n", ctmp);
+
+  fprintf (ci->fh, "#define TC_%s ((CORBA_TypeCode)&TC_%s_struct)\n", ctmp, ctmp);
+  if (ci->do_impl_hack)
+      fprintf (ci->fh, "#endif\n");
 
   if(do_alloc && rinfo->small) {
       char *tc;
@@ -1214,9 +1222,26 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 
 		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
       
-		fprintf (ci->fh, "extern ORBit_IInterface %s__iinterface;\n", id);
-		fprintf (ci->fh, "extern ORBit_IMethod %s__imethods[];\n", id);
+		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+		fprintf (ci->fh, "static ");
+		fprintf (ci->fh, "#else\n");
+		fprintf (ci->fh, "extern ");
+		fprintf (ci->fh, "#endif\n");
+		fprintf (ci->fh, "ORBit_IInterface %s__iinterface;\n", id);
+
 		fprintf (ci->fh, "#define %s_IMETHODS_LEN %d\n", id, num_methods);
+
+		if (num_methods == 0)
+			fprintf (ci->fh, "#define %s__imethods (ORBit_IMethod*) NULL\n", id);
+		else {
+			fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
+			fprintf (ci->fh, "static ");
+			fprintf (ci->fh, "#else\n");
+			fprintf (ci->fh, "extern ");
+			fprintf (ci->fh, "#endif\n");
+			fprintf (ci->fh, "ORBit_IMethod %s__imethods[%s_IMETHODS_LEN];\n", id, id);
+		}
+
 
 		num_methods = 0;
 
