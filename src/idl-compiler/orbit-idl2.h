@@ -14,7 +14,8 @@ typedef struct {
   int debug_level;
   int idl_warn_level;
   int show_cpp_errors;
-  int typecode_as_ident;
+  int is_pidl;
+  int do_skel_defs;	/* gen defs within the header file */
 
   enum { OUTPUT_STUBS=1<<0,
 	 OUTPUT_SKELS=1<<1,
@@ -156,7 +157,8 @@ struct _OIDL_Marshal_Node {
 		CX_CORBA_OBJECT, 
         	CX_CORBA_TYPECODE, 
 		CX_CORBA_CONTEXT,
-		CX_RECURSIVE
+		CX_RECURSIVE,
+		CX_NATIVE
 	} type;
       int context_item_count;
     } complex_info;
@@ -222,6 +224,9 @@ gint oidl_param_numptrs(IDL_tree param, IDL_ParamRole role);
 gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 IDL_tree orbit_cbe_get_typespec(IDL_tree node);
 IDL_ParamRole oidl_attr_to_paramrole(enum IDL_param_attr attr);
+
+extern gboolean oidl_tree_is_pidl(IDL_tree tree);
+
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
 

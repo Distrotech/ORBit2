@@ -36,7 +36,9 @@ static void ck_output_except(IDL_tree tree, OIDL_C_Info *ci);
 static void
 ck_output_skels(IDL_tree tree, OIDL_C_Info *ci)
 {
-  if(!tree) return;
+  if ( !tree || (tree->declspec & IDLF_DECLSPEC_PIDL) )
+    return;
+
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:
@@ -483,7 +485,8 @@ static void cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci);
 static void
 ck_output_poastuff(IDL_tree tree, OIDL_C_Info *ci)
 {
-  if(!tree) return;
+  if( !tree || (tree->declspec & IDLF_DECLSPEC_PIDL)!=0 ) 
+    return;
 
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_MODULE:
@@ -733,8 +736,15 @@ static void
 cbe_skel_do_interface(IDL_tree tree, OIDL_C_Info *ci)
 {
   char *id, *id2;
-  IDL_tree curitem;
+  IDL_tree curitem, pnt;
   int i;
+
+  /* PIDL methods dont have normal skel functions. */
+  for ( pnt=tree; pnt; pnt=IDL_NODE_UP(pnt) ) {
+      if ( pnt->declspec & IDLF_DECLSPEC_PIDL )
+	return;
+  }
+
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(tree).ident), "_", 0);
 

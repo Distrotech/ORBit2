@@ -750,6 +750,13 @@ oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice)
 	    retval = 2;
 	}
         break;
+    case IDLN_NATIVE:
+	if ( IDL_NATIVE(param).user_type
+	  && strcmp(IDL_NATIVE(param).user_type,"IDL_variable_length_struct")==0 ) {
+	  	return role==DATA_OUT ? 2 : 1;
+	  }
+	break;
+      
     default:
       break;
     }
@@ -992,4 +999,14 @@ oidl_attr_to_paramrole(enum IDL_param_attr attr)
     g_warning("Unknown IDL_param_attr %d", attr);
     return -1;
   }
+}
+
+gboolean
+oidl_tree_is_pidl(IDL_tree tree) {
+    IDL_tree pnt;
+    for ( pnt=tree; pnt; pnt=IDL_NODE_UP(pnt) ) {
+	if ( pnt->declspec & IDLF_DECLSPEC_PIDL )
+	    return TRUE;
+    }
+    return FALSE;
 }

@@ -41,7 +41,8 @@ static gboolean cl_disable_stubs = FALSE,
   cl_enable_skeleton_impl = FALSE;
 static int cl_idlwarnlevel = 2;
 static int cl_debuglevel = 0;
-static int cl_typecode_as_ident = 0;
+static int cl_is_pidl = 0;
+static gboolean cl_disable_defs_skels = 0;
 static gboolean cl_showcpperrors;
 static char *cl_output_lang = "c";
 static char *cl_backend_dir = ORBITLIBDIR;
@@ -108,7 +109,6 @@ struct poptOption options[] = {
   {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4", NULL},
   {"idlwarnlevel", '\0', POPT_ARG_INT, &cl_idlwarnlevel, 0, "IDL warning level 0 to 4, default is 2", NULL},
   {"showcpperrors", '\0', POPT_ARG_NONE, &cl_showcpperrors, 0, "Show CPP errors", NULL},
-  {"typecodeasident", '\0', POPT_ARG_NONE, &cl_typecode_as_ident, 0, "Alloc TypeCode as normal identifier", NULL},
   {"nostubs", '\0', POPT_ARG_NONE, &cl_disable_stubs, 0, "Don't output stubs", NULL},
   {"noskels", '\0', POPT_ARG_NONE, &cl_disable_skels, 0, "Don't output skels", NULL},
   {"nocommon", '\0', POPT_ARG_NONE, &cl_disable_common, 0, "Don't output common", NULL},
@@ -117,6 +117,8 @@ struct poptOption options[] = {
   {"backenddir", '\0', POPT_ARG_STRING, &cl_backend_dir, 0, "Override IDL backend library directory", "DIR"},
   {"c-output-formatter", '\0', POPT_ARG_STRING, &c_output_formatter, 0, "Program to use to format output (normally, indent)", "PROGRAM"},
   {"onlytop", '\0', POPT_ARG_NONE, &cl_onlytop, 0, "Inhibit includes", NULL},
+  {"pidl", '\0', POPT_ARG_NONE, &cl_is_pidl, 0, "Treat as Pseudo IDL", NULL},
+  {"nodefskels", '\0', POPT_ARG_NONE, &cl_disable_defs_skels, 0, "Don't output defs for skels in header", NULL},
   POPT_AUTOHELP
   {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
@@ -155,7 +157,8 @@ int main(int argc, const char *argv[])
   rinfo.debug_level = cl_debuglevel;
   rinfo.idl_warn_level = cl_idlwarnlevel;
   rinfo.show_cpp_errors = cl_showcpperrors;
-  rinfo.typecode_as_ident = cl_typecode_as_ident;
+  rinfo.is_pidl = cl_is_pidl;
+  rinfo.do_skel_defs = !cl_disable_defs_skels;
   rinfo.enabled_passes =
     (cl_disable_stubs?0:OUTPUT_STUBS)
     |(cl_disable_skels?0:OUTPUT_SKELS)

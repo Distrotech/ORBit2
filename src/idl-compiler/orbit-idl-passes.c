@@ -388,6 +388,9 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
     case CX_RECURSIVE:
       /* XXX: Im not sure what we should do! */
       break;
+    case CX_NATIVE:
+      /* XXX: Im not sure what we should do! */
+      break;
     }
     break;
   case MARSHAL_LOOP:

@@ -351,6 +351,9 @@ c_demarshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
     	g_free(tname);
     }
     break;
+  case CX_NATIVE:
+    g_error("Don't know how to demarshal a NATIVE yet.");
+    break;
   }
 
   c_demarshal_load_curptr(cmi);

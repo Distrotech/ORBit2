@@ -460,6 +460,12 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
     retval = oidl_marshal_node_new(parent, MARSHAL_CONST, NULL);
     retval->tree = tree;
     break;
+  case IDLN_NATIVE:
+    /* we dont have access to runinfo from here -- should warn if not PIDL */
+    retval = oidl_marshal_node_new(parent, MARSHAL_COMPLEX, NULL);
+    retval->u.complex_info.type = CX_NATIVE;
+    retval->tree = tree;
+    break;
   default:
     g_warning("Not populating for %s", IDL_tree_type_names[IDL_NODE_TYPE(tree)]);
     break;

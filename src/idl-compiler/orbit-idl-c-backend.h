@@ -11,6 +11,8 @@ typedef struct {
   char *base_name, *c_base_name;
   FILE *fh;
   GString *ext_dcls;
+  gboolean do_impl_hack;
+  gboolean do_skel_defs;
 } OIDL_C_Info;
 
 typedef struct {
