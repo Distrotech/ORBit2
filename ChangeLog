@@ -1,3 +1,10 @@
+2001-08-19  Mark McLoughlin <mark@skynet.ie>
+	
+	* src/orb/poa/poa.c: code movement, cleaning etc.
+
+	* src/orb/poa/orbit-poa.h: only export what's 
+	neccessary.
+
 2001-08-18  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c

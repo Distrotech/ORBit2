@@ -24,25 +24,10 @@ static void ORBit_POA_ServantManager_unuse_servant(
 				       PortableServer_Servant servant,
 				       CORBA_Environment *ev );
 
-static void ORBit_POA_add_child( PortableServer_POA poa, 
-				 PortableServer_POA child, 
-				 CORBA_Environment *ev );
-
 static void ORBit_POA_handle_request (PortableServer_POA          poa,
 				      GIOPRecvBuffer             *recv_buffer,
 				      ORBit_ObjectKey            *objkey);
 
-static ORBit_POAObject ORBit_POA_create_object (PortableServer_POA             poa,
-						const PortableServer_ObjectId *objid,
-						CORBA_Environment             *ev);
-
-static gboolean ORBit_POA_okey_to_objid (PortableServer_POA       poa,
-					 ORBit_ObjectKey         *objkey,
-					 PortableServer_ObjectId *objid);
-
-static gboolean           ORBit_POAObject_is_active        (ORBit_POAObject    pobj);
-
-static ORBit_ObjectKey*   ORBit_POAObject_object_to_objkey (ORBit_POAObject    pobj);
 
 static void               ORBit_POAObject_invoke           (ORBit_POAObject    pobj,
 							    gpointer           ret,
@@ -59,545 +44,25 @@ static void               ORBit_POAObject_handle_request    (ORBit_POAObject    
 							     GIOPRecvBuffer    *recv_buffer,
 							     CORBA_Environment *ev);
 
+static void               ORBit_POA_deactivate_object       (PortableServer_POA  poa,
+							     ORBit_POAObject     pobj,
+							     CORBA_boolean       do_etherealize,
+							     CORBA_boolean       is_cleanup);
+
+static gboolean           ORBit_POA_okey_to_objid           (PortableServer_POA       poa,
+							     ORBit_ObjectKey         *objkey,
+							     PortableServer_ObjectId *objid);
+
 static GHashTable *ORBit_class_assignments = NULL;
 static guint ORBit_class_assignment_counter = 0;
 
-PortableServer_POA
-PortableServer_POA_create_POA(PortableServer_POA _obj,
-			      const CORBA_char *adapter_name,
-			      const PortableServer_POAManager a_POAManager,
-			      const CORBA_PolicyList *policies,
-			      CORBA_Environment * ev)
-{
-  PortableServer_POA new_poa = NULL;
-  PortableServer_POA check_poa = NULL;
-	
-  /* Check for a child POA by the same name in parent */
-  check_poa = PortableServer_POA_find_POA(_obj, adapter_name,
-					  FALSE, ev);
-  CORBA_exception_free (ev);
-
-  if (!check_poa)
-    new_poa = ORBit_POA_new(_obj->orb,
-			    adapter_name, a_POAManager, policies, ev);
-  else {
-    CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			ex_PortableServer_POA_AdapterAlreadyExists,
-			NULL);
-    new_poa = NULL;
-  }
-
-  if(ev->_major == CORBA_NO_EXCEPTION)
-    /* register parent-child (it will do both cross-link pointers) */
-    ORBit_POA_add_child(_obj, new_poa, ev);
-
-  CORBA_Object_duplicate((CORBA_Object)new_poa, ev);
-
-  return new_poa;
-}
-
-PortableServer_POA
-PortableServer_POA_find_POA(PortableServer_POA _obj,
-			    const CORBA_char *adapter_name,
-			    const CORBA_boolean activate_it,
-			    CORBA_Environment * ev)
-{
-  PortableServer_POA child_poa = NULL;
-
-  if(_obj->child_poas)
-    child_poa = g_hash_table_lookup(_obj->child_poas, adapter_name);
-
-  if(activate_it)
-    g_warning("Don't yet know how to activate POA named \"%s\"",
-	      adapter_name);
-
-  if(child_poa)
-      CORBA_Object_duplicate((CORBA_Object)child_poa, ev);
-  else
-    CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			ex_PortableServer_POA_AdapterNonExistent,
-			NULL);	
-
-  return child_poa;
-}
-
-void
-PortableServer_POA_destroy(PortableServer_POA _obj,
-			   const CORBA_boolean etherealize_objects,
-			   const CORBA_boolean wait_for_completion,
-			   CORBA_Environment * ev)
-{
-  CORBA_boolean	done;
-
-  if ( _obj->life_flags & ORBit_LifeF_Destroyed )
-    return;
-  if ( wait_for_completion && ORBit_POA_is_inuse(_obj, /*kids*/1, ev) )
-    {
-      CORBA_exception_set_system(ev, ex_CORBA_BAD_INV_ORDER,
-				 CORBA_COMPLETED_NO);
-      return;
-    }
-  done = ORBit_POA_destroy(_obj, etherealize_objects, ev);
-  g_assert( done || !wait_for_completion );
-}
-
-CORBA_string
-PortableServer_POA__get_the_name(PortableServer_POA _obj,
-				 CORBA_Environment * ev)
-{
-  return CORBA_string_dup(_obj->name);
-}
-
-PortableServer_POA
-PortableServer_POA__get_the_parent(PortableServer_POA _obj,
-				   CORBA_Environment *ev)
-{
-  return (PortableServer_POA)
-    CORBA_Object_duplicate((CORBA_Object)_obj->parent_poa, ev);
-}
-
 static void
-poalist_add_child(gpointer key, gpointer value, gpointer data)
+ORBit_POAList_add_child (gpointer key, gpointer value, gpointer data)
 {
-  PortableServer_POAList *retval = data;
+	PortableServer_POA      poa    = value;
+	PortableServer_POAList *retval = data;
 
-  retval->_buffer[retval->_maximum++] = CORBA_Object_duplicate(value, NULL);
-}
-
-PortableServer_POAList *
-PortableServer_POA__get_the_children(PortableServer_POA _obj,
-				     CORBA_Environment * ev)
-{
-  PortableServer_POAList *retval;
-
-  retval = PortableServer_POAList__alloc();
-  retval->_length = g_hash_table_size(_obj->child_poas);
-  retval->_maximum = 0;
-  retval->_buffer = CORBA_sequence_PortableServer_POA_allocbuf(retval->_length);
-  retval->_release = CORBA_TRUE;
-  g_hash_table_foreach(_obj->child_poas, poalist_add_child, retval);
-
-  return retval;
-}
-
-PortableServer_POAManager
-PortableServer_POA__get_the_POAManager(PortableServer_POA _obj,
-				       CORBA_Environment * ev)
-{
-  return (PortableServer_POAManager)
-    CORBA_Object_duplicate((CORBA_Object)_obj->poa_manager, ev);
-}
-
-PortableServer_AdapterActivator
-PortableServer_POA__get_the_activator(PortableServer_POA _obj,
-				      CORBA_Environment * ev)
-{
-  return (PortableServer_AdapterActivator)
-    CORBA_Object_duplicate((CORBA_Object)_obj->the_activator, ev);
-}
-
-void
-PortableServer_POA__set_the_activator(PortableServer_POA _obj,
-				      const PortableServer_AdapterActivator value,
-				      CORBA_Environment * ev)
-{
-  /* These refs are our responsibility */
-  if(_obj->the_activator)
-    ORBit_RootObject_release((CORBA_Object)_obj->the_activator);
-  _obj->the_activator = (PortableServer_AdapterActivator)
-    ORBit_RootObject_duplicate((CORBA_Object)value);
-}
-
-PortableServer_ServantManager
-PortableServer_POA_get_servant_manager(PortableServer_POA _obj,
-				       CORBA_Environment * ev)
-{
-  return (PortableServer_ServantManager)
-    CORBA_Object_duplicate((CORBA_Object)_obj->servant_manager, ev);
-}
-
-void
-PortableServer_POA_set_servant_manager(PortableServer_POA _obj,
-				       const PortableServer_ServantManager imgr,
-				       CORBA_Environment * ev)
-{
-  if(_obj->servant_manager)
-    CORBA_Object_release((CORBA_Object)_obj->servant_manager, ev);
-  _obj->servant_manager = (PortableServer_ServantManager)
-    CORBA_Object_duplicate((CORBA_Object)imgr, ev);
-}
-
-PortableServer_Servant
-PortableServer_POA_get_servant(PortableServer_POA _obj,
-			       CORBA_Environment *ev)
-{
-  if(_obj->default_servant)
-    return _obj->default_servant;
-  else
-    return NULL;
-}
-
-void
-PortableServer_POA_set_servant(PortableServer_POA _obj,
-			       const PortableServer_Servant p_servant,
-			       CORBA_Environment * ev)
-{
-  if(p_servant)
-    _obj->default_servant = p_servant;
-  else
-    _obj->default_servant = NULL;
-}
-
-PortableServer_ObjectId*
-PortableServer_POA_activate_object(PortableServer_POA _obj,
-				   const PortableServer_Servant p_servant,
-				   CORBA_Environment * ev)
-{
-  PortableServer_ServantBase *servant = p_servant;
-  ORBit_POAObject 	      newobj;
-
-  if(_obj->p_servant_retention != PortableServer_RETAIN
-     || _obj->p_id_assignment != PortableServer_SYSTEM_ID)
-    {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_POA_WrongPolicy,
-			  NULL);
-      return NULL;
-    }
-	
-  if((_obj->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
-     (ORBIT_SERVANT_TO_POAOBJECT_LIST(servant) != 0))
-    {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_POA_ServantAlreadyActive,
-			  NULL);
-      return NULL;
-    }
-
-  newobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
-  ORBit_POA_activate_object(_obj, newobj, servant, ev);
-  return (PortableServer_ObjectId*)ORBit_sequence_CORBA_octet_dup(newobj->object_id);
-}
-
-void
-PortableServer_POA_activate_object_with_id(PortableServer_POA _obj,
-					   const PortableServer_ObjectId *id,
-					   const PortableServer_Servant p_servant,
-					   CORBA_Environment * ev)
-{
-  PortableServer_ServantBase *servant = p_servant;
-  ORBit_POAObject             newobj;
-
-  ev->_major = CORBA_NO_EXCEPTION;
-  if(!_obj || !id || !p_servant)
-    {
-      CORBA_exception_set_system(ev, ex_CORBA_BAD_PARAM,
-				 CORBA_COMPLETED_NO);
-      return;
-    }
-
-  newobj = ORBit_POA_oid_to_obj(_obj, id, /*active*/0, ev);
-  if ( ev->_major )
-    return;
-  if ( newobj && newobj->servant!=0 )
-    {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_POA_ObjectAlreadyActive, 
-			  NULL);
-      return;
-    }
-  if((_obj->p_id_uniqueness==PortableServer_UNIQUE_ID) &&
-     (ORBIT_SERVANT_TO_POAOBJECT_LIST(servant) != 0))
-    {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_POA_ServantAlreadyActive,
-			  NULL);
-      return;
-    }
-  if ( newobj==0 )
-    newobj = ORBit_POA_create_object(_obj, id, ev);
-  ORBit_POA_activate_object(_obj, newobj, servant, ev);
-}
-
-void
-PortableServer_POA_deactivate_object(PortableServer_POA _obj,
-				     const PortableServer_ObjectId *oid,
-				     CORBA_Environment * ev)
-{
-  ORBit_POAObject oldobj;
-
-  ev->_major = CORBA_NO_EXCEPTION;
-  if(!_obj || !oid) {
-    CORBA_exception_set_system(ev, ex_CORBA_BAD_PARAM,
-			       CORBA_COMPLETED_NO);
-    return;
-  }
-  oldobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/1, ev);
-  if ( ev->_major )
-    return;
-  if(!oldobj) {
-    CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			ex_PortableServer_POA_ObjectNotActive,
-			NULL);
-    return;
-  }
-  ORBit_POA_deactivate_object(_obj, oldobj, 
-			      /*etherealize_objects*/CORBA_TRUE,
-			      /*cleanup_in_progress*/CORBA_FALSE);
-
-}
-
-CORBA_Object
-PortableServer_POA_create_reference(PortableServer_POA _obj,
-				    const CORBA_RepositoryId intf,
-				    CORBA_Environment * ev)
-{
-  ORBit_POAObject pobj;
-
-  if ( _obj->p_id_assignment != PortableServer_SYSTEM_ID )
-    {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_POA_WrongPolicy, NULL);
-      return NULL;
-    }
-
-  pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
-
-  return ORBit_POA_obj_to_ref(_obj, pobj, intf, ev);
-}
-
-CORBA_Object
-PortableServer_POA_create_reference_with_id(PortableServer_POA _obj,
-					    const PortableServer_ObjectId* oid,
-					    const CORBA_RepositoryId intf,
-					    CORBA_Environment* ev)
-{
-  ORBit_POAObject	pobj;
-
-  pobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/0, /*ev*/0);
-  if ( pobj == NULL )
-    pobj = ORBit_POA_create_object(_obj, oid, ev);
-
-  return ORBit_POA_obj_to_ref(_obj, pobj, intf, ev);
-}
-
-PortableServer_ObjectId *
-PortableServer_POA_servant_to_id(PortableServer_POA _obj,
-				 const PortableServer_Servant p_servant,
-				 CORBA_Environment * ev)
-{
-  PortableServer_ServantBase *servant = p_servant;
-  int defserv =
-    (_obj->p_request_processing == PortableServer_USE_DEFAULT_SERVANT);
-  int retain =
-    (_obj->p_servant_retention == PortableServer_RETAIN);
-  int implicit =
-    (_obj->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION);
-  int unique =
-    (_obj->p_id_uniqueness == PortableServer_UNIQUE_ID);
-  int policy_ok =
-    (defserv || (retain && (unique || implicit)));
-  ORBit_POAObject pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant);
-
-  g_return_val_if_fail(p_servant != NULL, NULL);
-
-  if ( retain && unique && pobj && pobj->servant==p_servant )
-    return ORBit_sequence_CORBA_octet_dup(pobj->object_id);
-  else if ( retain && implicit && (!unique || pobj==0) )
-    {
-      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
-      ORBit_POA_activate_object(_obj, pobj, servant, ev);
-      /* XXX: seems like above activate could fail in many ways! */
-      return ORBit_sequence_CORBA_octet_dup(pobj->object_id);
-    }
-  else
-    {
-      /*
-       * This handles case 3 of the spec; but is broader:
-       * it matches invokations on any type of servant, not
-       * just the default servant.
-       * The stricter form could be implemented, 
-       * but it would only add more code...
-	     */
-      ORBit_POAInvocation	*ik = _obj->orb->poa_current_invocations;
-      for ( ; ik; ik = ik->prev)
-	{
-	  if ( ik->pobj->servant == p_servant )
-	    return ORBit_sequence_CORBA_octet_dup(ik->pobj->object_id);
-	}
-    }
-  CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-		      policy_ok ? ex_PortableServer_POA_ServantNotActive
-		      : ex_PortableServer_POA_WrongPolicy,
-		      NULL);
-  return NULL;
-}
-
-CORBA_Object
-PortableServer_POA_servant_to_reference(PortableServer_POA _obj,
-					const PortableServer_Servant p_servant,
-					CORBA_Environment *ev)
-{
-  PortableServer_ServantBase *servant = p_servant;
-  ORBit_POAObject             pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant);
-
-  int retain =
-    (_obj->p_servant_retention == PortableServer_RETAIN);
-  int implicit =
-    (_obj->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION);
-  int unique =
-    (_obj->p_id_uniqueness==PortableServer_UNIQUE_ID);
-  int policy_ok = (retain && (unique || implicit));
-
-  if ( retain && unique && pobj )
-    {
-    /* pobj != NULL --> object activated */
-    if ( ((ORBit_OAObject)pobj)->objref != NULL )
-      return ((ORBit_OAObject)pobj)->objref;
-    else
-      return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
-    }
-  else if ( retain && implicit && (!unique || pobj==0) )
-    {
-      pobj = ORBit_POA_create_object(_obj, /*oid*/NULL, ev);
-      ORBit_POA_activate_object(_obj, pobj, servant, ev);
-      /* XXX: seems like above activate could fail in many ways! */
-      return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
-    }
-  else
-    {
-      /* This case deals with "invoked in the context of
-       * executing a request." Note that there are no policy
-       * restrictions for this case. We must do a forward search
-       * looking for matching {servant}. If unique, we could 
-       * go backward from servant to pobj to use_cnt, but we
-       * dont do this since forward search is more general 
-       */
-      ORBit_POAInvocation	*ik = _obj->orb->poa_current_invocations;
-      for ( ; ik; ik = ik->prev)
-	{
-	  if ( ik->pobj->servant == p_servant )
-	    return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
-	}
-    }
-
-  CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-		      policy_ok ? ex_PortableServer_POA_ServantNotActive
-		      : ex_PortableServer_POA_WrongPolicy,
-		      NULL);
-  return NULL;
-
-}
-
-PortableServer_Servant
-PortableServer_POA_reference_to_servant(PortableServer_POA _obj,
-					const CORBA_Object reference,
-					CORBA_Environment * ev)
-{
-  if ( reference == NULL )
-     return NULL;
-
-  if(_obj->p_request_processing != PortableServer_USE_DEFAULT_SERVANT
-     && _obj->p_servant_retention != PortableServer_RETAIN)
-    {
-    CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			ex_PortableServer_POA_WrongPolicy,
-			NULL);
-    return NULL;
-  }
-
-  if ( _obj->p_servant_retention == PortableServer_RETAIN ) {
-    ORBit_POAObject pobj = (ORBit_POAObject)reference->adaptor_obj;
-
-    if ( pobj == NULL ) {
-      CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			  ex_PortableServer_POA_WrongAdapter,
-			  NULL);
-      return NULL;
-    }
-
-    if ( pobj->servant != NULL )
-      return pobj->servant;
-  }
-
-  if ( _obj->p_request_processing == PortableServer_USE_DEFAULT_SERVANT &&
-       _obj->default_servant != NULL )
-      return _obj->default_servant;
-
-  CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-		      ex_PortableServer_POA_ObjectNotActive,
-		      NULL);
-  return NULL;
-}
-
-PortableServer_ObjectId *
-PortableServer_POA_reference_to_id(PortableServer_POA _obj,
-				   const CORBA_Object reference,
-				   CORBA_Environment * ev)
-{
-  ORBit_POAObject pobj;
-
-  if ( reference == NULL )
-     return NULL;
-
-  if ( (pobj = (ORBit_POAObject)reference->adaptor_obj) != NULL )
-     return (PortableServer_ObjectId *)
-		ORBit_sequence_CORBA_octet_dup(pobj->object_id);
-
-  CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-		      ex_PortableServer_POA_WrongAdapter,
-		      NULL);
-  return NULL;
-}
-
-PortableServer_Servant
-PortableServer_POA_id_to_servant(PortableServer_POA _obj,
-				 const PortableServer_ObjectId* oid,
-				 CORBA_Environment *ev)
-{
-  if(_obj->p_request_processing != PortableServer_USE_DEFAULT_SERVANT
-     && _obj->p_servant_retention != PortableServer_RETAIN)
-    {
-    CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-			ex_PortableServer_POA_WrongPolicy,
-			NULL);
-    return NULL;
-  }
-
-  if ( _obj->p_servant_retention == PortableServer_RETAIN )
-    {
-      ORBit_POAObject pobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/1, /*ev*/0);
-
-      if ( pobj != NULL && pobj->servant != NULL )
-	return pobj->servant;
-    }
-
-  if ( _obj->p_request_processing == PortableServer_USE_DEFAULT_SERVANT &&
-       _obj->default_servant != NULL )
-        return _obj->default_servant;
-
-  CORBA_exception_set(ev, CORBA_USER_EXCEPTION,
-		      ex_PortableServer_POA_ObjectNotActive,
-		      NULL);
-
-  return NULL;
-}
-
-CORBA_Object
-PortableServer_POA_id_to_reference(PortableServer_POA _obj,
-				   const PortableServer_ObjectId *oid,
-				   CORBA_Environment * ev)
-{
-  ORBit_POAObject pobj;
-
-  pobj = ORBit_POA_oid_to_obj(_obj, oid, /*active*/1, ev);
-  if ( ev->_major )
-    return NULL;	/* may raise WrongPolicy or ObjectNotActive */
-
-  if ( ((ORBit_OAObject)pobj)->objref != NULL )
-    return ((ORBit_OAObject)pobj)->objref;
-
-  return ORBit_POA_obj_to_ref(_obj, pobj, /*type*/NULL, ev);
+	retval->_buffer[retval->_maximum++] = CORBA_Object_duplicate ((CORBA_Object)poa, NULL);
 }
 
 /* PortableServer_Current interface */
@@ -919,7 +384,7 @@ ORBit_POAObject_object_to_objkey (ORBit_POAObject pobj)
 	return objkey;
 }
 
-ORBit_POAObject
+static ORBit_POAObject
 ORBit_POA_oid_to_obj(PortableServer_POA poa,
 		     const PortableServer_ObjectId *oid,
 		     gboolean only_active,
@@ -927,6 +392,9 @@ ORBit_POA_oid_to_obj(PortableServer_POA poa,
 {
   ORBit_POAObject pobj;
 
+  /*
+   * FIXME, FIXME, FIXME
+   */
   if ( poa->p_servant_retention != PortableServer_RETAIN )
     {
       if ( ev )
@@ -963,8 +431,7 @@ ORBit_POA_set_life(PortableServer_POA poa,
 
 static void
 ORBit_POA_add_child(PortableServer_POA poa,
-		    PortableServer_POA child, 
-		    CORBA_Environment *ev)
+		    PortableServer_POA child)
 {
  /* released in ORBit_POA_remove_child */
  child->parent_poa = ORBit_RootObject_duplicate(poa);
@@ -982,7 +449,7 @@ ORBit_POA_remove_child(PortableServer_POA poa,
 	ORBit_RootObject_release(poa);
 }
 
-gboolean
+static gboolean
 ORBit_POA_destroy(PortableServer_POA poa,
 		  CORBA_boolean etherealize_objects,
 		  CORBA_Environment *ev)
@@ -1278,7 +745,7 @@ ORBit_POA_set_policylist(PortableServer_POA poa,
     }
 }
 
-PortableServer_POA
+static PortableServer_POA
 ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
 	      PortableServer_POAManager manager,
 	      const CORBA_PolicyList *policies,
@@ -1353,7 +820,7 @@ error:
   return NULL;
 }
 
-CORBA_Object
+static CORBA_Object
 ORBit_POA_obj_to_ref(PortableServer_POA poa,
 		     ORBit_POAObject pobj,
 		     const CORBA_RepositoryId intf,
@@ -1523,7 +990,7 @@ ORBit_POA_create_object (PortableServer_POA             poa,
     it is installed. In this later case, it may be either RETAIN
     or NON_RETAIN.
 */
-void
+static void
 ORBit_POA_activate_object(PortableServer_POA poa, 
 			  ORBit_POAObject pobj,
 			  PortableServer_ServantBase *servant, 
@@ -1562,7 +1029,7 @@ ORBit_POA_activate_object(PortableServer_POA poa,
     If object is currentin use (servicing a request), etherialization
     and memory release will occur later.
 **/
-void
+static void
 ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject pobj,
 			     CORBA_boolean do_etherealize,
 			     CORBA_boolean is_cleanup)
@@ -2076,4 +1543,534 @@ ORBit_POAObject_post_invoke(ORBit_POAObject pobj)
 	ORBit_POA_deactivate_object(pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
     	/* WATCHOUT: pobj may not exist anymore! */
     }
+}
+
+/*
+ * PortableServer::POA interface
+ * Section 11.3.8
+ */
+
+PortableServer_POA
+PortableServer_POA_create_POA (PortableServer_POA               poa,
+			       const CORBA_char                *adapter_name,
+			       const PortableServer_POAManager  a_POAManager,
+			       const CORBA_PolicyList          *policies,
+			       CORBA_Environment               *ev)
+{
+	PortableServer_POA retval;
+
+	if (g_hash_table_lookup(poa->child_poas, adapter_name)) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_AdapterAlreadyExists,
+				     NULL);
+		return CORBA_OBJECT_NIL;
+		}
+
+	retval = ORBit_POA_new (poa->orb, adapter_name, a_POAManager, policies, ev);
+
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return CORBA_OBJECT_NIL;
+
+	ORBit_POA_add_child (poa, retval);
+
+	CORBA_Object_duplicate ((CORBA_Object)retval, ev);
+
+	return retval;
+}
+
+PortableServer_POA
+PortableServer_POA_find_POA (PortableServer_POA   poa,
+			     const CORBA_char    *adapter_name,
+			     const CORBA_boolean  activate_it,
+			     CORBA_Environment   *ev)
+{
+	PortableServer_POA child_poa = NULL;
+
+	if (poa->child_poas)
+		child_poa = g_hash_table_lookup (poa->child_poas, adapter_name);
+
+	if (activate_it)
+		g_warning ("Don't yet know how to activate POA named \"%s\"",
+			   adapter_name);
+
+	if (child_poa)
+		CORBA_Object_duplicate ((CORBA_Object)child_poa, ev);
+	else
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_AdapterNonExistent,
+				     NULL);	
+
+	return child_poa;
+}
+
+void
+PortableServer_POA_destroy (PortableServer_POA   poa,
+			    const CORBA_boolean  etherealize_objects,
+			    const CORBA_boolean  wait_for_completion,
+			    CORBA_Environment   *ev)
+{
+	gboolean done;
+
+	if (poa->life_flags & ORBit_LifeF_Destroyed)
+		return;
+
+	if (wait_for_completion && ORBit_POA_is_inuse (poa, CORBA_TRUE, ev)) {
+		CORBA_exception_set_system (ev, ex_CORBA_BAD_INV_ORDER,
+					    CORBA_COMPLETED_NO);
+		return;
+	}
+
+	done = ORBit_POA_destroy (poa, etherealize_objects, ev);
+
+	g_assert (done || !wait_for_completion);
+}
+
+CORBA_string
+PortableServer_POA__get_the_name (PortableServer_POA  poa,
+				  CORBA_Environment  *ev)
+{
+	return CORBA_string_dup (poa->name);
+}
+
+PortableServer_POA
+PortableServer_POA__get_the_parent (PortableServer_POA  poa,
+				    CORBA_Environment  *ev)
+{
+	return (PortableServer_POA)
+			CORBA_Object_duplicate ((CORBA_Object)poa->parent_poa, ev);
+}
+
+PortableServer_POAList*
+PortableServer_POA__get_the_children (PortableServer_POA  poa,
+				      CORBA_Environment  *ev)
+{
+	PortableServer_POAList *retval;
+
+	retval           = PortableServer_POAList__alloc();
+	retval->_length  = g_hash_table_size (poa->child_poas);
+	retval->_maximum = 0; /* FIXME: needed in ORBit_POAList__add_child */
+	retval->_buffer  = CORBA_sequence_PortableServer_POA_allocbuf (retval->_length);
+	retval->_release = CORBA_TRUE;
+
+	g_hash_table_foreach (poa->child_poas, ORBit_POAList_add_child, retval);
+
+	return retval;
+}
+
+PortableServer_POAManager
+PortableServer_POA__get_the_POAManager (PortableServer_POA  poa,
+					CORBA_Environment  *ev)
+{
+	return (PortableServer_POAManager)
+			CORBA_Object_duplicate ((CORBA_Object)poa->poa_manager, ev);
+}
+
+PortableServer_AdapterActivator
+PortableServer_POA__get_the_activator (PortableServer_POA  poa,
+				       CORBA_Environment  *ev)
+{
+	return (PortableServer_AdapterActivator)
+			CORBA_Object_duplicate ((CORBA_Object)poa->the_activator, ev);
+}
+
+void
+PortableServer_POA__set_the_activator (PortableServer_POA                    poa,
+				       const PortableServer_AdapterActivator activator,
+				       CORBA_Environment * ev)
+{
+	if (poa->the_activator)
+		ORBit_RootObject_release (poa->the_activator);
+
+	poa->the_activator = (PortableServer_AdapterActivator)
+					ORBit_RootObject_duplicate (activator);
+}
+
+PortableServer_ServantManager
+PortableServer_POA_get_servant_manager (PortableServer_POA  poa,
+					CORBA_Environment  *ev)
+{
+	return (PortableServer_ServantManager)
+			CORBA_Object_duplicate ((CORBA_Object)poa->servant_manager, ev);
+}
+
+void
+PortableServer_POA_set_servant_manager (PortableServer_POA                   poa,
+					const PortableServer_ServantManager  imgr,
+					CORBA_Environment                   *ev)
+{
+	if (poa->servant_manager)
+		ORBit_RootObject_release (poa->servant_manager);
+
+	poa->servant_manager = (PortableServer_ServantManager)
+					ORBit_RootObject_duplicate (imgr);
+}
+
+PortableServer_Servant
+PortableServer_POA_get_servant (PortableServer_POA  poa,
+				CORBA_Environment  *ev)
+{
+	return poa->default_servant;
+}
+
+void
+PortableServer_POA_set_servant (PortableServer_POA           poa,
+			       const PortableServer_Servant  p_servant,
+			       CORBA_Environment            *ev)
+{
+	poa->default_servant = p_servant;
+}
+
+PortableServer_ObjectId*
+PortableServer_POA_activate_object (PortableServer_POA            poa,
+				    const PortableServer_Servant  p_servant,
+				    CORBA_Environment            *ev)
+{
+	PortableServer_ServantBase *servant = p_servant;
+	ORBit_POAObject             newobj;
+
+	if (poa->p_servant_retention != PortableServer_RETAIN || 
+	    poa->p_id_assignment != PortableServer_SYSTEM_ID) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_WrongPolicy,
+				     NULL);
+		return NULL;
+	}
+	
+	if (poa->p_id_uniqueness == PortableServer_UNIQUE_ID &&
+	    ORBIT_SERVANT_TO_POAOBJECT_LIST (servant) != NULL) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_ServantAlreadyActive,
+				     NULL);
+		return NULL;
+	}
+
+	newobj = ORBit_POA_create_object (poa, NULL, ev);
+	ORBit_POA_activate_object (poa, newobj, servant, ev);
+
+	return (PortableServer_ObjectId *)
+			ORBit_sequence_CORBA_octet_dup (newobj->object_id);
+}
+
+void
+PortableServer_POA_activate_object_with_id (PortableServer_POA             poa,
+					    const PortableServer_ObjectId *oid,
+					    const PortableServer_Servant   p_servant,
+					    CORBA_Environment             *ev)
+{
+	PortableServer_ServantBase *servant = p_servant;
+	ORBit_POAObject             newobj;
+
+	/*
+	 * FIXME: If we're going to do this
+	 *        we should always do it.
+ 	 */
+	if(!poa || !oid || !p_servant) {
+		CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM,
+					    CORBA_COMPLETED_NO);
+		return;
+	}
+
+	newobj = ORBit_POA_oid_to_obj (poa, oid, FALSE, ev);
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return;
+
+	if (newobj && newobj->servant != NULL) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_ObjectAlreadyActive, 
+				     NULL);
+		return;
+	}
+
+	if (poa->p_id_uniqueness == PortableServer_UNIQUE_ID &&
+	    ORBIT_SERVANT_TO_POAOBJECT_LIST (servant) != 0) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_ServantAlreadyActive,
+				     NULL);
+		return;
+	}
+
+	if (!newobj)
+		newobj = ORBit_POA_create_object(poa, oid, ev);
+
+	ORBit_POA_activate_object (poa, newobj, servant, ev);
+}
+
+void
+PortableServer_POA_deactivate_object (PortableServer_POA             poa,
+				      const PortableServer_ObjectId *oid,
+				      CORBA_Environment             *ev)
+{
+	ORBit_POAObject oldobj;
+
+	/*
+	 * FIXME: If we're going to do this
+	 *        we should always do it.
+ 	 */
+	if (!poa || !oid) {
+		CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM,
+					    CORBA_COMPLETED_NO);
+		return;
+	}
+
+	oldobj = ORBit_POA_oid_to_obj (poa, oid, TRUE, ev);
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return;
+
+	ORBit_POA_deactivate_object (poa, oldobj, CORBA_TRUE, CORBA_FALSE);
+}
+
+CORBA_Object
+PortableServer_POA_create_reference (PortableServer_POA        poa,
+				     const CORBA_RepositoryId  intf,
+				     CORBA_Environment        *ev)
+{
+	ORBit_POAObject pobj;
+
+	if (poa->p_id_assignment != PortableServer_SYSTEM_ID) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_WrongPolicy, NULL);
+		return CORBA_OBJECT_NIL;
+	}
+
+	pobj = ORBit_POA_create_object (poa, NULL, ev);
+
+	return ORBit_POA_obj_to_ref (poa, pobj, intf, ev);
+}
+
+CORBA_Object
+PortableServer_POA_create_reference_with_id (PortableServer_POA             poa,
+					     const PortableServer_ObjectId *oid,
+					     const CORBA_RepositoryId       intf,
+					     CORBA_Environment             *ev)
+{
+	ORBit_POAObject	pobj;
+
+	pobj = ORBit_POA_oid_to_obj (poa, oid, FALSE, NULL);
+	if (!pobj)
+		pobj = ORBit_POA_create_object(poa, oid, ev);
+
+	return ORBit_POA_obj_to_ref(poa, pobj, intf, ev);
+}
+
+PortableServer_ObjectId*
+PortableServer_POA_servant_to_id (PortableServer_POA            poa,
+				  const PortableServer_Servant  p_servant,
+				  CORBA_Environment            *ev)
+{
+	PortableServer_ServantBase *servant = p_servant;
+	ORBit_POAObject             pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant);
+	gboolean                    defserv, retain, implicit, unique;
+
+	g_return_val_if_fail (p_servant, NULL);
+
+	defserv   = (poa->p_request_processing  == PortableServer_USE_DEFAULT_SERVANT);
+	retain    = (poa->p_servant_retention   == PortableServer_RETAIN);
+	implicit  = (poa->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION);
+	unique    = (poa->p_id_uniqueness       == PortableServer_UNIQUE_ID);
+
+	if (!(defserv || (retain && (unique || implicit)))) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_WrongPolicy,
+				     NULL);
+		return NULL;
+	}
+
+	if (retain && unique && pobj && pobj->servant == p_servant)
+		return ORBit_sequence_CORBA_octet_dup (pobj->object_id);
+
+	else if (retain && implicit && (!unique || !pobj)) {
+		pobj = ORBit_POA_create_object (poa, NULL, ev);
+		ORBit_POA_activate_object (poa, pobj, servant, ev);
+
+		return ORBit_sequence_CORBA_octet_dup (pobj->object_id);
+	}
+	else {
+		/*
+		 * FIXME:
+		 * This handles case 3 of the spec; but is broader:
+		 * it matches invokations on any type of servant, not
+		 * just the default servant.
+		 * The stricter form could be implemented, 
+		 * but it would only add more code...
+		 */
+		ORBit_POAInvocation	*irec = poa->orb->poa_current_invocations;
+
+		for ( ; irec; irec = irec->prev)
+			if (irec->pobj->servant == p_servant)
+				return ORBit_sequence_CORBA_octet_dup (irec->pobj->object_id);
+	}
+
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			     ex_PortableServer_POA_ServantNotActive,
+			     NULL);
+
+	return NULL;
+}
+
+CORBA_Object
+PortableServer_POA_servant_to_reference (PortableServer_POA            poa,
+					 const PortableServer_Servant  p_servant,
+					 CORBA_Environment            *ev)
+{
+	PortableServer_ServantBase *servant = p_servant;
+	ORBit_POAObject             pobj = ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant);
+	gboolean                    retain, implicit, unique;
+
+	retain   = (poa->p_servant_retention   == PortableServer_RETAIN);
+	implicit = (poa->p_implicit_activation == PortableServer_IMPLICIT_ACTIVATION);
+	unique   = (poa->p_id_uniqueness       == PortableServer_UNIQUE_ID);
+
+	if (!(retain && (unique || implicit))) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_WrongPolicy,
+				     NULL);
+		return CORBA_OBJECT_NIL;
+	}
+
+	if (retain && unique && pobj)
+		if (((ORBit_OAObject)pobj)->objref)
+			return ((ORBit_OAObject)pobj)->objref;
+		else
+			return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
+
+	else if (retain && implicit && (!unique || !pobj)) {
+		pobj = ORBit_POA_create_object (poa, NULL, ev);
+		ORBit_POA_activate_object (poa, pobj, servant, ev);
+
+		return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
+	}
+	else {
+		/*
+		 * FIXME:
+		 * This case deals with "invoked in the context of
+		 * executing a request." Note that there are no policy
+		 * restrictions for this case. We must do a forward search
+		 * looking for matching {servant}. If unique, we could 
+		 * go backward from servant to pobj to use_cnt, but we
+		 * dont do this since forward search is more general 
+		 */
+		ORBit_POAInvocation	*irec = poa->orb->poa_current_invocations;
+		for ( ; irec; irec = irec->prev)
+			if (irec->pobj->servant == p_servant)
+				return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
+	}
+
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			     ex_PortableServer_POA_ServantNotActive,
+			     NULL);
+
+	return NULL;
+}
+
+PortableServer_Servant
+PortableServer_POA_reference_to_servant (PortableServer_POA  poa,
+					 const CORBA_Object  reference,
+					 CORBA_Environment  *ev)
+{
+	if (reference == CORBA_OBJECT_NIL)
+		return NULL;
+
+	if (poa->p_request_processing != PortableServer_USE_DEFAULT_SERVANT && 
+	    poa->p_servant_retention  != PortableServer_RETAIN) {
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_WrongPolicy,
+				     NULL);
+		return NULL;
+	}
+
+	/*
+	 * FIXME: Is this correct
+	 */
+	if (poa->p_servant_retention == PortableServer_RETAIN ) {
+		if (!reference->adaptor_obj) {
+			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+					     ex_PortableServer_POA_WrongAdapter,
+					     NULL);
+			return NULL;
+		}
+
+		if (((ORBit_POAObject)reference->adaptor_obj)->servant)
+			return ((ORBit_POAObject)reference->adaptor_obj)->servant;
+	}
+
+	if (poa->p_request_processing == PortableServer_USE_DEFAULT_SERVANT &&
+	    poa->default_servant)
+		return poa->default_servant;
+
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			     ex_PortableServer_POA_ObjectNotActive,
+			     NULL);
+
+	return NULL;
+}
+
+PortableServer_ObjectId*
+PortableServer_POA_reference_to_id (PortableServer_POA  poa,
+				    const CORBA_Object  reference,
+				    CORBA_Environment  *ev)
+{
+	ORBit_POAObject pobj;
+
+	if (reference == CORBA_OBJECT_NIL)
+		return NULL;
+
+	pobj = (ORBit_POAObject)reference->adaptor_obj;
+	if (pobj)
+		return (PortableServer_ObjectId *)
+				ORBit_sequence_CORBA_octet_dup (pobj->object_id);
+
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			     ex_PortableServer_POA_WrongAdapter,
+			     NULL);
+
+	return NULL;
+}
+
+PortableServer_Servant
+PortableServer_POA_id_to_servant (PortableServer_POA             poa,
+				  const PortableServer_ObjectId *oid,
+				  CORBA_Environment             *ev)
+{
+	if (poa->p_request_processing != PortableServer_USE_DEFAULT_SERVANT &&
+	    poa->p_servant_retention  != PortableServer_RETAIN) {
+
+		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+				     ex_PortableServer_POA_WrongPolicy,
+				     NULL);
+		return NULL;
+	}
+
+	if (poa->p_servant_retention == PortableServer_RETAIN) {
+		ORBit_POAObject pobj = ORBit_POA_oid_to_obj (poa, oid, TRUE, NULL);
+
+		if (pobj && pobj->servant)
+			return pobj->servant;
+	}
+
+	if (poa->p_request_processing == PortableServer_USE_DEFAULT_SERVANT &&
+	    poa->default_servant)
+		return poa->default_servant;
+
+	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+			     ex_PortableServer_POA_ObjectNotActive,
+			     NULL);
+
+	return NULL;
+}
+
+CORBA_Object
+PortableServer_POA_id_to_reference (PortableServer_POA             poa,
+				    const PortableServer_ObjectId *oid,
+				    CORBA_Environment             *ev)
+{
+	ORBit_POAObject pobj;
+
+	pobj = ORBit_POA_oid_to_obj (poa, oid, TRUE, ev);
+	if (ev->_major != CORBA_NO_EXCEPTION)
+		return NULL;
+
+	if (((ORBit_OAObject)pobj)->objref != CORBA_OBJECT_NIL)
+		return ((ORBit_OAObject)pobj)->objref;
+
+	return ORBit_POA_obj_to_ref (poa, pobj, NULL, ev);
 }
