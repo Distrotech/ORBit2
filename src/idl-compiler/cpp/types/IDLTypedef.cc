@@ -196,53 +196,53 @@ IDLTypedef::member_impl_arg_copy (ostream      &ostr,
 void
 IDLTypedef::member_pack_to_c_pre  (ostream      &ostr,
 				   Indent       &indent,
-				   const string &member_id,
-				   const string &c_struct_id) const
+				   const string &cpp_id,
+				   const string &c_id) const
 {
-	m_alias.member_pack_to_c_pre (ostr, indent, member_id, c_struct_id);
+	m_alias.member_pack_to_c_pre (ostr, indent, cpp_id, c_id);
 }
 
 void
 IDLTypedef::member_pack_to_c_pack (ostream      &ostr,
 				   Indent       &indent,
-				   const string &member_id,
-				   const string &c_struct_id) const
+				   const string &cpp_id,
+				   const string &c_id) const
 {
-	m_alias.member_pack_to_c_pack (ostr, indent, member_id, c_struct_id);
+	m_alias.member_pack_to_c_pack (ostr, indent, cpp_id, c_id);
 }
 
 void
 IDLTypedef::member_pack_to_c_post (ostream      &ostr,
-				Indent       &indent,
-				const string &member_id,
-				const string &c_struct_id) const
+				   Indent       &indent,
+				   const string &cpp_id,
+				   const string &c_id) const
 {
-	m_alias.member_pack_to_c_post (ostr, indent, member_id, c_struct_id);
+	m_alias.member_pack_to_c_post (ostr, indent, cpp_id, c_id);
 }
 
 void
 IDLTypedef::member_unpack_from_c_pre  (ostream      &ostr,
 				       Indent       &indent,
-				       const string &member_id,
-				       const string &c_struct_id) const
+				       const string &cpp_id,
+				       const string &c_id) const
 {
-	m_alias.member_unpack_from_c_pre (ostr, indent, member_id, c_struct_id);
+	m_alias.member_unpack_from_c_pre (ostr, indent, cpp_id, c_id);
 }
 
 void
 IDLTypedef::member_unpack_from_c_pack (ostream      &ostr,
 				       Indent       &indent,
-				       const string &member_id,
-				       const string &c_struct_id) const
+				       const string &cpp_id,
+				       const string &c_id) const
 {
-	m_alias.member_unpack_from_c_pack (ostr, indent, member_id, c_struct_id);
+	m_alias.member_unpack_from_c_pack (ostr, indent, cpp_id, c_id);
 }
 
 void
 IDLTypedef::member_unpack_from_c_post  (ostream      &ostr,
 					Indent       &indent,
-					const string &member_id,
-					const string &c_struct_id) const
+					const string &cpp_id,
+					const string &c_id) const
 {
-	m_alias.member_unpack_from_c_post (ostr, indent, member_id, c_struct_id);
+	m_alias.member_unpack_from_c_post (ostr, indent, cpp_id, c_id);
 }

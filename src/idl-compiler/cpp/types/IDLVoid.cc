@@ -173,8 +173,8 @@ IDLVoid::member_impl_arg_copy (ostream      &ostr,
 void
 IDLVoid::member_pack_to_c_pre  (ostream      &ostr,
 				Indent       &indent,
-				const string &member_id,
-				const string &c_struct_id) const
+				const string &cpp_id,
+				const string &c_id) const
 {
 	throw IDLExVoid ();
 }
@@ -182,8 +182,8 @@ IDLVoid::member_pack_to_c_pre  (ostream      &ostr,
 void
 IDLVoid::member_pack_to_c_pack (ostream      &ostr,
 				Indent       &indent,
-				const string &member_id,
-				const string &c_struct_id) const
+				const string &cpp_id,
+				const string &c_id) const
 {
 	throw IDLExVoid ();
 }
@@ -191,8 +191,8 @@ IDLVoid::member_pack_to_c_pack (ostream      &ostr,
 void
 IDLVoid::member_pack_to_c_post (ostream      &ostr,
 				Indent       &indent,
-				const string &member_id,
-				const string &c_struct_id) const
+				const string &cpp_id,
+				const string &c_id) const
 {
 	throw IDLExVoid ();
 }
@@ -200,8 +200,8 @@ IDLVoid::member_pack_to_c_post (ostream      &ostr,
 void
 IDLVoid::member_unpack_from_c_pre  (ostream      &ostr,
 				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const
+				    const string &cpp_id,
+				    const string &c_id) const
 {
 	throw IDLExVoid ();
 }
@@ -209,8 +209,8 @@ IDLVoid::member_unpack_from_c_pre  (ostream      &ostr,
 void
 IDLVoid::member_unpack_from_c_pack (ostream      &ostr,
 				    Indent       &indent,
-				    const string &member_id,
-				    const string &c_struct_id) const
+				    const string &cpp_id,
+				    const string &c_id) const
 {
 	throw IDLExVoid ();
 }
@@ -218,8 +218,8 @@ IDLVoid::member_unpack_from_c_pack (ostream      &ostr,
 void
 IDLVoid::member_unpack_from_c_post  (ostream      &ostr,
 				     Indent       &indent,
-				     const string &member_id,
-				     const string &c_struct_id) const
+				     const string &cpp_id,
+				     const string &c_id) const
 {
 	throw IDLExVoid ();
 }

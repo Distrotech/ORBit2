@@ -252,8 +252,8 @@ IDLSimpleType::member_impl_arg_copy (ostream      &ostr,
 void
 IDLSimpleType::member_pack_to_c_pre  (ostream      &ostr,
 				      Indent       &indent,
-				      const string &member_id,
-				      const string &c_struct_id) const
+				      const string &cpp_id,
+				      const string &c_id) const
 {
 	// Do nothing
 }
@@ -262,18 +262,17 @@ IDLSimpleType::member_pack_to_c_pre  (ostream      &ostr,
 void
 IDLSimpleType::member_pack_to_c_pack (ostream      &ostr,
 				      Indent       &indent,
-				      const string &member_id,
-				      const string &c_struct_id) const
+				      const string &cpp_id,
+				      const string &c_id) const
 {
-	ostr << indent << c_struct_id << '.' << member_id << " = "
-	     << member_id << ';' << endl;
+	ostr << indent << c_id << " = " << cpp_id << ';' << endl;
 }
 
 void
 IDLSimpleType::member_pack_to_c_post (ostream      &ostr,
 				      Indent       &indent,
-				      const string &member_id,
-				      const string &c_struct_id) const
+				      const string &cpp_id,
+				      const string &c_id) const
 {
 	// Do nothing
 }
@@ -281,8 +280,8 @@ IDLSimpleType::member_pack_to_c_post (ostream      &ostr,
 void
 IDLSimpleType::member_unpack_from_c_pre  (ostream      &ostr,
 					  Indent       &indent,
-					  const string &member_id,
-					  const string &c_struct_id) const
+					  const string &cpp_id,
+					  const string &c_id) const
 {
 	// Do nothing
 }
@@ -290,18 +289,17 @@ IDLSimpleType::member_unpack_from_c_pre  (ostream      &ostr,
 void
 IDLSimpleType::member_unpack_from_c_pack (ostream      &ostr,
 					  Indent       &indent,
-					  const string &member_id,
-					  const string &c_struct_id) const
+					  const string &cpp_id,
+					  const string &c_id) const
 {
-	ostr << indent << member_id << " = "
-	     << c_struct_id << '.' << member_id << ';' << endl;
+	ostr << indent << cpp_id << " = " << c_id << ';' << endl;
 }
 
 void
 IDLSimpleType::member_unpack_from_c_post  (ostream      &ostr,
 					   Indent       &indent,
-					   const string &member_id,
-					   const string &c_struct_id) const
+					   const string &cpp_id,
+					   const string &c_id) const
 {
 	// Do nothing
 }

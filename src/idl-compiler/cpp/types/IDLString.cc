@@ -255,8 +255,8 @@ IDLString::member_impl_arg_copy (ostream      &ostr,
 void
 IDLString::member_pack_to_c_pre  (ostream      &ostr,
 				  Indent       &indent,
-				  const string &member_id,
-				  const string &c_struct_id) const
+				  const string &cpp_id,
+				  const string &c_id) const
 {
 	// Do nothing
 }
@@ -264,12 +264,9 @@ IDLString::member_pack_to_c_pre  (ostream      &ostr,
 void
 IDLString::member_pack_to_c_pack (ostream      &ostr,
 				  Indent       &indent,
-				  const string &member_id,
-				  const string &c_struct_id) const
+				  const string &cpp_id,
+				  const string &c_id) const
 {
-	string c_id = c_struct_id + '.' + member_id;
-	string cpp_id = member_id;
-	
 	ostr << indent << c_id << " = "
 	     << "CORBA::string_dup (" << cpp_id << ")"
 	     << ';' << endl;
@@ -278,8 +275,8 @@ IDLString::member_pack_to_c_pack (ostream      &ostr,
 void
 IDLString::member_pack_to_c_post (ostream      &ostr,
 				  Indent       &indent,
-				  const string &member_id,
-				  const string &c_struct_id) const
+				  const string &cpp_id,
+				  const string &c_id) const
 {
 	// Do nothing
 }
@@ -287,8 +284,8 @@ IDLString::member_pack_to_c_post (ostream      &ostr,
 void
 IDLString::member_unpack_from_c_pre  (ostream      &ostr,
 				      Indent       &indent,
-				      const string &member_id,
-				      const string &c_struct_id) const
+				      const string &cpp_id,
+				      const string &c_id) const
 {
 	// Do nothing
 }
@@ -296,12 +293,9 @@ IDLString::member_unpack_from_c_pre  (ostream      &ostr,
 void
 IDLString::member_unpack_from_c_pack (ostream      &ostr,
 				      Indent       &indent,
-				      const string &member_id,
-				      const string &c_struct_id) const
+				      const string &cpp_id,
+				      const string &c_id) const
 {
-	string c_id = c_struct_id + '.' + member_id;
-	string cpp_id = member_id;
-
 	ostr << cpp_id << " = CORBA::string_dup (" << c_id << ")"
 	     << ';' << endl;
 }
@@ -309,8 +303,8 @@ IDLString::member_unpack_from_c_pack (ostream      &ostr,
 void
 IDLString::member_unpack_from_c_post  (ostream      &ostr,
 				       Indent       &indent,
-				       const string &member_id,
-				       const string &c_struct_id) const
+				       const string &cpp_id,
+				       const string &c_id) const
 {
 	// Do nothing
 }

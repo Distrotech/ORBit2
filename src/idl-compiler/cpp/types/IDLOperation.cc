@@ -197,14 +197,14 @@ IDLOperation::skel_do_pre (ostream &ostr,
 
 	// Prepare return value container
 	m_returntype->skel_impl_ret_pre (ostr, indent);
+
+	ostr << indent << "bool _results_valid = true;" << endl << endl;
 }
 
 void
 IDLOperation::skel_do_call (ostream &ostr,
 			    Indent  &indent) const
 {
-	ostr << indent << "bool _results_valid = true;" << endl;
-	
 	// Create C++ exception context
 	ostr << indent++ << "try {" << endl;
 
@@ -245,7 +245,7 @@ IDLOperation::skel_do_call (ostream &ostr,
 	// Catch and report unknown exceptions
 	ostr << indent++ << "catch (...) {" << endl;
 	ostr << indent << "::_orbitcpp::error (\"unknown exception in skeleton\");" << endl;
-	ostr << --indent << "}" << endl;
+	ostr << --indent << "}" << endl << endl;
 }
 
 void
