@@ -320,9 +320,11 @@ cbe_skel_param_subfree(IDL_tree tree, OIDL_C_Info *ci, gboolean free_internal)
     id = orbit_cbe_get_typename(IDL_PARAM_DCL(tree).param_type_spec);
     varname = IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str;
   }
-
-  fprintf(ci->fh, "%s__free(&%s, NULL, %s);\n",
-	  id, varname, free_internal?"CORBA_TRUE":"CORBA_FALSE");
+  /* NOTE: we no longer use {free_internal}. Instead, any data we
+   * do not want to free is tagged at the time we reference it.
+   * See ORBit/docs/orbit-mem2.txt.
+   */
+  fprintf(ci->fh, "%s__freekids(&%s, NULL);\n", id, varname);
   g_free(id);
 }
 

@@ -154,7 +154,9 @@ cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   cc_alloc_prep(tree, ci);
 
   tname = orbit_cbe_get_typename(tree);
-  fprintf(ci->fh, "gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings)\n", tname);
+  /* XXX if tname is fixed_length (doesnt contain any pointers),
+   * then we should #define the __freekids func */
+  fprintf(ci->fh, "gpointer %s__freekids(gpointer mem, gpointer dat)\n", tname);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh, "%s *var = mem;\n", tname);
   for(sub = IDL_TYPE_STRUCT(tree).member_list; sub; sub = IDL_LIST(sub).next) {
@@ -167,17 +169,10 @@ cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       continue;
 
     ttmp = orbit_cbe_get_typespec(IDL_MEMBER(memb).type_spec);
-    if(IDL_NODE_TYPE(ttmp) == IDLN_TYPE_STRING)
-      fprintf(ci->fh, "if(free_strings) {\n");
-    else
-      fprintf(ci->fh, "{\n");
-
     ctmp = orbit_cbe_get_typename(IDL_MEMBER(memb).type_spec);
     for(sub2 = IDL_MEMBER(memb).dcls; sub2; sub2 = IDL_LIST(sub2).next)
-      fprintf(ci->fh, "%s__free(&(var->%s), NULL, free_strings);\n", ctmp, IDL_IDENT(IDL_LIST(sub2).data).str);
+      fprintf(ci->fh, "%s__freekids(&(var->%s), NULL);\n", ctmp, IDL_IDENT(IDL_LIST(sub2).data).str);
     g_free(ctmp);
-    
-    fprintf(ci->fh, "}\n");
   }
 
   fprintf(ci->fh, "return (gpointer)(var + 1);\n");
@@ -187,7 +182,7 @@ cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     fprintf(ci->fh, "%s *%s__alloc(void)\n", tname, tname);
     fprintf(ci->fh, "{\n");
     fprintf(ci->fh, "%s *retval;\n", tname);
-    fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));\n", tname, tname);
+    fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), 1, %s__freekids);\n", tname, tname);
 
     for(sub = IDL_TYPE_STRUCT(tree).member_list; sub; sub = IDL_LIST(sub).next) {
       IDL_tree memb, sub2;
@@ -221,7 +216,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   tname = orbit_cbe_get_typename(tree);
 
-  fprintf(ci->fh, "gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings)\n", tname);
+  fprintf(ci->fh, "gpointer %s__freekids(gpointer mem, gpointer dat)\n", tname);
   fprintf(ci->fh, "{\n");
 
   fprintf(ci->fh, "%s *val = mem;\n", tname);
@@ -254,7 +249,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       char *ctmp;
 
       ctmp = orbit_cbe_get_typename(IDL_MEMBER(memb).type_spec);
-      fprintf(ci->fh, "%s__free(&(val->_u.%s), NULL, free_strings);\n",
+      fprintf(ci->fh, "%s__freekids(&(val->_u.%s), NULL);\n",
 	      ctmp, IDL_IDENT(IDL_LIST(IDL_MEMBER(memb).dcls).data).str);
       g_free(ctmp);
     }
@@ -271,7 +266,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf(ci->fh, "%s* %s__alloc(void)\n", tname, tname);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh, "%s *retval;\n", tname);
-  fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));\n",
+  fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), 1, %s__freekids);\n",
 	  tname, tname);
   if(!orbit_cbe_type_is_fixed_length(tree))
     fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s));\n", tname);
@@ -280,63 +275,37 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf(ci->fh, "}\n");
 }
 
+
+/**
+   {node} is the IDLN_ARRAY (with corresponding new ident and size_list).
+   {ts} is the element type of the array.
+   Outputs the defintions of the __alloc() and __freekids() functions.
+   Note that the __freekids() func is not used by the __alloc(); the
+   __freekids() is only used when the array in embedded in a larger type.
+
+   I think the whole mechanism may be slightly off, because it
+   doesnt honour CORBA's recursive decomposition into slices.
+**/
 static void
-cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+cc_output_alloc_array(IDL_tree node, IDL_tree ts, 
+  OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
-  IDL_tree sub, ts, tts;
-  int i, n;
-  char *ctmp;
-  gboolean fixlen;
+    int i, n;
+    char *ts_name, *tname;
+    gboolean fixlen;
+    IDL_tree curitem, ttmp;
 
-  cc_alloc_prep(tree, ci);
-  ts = IDL_TYPE_DCL(tree).type_spec;
-  tts = orbit_cbe_get_typespec(ts);
-
-  if (IDL_NODE_TYPE(tts) == IDLN_INTERFACE
-      || IDL_NODE_TYPE(tts) == IDLN_TYPE_OBJECT)
-    return;
-
-  ctmp = orbit_cbe_get_typename(ts);
-
-  fixlen = orbit_cbe_type_is_fixed_length(ts);
-
-  for(sub = IDL_TYPE_DCL(tree).dcls; sub; sub = IDL_LIST(sub).next) {
-    IDL_tree node, ident, ttmp;
-    char *tname;
-
-    node = IDL_LIST(sub).data;
-
-    switch(IDL_NODE_TYPE(node)) {
-    case IDLN_IDENT:
-      if(fixlen)
-	continue;
-      ident = node;
-      if(IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
-	 || IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) continue;
-      break;
-    case IDLN_TYPE_ARRAY:
-      ident = IDL_TYPE_ARRAY(node).ident;
-      break;
-    default:
-      g_assert_not_reached();
-      break;
-    }
+    ts_name = orbit_cbe_get_typename(ts);
+    fixlen = orbit_cbe_type_is_fixed_length(ts);
 
     tname = orbit_cbe_get_typename(node);
+    n = IDL_list_length(IDL_TYPE_ARRAY(node).size_list);
 
-    fprintf(ci->fh, "gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings)\n", tname);
+    fprintf(ci->fh, "gpointer %s__freekids(gpointer mem, gpointer dat)\n", tname);
     fprintf(ci->fh, "{\n");
-
-    switch(IDL_NODE_TYPE(node)) {
-    case IDLN_IDENT:
-      fprintf(ci->fh, "return %s__free(mem, dat, free_strings);\n", ctmp);
-      break;
-    case IDLN_TYPE_ARRAY:
-      n = IDL_list_length(IDL_TYPE_ARRAY(node).size_list);
-
-      if(fixlen) {
+    if(fixlen) {
 	fprintf(ci->fh, "gpointer retval = ((guchar *)mem) + sizeof(%s);\n", tname);
-      } else {
+    } else {
 	fprintf(ci->fh, "gpointer retval = mem, slice = mem;\n");
 	for(i = 0; i < n; i++) {
 	  fprintf(ci->fh, "int n%d;\n", i);
@@ -347,59 +316,109 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 		  i, i, IDL_INTEGER(IDL_LIST(ttmp).data).value, i);
 	}
       
-	fprintf(ci->fh, "retval = %s__free(&((%s_slice *)slice)", ctmp, tname);
+	fprintf(ci->fh, "retval = %s__freekids(&((%s_slice *)slice)", ts_name, tname);
 	for(i = 0; i < n; i++)
 	  fprintf(ci->fh, "[n%d]", i);
-	fprintf(ci->fh, ", NULL, free_strings);\n");
+	fprintf(ci->fh, ", NULL);\n");
       
 	for(i = 0; i < n; i++) {
 	  fprintf(ci->fh, "}\n");
 	}
-      }
-
-      fprintf(ci->fh, "return retval;\n");
-
-      break;
-    default:
-      break;
     }
+    fprintf(ci->fh, "return retval;\n");
     fprintf(ci->fh, "}\n\n");
+    /* end-of __freekids */
 
-    fprintf(ci->fh, "%s%s %s__alloc(void)\n", tname, (IDL_NODE_TYPE(node) == IDLN_TYPE_ARRAY)?"_slice*":"*", tname);
+    fprintf(ci->fh, "%s_slice* %s__alloc(void)\n", tname, tname);
     fprintf(ci->fh, "{\n");
-
-    if(IDL_NODE_TYPE(node) == IDLN_TYPE_ARRAY) {
-
-      fprintf(ci->fh, "%s_slice *retval;\n", tname);
-      fprintf(ci->fh, "  retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)", tname);
-
-      if(fixlen)
-	fprintf(ci->fh, "NULL, NULL);\n");
-      else {
-	IDL_tree curitem;
-
-	curitem = IDL_TYPE_ARRAY(node).size_list;
-	fprintf(ci->fh, "%s__free, GUINT_TO_POINTER(%" IDL_LL "d", tname, IDL_INTEGER(IDL_LIST(curitem).data).value);
-	for(; curitem; curitem = IDL_LIST(curitem).next)
-	  fprintf(ci->fh, "*%" IDL_LL "d", IDL_INTEGER(IDL_LIST(curitem).data).value);
-	fprintf(ci->fh, "));\n");
-
-	curitem = IDL_TYPE_ARRAY(node).size_list;
-	fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s_slice) * %" IDL_LL "d);\n", tname,
-		IDL_INTEGER(IDL_LIST(curitem).data).value);
-      }
-
-      fprintf(ci->fh, "return retval;\n");
+    fprintf(ci->fh, "%s_slice *retval;\n", tname);
+    fprintf(ci->fh, "  retval = ORBit_alloc(sizeof(%s), 1", ts_name);
+    curitem = IDL_TYPE_ARRAY(node).size_list;
+    for(; curitem; curitem = IDL_LIST(curitem).next)
+      fprintf(ci->fh, "*%" IDL_LL "d", IDL_INTEGER(IDL_LIST(curitem).data).value);
+    if(fixlen) {
+      fprintf(ci->fh, ", NULL);\n");
     } else {
-      fprintf(ci->fh, "return %s__alloc();\n", ctmp);
+      fprintf(ci->fh, ", %s__freekids);\n", ts_name);
+      /* WATCHOUT: the __freekids above is the underlying ts, not the new type! */
+      fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s));\n", tname);
     }
-
+    fprintf(ci->fh, "return retval;\n");
     fprintf(ci->fh, "}\n");
 
     g_free(tname);
-  }
+    g_free(ts_name);
+}
 
-  g_free(ctmp);
+
+/**
+    Generate alloc funcs for identifier {ident}, which is of type {ts}.
+    I dont think we should generate any code at all here. Instead,
+    just gen #defines in the header.
+**/
+static void
+cc_output_alloc_alias(IDL_tree ident, IDL_tree ts, 
+  OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+{
+    char *ts_name, *tname;
+
+    ts_name = orbit_cbe_get_typename(ts);
+    tname = orbit_cbe_get_typename(ident);
+
+    fprintf(ci->fh, "/* %s is alias of %s */\n", tname, ts_name);
+#if 0
+    fprintf(ci->fh, "gpointer %s__freekids(gpointer mem, gpointer dat)\n", tname);
+    fprintf(ci->fh, "{\n");
+    fprintf(ci->fh, "return %s__freekids(mem, dat);\n", ts_name);
+    fprintf(ci->fh, "}\n\n");
+#endif
+
+    fprintf(ci->fh, "%s* %s__alloc(void)\n", tname, tname);
+    fprintf(ci->fh, "{\n");
+    fprintf(ci->fh, "return %s__alloc();\n", ts_name);
+    fprintf(ci->fh, "}\n");
+    g_free(tname);
+    g_free(ts_name);
+}
+
+static void
+cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+{
+  IDL_tree sub, ts, tts;
+  gboolean fixlen;
+
+  cc_alloc_prep(tree, ci);
+  ts = IDL_TYPE_DCL(tree).type_spec;
+  tts = orbit_cbe_get_typespec(ts);
+
+  if (IDL_NODE_TYPE(tts) == IDLN_INTERFACE
+      || IDL_NODE_TYPE(tts) == IDLN_TYPE_OBJECT)
+    return;
+
+  fixlen = orbit_cbe_type_is_fixed_length(ts);
+
+  for(sub = IDL_TYPE_DCL(tree).dcls; sub; sub = IDL_LIST(sub).next) {
+    IDL_tree node;
+
+    node = IDL_LIST(sub).data;
+
+    switch(IDL_NODE_TYPE(node)) {
+    case IDLN_IDENT:
+      if(fixlen)
+	continue;
+      if(IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING
+	 	|| IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING) 
+	 continue;	/* why? */
+      cc_output_alloc_alias(node, ts, rinfo, ci);
+      break;
+    case IDLN_TYPE_ARRAY:
+      cc_output_alloc_array(node, ts, rinfo, ci);
+      break;
+    default:
+      g_assert_not_reached();
+      break;
+    }
+  }
 }
 
 static void cc_alloc_prep_sequence(IDL_tree tree, OIDL_C_Info *ci);
@@ -449,6 +468,9 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
   }
 }
 
+/**
+    Note that the __freekids is always a #define in the header.
+**/
 static void
 cc_alloc_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 {
@@ -461,18 +483,11 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
   orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);
   fprintf(ci->fh, " && !defined(ORBIT_DEF_%s)\n", ctmp);
   fprintf(ci->fh, "#define ORBIT_DEF_%s 1\n\n", ctmp);
-  fprintf(ci->fh, "gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings)\n", ctmp);
-  fprintf(ci->fh, "{\n");
-  fprintf(ci->fh, "  %s* val = mem;\n", ctmp);
-  fprintf(ci->fh, "  if(val->_release)");
-  fprintf(ci->fh, "    ORBit_free(val->_buffer, free_strings);\n");
-  fprintf(ci->fh, "  return (gpointer)(val + 1);\n");
-  fprintf(ci->fh, "}\n\n");
-
   fprintf(ci->fh, "%s *%s__alloc(void)\n", ctmp, ctmp);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh, "  %s *retval;\n", ctmp);
-  fprintf(ci->fh, "  retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));\n", ctmp, ctmp);
+  fprintf(ci->fh, "  retval = ORBit_alloc(sizeof(%s), 1, %s__freekids);\n", 
+  			ctmp, ctmp);
 
   fprintf(ci->fh, "  retval->_maximum = ");
   if(IDL_TYPE_SEQUENCE(tree).positive_int_const) {
@@ -493,16 +508,16 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
   orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   fprintf(ci->fh, "* retval = ORBit_alloc(sizeof(");
   orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-  fprintf(ci->fh, ")*len, (ORBit_free_childvals)");
+  fprintf(ci->fh, "), len, ");
   elements_are_fixed = orbit_cbe_type_is_fixed_length(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
   if(elements_are_fixed)
-    fprintf(ci->fh, "NULL");
+    fprintf(ci->fh, "/*freekids*/NULL");
   else {
     ctmp2 = orbit_cbe_get_typename(IDL_TYPE_SEQUENCE(tree).simple_type_spec);
-    fprintf(ci->fh, "%s__free", ctmp2);
+    fprintf(ci->fh, "%s__freekids", ctmp2);
     g_free(ctmp2);
   }
-  fprintf(ci->fh, ", GUINT_TO_POINTER(len));\n");
+  fprintf(ci->fh, ");\n");
   if(!elements_are_fixed) {
     fprintf(ci->fh, "memset(retval, '\\0', sizeof(");
     orbit_cbe_write_typespec(ci->fh, IDL_TYPE_SEQUENCE(tree).simple_type_spec);

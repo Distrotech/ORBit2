@@ -107,7 +107,7 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     fullname = orbit_cbe_get_typename(tree);
     fprintf(ci->fh, "#if !defined(ORBIT_DECL_%s) && !defined(_%s_defined)\n#define ORBIT_DECL_%s 1\n#define _%s_defined 1\n", fullname, fullname, fullname, fullname);
 
-    fprintf(ci->fh, "#define %s__free CORBA_Object__free\n", fullname);
+    fprintf(ci->fh, "#define %s__freekids CORBA_Object__freekids\n", fullname);
     fprintf(ci->fh, "typedef CORBA_Object %s;\n", fullname);
     fprintf(ci->fh, "extern CORBA_unsigned_long %s__classid;\n", fullname);
     ch_type_alloc_and_tc(tree, ci, FALSE);
@@ -468,13 +468,18 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
 		(IDL_NODE_TYPE(tree) == IDLN_TYPE_ARRAY)?"_slice":"",
 		ctmp);
       }
-      fprintf(ci->fh,
-	      "extern gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings); /* ORBit internal use */\n",
+      if ( IDL_NODE_TYPE(tts) != IDLN_TYPE_SEQUENCE ) {
+        fprintf(ci->fh,
+	      "extern gpointer %s__freekids(gpointer mem, gpointer dat); /* ORBit internal use */\n",
 	      ctmp);
+      }
     }
+    /* both of these next ones are special cases of aliases, I think */
     if((IDL_NODE_TYPE(tts) == IDLN_TYPE_STRING)
        || (IDL_NODE_TYPE(tts) == IDLN_TYPE_WIDE_STRING))
-      fprintf(ci->fh, "#define %s__free CORBA_string__free\n", ctmp);
+      fprintf(ci->fh, "#define %s__freekids CORBA_string__freekids\n", ctmp);
+    if( IDL_NODE_TYPE(tts) == IDLN_TYPE_SEQUENCE )
+      fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
   }
 
   g_free(ctmp);
