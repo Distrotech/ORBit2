@@ -93,7 +93,7 @@ while test $# -gt 0; do
    --use-service=*)
 	case $optarg in
 	    name)
-		services="$services -lORBitname"
+		services="$services -lORBitCosNaming"
 		;;
 	    *)
 		usage
