@@ -174,7 +174,7 @@ IDLTypedef::skel_impl_arg_post (ostream          &ostr,
 string
 IDLTypedef::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
-	return m_alias.stub_decl_ret_get (active_typedef ? active_typedef : this);
+	return m_alias.skel_decl_ret_get (active_typedef ? active_typedef : this);
 }
 
 void

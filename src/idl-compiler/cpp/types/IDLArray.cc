@@ -43,6 +43,73 @@ IDLArray::IDLArray (IDLType const &element_type,
 	}
 }
 
+void
+IDLArray::fill_c_array (ostream      &ostr,
+			Indent       &indent,
+			const string &cpp_id,
+			const string &c_id) const
+{
+	unsigned int depth = 0;
+	string array_pos;
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
+		array_pos += "[";
+		array_pos += iterator_name;
+		array_pos += "]";
+
+		ostr << indent
+		     << "for (CORBA::ULong " << iterator_name << " = 0; "
+		     << iterator_name << " < " << *i << "; "
+		     << iterator_name << "++)" << endl;
+		ostr << indent++ << "{" << endl;
+
+		g_free (iterator_name);
+	}
+
+	string cpp_member = cpp_id + array_pos;
+	string c_member = c_id + array_pos;
+	m_element_type.member_pack_to_c (ostr, indent, cpp_member, c_member);
+
+	for (; depth; depth--)
+	{
+		ostr << --indent << "}" << endl;
+	}
+}
+
+void
+IDLArray::fill_cpp_array (ostream      &ostr,
+			  Indent       &indent,
+			  const string &cpp_id,
+			  const string &c_id) const
+{
+	unsigned int depth = 0;
+	string array_pos;
+	for (const_iterator i = begin (); i != end (); i++, depth++)
+	{
+		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
+		array_pos += "[";
+		array_pos += iterator_name;
+		array_pos += "]";
+
+		ostr << indent
+		     << "for (CORBA::ULong " << iterator_name << " = 0; "
+		     << iterator_name << " < " << *i << "; "
+		     << iterator_name << "++)" << endl;
+		ostr << indent++ << "{" << endl;
+
+		g_free (iterator_name);
+	}
+
+	string cpp_member = cpp_id + array_pos;
+	string c_member = c_id + array_pos;
+	m_element_type.member_unpack_from_c (ostr, indent, cpp_member, c_member);
+
+	for (; depth; depth--)
+	{
+		ostr << --indent << "}" << endl;
+	}
+}
 
 void
 IDLArray::typedef_decl_write (ostream          &ostr,
@@ -74,8 +141,28 @@ IDLArray::typedef_decl_write (ostream          &ostr,
 
 	// Create _out typedef
 	if (!m_element_type.conversion_required ())
+	{
+		// _out
 		ostr << indent << "typedef " << target.get_cpp_identifier ()
-		     << " " << target.get_cpp_identifier () << "_out;" << endl;
+		     << " " << target.get_cpp_identifier () << "_out;"
+		     << endl << endl;
+
+		// Allocator
+		ostr << indent << "inline " << target.get_cpp_identifier () << "_slice * " 
+		     << target.get_cpp_identifier () << "_alloc ()" << endl
+		     << indent++ << "{" << endl;
+		ostr << indent << "return " << target.get_c_typename () << "__alloc ();" << endl;
+		ostr << --indent << "}" << endl << endl;
+			
+		return;
+	}
+
+	ostr << indent << "typedef " << IDL_IMPL_NS "::ArrayVariable_out< "
+	     << target.get_cpp_identifier () << "_slice, " << *(begin ()) << " > "
+	     << target.get_cpp_identifier () << "_out;" << endl;
+	ostr << indent << "typedef " << IDL_IMPL_NS "::ArrayVariable_var< "
+	     << target.get_cpp_identifier () << "_slice, " << *(begin ()) << " > "
+	     << target.get_cpp_identifier () << "_var;" << endl;
 }
 
 string
@@ -113,49 +200,24 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 			     IDL_param_attr    direction,
 			     const IDLTypedef *active_typedef = 0) const
 {
+	g_assert (active_typedef);
+	
 	if (!m_element_type.conversion_required ())
 		return;
-	
-	// Create C array
-	ostr << indent << m_element_type.get_c_member_typename ()
-	     << " _c_" << cpp_id;
-
-	// Write dimensions
-	for (const_iterator i = begin (); i != end (); i++)
-		ostr << '[' << *i << ']';
-	ostr << ';' << endl;
 
 	if (direction == IDL_PARAM_OUT)
-		// No need to pre-fill out parameters
+	{
+		// Create slice pointer and do nothing with it
+		ostr << indent << active_typedef->get_c_typename ()
+		     << "_slice *_c_" << cpp_id << ";" << endl;
 		return;
-		
-	// Fill C array
-	int depth = 0;
-	string array_pos;
-	for (const_iterator i = begin (); i != end (); i++, depth++)
-	{
-		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
-		array_pos += "[";
-		array_pos += iterator_name;
-		array_pos += "]";
-
-		ostr << indent
-		     << "for (CORBA::ULong " << iterator_name << " = 0; "
-		     << iterator_name << " < " << *i << "; "
-		     << iterator_name << "++)" << endl;
-		ostr << indent++ << "{" << endl;
-
-		g_free (iterator_name);
 	}
+	
+	// Create and fill C array
+	ostr << indent << active_typedef->get_c_typename ()
+	     << " _c_" << cpp_id << ';' << endl;
 
-	string c_member = "_c_" + cpp_id + array_pos;
-	string cpp_member = cpp_id + array_pos;
-	m_element_type.member_pack_to_c (ostr, indent, cpp_member, c_member);
-
-	for (const_iterator i = begin (); i != end (); i++, depth++)
-	{
-		ostr << --indent << "}" << endl;
-	}
+	fill_c_array (ostr, indent, cpp_id, "_c_" + cpp_id);
 }
 	
 string
@@ -163,7 +225,6 @@ IDLArray::stub_impl_arg_call (const string   &cpp_id,
 			      IDL_param_attr  direction,
 			      const IDLTypedef *active_typedef = 0) const
 {
-#warning "WRITE ME"
 	if (!m_element_type.conversion_required ())
 		return cpp_id;
 
@@ -180,7 +241,7 @@ IDLArray::stub_impl_arg_call (const string   &cpp_id,
 		break;
 	}
 
-	return "_c_" + cpp_id;
+	return retval;
 }
 	
 void
@@ -190,7 +251,6 @@ IDLArray::stub_impl_arg_post (ostream          &ostr,
 			      IDL_param_attr    direction,
 			      const IDLTypedef *active_typedef = 0) const
 {
-#warning "WRITE ME"
 	if (!m_element_type.conversion_required ())
 		return;
 
@@ -198,33 +258,8 @@ IDLArray::stub_impl_arg_post (ostream          &ostr,
 		// No need to load IN parameters back
 		return;
 	
-	// Re-load C array
-	int depth = 0;
-	string array_pos;
-	for (const_iterator i = begin (); i != end (); i++, depth++)
-	{
-		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
-		array_pos += "[";
-		array_pos += iterator_name;
-		array_pos += "]";
-
-		ostr << indent
-		     << "for (CORBA::ULong " << iterator_name << " = 0; "
-		     << iterator_name << " < " << *i << "; "
-		     << iterator_name << "++)" << endl;
-		ostr << indent++ << "{" << endl;
-
-		g_free (iterator_name);
-	}
-
-	string c_member = "_c_" + cpp_id + array_pos;
-	string cpp_member = cpp_id + array_pos;
-	m_element_type.member_unpack_from_c (ostr, indent, cpp_member, c_member);
-
-	for (const_iterator i = begin (); i != end (); i++, depth++)
-	{
-		ostr << --indent << "}" << endl;
-	}
+	// Re-load from C array
+	fill_cpp_array (ostr, indent, cpp_id, "_c_" + cpp_id);
 }
 
 
@@ -243,7 +278,7 @@ IDLArray::stub_impl_ret_pre (ostream          &ostr,
 			     Indent           &indent,
 			     const IDLTypedef *active_typedef = 0) const
 {
-#warning "WRITE ME"
+	// Do nothing
 }
 
 void
@@ -263,12 +298,24 @@ IDLArray::stub_impl_ret_post (ostream          &ostr,
 			      Indent           &indent,
 			      const IDLTypedef *active_typedef = 0) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+	
 	if (!m_element_type.conversion_required ())
 	{
 		ostr << indent << "return _retval;" << endl;
 		return;
 	}
+	
+	// Create and fill C++ array
+	ostr << indent << active_typedef->get_cpp_typename ()
+	     << " _cpp_retval;" << endl;
+
+	fill_c_array (ostr, indent, "_cpp_retval", "_retval");
+	
+	ostr << indent << active_typedef->get_c_typename ()
+	     << "__freekids (_retval, 0);" << endl;
+
+	ostr << indent << "return _cpp_retval;" << endl;
 }
 	
 
@@ -313,49 +360,33 @@ IDLArray::skel_impl_arg_pre (ostream          &ostr,
 			     IDL_param_attr    direction,
 			     const IDLTypedef *active_typedef) const
 {
-	if (!m_element_type.conversion_required ())
-		return;
+	g_assert (active_typedef);
 	
-	// Create C++ array
-	ostr << indent << m_element_type.get_cpp_member_typename ()
-	     << " _cpp_" << c_id;
-
-	// Write dimensions
-	for (const_iterator i = begin (); i != end (); i++)
-		ostr << '[' << *i << ']';
-	ostr << ';' << endl;
-
-	if (direction == IDL_PARAM_OUT)
-		// No need to pre-fill out parameters
+	if (!m_element_type.conversion_required ())
+		// Do nothing
 		return;
+
+	switch (direction)
+	{
+	case IDL_PARAM_IN:
+		ostr << indent << active_typedef->get_cpp_typename ()
+		     << " _cpp_" << c_id << ";" << endl;
+		fill_cpp_array (ostr, indent, "_cpp_" + c_id, c_id);
+		break;
 		
-	// Fill C++ array
-	int depth = 0;
-	string array_pos;
-	for (const_iterator i = begin (); i != end (); i++, depth++)
-	{
-		gchar *iterator_name = g_strdup_printf ("i_%d", depth);
-		array_pos += "[";
-		array_pos += iterator_name;
-		array_pos += "]";
+	case IDL_PARAM_INOUT:
+		ostr << indent << active_typedef->get_cpp_typename ()
+		     << "_slice *_cpp_" << c_id << ";" << endl;
+		fill_cpp_array (ostr, indent, "_cpp_" + c_id, c_id);
+		break;
 
-		ostr << indent
-		     << "for (CORBA::ULong " << iterator_name << " = 0; "
-		     << iterator_name << " < " << *i << "; "
-		     << iterator_name << "++)" << endl;
-		ostr << indent++ << "{" << endl;
-
-		g_free (iterator_name);
+	case IDL_PARAM_OUT:
+		ostr << indent << active_typedef->get_cpp_typename ()
+		     << "_slice *_cpp_" << c_id << ";" << endl;
+		break;
 	}
 
-	string c_member = c_id + array_pos;
-	string cpp_member = "_cpp_" + c_id + array_pos;
-	m_element_type.member_unpack_from_c (ostr, indent, cpp_member, c_member);
-
-	for (const_iterator i = begin (); i != end (); i++, depth++)
-	{
-		ostr << --indent << "}" << endl;
-	}
+	ostr << endl;
 }
 	
 string
@@ -364,6 +395,7 @@ IDLArray::skel_impl_arg_call (const string     &c_id,
 			      const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
+
 	if (!m_element_type.conversion_required ())
 		return c_id;
 	else
@@ -377,7 +409,31 @@ IDLArray::skel_impl_arg_post (ostream          &ostr,
 			      IDL_param_attr    direction,
 			      const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+
+	if (!m_element_type.conversion_required ())
+		// Do nothing
+		return;
+	
+	if (direction == IDL_PARAM_IN)
+		// No need to reload IN parameters
+		return;
+		
+	// Load C array from C++
+	string cpp_root = "_cpp_" + c_id;
+	string c_root = c_id;
+	if (direction == IDL_PARAM_OUT)
+	{
+		// We need to allocate OUT parameters ourselves
+		c_root = "*" + c_root;
+		ostr << indent << c_root << " = "
+		     << active_typedef->get_c_typename () << "__alloc ()"
+		     << ";" << endl;
+	}
+
+	fill_c_array (ostr, indent, cpp_root, c_root);
+
+	ostr << endl;
 }
 
 
@@ -386,7 +442,9 @@ IDLArray::skel_impl_arg_post (ostream          &ostr,
 string
 IDLArray::skel_decl_ret_get (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+
+	return active_typedef->get_c_typename () + "_slice *";
 }
 
 void
@@ -394,8 +452,8 @@ IDLArray::skel_impl_ret_pre (ostream          &ostr,
 			     Indent           &indent,
 			     const IDLTypedef *active_typedef) const
 {
-	ostr << indent << active_typedef->get_c_typename ()
-	     << "_slice *_retval;" << endl;
+	ostr << indent << active_typedef->get_cpp_typename ()
+	     << "_slice *_retval = 0;" << endl;
 }
 
 void
@@ -412,7 +470,23 @@ IDLArray::skel_impl_ret_post (ostream          &ostr,
 			      Indent           &indent,
 			      const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	g_assert (active_typedef);
+	
+	if (!m_element_type.conversion_required ())
+	{
+		ostr << indent << "return _retval;" << endl;
+		return;
+	}
+
+	// Create C return value and fill it
+	ostr << indent << active_typedef->get_c_typename ()
+	     << "_slice *_c_retval = "
+	     << active_typedef->get_c_typename () << "__alloc ()"
+	     << ";" << endl;
+
+	fill_c_array (ostr, indent, "_retval", "_c_retval");
+
+	ostr << indent << "return _c_retval;" << endl;
 }
 
 

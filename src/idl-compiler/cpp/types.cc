@@ -109,9 +109,7 @@ ORBITCPP_MAKE_SIMPLE_TYPE(LongDouble, CORBA_long_double)
 static IDLAny idlAny;
 #endif
 static IDLObject idlObject;
-#if 0 //!!!
 static IDLTypeCode idlTypeCode;
-#endif
 
 
 
@@ -153,19 +151,19 @@ IDLTypeParser::parseTypeSpec(IDLScope &scope,IDL_tree typespec) {
 		case IDLN_TYPE_STRING:
 			type = &idlString;
 			break;
+
 #if 0 //!!!
 		case IDLN_TYPE_ANY:
 			type = &idlAny;
 			break;
 #endif
+
 		case IDLN_TYPE_OBJECT:
 			type = &idlObject;
 			break;
-#if 0
 		case IDLN_TYPE_TYPECODE:
-			type=&idlTypeCode;
+			type = &idlTypeCode;
 			break;
-#endif
 				
 		case IDLN_TYPE_INTEGER:
 			if (IDL_TYPE_INTEGER(typespec).f_signed) {
@@ -238,12 +236,12 @@ IDLTypeParser::parseTypeSpec(IDLScope &scope,IDL_tree typespec) {
 				type = seq;
 				break;
 			}
+#endif
 		case IDLN_TYPE_ARRAY:
 		    {
 				cout << "Array!";
 				break;
 			}
-#endif
 		ORBITCPP_DEFAULT_CASE(typespec)
 		}
 
@@ -259,7 +257,6 @@ IDLTypeParser::parseDcl(IDL_tree dcl, IDLType *typespec, string &id)
 	
 	if (IDL_NODE_TYPE(dcl) == IDLN_IDENT){
 		id = IDL_IDENT(dcl).str;
-#if 0 //!!!
 	} else if (IDL_NODE_TYPE(dcl) == IDLN_TYPE_ARRAY) {
 		ret_type = new IDLArray(*typespec,
 								  IDL_IDENT(IDL_TYPE_ARRAY(dcl).ident).str,
@@ -268,7 +265,6 @@ IDLTypeParser::parseDcl(IDL_tree dcl, IDLType *typespec, string &id)
 		// is what we want (the memory is freed upon destruction of the IDLTypeParser)
 		m_anonymous_types.push_back(ret_type);
 		id = IDL_IDENT(IDL_TYPE_ARRAY(dcl).ident).str;
-#endif
 	} else 
 		ORBITCPP_NYI(" declarators:"+idlGetNodeTypeString(dcl));
 	return ret_type;

@@ -429,7 +429,7 @@ IDLInterface::skel_impl_ret_pre  (ostream &ostr,
 				  Indent  &indent,
 				  const IDLTypedef *active_typedef) const
 {
-	ostr << indent << get_cpp_typename_ptr () << " _retval"
+	ostr << indent << get_cpp_typename_ptr () << " _retval = 0"
 	     << ';' << endl;
 }
 
@@ -493,7 +493,7 @@ IDLInterface::member_pack_to_c (ostream      &ostr,
 				const string &c_id,
 				const IDLTypedef *active_typedef) const
 {
-	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_object ()"
+	ostr << indent << c_id << " = " << cpp_id << "->_orbitcpp_get_c_object ()"
 	     << ';' << endl;
 }
 

@@ -650,9 +650,11 @@ IDLPassXlate::doInterfaceStaticMethodDeclarations (IDLInterface &iface)
 		 << " _narrow (CORBA::Object_ptr obj);" << endl;
 
 	m_header << indent << "static " << ptr_name << " _nil()" << endl
-		 << indent++ << '{' << endl
-		 << indent << "return CORBA_OBJECT_NIL;" << endl
-		 << --indent << '}' << endl;
+		 << indent << '{' << endl;
+	indent++;
+	m_header << indent << "return CORBA_OBJECT_NIL;" << endl
+		 << indent << '}' << endl;
+	indent--;
 }
 
 void IDLPassXlate::doInterfaceStaticMethodDefinitions (IDLInterface &iface)
