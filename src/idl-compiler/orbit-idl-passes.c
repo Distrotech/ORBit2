@@ -854,10 +854,16 @@ oidl_pass_choose_where_sub_held(OIDL_Marshal_Node *node)
   switch(node->type)
     {
     case MARSHAL_LOOP:
-      if(((node->flags & (MN_ISSTRING|MN_COALESCABLE)) == (MN_ISSTRING|MN_COALESCABLE))
+      if(((node->flags & (MN_ISSTRING|MN_COALESCABLE|MN_WIDESTRING)) == (MN_ISSTRING|MN_COALESCABLE))
 	 && (node->where & MW_Msg))
 	{
 	  node->where = MW_Msg;
+	  return;
+	}
+      if(((node->flags & (MN_ISSTRING|MN_COALESCABLE|MN_WIDESTRING)) == (MN_ISSTRING|MN_COALESCABLE|MN_WIDESTRING))
+	 && (node->where & MW_Alloca))
+	{
+	  node->where = MW_Alloca;
 	  return;
 	}
 
@@ -893,7 +899,8 @@ oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
     oidl_pass_choose_where_sub_held(node->u.loop_info.loop_var);
     oidl_pass_choose_where_sub_held(node->u.loop_info.length_var);
     if((node->u.loop_info.contents->flags & MN_COALESCABLE)
-       && (node->u.loop_info.contents->where & MW_Msg))
+       && (node->u.loop_info.contents->where & MW_Msg)
+       && !(node->flags & MN_WIDESTRING))
       node->u.loop_info.contents->where = MW_Msg;
     else if(!(node->flags & (MN_ISSEQ|MN_ISSTRING))
 	    && (node->u.loop_info.contents->where & MW_Null))
@@ -926,7 +933,7 @@ oidl_node_pass_choose_where(OIDL_Marshal_Node *node)
 		break;
 	      case MARSHAL_LOOP:
 		if((sub->where & MW_Msg)
-		   && ((sub->flags & (MN_ISSEQ|MN_COALESCABLE)) == MN_COALESCABLE))
+		   && ((sub->flags & (MN_ISSEQ|MN_COALESCABLE|MN_WIDESTRING)) == MN_COALESCABLE))
 		  {
 		    /* We can only use MW_Msg for strings and coalescable arrays */
 		    sub->where = MW_Msg;

@@ -10,6 +10,7 @@
 #include <orbit/GIOP/giop-recv-buffer.h>
 #include <orbit/GIOP/giop-connection.h>
 #include <orbit/GIOP/giop-server.h>
+#include <orbit/GIOP/giop-endian.h>
 
 void giop_init(void);
 

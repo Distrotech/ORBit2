@@ -25,8 +25,8 @@ typedef struct {
 
   O_MUTEX_DEFINE(incoming_mutex);
   GIOPRecvBuffer *incoming_msg;
+  guint incoming_tag;
   O_MUTEX_DEFINE(outgoing_mutex);
-  GList *outgoing_msgs;
 
   GIOPVersion giop_version;
 } GIOPConnection;

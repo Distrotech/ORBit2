@@ -186,7 +186,10 @@ c_marshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   ctmp_contents = oidl_marshal_node_valuestr(node->u.loop_info.contents);
 
   if(node->flags & MN_ISSTRING) {
-    fprintf(cmi->ci->fh, "%s = strlen(%s) + 1;\n", ctmp_len, ctmp);
+    if(node->flags & MN_WIDESTRING)
+      fprintf(cmi->ci->fh, "%s = ORBit_wchar_strlen(%s);\n", ctmp_len, ctmp);
+    else
+      fprintf(cmi->ci->fh, "%s = strlen(%s) + 1;\n", ctmp_len, ctmp);
   }
 
   c_marshal_generate(node->u.loop_info.length_var, cmi);

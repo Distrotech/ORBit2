@@ -295,6 +295,8 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
   case IDLN_TYPE_STRING:
   case IDLN_TYPE_WIDE_STRING:
     retval = oidl_marshal_node_new(parent, MARSHAL_LOOP, NULL, pi);
+    if(parent)
+      retval->flags &= ~(parent->flags & MN_LOOPED);
     retval->flags |= MN_ISSTRING;
     retval->u.loop_info.length_var = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, &subpi);
     retval->u.loop_info.length_var->u.datum_info.datum_size = sizeof(CORBA_long);
@@ -303,11 +305,15 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, OIDL_Populate_Info *p
     retval->u.loop_info.loop_var->u.datum_info.datum_size = sizeof(CORBA_long);
     retval->u.loop_info.loop_var->flags |= MN_NEED_TMPVAR|MN_NOMARSHAL|MN_LOOPED;
     retval->u.loop_info.contents = oidl_marshal_node_new(retval, MARSHAL_DATUM, NULL, &subpi);
-    retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_octet);
+    if(IDL_NODE_TYPE(tree) == IDLN_TYPE_WIDE_STRING)
+      {
+	retval->flags |= MN_WIDESTRING;
+	retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_wchar);
+      }
+    else
+      retval->u.loop_info.contents->u.datum_info.datum_size = sizeof(CORBA_char);
     retval->u.loop_info.contents->where &= MW_Msg|MW_Heap;
     retval->tree = tree;
-    if(parent)
-      retval->flags &= ~(parent->flags & MN_LOOPED);
     break;
   case IDLN_TYPE_ARRAY:
     {
