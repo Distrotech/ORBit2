@@ -384,9 +384,17 @@ oidl_marshal_tree_dump(IDL_tree tree, int indent_level)
 #endif
     break;
   case IDLN_ATTR_DCL:
-    oidl_marshal_tree_dump(((OIDL_Attr_Info *)tree->data)->op1, indent_level);
-    if(((OIDL_Attr_Info *)tree->data)->op2)
-      oidl_marshal_tree_dump(((OIDL_Attr_Info *)tree->data)->op2, indent_level);
+    {
+      IDL_tree curnode, attr_name;
+
+      for(curnode = IDL_ATTR_DCL(tree).simple_declarations; curnode; curnode = IDL_LIST(curnode).next) {
+	attr_name = IDL_LIST(curnode).data;
+
+	oidl_marshal_tree_dump(((OIDL_Attr_Info *)attr_name->data)->op1, indent_level + INDENT_INCREMENT_2);
+	if(((OIDL_Attr_Info *)attr_name->data)->op2)
+	  oidl_marshal_tree_dump(((OIDL_Attr_Info *)attr_name->data)->op2, indent_level + INDENT_INCREMENT_2);
+      }
+    }
     break;
   default:
     break;

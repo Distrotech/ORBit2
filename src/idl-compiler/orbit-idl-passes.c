@@ -539,7 +539,8 @@ if(!(anode)->name \
     for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
       ntmp = ltmp->data;
       orbit_idl_collapse_sets(ntmp);
-      if(ntmp->type == MARSHAL_SET
+      if(!ntmp->name
+	 && ntmp->type == MARSHAL_SET
 	 && SET_SIZE(ntmp) == 1) {
 	ltmp->data = ntmp->u.set_info.subnodes->data;
 	ntmp = ltmp->data;

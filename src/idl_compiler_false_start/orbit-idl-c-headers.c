@@ -77,6 +77,8 @@ static void ch_output_type_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_In
 static void ch_output_type_enum(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_type_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void ch_output_codefrag(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static void ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_prep(IDL_tree tree, OIDL_C_Info *ci);
 static void ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc);
 
@@ -122,6 +124,12 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     break;
   case IDLN_TYPE_UNION:
     ch_output_type_union(tree, rinfo, ci);
+    break;
+  case IDLN_CODEFRAG:
+    ch_output_codefrag(tree, rinfo, ci);
+    break;
+  case IDLN_CONST_DCL:
+    ch_output_const_dcl(tree, rinfo, ci);
     break;
   default:
     break;
@@ -315,6 +323,41 @@ ch_output_type_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   g_free(id);
 }
 
+static void
+ch_output_codefrag(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+{
+  GSList *list;
+
+  for(list = IDL_CODEFRAG(tree).lines; list;
+      list = g_slist_next(list)) {
+    if(!strncmp(list->data,
+		"#pragma include_defs",
+		sizeof("#pragma include_defs")-1)) {
+      memmove(list->data, ((char *)list->data) + sizeof("#pragma include_defs"),
+	      strlen(list->data) - sizeof("#pragma include_defs") + 1);
+      fprintf(ci->fh, "#include <%s>\n", (char *)list->data);
+    } else
+      fprintf(ci->fh, "%s", (char *)list->data);
+  }
+}
+
+static void
+ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
+{
+  char *id;
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_CONST_DCL(tree).ident), "_", 0);
+  fprintf(ci->fh, "#ifndef %s\n", id);
+  fprintf(ci->fh, "#define %s ", id);
+
+  orbit_cbe_write_const(ci->fh,
+			IDL_CONST_DCL(tree).const_exp);
+  fprintf(ci->fh, "\n");
+  fprintf(ci->fh, "#endif /* !%s */\n\n", id);
+
+  g_free(id);
+}
+
 static void ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci);
 static void ch_prep_fixed(IDL_tree tree, OIDL_C_Info *ci);
 
@@ -355,7 +398,7 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 
   fullname = orbit_cbe_get_typename(tree);
 
-  fprintf(ci->fh, "#ifndef ORBIT_DECL_%s\n#define ORBIT_DECL_%s 1\n", fullname, fullname);
+  fprintf(ci->fh, "#if !defined(ORBIT_DECL_%s) && !defined(_%s_defined)\n#define ORBIT_DECL_%s 1\n#define _%s_defined 1\n", fullname, fullname, fullname, fullname);
   fprintf(ci->fh, "#define ORBIT_IMPL_%s ORBIT_FILE_ID_%s\n", fullname, ci->c_base_name);
 
   if(IDL_NODE_TYPE(IDL_TYPE_SEQUENCE(tree).simple_type_spec) == IDLN_TYPE_SEQUENCE)
