@@ -43,9 +43,9 @@ liborb_core_la_SOURCES= \
 	$(main_src)
 
 IDLOUT=corba-defs-common.c
-DEFS_IDLOUT=iop-defs.h iop-defs-common.c
+DEFS_IDLOUT=iop-defs-common.c
 OPS_IDLOUT= corba-ops.h corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
-IFACE_IDLOUT=orbit-interface.h orbit-interface-common.c
+IFACE_IDLOUT=orbit-interface-common.c
 
 $(liborb_core_la_OBJECTS) : $(BUILT_SOURCES)
 IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl
@@ -70,7 +70,7 @@ $(OPS_IDLOUT): corba-ops.idl $(IDL)
 	sed -e "s,Z,_,g" corba-ops-skels.c > corba-ops-skels.c.out;				\
 	mv corba-ops-skels.c.out corba-ops-skels.c;
 
-IDL_FLAGS_INTERFACE = --nostubs --noskels --showcpperrors
+IDL_FLAGS_INTERFACE = --nostubs --noskels --showcpperrors --noheaders
 $(IFACE_IDLOUT) : orbit-interface.idl $(IDL)
 	-(rm -f $(IFACE_IDLOUT) || true) > /dev/null
 	$(IDL_COMPILER) $(IDL_FLAGS_INTERFACE) --deps .deps/orbit-interface.idl.P $<

@@ -13,7 +13,7 @@ INCLUDES= \
 	$(LINC_CFLAGS) \
 	$(GLIB_CFLAGS)
 
-DYNAMIC_IDLOUT=dynamic-defs-common.c dynamic-defs.h
+DYNAMIC_IDLOUT=dynamic-defs-common.c
 
 BUILT_SOURCES=$(DYNAMIC_IDLOUT)
 
@@ -22,7 +22,7 @@ IDL_FLAGS= -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\
 	-I$(top_srcdir)/src/idl/misc				\
 	-I$(top_srcdir)/src/orb/orb-core			\
-	--noskels --nodefskels --nostubs --noidata		\
+	--noskels --nodefskels --nostubs --noidata --noheaders  \
 	--showcpperrors
 IDL_FILES=dynamic-defs.idl
 include $(top_srcdir)/Makefile.shared
