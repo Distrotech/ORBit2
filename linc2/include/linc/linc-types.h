@@ -1,6 +1,17 @@
 #ifndef LINC_TYPES_H
 #define LINC_TYPES_H 1
 
+/* For recursive mutexes */
+#ifndef _REENTRANT
+#define _REENTRANT 1
+#endif
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 1
+#endif
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+
 #include <glib.h>
 #include <glib-object.h>
 #include <linc/linc-config.h>
@@ -16,7 +27,7 @@ typedef enum {
 } LINCConnectionOptions;
 
 /* Make Slowaris happy */
-#include <time.h>
+#include <sys/time.h>
 
 #ifdef LINC_THREADSAFE
 
