@@ -622,16 +622,16 @@ ORBit_POA_set_policy (PortableServer_POA  poa,
 }
 
 static void
-ORBit_POA_copy_policies (PortableServer_POA src,
+ORBit_POA_copy_policies (const PortableServer_POA src,
 			 PortableServer_POA dest)
 {
-	dest->p_thread              = dest->p_thread;
-	dest->p_lifespan            = dest->p_lifespan;
-	dest->p_id_uniqueness       = dest->p_id_uniqueness;
-	dest->p_id_assignment       = dest->p_id_assignment;
-	dest->p_servant_retention   = dest->p_servant_retention;
-	dest->p_request_processing  = dest->p_request_processing;
-	dest->p_implicit_activation = dest->p_implicit_activation;
+	dest->p_thread              = src->p_thread;
+	dest->p_lifespan            = src->p_lifespan;
+	dest->p_id_uniqueness       = src->p_id_uniqueness;
+	dest->p_id_assignment       = src->p_id_assignment;
+	dest->p_servant_retention   = src->p_servant_retention;
+	dest->p_request_processing  = src->p_request_processing;
+	dest->p_implicit_activation = src->p_implicit_activation;
 }
 
 static void
@@ -737,6 +737,8 @@ ORBit_POA_new_from (CORBA_ORB                  orb,
 		for (i = 0; i < opt_policies->_length; i++)
 			ORBit_POA_set_policy (poa, opt_policies->_buffer[i]);
 	}
+
+	ORBit_POA_add_child (parent, poa);
 
 	return poa;
 }

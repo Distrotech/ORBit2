@@ -1,5 +1,7 @@
 2003-06-06  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/Makefile.am: fix deps again (?)
+
 	* src/orb/orb-core/orbit-small.c
 	(ORBit_small_unlisten_for_broken_full): split from
 	(ORBit_small_unlisten_for_broken): here, and allow
