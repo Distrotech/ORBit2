@@ -13,13 +13,13 @@
 
 #define LINC_TYPE_CONNECTION (linc_connection_get_type())
 #define LINC_TYPE_IS_CONNECTION(type) (G_TYPE_FUNDAMENTAL (type) == LINC_TYPE_CONNECTION)
-#define LINC_CONNECTION(object)	(LINC_IS_CONNECTION (object) ? ((GObject*) (object)) : \
+#define LINC_CONNECTION(object)	(LINC_IS_CONNECTION (object) ? ((LINCConnection*) (object)) : \
 				    G_TYPE_CHECK_INSTANCE_CAST ((object), LINC_TYPE_CONNECTION, LINCConnection))
 
 #define LINC_CONNECTION_CLASS(class)	   (LINC_IS_CONNECTION_CLASS (class) ? ((GObjectClass*) (class)) : \
 				    G_TYPE_CHECK_CLASS_CAST ((class), LINC_TYPE_CONNECTION, LINCConnectionClass))
 
-#define LINC_IS_CONNECTION(object)	   (((GObject*) (object)) != NULL && \
+#define LINC_IS_CONNECTION(object)	   (((LINCConnection*) (object)) != NULL && \
 				    LINC_IS_CONNECTION_CLASS (((GTypeInstance*) (object))->g_class))
 
 #define LINC_IS_CONNECTION_CLASS(class)   (((GTypeClass*) (class)) != NULL && \
