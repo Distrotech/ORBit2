@@ -3,7 +3,8 @@
 
 #include "config.h"
 
-#define ORBIT_RAND_DATA_LEN 8
+#define ORBIT_RAND_DATA_LEN	8
+#define ORBIT_ADAPTOR_KEY_LEN	(ORBIT_RAND_DATA_LEN + sizeof (CORBA_long))
 
 /*
  * Exported by poa.c.
@@ -28,14 +29,11 @@ PortableServer_Current
  * Exported by poa-manager.c
  */
 void               ORBit_POAManager_register_poa   (PortableServer_POAManager  poa_mgr, 
-						    PortableServer_POA         poa,
-						    CORBA_Environment         *ev);
+						    PortableServer_POA         poa);
 
 void               ORBit_POAManager_unregister_poa (PortableServer_POAManager  poa_mgr, 
-						    PortableServer_POA         poa,
-						    CORBA_Environment         *ev);
+						    PortableServer_POA         poa);
 PortableServer_POAManager
-                   ORBit_POAManager_new            (CORBA_ORB                  orb,
-						    CORBA_Environment         *ev);
+                   ORBit_POAManager_new            (CORBA_ORB                  orb);
 
 #endif /* ORBIT_POA_H */

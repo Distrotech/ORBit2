@@ -1,12 +1,15 @@
 #include <config.h>
 #include <orbit/orbit.h>
 
-#define POLICY__get_value(name)                                              \
-	name##Value                                                          \
-	name##__get_value (name policy,                                      \
-			   CORBA_Environment *ev)                            \
-	{                                                                    \
-		return ORBit_Policy_get ((CORBA_Policy)policy);              \
+#define POLICY__get_value(name)							\
+	name##Value								\
+	name##__get_value (name obj,						\
+			   CORBA_Environment *ev)				\
+	{									\
+		struct CORBA_Policy_type *policy =				\
+			(struct CORBA_Policy_type *) obj;			\
+										\
+		return policy->value;						\
 	}
 
 POLICY__get_value (PortableServer_ThreadPolicy)
@@ -51,13 +54,3 @@ PortableServer_POA_create_POLICY (PortableServer_RequestProcessingPolicy,
 PortableServer_POA_create_POLICY (PortableServer_ImplicitActivationPolicy, 
 				  implicit_activation,
 				  PortableServer_IMPLICIT_ACTIVATION_POLICY_ID)
-
-ORBit_PortableServer_OkeyrandPolicy
-PortableServer_POA_create_okeyrand_policy (PortableServer_POA         poa,
-					   const CORBA_unsigned_long  poa_rand_len,
-					   CORBA_Environment         *ev)
-{
-	return (ORBit_PortableServer_OkeyrandPolicy)
-			ORBit_Policy_new (ORBit_PortableServer_OKEYRAND_POLICY_ID,
-                                          poa_rand_len);
-}

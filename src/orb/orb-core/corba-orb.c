@@ -944,27 +944,27 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 	{
 		int i;
-		int leaked_poas = 0;
+		int leaked_adaptors = 0;
 
 		/* Each poa has a ref on the ORB */
 		for (i = 0; i < orb->adaptors->len; i++) {
-			PortableServer_POA poa;
+			ORBit_ObjectAdaptor adaptor;
 
-			poa = g_ptr_array_index (orb->adaptors, i);
+			adaptor = g_ptr_array_index (orb->adaptors, i);
 
-			if (poa)
-				leaked_poas++;
+			if (adaptor)
+				leaked_adaptors++;
 		}
 
-		if (leaked_poas) {
-			g_warning ("CORBA_ORB_destroy: leaked '%d' POAs", leaked_poas);
+		if (leaked_adaptors) {
+			g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors", leaked_adaptors);
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
 
-		if (((ORBit_RootObject)orb)->refs != 2 + leaked_poas) {
+		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
 			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
-				   ((ORBit_RootObject)orb)->refs - 1 - leaked_poas);
+				   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}

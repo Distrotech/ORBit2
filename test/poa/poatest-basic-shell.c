@@ -27,9 +27,6 @@
 
 PortableServer_POA child_poa = CORBA_OBJECT_NIL;
 
-/*
- * Test specific function
- */
 int
 main (int argc, char **argv) 
 {

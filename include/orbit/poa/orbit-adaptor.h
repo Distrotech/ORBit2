@@ -100,6 +100,8 @@ struct ORBit_ObjectAdaptor_type {
 	ORBit_AdaptorKey               adaptor_key;
 };
 
+int ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor, CORBA_ORB orb);
+
 #endif /* ORBIT2_INTERNAL_API */
 
 #endif /* __ORBIT_ADAPTOR_H__ */

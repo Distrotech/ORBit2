@@ -76,9 +76,7 @@ TestFactory_getStructServerIOR (PortableServer_Servant servant,
 {
 	test_TestFactory_Servant *this = (test_TestFactory_Servant *) servant;
 
-	return CORBA_ORB_object_to_string (
-		ORBIT_SERVANT_TO_FIRST_POAOBJECT (servant)->poa->orb,
-		this->structServerRef, ev);
+	return CORBA_ORB_object_to_string (global_orb, this->structServerRef, ev);
 }
 
 static test_StructServer
