@@ -1,3 +1,14 @@
+2002-05-07  Michael Meeks  <michael@ximian.com>
+
+	* src/services/name/orbit-name-server.c
+	(impl_NamingContext_list): re-order to kill swathe of
+	redundant forward prototypes.
+	(ORBit_CosNaming_NamingContextExt_create),
+	(impl_BindingIterator__create): dup the poa ref we hold.
+	(impl_NamingContextExt__destroy),
+	(impl_BindingIterator__destroy, impl_BindingIterator__destroy):
+	don't de-activate ourselves in a finalize method.
+
 2002-04-23  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/iop-profiles.c:
