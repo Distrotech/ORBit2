@@ -386,6 +386,7 @@ void testUnboundedSequence(test_TestFactory factory,
   
   inArg._buffer = CORBA_sequence_CORBA_string_allocbuf(2);
   inArg._length = 2;
+  CORBA_sequence_set_release(&inArg, CORBA_TRUE);
 
   for (i=0;i<inArg._length;i++){
 	inArg._buffer[i] = CORBA_string_dup(constants_SEQ_STRING_IN[i]);
@@ -393,6 +394,7 @@ void testUnboundedSequence(test_TestFactory factory,
 
   inoutArg._buffer = CORBA_sequence_CORBA_string_allocbuf(2);
   inoutArg._length = 2;
+  CORBA_sequence_set_release(&inoutArg, CORBA_TRUE);
 
   for (i=0;i<inoutArg._length;i++){
 	inoutArg._buffer[i] = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[i]);
@@ -437,17 +439,19 @@ testBoundedSequence (test_TestFactory   factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 
   
-  inArg._buffer = CORBA_sequence_test_CompoundStruct_allocbuf(2);
-  inArg._length = 2;
+  inArg._buffer  = CORBA_sequence_test_CompoundStruct_allocbuf(2);
+  inArg._length  = 2;
   inArg._maximum = 2;
+  CORBA_sequence_set_release(&inoutArg, CORBA_TRUE);
 
   for (i=0;i<inArg._length;i++){
 	inArg._buffer[i].a.a = CORBA_string_dup(constants_SEQ_STRING_IN[i]);
   }
 
-  inoutArg._buffer = CORBA_sequence_test_CompoundStruct_allocbuf(2);
-  inoutArg._length = 2;
+  inoutArg._buffer  = CORBA_sequence_test_CompoundStruct_allocbuf(2);
+  inoutArg._length  = 2;
   inoutArg._maximum = 2;
+  CORBA_sequence_set_release(&inoutArg, CORBA_TRUE);
 
   for (i=0;i<inoutArg._length;i++){
 	inoutArg._buffer[i].a.a = CORBA_string_dup(constants_SEQ_STRING_INOUT_IN[i]);
@@ -803,8 +807,9 @@ void testSequenceOfAny(test_TestFactory factory,
 
   d_print("Testing Sequence of Any...\n");
 
-  anyseq._buffer= CORBA_sequence_CORBA_any_allocbuf(2);
-  anyseq._length= 2;
+  anyseq._buffer  = CORBA_sequence_CORBA_any_allocbuf(2);
+  anyseq._length  = 2;
+  CORBA_sequence_set_release(&anyseq, CORBA_TRUE);
   
   for (i=0;i<anyseq._length;i++){
 	anyseq._buffer[i]._type = (CORBA_TypeCode)TC_CORBA_string;
