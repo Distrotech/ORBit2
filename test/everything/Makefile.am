@@ -17,13 +17,16 @@ INCLUDES =                                 \
 	-I$(top_builddir)/src/ORBitutil    \
 	-I$(top_srcdir)/src/orb            \
 	-I$(top_srcdir)/src                \
+	-I$(top_srcdir)/src/services/imodule \
 	-DORBIT2_INTERNAL_API              \
 	$(WARN_CFLAGS)                     \
 	$(ORBIT_CFLAGS)
 
 #	-DORBIT_STUB_DEBUG_LOCAL
 
-LDADD = $(top_builddir)/src/orb/libORBit-2.la		\
+LDADD = $(top_builddir)/src/orb/libORBit-2.la				\
+	$(top_builddir)/src/services/imodule/libORBit-imodule-2.la	\
+	$(ORBIT_IDL_LIBS)						\
 	$(ORBIT_LIBS)
 
 #  -lefence
