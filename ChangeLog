@@ -1,5 +1,16 @@
 2005-02-14  Tor Lillqvist  <tml@novell.com>
 
+	* configure.in: New autoconf variable LIBM, set to -lm on Unix,
+	empty on Windows.
+
+	* ORBit-2.0.pc.in (Libs): Use @LIBM@. The dummy -lm in mingw prevents
+	libtool from creating DLLs.
+	(orbit_idl): Append @EXEEXT@.
+
+	* src/idl-compiler/Makefile.am
+	* test/Makefile.am: Use $(LIBM) here, less verbiage than if using
+	an automake ifdef.
+
 	* src/orb/orb-core/orb-core-private.h
 	* src/orb/util/orbit-options.c: On Win32, #undef the compile-time
 	pathnames from the Makefiles, instead use run-time strings set up

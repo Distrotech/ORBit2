@@ -1,9 +1,3 @@
-if OS_WIN32
-libm=
-else
-libm=-lm
-endif
-
 bin_PROGRAMS = orbit-idl-2
 
 orbit_backends_dir = $(libdir)/orbit-2.0/idl-backends
@@ -22,7 +16,7 @@ INCLUDES =							\
 
 orbit_idl_2_LDADD =                     \
 	$(ORBIT_IDL_LIBS)		\
-	-lpopt $(libm)
+	-lpopt $(LIBM)
 
 orbit_idl_2_SOURCES =			\
 	orbit-idl-main.c		\
