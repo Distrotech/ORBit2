@@ -82,9 +82,23 @@ static void orbit_idl_op_populate(IDL_tree tree)
 
   setme = g_new0(OIDL_Op_Info, 1);
 
-  setme->in = orbit_idl_marshal_populate_in(tree);
-  setme->out = orbit_idl_marshal_populate_out(tree);
+  setme->in_stubs = orbit_idl_marshal_populate_in(tree, FALSE);
+  setme->out_stubs = orbit_idl_marshal_populate_out(tree, FALSE);
+  setme->in_skels = orbit_idl_marshal_populate_in(tree, TRUE);
+  setme->out_skels = orbit_idl_marshal_populate_out(tree, TRUE);
   setme->counter = 0;
+
+  tree->data = setme;
+}
+
+static void orbit_idl_except_populate(IDL_tree tree)
+{
+  OIDL_Except_Info *setme;
+
+  setme = g_new0(OIDL_Except_Info, 1);
+
+  setme->marshal = orbit_idl_marshal_populate_except_marshal(tree);
+  setme->demarshal = orbit_idl_marshal_populate_except_demarshal(tree);
 
   tree->data = setme;
 }
@@ -110,6 +124,9 @@ orbit_idl_tree_populate(IDL_tree tree)
     break;
   case IDLN_OP_DCL:
     orbit_idl_op_populate(tree);
+    break;
+  case IDLN_EXCEPT_DCL:
+    orbit_idl_except_populate(tree);
     break;
   case IDLN_ATTR_DCL:
     {

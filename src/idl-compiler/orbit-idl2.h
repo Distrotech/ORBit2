@@ -68,7 +68,8 @@ typedef enum {
   MN_LOOPED = 1<<6, /* This variable is looped over */
   MN_COALESCABLE = 1<<7, /* You can coalesce multiple sequential instances of this type into one encode/decode operation */
   MN_ENDIAN_DEPENDANT = 1<<8,
-  MN_DEMARSHAL_UPDATE_AFTER = 1<<9
+  MN_DEMARSHAL_UPDATE_AFTER = 1<<9,
+  MN_DEMARSHAL_CORBA_ALLOC = 1<<10 /* Set if we can never allocate this thingie on the stack (i.e. an inout param) */
 } OIDL_Marshal_Node_Flags;
 
 struct _OIDL_Marshal_Node {
@@ -100,6 +101,7 @@ struct _OIDL_Marshal_Node {
       guint32 amount;
     } const_info;
     struct {
+      enum { CX_CORBA_FIXED, CX_CORBA_ANY, CX_CORBA_OBJECT, CX_CORBA_TYPECODE } type;
     } complex_info;
     struct {
       GSList *subnodes;
@@ -121,9 +123,12 @@ typedef struct {
   IDL_tree op1, op2;
 } OIDL_Attr_Info;
 typedef struct {
-  OIDL_Marshal_Node *in, *out;
+  OIDL_Marshal_Node *in_stubs, *out_stubs, *in_skels, *out_skels;
   int counter;
 } OIDL_Op_Info;
+typedef struct {
+  OIDL_Marshal_Node *marshal, *demarshal;
+} OIDL_Except_Info;
 
 typedef struct {
   const char *name;
@@ -132,8 +137,10 @@ typedef struct {
 OIDL_Backend_Info *orbit_idl_backend_for_lang(const char *lang);
 
 /* genmarshal */
-OIDL_Marshal_Node *orbit_idl_marshal_populate_in(IDL_tree tree);
-OIDL_Marshal_Node *orbit_idl_marshal_populate_out(IDL_tree tree);
+OIDL_Marshal_Node *orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels);
+OIDL_Marshal_Node *orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels);
+OIDL_Marshal_Node *orbit_idl_marshal_populate_except_marshal(IDL_tree tree);
+OIDL_Marshal_Node *orbit_idl_marshal_populate_except_demarshal(IDL_tree tree);
 char *oidl_marshal_node_fqn(OIDL_Marshal_Node *node);
 char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node);
 
@@ -154,6 +161,7 @@ typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRol
 gint oidl_param_numptrs(IDL_tree param, IDL_ParamRole role);
 gboolean orbit_cbe_type_is_fixed_length(IDL_tree ts);
 IDL_tree orbit_cbe_get_typespec(IDL_tree node);
+IDL_ParamRole oidl_attr_to_paramrole(enum IDL_param_attr attr);
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
 

@@ -129,6 +129,7 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     fprintf(ci->fh, "#ifndef ORBIT_DEF_%s\n#define ORBIT_DEF_%s 1\n", fullname, fullname);
 
     fprintf(ci->fh, "typedef CORBA_Object %s;\n", fullname);
+    fprintf(ci->fh, "extern CORBA_unsigned_long %s__classid;\n", fullname);
 
     fprintf(ci->fh, "#endif\n");
     g_free(fullname);

@@ -119,7 +119,6 @@ cc_output_allocs(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     cc_output_allocs(IDL_INTERFACE(tree).body, rinfo, ci);
     break;
   case IDLN_EXCEPT_DCL:
-    g_warning("Need to do except marshalling.");
   case IDLN_TYPE_STRUCT:
     cc_output_alloc_struct(tree, rinfo, ci);
     break;
@@ -186,7 +185,7 @@ cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       continue;
 
     for(sub2 = IDL_MEMBER(memb).dcls; sub2; sub2 = IDL_LIST(sub2).next)
-      fprintf(ci->fh, "memset(&(var->%s), '\\0', sizeof(var->%s));\n",
+      fprintf(ci->fh, "memset(&(retval->%s), '\\0', sizeof(retval->%s));\n",
 	      IDL_IDENT(IDL_LIST(sub2).data).str,
 	      IDL_IDENT(IDL_LIST(sub2).data).str);
   }
@@ -211,7 +210,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf(ci->fh, "gpointer %s__free(gpointer mem, gpointer dat, CORBA_boolean free_strings)\n", tname);
   fprintf(ci->fh, "{\n");
 
-  fprintf(ci->fh, "%s *val;\n", tname);
+  fprintf(ci->fh, "%s *val = mem;\n", tname);
 
   fprintf(ci->fh, "switch(val->_d) {\n");
   for(sub = IDL_TYPE_UNION(tree).switch_body; sub; sub = IDL_LIST(sub).next) {
@@ -253,7 +252,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   fprintf(ci->fh, "%s* %s__alloc(void)\n", tname, tname);
   fprintf(ci->fh, "{\n");
   fprintf(ci->fh, "%s *retval;\n", tname);
-  fprintf(ci->fh, "retval = ORBit__alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));",
+  fprintf(ci->fh, "retval = ORBit_alloc(sizeof(%s), (ORBit_free_childvals)%s__free, GUINT_TO_POINTER(1));",
 	  tname, tname);
   if(!orbit_cbe_type_is_fixed_length(tree))
     fprintf(ci->fh, "memset(retval, '\\0', sizeof(%s));\n", tname);
@@ -329,7 +328,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     }
     fprintf(ci->fh, "}\n\n");
 
-    fprintf(ci->fh, "%s%s %s__alloc(void)\n", tname, (IDL_NODE_TYPE(node) == IDLN_TYPE_ARRAY)?"_slice*":"", tname);
+    fprintf(ci->fh, "%s%s %s__alloc(void)\n", tname, (IDL_NODE_TYPE(node) == IDLN_TYPE_ARRAY)?"_slice*":"*", tname);
     fprintf(ci->fh, "{\n");
 
     if(IDL_NODE_TYPE(node) == IDLN_TYPE_ARRAY) {
@@ -376,17 +375,6 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
     cc_alloc_prep_sequence(tree, ci);
     break;
   case IDLN_EXCEPT_DCL:
-    {
-      char *id;
-      id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_EXCEPT_DCL(tree).ident), "_", 0);
-      fprintf(ci->fh, "void _ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev)\n", id);
-      fprintf(ci->fh, "{\n");
-      fprintf(ci->fh, "}\n");
-      fprintf(ci->fh, "void _ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev)\n", id);
-      fprintf(ci->fh, "{\n");
-      fprintf(ci->fh, "}\n");
-      g_free(id);
-    }
   case IDLN_TYPE_STRUCT:
     {
       IDL_tree sub;
