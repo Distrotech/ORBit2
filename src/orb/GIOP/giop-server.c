@@ -5,26 +5,29 @@
 static GObjectClass *parent_class = NULL;
 
 GIOPServer *
-giop_server_new(GIOPVersion giop_version,
-		const char *proto_name, const char *local_host_info,
-		const char *local_serv_info,
-		LINCConnectionOptions create_options,
-		gpointer create_orb_data)
+giop_server_new (GIOPVersion            giop_version,
+		 const char            *proto_name, 
+		 const char            *local_host_info,
+		 const char            *local_serv_info,
+		 LINCConnectionOptions  create_options,
+		 gpointer               create_orb_data)
 {
-  GIOPServer *server = (GIOPServer *)g_object_new(giop_server_get_type(), NULL);
+	GIOPServer *server = (GIOPServer *)
+				g_object_new (GIOP_TYPE_SERVER, NULL);
 
-  server->giop_version = giop_version;
-  if(!linc_server_setup((LINCServer *)server, proto_name, local_host_info, local_serv_info,
-			create_options))
-    {
-      g_object_unref((GObject *)server); server = NULL;
-    }
-  else
-    {
-      server->orb_data = create_orb_data;
-    }
+	server->giop_version = giop_version;
 
-  return server;
+	if (!linc_server_setup (LINC_SERVER (server), proto_name, 
+				local_host_info, local_serv_info, 
+				create_options)) {
+
+		g_object_unref (G_OBJECT (server));
+		return NULL;
+	}
+	else
+		server->orb_data = create_orb_data;
+
+	return server;
 }
 
 static LINCConnection *
