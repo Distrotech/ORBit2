@@ -1223,9 +1223,9 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
       
 		fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
-		fprintf (ci->fh, "static ");
+		fprintf (ci->fh, "static \n");
 		fprintf (ci->fh, "#else\n");
-		fprintf (ci->fh, "extern ");
+		fprintf (ci->fh, "extern \n");
 		fprintf (ci->fh, "#endif\n");
 		fprintf (ci->fh, "ORBit_IInterface %s__iinterface;\n", id);
 
@@ -1235,9 +1235,9 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 			fprintf (ci->fh, "#define %s__imethods (ORBit_IMethod*) NULL\n", id);
 		else {
 			fprintf (ci->fh, "#ifdef ORBIT_IDL_C_IMODULE\n");
-			fprintf (ci->fh, "static ");
+			fprintf (ci->fh, "static \n");
 			fprintf (ci->fh, "#else\n");
-			fprintf (ci->fh, "extern ");
+			fprintf (ci->fh, "extern \n");
 			fprintf (ci->fh, "#endif\n");
 			fprintf (ci->fh, "ORBit_IMethod %s__imethods[%s_IMETHODS_LEN];\n", id, id);
 		}
