@@ -354,7 +354,6 @@ PortableServer_POA_create_reference(PortableServer_POA _obj,
 				    CORBA_Environment * ev)
 {
   ORBit_POAObject *pobj;
-  CORBA_Object    retval;
 
   if ( _obj->p_id_assignment != PortableServer_SYSTEM_ID )
     {
@@ -901,7 +900,8 @@ remove_cb(PortableServer_ObjectId *oid, ORBit_POAObject *pobj, gpointer dummy)
   if ( (pobj->life_flags & ORBit_LifeF_Destroyed) == 0 ) {
     g_free( pobj );
     return TRUE;
-    }
+  }
+  return FALSE;
 }
 
 gboolean
@@ -1465,7 +1465,7 @@ ORBit_POA_obj_to_ref(PortableServer_POA poa,
 		     CORBA_Environment *ev)
 {
   PortableServer_ObjectId *oid;
-  CORBA_Object            objref;
+  CORBA_Object             objref;
   const char              *type_id = intf;
 
   g_assert( pobj && pobj->objref == NULL );
@@ -1539,7 +1539,7 @@ ORBit_POAObject_release_cb(ORBit_RootObject robj)
  else
    pobj->life_flags = ORBit_LifeF_Destroyed;
 
- ORBit_RootObject_release(poa);
+ ORBit_RootObject_release_T(poa);
 }
 
 static ORBit_RootObject_Interface ORBit_POAObject_if = {

@@ -44,10 +44,12 @@ struct ORBit_RootObject_struct {
 #define ORBIT_ROOT_OBJECT(obj) ((ORBit_RootObject)(obj))
 #define ORBIT_ROOT_OBJECT_TYPE(obj) (((ORBit_RootObject)(obj))->interface->type)
 
-void ORBit_RootObject_init(ORBit_RootObject obj, const ORBit_RootObject_Interface * interface);
+void     ORBit_RootObject_init      (ORBit_RootObject obj,
+				     const ORBit_RootObject_Interface *interface);
 
-gpointer ORBit_RootObject_duplicate(gpointer obj);
-void ORBit_RootObject_release(gpointer obj);
+gpointer ORBit_RootObject_duplicate (gpointer obj);
+void     ORBit_RootObject_release   (gpointer obj);
+void     ORBit_RootObject_release_T (gpointer obj);
 
 O_MUTEX_DEFINE_EXTERN(ORBit_RootObject_lifecycle_lock);
 

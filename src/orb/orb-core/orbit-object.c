@@ -21,11 +21,9 @@ ORBit_RootObject_duplicate(gpointer obj)
 }
 
 void
-ORBit_RootObject_release(gpointer obj)
+ORBit_RootObject_release_T(gpointer obj)
 {
   ORBit_RootObject robj = obj;
-
-  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
 
   if(robj && robj->refs != ORBIT_REFCOUNT_STATIC)
     {
@@ -40,6 +38,14 @@ ORBit_RootObject_release(gpointer obj)
 	    g_free(robj);
 	}
     }
+}
+
+void
+ORBit_RootObject_release(gpointer obj)
+{
+  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+
+  ORBit_RootObject_release_T (obj);
 
   O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
 }
