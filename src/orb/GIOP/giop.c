@@ -390,12 +390,33 @@ giop_thread_push_recv (GIOPMessageQueueEntry *ent)
 	g_mutex_unlock (tdata->lock);
 }
 
+static GMainLoop *giop_main_loop = NULL;
+
+void
+giop_main_run (void)
+{
+	if (giop_is_threaded) {
+		g_assert (giop_thread_self () == giop_main_thread);
+		g_assert (giop_main_loop == NULL);
+		giop_main_loop = g_main_loop_new (NULL, TRUE);
+		g_main_loop_run (giop_main_loop);
+		g_main_loop_unref (giop_main_loop);
+		giop_main_loop = NULL;
+	} else
+		linc_main_loop_run ();
+}
+
 void
 giop_shutdown (void)
 {
 	if (!giop_is_threaded)
 		giop_connections_shutdown ();
+
 	g_main_loop_quit (linc_loop); /* break into the linc loop */
+	if (giop_main_loop) {
+		g_main_loop_quit (giop_main_loop);
+		g_warning ("Quit ORB run loop");
+	}
 
 	if (giop_is_threaded) {
 		if (!giop_thread_self ()->wake_context)

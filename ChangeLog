@@ -1,5 +1,11 @@
 2003-04-01  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop.c (giop_shutdown, giop_main_run):
+	add shared seperate 'main-thread' glib mainloop, 
+	If you are running your own loop, you get to quit that
+	yourself on CORBA_ORB_shutdown, we only break out of
+	CORBA_ORB_run's loop, if it's going.
+
 	* src/orb/poa/poa-private.h: add.
 
 	* src/orb/poa/poa.c (ORBit_POA_free_fn, ORBit_POA_new):
