@@ -177,6 +177,13 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "}\n");
   }
 
+#ifndef BACKWARDS_COMPAT_0_4
+  fprintf(ci->fh, "{\nint *_use_count; GFunc _death_func; gpointer _user_data; ORBit_POAObject *_pobj;\n");
+  fprintf(ci->fh, "_pobj = ORBIT_OBJECT_KEY(_ORBIT_servant->_private)->object;\n");
+  fprintf(ci->fh, "_use_count = _pobj->use_count;\n _death_func = _pobj->death_callback; _user_data = _pobj->user_data;\n");
+  fprintf(ci->fh, "if(_use_count) (*_use_count)++;\n");
+#endif
+
   if(IDL_OP_DCL(tree).op_type_spec)
     fprintf(ci->fh, "_ORBIT_retval = ");
   fprintf(ci->fh, "_impl_%s(_ORBIT_servant, ", IDL_IDENT(IDL_OP_DCL(tree).ident).str);
@@ -187,6 +194,10 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
   if(IDL_OP_DCL(tree).context_expr)
     fprintf(ci->fh, "&_ctx, ");
   fprintf(ci->fh, "ev);\n");
+
+#ifndef BACKWARDS_COMPAT_0_4
+  fprintf(ci->fh, "if(_use_count) { if(!(--(*_use_count))) _death_func(_use_count, _user_data); }\n}\n");
+#endif
 
   if(!IDL_OP_DCL(tree).f_oneway) {
     fprintf(ci->fh, "{ /* marshalling */\n");

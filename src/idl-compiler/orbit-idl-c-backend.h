@@ -5,6 +5,8 @@
 
 #include <unistd.h>
 
+#define BACKWARDS_COMPAT_0_4
+
 typedef struct {
   char *base_name, *c_base_name;
   FILE *fh;
