@@ -1,7 +1,7 @@
 2002-01-16  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_stubs.cc
-	  IDLPassSkels::doOperationPrototype(),
+	    IDLPassStubs::doOperationStub(),
 	  src/idl-compiler/cpp/pass_skels.cc
 	    IDLPassSkels::doOperationPrototype():
 	Added some null pointer checks to prevent segfaults. Maybe this is
