@@ -1,3 +1,19 @@
+2002-02-05  Sebastian Wilhelmi  <wilhelmi@ira.uka.de>
+
+	* src/linc-connection.c (write_data): Do not use
+	WRITEV_IOVEC_LIMIT as the maximal iovec count, but determine it by
+	some architecture dependent preprocessor constants. This prevents
+	using the fallback implementation of writev. (if the count is too
+	big, the kernel returns an error and libc might provide a fallback
+	by alloca'ing the necessary mem, copying the iovec's content there
+	and writing that out, which in turn might produce a segmentation
+	fault for lots of data on a small stacks, like in multithreaded
+	programs)
+
+	* configure.in, acconfig.h: Removed the test for
+	WRITEV_IOVEC_LIMIT form configure.in and WRITEV_IOVEC_LIMIT from
+	acconfig.h.
+
 2002-01-28  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: Version 0.1.16

@@ -478,6 +478,46 @@ linc_connection_read (LINCConnection *cnx,
 	return bytes_read;
 }
 
+/* Determine the maximum size of the iovec vector */
+
+#if defined (UIO_MAXIOV) /* Glibc */
+# define LINC_IOV_MAX (UIO_MAXIOV)
+#elif defined (MAXIOV) /* HPUX */
+# define LINC_IOV_MAX (MAXIOV)
+#elif defined (IOV_MAX) /* AIX */
+# define LINC_IOV_MAX (IOV_MAX)
+#elif defined (_SC_IOV_MAX) /* SGI */
+# define LINC_IOV_MAX_INIT (sysconf (_SC_IOV_MAX))
+#else /* Safe Guess */
+# define LINC_IOV_MAX 16
+#endif
+
+/* If the value requires initialization, define the function here */
+#if defined (LINC_IOV_MAX_INIT)
+# define LINC_IOV_MAX linc_iov_max
+  static guint linc_iov_max = 0;
+  static inline void
+  linc_iov_max_init () 
+  {
+    if (linc_iov_max == 0)
+      {
+        gint max;
+        G_LOCK_DEFINE_STATIC (linc_iov_max);
+        G_LOCK (linc_iov_max);
+        if (linc_iov_max == 0)
+          {
+            max = LINC_IOV_MAX_INIT;
+            if (max <= 0)
+              max = 16;
+            linc_iov_max = max;
+          }
+        G_UNLOCK (linc_iov_max);
+      }
+  }
+#else
+# define linc_iov_max_init()
+#endif
+
 static glong
 write_data (LINCConnection *cnx, QueuedWrite *qw)
 {
@@ -485,6 +525,8 @@ write_data (LINCConnection *cnx, QueuedWrite *qw)
 
 	g_return_val_if_fail (cnx->status == LINC_CONNECTED,
 			      LINC_IO_FATAL_ERROR);
+
+	linc_iov_max_init ();
 
 	while ((qw->nvecs > 0) && (qw->vecs->iov_len > 0)) {
 		int n;
@@ -499,7 +541,7 @@ write_data (LINCConnection *cnx, QueuedWrite *qw)
 		else
 #endif
 			n = writev (cnx->priv->fd, qw->vecs,
-				    MIN (qw->nvecs, WRITEV_IOVEC_LIMIT));
+				    MIN (qw->nvecs, LINC_IOV_MAX));
 
 		d_printf ("wrote %d bytes\n", n);
 

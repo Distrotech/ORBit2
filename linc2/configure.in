@@ -122,44 +122,6 @@ fi
 
 AC_C_BIGENDIAN
 
-AC_MSG_CHECKING(maximum number of iovecs for a writev)
-AC_TRY_RUN([
-#include <fcntl.h>
-#include <sys/uio.h>
-#include <stdio.h>
-#include <unistd.h>
-#define NIOVECS 2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2
-int main(int argc, char *argv[])
-{
-	char dumbuf[20] = "\n";
-	struct iovec iovecs[NIOVECS];
-	int i,fd;
-	FILE *f;
-
-	for(i = 0; i < NIOVECS; i++) {
-		iovecs[i].iov_base = dumbuf;
-		iovecs[i].iov_len = 1;
-	}
-
-	f = fopen("conftestval", "w");
-	fd=open("/dev/null", O_WRONLY);
-	if(fd==-1)
-		return(1);
-
-	for(i = 1; 2*i < NIOVECS; i *= 2)
-		if(writev(fd, iovecs, 2*i) < 0)
-			break;
-	fprintf(f, "%d\n", i);
-
-	close(fd);
-	fclose(f);
-	return 0;
-}
-], WRITEV_IOVEC_LIMIT="`cat conftestval`", WRITEV_IOVEC_LIMIT=1024, WRITEV_IOVEC_LIMIT=1024)
-
-AC_MSG_RESULT($WRITEV_IOVEC_LIMIT)
-AC_DEFINE_UNQUOTED(WRITEV_IOVEC_LIMIT, $WRITEV_IOVEC_LIMIT)
-
 if test "x$GCC" = "xyes" -a "x$enable_compile_warnings" != "xno"; then
 	WARN_CFLAGS="-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations"
 else
