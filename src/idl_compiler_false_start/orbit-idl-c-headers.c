@@ -345,7 +345,7 @@ ch_output_codefrag(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	*cte = '\0';
       fprintf(ci->fh, "#include <%s>\n", ctmp);
     } else
-      fprintf(ci->fh, "%s", (char *)list->data);
+      fprintf(ci->fh, "%s\n", (char *)list->data);
   }
 }
 
