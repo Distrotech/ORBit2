@@ -1,8 +1,6 @@
 #ifndef LINC_TYPES_H
 #define LINC_TYPES_H 1
 
-#include <sys/types.h>
-
 /* For recursive mutexes */
 #ifndef _REENTRANT
 #define _REENTRANT 1
@@ -17,6 +15,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <linc/linc-config.h>
+#include <sys/types.h>
 
 #ifdef G_THREADS_ENABLED
 #define LINC_THREADSAFE 1
