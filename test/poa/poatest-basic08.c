@@ -75,7 +75,7 @@ poatest_run( PortableServer_POA rootpoa,
   */
  poa_policies._maximum = 2;
  poa_policies._length = 2;
- poa_policies._buffer = g_new0( CORBA_Policy, 2 );
+ poa_policies._buffer = CORBA_PolicyList_allocbuf(2);
  CORBA_sequence_set_release( &poa_policies, CORBA_FALSE );
 
  poa_policies._buffer[0] = (CORBA_Policy)PortableServer_POA_create_id_uniqueness_policy(
@@ -101,7 +101,7 @@ poatest_run( PortableServer_POA rootpoa,
 
  CORBA_Policy_destroy( poa_policies._buffer[0], &ev );
  CORBA_Policy_destroy( poa_policies._buffer[1], &ev );
- g_free( poa_policies._buffer );
+ CORBA_free( poa_policies._buffer );
 
  /*
   * Initialise the servant.
