@@ -1,3 +1,8 @@
+2003-04-13  Masahiro Sakai  <sakai@tom.sfc.keio.ac.jp>
+
+	* src/linc-protocols.c (linc_protocol_get_sockaddr_unix): fix to
+	include path's terminating '\0' into *saddr_len count.
+
 2003-04-10  Michael Meeks  <michael@ximian.com>
 
 	* Thanks to mmokrejs@natur.cuni.cz for the
