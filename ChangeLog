@@ -1,3 +1,13 @@
+2001-05-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value): 
+	set _release = TRUE for sequences.
+
+2001-05-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_poa): fix more stupid leaks.
+
 2001-05-18  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c

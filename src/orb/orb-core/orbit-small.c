@@ -766,11 +766,39 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
 		
 		if (a->flags & ORBit_I_ARG_IN ||
-		    a->flags & ORBit_I_ARG_INOUT)
-			args [i] = ORBit_demarshal_arg (
-				recv_buffer, a->tc, TRUE, orb);
+		    a->flags & ORBit_I_ARG_INOUT) {
+			gpointer p;
 
-		else { /* Out */
+			tc = a->tc;
+
+			while (tc->kind == CORBA_tk_alias)
+				tc = tc->subtypes [0];
+
+			switch (tc->kind) {
+			case CORBA_BASE_TYPES:
+			case CORBA_tk_objref:
+			case CORBA_tk_TypeCode:
+			case CORBA_tk_string:
+			case CORBA_tk_wstring:
+				p = args [i] = alloca (ORBit_gather_alloc_info (tc));
+				do_demarshal_value (recv_buffer, &p, tc, TRUE, orb);
+				break;
+			case CORBA_tk_struct:
+			case CORBA_tk_union:
+			case CORBA_tk_except:
+			case CORBA_tk_array:
+				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
+					p = args [i] = alloca (ORBit_gather_alloc_info (tc));
+					do_demarshal_value (recv_buffer, &p, tc, TRUE, orb);
+					break;
+				} /* drop through */
+			default:
+				args [i] = ORBit_demarshal_arg (
+					recv_buffer, a->tc, TRUE, orb);
+				break;
+			}
+
+		} else { /* Out */
 			tc = a->tc;
 
 			while (tc->kind == CORBA_tk_alias)
@@ -909,18 +937,46 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 		}
 	}
 
-	if (ev->_major == CORBA_NO_EXCEPTION) { /* Free data */
-		for (i = 0; i < m_data->arguments._length; i++) {
-			ORBit_IArg *a = &m_data->arguments._buffer [i];
+	for (i = 0; i < m_data->arguments._length; i++) {
+		ORBit_IArg *a = &m_data->arguments._buffer [i];
+		
+		if (a->flags & ORBit_I_ARG_IN ||
+		    a->flags & ORBit_I_ARG_INOUT) {
 			
-			if (a->flags & ORBit_I_ARG_IN ||
-			    a->flags & ORBit_I_ARG_INOUT)
+			tc = a->tc;
+			
+			while (tc->kind == CORBA_tk_alias)
+				tc = tc->subtypes [0];
+			
+			switch (tc->kind) {
+			case CORBA_BASE_TYPES:
+				break;
+			case CORBA_tk_objref:
+			case CORBA_tk_TypeCode:
+				CORBA_Object_release (*(CORBA_Object *) args [i], ev);
+				break;
+			case CORBA_tk_string:
+			case CORBA_tk_wstring:
+				CORBA_free (*(char **) args [i]);
+				break;
+			case CORBA_tk_struct:
+			case CORBA_tk_union:
+			case CORBA_tk_except:
+			case CORBA_tk_array:
+				if (m_data->flags & ORBit_I_COMMON_FIXED_SIZE) {
+					ORBit_freekids_via_TypeCode (tc, args [i]);
+					break;
+				}
+				/* drop through */
+			default:
 				CORBA_free (args [i]);
-			else /* Out */
+				break;
+			}
+		} else /* Out */
+			if (ev->_major == CORBA_NO_EXCEPTION)
 				CORBA_free (scratch [i]);
-		}
 	}
-
+	
 	CORBA_exception_free (ev);
 }
 

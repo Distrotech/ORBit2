@@ -569,7 +569,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 
       p = *val;
       buf->cur = ALIGN_ADDRESS(buf->cur, sizeof(CORBA_long));
-      p->_release = 1;
+      p->_release = TRUE;
       if((buf->cur + sizeof(CORBA_unsigned_long)) > buf->end)
 	return TRUE;
       if(giop_msg_conversion_needed(buf))
@@ -655,6 +655,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
 
       *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_SEQ);
       p = *val;
+      p->_release = TRUE;
       buf->cur = ALIGN_ADDRESS(buf->cur, sizeof(CORBA_long));
       if((buf->cur + sizeof(CORBA_long)) > buf->end)
 	return TRUE;

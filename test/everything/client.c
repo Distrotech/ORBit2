@@ -775,9 +775,9 @@ run_tests (test_TestFactory   factory,
 {
   int i;
 
-  for(i=0;i<20;i++){
+  for(i=0;i<20;i++) {
     testConst();
-    testAttribute(factory,ev);  
+    testAttribute(factory,ev);
     testString(factory,ev);
     testLong(factory,ev);
     testEnum(factory,ev);
@@ -785,8 +785,10 @@ run_tests (test_TestFactory   factory,
     testFixedLengthStruct(factory,ev);
     testVariableLengthStruct(factory,ev);
     testCompoundStruct(factory,ev);
+
     testUnboundedSequence(factory,ev);
     testBoundedSequence(factory,ev);
+
     testFixedLengthUnion(factory,ev);
     testVariableLengthUnion(factory,ev);
     testFixedLengthArray(factory,ev);
