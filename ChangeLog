@@ -1,3 +1,10 @@
+2002-02-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-common.c:
+	(cc_small_build_interfaces): don't initialise ai twice.
+
+	* docs/FAQ: add bit about refs and giop debugging.
+
 2002-02-11  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: version 2.3.105
