@@ -1,5 +1,11 @@
 2001-07-25  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/iop-profiles.c(IOP_components_marshal),
+	  src/orb/orb-core/corba-contexts.c(ORBit_Context_marhsal),
+	see below...  more of the same.
+
+2001-07-25  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/iop-profiles.c(IOP_profile_marshal),
 	  src/orb/corba-typecode.c(tc_enc):
 	do not dereference pointers that aren't neccessarily

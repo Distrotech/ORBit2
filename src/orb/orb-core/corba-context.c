@@ -321,39 +321,44 @@ CORBA_Context_delete(CORBA_Context ctx, const CORBA_Flags del_flags,
 }
 
 void
-ORBit_Context_marshal(CORBA_Context ctx, const ORBit_ContextMarshalItem *mlist,
-		      CORBA_unsigned_long nitems, GIOPSendBuffer *buf)
+ORBit_Context_marshal (CORBA_Context                   ctx, 
+		       const ORBit_ContextMarshalItem *mlist,
+		       CORBA_unsigned_long             nitems, 
+		       GIOPSendBuffer                 *buf)
 {
-  int i;
-  CORBA_unsigned_long *real_nitems, ltmp;
+	CORBA_unsigned_long  real_nitems, ltmp;
+	guchar              *marker;
+	int                  i;
 
-  real_nitems = (gpointer)
-    giop_send_buffer_append_aligned (buf, &nitems, sizeof(nitems));
-  if(!ctx->mappings)
-    {
-      *real_nitems = 0;
-      return;
-    }
+	marker = giop_send_buffer_append_aligned (buf, &nitems, 4);
 
-  for(*real_nitems = i = 0; i < nitems; i++)
-    {
-      char *value;
+	if (!ctx->mappings) {
+		real_nitems = 0;
+		memcpy (marker, &real_nitems, 4);
 
-      value = g_hash_table_lookup(ctx->mappings, mlist[i].str);
-      if(!value)
-	continue;
+		return;
+	}
 
-      /* Key */
-      giop_send_buffer_append_aligned(buf, &mlist[i].len, sizeof(mlist[i].len));
-      giop_send_buffer_append(buf, mlist[i].str, mlist[i].len);
-      (*real_nitems)++;
+	for (real_nitems = i = 0; i < nitems; i++) {
+		char *value;
 
-      /* Value */
-      ltmp = strlen(value) + 1;
-      giop_send_buffer_append_aligned(buf, &ltmp, sizeof(ltmp));
-      giop_send_buffer_append(buf, value, ltmp);
-      (*real_nitems)++;
-    }
+		value = g_hash_table_lookup (ctx->mappings, mlist[i].str);
+		if (!value)
+			continue;
+
+		/* Key */
+		giop_send_buffer_append_aligned (buf, &mlist[i].len, sizeof(mlist[i].len));
+		giop_send_buffer_append (buf, mlist[i].str, mlist[i].len);
+		real_nitems++;
+
+		/* Value */
+		ltmp = strlen (value) + 1;
+		giop_send_buffer_append_aligned (buf, &ltmp, 4);
+		giop_send_buffer_append (buf, value, ltmp);
+		real_nitems++;
+	}
+
+	memcpy (marker, &real_nitems, 4);
 }
 
 #define ALIGNFOR(x) recv_buffer->cur = ALIGN_ADDRESS(recv_buffer->cur, sizeof(x))
