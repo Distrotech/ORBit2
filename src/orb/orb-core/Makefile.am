@@ -2,7 +2,7 @@ noinst_LTLIBRARIES=liborb-core.la
 
 TYPELIB_DIR=$(libdir)/orbit
 
-INCLUDES= \
+INCLUDES=-I. -I$(srcdir) \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-I$(top_builddir)/include/orbit/orb-core \
@@ -44,8 +44,8 @@ liborb_core_la_SOURCES= \
 
 IDLOUT=corba-defs-common.c
 DEFS_IDLOUT=iop-defs-common.c
-OPS_IDLOUT=corba-ops.h corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
-IFACE_IDLOUT=orbit-interface.h orbit-interface-common.c
+OPS_IDLOUT= corba-ops.h corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
+IFACE_IDLOUT=orbit-interface-common.c
 
 $(liborb_core_la_OBJECTS) : $(BUILT_SOURCES)
 IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl
