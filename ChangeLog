@@ -1,3 +1,9 @@
+2001-12-06  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-any.c:
+	(ORBit_copy_value_core),
+	(ORBit_value_equivalent): fix union alignment.
+
 2001-12-06  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-object.c (CORBA_Object_hash),
