@@ -37,7 +37,11 @@ IDL_FLAGS=--showcpperrors
 IDL_FILES=poatest.idl
 include $(top_srcdir)/Makefile.shared
 
-common_srcs = $(POATEST_IDLOUT) poatest-basic-shell.c poatest-exception.h
+common_srcs = 			\
+	$(POATEST_IDLOUT)	\
+	poatest-basic-shell.c	\
+	poatest-basic-shell.h	\
+	poatest-exception.h
 
 poatest_basic01_SOURCES = $(common_srcs) poatest-basic01.c 
 poatest_basic02_SOURCES = $(common_srcs) poatest-basic02.c 

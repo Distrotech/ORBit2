@@ -1,4 +1,8 @@
 2001-10-31  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/poa/Makefile.am: add poatest-basic-shell.h.
+
+2001-10-31  Mark McLoughlin  <mark@skynet.ie>
 	
 	I feel violated. What's bonobo-config doing poking 
 	around with this stuff?
