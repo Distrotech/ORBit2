@@ -570,7 +570,7 @@ giop_recv_list_zap (GIOPConnection *cnx)
 }
 
 CORBA_unsigned_long
-giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
+giop_recv_buffer_get_request_id (GIOPRecvBuffer *buf)
 {
 	static const glong reqid_offsets [GIOP_NUM_MSG_TYPES] [GIOP_NUM_VERSIONS] = {
 		/* GIOP_REQUEST */
@@ -698,7 +698,7 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
 ORBit_ObjectKey*
 giop_recv_buffer_get_objkey (GIOPRecvBuffer *buf)
 {
-	switch(buf->msg.header.version [1]) {
+	switch (buf->msg.header.version [1]) {
 	case 0:
 		return &buf->msg.u.request_1_0.object_key;
 		break;
@@ -881,10 +881,7 @@ giop_connection_handle_input (LINCConnection *lcnx)
 			return TRUE;
 		}
 
-		if (n < 0 || !buf->left_to_read) {
-			/* FIXME: we hit this _far_ too much, this is a common
-			   path instead of an unusual incidental */
-/*			g_warning ("Bad read %d %ld", n, buf->left_to_read); */
+		if (n < 0 || !buf->left_to_read) { /* HUP */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 			g_object_unref ((GObject *) cnx);
@@ -914,8 +911,6 @@ giop_connection_handle_input (LINCConnection *lcnx)
 					if (giop_recv_buffer_handle_fragmented (buf, cnx))
 						goto msg_error;
 				} else {
-					/* FIXME: looks like we waste 12 bytes here for
-					   no good reason */
 					buf->cur = buf->message_body + 12;
 
 					if (giop_recv_buffer_demarshal (buf))
