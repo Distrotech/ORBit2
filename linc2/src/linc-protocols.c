@@ -714,7 +714,7 @@ linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
 				 gchar                  **portnum)
 {
 	struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)saddr;
-#ifdef HAVE_GETADDRINFO
+#ifdef HAVE_GETNAMEINFO
 	char hbuf[NI_MAXHOST];
 #else
 	struct hostent      *host = NULL;
