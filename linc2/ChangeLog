@@ -1,3 +1,11 @@
+2002-01-04  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_io_handler):
+	allow handling both input and output in the same poll,
+	to stop re-enterancy hell in the ORB.
+	(queue_signal): special case a '0' byte max_buffer ==
+	no maximum, thanks to Dave Camp.
+
 2002-01-03  Michael Meeks  <michael@ximian.com>
 
 	* Version 0.1.12

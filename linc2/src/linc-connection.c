@@ -83,7 +83,8 @@ queue_signal (LINCConnection *cnx,
 				       0, new_size);
 	}
 
-	if (cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
+	if (cnx->priv->max_buffer_bytes &&
+	    cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
 		linc_connection_state_changed (cnx, LINC_DISCONNECTED);
 
 	g_object_unref (G_OBJECT (cnx));
@@ -791,7 +792,9 @@ linc_connection_io_handler (GIOChannel  *gioc,
 		d_printf ("Handle input on fd %d\n", cnx->priv->fd);
 		klass->handle_input (cnx);
 
-	} else if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
+	}
+
+	if (cnx->status == LINC_CONNECTED && condition & G_IO_OUT) {
 		gboolean done_writes = TRUE;
 
 		d_printf ("IO Out - buffer space free ...\n");
@@ -828,8 +831,9 @@ linc_connection_io_handler (GIOChannel  *gioc,
 			linc_watch_set_condition (cnx->priv->tag,
 						  LINC_ERR_CONDS | LINC_IN_CONDS);
 
-	} else if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
+	}
 
+	if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
 		switch (cnx->status) {
 		case LINC_CONNECTING:
 			n = 0;
@@ -850,16 +854,16 @@ linc_connection_io_handler (GIOChannel  *gioc,
 			}
 			break;
 		case LINC_CONNECTED: {
-			d_printf ("Disconnect on err: %d\n", cnx->priv->fd);
-			linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+			if (condition & LINC_ERR_CONDS) {
+				d_printf ("Disconnect on err: %d\n", cnx->priv->fd);
+				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+			}
 			break;
 		}
 		default:
 			break;
 		}
-	} else
-		g_warning ("Dropping state on fd %d on the floor (%d)",
-			   cnx->priv->fd, condition);
+	}
 
 	g_object_unref (G_OBJECT (cnx));
 
