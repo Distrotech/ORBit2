@@ -163,6 +163,7 @@ AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
 
 AC_CHECK_LIB(popt, poptStrippedArgv, POPT_LIBS=-lpopt, AC_MSG_ERROR([You must have popt version 1.5 or greater installed.]))
 AC_SUBST(POPT_LIBS)
+AC_CHECK_HEADER(popt.h,,AC_MSG_ERROR([Failed to find popt.h - you may have to adjust your environment]))
 
 # AC_CHECK_TYPE doesn't work here.
 AC_MSG_CHECKING([for socklen_t])

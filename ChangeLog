@@ -1,3 +1,6 @@
+2001-08-23  Sander Vesik <Sander.Vesik@sun.com>
+	* configure.in: check for popt.h
+
 2001-08-23  Mark McLoughlin <mark@skynet.ie>
 	
 	* test/poa/poatest-basic??.c:
