@@ -499,11 +499,11 @@ ORBit_get_safe_tmp (void)
 }
 
 void
-giop_init (gboolean threaded, gboolean blank_wire_data)
+giop_init (gboolean thread_safe, gboolean blank_wire_data)
 {
-	link_init (threaded);
+	link_init (thread_safe);
 
-	if (threaded) {
+	if (thread_safe) {
 		GIOPThread *tdata;
 
 		/* We need a destructor to clean up if giopthreads are used
