@@ -13,7 +13,6 @@ if ENABLE_CPP
 noinst_LTLIBRARIES = libidl-cpp-types.la
 
 headers = 		\
-#  IDLAny.hh		\
   IDLArray.hh		\
   IDLArrayList.hh	\
   IDLAttribAccessor.hh	\
@@ -27,22 +26,17 @@ headers = 		\
   IDLObject.hh		\
   IDLOperation.hh	\
   IDLScope.hh		\
-#  IDLSequence.hh	\
-#  IDLSequenceList.hh	\
   IDLSimpleType.hh	\
   IDLString.hh		\
-#  IDLStruct.hh		\
   IDLType.hh		\
   IDLTypeCode.hh	\
   IDLTypedef.hh		\
-#  IDLUnion.hh		\
   IDLUserDefScopeType.hh \
   IDLUserDefSimpleType.hh \
   IDLUserDefType.hh	\
   IDLVoid.hh
 
 modules =		\
-#  IDLAny.cc		\
   IDLArray.cc		\
   IDLArrayList.cc	\
   IDLAttribAccessor.cc	\
@@ -56,15 +50,11 @@ modules =		\
   IDLObject.cc		\
   IDLOperation.cc	\
   IDLScope.cc		\
-#  IDLSequence.cc	\
-#  IDLSequenceList.cc	\
   IDLSimpleType.cc	\
   IDLString.cc		\
-#  IDLStruct.cc		\
   IDLType.cc		\
   IDLTypeCode.cc	\
   IDLTypedef.cc		\
-#  IDLUnion.cc		\
   IDLUserDefScopeType.cc \
   IDLUserDefSimpleType.cc \
   IDLUserDefType.cc	\

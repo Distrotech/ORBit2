@@ -236,6 +236,27 @@ IDLTypedef::member_impl_arg_copy (ostream          &ostr,
 				      active_typedef ? active_typedef : this);
 }
 
+
+void
+IDLTypedef::member_init_cpp (ostream          &ostr,
+			     Indent           &indent,
+			     const string     &cpp_id,
+			     const IDLTypedef *active_typedef = 0) const
+{
+	m_alias.member_init_cpp (ostr, indent, cpp_id,
+				 active_typedef ? active_typedef : this);
+}
+
+void
+IDLTypedef::member_init_c (ostream          &ostr,
+			   Indent           &indent,
+			   const string     &c_id,
+			   const IDLTypedef *active_typedef = 0) const
+{
+	m_alias.member_init_c (ostr, indent, c_id,
+			       active_typedef ? active_typedef : this);
+}
+
 void
 IDLTypedef::member_pack_to_c (ostream          &ostr,
 			      Indent           &indent,

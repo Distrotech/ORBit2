@@ -27,6 +27,12 @@
 
 #include "IDLVoid.hh"
 
+bool
+IDLVoid::is_fixed () const
+{
+	throw IDLExVoid ();
+}
+
 void
 IDLVoid::const_decl_write (ostream          &ostr,
 			   Indent           &indent,
@@ -214,6 +220,24 @@ IDLVoid::member_impl_arg_copy (ostream          &ostr,
 			       Indent           &indent,
 			       const string     &cpp_id,
 			       const IDLTypedef *active_typedef) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_init_cpp (ostream          &ostr,
+			  Indent           &indent,
+			  const string     &cpp_id,
+			  const IDLTypedef *active_typedef = 0) const
+{
+	throw IDLExVoid ();
+}
+
+void
+IDLVoid::member_init_c (ostream          &ostr,
+			Indent           &indent,
+			const string     &c_id,
+			const IDLTypedef *active_typedef = 0) const
 {
 	throw IDLExVoid ();
 }

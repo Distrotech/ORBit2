@@ -286,6 +286,24 @@ IDLSimpleType::member_impl_arg_copy (ostream      &ostr,
 }
 
 void
+IDLSimpleType::member_init_cpp (ostream          &ostr,
+				Indent           &indent,
+				const string     &cpp_id,
+				const IDLTypedef *active_typedef = 0) const
+{
+	// Do nothing
+}
+
+void
+IDLSimpleType::member_init_c (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_id,
+			      const IDLTypedef *active_typedef = 0) const
+{
+	// Do nothing
+}
+
+void
 IDLSimpleType::member_pack_to_c (ostream      &ostr,
 				 Indent       &indent,
 				 const string &cpp_id,

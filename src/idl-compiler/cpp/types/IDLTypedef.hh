@@ -45,6 +45,9 @@ public:
 		return m_alias;
 	}
 
+	bool conversion_required () const { return m_alias.conversion_required (); };
+	bool is_fixed () const { return m_alias.is_fixed (); };
+	
 	////////////////////////////////////////////
 	// Constants
 
@@ -159,6 +162,17 @@ public:
 				   const string     &cpp_id,
 				   const IDLTypedef *active_typedef = 0) const;
 	
+	// Initialization
+	void member_init_cpp (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &cpp_id,
+			      const IDLTypedef *active_typedef = 0) const;
+	
+	void member_init_c   (ostream          &ostr,
+			      Indent           &indent,
+			      const string     &c_id,
+			      const IDLTypedef *active_typedef = 0) const;
+
 	// Compound conversion: C++ -> C
 	void member_pack_to_c (ostream          &ostr,
 			       Indent           &indent,
