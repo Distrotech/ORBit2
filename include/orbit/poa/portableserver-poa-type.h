@@ -18,7 +18,7 @@ struct PortableServer_POA_type {
 
 	guint16                         use_cnt;
 	guint16                         life_flags;
-	int                             poaID;
+	int                             poa_id;
 	int                             next_sysid;
 	char                           *name;
 	CORBA_ORB                       orb;
@@ -41,8 +41,6 @@ struct PortableServer_POA_type {
 	PortableServer_ImplicitActivationPolicyValue p_implicit_activation;
 	PortableServer_ServantRetentionPolicyValue   p_servant_retention;
 	PortableServer_RequestProcessingPolicyValue  p_request_processing;
-
-	int poa_rand_len;
 };
 
 #endif /* ORBIT2_INTERNAL_API */

@@ -18,7 +18,7 @@ static const ORBit_RootObject_Interface CORBA_POAManager_epv = {
 };
 
 PortableServer_POAManager
-ORBit_POAManager_new (CORBA_ORB orb, CORBA_Environment *ev)
+ORBit_POAManager_new (CORBA_ORB orb)
 {
 	PortableServer_POAManager retval;
 
@@ -32,27 +32,18 @@ ORBit_POAManager_new (CORBA_ORB orb, CORBA_Environment *ev)
 
 void
 ORBit_POAManager_register_poa (PortableServer_POAManager  poa_mgr, 
-			       PortableServer_POA         poa,
-			       CORBA_Environment         *ev)
+			       PortableServer_POA         poa)
 {
 	g_assert (g_slist_find (poa_mgr->poa_collection, poa) == NULL);
-	g_assert (poa->poa_manager == NULL );
 
 	poa_mgr->poa_collection = g_slist_append (poa_mgr->poa_collection, poa);
-	poa->poa_manager        = ORBit_RootObject_duplicate (poa_mgr);
 }
 
 void
 ORBit_POAManager_unregister_poa (PortableServer_POAManager poa_mgr, 
-				 PortableServer_POA        poa,
-				 CORBA_Environment        *ev)
+				 PortableServer_POA        poa)
 {
-	g_assert(poa->poa_manager == poa_mgr);
-
 	poa_mgr->poa_collection = g_slist_remove (poa_mgr->poa_collection, poa);
-	poa->poa_manager = NULL;
-
-	ORBit_RootObject_release (poa_mgr);
 }
 
 /*
@@ -64,7 +55,7 @@ void
 PortableServer_POAManager_activate (PortableServer_POAManager  manager,
 				    CORBA_Environment         *ev)
 {
-	GSList             *l;
+	GSList *l;
 
 	if (!manager) {
 		CORBA_exception_set_system (ev, ex_CORBA_BAD_PARAM,

@@ -406,6 +406,12 @@ dynany_any_new_default (const CORBA_TypeCode tc)
 	return value;
 }
 
+gpointer
+ORBit_dynany_new_default (const CORBA_TypeCode tc)
+{
+	return dynany_any_new_default (tc);
+}
+
 static gboolean
 dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 			    CORBA_TypeCode        sequence_tc,

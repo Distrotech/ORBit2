@@ -462,6 +462,7 @@ ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
 	char    *id;
 	IDL_tree ident;
+	IDL_tree typespec;
 
 	ident = IDL_CONST_DCL (tree).ident;
 	id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS (ident), "_", 0);
@@ -472,8 +473,9 @@ ch_output_const_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	orbit_cbe_write_const(ci->fh,
 			      IDL_CONST_DCL(tree).const_exp);
 
-	if (IDL_NODE_TYPE (IDL_CONST_DCL(tree).const_type) == IDLN_TYPE_INTEGER &&
-	    !IDL_TYPE_INTEGER (IDL_CONST_DCL(tree).const_type).f_signed)
+	typespec = orbit_cbe_get_typespec (IDL_CONST_DCL(tree).const_type);
+	if (IDL_NODE_TYPE (typespec) == IDLN_TYPE_INTEGER &&
+	    !IDL_TYPE_INTEGER (typespec).f_signed)
 		fprintf(ci->fh, "U");
 
 	fprintf(ci->fh, "\n");
@@ -933,6 +935,7 @@ ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
 	switch(IDL_NODE_TYPE(cur)) {
 	case IDLN_OP_DCL:
+	  orbit_idl_check_oneway_op (cur);
 	  orbit_cbe_op_write_proto(ci->fh, cur, "", FALSE);
 	  fprintf(ci->fh, ";\n");
 	  break;

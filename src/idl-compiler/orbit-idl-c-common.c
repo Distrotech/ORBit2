@@ -987,12 +987,11 @@ cc_small_build_interfaces (GSList *list, IDL_tree tree)
 		break;
 	}
 	case IDLN_ATTR_DCL: {
-		OIDL_Attr_Info *ai = tree->data;
 		IDL_tree curitem;
       
 		for (curitem = IDL_ATTR_DCL (tree).simple_declarations;
 		     curitem; curitem = IDL_LIST (curitem).next) {
-			ai = IDL_LIST (curitem).data->data;
+			OIDL_Attr_Info *ai = IDL_LIST (curitem).data->data;
 	
 			list = cc_small_build_interfaces (list, ai->op1);
 			if (ai->op2)

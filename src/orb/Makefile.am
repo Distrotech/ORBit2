@@ -10,6 +10,7 @@ INCLUDES =					\
 	-DORBIT_VERSION=\"@ORBIT_VERSION@\"	\
 	-DORBIT2_INTERNAL_API			\
 	$(WARN_CFLAGS)				\
+	$(ORBIT_DEBUG_CFLAGS)			\
 	$(ORBIT_CFLAGS)
 
 libORBit_2_la_SOURCES=orbit-init.c orbit-init.h

@@ -3,6 +3,31 @@
 #include <string.h>
 
 void
+orbit_idl_check_oneway_op (IDL_tree op)
+{
+	g_assert (IDL_NODE_TYPE(op) == IDLN_OP_DCL);
+
+	if (IDL_OP_DCL (op).f_oneway) {
+		IDL_tree sub;
+
+		for (sub = IDL_OP_DCL (op).parameter_dcls; sub; sub = IDL_LIST (sub).next) {
+			IDL_tree param = IDL_LIST (sub).data;
+
+			if (IDL_PARAM_DCL (param).attr == IDL_PARAM_OUT ||
+			    IDL_PARAM_DCL (param).attr == IDL_PARAM_INOUT) {
+				g_warning ("Out or Inout parameter in declaration of oneway '%s'",
+					   IDL_IDENT(IDL_OP_DCL(op).ident).str);
+				break;
+			}
+		}
+
+		if (IDL_OP_DCL (op).op_type_spec)
+			g_warning ("Return value in declaration of oneway '%s'",
+				   IDL_IDENT(IDL_OP_DCL(op).ident).str);
+	}
+}
+
+void
 orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 {
   IDL_tree attr_name, ident, curnode, op1, op2, intf;
@@ -18,7 +43,7 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
 
     attr_name = IDL_LIST(curnode).data;
 
-    g_string_sprintf(attrname, "_get_%s",
+    g_string_printf(attrname, "_get_%s",
 		     IDL_IDENT(attr_name).str);
     ident = IDL_ident_new(g_strdup(attrname->str));
     IDL_IDENT_TO_NS(ident) = IDL_IDENT_TO_NS(attr_name);
@@ -29,7 +54,7 @@ orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)
     IDL_ns_place_new(ns, ident);
 
     if(!IDL_ATTR_DCL(attr).f_readonly) {
-      g_string_sprintf(attrname, "_set_%s",
+      g_string_printf(attrname, "_set_%s",
 		       IDL_IDENT(attr_name).str);
       ident = IDL_ident_new(g_strdup(attrname->str));
       IDL_IDENT_TO_NS(ident) = IDL_IDENT_TO_NS(attr_name);

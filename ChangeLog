@@ -1,3 +1,7 @@
+2002-02-22  Mark McLoughlin  <mark@skynet.ie>
+
+	* Merged changes to HEAD back into the cpp branch.
+
 2002-02-21  Murray Cumming  <murrayc@usa.net>
 
 	* Corba::Object and Corba::Orb now have pointers to the 
@@ -6,15 +10,351 @@
 	cast between C and C++ instances, using cast operators and copy
 	constructors.
 
+2002-02-18  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-common.c:
+	(cc_small_build_interfaces): don't initialise ai twice.
+
+	* docs/FAQ: add bit about refs and giop debugging.
+
+2002-02-11  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: version 2.3.105
+
+2002-02-08  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	(orbit_output_tcstruct_anon_sublabels_array): cleanup.
+
+2002-02-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/util/genrand.c
+	(genuid_rand_device): handle EINTR, EAGAIN,
+	and short reads.
+
+2002-02-06  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): make trace debugging
+	more meaningfull in-proc.
+
+2002-02-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-object.c
+	(object_hash_dump): impl.
+	(ORBit_RootObject_shutdown),
+	(ORBit_RootObject_init, do_unref): add more verbose
+	and powerful object debugging.
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_setup_debug_flags): add 'refs'
+
+	* src/orb/orb-core/orbit-debug.h: fix bitmask cockup.
+
+2002-02-05  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-any.c: (ORBit_value_equivalent):
+	add union_size to the original pointers.
+
+	* test/everything/client.c: (testAnyEquivalence): re-enable
+	testing this.
+
+2002-02-05  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-any.c: (ORBit_get_union_switch):
+	don't assume pointers are correctly alligned.
+
+	* src/orb/util/genrand.c: (genuid_glib_pseudo): fix silly.
+
+2002-02-04  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-context.c
+	(ORBit_Context_free_fn): remove ourselves correctly
+	from the parent.
+
+	* test/everything/client.c (testAnyEquivalence):
+	knobble for now so we pass the tests.
+
+	* src/orb/orb-core/corba-any.c: do a proper boolean
+	compare.
+
+2002-02-02  Michael Meeks  <michael@ximian.com>
+
+	* Makefile.am (EXTRA_DIST): add Makefile.shared.
+
+2002-02-04  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: version 2.3.104.
+
+2002-02-04  Shivram U <shivaram.upadhyayula@wipro.com>
+
+	reviewed by: Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-demarshal.c:
+	* src/idl-compiler/orbit-idl-c-marshal.c:
+	* src/idl-compiler/orbit-idl-c-skelimpl.c:
+	* src/idl-compiler/orbit-idl-c-stubs.c:
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	* src/idl-compiler/orbit-idl-c-utils.c:
+	* src/idl-compiler/orbit-idl-utils.c:
+	* src/orb/orb-core/corba-object.c:
+	Remove deprecated glib functions.
+	s/g_string_sprintf/g_string_printf/
+	s/g_string_sprintfa/g_string_append_printf/
+	s/g_main_iteration/g_main_context_iteration/.
+
+2002-01-31  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/GIOP/giop-debug.h: make giop dumping a runtime
+	debugging option.
+
+	* src/orb/GIOP/giop-recv-buffer.c: (giop_recv_msg_reading_body):
+	use dprintf (GIOP.. instead of giop_dprintf.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_setup_debug_flags):
+	add ORBIT_DEBUG_GIOP.
+
+	* src/orb/orb-core/orbit-debug.h: ditto.
+
+2002-01-30  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-any.h: kill dup_strings
+	arg from demarshal funcs. Kill duplicated 
+	ORBit_demarshal_value.
+
+	* src/orb/GIOP/giop-recv-buffer.c:
+	(giop_IOP_ServiceContextList_demarshal): upd for dup_strings.
+
+	* src/orb/orb-core/corba-any.c:
+	(ORBit_get_union_tag): kill unused variable.
+	(ORBit_demarshal_value), (ORBit_demarshal_arg),
+	(ORBit_demarshal_any): kill dup_strings arg.
+
+	* src/orb/orb-core/orbit-small.c:
+	(ORBit_handle_exception_array): upd for dup_strings.
+	(ORBit_small_marshal_context): move branch to
+	(orbit_small_marshal): here. We rarely take this branch, so
+	lets kill the fuction call overhead for the common case.
+	(orbit_small_demarshal), (ORBit_small_invoke_adaptor): upd
+	for dup_strings change.
+
+	* test/everything/basicServer.c: (BasicServer_opString),
+	(BasicServer_opFloat), (BasicServer_opDouble),
+	(BasicServer_opLongDouble): implement floating point tests.
+
+	* test/everything/unionServer.c: (UnionServer_opMisc): impl another
+	union test.
+
+	* test/everything/client.c:
+	(testConst): test float, double and long double constants.
+	(testFloat), (testDouble), (testLongDouble): use floating point
+	tests.
+	(testMiscUnions): use new union test.
+	(testAnyException): add output.
+	(testAnyEquivalence): test ORBit_any_equivalent and ORBit_copy_value
+	code paths.
+	(test_BasicServer_opExceptionA): update vtable offset.
+	(run_tests): run new tests.
+
+	* test/everything/constants.h: add floating point constants.
+
+	* test/everything/everything.idl: add idl for new tests.
+
+2002-01-29  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-orb.c: clean up.
+
+2002-01-28  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: version 2.3.103.
+
+2002-01-28  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/util/genrand.c: (genuid_simple),
+	(genuid_glib_pseudo): more tweaks.
+
+2002-01-25  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (main): upd.
+	(test_init): test it.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_shutdown, CORBA_ORB_init),
+	(CORBA_ORB_destroy): count init / destroy pairs
+	and don't allow people to destroy if someone else
+	has inited.
+
+2002-01-25  Mark McLoughlin  <mark@skynet.ie>
+
+	* acinclude.m4: (AC_CHECK_ALIGNOF): error out if an alignment
+	is found to be zero.
+
+	* test/everything/client.c: (make_large_str_seq): fix leak.
+
+2002-01-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c
+	(ORBit_TypeCode_free_fn): kill bogus typecode free.
+
+	* src/orb/util/genrand.c (ORBit_genuid_init): seed
+	the random number generator but once.
+	(genuid_glib_pseudo): use rand more sensibly, use
+	genuid_simple first.
+	(genuid_simple): make inc a gulong.
+
 2002-01-23  Murray Cumming  <murrayc@usa.net>
 
 	* Applied Richard Andrews's patches which make the C++ skels 
 	gcc-friendly.
 
+2002-01-22  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-typecode.c
+	(ORBit_TypeCode_free_f): sublabels isn't an 'any' sequence
+	anymore.
+
+2002-01-22  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-typecode.h: change the
+	sublabels member to a CORBA_long *.
+
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	(orbit_output_tcstruct_anon_sublabels_array),
+	(orbit_output_tcstruct_sublabels), (cbe_tc_generate):
+	output the array.
+
+	* src/orb/orb-core/corba-any.c: (ORBit_get_union_tag):
+	simplify the discrim compare.
+
+	* src/orb/orb-core/corba-orb.c: (copy_case_value): impl.
+	(CORBA_ORB_create_union_tc): don't copy the whole any, just
+	the value.
+
+	* src/orb/orb-core/corba-typecode.c: (tc_enc_tk_union),
+	(tc_dec_tk_union), (typecode_equiv_internal): upd.
+
+2002-01-22  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-utils.c:
+	(orbit_idl_check_oneway_op): impl to check if oneways have
+	returns or outs/inouts.
+
+	* src/idl-compiler/orbit-idl-c-headers.c:
+	(ch_output_stub_protos): use.
+
+	* test/everything/everything.idl,
+	  test/everything/server.c,
+	  test/everything/client.c: make segv return void.
+
+2002-01-21  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-orb.c:
+	(ORBit_setup_debug_flags): fix silly so that debug options
+	in orbitrc works correctly.
+
+2002-01-21  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_copy_value): tolerate NULL.
+
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_demarshal): kill warning.
+
+	* test/everything/client.c (testMisc): add a check.
+
+2002-01-21  Xiong Jiang <jxiong@offtopic.org>
+
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(cs_small_output_stub): put the endif in a comment, to
+	make the preprocessor happy.
+
+2002-01-17  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require the new linc with different
+	protocol structure size.
+
+	* test/everything/client.c (main): upd.
+
+2002-01-17  Mark McLoughlin  <mark@skynet.ie>
+	
+	Allow ORBit2 debugging to be switched on/off at runtime.
+	Based on a patch by Jacob Berkman <jacob@ximian.com>
+
+	* configure.in: --enable-debug option.
+
+	* src/orb/GIOP/Makefile.am, src/orb/Makefile.am,
+	  src/orb/dynamic/Makefile.am, src/orb/orb-core/Makefile.am,
+	  src/orb/poa/Makefile.am, src/orb/util/Makefile.am:
+	use ORBIT_DEBUG_CFLAGS.
+	
+	* src/orb/orb-core/corba-object.c: (g_CORBA_Object_equal),
+	(ORBit_objref_find), (ORBit_object_get_connection),
+	(ORBit_marshal_object): upd.
+
+	* src/orb/orb-core/corba-orb.c: (ORBit_setup_debug_flags),
+	(CORBA_ORB_init): add --ORBDebugFlags option and ORBIT2_DEBUG
+	env variable and parse.
+
+	* src/orb/orb-core/orbit-debug.h: kill old debug stuff and
+	make everything conditional on G_ENABLE_DEBUG.
+	
+	* src/orb/orb-core/orbit-small.c: (ORBit_handle_exception_array),
+	(ORBit_small_send_user_exception), (orbit_small_marshal),
+	(orbit_small_demarshal), (ORBit_small_invoke_stub),
+	(ORBit_small_invoke_adaptor), (ORBit_small_demarshal_async): upd.
+
+	* src/orb/orb-core/orbit-trace.c: (ORBit_trace_timestamp): upd.
+
+	* src/orb/orb-core/orbit-typelib.c: (load_module): upd.
+
+	* src/orb/poa/orbit-adaptor.c: (ORBit_handle_request): upd.
+
+	* src/orb/util/genrand.c: (ORBit_genuid_init), (genuid_simple):
+	incorporate the pid and an incrementing number into simple uid.
+
 2002-01-17  Murray Cumming  <murrayc@usa.net>
 
 	* The orb-cpp headers are now installed in the orbit-2.0/orbit
 	directory, instead of the orb directory. 
+
+2002-01-16  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-orb-type.h: kill genrand
+	ORB member.
+
+	* include/orbit/util/orbit-genrand.h: rename to genuid, we're
+	not allways taking about randomness.
+
+	* src/orb/orb-core/corba-orb.c:
+	(ORBit_genuid_type): impl to figure what genuid type we'll use.
+	(CORBA_ORB_init): upd.
+	(ORBit_proto_use): fix silly.
+	Also add a --ORBSimpleUIDs option.
+
+	* src/orb/poa/orbit-adaptor.c: (ORBit_adaptor_setup): upd.
+
+	* src/orb/poa/poa.c: (ORBit_POA_new_system_objid): upd.
+
+	* src/orb/util/genrand.c:
+	(ORBit_genuid_init), (ORBit_genuid_fini): impl.
+	(genuid_glib_pseudo): impl id generator using glib's prng.
+	(genrand_unix): kill.
+	(genuid_simple): impl non-random id generator.
+	(ORBit_genuid_buffer): upd.
+
+	* test/test-performance.c: (main): pass argc and argv to
+	ORB_init.
+
+	* docs/FAQ, docs/internals/poa-notes.txt: upd.
+
+2002-01-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c: update to free
+	result of IOP profile dumpage.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_components_free): make it free the list too,
+	and NULL the list for safety.
 
 2002-01-16  Murray Cumming  <murrayc@usa.net>
 
@@ -26,6 +366,101 @@
 	just masking more serious problems somewhere else. orbit-2-idl -lc++
 	now compiles Bonobo.idl, but I haven't investigated whether the 
 	generated code is sane.
+
+2002-01-14  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/orb-core/corba-policy-type.h,
+	  src/orb/orb-core/corba-policy.c: kill ORBit_Policy_(set|get)
+
+	* include/orbit/poa/orbit-adaptor.h: (ORBit_adaptor_setup): add.
+
+	* include/orbit/poa/poa-types.h:
+	(ORBit_vepvmap_init): kill.
+	Kill init_vepvmap and vepvlen ClassInfo members.
+	Enable vepvmap cache by default. Add next member to
+	ORBit_POAObject_type to replace servant->_private GSList.
+	Kill unused macros.
+
+	* include/orbit/poa/poa.h: don't include poa-policy.h.
+
+	* include/orbit/poa/portableserver-poa-type.h: kill poa_rand_len
+	POA struct member.
+
+	* src/idl-compiler/orbit-idl-c-skels.c:
+	(cbe_skel_interface_print_vepvmap_initializer): kill.
+	(cbe_skel_interface_print_vepvmap_line), (cbe_skel_do_interface):
+	initialise the vepvmap in servant init. No need for init_vepvmap method.
+	
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_destroy): s/poa/adaptor/.
+
+	* src/orb/poa/orbit-adaptor.c: (ORBit_adaptor_setup): move here from
+	poa.c - all adaptor's keys should be the same.
+
+	* src/orb/poa/orbit-poa.h:
+	* src/orb/poa/poa-manager.c: (ORBit_POAManager_new),
+	(ORBit_POAManager_register_poa), (ORBit_POAManager_unregister_poa): kill
+	unneeded ev args. Move ownership of the poa_manager reference into poa.c
+	where it belongs.
+
+	* src/orb/poa/poa-policy.c: set the policy structs directly. Kill okey
+	randomness policy.
+
+	* src/orb/poa/poa-servants.c: use poa_execption macros.
+
+	* src/orb/poa/poa.c:
+	(check_object_inuse): impl instead of hacking traverse_cb.
+	(ORBit_POA_object_id_lookup): rename from ORBit_POA_oid_to_obj, removing
+	crackness in the process.
+	(ORBit_POA_remove_child): kill unneeded ev arg.
+	(ORBit_POA_destroy): cleanup.
+	(traverse_cb): rationalise. Kill unneeded TraverseInfo members.
+	(ORBit_POA_deactivate): upd.
+	(ORBit_POA_free_fn): check members are allocated before freeing.
+	(ORBit_POA_set_policy): update fro policy changes.
+	(ORBit_POA_set_policies): set defaults here, use poa_exception macros.
+	(ORBit_POA_new): big cleanup.
+	(ORBit_POA_activate_object): don't init vepvpmap here. Update for
+	servant pobj list changes.
+	(ORBit_POA_deactivate_object): ditto.
+	(ORBit_POAObject_handle_request): use policy checking macros.
+	(ORBit_POA_object_key_lookup): impl.
+	(ORBit_POA_handle_request): use ORBit_POA_object_key_lookup and
+	return_exception.
+	(ORBit_POA_ServantManager_use_servant),
+	(ORBit_POA_ServantManager_unuse_servant): big cleanup and update for
+	servant pobj list change.
+
+	* test/everything/server.c: (TestFactory_getStructServerIOR): use
+	global_orb.
+
+2002-01-09  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.102
+
+2002-01-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(send_buffer_list): initialize it.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_remove_by_orb): fix acute
+	re-enterancy hazard.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_zap): fix re-enterancy hazard.
+	(giop_queued_messages): initialize it.
+
+2002-01-09  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/test-performance.c: (create_mult_id_poa), (test_activation),
+	(main): add object activation/de-activation performance test.
+
+	* test/Makefile.am: upd.
+
+2002-01-07  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/services/name/Makefile.am: install idl files in
+	$(datadir)/idl/orbit-2.0.
 
 2002-01-07  Murray Cumming  <murrayc@usa.net>
 
@@ -54,6 +489,144 @@
 	produces C++ files which actually have contents. I haven't tried 
 	to use those files yet.
 
+2002-01-04  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testSegv): remove
+	race condition assert.
+
+	* test/everything/everything.idl: make segv
+	oneway.
+
+2002-01-03  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.101
+
+2001-12-31  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/poa/orbit-adaptor.c
+	(ORBit_handle_request): debug.
+
+	* src/orb/poa/poa.c (ORBit_POA_handle_request):
+	add debug.
+
+2002-01-03  Laszlo Peter  <laca@ireland.sun.com>
+
+	* test/test-performance.c: s/time/elapsed_time/ (conflicts with
+	Solaris system headers)
+
+2002-01-03  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/test-performance.c: make global symbols static to
+	stop core dumps in my ldap libraries. Don't ask me :/
+
+2002-01-03  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-c-stubs.c: (cs_small_output_stub):
+	output local case code to check to see if the operation is
+	implemented and return NO_IMPLEMENT if not.
+	
+	* src/idl-compiler/orbit-idl2.h: add ORBIT_EPV_VAR_NAME.
+
+	* test/everything/client.c: (testMisc): test this in the local
+	case as well.
+
+2002-01-03  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/poa/poa-types.h:
+	(ORBIT_STUB_IsBypass): check for nil reference, and pawn off
+	on ORBit_small_invoke_stub if it is nil.
+
+	* src/orb/orb-core/orbit-small.c: (ORBit_small_invoke_stub):
+	return INV_OBJREF exception if obj is nil.
+
+	* test/everything/client.c: (testException): test.
+
+	* test/everything/pingServer.c: (PingPongServer_opSleep):
+	kill unused variable.
+
+2001-12-31  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require the new linc.
+
+2001-12-28  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/dynamic/dynany.c
+	(ORBit_dynany_new_default): publicise internaly
+	for time trials.
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	(ch_output_const_dcl): output unsigned types
+	properly.
+
+	* test/everything/client.c (testPingPong): add
+	non-blocking IO test.
+
+	* test/everything/pingServer.c
+	(PingPongServer_opSleep): impl.
+
+	* src/orb/poa/poa.c
+	(ORBit_POA_handle_request, return_exception):
+	non blocking writes.
+
+	* src/orb/orb-core/orbit-small.c
+	(orbit_small_marshal): do a non-blocking write.
+	(ORBit_small_invoke_adaptor): ditto.
+
+2001-12-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_close): block on send notification.
+
+	* src/orb/GIOP/giop-send-buffer.c
+	(giop_send_buffer_write): do blocking and non-blocking
+	writes.
+
+	* include/orbit/GIOP/giop-send-buffer.h: kill duff
+	prototype.
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_get_connection): impl.
+	(ORBit_connection_set_max_buffer): impl.
+
+2001-12-21  Roland Juelich <rj@atecom.com>
+
+	* src/orb/orb-core/iop-profiles.c: (IOP_ObjectKey_demarshal):
+	don't modify key length.
+
+2001-12-19  Mark McLoughlin  <mark@skynet.ie>
+
+	* test/everything/test.sh: niceify.
+
+2001-12-19  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/iop-profiles.c: (IOP_profiles_sync_objkey):
+	reduce the scream and shout error to a warning.
+
+2001-12-18  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init):
+	check the ALIGNOF_DOUBLE instead, since all sys
+	allocated memory has to be aligned to this.
+
+2001-12-15  Ross Golder  <rossg@golder.org>
+
+	* ORBit.spec.in: updated shared library directory.
+
+2001-12-14  Roland Juelich <rj@atecom.com>
+
+	* src/orb/orb-core/corba-orb.c: add ORBIIOPIPName
+	and ORBIIOPIPSock options.
+	(ORBit_ORB_start_servers): use the arguments.
+
+2001-12-13  Sam Couter <sam@topic.com.au>
+
+	* configure.in: move type alignment test
+
+	* acinclude.m4: here & make it pretty.
+
+2001-12-11  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.100
 
 2001-12-11  Michael Meeks  <michael@ximian.com>
 
@@ -91,12 +664,6 @@
 
 	* src/orb/orb-core/corba-typecode.c: (CDR_get):
 	use proper casts.
-
-2001-12-07  Mark McLoughlin  <mark@skynet.ie>
-
-	reviewed by: <delete if not using a buddy>
-
-	* src/orb/orb-core/corba-typecode.c: (CDR_get):
 
 2001-12-07  Mark McLoughlin  <mark@skynet.ie>
 
@@ -1347,7 +1914,7 @@
 
 	* configure.in (AC_OUTPUT): generate orbit2-config
 
-2001-10-16  Ross Golder  <rossg@durban.golder.org>
+2001-10-16  Ross Golder  <rossg@golder.org>
 
 	* orbit-config.in: replaced with orbit2-config.in
 	* orbit2-config.in: use pkg-config ORBit2 for --cflags

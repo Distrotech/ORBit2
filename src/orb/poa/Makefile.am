@@ -13,6 +13,7 @@ INCLUDES =						\
 	-I$(top_srcdir)/src/orb/poa			\
 	-DORBIT2_INTERNAL_API				\
 	$(WARN_CFLAGS)					\
+	$(ORBIT_DEBUG_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
 POA_IDLOUT=poa-defs-common.c

@@ -272,8 +272,9 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 }
 
 static glong
-ORBit_get_union_switch (CORBA_TypeCode tc, gconstpointer *val, 
-		       gboolean update)
+ORBit_get_union_switch (CORBA_TypeCode  tc,
+			gconstpointer  *val, 
+			gboolean        update)
 {
 	glong retval = 0; /* Quiet gcc */
 
@@ -283,14 +284,26 @@ ORBit_get_union_switch (CORBA_TypeCode tc, gconstpointer *val,
 	switch (tc->kind) {
 	case CORBA_tk_ulong:
 	case CORBA_tk_long:
-	case CORBA_tk_enum:
-		retval = *(CORBA_long *)*val;
-		if (update) *val = ((guchar *)*val) + sizeof (CORBA_long);
+	case CORBA_tk_enum: {
+		CORBA_long tmp;
+
+		memcpy (&tmp, *val, sizeof (CORBA_long));
+		retval = (glong) tmp;
+
+		if (update)
+			*val = ((guchar *)*val) + sizeof (CORBA_long);
+		}
 		break;
 	case CORBA_tk_ushort:
-	case CORBA_tk_short:
-		retval = *(CORBA_short *)*val;
-		if (update) *val = ((guchar *)*val) + sizeof (CORBA_short);
+	case CORBA_tk_short: {
+		CORBA_short tmp;
+
+		memcpy (&tmp, *val, sizeof (CORBA_short));
+		retval = (glong) tmp;
+
+		if (update)
+			*val = ((guchar *)*val) + sizeof (CORBA_short);
+		}
 		break;
 	case CORBA_tk_char:
 	case CORBA_tk_boolean:
@@ -319,9 +332,9 @@ ORBit_get_union_tag (CORBA_TypeCode union_tc,
 		     gconstpointer *val, 
 		     gboolean       update)
 {
-	glong discrim_val, case_val;
-	int i;
 	CORBA_TypeCode retval = CORBA_OBJECT_NIL;
+	glong          discrim_val;
+	int            i;
 
 	discrim_val = ORBit_get_union_switch (
 		union_tc->discriminator, val, update);
@@ -330,11 +343,7 @@ ORBit_get_union_tag (CORBA_TypeCode union_tc,
 		if (i == union_tc->default_index)
 			continue;
 
-		case_val = ORBit_get_union_switch (
-			union_tc->sublabels[i]._type,
-			(gconstpointer*)&union_tc->sublabels[i]._value, FALSE);
-
-		if (case_val == discrim_val) {
+		if (union_tc->sublabels [i] == discrim_val) {
 			retval = union_tc->subtypes[i];
 			break;
 		}
@@ -374,7 +383,6 @@ gboolean
 ORBit_demarshal_value (CORBA_TypeCode tc,
 		      gpointer *val,
 		      GIOPRecvBuffer *buf,
-		      gboolean dup_strings,
 		      CORBA_ORB orb)
 {
 	CORBA_long i;
@@ -499,7 +507,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_ANY);
 		decoded = *val;
 		decoded->_release = CORBA_FALSE;
-		if (ORBit_demarshal_any (buf, decoded, dup_strings, orb))
+		if (ORBit_demarshal_any (buf, decoded, orb))
 			return TRUE;
 		*val = ((guchar *)*val) + sizeof (CORBA_any);
 		break;
@@ -545,7 +553,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 	case CORBA_tk_struct:
 		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		for (i = 0; i < tc->sub_parts; i++) {
-			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, dup_strings, orb))
+			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, orb))
 				return TRUE;
 		}
 		break;
@@ -556,7 +564,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		int	        sz = 0;
 
 		discrim = *val = ALIGN_ADDRESS (*val, MAX (tc->discriminator->c_align, tc->c_align));
-		if (ORBit_demarshal_value (tc->discriminator, val, buf, dup_strings, orb))
+		if (ORBit_demarshal_value (tc->discriminator, val, buf, orb))
 			return TRUE;
 
 		subtc = ORBit_get_union_tag (tc, (gconstpointer*)&discrim, FALSE);
@@ -564,7 +572,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 
 		body = *val = ALIGN_ADDRESS (*val, tc->c_align);
-		if (ORBit_demarshal_value (subtc, &body, buf, dup_strings, orb))
+		if (ORBit_demarshal_value (subtc, &body, buf, orb))
 			return TRUE;
 
 		/* WATCHOUT: end subtc body may not be end of union */
@@ -584,12 +592,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 		if ((buf->cur + i) > buf->end
 		    || (buf->cur + i) < buf->cur)
 			return TRUE;
-		if (dup_strings) {
-			*(char **)*val = CORBA_string_dup (buf->cur);
-		} else {
-			*(((ORBitMemHow *) (buf->cur))-1) = ORBIT_MEMHOW_NONE;
-			*(char **)*val = buf->cur;
-		}
+		*(char **)*val = CORBA_string_dup (buf->cur);
 		*val = ((guchar *)*val) + sizeof (CORBA_char *);
 		buf->cur += i;
 		break;
@@ -626,7 +629,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 
 			for (i = 0; i < p->_length; i++)
 				if (ORBit_demarshal_value (tc->subtypes[0], &subval,
-							   buf, dup_strings, orb))
+							   buf, orb))
 					return TRUE;
 		}
 
@@ -635,7 +638,7 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 	}
 	case CORBA_tk_array:
 		for (i = 0; i < tc->length; i++)
-			if (ORBit_demarshal_value (tc->subtypes[0], val, buf, dup_strings, orb))
+			if (ORBit_demarshal_value (tc->subtypes[0], val, buf, orb))
 				return TRUE;
 		break;
 	case CORBA_tk_fixed:
@@ -651,14 +654,13 @@ ORBit_demarshal_value (CORBA_TypeCode tc,
 gpointer
 ORBit_demarshal_arg (GIOPRecvBuffer *buf,
 		     CORBA_TypeCode tc,
-		     gboolean       dup_strings,
 		     CORBA_ORB      orb)
 {
 	gpointer retval, val;
 
 	retval = val = ORBit_alloc_by_tc (tc);
 
-	ORBit_demarshal_value (tc, &val, buf, dup_strings, orb);
+	ORBit_demarshal_value (tc, &val, buf, orb);
 
 	return retval;
 }
@@ -666,7 +668,6 @@ ORBit_demarshal_arg (GIOPRecvBuffer *buf,
 gboolean
 ORBit_demarshal_any (GIOPRecvBuffer *buf,
 		     CORBA_any      *retval,
-		     gboolean        dup_strings,
 		     CORBA_ORB       orb)
 {
 	gpointer val;
@@ -677,8 +678,7 @@ ORBit_demarshal_any (GIOPRecvBuffer *buf,
 		return TRUE;
 
 	val = retval->_value = ORBit_alloc_by_tc (retval->_type);
-	if (ORBit_demarshal_value (retval->_type, &val,
-				   buf, dup_strings, orb))
+	if (ORBit_demarshal_value (retval->_type, &val, buf, orb))
 		return TRUE;
 
 	return FALSE;
@@ -822,9 +822,8 @@ ORBit_copy_value_core (gconstpointer *val,
 	case CORBA_tk_except:
 		*val = ALIGN_ADDRESS (*val, tc->c_align);
 		*newval = ALIGN_ADDRESS (*newval, tc->c_align);
-		for (i = 0; i < tc->sub_parts; i++) {
+		for (i = 0; i < tc->sub_parts; i++)
 			ORBit_copy_value_core (val, newval, tc->subtypes[i]);
-		}
 		break;
 	case CORBA_tk_union:
 	{
@@ -845,8 +844,8 @@ ORBit_copy_value_core (gconstpointer *val,
 
 		*val = ((guchar *)*val) + union_size;
 		*newval = ((guchar *)*newval) + union_size;
+		break;
 	}
-	break;
 	case CORBA_tk_wstring:
 	case CORBA_tk_string:
 		*val = ALIGN_ADDRESS (*val, ORBIT_ALIGNOF_CORBA_POINTER);
@@ -893,6 +892,9 @@ gpointer
 ORBit_copy_value (gconstpointer value, CORBA_TypeCode tc)
 {
 	gpointer retval, newval;
+
+	if (!value)
+		return NULL;
 
 	retval = newval = ORBit_alloc_by_tc (tc);
 	ORBit_copy_value_core (&value, &newval, tc);
@@ -949,9 +951,21 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		ALIGN_COMPARE (a, b, float, float,   ORBIT_ALIGNOF_CORBA_FLOAT);
 		ALIGN_COMPARE (a, b, double, double, ORBIT_ALIGNOF_CORBA_DOUBLE);
 
-		ALIGN_COMPARE (a, b, boolean, octet, ORBIT_ALIGNOF_CORBA_OCTET);
 		ALIGN_COMPARE (a, b, char,    octet, ORBIT_ALIGNOF_CORBA_OCTET);
 		ALIGN_COMPARE (a, b, octet,   octet, ORBIT_ALIGNOF_CORBA_OCTET);
+
+	case CORBA_tk_boolean: {
+		gboolean ba, bb;
+
+		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_OCTET);
+		*b = ALIGN_ADDRESS (*b, ORBIT_ALIGNOF_CORBA_OCTET);
+		ba = *(CORBA_octet *) *a;
+		bb = *(CORBA_octet *) *b;
+		*a = ((guchar *) *a) + sizeof (CORBA_octet);
+		*b = ((guchar *) *b) + sizeof (CORBA_octet);
+
+		return (ba && bb) || (!ba && !bb);
+	}
 
 	case CORBA_tk_string:
 		*a = ALIGN_ADDRESS (*a, ORBIT_ALIGNOF_CORBA_POINTER);
@@ -1031,14 +1045,18 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 	}
 
 	case CORBA_tk_union: {
-		gint   union_align = tc->c_align;
-		gint   discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
-		size_t union_size = ORBit_gather_alloc_info (tc);
+		gint     union_align = tc->c_align;
+		gint     discrim_align = MAX (tc->discriminator->c_align, tc->c_align);
+		size_t   union_size = ORBit_gather_alloc_info (tc);
+		gpointer a_orig, b_orig;
 
 		CORBA_TypeCode utc_a = ORBit_get_union_tag (
 			tc, (gconstpointer *)a, FALSE);
 		CORBA_TypeCode utc_b = ORBit_get_union_tag (
 			tc, (gconstpointer *)b, FALSE);
+
+		a_orig = *a;
+		b_orig = *b;
 
 		if (!CORBA_TypeCode_equal (utc_a, utc_b, ev))
 			return FALSE;
@@ -1055,8 +1073,8 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		if (!ORBit_value_equivalent (a, b, utc_a, ev))
 			return FALSE;
 
-		*a = ((guchar *) *a) + union_size;
-		*b = ((guchar *) *b) + union_size;
+		*a = ((guchar *) a_orig) + union_size;
+		*b = ((guchar *) b_orig) + union_size;
 		return TRUE;
 	}
 

@@ -12,6 +12,7 @@ INCLUDES =						\
 	-I$(top_builddir)/include/orbit/dynamic		\
 	-DORBIT2_INTERNAL_API				\
 	$(WARN_CFLAGS)					\
+	$(ORBIT_DEBUG_CFLAGS)				\
 	$(ORBIT_CFLAGS)
 
 DYNAMIC_IDLOUT=dynamic-defs-common.c

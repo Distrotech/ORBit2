@@ -36,6 +36,8 @@ void orbit_idl_node_foreach(OIDL_Marshal_Node *node, GFunc func, gpointer user_d
 void IDL_tree_traverse_parents(IDL_tree p, GFunc f, gconstpointer func_data);
 gboolean orbit_cbe_type_contains_complex(IDL_tree ts);
 
+void orbit_idl_check_oneway_op (IDL_tree op);
+
 typedef enum { DATA_IN=1, DATA_INOUT=2, DATA_OUT=4, DATA_RETURN=8 } IDL_ParamRole;
 gint oidl_param_info(IDL_tree param, IDL_ParamRole role, gboolean *isSlice);
 
@@ -48,5 +50,6 @@ extern gboolean oidl_tree_is_pidl(IDL_tree tree);
 
 
 #define ORBIT_RETVAL_VAR_NAME "_ORBIT_retval"
+#define ORBIT_EPV_VAR_NAME    "_ORBIT_epv"
 
 #endif /* ORBIT_IDL2_H */

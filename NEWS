@@ -1,3 +1,77 @@
+Version 2.3.105
+
+	* Changes
+		+ object debugging (Michael)
+		+ expand in-proc trace debugging (Michael)
+		+ genuid cleanups (Michael, Mark)
+		+ minor typecode idl comiler cleanup (Mark)
+
+	* Bugs
+		+ Makefile.shared disting problem (Michael)
+		+ context removing bug (Michael)
+		+ various Any comparing bugs (Michael, Mark)
+
+Version 2.3.104
+
+	* runtime GIOP debugging (Mark)	
+	* union, any and floats regression tests (Mark)
+	* minor optimisations/rationalisations (Mark)
+	* orb-core code cleanups (Mark)
+	* removing deprecated glib functions (Shivram U)
+
+Version 2.3.103
+
+	* Changes
+		+ big POA cleanup (Mark)
+		+ unique id generator re-write (Mark, Michael)
+		+ runtime debugging (Jacob Berkman, Mark)
+		+ idl compiler checks oneway's validity (Mark)
+		+ union marshalling cleanup (Mark)
+		+ allow multiple ORB:init calls (Michael)
+
+	* Bugs
+		+ fix profile leaks (Michael)
+		+ fix screwy idl compiler output (Xiong Jiang)
+		+ bomb out if alingment checks fail (Mark)
+
+Version 2.3.102
+
+	* Changes
+		+ re-enterancy various (Michael)
+		+ moved IDL install (Mark)
+		+ performance regression test (Michael, Mark)
+		+ fixed regression tests (Michael)
+
+Version 2.3.101
+
+	* Features
+		+ configurable non-blocking IO with the new linc (Michael)
+		+ performance regression test (Michael, Mark, Laszlo Peter)
+		+ Name/Sock options for init connection (Roland Juelich)
+
+	* IDL compiler
+		+ generate correct unsigned defines (Michael)
+		+ handle NULL obj / impl cleanly (Mark)
+
+	* Misc.
+		+ more regression tests (Mark)
+		+ autoconf updates (Sam Couter)
+		+ IOP profile fixage (Roland Juelich, Marl)
+		+ spec fixage (Ross Golder)
+
+Version 2.3.100
+
+	* Bugs
+		+ more regression tests (Michael)
+		+ IDL compiler fixage (Laszlo Peter, Michael)
+		+ FreeBSD build fixage (Theo Van Klaveren)
+		+ hashing issues (Michael)
+		+ union alignment fixage (Mark, Laszlo)
+		+ re-work debug code (Mark)
+		+ typecode marshaling byteswaps (Mark)
+		+ any de-marshaling byteswaps (Mark)
+		+ build fixage (Jacob)
+
 Version 2.3.99
 
 	* Features

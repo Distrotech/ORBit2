@@ -1,17 +1,14 @@
+#ifdef G_ENABLE_DEBUG
+
 #include "config.h"
-#include <orbit/orbit.h>
+#include <unistd.h>
 #include <string.h>
+#include <sys/time.h>
+#include <ctype.h>
+#include <orbit/orbit.h>
 
 #include "orb-core-private.h"
 #include "orbit-debug.h"
-
-#ifdef TRACE_DEBUG
-#  include <unistd.h>
-#endif
-
-#ifdef TRACE_TIMING
-#  include <sys/time.h>
-#endif
 
 /*
  * Flip this switch to debug the
@@ -19,8 +16,6 @@
  */
 #undef DEBUG_TRACE
 
-
-#ifdef TRACE_DEBUG
 #define NOT_NULL(str) ((str) == NULL ? "(null)" : (str))
 
 void
@@ -211,7 +206,6 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 	*val = ((guchar *)*val) + ORBit_gather_alloc_info (tc);
 }
 
-#ifdef TRACE_TIMING
 void
 ORBit_trace_timestamp (void)
 {
@@ -220,7 +214,6 @@ ORBit_trace_timestamp (void)
 	gettimeofday (&t, NULL);
 	tprintf ("%lu.%lu ", t.tv_sec, t.tv_usec);
 }
-#endif
 
 void
 ORBit_trace_header (CORBA_Object   object,
@@ -243,4 +236,23 @@ ORBit_trace_end_method (void)
 	tprintf ("\n");
 }
 
-#endif /* TRACE_DEBUG */
+void
+ORBit_trace_profiles (CORBA_Object obj)
+{
+	tprintf ("p %d: Obj %p (%s) profiles: ",
+		 getpid (), obj,
+		 g_quark_to_string (obj ? obj->type_qid : 0));
+	if (obj) {
+		GSList *l;
+
+		for (l = obj->profile_list; l; l = l->next) {
+			char *s;
+			s = IOP_profile_dump (obj, l->data);
+			tprintf ("'%s' ", s);
+			g_free (s);
+		}
+	}
+	tprintf ("\n");
+}
+
+#endif /* G_ENABLE_DEBUG */

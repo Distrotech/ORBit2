@@ -246,10 +246,8 @@ load_module (const char *fname, const char *libname)
 	ORBit_IModule *module;
 
 	if (!(handle = g_module_open (fname, G_MODULE_BIND_LAZY))) {
-#ifdef TYPE_DEBUG
-		g_warning ("Failed to load '%s': '%s'", fname,
-			   g_module_error ());
-#endif
+		dprintf (TYPES, "Failed to load '%s': '%s'\n", fname,
+			 g_module_error ());
 		return FALSE;
 	}
 
@@ -265,10 +263,8 @@ load_module (const char *fname, const char *libname)
 		ORBit_IInterface **p;
 		gulong length, i;
 
-#ifdef TYPE_DEBUG
-		g_warning ("Loaded interfaces of serial %d from '%s'",
+		dprintf (TYPES, "Loaded interfaces of serial %d from '%s'\n",
 			   module->version, fname);
-#endif
 
 		for (p = module->interfaces, length = 0; p && *p; p++)
 			length++;
@@ -290,9 +286,7 @@ load_module (const char *fname, const char *libname)
 			dest = &iinterfaces->_buffer [i];
 			add_iinterface (dest);
 
-#ifdef TYPE_DEBUG
-			g_warning ("Type '%s'", dest->tc->repo_id);
-#endif
+			dprintf (TYPES, "Type '%s'\n", dest->tc->repo_id);
 		}
 
 		types = ORBit_copy_value (

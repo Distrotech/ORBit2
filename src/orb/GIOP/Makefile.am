@@ -3,6 +3,7 @@ INCLUDES =				\
 	-I$(top_builddir)/include	\
 	-DORBIT2_INTERNAL_API		\
 	$(WARN_CFLAGS)			\
+	$(ORBIT_DEBUG_CFLAGS)		\
 	$(ORBIT_CFLAGS)
 
 noinst_LTLIBRARIES=libGIOP.la
@@ -10,7 +11,7 @@ noinst_LTLIBRARIES=libGIOP.la
 libGIOP_la_SOURCES=giop-connection.c \
 	giop-server.c \
 	giop.c \
-	gip-debug.h \
+	giop-debug.h \
 	giop-private.h \
 	giop-send-buffer.c \
 	giop-recv-buffer.c \

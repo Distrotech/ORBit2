@@ -9,7 +9,7 @@
 #define GIOP_CHUNK_ALIGN 8
 #define GIOP_CHUNK_SIZE (GIOP_CHUNK_ALIGN * 256)
 
-static GSList *send_buffer_list;
+static GSList *send_buffer_list = NULL;
 static GMutex *send_buffer_list_lock = NULL;
 
 static const char giop_zero_buf [GIOP_CHUNK_ALIGN * 10] = {0};
@@ -388,9 +388,15 @@ giop_send_buffer_append_aligned (GIOPSendBuffer *buf,
  * Return value: 0 on sucess, non 0 on error.
  **/
 int
-giop_send_buffer_write (GIOPSendBuffer *buf, GIOPConnection *cnx)
+giop_send_buffer_write (GIOPSendBuffer *buf,
+			GIOPConnection *cnx,
+			gboolean        blocking)
 {
 	int retval;
+	static LINCWriteOpts *non_block = NULL;
+
+	if (!non_block)
+		non_block = linc_write_options_new (FALSE);
 
 	if (buf->giop_version >= GIOP_1_2)
 		giop_send_buffer_align (buf, 8); /* Do tail align */
@@ -399,7 +405,13 @@ giop_send_buffer_write (GIOPSendBuffer *buf, GIOPConnection *cnx)
 
 	retval = linc_connection_writev (
 		(LINCConnection *) cnx, buf->iovecs,
-		buf->num_used, buf->msg.header.message_size + buf->header_size);
+		buf->num_used, 
+		blocking ? NULL : non_block);
+
+	if (!blocking && retval == LINC_IO_QUEUED_DATA)
+		retval = 0;
+
+	/* FIXME: we need to flag the connection disconnected on fatal error */
 
 	LINC_MUTEX_UNLOCK (cnx->outgoing_mutex);
 

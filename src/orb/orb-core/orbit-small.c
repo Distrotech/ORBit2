@@ -88,13 +88,13 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 
 	reply_status = giop_recv_buffer_reply_status (rb);
 
-	dprintf ("Received exception %d: '%s'\n",
+	dprintf (MESSAGES, "Received exception %d: '%s'\n",
 		 reply_status, my_repoid ? my_repoid : "<Null>");
 
 	if (reply_status == CORBA_SYSTEM_EXCEPTION) {
 		CORBA_unsigned_long minor;
 
-		dprintf ("system exception\n");
+		dprintf (MESSAGES, "system exception\n");
 		
 		ev->_major = CORBA_SYSTEM_EXCEPTION;
 
@@ -127,13 +127,13 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 			ev->_any._type = ORBit_RootObject_duplicate (
 				TC_CORBA_SystemException);
 		
-		dprintf ("system exception de-marshaled\n");
+		dprintf (MESSAGES, "system exception de-marshaled\n");
 		return;
 
 	} else if (reply_status == CORBA_USER_EXCEPTION) {
 		int i;
 
-		dprintf ("user exception\n");
+		dprintf (MESSAGES, "user exception\n");
 
 		for (i = 0; i < types->_length; i++) {
 			if (!strcmp (types->_buffer[i]->repo_id, my_repoid))
@@ -149,10 +149,10 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 		} else {
 			gpointer data;
 			
-			dprintf ("de-marshal user exception\n");
+			dprintf (MESSAGES, "de-marshal user exception\n");
 
 			data = ORBit_demarshal_arg (
-				rb, types->_buffer [i], TRUE, orb);
+				rb, types->_buffer [i], orb);
 
 			/* FIXME: might be fixed one day by cunning detection
 			   in CORBA_exception_set ... */
@@ -199,7 +199,7 @@ ORBit_small_send_user_exception (GIOPSendBuffer     *send_buffer,
 	} else {
 		giop_send_buffer_append_string (send_buffer, ev->_id);
 
-		dprintf ("Returning exception of type '%s'\n", ev->_id);
+		dprintf (MESSAGES, "Returning exception of type '%s'\n", ev->_id);
 
 		ORBit_marshal_arg (send_buffer, ev->_any._value,
 				   types->_buffer[i]);
@@ -213,36 +213,34 @@ ORBit_small_marshal_context (GIOPSendBuffer *send_buffer,
 			     ORBit_IMethod  *m_data,
 			     CORBA_Context   ctx)
 {
-	if (m_data->contexts._length > 0) {
-		int i;
-		/* Horrible inefficiency to get round the 'lete
-		   efficiency of the current impl */
-		ORBit_ContextMarshalItem *mlist;
+	int i;
+	/* Horrible inefficiency to get round the 'lete
+	   efficiency of the current impl */
+	ORBit_ContextMarshalItem *mlist;
 
-		mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
-				m_data->contexts._length);
+	mlist = alloca (sizeof (ORBit_ContextMarshalItem) *
+			m_data->contexts._length);
 
-		tprintf (" context { ");
+	tprintf (" context { ");
 
-		for (i = 0; i < m_data->contexts._length; i++) {
-			char *val;
+	for (i = 0; i < m_data->contexts._length; i++) {
+		char *val;
 
-			mlist [i].str = m_data->contexts._buffer [i];
+		mlist [i].str = m_data->contexts._buffer [i];
 
-			val = g_hash_table_lookup (ctx->mappings, mlist [i].str);
-			tprintf ("( %s: '%s' )%s", mlist [i].str, val,
-				 i < m_data->contexts._length - 1 ? ", ": "");
+		val = g_hash_table_lookup (ctx->mappings, mlist [i].str);
+		tprintf ("( %s: '%s' )%s", mlist [i].str, val,
+			 i < m_data->contexts._length - 1 ? ", ": "");
 
-			mlist [i].len = strlen (mlist [i].str) + 1;
-		}
-
-		tprintf (" }");
-
-		/* Assumption, this doesn't whack mlist pointers into
-		   the send_buffer: verified */
-		ORBit_Context_marshal (
-			ctx, mlist, m_data->contexts._length, send_buffer);
+		mlist [i].len = strlen (mlist [i].str) + 1;
 	}
+
+	tprintf (" }");
+
+	/* Assumption, this doesn't whack mlist pointers into
+	   the send_buffer: verified */
+	ORBit_Context_marshal (
+		ctx, mlist, m_data->contexts._length, send_buffer);
 }
 
 #define BASE_TYPES \
@@ -284,7 +282,7 @@ typedef struct {
 #define do_marshal_value(a,b,c)     \
 	ORBit_marshal_value   ((a),(gconstpointer *)(b),(c))
 #define do_demarshal_value(a,b,c,e) \
-	ORBit_demarshal_value ((c),(b),(a),TRUE,(e))
+	ORBit_demarshal_value ((c),(b),(a),(e))
 
 static gboolean
 orbit_small_marshal (CORBA_Object           obj,
@@ -315,7 +313,7 @@ orbit_small_marshal (CORBA_Object           obj,
 		align &= ~(sizeof (CORBA_unsigned_long) - 1);
 		memset (header + len, 0, align - len);
 
-		dprintf ("Align = %d\n", align);
+		dprintf (MESSAGES, "Align = %d\n", align);
 		op_vec.iov_len  = align;
 		op_vec.iov_base = header;
 	}
@@ -327,7 +325,7 @@ orbit_small_marshal (CORBA_Object           obj,
 	if (!send_buffer)
 		return FALSE;
 
-	dprintf ("Marshal: id 0x%x\n", request_id);
+	dprintf (MESSAGES, "Marshal: id 0x%x\n", request_id);
 
 	for (i = 0; (m_data->arguments._buffer &&
 		     m_data->arguments._buffer [i].flags); i++) {
@@ -357,11 +355,12 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	tprintf (")");
 
-	ORBit_small_marshal_context (send_buffer, m_data, ctx);
+	if (m_data->contexts._length > 0)
+		ORBit_small_marshal_context (send_buffer, m_data, ctx);
 
 	do_giop_dump_send (send_buffer);
 
-	if (giop_send_buffer_write (send_buffer, cnx)) {
+	if (giop_send_buffer_write (send_buffer, cnx, FALSE)) {
 		g_warning ("Failed to send buffer");
 		giop_recv_list_destroy_queue_entry (mqe);
 		return FALSE;
@@ -396,7 +395,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 
 	recv_buffer = giop_recv_buffer_get (mqe, TRUE);
 	if (!recv_buffer) {
-		dprintf ("No recv buffer ...\n");
+		dprintf (MESSAGES, "No recv buffer ...\n");
 		return MARSHAL_SYS_EXCEPTION_INCOMPLETE;
 	}
 
@@ -404,7 +403,7 @@ orbit_small_demarshal (CORBA_Object           obj,
  		goto msg_exception;
 
 	if ((tc = m_data->ret)) {
-		tprintf (" => ");
+		tprintf (" =>: ");
 
 		g_assert (ret != NULL);
 
@@ -430,7 +429,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		case SEQ_ANY_TYPES:
 		case CORBA_tk_array:
 		default:
-			data = ORBit_demarshal_arg (recv_buffer, tc, TRUE, orb);
+			data = ORBit_demarshal_arg (recv_buffer, tc, orb);
 			if (!data)
 				return MARSHAL_SYS_EXCEPTION_COMPLETE;
 
@@ -501,7 +500,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 					do_demarshal_value (recv_buffer, &arg, tc, orb);
 				} else
 					*(gpointer *)args [i] = p = ORBit_demarshal_arg (
-						recv_buffer, tc, TRUE, obj->orb);
+						recv_buffer, tc, obj->orb);
 
 				if (!trace_have_out++)
 					tprintf (" out: (");
@@ -533,14 +532,16 @@ orbit_small_demarshal (CORBA_Object           obj,
 			recv_buffer, ev, &m_data->exceptions, obj->orb);
 		giop_recv_buffer_unuse (recv_buffer);
 
-#ifdef TRACE_DEBUG
-		if (ev->_major == CORBA_SYSTEM_EXCEPTION)
-			tprintf (" System Exception: '%s' ", ev->_id);
-		else {
-			tprintf (" User Exception: '%s' ", ev->_id);
-			ORBit_trace_any (&ev->_any);
+#ifdef G_ENABLE_DEBUG
+		if (_orbit_debug_flags & ORBIT_DEBUG_TRACES) {
+			if (ev->_major == CORBA_SYSTEM_EXCEPTION)
+				tprintf (" System Exception: '%s' ", ev->_id);
+			else {
+				tprintf (" User Exception: '%s' ", ev->_id);
+				ORBit_trace_any (&ev->_any);
+			}
 		}
-#endif
+#endif /* G_ENABLE_DEBUG */
 
 		return MARSHAL_EXCEPTION_COMPLETE;
 	}
@@ -558,9 +559,20 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	CORBA_completion_status completion_status;
 	GIOPConnection         *cnx;
 	GIOPMessageQueueEntry   mqe;
-	ORBit_OAObject          adaptor_obj = obj->adaptor_obj;
+	ORBit_OAObject          adaptor_obj;
+
+	if (!obj) {
+		dprintf (MESSAGES, "Cannot invoke method on null object\n");
+		CORBA_exception_set_system (ev, ex_CORBA_INV_OBJREF,
+					    CORBA_COMPLETED_NO);
+		goto clean_out;
+	}
+
+	adaptor_obj = obj->adaptor_obj;
 
 	if (adaptor_obj) {
+		tprintf_header (obj, m_data);
+		tprintf ("[in-proc]");
 		ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
 					    args, ctx, NULL, ev);
 		goto clean_out;
@@ -569,7 +581,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	cnx = ORBit_object_get_connection (obj);
 
 	if (!cnx) {
-		dprintf ("Null connection on object '%p'\n", obj);
+		dprintf (MESSAGES, "Null connection on object '%p'\n", obj);
 		completion_status = CORBA_COMPLETED_NO;
 		goto system_exception;
 	}
@@ -597,23 +609,23 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	{
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		completion_status = CORBA_COMPLETED_YES;
-		dprintf ("Sys exception completed on id 0x%x\n\n", request_id);
+		dprintf (MESSAGES, "Sys exception completed on id 0x%x\n\n", request_id);
 		goto system_exception;
 
 	case MARSHAL_SYS_EXCEPTION_INCOMPLETE:
-		dprintf ("Sys exception incomplete on id 0x%x\n\n", request_id);
+		dprintf (MESSAGES, "Sys exception incomplete on id 0x%x\n\n", request_id);
 		goto system_exception;
 
 	case MARSHAL_EXCEPTION_COMPLETE:
-		dprintf ("Clean demarshal of exception on id 0x%x\n\n", request_id);
+		dprintf (MESSAGES, "Clean demarshal of exception on id 0x%x\n\n", request_id);
 		break;
 
 	case MARSHAL_RETRY:
-		dprintf ("Retry demarshal on id 0x%x\n\n", request_id);
+		dprintf (MESSAGES, "Retry demarshal on id 0x%x\n\n", request_id);
 		goto retry_request;
 
 	case MARSHAL_CLEAN:
-		dprintf ("Clean demarshal on id 0x%x\n\n", request_id);
+		dprintf (MESSAGES, "Clean demarshal on id 0x%x\n\n", request_id);
 		break;
 	};
 
@@ -713,8 +725,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 					break;
 				} /* drop through */
 			default:
-				args [i] = ORBit_demarshal_arg (
-					recv_buffer, a->tc, TRUE, orb);
+				args [i] = ORBit_demarshal_arg (recv_buffer, a->tc, orb);
 				p = args [i];
 				tprintf_trace_value (&p, tc);
 				break;
@@ -774,7 +785,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 		ev->_major);
 
 	if (!send_buffer) {
-		dprintf ("Weird, no send_buffer");
+		dprintf (MESSAGES, "Weird, no send_buffer");
 		return;
 
 	} else if (ev->_major == CORBA_USER_EXCEPTION) {
@@ -782,7 +793,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 			send_buffer, ev, &m_data->exceptions)) {
 			/* Tried to marshal an unknown exception,
 			   so we throw a system exception next */
-			dprintf ("Re-sending an exception, this time %d: '%s'",
+			dprintf (MESSAGES, "Re-sending an exception, this time %d: '%s'",
 				 ev->_major, ev->_id);
 			goto sys_exception;
 		}
@@ -799,7 +810,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 		if ((tc = m_data->ret)) {
 			gpointer p = retval;
 
-			tprintf (" => ");
+			tprintf (" =>; ");
 
 			while (tc->kind == CORBA_tk_alias)
 				tc = tc->subtypes [0];
@@ -868,7 +879,7 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 
 	do_giop_dump_send (send_buffer);
 
-	giop_send_buffer_write (send_buffer, recv_buffer->connection);
+	giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
 	giop_send_buffer_unuse (send_buffer);
 
 	if (m_data->ret && ev->_major == CORBA_NO_EXCEPTION) {
@@ -994,15 +1005,18 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 				       ret, aqe->m_data, args)) {
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		aqe->completion_status = CORBA_COMPLETED_YES;
-		dprintf ("Sys exception completed on id 0x%x\n\n", aqe->mqe.request_id);
+		dprintf (MESSAGES, "Sys exception completed on id 0x%x\n\n",
+			 aqe->mqe.request_id);
 		goto system_exception;
 
 	case MARSHAL_SYS_EXCEPTION_INCOMPLETE:
-		dprintf ("Sys exception incomplete on id 0x%x\n\n", aqe->mqe.request_id);
+		dprintf (MESSAGES, "Sys exception incomplete on id 0x%x\n\n",
+			 aqe->mqe.request_id);
 		goto system_exception;
 
 	case MARSHAL_EXCEPTION_COMPLETE:
-		dprintf ("Clean demarshal of exception on id 0x%x\n\n", aqe->mqe.request_id);
+		dprintf (MESSAGES, "Clean demarshal of exception on id 0x%x\n\n",
+			 aqe->mqe.request_id);
 		break;
 
 	case MARSHAL_RETRY:
@@ -1010,7 +1024,8 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 		return;
 
 	case MARSHAL_CLEAN:
-		dprintf ("Clean demarshal on id 0x%x\n\n", aqe->mqe.request_id);
+		dprintf (MESSAGES, "Clean demarshal on id 0x%x\n\n",
+			 aqe->mqe.request_id);
 		break;
 	};
 	goto clean_out;
@@ -1241,3 +1256,21 @@ ORBit_small_unlisten_for_broken (CORBA_Object obj,
 
 	return ret;
 }
+
+ORBitConnection *
+ORBit_small_get_connection (CORBA_Object obj)
+{
+	return (ORBitConnection *) ORBit_object_get_connection (obj);
+}
+
+void
+ORBit_connection_set_max_buffer (ORBitConnection *cnx,
+				 gulong           max_buffer_bytes)
+{
+	LINCConnection *lcnx = (LINCConnection *) cnx;
+
+	g_return_if_fail (LINC_IS_CONNECTION (lcnx));
+
+	linc_connection_set_max_buffer (lcnx, max_buffer_bytes);
+}
+

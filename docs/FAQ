@@ -11,15 +11,17 @@ The ORBit2 FAQ - v 0.1
 		+ is ORBit2 thread safe ?
 			+ how do I enable a threaded ORB ?
 			+ what is this re-enterancy thing ?
-			+ can I have each invocation handled by a
-			  different thread ?
+			+ can I invoke methods from multiple threads ?
 			+ can I receive invocations in multiple
 			  threads ?
-			+ can I invoke methods from multiple threads ?
+			+ can I have each invocation handled by a
+			  different thread ?
 
 		+ how does the new 'type' system work ?
 			+ what do you mean by 'type' data ?
 			+ how do we get type data for an interface ?
+				+ Type data from an object reference ?
+				+ Type data from a type library ?
 			+ what is a type library (or imodule) ?
 			+ how do I find which type libraries are installed ?
 			+ why bother generating type information from
@@ -29,10 +31,15 @@ The ORBit2 FAQ - v 0.1
 	+ Misc.
 		+ where can I find out more about CORBA ?
 		+ what is the purify cleanliness option ?
+		+ how do I enable ORB debugging ?
 		+ how do I enable reference tracking ?
+		+ what's all this about random numbers ?
 		+ my skels leak memory - why ?
 		+ why should I not use _release ?
 		+ why can't I keep a pointer to an argument ?
+
+	+ Errors.
+		+ assertion failed: (ORBIT_ALIGNOF_CORBA_POINTER > 2) ?
 
 * What is ORBit2 ?
 
@@ -328,6 +335,27 @@ guestimation.
 which can be helpful for poorer man's memory debugging tools, such as
 memprof.
 
+** how do I enable ORB debugging ?
+
+	ORBit2 provides some nice mechanisms for debugging your
+application. To make sure support for them is compiled into the ORB
+you need to pass the --enable-debug option at configure time.
+
+	By passing a colon seperated list of flags to the ORB using
+either the ORBIT2_DEBUG environment variable or the --ORBDebugFlags=
+command line option, you can switch on the various features. The
+available flags are:
+
+	+ messages : enable general debug messages.
+	+ traces   : enable an strace-like of trace of method
+	             invocations.
+	+ timings  : add microsecond time stamps to the trace.
+	+ types    : debug typelib loading.
+	+ objects  : enable object profile related messages.
+	+ giop     : enable dumping of all GIOP packets.
+	+ refs     : object ref-counting debugging info.
+	+ all      : enable all of the above flags.
+		
 ** how do I enable reference tracking ?
 
 	The ORB by default accounts for all it's object resouces, and
@@ -347,6 +375,31 @@ return an exception in ev.
 add 'return bonobo_debug_shutdown ()' at the end of your program. This
 will also flag bonobo object references and other bonbo internal
 resouce managment problems.
+
+** what's all this about random numbers ?
+
+	Every object created by the POA contains two pieces of random
+data in its object reference. This is primarily a defence against a
+malicous attack on your application by someone who may try to
+construct an object reference and invoke methods on it.
+
+	By default the ORB reads this random data from /dev/urandom
+which is a good non-blocking source of entropy on Linux and Solaris 9.
+
+	However, on previous version of Solaris and other platforms,
+/dev/urandom is not available. On these platforms, /dev/random often
+has poor levels of entropy and may cause the application to block. In
+this case the ORB will first try to use the OpenSSL RAND_bytes()
+method if ORBit has been compiled with SSL support and, finally, use
+the glib psuedo random number generator.
+
+	If the only transport enabled in the ORB are unix domain
+sockets, a very simple hashing algorithm based on gettimeofday() is
+used to generate unique ids. The rationale behind this is that UDS
+sockets are created with the default file permissions of the of the
+process. These default permissions can be modified using the usual
+umask() system call. These file permissions should provide sufficient
+defense.
 
 ** my skels leak memory - why ?
 
@@ -437,3 +490,13 @@ function to copy any value, specified by type:
 }
 
 	is correct.
+
+* Errors.
+
+** assertion failed: (ORBIT_ALIGNOF_CORBA_POINTER > 2) ?
+
+	This error usually occurs when the compiler alignment
+configure check fails to work correctly. Have a look at the
+ORBIT_ALIGNOF defines in include/orbit/orbit-config.h. If these are
+all zeros, then you need to look at config.log and figure out why
+configure if coming up with these bogus values.
