@@ -1,3 +1,8 @@
+2001-11-29  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/GIOP/giop.c: (giop_dump_recv): print the 
+	  header as well as the message body.
+
 2001-11-26  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.3.99
