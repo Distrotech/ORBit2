@@ -42,7 +42,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   IDL_ns namespace;
   IDL_tree tree;
   int errcode;
-  char *basename, *ctmp;
+  char *fbasename, *ctmp;
   OIDL_Output_Tree otree;
 
   binfo = orbit_idl_backend_for_lang(rinfo->output_language,rinfo->backend_directory);
@@ -68,9 +68,9 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
     return 0;
   }
 
-  basename = alloca(strlen(filename) + 1);
-  strcpy(basename, filename);
-  ctmp = strrchr(basename, '.');
+  fbasename = g_alloca(strlen(filename) + 1);
+  strcpy(fbasename, filename);
+  ctmp = strrchr(fbasename, '.');
   if(ctmp) *ctmp = '\0';
 
   otree.tree = tree;

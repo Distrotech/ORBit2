@@ -1,6 +1,6 @@
 #include "config.h"
-
 #include "orbit-idl2.h"
+#include <string.h>
 
 void
 orbit_idl_attr_fake_ops(IDL_tree attr, IDL_ns ns)

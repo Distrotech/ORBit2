@@ -54,5 +54,6 @@ guchar *giop_send_buffer_append_indirect(GIOPSendBuffer *buf, gconstpointer mem,
 void giop_send_buffer_align(GIOPSendBuffer *buf, gulong boundary);
 
 int giop_send_buffer_write(GIOPSendBuffer *buf, GIOPConnection *cnx);
+CORBA_unsigned_long giop_get_request_id(void);
 
 #endif

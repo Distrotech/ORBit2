@@ -563,7 +563,7 @@ giop_recv_list_push(GIOPRecvBuffer *buf)
   O_MUTEX_UNLOCK(giop_queued_messages_lock);
 }
 
-static CORBA_unsigned_long
+CORBA_unsigned_long
 giop_recv_buffer_get_request_id(GIOPRecvBuffer *buf)
 {
   g_assert(buf->state == GIOP_MSG_READY);
@@ -675,25 +675,29 @@ giop_recv_list_pop(gboolean choose_msg_type, CORBA_unsigned_long msg_type,
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_reply(CORBA_unsigned_long request_id, gboolean block_for_reply)
+giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply)
 {
   GIOPRecvBuffer *retval;
 
   do {
     g_main_iteration(block_for_reply);
-  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_REPLY, TRUE, request_id)) && block_for_reply);
+  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_REPLY, TRUE, request_id))
+	  && block_for_reply
+	  && (!cnx || cnx->parent.status != LINC_DISCONNECTED));
 
   return retval;
 }
 
 GIOPRecvBuffer *
-giop_recv_buffer_use_locate_reply(CORBA_unsigned_long request_id, gboolean block_for_reply)
+giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply)
 {
   GIOPRecvBuffer *retval;
   
   do {
     g_main_iteration(block_for_reply);
-  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_LOCATEREPLY, TRUE, request_id)) && block_for_reply);
+  } while(!(retval = giop_recv_list_pop(TRUE, GIOP_LOCATEREPLY, TRUE, request_id))
+	  && block_for_reply
+	  && (!cnx || cnx->parent.status != LINC_DISCONNECTED));
 
   return retval;  
 }
@@ -745,4 +749,40 @@ giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth)
     }
 
   return giop_recv_buffer_state_change(buf, new_state, is_auth);
+}
+
+guint
+giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
+{
+  switch(buf->header.version[1])
+    {
+    case 0:
+      return buf->msg.reply_1_0.reply_status;
+      break;
+    case 1:
+      return buf->msg.reply_1_1.reply_status;
+      break;
+    case 2:
+      return buf->msg.reply_1_2.reply_status;
+      break;
+    }
+
+  return 0;
+}
+
+char *
+giop_recv_buffer_get_opname(GIOPRecvBuffer *buf)
+{
+  switch(buf->header.version[1])
+    {
+    case 0:
+      return buf->msg.request_1_0.operation;
+      break;
+    case 1:
+      return buf->msg.request_1_1.operation;
+      break;
+    case 2:
+      return buf->msg.request_1_2.operation;
+      break;
+    }
 }

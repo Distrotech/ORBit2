@@ -112,7 +112,8 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "};\n");
   }
 
-  fprintf(ci->fh, "register CORBA_unsigned_long _ORBIT_request_id, _ORBIT_system_exception_minor;\n");
+  fprintf(ci->fh, "register CORBA_unsigned_long _ORBIT_request_id;\n");
+  fprintf(ci->fh, "register CORBA_char *_ORBIT_system_exception_ex;\n");
   fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
   fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
   if(!IDL_OP_DCL(tree).f_oneway)
@@ -172,7 +173,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   if(sizeof(gpointer) > sizeof(CORBA_unsigned_long))
     fprintf(ci->fh, "_ORBIT_request_id = giop_get_request_id();\n");
   else
-    fprintf(ci->fh, "_ORBIT_request_id = GPOINTER_TO_UINT(alloca(0));\n");
+    fprintf(ci->fh, "_ORBIT_request_id = GPOINTER_TO_UINT(g_alloca(0));\n");
 
   fprintf(ci->fh, "{ /* marshalling */\n");
   fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%lu]; } _ORBIT_operation_name_data = { %lu, \"%s\" };\n",
@@ -187,15 +188,15 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   orbit_cbe_alloc_tmpvars(oi->in_stubs, ci);
 
   fprintf(ci->fh, "_ORBIT_send_buffer = \n");
-  fprintf(ci->fh, "giop_send_request_buffer_use(_cnx, NULL, _ORBIT_request_id, %s,\n",
+  fprintf(ci->fh, "giop_send_buffer_use_request(_cnx->giop_version, _ORBIT_request_id, %s,\n",
 	  IDL_OP_DCL(tree).f_oneway?"CORBA_FALSE":"CORBA_TRUE");
-  fprintf(ci->fh, "&(_obj->active_profile->object_key_vec), &_ORBIT_operation_vec, &ORBit_default_principal_iovec);\n\n");
-  fprintf(ci->fh, "_ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE;\n");
+  fprintf(ci->fh, "&(_obj->oki->object_key_vec), &_ORBIT_operation_vec, NULL /* &ORBit_default_principal_iovec */);\n\n");
+  fprintf(ci->fh, "_ORBIT_system_exception_ex = ex_CORBA_COMM_FAILURE;\n");
   fprintf(ci->fh, "if(!_ORBIT_send_buffer) goto _ORBIT_system_exception;\n");
 
   c_marshalling_generate(oi->in_stubs, ci, TRUE);
 
-  fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) goto _ORBIT_system_exception;\n");
+  fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer, _cnx)) goto _ORBIT_system_exception;\n");
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_MAYBE;\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
   fprintf(ci->fh, "}\n");
@@ -209,13 +210,13 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     if(oi->out_stubs)
       fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
 
-    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
+    fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_buffer_use_reply(_cnx, _ORBIT_request_id, TRUE);\n");
 
     fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;\n");
     fprintf(ci->fh, "_ORBIT_buf_end = _ORBIT_recv_buffer->end;\n");
     fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_YES;\n");
 
-    fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status != GIOP_NO_EXCEPTION) goto _ORBIT_msg_exception;\n");
+    fprintf(ci->fh, "if(giop_recv_buffer_reply_status(_ORBIT_recv_buffer) != GIOP_NO_EXCEPTION) goto _ORBIT_msg_exception;\n");
 
     cs_stub_alloc_params(tree, ci);
 
@@ -249,15 +250,15 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	cbe_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci);
       }
     fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
-    fprintf(ci->fh, "_ORBIT_system_exception_minor = ex_CORBA_MARSHAL;\n");
+    fprintf(ci->fh, "_ORBIT_system_exception_ex = ex_CORBA_MARSHAL;\n");
   }
   fprintf(ci->fh, "_ORBIT_system_exception:\n");
 #ifdef BACKWARDS_COMPAT_0_4
-  fprintf(ci->fh, "CORBA_exception_set_system(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status);\n");
+  fprintf(ci->fh, "CORBA_exception_set_system(ev, _ORBIT_system_exception_ex, _ORBIT_completion_status);\n");
   fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
 #else
-  fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
+  fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_ex, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
 #endif
   if(IDL_OP_DCL(tree).op_type_spec)
     /* This will avoid warning about uninitialized memory while
@@ -271,7 +272,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   if(!IDL_OP_DCL(tree).f_oneway) {
     fprintf(ci->fh, "_ORBIT_msg_exception:\n");
     /* deal with LOCATION_FORWARD exceptions */
-    fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status == GIOP_LOCATION_FORWARD) {\n");
+    fprintf(ci->fh, "if(giop_recv_buffer_reply_status(_ORBIT_recv_buffer) == GIOP_LOCATION_FORWARD) {\n");
 #ifdef BACKWARDS_COMPAT_0_4
     fprintf(ci->fh, "if (_obj->forward_locations != NULL) ORBit_delete_profiles(_obj->forward_locations);\n");
     fprintf(ci->fh, "_obj->forward_locations = ORBit_demarshal_IOR(_ORBIT_recv_buffer);\n");

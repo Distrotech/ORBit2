@@ -147,7 +147,7 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 	if ( IDL_SRCFILE(tree).seenCnt==0 
 	  && !IDL_SRCFILE(tree).isTop 
 	  && !IDL_SRCFILE(tree).wasInhibit ) {
-	    char *hfn = g_strdup(g_basename(idlfn)), *htail;
+	    char *hfn = g_path_get_basename(idlfn), *htail;
 	    htail = strrchr(hfn,'.');
 	    g_assert( htail && strlen(htail)>=2 );
 	    htail[1] = 'h';

@@ -1,5 +1,6 @@
 #include "config.h"
 #include "orbit-idl2.h"
+#include <string.h>
 
 /* OK, the deal is that node->where should tell possible allocation strategies when demarshalling
 

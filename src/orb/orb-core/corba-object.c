@@ -1,9 +1,67 @@
 #include <orbit/orbit.h>
 
+static void ORBit_profile_free(IOP_Profile_info *p);
+static guint g_CORBA_Object_hash(CORBA_Object _obj);
+static gboolean g_CORBA_Object_equal(CORBA_Object _obj,
+				     CORBA_Object other_object);
 static IOP_Profile_info *IOP_profile_find(GSList *list, IOP_ProfileId type,
 					  GSList **pos);
 static IOP_Component_info *IOP_component_find(GSList *list, IOP_ComponentId type,
 					      GSList **pos);
+
+static GHashTable *objrefs = NULL;
+
+static void
+CORBA_Object_release_cb(ORBit_RootObject robj)
+{
+  CORBA_Object obj = (CORBA_Object)robj;
+
+  giop_connection_unref(obj->connection);
+  g_slist_foreach(obj->profile_list, );
+}
+
+static ORBit_RootObject_Interface objref_if = {
+  ORBIT_ROT_OBJREF,
+  CORBA_Object_release_cb
+};
+
+static CORBA_Object
+ORBit_objref_new(CORBA_ORB orb, const char *type_id, GSList *profiles)
+{
+  CORBA_Object retval;
+  retval = g_new0(struct CORBA_Object_type, 1);
+  ORBit_RootObject_init((ORBit_RootObject)retval, iface);
+  retval->type_id = g_strdup(type_id);
+  retval->profile_list = profiles;
+  retval->orb = orb;
+
+  return retval;
+}
+
+static CORBA_Object
+ORBit_objref_find(CORBA_ORB orb, const char *type_id, GSList *profiles)
+{
+  CORBA_Object retval = CORBA_OBJECT_NIL;
+  struct CORBA_Object_type fakeme = {{0}};
+
+  fakeme.type_id = type_id;
+  fakeme.profile_list = profiles;
+
+  O_MUTEX_LOCK(ORBit_RootObject_lifecycle_lock);
+  if(!objrefs)
+    objrefs = g_hash_table_new(g_CORBA_Object_hash, g_CORBA_Object_equal);
+  retval = g_hash_table_lookup(objrefs, &fakeme);
+  if(!retval)
+    retval = ORBit_objref_new(orb, type_id, profiles);
+  else
+    g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
+
+  retval = CORBA_Object_duplicate(retval, NULL);
+
+  O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
+
+  return retval;
+}
 
 static gboolean
 ORBit_try_connection(CORBA_Object obj)
@@ -1174,10 +1232,15 @@ ORBit_demarshal_object(CORBA_Object *obj, GIOPRecvBuffer *buf,
       profile = ORBit_demarshal_profile(buf, orb);
       if(profile)
 	profiles = g_slist_append(profiles, profile);
+      else
+	goto errout;
     }
+
+  *obj = ORBit_objref_find(orb, type_id, profiles);
 
   return FALSE;
 
  errout:
   g_slist_foreach(profiles, (GFunc)ORBit_profile_free, NULL);
+  return TRUE;
 }
