@@ -37,6 +37,11 @@ g_CORBA_Object_equal (gconstpointer a, gconstpointer b)
 	if(!(_obj && other_object))
 		return FALSE;
 
+	g_assert (_obj->object_key && other_object->object_key);
+
+	if (!IOP_ObjectKey_equal (_obj->object_key, other_object->object_key))
+		return FALSE;
+
 	for (cur1 = _obj->profile_list; cur1; cur1 = cur1->next) {
 		for (cur2 = other_object->profile_list; cur2; cur2 = cur2->next) {
 			if (IOP_profile_equal (_obj, other_object,
@@ -139,14 +144,16 @@ ORBit_objref_find (CORBA_ORB   orb,
 
 	fakeme.type_id = (char *)type_id;
 	fakeme.profile_list = profiles;
+	fakeme.object_key = IOP_profiles_sync_objkey (profiles);
 
 	LINC_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 
 	retval = ORBit_lookup_objref (&fakeme);
 
 	if (!retval) {
-		retval = ORBit_objref_new (orb, type_id);
+		retval               = ORBit_objref_new (orb, type_id);
 		retval->profile_list = profiles;
+		retval->object_key   = fakeme.object_key;
 		ORBit_register_objref (retval);
 	} else
 		IOP_delete_profiles (&profiles);
@@ -221,8 +228,7 @@ ORBit_try_connection (CORBA_Object obj)
 }
 
 GIOPConnection *
-ORBit_object_get_connection (CORBA_Object obj)
-{
+ORBit_object_get_connection (CORBA_Object obj) {
 	GSList *plist, *cur;
 	char tbuf[20];
 	/* Information we have to come up with */
@@ -236,15 +242,20 @@ ORBit_object_get_connection (CORBA_Object obj)
   
 	g_assert (obj->connection == NULL);
 
-	plist = obj->forward_locations;
-	if (!plist)
+	if (!obj->forward_locations) {
 		plist = obj->profile_list;
+		objkey = obj->object_key;
+	}
+	else {
+		plist = obj->forward_locations;
+		objkey = IOP_profiles_sync_objkey (plist);
+	}
 
 	for (cur = plist; cur; cur = cur->next) {
 		gpointer *pinfo = cur->data;
 
 		if (IOP_profile_get_info (obj, pinfo, &iiop_version, &proto,
-					  &host, &service, &is_ssl, &objkey, tbuf)) {
+					  &host, &service, &is_ssl, tbuf)) {
 
 			obj->connection = giop_connection_initiate (
 				proto, host, service,

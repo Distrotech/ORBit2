@@ -16,23 +16,7 @@ static GSList *common_profiles = NULL;
 
 static void IOP_profile_free (IOP_Profile_info *p);
 
-static IOP_Profile_info *
-IOP_profile_find(GSList *list, IOP_ProfileId type, GSList **pos)
-{
-  for(; list; list = list->next)
-    {
-      IOP_Profile_info *pi = list->data;
-      if(pi->profile_type == type)
-	{
-	  if(pos)
-	    *pos = list;
-	  return pi;
-	}
-    }
-
-  return NULL;
-}
-
+#ifdef LINC_SSL_SUPPORT
 static IOP_Component_info *
 IOP_component_find(GSList *list, IOP_ComponentId type, GSList **pos)
 {
@@ -45,6 +29,7 @@ IOP_component_find(GSList *list, IOP_ComponentId type, GSList **pos)
 
   return NULL;
 }
+#endif /* LINC_SSL_SUPPORT */
 
 static gchar *
 IOP_ObjectKey_dump (ORBit_ObjectKey *objkey)
@@ -70,11 +55,10 @@ IOP_profile_dump(CORBA_Object obj, gpointer p)
 	switch (t) {
 	case IOP_TAG_INTERNET_IOP: {
 		IOP_TAG_INTERNET_IOP_info  *iiop = p;
-		ORBit_ObjectKey            *objkey;
 
-		objkey = iiop->object_key ? iiop->object_key : obj->object_key;
+		g_assert (!iiop->object_key);
 		
-		key = IOP_ObjectKey_dump (objkey);
+		key = IOP_ObjectKey_dump (obj->object_key);
 		g_string_printf (str, "P-IIOP %s:0x%x '%s'",
 				 iiop->host, iiop->port, key);
 		break;
@@ -91,12 +75,10 @@ IOP_profile_dump(CORBA_Object obj, gpointer p)
 	
 	case IOP_TAG_ORBIT_SPECIFIC: {
 		IOP_TAG_ORBIT_SPECIFIC_info *os = p;
-		ORBit_ObjectKey             *objkey;
 		
-		objkey = os->object_key ? os->object_key : obj->object_key;
+		g_assert (!os->object_key);
 
-		key = IOP_ObjectKey_dump (objkey);
-
+		key = IOP_ObjectKey_dump (obj->object_key);
 		g_string_printf (str, "P-OS %s:0x%x '%s'",
 				 os->unix_sock_path, os->ipv6_port,
 				 key);
@@ -113,11 +95,114 @@ IOP_profile_dump(CORBA_Object obj, gpointer p)
 	return g_string_free (str, FALSE);
 }
 
+/*
+ * IOP_profiles_sync_objkey:
+ * @profiles: newly demarshalled profile list.
+ *
+ * This method scans @profiles for object keys and returns one
+ * of this object keys. All other keys are freed.
+ *
+ * This is based on the (potentially) dangerous assumption that
+ * no ORB would have two different object keys representing the
+ * same object. For this reason the object keys are compared and
+ * if they do not match an error is displayed.
+ *
+ * Return Value: An #ORBit_ObjectKey pointer.
+ */
+ORBit_ObjectKey*
+IOP_profiles_sync_objkey (GSList *profiles)
+{
+	ORBit_ObjectKey  *objkey;
+	IOP_Profile_info *pi;
+	GSList           *l;
+	gboolean          match;
+
+	objkey = NULL;
+	match = TRUE;
+
+	for(l = profiles; l; l = l->next) {
+		pi = l->data;
+
+		switch (pi->profile_type) {
+		case IOP_TAG_INTERNET_IOP: {
+			IOP_TAG_INTERNET_IOP_info *iiopi = 
+					(IOP_TAG_INTERNET_IOP_info *)pi;
+
+			if (!objkey)
+				objkey = iiopi->object_key;
+			else {
+				match = IOP_ObjectKey_equal (objkey,
+							     iiopi->object_key);
+				ORBit_free (iiopi->object_key);
+			}
+
+			iiopi->object_key = NULL;
+			}
+			break;
+		case IOP_TAG_ORBIT_SPECIFIC: {
+			IOP_TAG_ORBIT_SPECIFIC_info *osi = 
+					(IOP_TAG_ORBIT_SPECIFIC_info *)pi;
+
+			if (!objkey)
+				objkey = osi->object_key;
+			else {
+				match = IOP_ObjectKey_equal (objkey,
+							     osi->object_key);
+				ORBit_free (osi->object_key);
+			}
+
+			osi->object_key = NULL;
+			}
+			break;
+		case IOP_TAG_MULTIPLE_COMPONENTS: {
+			IOP_TAG_MULTIPLE_COMPONENTS_info *mci = 
+					(IOP_TAG_MULTIPLE_COMPONENTS_info *)pi;
+			GSList                           *mcl = mci->components;
+
+			for(; mcl; mcl = mcl->next)
+				if (((IOP_Component_info *)mcl->data)->component_type == 
+						IOP_TAG_COMPLETE_OBJECT_KEY) {
+					IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = 
+						(IOP_TAG_COMPLETE_OBJECT_KEY_info *)mcl->data;
+
+					if (!objkey)
+						objkey = coki->object_key;
+					else {
+						match = IOP_ObjectKey_equal (
+								objkey, coki->object_key);
+						ORBit_free (coki->object_key);
+					}
+
+					coki->object_key = NULL;
+				}
+			}
+			break;
+		default:
+			break;
+		}
+
+		/*
+		 * FIXME:
+		 *    We might want to remove this check after a while.
+		 */
+		if (!match)
+			g_error ("Object Keys in different profiles don't match.\n"
+				 "Scream and Shout on orbit-list@gnome\n."
+				 "You might want to mention what ORB you're using\n");
+	}
+	
+	return objkey;
+}
+
 gboolean
-IOP_profile_get_info(CORBA_Object obj, gpointer *pinfo,
-		     GIOPVersion *iiop_version, char **proto,
-		     char **host, char **service, gboolean *ssl,
-		     ORBit_ObjectKey **objkey, char *tmpbuf)
+IOP_profile_get_info (CORBA_Object  obj,
+		      gpointer     *pinfo,
+		      GIOPVersion  *iiop_version,
+		      char         **proto,
+		      char         **host,
+		      char         **service,
+		      gboolean      *ssl,
+		      char          *tmpbuf)
 {
   IOP_TAG_ORBIT_SPECIFIC_info *osi;
   IOP_TAG_INTERNET_IOP_info *iiop;
@@ -144,7 +229,6 @@ IOP_profile_get_info(CORBA_Object obj, gpointer *pinfo,
       *host = iiop->host;
       *service = tmpbuf;
       g_snprintf(tmpbuf, 8, "%d", iiop->port);
-      *objkey = iiop->object_key;
 #ifdef LINC_SSL_SUPPORT
       {
 	IOP_TAG_SSL_SEC_TRANS_info *ssli;
@@ -178,22 +262,6 @@ IOP_profile_get_info(CORBA_Object obj, gpointer *pinfo,
 	  }
       }
 #endif
-      {
-	IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
-	mci = (IOP_TAG_MULTIPLE_COMPONENTS_info *)
-	  IOP_profile_find(obj->profile_list, IOP_TAG_MULTIPLE_COMPONENTS, NULL);
-	*objkey = NULL;
-	if(mci)
-	  {
-	    IOP_TAG_COMPLETE_OBJECT_KEY_info *coki;
-	    coki = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
-	      IOP_component_find(mci->components, IOP_TAG_COMPLETE_OBJECT_KEY,
-				 NULL);
-	    if(coki)
-	      *objkey = coki->object_key ? coki->object_key : obj->object_key;
-	  }
-	return *objkey?TRUE:FALSE;
-      }
       break;
     case IOP_TAG_ORBIT_SPECIFIC:
       /* Due to (a) my brain deadness in putting multiple protocols in
@@ -209,7 +277,6 @@ IOP_profile_get_info(CORBA_Object obj, gpointer *pinfo,
 	  *proto = "UNIX";
 	  *host = "";
 	  *service = osi->unix_sock_path;
-	  *objkey = osi->object_key;
 	  return TRUE;
 	}
       break;
@@ -231,7 +298,7 @@ IOP_get_mci (GSList *p)
   return NULL;
 }
 
-static inline gboolean
+gboolean
 IOP_ObjectKey_equal (ORBit_ObjectKey *a,
 		     ORBit_ObjectKey *b)
 {
@@ -264,16 +331,12 @@ IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
 	case IOP_TAG_INTERNET_IOP: {
 		IOP_TAG_INTERNET_IOP_info  *iiop1 = d1;
 		IOP_TAG_INTERNET_IOP_info  *iiop2 = d2;
-		ORBit_ObjectKey            *objkey1, *objkey2;
+
+		g_assert (!iiop1->object_key && !iiop2->object_key);
 
 		if (iiop1->port != iiop2->port)
 			return FALSE;
 
-		objkey1 = iiop1->object_key ? iiop1->object_key : obj1->object_key;
-		objkey2 = iiop2->object_key ? iiop2->object_key : obj2->object_key;
-
-		if (!IOP_ObjectKey_equal (objkey1, objkey2))
-			return FALSE;
 		if (strcmp (iiop1->host, iiop2->host))
 			return FALSE;
 		break;
@@ -293,44 +356,18 @@ IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
 		if (strcmp (giop1->proto, giop2->proto))
 			return FALSE;
 
-		{ /* Oh, the ugliness */
-			IOP_TAG_COMPLETE_OBJECT_KEY_info *c1, *c2;
-			ORBit_ObjectKey                  *objkey1, *objkey2;
-
-			c1 = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
-				IOP_component_find(mci1->components,
-						   IOP_TAG_COMPLETE_OBJECT_KEY,
-						   NULL);
-			c2 = (IOP_TAG_COMPLETE_OBJECT_KEY_info *)
-				IOP_component_find(mci2->components,
-						   IOP_TAG_COMPLETE_OBJECT_KEY,
-						   NULL);
-
-			if (!(c1 || c2))
-				return FALSE;
-
-			objkey1 = c1->object_key ? c1->object_key : obj1->object_key;
-			objkey2 = c2->object_key ? c2->object_key : obj2->object_key;
-
-			if (!IOP_ObjectKey_equal (objkey1, objkey2))
-				return FALSE;
-		}
 		break;
 	}
 
 	case IOP_TAG_ORBIT_SPECIFIC: {
 		IOP_TAG_ORBIT_SPECIFIC_info *os1 = d1;
 		IOP_TAG_ORBIT_SPECIFIC_info *os2 = d2;
-		ORBit_ObjectKey             *objkey1, *objkey2;
+
+		g_assert (!os1->object_key && !os2->object_key);
 
 		if (os1->ipv6_port != os2->ipv6_port)
 			return FALSE;
 
-		objkey1 = os1->object_key ? os1->object_key : obj1->object_key;
-		objkey2 = os2->object_key ? os2->object_key : obj2->object_key;
-
-		if (!IOP_ObjectKey_equal (objkey1, objkey2))
-			return FALSE;
 		if (strcmp (os1->unix_sock_path, os2->unix_sock_path))
 			return FALSE;
 		break;
@@ -557,7 +594,6 @@ IOP_generate_profiles (CORBA_Object obj)
 
     coki = g_new0 (IOP_TAG_COMPLETE_OBJECT_KEY_info, 1);
     coki->parent.component_type = IOP_TAG_COMPLETE_OBJECT_KEY;
-    coki->object_key = NULL; /* Sucks in the object's key at marshal time */
     mci->components = g_slist_append (mci->components, coki);
   }
 
@@ -699,9 +735,6 @@ IOP_ObjectKey_marshal (CORBA_Object                obj,
 		       GIOPSendBuffer             *buf,
 		       ORBit_ObjectKey            *objkey)
 {
-	if (!objkey)
-		objkey = obj->object_key;
-
 	giop_send_buffer_append_aligned (buf, &objkey->_length, 4);
 
 	giop_send_buffer_append (buf, objkey->_buffer, objkey->_length);
@@ -733,9 +766,7 @@ static void
 IOP_TAG_COMPLETE_OBJECT_KEY_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
 				    IOP_Component_info *ci)
 {
-  IOP_TAG_COMPLETE_OBJECT_KEY_info *coki = (IOP_TAG_COMPLETE_OBJECT_KEY_info *) ci;
-
-  IOP_ObjectKey_marshal (obj, buf, coki->object_key);
+  IOP_ObjectKey_marshal (obj, buf, obj->object_key);
 }
 
 static void
@@ -848,7 +879,7 @@ IOP_TAG_INTERNET_IOP_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &iiop->port, 2);
 
-  IOP_ObjectKey_marshal(obj, buf, iiop->object_key ? iiop->object_key : obj->object_key);
+  IOP_ObjectKey_marshal(obj, buf, obj->object_key);
 
   IOP_components_marshal(obj, buf, iiop->components);
 }
@@ -899,7 +930,7 @@ IOP_TAG_ORBIT_SPECIFIC_marshal(CORBA_Object obj, GIOPSendBuffer *buf,
   giop_send_buffer_append(buf, osi->unix_sock_path, len);
   giop_send_buffer_align(buf, 2);
   giop_send_buffer_append(buf, &osi->ipv6_port, 2);
-  IOP_ObjectKey_marshal(obj, buf, osi->object_key ? osi->object_key : obj->object_key);
+  IOP_ObjectKey_marshal(obj, buf, obj->object_key);
 }
 
 static void

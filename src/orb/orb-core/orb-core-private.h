@@ -14,20 +14,33 @@ void ORBit_start_servers( CORBA_ORB orb );
 /*
  * profile methods.
  */
-void     IOP_generate_profiles( CORBA_Object obj );
-void     IOP_register_profiles( CORBA_Object obj, GSList *profiles );
-void     IOP_delete_profiles( GSList **profiles );
+void             IOP_generate_profiles    (CORBA_Object     obj);
+void             IOP_register_profiles    (CORBA_Object     obj,
+					   GSList          *profiles);
+void             IOP_delete_profiles      (GSList         **profiles);
+ORBit_ObjectKey* IOP_profiles_sync_objkey (GSList          *profiles);
+gboolean         IOP_ObjectKey_equal      (ORBit_ObjectKey *a,
+					   ORBit_ObjectKey *b);
+gboolean         IOP_profile_get_info     (CORBA_Object     obj,
+					   gpointer        *pinfo,
+					   GIOPVersion     *iiop_version,
+					   char           **proto,
+					   char           **host,
+					   char           **service,
+					   gboolean        *ssl,
+					   char           *tmpbuf);
+void             IOP_profile_hash         (gpointer        item,
+					   gpointer        data);
+gchar           *IOP_profile_dump         (CORBA_Object    obj,
+					   gpointer        p);
+gboolean         IOP_profile_equal        (CORBA_Object    obj1,
+					   CORBA_Object    obj2,
+					   gpointer        d1,
+					   gpointer        d2);
+void             IOP_profile_marshal      (CORBA_Object    obj,
+					   GIOPSendBuffer *buf,
+					   gpointer       *p);
 
-gboolean IOP_profile_get_info( CORBA_Object obj, gpointer *pinfo,
-			       GIOPVersion *iiop_version, char **proto,
-			       char **host, char **service, gboolean *ssl,
-			       ORBit_ObjectKey **objkey, char *tmpbuf );
-
-void     IOP_profile_hash( gpointer item, gpointer data );
-gchar   *IOP_profile_dump( CORBA_Object obj, gpointer p );
-gboolean IOP_profile_equal( CORBA_Object obj1, CORBA_Object obj2,
-			    gpointer d1, gpointer d2 );
-void     IOP_profile_marshal( CORBA_Object obj, GIOPSendBuffer *buf, gpointer *p );
 
 gboolean ORBit_demarshal_IOR( CORBA_ORB orb, GIOPRecvBuffer *buf,
 			      char **ret_type_id, GSList **ret_profiles);

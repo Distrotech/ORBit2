@@ -1,10 +1,31 @@
+2001-09-06 Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-object.c
+	(g_CORBA_Object_equal): compare object keys.
+	(ORBit_objref_find): sync the object keys before
+	looking up the object.
+	(ORBit_try_connection): sync object keys in
+	forward locations profiles.
+
+	* src/orb/orb-core/iop-profiles.c,
+	  src/orb/orb-core/iop-profiles.h
+	(IOP_profile_find): remove unused.
+	(IOP_profile_dump): the object key is never in the
+	profiles anymore.
+	(IOP_profiles_sync_objkey): impl.
+	(IOP_profile_get_info): remove objkey arg.
+	(IOP_ObjectKey_equal): export.
+	(IOP_profile_equal): don't compare object keys.
+	(IOP_component_free, IOP_TAG_INTERNET_IOP_free,
+	 IOP_TAG_ORBIT_SPECIFIC_free): don't free the object key.
+	
 2001-09-04 Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/poa/Makefile.am,
 	  src/orb/dynamic/Makefile.am,
 	  src/orb/orb-core/Makefile.am: add --noheaders
 	options to fix build dependancy problem and remove
-	headers from BUILTS_SOURCES.
+	headers from BUILT_SOURCES.
 
 2001-09-04 Mark McLoughlin <mark@skynet.ie>
 
