@@ -224,7 +224,7 @@ int main(int argc, const char *argv[])
 	   
   /* Do it */
   while((arg=poptGetArg(pcon))!=NULL) {
-    rinfo.input_filename = g_path_get_basename(arg);
+    rinfo.input_filename = g_strdup (arg); /* g_path_get_basename(arg); - what !? */
     if (!orbit_idl_to_backend(arg, &rinfo)) {
       g_warning("%s compilation failed", arg);
     }

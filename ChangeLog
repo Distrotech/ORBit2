@@ -1,3 +1,25 @@
+2001-08-24  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.3.94
+
+	* Makefile.shared: don't generate .deps - totaly broken.
+
+	* test/Makefile.am: dynany.idl not .idk !
+
+	* src/idl-compiler/orbit-idl-main.c (main): use
+	the full filename not the basename !
+
+	* src/idl-compiler/orbit-idl-c-backend.c
+	(out_for_pass): create the .deps directory if it doesn't
+	exist - spew only warnings.
+
+	* src/orb/orb-core/Makefile.am: why not generate the
+	headers we go on to include ?
+
+	* src/idl-compiler/orbit-idl-c-backend.c
+	(out_for_pass): print the correct name of what it failed
+	to open...
+
 2001-08-23  Mark McLoughlin <mark@skynet.ie>
 	
 	* src/orb/orb-core/allocators.c

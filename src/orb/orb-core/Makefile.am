@@ -36,14 +36,14 @@ main_src = \
 	orbit-debug.h
 
 liborb_core_la_SOURCES= \
-	$(IOP_IDLOUT) \
+	$(DEFS_IDLOUT) \
 	$(IDLOUT) \
 	$(OPS_IDLOUT) \
 	$(IFACE_IDLOUT) \
 	$(main_src)
 
 IDLOUT=corba-defs-common.c
-IOP_IDLOUT=iop-defs-common.c
+DEFS_IDLOUT=iop-defs.h iop-defs-common.c
 OPS_IDLOUT= corba-ops.h corba-ops-stubs.c corba-ops-common.c corba-ops-skels.c
 IFACE_IDLOUT=orbit-interface.h orbit-interface-common.c
 
@@ -54,7 +54,7 @@ IDL_FLAGS = -I$(top_srcdir)/src/idl/CORBA_PIDL			\
 	-I$(top_srcdir)/src/idl/CORBA				\
 	-I$(top_srcdir)/src/idl/misc				\
 	-I$(top_srcdir)/src/idl/interop				\
-	--noskels --nodefskels --nostubs --noidata --noheaders	\
+	--noskels --nodefskels --nostubs --noidata		\
 	--define=Object=OObject --define=TypeCode=TTypeCode	\
         --showcpperrors
 IDL_FILES=corba-defs.idl iop-defs.idl corba-ops.idl orbit-interface.idl
@@ -76,6 +76,6 @@ $(IFACE_IDLOUT) : orbit-interface.idl $(IDL)
 	$(IDL_COMPILER) $(IDL_FLAGS_INTERFACE) --deps .deps/orbit-interface.idl.P $<
 
 
-BUILT_SOURCES= $(IFACE_IDLOUT) $(IDLOUT) $(IOP_IDLOUT) $(OPS_IDLOUT)
+BUILT_SOURCES= $(IFACE_IDLOUT) $(IDLOUT) $(DEFS_IDLOUT) $(OPS_IDLOUT)
 CLEANFILES=$(BUILT_SOURCES)
 EXTRA_DIST=$(IDL_FILES)

@@ -2,7 +2,7 @@ IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl
 
 %.h %-stubs.c %-skels.c %-common.c %-imodule.c %-skelimpl.c: $(IDL_DIR)%.idl $(IDL_COMPILER)
 	-(rm -f $(*).h $(*)-stubs.c $(*)-skels.c $(*)-common.c $(*)-imodule.c $(*)-skelimpl.c || true) > /dev/null
-	$(IDL_COMPILER) $(IDL_FLAGS) --deps .deps/$*.idl.P $<
+	$(IDL_COMPILER) $(IDL_FLAGS) $<
 	for I in $(*).h $(*)-stubs.c $(*)-skels.c $(*)-common.c $(*)-imodule.c $(*)-skelimpl.c; do \
 		if test -f $$I; then \
 			sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \

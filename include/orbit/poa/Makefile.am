@@ -19,7 +19,7 @@ IDL_FLAGS =  -I$(top_srcdir)/src/idl/CORBA_PIDL				\
 	--define=Object=OObject --define=TypeCode=TTypeCode		\
 	--noskels --nodefskels --nostubs --nocommon --noidata		\
         --showcpperrors
-IDL_FILES= POA-defs.idl
+IDL_FILES=poa-defs.idl
 IDL_DIR=$(top_srcdir)/src/orb/poa/
 include $(top_srcdir)/Makefile.shared
 
