@@ -125,8 +125,6 @@ StructServer_opStructAny (PortableServer_Servant servant,
 	return a;
 }
 
-PortableServer_ServantBase__epv StructServer_base_epv = {NULL,NULL,NULL};
-
 POA_test_StructServer__epv StructServer_epv = {
 	NULL,
 	StructServer_opFixed,
@@ -136,6 +134,7 @@ POA_test_StructServer__epv StructServer_epv = {
 	StructServer_opStructAny
 };
 
+PortableServer_ServantBase__epv StructServer_base_epv = {NULL, simple_finalize, NULL};
 POA_test_StructServer__vepv StructServer_vepv = {&StructServer_base_epv,&BasicServer_epv,&StructServer_epv};
 
 POA_test_StructServer StructServer_servant = {NULL,&StructServer_vepv};  /* Singleton */

@@ -30,7 +30,7 @@
 #include "orbit/orbit.h"
 
 #define NUM_RUNS 1
-#define NUM_THREADS 0
+#define NUM_THREADS 8
 
 #undef TIMING_RUN
 
@@ -1388,16 +1388,13 @@ testMisc (test_TestFactory   factory,
 	} else { /* Lets do some things on a de-activated ref */
 		test_BasicServer         obj;
 		PortableServer_ObjectId *oid;
-		POA_test_BasicServer     servant = {
-			NULL, &BasicServer_vepv
-		};
+		POA_test_BasicServer    *servant;
 
-		obj = create_object (
-			global_poa, POA_test_BasicServer__init,
-			&servant, ev);
+		servant = SIMPLE_SERVANT_NEW (BasicServer);
+		obj = create_object (global_poa, servant, ev);
 
 		oid = PortableServer_POA_servant_to_id (
-			global_poa, &servant, ev);
+			global_poa, servant, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		PortableServer_POA_deactivate_object (
 			global_poa, oid, ev);
@@ -1590,7 +1587,8 @@ broken_cb (LINCConnection *connection, gboolean *broken)
 }
 
 static void
-testPingPong (test_TestFactory   factory, 
+testPingPong (test_TestFactory   factory,
+	      gboolean           thread_tests,
 	      CORBA_Environment *ev)
 {
 	test_PingPongServer r_objref, l_objref, objref;
@@ -1598,7 +1596,7 @@ testPingPong (test_TestFactory   factory,
 	CORBA_unsigned_long after_remote_hash;
 
 #if NUM_THREADS > 0
-	if (threaded) {
+	if (thread_tests) {
 		g_warning ("No thread available to handle incoming requests");
 		return;
 	}
@@ -1865,7 +1863,7 @@ test_basic_server (test_TestFactory   factory,
 
 static void
 run_tests (test_TestFactory   factory, 
-	   gboolean           reenterant_only,
+	   gboolean           thread_tests,
 	   CORBA_Environment *ev)
 {
 	int i;
@@ -1898,11 +1896,11 @@ run_tests (test_TestFactory   factory,
 		testContext (factory, ev);
 		testIInterface (factory, ev);
 #ifndef TIMING_RUN
-		if (!reenterant_only)
+		if (!thread_tests)
 			testAsync (factory, ev);
 #endif
 		if (!in_proc)
-			testPingPong (factory, ev);
+			testPingPong (factory, thread_tests, ev);
 		testMisc (factory, ev);
 	}
 	

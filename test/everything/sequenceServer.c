@@ -115,16 +115,11 @@ SequenceServer_opBoundedStructSeq(PortableServer_Servant _servant,
   return retn;
 }
 
-
-
-PortableServer_ServantBase__epv SequenceServer_base_epv = {NULL,NULL,NULL};
-
 POA_test_SequenceServer__epv SequenceServer_epv = {
-  NULL,
-  SequenceServer_opStrSeq,
-  SequenceServer_opBoundedStructSeq,
+	NULL,
+	SequenceServer_opStrSeq,
+	SequenceServer_opBoundedStructSeq,
 };
 
-POA_test_SequenceServer__vepv SequenceServer_vepv = {&SequenceServer_base_epv,&SequenceServer_epv};
-
-POA_test_SequenceServer SequenceServer_servant = {NULL,&SequenceServer_vepv};  /* Singleton */
+PortableServer_ServantBase__epv SequenceServer_base_epv = {NULL, simple_finalize, NULL};
+POA_test_SequenceServer__vepv SequenceServer_vepv = { &SequenceServer_base_epv, &SequenceServer_epv };

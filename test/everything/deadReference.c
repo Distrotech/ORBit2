@@ -49,23 +49,17 @@ DeadReferenceObj_test (PortableServer_Servant  servant,
 	CORBA_Object_release ((CORBA_Object) poa_current, ev);
 }
 
-static PortableServer_ServantBase__epv DeadReferenceObj_base_epv = {
-	NULL,
-	NULL,
-	NULL
-};
-
 static POA_test_DeadReferenceObj__epv DeadReferenceObj_epv = {
 	NULL,
 	DeadReferenceObj_test,
 };
 
+static PortableServer_ServantBase__epv DeadReferenceObj_base_epv = {
+	NULL,
+	simple_finalize,
+	NULL
+};
 static POA_test_DeadReferenceObj__vepv DeadReferenceObj_vepv = {
 	&DeadReferenceObj_base_epv,
 	&DeadReferenceObj_epv
-};
-
-static POA_test_DeadReferenceObj DeadReferenceObj_servant = {
-	NULL,
-	&DeadReferenceObj_vepv
 };

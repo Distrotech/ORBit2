@@ -115,7 +115,7 @@ UnionServer_opMisc (PortableServer_Servant    servant,
 	return retval;
 }
 
-PortableServer_ServantBase__epv UnionServer_base_epv = {NULL, NULL, NULL};
+PortableServer_ServantBase__epv UnionServer_base_epv = {NULL, simple_finalize, NULL};
 
 POA_test_UnionServer__epv UnionServer_epv = {
 	NULL,

@@ -62,14 +62,10 @@ ContextServer_opWithContext (PortableServer_Servant _servant,
 	return CORBA_Object_duplicate (inArg, ev);
 }
 
-
-PortableServer_ServantBase__epv ContextServer_base_epv = {NULL,NULL,NULL};
-
 POA_test_ContextServer__epv ContextServer_epv = {
-  NULL,
-  ContextServer_opWithContext,
+	NULL,
+	ContextServer_opWithContext,
 };
 
-POA_test_ContextServer__vepv ContextServer_vepv = {&ContextServer_base_epv,&ContextServer_epv};
-
-POA_test_ContextServer ContextServer_servant = {NULL,&ContextServer_vepv};  /* Singleton */
+PortableServer_ServantBase__epv ContextServer_base_epv = {NULL, simple_finalize, NULL};
+POA_test_ContextServer__vepv ContextServer_vepv = { &ContextServer_base_epv, &ContextServer_epv };

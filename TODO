@@ -1,6 +1,10 @@
 TODO:
 
 * Threading 
+	+ Split class_info registration out of the skels - shrink
+	  the POA_..._init method to a single chained method call,
+	  do some locking on that - esp. for __classid init.
+
 	+ Create a per-object policy 'PROCESS_REENTERANTLY', using our
 	  VPVID space; takes a boolean ... set it on the object ...
 	  [ make some libbonobo wrappers to improve the situation ]
