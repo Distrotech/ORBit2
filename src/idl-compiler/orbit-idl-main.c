@@ -39,7 +39,9 @@ static gboolean cl_disable_stubs = FALSE,
   cl_disable_common = FALSE,
   cl_disable_headers = FALSE,
   cl_enable_skeleton_impl = FALSE;
-static int cl_debuglevel;
+static int cl_idlwarnlevel = 2;
+static int cl_debuglevel = 0;
+static gboolean cl_showcpperrors;
 static char *cl_output_lang = "c";
 
 #define BASE_CPP_ARGS "-D__ORBIT_IDL__ "
@@ -100,7 +102,9 @@ struct poptOption options[] = {
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_cpp_callback_options, 0, NULL, NULL},
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_libIDL_callback_options, 0, NULL, NULL},
   {"lang", 'l', POPT_ARG_STRING, &cl_output_lang, 0, "Output language (default is C)", NULL},
-  {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4, default is 2", NULL},
+  {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4", NULL},
+  {"idlwarnlevel", '\0', POPT_ARG_INT, &cl_idlwarnlevel, 0, "IDL warning level 0 to 4, default is 2", NULL},
+  {"showcpperrors", '\0', POPT_ARG_NONE, &cl_showcpperrors, 0, "Show CPP errors", NULL},
   {"nostubs", '\0', POPT_ARG_NONE, &cl_disable_stubs, 0, "Don't output stubs", NULL},
   {"noskels", '\0', POPT_ARG_NONE, &cl_disable_skels, 0, "Don't output skels", NULL},
   {"nocommon", '\0', POPT_ARG_NONE, &cl_disable_common, 0, "Don't output common", NULL},
@@ -143,6 +147,8 @@ int main(int argc, char *argv[])
   /* Prep our run info for the backend */
   rinfo.cpp_args = cl_cpp_args->str;
   rinfo.debug_level = cl_debuglevel;
+  rinfo.idl_warn_level = cl_idlwarnlevel;
+  rinfo.show_cpp_errors = cl_showcpperrors;
   rinfo.enabled_passes =
     (cl_disable_stubs?0:OUTPUT_STUBS)
     |(cl_disable_skels?0:OUTPUT_SKELS)

@@ -51,8 +51,9 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   errcode = IDL_parse_filename(filename, rinfo->cpp_args, NULL,
 			       &tree, &namespace,
-			       IDLF_TYPECODES|IDLF_CODEFRAGS,
-			       IDL_WARNINGMAX);
+			       (rinfo->show_cpp_errors?IDLF_SHOW_CPP_ERRORS:0)
+			       |IDLF_TYPECODES|IDLF_CODEFRAGS,
+			       rinfo->idl_warn_level);
   if(rinfo->debug_level > 1)
     orbit_idl_print_node(tree, 0);
 

@@ -12,6 +12,8 @@
 typedef struct {
   char *cpp_args;
   int debug_level;
+  int idl_warn_level;
+  int show_cpp_errors;
 
   enum { OUTPUT_STUBS=1<<0,
 	 OUTPUT_SKELS=1<<1,
