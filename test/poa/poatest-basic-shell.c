@@ -26,12 +26,12 @@
 #include "poatest-basic-shell.h"
 
 PortableServer_POA child_poa = CORBA_OBJECT_NIL;
+CORBA_ORB orb = CORBA_OBJECT_NIL;
 
 int
 main (int argc, char **argv) 
 {
 	CORBA_Environment         ev;
-	CORBA_ORB                 orb;
 	PortableServer_POA        rootpoa;
 	PortableServer_POAManager poa_mgr;
 	poatest                   poatest_obj;

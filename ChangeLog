@@ -1,3 +1,10 @@
+2003-06-06  Michael Meeks  <michael@ximian.com>
+
+	* test/poa/test-poa.c: add.
+
+	* src/orb/poa/poa.c (ORBit_POA_copy_policies): impl.
+	(ORBit_POA_new_from): impl.
+
 2003-06-05  Michael Meeks  <michael@ximian.com>
 
 	* include/orbit/orb-core/corba-object.h: fix

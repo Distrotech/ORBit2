@@ -102,5 +102,7 @@ poatest_run (PortableServer_POA        rootpoa,
 		return CORBA_OBJECT_NIL;
 	}
 
+	
+
 	return poatest_obj;
 }

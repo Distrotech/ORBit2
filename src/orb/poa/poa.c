@@ -622,6 +622,19 @@ ORBit_POA_set_policy (PortableServer_POA  poa,
 }
 
 static void
+ORBit_POA_copy_policies (PortableServer_POA src,
+			 PortableServer_POA dest)
+{
+	dest->p_thread              = dest->p_thread;
+	dest->p_lifespan            = dest->p_lifespan;
+	dest->p_id_uniqueness       = dest->p_id_uniqueness;
+	dest->p_id_assignment       = dest->p_id_assignment;
+	dest->p_servant_retention   = dest->p_servant_retention;
+	dest->p_request_processing  = dest->p_request_processing;
+	dest->p_implicit_activation = dest->p_implicit_activation;
+}
+
+static void
 ORBit_POA_set_policies (PortableServer_POA      poa,
 			const CORBA_PolicyList *policies,
 			CORBA_Environment      *ev)
@@ -700,6 +713,32 @@ ORBit_POA_new (CORBA_ORB                  orb,
 	ORBit_POAManager_register_poa (manager, poa);
 
 	return ORBit_RootObject_duplicate (poa);
+}
+
+PortableServer_POA
+ORBit_POA_new_from (CORBA_ORB                  orb,
+		    PortableServer_POA         parent,
+		    const CORBA_char          *adaptor_name,
+		    const CORBA_PolicyList    *opt_policies,
+		    CORBA_Environment         *ev)
+{
+	PortableServer_POA poa;
+	
+	g_return_val_if_fail (parent != CORBA_OBJECT_NIL, CORBA_OBJECT_NIL);
+
+	poa = ORBit_POA_new (orb, adaptor_name, parent->poa_manager, NULL, ev);
+
+	g_return_val_if_fail (poa != CORBA_OBJECT_NIL, CORBA_OBJECT_NIL);
+
+	ORBit_POA_copy_policies (parent, poa);
+
+	if (opt_policies) {
+		int i;
+		for (i = 0; i < opt_policies->_length; i++)
+			ORBit_POA_set_policy (poa, opt_policies->_buffer[i]);
+	}
+
+	return poa;
 }
 
 static CORBA_Object
