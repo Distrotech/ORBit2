@@ -169,6 +169,9 @@ void
 linc_io_remove_watch (LincWatch *w)
 {
 	if (w) {
+		linc_source_set_condition ((LincUnixWatch *) w->main_source, 0);
+		linc_source_set_condition ((LincUnixWatch *) w->linc_source, 0);
+
 		g_source_destroy (w->main_source);
 		g_source_unref   (w->main_source);
 
