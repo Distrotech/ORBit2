@@ -35,6 +35,8 @@ typedef struct {
   gboolean small_stubs;
   gboolean small_skels;
   gboolean idata;
+
+  IDL_ns namespace;
 } OIDL_Run_Info;
 
 /* yadda yadda:
