@@ -185,7 +185,7 @@ IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
 	  }
       }
 #endif
-      
+      return TRUE;
       break;
     case IOP_TAG_GENERIC_IOP:
       giop = (IOP_TAG_GENERIC_IOP_info *)pi;
@@ -276,11 +276,10 @@ _ORBit_object_get_connection(CORBA_Object obj)
 	  obj->connection =
 	    giop_connection_initiate(proto, host, service,
 				     is_ssl?LINC_CONNECTION_SSL:0, iiop_version);
-	  g_assert(obj->connection);
-	  obj->oki = oki;
 
 	  if(ORBit_try_connection(obj))
 	    {
+	      obj->oki = oki;
 	      obj->connection->orb_data = obj->orb;
 	      return obj->connection;
 	    }

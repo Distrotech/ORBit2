@@ -203,3 +203,38 @@ ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev)
   giop_send_buffer_append(buf, &se->minor, sizeof(se->minor));
   giop_send_buffer_append_indirect(buf, &se->completed, sizeof(se->completed));
 }
+
+void
+ORBit_send_user_exception(GIOPSendBuffer *send_buffer,
+			  CORBA_Environment *ev,
+			  const ORBit_exception_marshal_info *user_exceptions)
+{
+  int i;
+
+  for(i = 0; user_exceptions[i].tc != CORBA_OBJECT_NIL; i++)
+    {
+      if(!strcmp(user_exceptions[i].tc->repo_id, ev->_any._type->repo_id))
+	break;
+    }
+
+  if(user_exceptions[i].tc == CORBA_OBJECT_NIL)
+    {
+      CORBA_Environment fakeev;
+      CORBA_exception_init(&fakeev);
+      CORBA_exception_set_system(&fakeev, ex_CORBA_UNKNOWN,
+				 CORBA_COMPLETED_MAYBE);
+      ORBit_send_system_exception(send_buffer, &fakeev);
+      CORBA_exception_free(&fakeev);
+    }
+  else
+    {
+      CORBA_unsigned_long len;
+      len = strlen(ev->_any._type->repo_id) + 1;
+      giop_send_buffer_align(send_buffer, sizeof(len));
+      giop_send_buffer_append_indirect(send_buffer, &len, sizeof(len));
+      giop_send_buffer_append(send_buffer, ev->_any._type->repo_id, len);
+
+      if(user_exceptions[i].marshal && ev->_any._value)
+	user_exceptions[i].marshal(send_buffer, ev);
+    }
+}

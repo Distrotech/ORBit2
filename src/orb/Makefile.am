@@ -9,8 +9,10 @@ INCLUDES=-I. -I$(srcdir) -I$(top_srcdir)/include \
 
 libORBit_la_SOURCES=orbit-init.c
 
-libORBit_la_LDFLAGS=-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -release $(LT_RELEASE) \
-	$(LINC_LIBS) $(GLIB_LIBS)
+libORBit_la_LDFLAGS=-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
+	-release $(LT_RELEASE) \
+	$(LINC_LIBS) $(GLIB_LIBS) \
+	-lpopt
 
 libORBit_la_LIBADD= \
 	util/liborb-util.la \

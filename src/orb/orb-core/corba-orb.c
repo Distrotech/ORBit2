@@ -4,6 +4,7 @@
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
 #include "orbhttp.h"
+#include <popt.h>
 
 static void
 CORBA_ORB_release_fn(ORBit_RootObject robj)
@@ -904,4 +905,11 @@ CORBA_ORB_set_initial_reference(CORBA_ORB orb, CORBA_ORB_ObjectId identifier,
 		      val->free_name?g_strdup(identifier):identifier,
 		      val);
   g_free(findkey);
+}
+
+void
+ORBit_ORB_forw_bind(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey,
+		    CORBA_Object oref, CORBA_Environment *ev)
+{
+  g_warning("ORBit_ORB_forw_bind NYI");
 }

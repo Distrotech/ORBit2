@@ -3,6 +3,11 @@
 
 typedef struct {
   const CORBA_TypeCode tc;
+  void (*marshal)(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev);
+} ORBit_exception_marshal_info;
+
+typedef struct {
+  const CORBA_TypeCode tc;
   void (*demarshal)(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev);
 } ORBit_exception_demarshal_info;
 
@@ -28,5 +33,8 @@ void ORBit_handle_exception(GIOPRecvBuffer *buf, CORBA_Environment *ev,
 GIOPConnection *ORBit_handle_location_forward(GIOPRecvBuffer *buf,
 					      CORBA_Object obj);
 void ORBit_send_system_exception(GIOPSendBuffer *buf, CORBA_Environment *ev);
+void ORBit_send_user_exception(GIOPSendBuffer *send_buffer,
+			       CORBA_Environment *ev,
+			       const ORBit_exception_marshal_info *user_exceptions);
 
 #endif

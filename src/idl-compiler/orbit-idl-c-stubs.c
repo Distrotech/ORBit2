@@ -113,12 +113,12 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   }
 
   fprintf(ci->fh, "register CORBA_unsigned_long _ORBIT_request_id;\n");
-  fprintf(ci->fh, "register CORBA_char *_ORBIT_system_exception_ex;\n");
+  fprintf(ci->fh, "register CORBA_char *_ORBIT_system_exception_ex = ex_CORBA_COMM_FAILURE;\n");
   fprintf(ci->fh, "register CORBA_completion_status _ORBIT_completion_status;\n");
-  fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer;\n");
+  fprintf(ci->fh, "register GIOPSendBuffer *_ORBIT_send_buffer = NULL;\n");
   if(!IDL_OP_DCL(tree).f_oneway)
     {
-      fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
+      fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer = NULL;\n");
       fprintf(ci->fh, "GIOPMessageQueueEntry _ORBIT_mqe;\n");
     }
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
@@ -168,6 +168,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   }
 
   fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
+  fprintf(ci->fh, "if(!_cnx) goto _ORBIT_system_exception;\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
     fprintf(ci->fh, "_ORBIT_retry_request:\n");

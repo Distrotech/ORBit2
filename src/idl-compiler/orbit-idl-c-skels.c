@@ -288,7 +288,7 @@ ck_output_except(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
     orbit_cbe_alloc_tmpvars(ei->demarshal, ci);
-    fprintf(ci->fh, "%s *_ORBIT_exdata = ev->_params;\n", id);
+    fprintf(ci->fh, "%s *_ORBIT_exdata = ev->_any._value;\n", id);
     c_marshalling_generate(ei->marshal, ci, FALSE);
   }
 
