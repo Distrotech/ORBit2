@@ -1,7 +1,22 @@
+2002-05-11  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/: Re-enabling random sequence-related stuff
+
 2002-05-10  Diego Sevilla Ruiz  <dsevilla@um.es>
 
 	* src/orb-cpp/orbitcpp_smartptr.hh: Changed ArrayVariable_var
 	operator logic to allow compilation of tests
+
+2002-05-06  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/types/IDLTypedef.cc
+	(get_c_member_typename): return C typename instead of C++ typename
+	of real type
+
+2002-05-05  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/pass_xlate.cc: Create 'traits' classes, to
+	be used by sequences
 
 2002-05-03  ERDI Gergo  <cactus@cactus.rulez.org>
 

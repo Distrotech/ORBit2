@@ -217,7 +217,7 @@ IDLTypedef::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 string
 IDLTypedef::get_c_member_typename (const IDLTypedef *active_typedef) const
 {
-	return m_alias.get_cpp_member_typename (active_typedef ? active_typedef : this);
+	return m_alias.get_c_member_typename (active_typedef ? active_typedef : this);
 }
 
 string

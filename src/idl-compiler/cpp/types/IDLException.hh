@@ -40,7 +40,7 @@ public:
 		// this is required for type container generation
 		return true;
 	}
-	string getRepositoryId() {
+	string getRepositoryId() const {
 		return IDL_IDENT_REPO_ID(IDL_EXCEPT_DCL(getNode()).ident);
 	};
 

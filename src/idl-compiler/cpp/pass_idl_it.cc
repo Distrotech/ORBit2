@@ -116,12 +116,12 @@ void IDLIteratingPass::doExportList(IDL_tree list,IDLScope &scope) {
 		case IDLN_TYPE_STRUCT:
 			doStruct(IDL_LIST(list).data,scope);
 			break;
+		case IDLN_TYPE_SEQUENCE:
+			doSequence(IDL_LIST(list).data,scope);
+			break;
 #if 0 //!!!
 		case IDLN_TYPE_UNION:
 			doUnion(IDL_LIST(list).data,scope);
-			break;
-		case IDLN_TYPE_SEQUENCE:
-			doSequence(IDL_LIST(list).data,scope);
 			break;
 		case IDLN_NATIVE:
 			doNative(IDL_LIST(list).data,scope);
@@ -161,23 +161,21 @@ void IDLIteratingPass::doDefinitionList(IDL_tree list,IDLScope &scope) {
 		case IDLN_TYPE_STRUCT:
 			doStruct(IDL_LIST(list).data,scope);
 			break;
+		case IDLN_TYPE_SEQUENCE:
+			doSequence(IDL_LIST(list).data,scope);
+			break;
 #if 0 //!!!
 		case IDLN_TYPE_UNION:
 			doUnion(IDL_LIST(list).data,scope);
-			break;
-		case IDLN_TYPE_SEQUENCE:
-			doSequence(IDL_LIST(list).data,scope);
 			break;
 		case IDLN_NATIVE:
 			doNative(IDL_LIST(list).data,scope);
 			break;
 #endif
 
-#if 0 //!!!
 		case IDLN_CONST_DCL:
 			doConstant(IDL_LIST(list).data,scope);
 			break;
-#endif
 		case IDLN_EXCEPT_DCL:
 			doException(IDL_LIST(list).data,scope);
 			break;
