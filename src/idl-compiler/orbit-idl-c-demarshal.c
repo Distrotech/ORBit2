@@ -38,6 +38,8 @@ c_demarshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci, gboolean in_s
   fprintf(ci->fh, "if(giop_msg_conversion_needed(GIOP_MESSAGE_BUFFER(_ORBIT_recv_buffer))) {\n");
   c_demarshal_generate(node, &cmi);
   fprintf(ci->fh, "} else {\n");
+  cmi.curptr_loaded = FALSE;
+  cmi.last_tail_align = 1;
   cmi.endian_swap_pass = FALSE;
   c_demarshal_generate(node, &cmi);
   fprintf(ci->fh, "}\n");
