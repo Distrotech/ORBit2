@@ -144,12 +144,18 @@ POA_test_PingPongServer__vepv PingPongServer_vepv = {
 static POA_test_PingPongServer *
 create_ping_pong_servant (void)
 {
+	CORBA_Environment ev[1];
 	test_PingPongServer_Servant *servant;
 	
 	servant = g_new0 (test_PingPongServer_Servant, 1);
 	servant->baseServant.vepv = &PingPongServer_vepv;
 
 	servant->registered = CORBA_OBJECT_NIL;
+
+	CORBA_exception_init (ev);
+	POA_test_PingPongServer__init (servant, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_exception_free (ev);
 
 	return (POA_test_PingPongServer *) servant;
 };

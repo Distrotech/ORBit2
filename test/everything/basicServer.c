@@ -191,8 +191,6 @@ BasicServer_testLargeStringSeq (PortableServer_Servant servant,
 {
 }
 
-PortableServer_ServantBase__epv BasicServer_base_epv = {NULL, NULL, NULL};
-
 POA_test_BasicServer__epv BasicServer_epv = {
 	NULL,
 	BasicServer__get_foo,
@@ -211,6 +209,5 @@ POA_test_BasicServer__epv BasicServer_epv = {
 	BasicServer_testLargeStringSeq
 };
 
-POA_test_BasicServer__vepv BasicServer_vepv = {&BasicServer_base_epv, &BasicServer_epv};
-
-POA_test_BasicServer BasicServer_servant = {NULL, &BasicServer_vepv};  /* Singleton */
+PortableServer_ServantBase__epv BasicServer_base_epv = {NULL, simple_finalize, NULL};
+POA_test_BasicServer__vepv BasicServer_vepv = { &BasicServer_base_epv, &BasicServer_epv };

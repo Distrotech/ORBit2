@@ -197,8 +197,6 @@ AnyServer_opTypeCode (PortableServer_Servant servant,
 	return TC_test_VariableLengthStruct; 
 }
 
-PortableServer_ServantBase__epv AnyServer_base_epv = {NULL,NULL,NULL};
-
 POA_test_AnyServer__epv AnyServer_epv = {
 	NULL,
 	AnyServer_opAnyStrSeq,
@@ -208,6 +206,5 @@ POA_test_AnyServer__epv AnyServer_epv = {
 	AnyServer_opTypeCode,
 };
 
-POA_test_AnyServer__vepv AnyServer_vepv = {&AnyServer_base_epv,&AnyServer_epv};
-
-POA_test_AnyServer AnyServer_servant = {NULL,&AnyServer_vepv};  /* Singleton */
+PortableServer_ServantBase__epv AnyServer_base_epv = {NULL, simple_finalize, NULL};
+POA_test_AnyServer__vepv AnyServer_vepv = { &AnyServer_base_epv, &AnyServer_epv };

@@ -1,3 +1,19 @@
+2003-05-09  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/*.c: large scale servant re-factor.
+
+2003-05-08  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/server.c (simple_finalize): impl.
+	(test_TestFactory__fini, create_TestFactory): 
+	allocate servant.
+	(simple_servant, TestFactory_createDeadReferenceObj) 
+	(test_TestFactory__init): allocate the servants, so
+	we're thread-safe.
+	
+	* test/everything/*.c: use Simple_base_epv to
+	finalize the servant where appropriate.
+
 2003-05-07  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-connection.c

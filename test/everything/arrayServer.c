@@ -104,9 +104,6 @@ ArrayServer_opStrArray(PortableServer_Servant _servant,
   return retn;  
 }
 
-
-PortableServer_ServantBase__epv ArrayServer_base_epv = {NULL,NULL,NULL};
-
 POA_test_ArrayServer__epv ArrayServer_epv = {
   NULL,
   ArrayServer_opLongArray,
@@ -114,6 +111,5 @@ POA_test_ArrayServer__epv ArrayServer_epv = {
   ArrayServer_opStrArray,
 };
 
-POA_test_ArrayServer__vepv ArrayServer_vepv = {&ArrayServer_base_epv,&ArrayServer_epv};
-
-POA_test_ArrayServer ArrayServer_servant = {NULL,&ArrayServer_vepv};  /* Singleton */
+PortableServer_ServantBase__epv ArrayServer_base_epv = {NULL, simple_finalize, NULL};
+POA_test_ArrayServer__vepv ArrayServer_vepv = { &ArrayServer_base_epv, &ArrayServer_epv };
