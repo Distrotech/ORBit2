@@ -1,3 +1,14 @@
+2003-05-29  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub): check cross-thread calls,
+	and generate an in-proc proxy for non-allowed xt cases.
+
+	* src/orb/poa/poa.c (ORBit_poa_allow_cross_thread_call): impl.
+	(get_c_method): use it.
+
+	* src/orb/GIOP/giop.c (giop_thread_same_key): impl.
+
 2003-05-28  Michael Meeks  <michael@ximian.com>
 
 	* src/idl-compiler/orbit-idl-c-skels.c:

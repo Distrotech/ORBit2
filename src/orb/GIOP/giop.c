@@ -355,6 +355,24 @@ giop_thread_request_push_key (gpointer  key,
 	g_mutex_unlock (giop_pool_hash_lock);
 }
 
+gboolean
+giop_thread_same_key (gpointer key, gboolean no_key_default)
+{
+	gboolean same;
+	GIOPThread *tdata;
+
+	g_mutex_lock (giop_pool_hash_lock);
+
+	if (!(tdata = g_hash_table_lookup (giop_pool_hash, key)))
+		same = no_key_default;
+	else
+		same = tdata == giop_thread_self ();
+
+	g_mutex_unlock (giop_pool_hash_lock);
+
+	return same;
+}
+
 static gboolean
 giop_mainloop_handle_input (GIOChannel     *source,
 			    GIOCondition    condition,
