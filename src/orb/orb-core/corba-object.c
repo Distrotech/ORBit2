@@ -201,17 +201,12 @@ ORBit_start_servers (CORBA_ORB orb)
 
 	for (info = linc_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
-		LINCConnectionOptions options = 0;
 
 		if (!ORBit_proto_use (info->name))
 			continue;
 
-#ifndef ORBIT_THREADED
-		options |= LINC_CONNECTION_NONBLOCKING;
-#endif
 		server = giop_server_new (orb->default_giop_version,
-					  info->name, NULL, NULL,
-					  options, orb);
+					  info->name, NULL, NULL, 0, orb);
 		if (server) {
 			orb->servers = g_slist_prepend (orb->servers, server);
 

@@ -179,6 +179,10 @@ giop_connection_initiate (const char *proto_name,
 
 	LINC_MUTEX_LOCK (cnx_list.lock);
 
+#ifndef ORBIT_THREADED
+	options |= LINC_CONNECTION_NONBLOCKING;
+#endif
+
 	cnx = giop_connection_list_lookup (
 		proto_name, remote_serv_info,
 		remote_serv_info, (options & LINC_CONNECTION_SSL) ? TRUE : FALSE);

@@ -872,15 +872,19 @@ giop_connection_handle_input (LINCConnection *lcnx)
 
 		buf = cnx->incoming_msg;
 
-		/* FIXME: holding cnx->incoming_mutex here can deadlock ! */
 		n = linc_connection_read (
 			lcnx, buf->cur, buf->left_to_read, FALSE);
 
-		if (n < 0 || /* error on read */
-		    n == 0 || /* short read == HUP on some platforms */
-		    !buf->left_to_read) { /* odd error case ? */
+		if (n == 0) { /* We'll be back */
+			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+			g_object_unref ((GObject *) cnx);
+			return TRUE;
+		}
+
+		if (n < 0 || !buf->left_to_read) {
 			/* FIXME: we hit this _far_ too much, this is a common
 			   path instead of an unusual incidental */
+/*			g_warning ("Bad read %d %ld", n, buf->left_to_read); */
 			LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
 			linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 			g_object_unref ((GObject *) cnx);

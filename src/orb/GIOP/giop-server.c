@@ -13,6 +13,10 @@ giop_server_new (GIOPVersion            giop_version,
 	GIOPServer *server = (GIOPServer *)
 		g_object_new (GIOP_TYPE_SERVER, NULL);
 
+#ifndef ORBIT_THREADED
+	create_options |= LINC_CONNECTION_NONBLOCKING;
+#endif
+
 	server->giop_version = giop_version;
 
 	if (!linc_server_setup (LINC_SERVER (server), proto_name, 

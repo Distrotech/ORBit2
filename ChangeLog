@@ -1,3 +1,25 @@
+2001-11-12  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-server.c (giop_server_new):
+	always pass non blocking flag.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_start_servers): don't pass non blocking
+	flag.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): always initate non
+	blocking connections.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): use new
+	linc_connection_read semantics, kills
+	deadlock, and heinous EAGAIN handling, we now
+	idle in the mainloop on EAGAIN.
+
+	* configure.in: require linc >= 0.1.8 and it's
+	new linc_connection_read.
+
 2001-11-09  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
