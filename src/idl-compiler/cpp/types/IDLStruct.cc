@@ -259,7 +259,7 @@ IDLStruct::stub_impl_ret_post (ostream          &ostr,
 		} else {
 			ostr << indent << cpp_typename << " *_cpp_retval = "
 			     << "new " << cpp_typename << ";" << endl;
-			ostr << indent << "_cpp_retval->_orbitcpp_unpack  (*_c_retval);" << endl;
+			ostr << indent << "_cpp_retval->_orbitcpp_unpack (*_c_retval);" << endl;
 			ostr << indent << "CORBA_free (_c_retval);" << endl;
 		}
 		
@@ -470,13 +470,22 @@ IDLStruct::skel_impl_ret_post (ostream          &ostr,
 string
 IDLStruct::get_cpp_member_typename (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+	
+	if (is_fixed ())
+		return cpp_type;
+	else
+		return cpp_type + "_var";
 }
 
 string
 IDLStruct::get_c_member_typename (const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	string c_type = active_typedef ?
+		active_typedef->get_c_typename () : get_c_typename ();
+
+	return c_type;
 }
 
 string
@@ -500,7 +509,10 @@ IDLStruct::member_init_cpp (ostream          &ostr,
 			    const string     &cpp_id,
 			    const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+	
+	ostr << indent << cpp_id << " = new " << cpp_type << ";" << endl;
 }
 
 void
@@ -519,7 +531,12 @@ IDLStruct::member_pack_to_c (ostream          &ostr,
 			     const string     &c_id,
 			     const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	// FIXME: Write passthrough optimization impl
+	
+	string accessor = is_fixed () ? "." : "->";
+
+	ostr << indent << cpp_id << accessor << "_orbitcpp_pack"
+	     << " (" << c_id << ");" << endl;
 }
 
 void
@@ -529,5 +546,10 @@ IDLStruct::member_unpack_from_c  (ostream          &ostr,
 			       const string     &c_id,
 			       const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	// FIXME: Write passthrough optimization impl
+
+	string accessor = is_fixed () ? "." : "->";
+
+	ostr << indent << cpp_id << accessor << "_orbitcpp_unpack"
+	     << " (" << c_id << ");" << endl;
 }

@@ -321,6 +321,6 @@ IDLString::member_unpack_from_c (ostream      &ostr,
 				 const string &c_id,
 				 const IDLTypedef *active_typedef) const
 {
-	ostr << cpp_id << " = CORBA::string_dup (" << c_id << ")"
+	ostr << indent << cpp_id << " = CORBA::string_dup (" << c_id << ")"
 	     << ';' << endl;
 }
