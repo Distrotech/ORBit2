@@ -1,3 +1,16 @@
+2002-01-22  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/idl-compiler/orbit-idl-utils.c:
+	(orbit_idl_check_oneway_op): impl to check if oneways have
+	returns or outs/inouts.
+
+	* src/idl-compiler/orbit-idl-c-headers.c:
+	(ch_output_stub_protos): use.
+
+	* test/everything/everything.idl,
+	  test/everything/server.c,
+	  test/everything/client.c: make segv return void.
+
 2002-01-21  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-orb.c:

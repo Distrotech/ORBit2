@@ -1444,7 +1444,6 @@ testSegv (test_TestFactory   factory,
 	if (!in_proc) {
 		gboolean broken = FALSE;
 		gboolean invoked = FALSE;
-		CORBA_char *id;
 
 		g_assert (ORBit_small_listen_for_broken (
 			factory, G_CALLBACK (broken_cb), &broken) ==
@@ -1458,7 +1457,7 @@ testSegv (test_TestFactory   factory,
 			factory, G_CALLBACK (dummy_cb)) ==
 			  ORBIT_CONNECTION_CONNECTED);
 
-		id = test_TestFactory_segv (factory, "do it!", ev); 
+		test_TestFactory_segv (factory, "do it!", ev); 
 #ifdef DO_HARDER_SEGV
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
 		g_assert (!strcmp (ev->_id, "IDL:CORBA/COMM_FAILURE:1.0"));
@@ -1474,7 +1473,6 @@ testSegv (test_TestFactory   factory,
 		    ORBIT_CONNECTION_CONNECTED)
 			g_warning ("Unusual race in unlisten");
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
-		CORBA_free (id);
 #endif
 	}
 }

@@ -59,7 +59,7 @@ module test {
 		ArrayServer getArrayServer();
 		AnyServer getAnyServer();
 		ContextServer getContextServer();
-		oneway string segv (in string when);
+		oneway void segv (in string when);
 		BaseServer getBaseServer();
 		DerivedServer getDerivedServer();
 		BaseServer getDerivedServerAsBaseServer();

@@ -935,6 +935,7 @@ ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
 	switch(IDL_NODE_TYPE(cur)) {
 	case IDLN_OP_DCL:
+	  orbit_idl_check_oneway_op (cur);
 	  orbit_cbe_op_write_proto(ci->fh, cur, "", FALSE);
 	  fprintf(ci->fh, ";\n");
 	  break;

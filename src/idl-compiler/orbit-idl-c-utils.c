@@ -307,47 +307,50 @@ orbit_cbe_write_param_typespec(FILE *of, IDL_tree tree) {
 }
 
 void
-orbit_cbe_op_write_proto(FILE *of,
-			 IDL_tree op,
-			 const char *nom_prefix,
-			 gboolean for_epv)
+orbit_cbe_op_write_proto (FILE       *of,
+			  IDL_tree    op,
+			  const char *nom_prefix,
+			  gboolean    for_epv)
 {
-  IDL_tree sub;
-  char *id;
+	IDL_tree  sub;
+	char     *id;
 
-  g_assert( IDL_NODE_TYPE(op) == IDLN_OP_DCL );
-  orbit_cbe_write_param_typespec(of, op);	/* return type */
+	g_assert (IDL_NODE_TYPE(op) == IDLN_OP_DCL);
 
-  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_INTERFACE(IDL_get_parent_node(op, IDLN_INTERFACE, NULL)).ident), "_", 0);
+	orbit_cbe_write_param_typespec (of, op);
 
-  if(for_epv) {
-    fprintf(of, " (*%s%s)", nom_prefix?nom_prefix:"",
-	    IDL_IDENT(IDL_OP_DCL(op).ident).str);
-  } else {
-    fprintf(of, " %s%s_%s", nom_prefix?nom_prefix:"",
-	    id,
-	    IDL_IDENT(IDL_OP_DCL(op).ident).str);
-  }
+	id = IDL_ns_ident_to_qstring (
+		IDL_IDENT_TO_NS (IDL_INTERFACE (
+			IDL_get_parent_node (op, IDLN_INTERFACE, NULL)).ident), "_", 0);
 
-  fprintf(of, "(");
+	if (for_epv)
+		fprintf (of, " (*%s%s)", nom_prefix ? nom_prefix : "",
+			 IDL_IDENT(IDL_OP_DCL(op).ident).str);
+	else 
+		fprintf (of, " %s%s_%s", nom_prefix ? nom_prefix : "",
+			 id, IDL_IDENT (IDL_OP_DCL (op).ident).str);
 
-  if(for_epv)
-    fprintf(of, "PortableServer_Servant _servant, ");
-  else
-    fprintf(of, "%s _obj, ", id);
+	fprintf (of, "(");
 
-  g_free(id);
+	if (for_epv)
+		fprintf (of, "PortableServer_Servant _servant, ");
+	else
+		fprintf (of, "%s _obj, ", id);
 
-  for(sub = IDL_OP_DCL(op).parameter_dcls; sub; sub = IDL_LIST(sub).next) {
-    IDL_tree parm = IDL_LIST(sub).data;
-    orbit_cbe_write_param_typespec(of, parm);	/* param type */
-    fprintf(of, " %s, ", IDL_IDENT(IDL_PARAM_DCL(parm).simple_declarator).str);
-  }
+	g_free (id);
 
-  if(IDL_OP_DCL(op).context_expr)
-    fprintf(of, "CORBA_Context _ctx, ");
+	for (sub = IDL_OP_DCL (op).parameter_dcls; sub; sub = IDL_LIST (sub).next) {
+		IDL_tree parm = IDL_LIST (sub).data;
 
-  fprintf(of, "CORBA_Environment *ev)");
+		orbit_cbe_write_param_typespec (of, parm);
+
+		fprintf (of, " %s, ", IDL_IDENT (IDL_PARAM_DCL (parm).simple_declarator).str);
+	}
+
+	if (IDL_OP_DCL (op).context_expr)
+		fprintf (of, "CORBA_Context _ctx, ");
+
+	fprintf (of, "CORBA_Environment *ev)");
 }
 
 /* Writes the value of the constant in 'tree' to file handle 'of' */
