@@ -64,9 +64,10 @@ do
   echo processing $i
   (cd $i; \
     libtoolize --copy --force; \
-    aclocal $ACLOCAL_FLAGS; autoheader; \
+    aclocal $ACLOCAL_FLAGS;
+    if test "$i" != "libIDL"; then autoheader; fi; \
     automake --add-missing $am_opt; \
-    autoheader; \
+    if test "$i" != "libIDL"; then autoheader; fi; \
     autoconf)
 done
 
