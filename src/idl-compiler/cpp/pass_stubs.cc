@@ -131,7 +131,7 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << attr.getType()->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(),_ev._orbitcpp_get_c_object());" << endl;
+	<< IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()<< "__get_" << attr.getCIdentifier() << "(_orbitcpp_cobj(),_ev._orbitcpp_cobj());" << endl;
 
 	m_module
 	<< mod_indent << "_ev.propagate_sysex();" << endl;
@@ -164,10 +164,10 @@ IDLPassStubs::doAttributeStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 		m_module
 			<< mod_indent << IDL_IMPL_C_NS_NOTUSED <<  iface.getQualifiedCIdentifier()
-			<< "__set_" << attr.getCIdentifier() << "(_orbitcpp_get_c_object(), "
+			<< "__set_" << attr.getCIdentifier() << "(_orbitcpp_cobj(), "
 			<<attr.getType()->getCPPStubParameterTerm(IDL_PARAM_IN,"val");
 		m_module
-			<<", _ev._orbitcpp_get_c_object());" << endl;
+			<<", _ev._orbitcpp_cobj());" << endl;
 
 		m_module
 		  << mod_indent << "_ev.propagate_sysex();" << endl;
@@ -217,7 +217,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 
 	m_module
 	<< mod_indent << op.m_returntype->getCPPStubReturnAssignment()
-	<< IDL_IMPL_C_NS_NOTUSED <<  op.getQualifiedCIdentifier() << "(_orbitcpp_get_c_object(),";
+	<< IDL_IMPL_C_NS_NOTUSED <<  op.getQualifiedCIdentifier() << "(_orbitcpp_cobj(),";
 
 	first = op.m_parameterinfo.begin();
 	last = op.m_parameterinfo.end();
@@ -226,7 +226,7 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 		m_module << first->Type->getCPPStubParameterTerm(first->Direction,first->Identifier) << ',';
 		first++;
 	}
-	m_module << "_ev._orbitcpp_get_c_object());" << endl;
+	m_module << "_ev._orbitcpp_cobj());" << endl;
 
 	// handle exceptions
 	m_module
@@ -243,9 +243,9 @@ IDLPassStubs::doOperationStub(IDLInterface &iface,IDLInterface &of,IDL_tree node
 	if (exfirst != exlast) { // no exceptions => every user ex is unknown
 		m_module
 		<< mod_indent << IDL_CORBA_NS "::RepositoryId const repo_id = "
-		<<  "::CORBA_exception_id(_ev._orbitcpp_get_c_object());" << endl
+		<<  "::CORBA_exception_id(_ev._orbitcpp_cobj());" << endl
 		<< mod_indent << "void *value = "
-		<<  "::CORBA_exception_value(_ev._orbitcpp_get_c_object());" << endl << endl;
+		<<  "::CORBA_exception_value(_ev._orbitcpp_cobj());" << endl << endl;
 
 		while (exfirst != exlast && *exfirst) {
 			m_module

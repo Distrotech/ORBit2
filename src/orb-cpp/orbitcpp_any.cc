@@ -45,7 +45,7 @@ CORBA::Any::insert_simple(CORBA::TypeCode_ptr tc, void* value, Boolean v_copy)
 	if( m_target._type != tc )
 	{
 		::_orbitcpp::CEnvironment _ev;
-		CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_get_c_object()); // release typecode
+		CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_cobj()); // release typecode
 		m_target._type = tc;
 	}
 }	
@@ -56,7 +56,7 @@ CORBA::Any::operator<<=(from_string in)
 	if( in.bound && (strlen(in.val) > in.bound) )
 		return;
 	::_orbitcpp::CEnvironment _ev;
-	CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_get_c_object()); // release typecode
+	CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_cobj()); // release typecode
 
 	CORBA_TypeCode new_tc = ::_orbitcpp::TypeCode_allocate();
 	new_tc->kind = CORBA_tk_string;
@@ -81,7 +81,7 @@ CORBA::Any::operator<<=(from_wstring in)
 	if( in.bound && (wcslen((wchar_t*)in.val) > in.bound) )
 		return;
 	::_orbitcpp::CEnvironment _ev;
-	CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_get_c_object()); // release typecode
+	CORBA_Object_release((CORBA_Object)m_target._type, _ev._orbitcpp_cobj()); // release typecode
 	CORBA_TypeCode new_tc = ::_orbitcpp::TypeCode_allocate();
 	new_tc->kind = CORBA_tk_wstring;
 	new_tc->length = in.bound;
@@ -107,7 +107,7 @@ CORBA::Any::operator>>=(to_string out) const
 	tmp->length = out.bound;
 	Boolean ret = extract(reinterpret_cast<CORBA::TypeCode_ptr>(tmp), const_cast<char*&>(out.val));
 	::_orbitcpp::CEnvironment _ev;
-	CORBA_Object_release((CORBA_Object)tmp, _ev._orbitcpp_get_c_object()); // release typecode
+	CORBA_Object_release((CORBA_Object)tmp, _ev._orbitcpp_cobj()); // release typecode
 	return ret;
 }
 
@@ -119,6 +119,6 @@ CORBA::Any::operator>>=(to_wstring out) const
 	tmp->length = out.bound;
 	Boolean ret = extract(reinterpret_cast<CORBA::TypeCode_ptr>(tmp), const_cast<WChar*&>(out.val));
 	::_orbitcpp::CEnvironment _ev;
-	CORBA_Object_release((CORBA_Object)tmp, _ev._orbitcpp_get_c_object()); // release typecode
+	CORBA_Object_release((CORBA_Object)tmp, _ev._orbitcpp_cobj()); // release typecode
 	return ret;
 }

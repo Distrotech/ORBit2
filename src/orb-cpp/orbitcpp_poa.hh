@@ -189,7 +189,7 @@ namespace PortableServer {
 		static POA_ptr _narrow(CORBA::Object_ptr obj);
 		static POA_ptr _nil();
 
-		PortableServer_POA _orbitcpp_get_c_object()
+		PortableServer_POA _orbitcpp_cobj()
 		{
 			return reinterpret_cast<PortableServer_POA>(m_target);
 		}
@@ -223,7 +223,7 @@ namespace PortableServer {
 		{}
 	
 	private:
-		PortableServer_POAManager _orbitcpp_get_c_object() {
+		PortableServer_POAManager _orbitcpp_cobj() {
 			return reinterpret_cast<PortableServer_POAManager>(m_target);
 		}
 	};

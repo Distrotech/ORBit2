@@ -1,3 +1,10 @@
+2002-04-16  Murray Cumming  <murrayc@usa.net>
+
+	* Renamed _orbitcpp_get_c_object() to _orbitcpp_cobj() all over
+	the place. I was getting tired of writing that long method name.
+	Cactus is going to do the same thing in the orbit-cpp-cactus
+	branch. This is more consistent with gtkmm's gobj() method too.	
+
 2002-03-29  Murray Cumming  <murrayc@usa.net>
 
 	* src/idl-compiler/cpp/pass_skels.cc:

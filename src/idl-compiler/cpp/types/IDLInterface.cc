@@ -139,13 +139,13 @@ IDLInterface::getCPPStubParameterTerm(IDL_param_attr attr, string const &id, IDL
 
 	switch (attr) {
 	case IDL_PARAM_IN:
-		return id + "->_orbitcpp_get_c_object()";
+		return id + "->_orbitcpp_cobj()";
 	case IDL_PARAM_INOUT:
 		//return "&reinterpret_cast< "+ctype+">("+id+")";
-		return "&(" + id + "->_orbitcpp_get_c_object ())";
+		return "&(" + id + "->_orbitcpp_cobj ())";
 	case IDL_PARAM_OUT:
 		//return id;
-		return "&(" + id + "->_orbitcpp_get_c_object ())";
+		return "&(" + id + "->_orbitcpp_cobj ())";
 	}
 	return "";
 }
@@ -229,7 +229,7 @@ void
 IDLInterface::writeCPPSkelReturnMarshalCode(ostream &ostr,Indent &indent,bool passthru,
 									   IDLTypedef const *activeTypedef = NULL) const
 {
-	ostr << indent << "return _retval->_orbitcpp_get_c_object ();" << endl;
+	ostr << indent << "return _retval->_orbitcpp_cobj ();" << endl;
 }
 
 string

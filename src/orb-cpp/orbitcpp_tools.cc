@@ -42,7 +42,7 @@
 
 CORBA_Object _orbitcpp::duplicate_guarded(CORBA_Object obj) {
 	CEnvironment ev;
-	CORBA_Object result = CORBA_Object_duplicate(obj, ev._orbitcpp_get_c_object());
+	CORBA_Object result = CORBA_Object_duplicate(obj, ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 	return result;
 }
@@ -50,7 +50,7 @@ CORBA_Object _orbitcpp::duplicate_guarded(CORBA_Object obj) {
 
 void _orbitcpp::release_guarded(CORBA_Object obj) {
 	CEnvironment ev;
-	CORBA_Object_release(obj, ev._orbitcpp_get_c_object());
+	CORBA_Object_release(obj, ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 }
 

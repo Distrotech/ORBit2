@@ -689,7 +689,7 @@ void IDLPassXlate::doInterfaceStaticMethodDefinitions(IDLInterface &iface)
 
  	m_module
  	<< indent << iface.getNSScopedCTypeName()
- 	<< " cobj = ptr->_orbitcpp_get_c_object();" << endl
+ 	<< " cobj = ptr->_orbitcpp_cobj();" << endl
  	<< indent << "cobj = ::_orbitcpp::duplicate_guarded(cobj);" << endl
  	<< indent << "return new " << iface.getQualifiedCPPStub() << "(cobj);" << endl;
 

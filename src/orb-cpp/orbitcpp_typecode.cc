@@ -84,7 +84,7 @@ CORBA::TypeCode::equal(TypeCode_ptr tc) const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_equal(const_cast <CORBA_TypeCode>(m_target),
-		reinterpret_cast <CORBA_TypeCode>(tc), ev._orbitcpp_get_c_object());
+		reinterpret_cast <CORBA_TypeCode>(tc), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -110,7 +110,7 @@ CORBA::TypeCode::kind() const
 
 	/* compiler warnings force me to use a C-style cast. Bad. */
 	retval = (CORBA::TCKind)
-		(CORBA_TypeCode_kind(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object()));
+		(CORBA_TypeCode_kind(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_cobj()));
 	ev.propagate_sysex();
 
 	return(retval);
@@ -135,7 +135,7 @@ CORBA::TypeCode::id() const
 	const char *retval = NULL;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_id(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object());
+	retval = CORBA_TypeCode_id(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -148,7 +148,7 @@ CORBA::TypeCode::name() const
 	const char *retval = NULL;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_name(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object());
+	retval = CORBA_TypeCode_name(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -162,7 +162,7 @@ CORBA::TypeCode::member_count() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_member_count(const_cast <CORBA_TypeCode>
-											(m_target), ev._orbitcpp_get_c_object());
+											(m_target), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -175,7 +175,7 @@ CORBA::TypeCode::member_name(ULong index) const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_member_name(const_cast <CORBA_TypeCode>(m_target),
-		index, ev._orbitcpp_get_c_object());
+		index, ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -190,7 +190,7 @@ CORBA::TypeCode::member_type(CORBA::ULong index) const
 
 	retval = reinterpret_cast <CORBA::TypeCode_ptr>
 		(CORBA_TypeCode_member_type(const_cast <CORBA_TypeCode>(m_target),
-			index, ev._orbitcpp_get_c_object()));
+			index, ev._orbitcpp_cobj()));
 	ev.propagate_sysex();
 
 	return(retval);
@@ -206,7 +206,7 @@ CORBA::TypeCode::discriminator_type() const
 
 	retval = reinterpret_cast <CORBA::TypeCode_ptr>
 		(CORBA_TypeCode_discriminator_type(const_cast <CORBA_TypeCode>
-											(m_target), ev._orbitcpp_get_c_object()));
+											(m_target), ev._orbitcpp_cobj()));
 	ev.propagate_sysex();
 
 	return(retval);
@@ -219,7 +219,7 @@ CORBA::TypeCode::default_index() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_default_index(const_cast <CORBA_TypeCode>
-											(m_target), ev._orbitcpp_get_c_object());
+											(m_target), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -232,7 +232,7 @@ CORBA::TypeCode::length() const
 	CORBA::ULong retval = 0;
 	CEnvironment ev;
 
-	retval = CORBA_TypeCode_length(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_get_c_object());
+	retval = CORBA_TypeCode_length(const_cast <CORBA_TypeCode>(m_target), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -247,7 +247,7 @@ CORBA::TypeCode::content_type() const
 
 	retval = reinterpret_cast <CORBA::TypeCode_ptr>
 		(CORBA_TypeCode_content_type(const_cast <CORBA_TypeCode>(m_target),
-			ev._orbitcpp_get_c_object()));
+			ev._orbitcpp_cobj()));
 	ev.propagate_sysex();
 
 	return(retval);
@@ -261,7 +261,7 @@ CORBA::TypeCode::fixed_digits() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_fixed_digits(const_cast <CORBA_TypeCode>
-										(m_target), ev._orbitcpp_get_c_object());
+										(m_target), ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -274,7 +274,7 @@ CORBA::TypeCode::fixed_scale() const
 	CEnvironment ev;
 
 	retval = CORBA_TypeCode_fixed_scale(const_cast <CORBA_TypeCode>(m_target),
-		ev._orbitcpp_get_c_object());
+		ev._orbitcpp_cobj());
 	ev.propagate_sysex();
 
 	return(retval);
@@ -317,7 +317,7 @@ CORBA::TypeCode::concrete_base_type() const
 	return(retval);
 }
 
-CORBA_TypeCode CORBA::TypeCode::_orbitcpp_get_c_object()
+CORBA_TypeCode CORBA::TypeCode::_orbitcpp_cobj()
 {
 	return m_target;
 }
