@@ -54,7 +54,7 @@ IDLArray::conversion_required () const
 bool
 IDLArray::is_fixed () const
 {
-#warning "WRITE ME"
+	return m_element_type.is_fixed ();
 }
 
 void
@@ -447,7 +447,15 @@ IDLArray::stub_impl_arg_post (ostream          &ostr,
 {
 	if (!m_element_type.conversion_required ())
 		return;
+	
+	g_assert (active_typedef);
 
+	string cpp_typename = active_typedef->get_cpp_typename ();
+
+	// Allocate C++ array (if needed)
+	if (!is_fixed ())
+		ostr << indent << cpp_id << " = " << cpp_typename << "_alloc ();" << endl;
+	
 	// Re-load from C array
 	if (direction == IDL_PARAM_INOUT || direction == IDL_PARAM_OUT)
 	fill_cpp_array (ostr, indent, cpp_id, "_c_" + cpp_id);
@@ -577,8 +585,7 @@ IDLArray::skel_impl_arg_pre (ostream          &ostr,
 
 	case IDL_PARAM_OUT:
 		ostr << indent << active_typedef->get_cpp_typename ()
-		     << "_slice *_cpp_" << c_id << " = "
-		     << active_typedef->get_cpp_typename () << "_alloc ();" << endl;
+		     << "_var _cpp_" << c_id << ";" << endl;
 		break;
 	}
 
