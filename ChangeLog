@@ -1,5 +1,10 @@
 2001-07-23  Michael Meeks  <michael@ximian.com>
 
+	* src/idl-compiler/orbit-idl-main.c (main): add version
+	output.
+
+2001-07-23  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_poa):
 	only free the return value if there is no exception.
 
