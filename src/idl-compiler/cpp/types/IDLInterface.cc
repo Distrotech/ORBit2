@@ -133,13 +133,13 @@ IDLInterface::getCPPStubDeclarator(IDL_param_attr attr,string const &id,string &
 
 
 string
-IDLInterface::getCPPStubParameterTerm(IDL_param_attr attr,string const &id,
-									  IDLTypedef const *activeTypedef = NULL) const {
+IDLInterface::getCPPStubParameterTerm(IDL_param_attr attr, string const &id, IDLTypedef const *activeTypedef = NULL) const
+{
 	string ctype = getNSScopedCTypeName();
 
 	switch (attr) {
 	case IDL_PARAM_IN:
-		return "*"+id;
+		return id + "->_orbitcpp_get_c_object()";
 	case IDL_PARAM_INOUT:
 		return "&reinterpret_cast< "+ctype+">("+id+")";
 	case IDL_PARAM_OUT:
@@ -154,9 +154,7 @@ IDLInterface::writeCPPStubReturnDemarshalCode(ostream &ostr,Indent &indent,
 											  IDLTypedef const *activeTypedef = NULL) const {
 	// must return stub ptr and not ptr in order to work when smart pointers are used
 	ostr
-		<< indent << getQualifiedCPPStub() << "* _cpp_retval = new " << getQualifiedCPPStub () << "(_retval);" << endl
-		<< indent << "CORBA_Object_release (_retval, 0);" << endl
-		<< indent << "return _cpp_retval;" << endl;
+		<< indent << "return " << getQualifiedCPPStub () << "::_orbitcpp_wrap(_retval);" << endl;
 }
 
 

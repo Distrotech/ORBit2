@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = liborbitcpp.la
+lib_LTLIBRARIES = libORBit-2-cpp.la
 
 INCLUDES = \
 	-I. \
@@ -7,9 +7,9 @@ INCLUDES = \
 	$(WARN_CFLAGS) \
 	$(ORBIT_CFLAGS)
 
-liborbitcppincludedir = $(includedir)/orbit-2.0/orbit/orb-cpp
+libORBit_2_cppincludedir = $(includedir)/orbit-2.0/orbit/orb-cpp
 
-liborbitcppinclude_HEADERS = \
+libORBit_2_cppinclude_HEADERS = \
 			orbitcpp.hh \
 			orbitcpp_config.hh \
 			orbitcpp_constants.hh \
@@ -26,7 +26,7 @@ liborbitcppinclude_HEADERS = \
 			orbitcpp_any.hh \
 			orbitcpp_typecode.hh
 
-liborbitcpp_la_SOURCES = \
+libORBit_2_cpp_la_SOURCES = \
 			orbitcpp_types.cc \
 			orbitcpp_exception.cc \
 			orbitcpp_tools.cc \
@@ -36,7 +36,7 @@ liborbitcpp_la_SOURCES = \
 			orbitcpp_constants.cc \
 			orbitcpp_any.cc \
 			orbitcpp_typecode.cc
-			$(liborbitcppinclude_HEADERS)
+			$(libORBit_2_cppinclude_HEADERS)
 
-liborbitcpp_la_LDFLAGS = -version-info $(LT_VERSION)
-liborbitcpp_la_LIBADD = $(ORBIT_LIBS) -lstdc++
+libORBit_2_cpp_la_LDFLAGS = -version-info $(LT_VERSION)
+libORBit_2_cpp_la_LIBADD = $(ORBIT_LIBS) -lstdc++

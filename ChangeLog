@@ -1,3 +1,10 @@
+2002-03-12  Murray Cumming  <murrayc@localhost.localdomain>
+
+	* Replace some use of *cppobject with
+	cppobject->orbitcpp_get_c_object().
+	* Changed orb-cpp lib name to libORBit-2-cpp.la. The old one wasn't
+	version-specific. Added pkg-config file for ORBit-2.0-cpp.
+
 2002-03-12  Murray Cumming  <murrayc@usa.net>
 
 	* Put classes from src/idl-compiler/cpp/types.[h|cc] into

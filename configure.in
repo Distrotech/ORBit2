@@ -231,6 +231,7 @@ AC_OUTPUT([
 Makefile
 orbit2-config
 ORBit-2.0.pc
+ORBit-2.0-cpp.pc
 ORBit-CosNaming-2.0.pc
 ORBit.spec
 src/Makefile
