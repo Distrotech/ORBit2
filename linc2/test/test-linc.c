@@ -1,9 +1,7 @@
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include "config.h"
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
 #include <linc/linc.h>
 #include "linc-private.h"
 #include "linc-compat.h"
@@ -41,19 +39,14 @@ init_tmp (void)
 	char *dir;
 	const char *user = g_get_user_name ();
 
-	dir = g_strconcat ("/tmp/orbit-", user, NULL);
+	dir = g_build_filename (g_get_tmp_dir (),
+				g_strconcat ("orbit-", user, NULL),
+				NULL);
+	  
 
 	link_set_tmpdir (dir);
 
 	g_free (dir);
-}
-
-static void
-broken_cb (LinkConnection *cnx, gpointer user_data)
-{
-	g_assert (user_data == NULL);
-
-	exit (13);
 }
 
 GType    test_server_cnx_type = 0;
@@ -82,9 +75,13 @@ create_server (LinkServer **server)
 
 	*server = g_object_new (link_server_get_type (), NULL);
 	
+#ifdef G_OS_WIN32
+	g_assert (link_server_setup (*server, "IPv4", NULL, "1234",
+				     LINK_CONNECTION_NONBLOCKING));
+#else	
 	g_assert (link_server_setup (*server, "UNIX", NULL, NULL,
 				     LINK_CONNECTION_NONBLOCKING));
-
+#endif
 	g_object_add_weak_pointer (G_OBJECT (*server),
 				   (gpointer *) server);
 }
@@ -94,7 +91,12 @@ create_client (LinkServer *server, LinkConnection **client)
 {
 	*client = link_connection_initiate
 		(test_client_cnx_type ? test_client_cnx_type :
-		 link_connection_get_type (), "UNIX",
+		 link_connection_get_type (),
+#ifdef G_OS_WIN32
+		 "IPv4",
+#else
+		 "UNIX",
+#endif
 		 server->local_host_info,
 		 server->local_serv_info,
 		 LINK_CONNECTION_NONBLOCKING,
@@ -104,6 +106,8 @@ create_client (LinkServer *server, LinkConnection **client)
 	g_object_add_weak_pointer (G_OBJECT (*client),
 				   (gpointer *) client);
 }
+
+#ifdef HAVE_SYS_WAIT_H
 
 static gboolean 
 test_broken_cnx_handle_input (LinkConnection *cnx)
@@ -153,6 +157,14 @@ test_get_broken_cnx_type (void)
 }
 
 static void
+broken_cb (LinkConnection *cnx, gpointer user_data)
+{
+	g_assert (user_data == NULL);
+
+	exit (13);
+}
+
+static void
 test_broken (void)
 {
 	LinkServer     *server;
@@ -191,16 +203,20 @@ test_broken (void)
 	g_assert (WIFEXITED (status) && WEXITSTATUS (status) == 13);
 }
 
+#endif
+
+#ifndef G_OS_WIN32
+
 static GIOCondition
 knobble_watch (LinkWatch *watch, GIOCondition new_cond)
 {
 	GIOCondition   old_cond;
-	LinkUnixWatch *a = (LinkUnixWatch *) watch->link_source;
-	LinkUnixWatch *b = (LinkUnixWatch *) watch->main_source;
 
 	g_assert (watch != NULL);
 
-	g_assert ((old_cond = a->condition) == b->condition);
+	old_cond = ((LinkUnixWatch *) watch->link_source)->condition;
+
+	g_assert (old_cond == ((LinkUnixWatch *) watch->main_source)->condition);
 	
 	link_watch_set_condition (watch, new_cond);
 
@@ -219,6 +235,8 @@ blocking_cb (LinkConnection *cnx,
 	     gpointer        user_data)
 {
 	BlockingData *bd = user_data;
+
+	fprintf (stderr, "blocking_cb\n");
 
 	if (bd->status < 3)
 		fprintf (stderr, " buffer %ld\n", buffer_size);
@@ -349,6 +367,8 @@ test_blocking (void)
 	link_write_options_free (options);
 }
 
+#endif
+
 static void
 test_local_ipv4 (void)
 {
@@ -408,11 +428,12 @@ test_local (void)
 
 	g_assert (!link_protocol_is_local (NULL, NULL, -1));
 
+#ifndef G_OS_WIN32
 	fprintf (stderr, " UNIX\n");
 	proto = link_protocol_find ("UNIX");
 	g_assert (proto != NULL);
 	g_assert (link_protocol_is_local (proto, NULL, -1));
-
+#endif
 	test_local_ipv4 ();
 	test_local_ipv6 ();
 }
@@ -538,8 +559,12 @@ main (int argc, char **argv)
 
 	test_protos ();
 	test_connected ();
+#ifdef HAVE_SYS_WAIT_H
 	test_broken ();
+#endif
+#ifndef G_OS_WIN32
 	test_blocking ();
+#endif
 	test_local ();
 	test_host ();
 

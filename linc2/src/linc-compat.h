@@ -88,9 +88,9 @@
 #  undef AF_UNIX		/* No Unix domain sockets */
 #  undef AF_INET6		/* Doesn't have sockaddr_in6 */
 
-void linc_map_winsock_error_to_errno (void);
+void link_map_winsock_error_to_errno (void);
 
-int  linc_socketpair (int *handles);
+int  link_socketpair (int *handles);
 
 #endif
 
@@ -117,6 +117,6 @@ int  linc_socketpair (int *handles);
 #  define LINK_UNIX_PATH_MAX UNIX_PATH_MAX
 #endif
 
-const char *linc_strerror (int);
+const char *link_strerror (int);
 
 #endif /* LINK_HACKS_H */

@@ -1,3 +1,11 @@
+/*
+ * linc-compat.c: This file is part of the linc library.
+ *
+ * Authors:
+ *    Tor Lillqvist  (tml@iki.fi)
+ *
+ * Copyright 2005, Novell, Inc.
+ */
 #include "config.h"
 
 #include "linc-compat.h"
@@ -12,7 +20,7 @@
  * defined as the corresponding WSAE* value in linc-compat.h
  */
 void
-linc_map_winsock_error_to_errno (void)
+link_map_winsock_error_to_errno (void)
 {
 	errno = WSAGetLastError ();
 	d_printf ("WSAGetLastError: %d\n", errno);
@@ -25,7 +33,7 @@ linc_map_winsock_error_to_errno (void)
 }
 
 int
-linc_socketpair (int *handles)
+link_socketpair (int *handles)
 {
   SOCKET temp, socket1 = -1, socket2 = -1;
   struct sockaddr_in saddr;
@@ -37,14 +45,14 @@ linc_socketpair (int *handles)
   temp = socket (AF_INET, SOCK_STREAM, 0);
   if (temp == INVALID_SOCKET)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out0;
     }
   
   arg = 1;
   if (ioctlsocket (temp, FIONBIO, &arg) == SOCKET_ERROR)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out0;
     }
 
@@ -55,41 +63,41 @@ linc_socketpair (int *handles)
 
   if (bind (temp, (struct sockaddr *)&saddr, sizeof (saddr)))
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out0;
     }
 
   if (listen (temp, 1) == SOCKET_ERROR)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out0;
     }
 
   len = sizeof (saddr);
   if (getsockname (temp, (struct sockaddr *)&saddr, &len))
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out0;
     }
 
   socket1 = socket (AF_INET, SOCK_STREAM, 0);
   if (socket1 == INVALID_SOCKET)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out0;
     }
   
   arg = 1;
   if (ioctlsocket (socket1, FIONBIO, &arg) == SOCKET_ERROR)
     { 
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out1;
     }
 
   if (connect (socket1, (struct sockaddr  *)&saddr, len) != SOCKET_ERROR ||
       WSAGetLastError () != WSAEWOULDBLOCK)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out1;
     }
 
@@ -101,7 +109,7 @@ linc_socketpair (int *handles)
 
   if (select (0, &read_set, NULL, NULL, NULL) == SOCKET_ERROR)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out1;
     }
 
@@ -114,7 +122,7 @@ linc_socketpair (int *handles)
   socket2 = accept (temp, (struct sockaddr *) &saddr, &len);
   if (socket2 == INVALID_SOCKET)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out1;
     }
 
@@ -126,7 +134,7 @@ linc_socketpair (int *handles)
 
   if (select (0, NULL, &write_set, NULL, NULL) == SOCKET_ERROR)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out2;
     }
 
@@ -139,14 +147,14 @@ linc_socketpair (int *handles)
   arg = 0;
   if (ioctlsocket (socket1, FIONBIO, &arg) == SOCKET_ERROR)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out2;
     }
 
   arg = 0;
   if (ioctlsocket (socket2, FIONBIO, &arg) == SOCKET_ERROR)
     {
-      linc_map_winsock_error_to_errno ();
+      link_map_winsock_error_to_errno ();
       goto out2;
     }
   
@@ -172,7 +180,7 @@ linc_socketpair (int *handles)
 #endif
 
 const char *
-linc_strerror (int number)
+link_strerror (int number)
 {
 	switch (number) {
 #ifdef HAVE_WINSOCK2_H

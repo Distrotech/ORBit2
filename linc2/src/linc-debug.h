@@ -4,7 +4,11 @@
 /*
  * Enables debug on the Unix socket / connection
  */
-#undef CONNECTION_DEBUG
+#ifdef _WIN32
+#  define CONNECTION_DEBUG	/* Temporary... */
+#else
+#  undef CONNECTION_DEBUG
+#endif
 
 #ifndef CONNECTION_DEBUG
 #ifdef G_HAVE_ISO_VARARGS

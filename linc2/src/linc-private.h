@@ -99,6 +99,10 @@ typedef struct {
 
         GIOChannel   *channel;
 	GPollFD       pollfd;
+#ifdef G_OS_WIN32
+	SOCKET	      socket;
+	int	      event_mask;
+#endif
 	GIOCondition  condition;
 	GIOFunc       callback;
 	gpointer      user_data;
@@ -112,14 +116,48 @@ struct _LinkWatch {
 #define LINK_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
 #define LINK_IN_CONDS  (G_IO_PRI|G_IO_IN)
 
+#ifdef G_OS_WIN32
+
+/* The functions in the Microsoft C library that correspond to
+ * system calls in Unix don't have any EINTR failure mode.
+ */
+#define LINK_TEMP_FAILURE_RETRY_SYSCALL(expression, val) \
+    { val = (int) (expression); }
+
+#else
+
 /* taken from  glibc  */ 
-# define LINC_TEMP_FAILURE_RETRY(expression, val) \
-    { long int __result;                                                     \
-       do __result = (long int) (expression);                                 \
-       while (__result == -1L && errno == EINTR);                             \
+#define LINK_TEMP_FAILURE_RETRY_SYSCALL(expression, val) \
+    { long int __result;                                 \
+       do __result = (long int) (expression);            \
+       while (__result == -1L && errno == EINTR);        \
        val = __result; }
 
-#define LINK_CLOSE(fd)  while (close (fd) < 0 && errno == EINTR)
+#endif
+
+#ifdef HAVE_WINSOCK2_H
+
+/* In WinSock2 WSAEINTR can't happen according to the docs, but
+ * it doesn't hurt to check anyway, does it?
+ */
+#define LINK_TEMP_FAILURE_RETRY_SOCKET(expression, val)                   \
+    { int __result;                                                       \
+       do __result = (int) (expression);                                  \
+       while (__result == SOCKET_ERROR && WSAGetLastError() == WSAEINTR); \
+       val = __result; }
+
+#define LINK_CLOSE_SOCKET(fd)  while (closesocket (fd) == SOCKET_ERROR && WSAGetLastError() == WSAEINTR)
+
+#else
+
+/* On Unix socket API calls are no different from normal system calls */
+
+#define LINK_TEMP_FAILURE_RETRY_SOCKET(expression, val) \
+    LINC_TEMP_FAILURE_RETRY_SYSCALL(expression, val)
+
+#define LINK_CLOSE_SOCKET(fd)  while (close (fd) < 0 && errno == EINTR)
+
+#endif
 
 const char      *link_get_local_hostname    (void);
 
