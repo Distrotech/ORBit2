@@ -1,7 +1,7 @@
 #ifndef CORBA_OBJECT_H
 #define CORBA_OBJECT_H 1
 
-#include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
