@@ -3,8 +3,13 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <linc/linc.h>
 #include <orbit/orbit-config.h>
 #include <orbit/util/orbit-util.h>
+
+#ifdef LINC_THREADSAFE
+#define ORBIT_THREADSAFE 1
+#endif
 
 #define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
 
