@@ -946,10 +946,12 @@ handle_reply (GIOPRecvBuffer *buf)
 			if (giop_debug_hook_unexpected_reply)
 				giop_debug_hook_unexpected_reply (buf);
 
+#ifdef G_ENABLE_DEBUG
 			else if (_orbit_debug_flags & ORBIT_DEBUG_ERRORS) {
 				dprintf (ERRORS, "We received an unexpected reply:");
 				giop_dump_recv (buf);
 			}
+#endif /* G_ENABLE_DEBUG */
 		}
 
 		giop_recv_buffer_unuse (buf);
