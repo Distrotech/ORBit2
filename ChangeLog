@@ -1,3 +1,10 @@
+2001-07-04  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/orbit-interface.idl,
+	  src/idl-compiler/orbit-idl-c-common.c,
+	  src/idl-compiler/orbit-idl-c-headers.c:
+	added inheritance data to ORBit::IInterface.
+
 2001-07-03  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orbit-init.c (ORBit_init_internals): seed

@@ -43,6 +43,7 @@ module ORBit {
 	struct IInterface {
 		string   repo_id;
 		IMethods methods;
+		sequence<IInterface> base_interfaces;
 	};
 }; /* module ORBit */
 

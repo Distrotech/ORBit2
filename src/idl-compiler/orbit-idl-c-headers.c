@@ -1131,6 +1131,8 @@ ch_output_marshallers(OIDL_C_Info *ci)
 static void
 ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 {
+	static int num_methods = 0;
+
 	if (!tree)
 		return;
 
@@ -1169,10 +1171,17 @@ ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci)
 		ch_output_itypes (IDL_INTERFACE(tree).body, ci);
       
 		fprintf (ci->fh, "extern ORBit_IInterface %s__itype;\n", id);
+		fprintf (ci->fh, "extern ORBit_IMethod %s__imethods[];\n", id);
+		fprintf (ci->fh, "#define %s_IMETHODS_LEN %d\n", id, num_methods);
+
+		num_methods = 0;
+
 		break;
 	}
 
 	case IDLN_OP_DCL:
+		num_methods++;
+		break;
 	default:
 		break;
 	}

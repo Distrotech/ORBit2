@@ -16,6 +16,13 @@ typedef struct {
 	IDL_tree tree;
 	GSList  *methods; /* IDLN_OP_DCLs */
 } Interface;
+
+typedef struct {
+	FILE     *of;
+	IDL_tree cur_node; /* Current Interface */
+	char     *cur_id;
+	guint    parents;
+} CCSmallInterfaceTraverseInfo;
  
 static void
 cc_output_typecodes(IDL_tree tree, OIDL_C_Info *ci)
@@ -880,12 +887,40 @@ cc_small_output_method (FILE *of, IDL_tree tree, const char *id)
 }
 
 static void
+cc_small_output_base_itypes(IDL_tree node, CCSmallInterfaceTraverseInfo *iti)
+{
+	char      *id;
+
+	if ( iti->cur_node == node ) return;
+
+	id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
+			IDL_INTERFACE (node).ident), "_", 0);
+
+	if ( iti->parents == 0 ) {
+		fprintf (iti->of, 
+			"static ORBit_IInterface %s__base_itypes[] = {\n", 
+			iti->cur_id);
+		}
+
+	fprintf (iti->of, "{\"%s\",", id);
+	fprintf (iti->of, "{%s_IMETHODS_LEN, %s_IMETHODS_LEN,\n", id, id );
+	fprintf (iti->of, " %s__imethods, FALSE},\n", id);
+	fprintf (iti->of, "{0, 0, NULL, FALSE}\n");
+	fprintf (iti->of, "},\n");
+
+	iti->parents++;
+
+	g_free(id);
+}
+
+static void
 cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 {
 	GSList *l;
 	FILE   *of = ci->fh;
 
 	for (l = list; l; l = l->next) {
+		CCSmallInterfaceTraverseInfo iti;
 		Interface *i = l->data;
 		char      *id;
 		GSList    *m;
@@ -896,25 +931,44 @@ cc_small_output_itypes (GSList *list, OIDL_C_Info *ci)
 		for (m = i->methods; m; m = m->next)
 			cc_small_output_method_bits (m->data, id, ci);
 
-		fprintf (of, "static ORBit_IMethod %s__imethods [] = {\n", id);
+		fprintf (of, "ORBit_IMethod %s__imethods [] = {\n", id);
 
 		for (m = i->methods; m; m = m->next)
 			cc_small_output_method (of, m->data, id);
 
 		fprintf (of, "};\n");
 
+		iti.of = of;
+		iti.cur_node = i->tree;
+		iti.cur_id = id;
+		iti.parents = 0;
+		IDL_tree_traverse_parents(i->tree, (GFunc)cc_small_output_base_itypes, &iti);
+
+		if ( iti.parents != 0 )
+			fprintf (of, "};\n", id);
+
 		fprintf (of, "ORBit_IInterface %s__itype = {\n", id);
 		fprintf (of, "\"%s\",", id);
-		fprintf (of, "{%d, %d, %s__imethods, FALSE}\n",
+		fprintf (of, "{%d, %d, %s__imethods, FALSE},\n",
 			 g_slist_length (i->methods),
 			 g_slist_length (i->methods), id);
+
+		if ( iti.parents != 0 )
+			fprintf (of, "{%d, %d, %s__base_itypes, FALSE}\n", 
+						iti.parents, iti.parents, id);
+		else
+			fprintf (of, "{0, 0, NULL, FALSE}\n", id);
+
 		fprintf (of, "};\n\n");
 
 		g_free (id);
-
-		g_slist_free (i->methods);
-		g_free (i);
 	}
+
+	for (l = list; l; l = l->next) {
+		g_slist_free (((Interface *)l->data)->methods);
+		g_free (l->data);
+		}
+
 	g_slist_free (list);
 }
 
@@ -955,7 +1009,7 @@ cc_small_build_interfaces (GSList *list, IDL_tree tree)
 
 		i->tree = tree;
 
-		list = g_slist_prepend (list, i);
+		list = g_slist_append (list, i);
 
 		list = cc_small_build_interfaces (list, IDL_INTERFACE(tree).body);
 
@@ -966,7 +1020,7 @@ cc_small_build_interfaces (GSList *list, IDL_tree tree)
 
 		g_return_val_if_fail (list != NULL, NULL);
 
-		i = list->data;
+		i = ( g_slist_last(list) )->data;
 		i->methods = g_slist_append (i->methods, tree);
 		break;
 	}
