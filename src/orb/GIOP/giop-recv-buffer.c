@@ -794,7 +794,7 @@ concat_frags (GList *list)
 		length += buf->end - buf->cur;
 	}
 
-	initial_length = (head->end - head->end);
+	initial_length = (head->end - head->cur);
 	g_assert (head->free_body);
 	alloc_buffer (head, head->message_body, length);
 	head->left_to_read = 0;

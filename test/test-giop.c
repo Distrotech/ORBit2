@@ -26,6 +26,7 @@ test_fragments (void)
 	ent.cnx = cnx;
 	ent.request_id = giop_fragment_request_id;
 
+	while (linc_main_
 	buf = giop_recv_buffer_get (&ent, TRUE);
 	g_assert (buf != NULL);
 	giop_recv_buffer_unuse (buf);
