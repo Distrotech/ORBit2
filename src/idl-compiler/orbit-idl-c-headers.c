@@ -400,8 +400,9 @@ ch_prep_sequence(IDL_tree tree, OIDL_C_Info *ci)
 
   fullname = orbit_cbe_get_typename(tree);
 
-  fprintf(ci->fh, "#if !defined(ORBIT_DECL_%s) && !defined(_%s_defined)\n#define ORBIT_DECL_%s 1\n#define _%s_defined 1\n", fullname, fullname, fullname, fullname);
-  fprintf(ci->fh, "#define ORBIT_IMPL_%s ORBIT_FILE_ID_%s\n", fullname, ci->c_base_name);
+  fprintf(ci->fh, "#if !defined(ORBIT_DECL_%s) && !defined(_%s_defined)\n#define ORBIT_DECL_%s 1\n#define _%s_defined 1\n",
+	  fullname, fullname, fullname, fullname);
+  orbit_cbe_id_define_hack(ci->fh, "ORBIT_IMPL", fullname, ci->c_base_name);
 
   if(IDL_NODE_TYPE(IDL_TYPE_SEQUENCE(tree).simple_type_spec) == IDLN_TYPE_SEQUENCE)
     ch_prep_sequence(IDL_TYPE_SEQUENCE(tree).simple_type_spec, ci);
@@ -434,8 +435,8 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
 
   ctmp = orbit_cbe_get_typename(tree);
 
-  fprintf(ci->fh, "#if !defined(TC_IMPL_TC_%s)\n", ctmp);
-  fprintf(ci->fh, "#define TC_IMPL_TC_%s ORBIT_FILE_ID_%s\n", ctmp, ci->c_base_name);
+  fprintf(ci->fh, "#if !defined(TC_IMPL_TC_%s_0)\n", ctmp);
+  orbit_cbe_id_define_hack(ci->fh, "TC_IMPL_TC", ctmp, ci->c_base_name);
   fprintf(ci->fh, "extern const struct CORBA_TypeCode_struct TC_%s_struct;\n", ctmp);
   fprintf(ci->fh, "#define TC_%s ((CORBA_TypeCode)&TC_%s_struct)\n", ctmp, ctmp);
   fprintf(ci->fh, "#endif\n");

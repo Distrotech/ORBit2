@@ -580,3 +580,29 @@ orbit_cbe_type_is_builtin(IDL_tree tree)
 
   return FALSE;
 }
+
+/* This is the WORST HACK in the WORLD, really truly, but the C preprocessor doesn't allow us to use
+   strings, so we have to work around it by using individual characters. */
+void
+orbit_cbe_id_define_hack(FILE *fh, const char *def_prefix, const char *def_name, const char *def_value)
+{
+  int i, n;
+  n = strlen(def_value);
+  for(i = 0; i < n; i++)
+    fprintf(fh, "#define %s_%s_%d '%c'\n", def_prefix, def_name, i, def_value[i]);
+}
+
+void
+orbit_cbe_id_cond_hack(FILE *fh, const char *def_prefix, const char *def_name, const char *def_value)
+{
+  int i, n;
+  n = strlen(def_value);
+  if(n <= 0)
+    return;
+
+  fprintf(fh, "(");
+
+  for(i = 0; i < n; i++)
+    fprintf(fh, "%s (%s_%s_%d == '%c') \\\n", i?"&&":"", def_prefix, def_name, i, def_value[i]);
+  fprintf(fh, ")");
+}
