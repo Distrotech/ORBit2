@@ -1,3 +1,11 @@
+2001-10-02  Laszlo Peter  <laca@ireland.sun.com>
+
+	* src/orb/orb-core/iop-profiles.c:
+	change g_string_printfa to g_string_append_printf
+	because it was renamed in glib.
+
+	* test/ior-decode.c: ditto.
+
 2001-10-03  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/orbit-small.c
