@@ -94,11 +94,20 @@ AC_DEFINE_UNQUOTED(INDENT_COMMAND,"$INDENT_COMMAND")
 
 dnl Checks for libraries.
 
-test -z "$LINC_CONFIG" && LINC_CONFIG=linc-config
-LINC_CFLAGS="`$LINC_CONFIG --cflags`"
-LINC_LIBS="`$LINC_CONFIG --libs`"
-AC_SUBST(LINC_CFLAGS)
-AC_SUBST(LINC_LIBS)
+LINC_REQUIRED=0.1.0
+
+AM_PATH_LINC($LINC_REQUIRED,,
+AC_MSG_ERROR([
+*** linc $LINC_REQUIRED or better is required.  Get linc from
+*** GNOME's CVS repository.]))
+
+AC_SUBST(LINC_REQUIRED)
+
+dnl test -z "$LINC_CONFIG" && LINC_CONFIG=linc-config
+dnl LINC_CFLAGS="`$LINC_CONFIG --cflags`"
+dnl LINC_LIBS="`$LINC_CONFIG --libs`"
+dnl AC_SUBST(LINC_CFLAGS)
+dnl AC_SUBST(LINC_LIBS)
 
 AC_CHECK_HEADERS(pthread.h)
 if test $ac_cv_header_pthread_h = yes; then
