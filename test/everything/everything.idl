@@ -85,6 +85,10 @@ module test {
 		VariableLengthStruct a;
 	};
 
+	struct ObjectStruct {
+		DerivedServer serv;
+	};
+
 	typedef sequence<string> StrSeq;
 	typedef sequence<string> AnotherStrSeq;
 	typedef sequence<CompoundStruct,2> BoundedStructSeq;

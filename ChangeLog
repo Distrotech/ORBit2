@@ -1,3 +1,14 @@
+2001-08-13  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testMisc): invoke a non
+	existant method on an object.
+	(testMisc): add a (currently failing) check for Martin's bug.
+
+	* test/everything/everything.idl: add ObjectStruct.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_profile_dump): dump the correct oki.
+
 2001-08-13  Mark McLoughlin <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-object-type.h:

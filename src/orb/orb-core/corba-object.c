@@ -247,6 +247,10 @@ ORBit_object_get_connection (CORBA_Object obj)
 	    {
 	      obj->object_key = objkey;
 	      obj->connection->orb_data = obj->orb;
+#ifdef DEBUG
+	      fprintf (stderr, "Initiated a connection to '%s' '%s' '%s'\n",
+		       proto, host, service);
+#endif
 	      return obj->connection;
 	    }
 	}

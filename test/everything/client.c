@@ -919,6 +919,22 @@ void
 testMisc (test_TestFactory   factory, 
 	  CORBA_Environment *ev)
 {
+	CORBA_char *foo;
+
+	/* Non existant method invoke - only for remote */
+	/* FIXME: should not work in local case either ! */
+	if (!factory->adaptor_obj) {
+		foo = test_BasicServer__get_foo (factory, ev);
+		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+		g_assert (!strcmp (ev->_id, "IDL:CORBA/BAD_OPERATION:1.0"));
+		CORBA_exception_free (ev);
+	}
+		
+	/* Check we are building full type data */
+	if (strcmp (TC_test_ObjectStruct->subtypes [0]->repo_id,
+		    "IDL:orbit/test/DerivedServer:1.0"))
+		g_warning ("Martin's bug needs fixing");
+	
 	/* Check a daft one seen in CORBA_exception_free */
 	CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 			     ex_test_SimpleException, NULL);
