@@ -1,3 +1,9 @@
+Version 0.1.22
+
+	* fixes
+		+ port to OS/X (Jacob)
+		+ fix extern mis-use (Michael)
+
 Version 0.1.21
 
 	* fixes
