@@ -3,11 +3,18 @@
 #include <linc/linc-connection.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <string.h>
 
 static void linc_server_init       (LINCServer      *cnx);
 static LINCConnection *linc_server_create_connection (LINCServer      *cnx);
 static void linc_server_destroy    (GObject         *obj);
 static void linc_server_class_init (LINCServerClass *klass);
+
+enum {
+  NEW_CONNECTION,
+  LAST_SIGNAL
+};
+static guint server_signals[LAST_SIGNAL] = {0};
 
 GType
 linc_server_get_type(void)
@@ -41,13 +48,60 @@ linc_server_get_type(void)
 static GObjectClass *parent_class = NULL;
 
 static void
+my_cclosure_marshal_VOID__OBJECT (GClosure     *closure,
+                                  GValue       *return_value,
+                                  guint         n_param_values,
+                                  const GValue *param_values,
+                                  gpointer      invocation_hint,
+                                  gpointer      marshal_data)
+{
+  typedef void (*GSignalFunc_VOID__OBJECT) (gpointer     data1,
+					    GObject     *arg_1,
+                                             gpointer     data2);
+  register GSignalFunc_VOID__OBJECT callback;
+  register GCClosure *cc = (GCClosure*) closure;
+  register gpointer data1, data2;
+
+  g_return_if_fail (n_param_values >= 2);
+
+  if (G_CCLOSURE_SWAP_DATA (closure))
+    {
+      data1 = closure->data;
+      data2 = g_value_get_as_pointer (param_values + 0);
+    }
+  else
+    {
+      data1 = g_value_get_as_pointer (param_values + 0);
+      data2 = closure->data;
+    }
+  callback = (GSignalFunc_VOID__OBJECT) (marshal_data ? marshal_data : cc->callback);
+
+  callback (data1,
+            g_value_get_as_pointer (param_values + 1),
+            data2);
+}
+
+static void
 linc_server_class_init (LINCServerClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *)klass;
+  GClosure *closure;
+  GType ptype;
 
   object_class->shutdown = linc_server_destroy;
   klass->create_connection = linc_server_create_connection;
   parent_class = g_type_class_ref(g_type_parent(G_TYPE_FROM_CLASS(object_class)));
+  closure = g_signal_type_closure_new(G_OBJECT_CLASS_TYPE(klass),
+				      G_STRUCT_OFFSET(LINCServerClass, new_connection));
+
+  ptype = G_TYPE_OBJECT;
+  server_signals[NEW_CONNECTION] = g_signal_newv("new_connection",
+						 G_OBJECT_CLASS_TYPE(klass),
+						 0, closure,
+						 NULL,
+						 my_cclosure_marshal_VOID__OBJECT,
+						 G_TYPE_NONE,
+						 1, &ptype);
 }
 
 static void
@@ -92,6 +146,7 @@ linc_server_handle_io(GIOChannel *gioc,
   int addrlen, fd;
   char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
   LINCConnection *connection;
+  GValue parms[2];
 
   O_MUTEX_LOCK(server->mutex);
 
@@ -122,6 +177,15 @@ linc_server_handle_io(GIOChannel *gioc,
     }
 
   O_MUTEX_UNLOCK(server->mutex);
+
+  memset(parms, 0, sizeof(parms));
+  g_value_init(parms, G_OBJECT_TYPE(server));
+  g_value_set_object(parms, G_OBJECT(server));
+  g_value_init(parms + 1, G_TYPE_OBJECT);
+  g_value_set_object(parms + 1, G_OBJECT(connection));
+  g_signal_emitv(parms, server_signals[NEW_CONNECTION], 0, NULL);
+  g_value_unset(parms);
+  g_value_unset(parms+1);
 
   return TRUE;
 }

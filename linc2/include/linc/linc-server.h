@@ -36,6 +36,8 @@ typedef struct {
   GObjectClass parent_class;
 
   LINCConnection *(* create_connection) (LINCServer *server);
+
+  void (* new_connection) (LINCServer *server, LINCConnection *cnx);
 } LINCServerClass;
 
 GType linc_server_get_type(void) G_GNUC_CONST;
