@@ -6,7 +6,7 @@
 #include <linc/linc-config.h>
 
 typedef enum {
-  LINC_CONNECTION_SSL
+  LINC_CONNECTION_SSL = 1<<0
 } LINCConnectionOptions;
 
 #ifdef LINC_THREADSAFE

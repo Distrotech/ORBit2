@@ -127,7 +127,7 @@ linc_server_setup(LINCServer *cnx, const char *proto_name,
   int fd, n;
   const LINCProtocolInfo * proto;
   struct addrinfo *ai, hints = {0};
-  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV];
+  char hnbuf[NI_MAXHOST], servbuf[NI_MAXSERV*2];
 
 #if !LINC_SSL_SUPPORT
   if((create_options & LINC_CONNECTION_SSL)

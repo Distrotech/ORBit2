@@ -343,6 +343,8 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
 
   g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
 
+  fd = cnx->fd;
+
 #if LINC_SSL_SUPPORT
   if(cnx->options & LINC_CONNECTION_SSL)
     {

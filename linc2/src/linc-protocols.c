@@ -112,7 +112,36 @@ linc_getaddrinfo(const char *nodename, const char *servname, const struct addrin
     {
       if(protocol_ents[i].getaddrinfo && (hints->ai_family == AF_UNSPEC || hints->ai_family == protocol_ents[i].family))
 	{
-	  tmprv = protocol_ents[i].getaddrinfo(nodename, servname, hints, res);
+	  char srvbuf[64];
+	  gboolean fakeserv = FALSE;
+
+	  if(!servname && (hints->ai_flags & AI_PASSIVE))
+	    switch(hints->ai_family)
+	      {
+#if defined(AF_INET)
+	      case AF_INET:
+#endif
+#if defined(AF_INET6)
+	      case AF_INET6:
+#endif
+		strcpy(srvbuf, "0");
+		fakeserv = TRUE;
+		break;
+#if defined(AF_UNIX)
+	      case AF_UNIX:
+		srand(time(NULL));
+		g_snprintf(srvbuf, sizeof(srvbuf),
+			   "%s/linc-%x%x", linc_tmpdir, rand(), rand());
+		fakeserv = TRUE;
+		break;
+#endif
+	      default:
+		break;
+	      }
+
+	  tmprv = protocol_ents[i].getaddrinfo(nodename,
+					       fakeserv?srvbuf:servname,
+					       hints, res);
 	  switch(tmprv)
 	    {
 	    case EAI_ADDRFAMILY:
@@ -124,42 +153,6 @@ linc_getaddrinfo(const char *nodename, const char *servname, const struct addrin
 	    default:
 	      rv = tmprv;
 	      keep_going = FALSE;
-	      if(!rv
-		 && !servname
-		 && (hints->ai_flags & AI_PASSIVE))
-		{
-		  switch((*res)->ai_family)
-		    {
-#if defined(AF_UNIX)
-		    case AF_UNIX:
-		      {
-			struct sockaddr_un *sun = (struct sockaddr_un *)(*res)->ai_addr;
-			srand(time(NULL));
-			g_snprintf(sun->sun_path, sizeof(sun->sun_path),
-				   "%s/linc-%x%x", linc_tmpdir, rand(), rand());
-		      }
-		      break;
-#endif
-#if defined(AF_INET)
-		    case AF_INET:
-		      {
-			struct sockaddr_in *sin = (struct sockaddr_in *)(*res)->ai_addr;
-			sin->sin_port = 0;
-		      }
-		      break;
-#endif
-#if defined(AF_INET6)
-		    case AF_INET6:
-		      {
-			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)(*res)->ai_addr;
-			sin6->sin6_port = 0;
-		      }
-		      break;
-#endif
-		    default:
-		      break;
-		    }
-		}
 	      break;
 	    }
 	}
