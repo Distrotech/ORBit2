@@ -204,7 +204,17 @@ ORBit_encode_CORBA_TypeCode(CORBA_TypeCode tc, GIOPSendBuffer* buf)
 gboolean
 ORBit_decode_CORBA_TypeCode(CORBA_TypeCode* tc, GIOPRecvBuffer* buf)
 {
-  return FALSE;
+  TCDecodeContext ctx;
+  GSList* l;
+  gboolean retval;
+
+  ctx.current_idx=0;
+  ctx.prior_tcs=NULL;
+  retval = tc_dec(tc, buf, &ctx);
+  for(l=ctx.prior_tcs;l;l=l->next)
+    g_free(l->data);
+  g_slist_free(ctx.prior_tcs);
+  return retval;
 }
 
 /* Encode a typecode to a codec, possibly recursively */
@@ -230,10 +240,9 @@ static void tc_enc(CORBA_TypeCode tc,
       if(node->tc==tc)
 	{
 	  num = CORBA_tk_recursive;
-	  giop_send_buffer_align(c, sizeof(num));
-	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
 	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
 	  num = node->index - ctx->current_idx - get_wptr(c);
+	  giop_send_buffer_append_indirect(c, &num, sizeof(num));
 	  return;
 	}
     }
@@ -256,9 +265,11 @@ static void tc_enc(CORBA_TypeCode tc,
       ctx->current_idx += get_wptr(c) + 4; /* +4 for the length */
 
       giop_send_buffer_align(c, sizeof(num));
+      num = 0;
       tmpi = (guint32*)giop_send_buffer_append_indirect(c, &num, sizeof(num));
       *tmpi -= c->msg.header.message_size;
       end = GIOP_FLAG_ENDIANNESS;
+      giop_send_buffer_append_indirect(c, &end, 1);
       (info->encoder)(tc, c, ctx);
       *tmpi -= c->msg.header.message_size;
       ctx->current_idx = tmp_index;
@@ -268,25 +279,28 @@ static void tc_enc(CORBA_TypeCode tc,
     }
 }
 
-
-static void tc_enc_tk_objref(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_objref(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   CDR_put_string(c, t->repo_id);
   CDR_put_string(c, t->name);
 }
 
-static void tc_enc_tk_sequence(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_sequence(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   tc_enc(*t->subtypes, c, ctx);
   CDR_put_ulong(c, t->length);
 }
 
-static void tc_enc_tk_string(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_string(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   CDR_put_ulong(c, t->length);
 }
 
-static void tc_enc_tk_struct(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_struct(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   CORBA_unsigned_long i;
   CDR_put_string(c, t->repo_id);
@@ -305,7 +319,8 @@ static void tc_enc_tk_struct(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContex
     type never embeds a pointer. So we can skip the whole CORBA_free
     mechanism and allocate simple memory for the types.
 **/
-static void tc_enc_tk_union(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_union(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   CORBA_unsigned_long i;
   CDR_put_string(c, t->repo_id);
@@ -348,8 +363,8 @@ static void tc_enc_tk_union(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext
     }
 }
 
-
-static void tc_enc_tk_enum(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_enum(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   CORBA_unsigned_long i;
   CDR_put_string(c, t->repo_id);
@@ -359,16 +374,16 @@ static void tc_enc_tk_enum(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext*
     CDR_put_string(c, t->subnames[i]);
 }
 
-
-static void tc_enc_tk_alias(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_alias(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   CDR_put_string(c, t->repo_id);
   CDR_put_string(c, t->name);
   tc_enc(*t->subtypes, c, ctx);
 }
 
-
-static void tc_enc_tk_except(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
+static void
+tc_enc_tk_except(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)
 {
   gulong i;
   CDR_put_string(c, t->repo_id);
@@ -379,7 +394,6 @@ static void tc_enc_tk_except(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContex
     tc_enc(t->subtypes[i], c, ctx);
   }
 }
-
 
 static void
 tc_enc_tk_array(CORBA_TypeCode t, GIOPSendBuffer *c, TCEncodeContext* ctx)

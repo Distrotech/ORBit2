@@ -563,6 +563,8 @@ giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
   if((buf->cur + 4) > buf->end)
     return NULL;
   len = *(CORBA_unsigned_long *)buf->cur;
+  if(giop_msg_conversion_needed(buf))
+    len = GUINT32_SWAP_LE_BE(len);
   buf->cur += 4;
   if((buf->cur + len) > buf->end
      || (buf->cur + len) < buf->cur)
