@@ -32,7 +32,7 @@ test_TestFactory getFactoryInstance(CORBA_Environment *ev);
 #include "unionServer.c"
 #include "arrayServer.c"
 #include "anyServer.c"
-
+#include "contextServer.c"
 
 /* Servant class */
 
@@ -45,6 +45,7 @@ typedef struct {
 	test_UnionServer unionServerRef;
 	test_ArrayServer arrayServerRef;
 	test_AnyServer anyServerRef;
+	test_ContextServer contextServerRef;
 } test_TestFactory_Servant;
 
 
@@ -98,6 +99,15 @@ TestFactory_getAnyServer(PortableServer_Servant servant,
   return CORBA_Object_duplicate(this->anyServerRef,ev);
 }
 
+static
+test_ContextServer
+TestFactory_getContextServer(PortableServer_Servant servant,
+			     CORBA_Environment *ev)
+{
+  test_TestFactory_Servant *this = (test_TestFactory_Servant*)servant;
+  return CORBA_Object_duplicate(this->contextServerRef,ev);
+}
+
 
 static
 void test_TestFactory__fini(PortableServer_Servant servant, CORBA_Environment *ev) {
@@ -123,6 +133,7 @@ POA_test_TestFactory__epv TestFactory_epv = {
   TestFactory_getUnionServer,
   TestFactory_getArrayServer,
   TestFactory_getAnyServer,
+  TestFactory_getContextServer,
 };
 
 POA_test_TestFactory__vepv TestFactory_vepv = {&TestFactory_base_epv,&TestFactory_epv};
@@ -191,6 +202,10 @@ test_TestFactory__init (PortableServer_Servant servant,
 	this->anyServerRef = create_object (
 		poa, POA_test_AnyServer__init,
 		&AnyServer_servant, ev);
+
+	this->contextServerRef = create_object (
+		poa, POA_test_ContextServer__init,
+		&ContextServer_servant, ev);
 
 	POA_test_TestFactory__init (
 		(PortableServer_ServantBase *) servant, ev);

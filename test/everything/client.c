@@ -703,6 +703,42 @@ void testTypeCode(test_TestFactory factory,
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
 
+void testContext(test_TestFactory factory, 
+		  CORBA_Environment *ev)
+{
+  test_ContextServer objref;
+  CORBA_Object inArg, inoutArg, outArg, retn;
+  CORBA_Context ctx;
+
+  g_print("Testing Contexts...\n");
+
+  objref = test_TestFactory_getContextServer(factory,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  inArg = inoutArg = outArg = retn = CORBA_OBJECT_NIL;
+
+  CORBA_Context_create_child (CORBA_OBJECT_NIL, "Whatever", &ctx, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  CORBA_Context_set_one_value (ctx, "foo", constants_STRING_IN, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Context_set_one_value (ctx, "baa", constants_STRING_INOUT_IN, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  retn = test_ContextServer_opWithContext (
+	  objref, inArg, &inoutArg, &outArg, ctx, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+
+  CORBA_Object_release (retn, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (inArg, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (inoutArg, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  CORBA_Object_release (outArg, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+}
+
 int main(int argc, char *argv[])
 {
   CORBA_Environment ev;
@@ -748,6 +784,7 @@ int main(int argc, char *argv[])
 //  testAnyException(factory,&ev); // Fails.
     testSequenceOfAny(factory,&ev);
 //  testTypeCode(factory,&ev); // Fails.
+    testContext(factory,&ev);
   }
   CORBA_Object_release(factory, &ev);
   CORBA_Object_release((CORBA_Object)orb, &ev);

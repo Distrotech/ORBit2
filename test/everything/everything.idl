@@ -46,6 +46,7 @@ module test {
 	interface B2;
 	interface DerivedServer;
 	interface TransientObj;
+	interface ContextServer;
 
 	interface TestFactory {
 		BasicServer getBasicServer();
@@ -54,6 +55,7 @@ module test {
 		UnionServer getUnionServer();
 		ArrayServer getArrayServer();
 		AnyServer getAnyServer();
+		ContextServer getContextServer();
 		BaseServer getBaseServer();
 		DerivedServer getDerivedServer();
 		BaseServer getDerivedServerAsBaseServer();
