@@ -356,6 +356,12 @@ cs_stub_alloc_tmpvar(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
   if(node->tree) {
     int i;
     orbit_cbe_write_typespec(ci->fh, node->tree);
+
+    if(IDL_NODE_TYPE(node->tree) != IDLN_PARAM_DCL) {
+      IDL_tree ts = orbit_cbe_get_typespec(node->tree);
+      if(IDL_NODE_TYPE(ts) == IDLN_TYPE_ARRAY)
+	fprintf(ci->fh, "_slice*");
+    }
     for(i = 0; i < node->nptrs; i++)
       fprintf(ci->fh, "*");
     fprintf(ci->fh, " %s;\n", node->name);

@@ -154,10 +154,14 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
   if(cmi->alloc_on_stack && !(node->flags & MN_DEMARSHAL_CORBA_ALLOC)) {
     if(!(node->u.loop_info.contents->flags & MN_COALESCABLE)
        || (cmi->endian_swap_pass && (node->u.loop_info.contents->flags & MN_ENDIAN_DEPENDANT))) {
-      fprintf(cmi->ci->fh, "%s%s = alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
-	      ctmp_contents, ctmp_len);
-      if(node->flags & MN_ISSEQ)
-	fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
+      if(node->flags & (MN_ISSEQ|MN_ISSTRING)) {
+	fprintf(cmi->ci->fh, "%s%s = alloca(sizeof(%s) * %s);\n", ctmp, (node->flags & MN_ISSEQ)?"._buffer":"",
+		ctmp_contents, ctmp_len);
+	if(node->flags & MN_ISSEQ)
+	  fprintf(cmi->ci->fh, "%s._release = CORBA_FALSE;\n", ctmp);
+      } else {
+	/* Array - no alloc needed */
+      }
     }
   } else {
     char *tname, *tcname;
@@ -172,8 +176,12 @@ c_demarshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
       fprintf(cmi->ci->fh, "%s._release = CORBA_TRUE;\n", ctmp);
     } else if(node->flags & MN_ISSTRING)
       fprintf(cmi->ci->fh, "%s = CORBA_string_alloc(%s);\n", ctmp, ctmp_len);
-    else
+#if 0
+    /* I'm pretty sure we don't ever need to alloc an array. Woo! */
+    else if(node->flags & MN_DEMARSHAL_CORBA_ALLOC) {
       fprintf(cmi->ci->fh, "%s = %s__alloc();\n", ctmp, tname);
+    }
+#endif
     g_free(tcname);
     g_free(tname);
   }
