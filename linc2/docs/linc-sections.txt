@@ -1,6 +1,5 @@
 <SECTION>
 <FILE>linc-connection</FILE>
-LINC_IS_CONNECTION
 LINCConnectionStatus
 <TITLE>LINCConnection</TITLE>
 linc_connection_from_fd
@@ -11,6 +10,7 @@ linc_connection_writev
 linc_connection_state_changed
 <SUBSECTION Standard>
 LINC_CONNECTION
+LINC_IS_CONNECTION
 LINC_TYPE_IS_CONNECTION
 LINC_TYPE_CONNECTION
 linc_connection_get_type
@@ -20,11 +20,11 @@ LINC_IS_CONNECTION_CLASS
 
 <SECTION>
 <FILE>linc-server</FILE>
-LINC_IS_SERVER
 <TITLE>LINCServer</TITLE>
 linc_server_setup
 <SUBSECTION Standard>
 LINC_SERVER
+LINC_IS_SERVER
 LINC_TYPE_IS_SERVER
 LINC_TYPE_SERVER
 linc_server_get_type
@@ -66,6 +66,7 @@ linc_main_loop_run
 
 <SECTION>
 <FILE>linc-config</FILE>
+<SUBSECTION Standard>
 LINC_SSL_SUPPORT
 </SECTION>
 

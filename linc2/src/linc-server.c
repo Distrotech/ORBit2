@@ -237,6 +237,19 @@ linc_server_handle_io (GIOChannel  *gioc,
 	return TRUE;
 }
 
+/**
+ * linc_server_setup:
+ * @cnx: the connection to setup
+ * @proto_name: the protocol to use
+ * @local_host_info: the local hsot
+ * @local_serv_info: remote server info
+ * @create_options: various create options
+ * 
+ *   Setup the server object. You should create a server object
+ * via g_object_new and then set it up, using this method.
+ * 
+ * Return value: the initialized server
+ **/
 gboolean
 linc_server_setup (LINCServer            *cnx,
 		   const char            *proto_name,

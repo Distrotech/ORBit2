@@ -14,16 +14,6 @@ A listening server object
 
 </para>
 
-<!-- ##### MACRO LINC_IS_SERVER ##### -->
-<para>
-
-</para>
-
-@obj: 
-<!-- # Unused Parameters # -->
-@object: 
-
-
 <!-- ##### FUNCTION linc_server_setup ##### -->
 <para>
 

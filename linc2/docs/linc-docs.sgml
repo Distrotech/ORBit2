@@ -6,7 +6,6 @@
 <!ENTITY linc-linc-types SYSTEM "sgml/linc-types.sgml">
 <!ENTITY linc-linc SYSTEM "sgml/linc.sgml">
 <!ENTITY linc-linc-config SYSTEM "sgml/linc-config.sgml">
-<!ENTITY linc-linc-private SYSTEM "sgml/linc-private.sgml">
 ]>
 <book id="index">
   <bookinfo>

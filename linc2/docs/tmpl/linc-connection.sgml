@@ -14,16 +14,6 @@ the basic connection object
 
 </para>
 
-<!-- ##### MACRO LINC_IS_CONNECTION ##### -->
-<para>
-
-</para>
-
-@obj: 
-<!-- # Unused Parameters # -->
-@object: 
-
-
 <!-- ##### ENUM LINCConnectionStatus ##### -->
 <para>
 
