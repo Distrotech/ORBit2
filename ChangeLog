@@ -1,3 +1,9 @@
+2002-03-07  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/pass-stubs.cc: IDLPassStubs::doInterface():
+	Reused calculation of base name, instead of duplicating code, 
+	fixing segfault that I didn't experience before now for some reason.
+
 2002-03-06  Murray Cumming  <murrayc@usa.net>
 
 	* test/cpp/helloworld: Added throw() declaration to server 
