@@ -1,3 +1,11 @@
+2004-05-07  Michael Meeks  <michael@ximian.com>
+
+	* Version 2.10.2
+
+2004-05-07  Michael Meeks  <michael@ximian.com>
+
+	* Branch for Gnome 2.6
+
 2004-04-24  Dan Winship  <danw@ximian.com>
 
 	* src/services/imodule/Makefile.am (LDADD): Remove
