@@ -1,5 +1,9 @@
 2001-10-31  Mark McLoughlin  <mark@skynet.ie>
 
+	* configure.in: version 2.3.96.
+
+2001-10-31  Mark McLoughlin  <mark@skynet.ie>
+
 	* test/poa/Makefile.am: add poatest-basic-shell.h.
 
 2001-10-31  Mark McLoughlin  <mark@skynet.ie>
