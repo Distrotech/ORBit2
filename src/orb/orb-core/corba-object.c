@@ -247,7 +247,6 @@ static gboolean
 ORBit_try_connection (CORBA_Object obj)
 {
 	gboolean retval = FALSE;
-	gboolean try = FALSE;
 	LinkConnectionStatus status;
 
 	if (!obj->connection)
@@ -609,46 +608,6 @@ ORBit_object_by_corbaloc  (CORBA_ORB          orb,
         return retval;
 }
 
-CORBA_boolean
-CORBA_Object_is_a (CORBA_Object       obj,
-		   const CORBA_char  *logical_type_id,
-		   CORBA_Environment *ev)
-{
-	static GQuark  corba_object_quark = 0;
-	static GQuark  omg_corba_object_quark = 0;
-	CORBA_boolean  retval;
-	gpointer       args[] = { (gpointer *)&logical_type_id };
-	GQuark         logical_type_quark;
-
-	if (!corba_object_quark)
-		corba_object_quark = g_quark_from_static_string (
-			"IDL:CORBA/Object:1.0");
-
-	if (!omg_corba_object_quark)
-		omg_corba_object_quark = g_quark_from_static_string (
-			"IDL:omg.org/CORBA/Object:1.0");
-
-	logical_type_quark = g_quark_from_string (logical_type_id);
-
-	if (logical_type_quark == corba_object_quark)
-		return CORBA_TRUE;
-
-	if (logical_type_quark == omg_corba_object_quark)
-		return CORBA_TRUE;
-
-	if (!obj)
-		return CORBA_FALSE;
-
-	if (logical_type_quark == obj->type_qid)
-		return CORBA_TRUE;
-
-	ORBit_small_invoke_stub (
-		obj, &CORBA_Object__imethods[4],
-		&retval, args, NULL, ev);
-
-	return retval;
-}
-
 static gboolean
 ORBit_IInterface_is_a (ORBit_IInterface *idata, const char *type_id)
 {
@@ -674,6 +633,50 @@ ORBit_impl_CORBA_Object_is_a(PortableServer_ServantBase *servant,
 	const char               *type_id = *(const char **)args[0];
 
 	*(CORBA_boolean *)ret = ORBit_IInterface_is_a (ci->idata, type_id);
+}
+
+CORBA_boolean
+CORBA_Object_is_a (CORBA_Object       obj,
+		   const CORBA_char  *logical_type_id,
+		   CORBA_Environment *ev)
+{
+	static GQuark  corba_object_quark = 0;
+	static GQuark  omg_corba_object_quark = 0;
+	CORBA_boolean  retval;
+	gpointer       servant;
+	gpointer       args[] = { (gpointer *)&logical_type_id };
+	GQuark         logical_type_quark;
+
+	if (!corba_object_quark)
+		corba_object_quark = g_quark_from_static_string (
+			"IDL:CORBA/Object:1.0");
+
+	if (!omg_corba_object_quark)
+		omg_corba_object_quark = g_quark_from_static_string (
+			"IDL:omg.org/CORBA/Object:1.0");
+
+	logical_type_quark = g_quark_from_string (logical_type_id);
+
+	if (logical_type_quark == corba_object_quark)
+		return CORBA_TRUE;
+
+	if (logical_type_quark == omg_corba_object_quark)
+		return CORBA_TRUE;
+
+	if (!obj)
+		return CORBA_FALSE;
+
+	if (logical_type_quark == obj->type_qid)
+		return CORBA_TRUE;
+
+	if ((servant = ORBit_small_get_servant (obj)))
+		ORBit_impl_CORBA_Object_is_a (servant, &retval, args, NULL, ev, NULL);
+
+	else /* warning: obeys POA policies */
+		ORBit_small_invoke_stub (obj, &CORBA_Object__imethods[4],
+					 &retval, args, NULL, ev);
+
+	return retval;
 }
 
 static void

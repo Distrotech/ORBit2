@@ -1,5 +1,9 @@
 2003-07-31  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/corba-object.c: by-pass invoke_stub
+	in-proc, since we may have a transient policy on our
+	object; and we want an answer now.
+
 	* test/everything/server.c
 	(TestFactory_getDerivedServer): impl.
 	(test_TestFactory__init): upd.
