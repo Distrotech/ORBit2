@@ -1,11 +1,21 @@
 #include "config.h"
 #include <orbit/orbit.h>
-#include "orb-core-private.h"
 #include <string.h>
 
+#include "orb-core-private.h"
+#include "orbit-debug.h"
+
+/*
+ * Flip this switch to debug the
+ * debug code.
+ */
 #undef DEBUG_TRACE
 
-#define tprintf(format...) fprintf(stderr, format)
+
+#ifndef TRACE_DEBUG
+
+
+#else /* TRACE_DEBUG */
 
 void
 ORBit_trace_objref (const CORBA_Object obj)
@@ -188,3 +198,5 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 
 	*val = ((guchar *)*val) + ORBit_gather_alloc_info (tc);
 }
+
+#endif /* TRACE_DEBUG */

@@ -32,7 +32,8 @@ main_src = \
 	corba-nvlist.c \
 	corba-request.c \
 	iop-profiles.c \
-	iop-profiles.h
+	iop-profiles.h \
+	orbit-debug.h
 
 liborb_core_la_SOURCES= \
 	$(IOP_IDLOUT) \
