@@ -1278,7 +1278,6 @@ ORBit_sequence_concat (gpointer      sequence,
 
 	src = seq->_buffer;
 
-	for (i = 0; i < seq->_length; ++i, src += element_size) {
+	for (i = 0; i < seq->_length; ++i, src += element_size) 
 		ORBit_sequence_append (sequence, (gpointer)src);
-	}
 }
