@@ -53,7 +53,6 @@ typedef struct {
 typedef struct {
 	GObjectClass parent_class;
 
-	/* subclasses should call parent impl first */
 	void     (* state_changed) (LinkConnection      *cnx,
 				    LinkConnectionStatus status);
 	gboolean (* handle_input)  (LinkConnection      *cnx);

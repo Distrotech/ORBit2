@@ -5,16 +5,13 @@
 
 G_BEGIN_DECLS
 
-#if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
+#if defined(ORBIT2_INTERNAL_API)
 
-#ifndef ORBIT2_INTERNAL_API
-#define  GIOPConnection void
-#endif
+/* This ABI is now purely internal and can be hacked around */
 
 typedef CORBA_sequence_CORBA_octet ORBit_ObjectKey;
 
 struct CORBA_Object_type {
-	/* None of these fields are used by the stubs */
 	struct ORBit_RootObject_struct parent;
 
 	GIOPConnection                *connection;        /* l */
@@ -23,11 +20,11 @@ struct CORBA_Object_type {
 	GSList                        *forward_locations; /* l */
 	ORBit_ObjectKey               *object_key;        /* l */
 
-	CORBA_ORB                      orb;         /* possibly used by stubs */
-	ORBit_OAObject                 adaptor_obj; /* used by stubs */
+	CORBA_ORB                      orb;
+	ORBit_OAObject                 adaptor_obj;
 };
 
-#endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
+#endif /* defined(ORBIT2_INTERNAL_API) */
 
 G_END_DECLS
 

@@ -116,18 +116,81 @@ typedef struct {
 	struct iovec  single_vec;
 } QueuedWrite;
 
+/*
+ * link_connection_class_state_changed:
+ * @cnx: a #LinkConnection
+ * @status: a #LinkConnectionStatus value.
+ *
+ * Set up linc's #GSources if the connection is in the #LINK_CONNECTED
+ * or #LINK_CONNECTING state.
+ *
+ * Remove the #GSources if the state has channged to #LINK_DISCONNECTED,
+ * close the socket and a gobject broken signal which may be caught by
+ * the application.
+ *
+ * Also perform SSL specific operations if the connection has move into
+ * the #LINK_CONNECTED state.
+ */
 static void
-link_connection_state_changed_T (LinkConnection      *cnx,
-				 LinkConnectionStatus status)
+link_connection_state_changed_T_R (LinkConnection      *cnx,
+				   LinkConnectionStatus status)
 {
+	gboolean changed;
 	LinkConnectionClass *klass;
 
 	g_assert (CNX_IS_LOCKED (cnx));
 
+	d_printf ("State changing from '%s' to '%s' on fd %d\n",
+		 STATE_NAME (cnx->status), STATE_NAME (status),
+		 cnx->priv->fd);
+
+	changed = cnx->status != status;
+
+	cnx->status = status;
+
+	switch (status) {
+	case LINK_CONNECTED:
+#ifdef LINK_SSL_SUPPORT
+		if (cnx->options & LINK_CONNECTION_SSL) {
+			if (cnx->was_initiated)
+				SSL_connect (cnx->priv->ssl);
+			else
+				SSL_accept (cnx->priv->ssl);
+		}
+#endif
+		if (!cnx->priv->tag)
+			link_source_add (cnx, LINK_ERR_CONDS | LINK_IN_CONDS);
+		break;
+
+	case LINK_CONNECTING:
+
+		if (cnx->priv->tag) /* re-connecting */
+			link_watch_set_condition (
+				cnx->priv->tag,
+				G_IO_OUT | LINK_ERR_CONDS);
+		else
+			link_source_add (cnx, G_IO_OUT | LINK_ERR_CONDS);
+		break;
+
+	case LINK_DISCONNECTED:
+		link_source_remove (cnx);
+		link_close_fd (cnx);
+		/* don't free pending queue - we could get re-connected */
+		if (changed) {
+			CNX_UNLOCK (cnx);
+			g_signal_emit (cnx, signals [BROKEN], 0);
+			CNX_LOCK (cnx);
+		}
+		break;
+	}
+
 	klass = (LinkConnectionClass *)G_OBJECT_GET_CLASS (cnx);
 
-	if (klass->state_changed)
+	if (klass->state_changed) {
+		CNX_UNLOCK (cnx);
 		klass->state_changed (cnx, status);
+		CNX_LOCK (cnx);
+	}
 }
 
 static void
@@ -158,7 +221,7 @@ queue_signal_T_R (LinkConnection *cnx,
 
 	if (cnx->priv->max_buffer_bytes &&
 	    cnx->priv->write_queue_bytes >= cnx->priv->max_buffer_bytes)
-		link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
+		link_connection_state_changed_T_R (cnx, LINK_DISCONNECTED);
 }
 
 static gulong
@@ -265,73 +328,6 @@ link_source_add (LinkConnection *cnx,
 		 cnx->priv->fd, condition);
 }
 
-/*
- * link_connection_class_state_changed:
- * @cnx: a #LinkConnection
- * @status: a #LinkConnectionStatus value.
- *
- * Set up linc's #GSources if the connection is in the #LINK_CONNECTED
- * or #LINK_CONNECTING state.
- *
- * Remove the #GSources if the state has channged to #LINK_DISCONNECTED,
- * close the socket and a gobject broken signal which may be caught by
- * the application.
- *
- * Also perform SSL specific operations if the connection has move into
- * the #LINK_CONNECTED state.
- */
-
-static void
-link_connection_class_state_changed (LinkConnection      *cnx,
-				     LinkConnectionStatus status)
-{
-	gboolean changed;
-
-	d_printf ("State changing from '%s' to '%s' on fd %d\n",
-		 STATE_NAME (cnx->status), STATE_NAME (status),
-		 cnx->priv->fd);
-
-	changed = cnx->status != status;
-
-	cnx->status = status;
-
-	switch (status) {
-	case LINK_CONNECTED:
-#ifdef LINK_SSL_SUPPORT
-		if (cnx->options & LINK_CONNECTION_SSL) {
-			if (cnx->was_initiated)
-				SSL_connect (cnx->priv->ssl);
-			else
-				SSL_accept (cnx->priv->ssl);
-		}
-#endif
-		if (!cnx->priv->tag)
-			link_source_add (cnx, LINK_ERR_CONDS | LINK_IN_CONDS);
-		break;
-
-	case LINK_CONNECTING:
-
-		if (cnx->priv->tag) /* re-connecting */
-			link_watch_set_condition (
-				cnx->priv->tag,
-				G_IO_OUT | LINK_ERR_CONDS);
-		else
-			link_source_add (cnx, G_IO_OUT | LINK_ERR_CONDS);
-		break;
-
-	case LINK_DISCONNECTED:
-		link_source_remove (cnx);
-		link_close_fd (cnx);
-		/* don't free pending queue - we could get re-connected */
-		if (changed) {
-			CNX_UNLOCK (cnx);
-			g_signal_emit (cnx, signals [BROKEN], 0);
-			CNX_LOCK (cnx);
-		}
-		break;
-	}
-}
-
 static void
 link_connection_from_fd_T (LinkConnection         *cnx,
 			   int                     fd,
@@ -366,7 +362,7 @@ link_connection_from_fd_T (LinkConnection         *cnx,
 	}
 #endif
 	g_assert (CNX_IS_LOCKED (0));
-	link_connection_state_changed_T (cnx, status);
+	link_connection_state_changed_T_R (cnx, status);
 
 	cnx_list = g_list_prepend (cnx_list, cnx);
 }
@@ -562,7 +558,7 @@ link_connection_state_changed (LinkConnection      *cnx,
 			       LinkConnectionStatus status)
 {
 	CNX_LOCK (cnx);
-	link_connection_state_changed_T (cnx, status);
+	link_connection_state_changed_T_R (cnx, status);
 	CNX_UNLOCK (cnx);
 }
 
@@ -822,7 +818,7 @@ link_connection_flush_write_queue_T_R (LinkConnection *cnx)
 		} else {
 			if (status == LINK_IO_FATAL_ERROR) {
 				d_printf ("Fatal error on queued write");
-				link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
+				link_connection_state_changed_T_R (cnx, LINK_DISCONNECTED);
 				
 			} else {
 				d_printf ("Write blocked\n");
@@ -1026,9 +1022,6 @@ link_connection_class_init (LinkConnectionClass *klass)
 	object_class->dispose  = link_connection_dispose;
 	object_class->finalize = link_connection_finalize;
 
-	klass->state_changed  = link_connection_class_state_changed;
-	klass->broken         = NULL;
-
 	signals [BROKEN] =
 		g_signal_new ("broken",
 			      G_TYPE_FROM_CLASS (object_class),
@@ -1154,7 +1147,7 @@ link_connection_io_handler (GIOChannel  *gioc,
 					cnx->priv->tag,
 					LINK_ERR_CONDS | LINK_IN_CONDS);
 
-				link_connection_state_changed_T (cnx, LINK_CONNECTED);
+				link_connection_state_changed_T_R (cnx, LINK_CONNECTED);
 
 				if (cnx->priv->write_queue) {
 					d_printf ("Connected, with queued writes, start flush ...\n");
@@ -1163,13 +1156,13 @@ link_connection_io_handler (GIOChannel  *gioc,
 			} else {
 				d_printf ("Error connecting %d %d %d on fd %d\n",
 					   rv, n, errno, cnx->priv->fd);
-				link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
+				link_connection_state_changed_T_R (cnx, LINK_DISCONNECTED);
 			}
 			break;
 		case LINK_CONNECTED: {
 			if (condition & LINK_ERR_CONDS) {
 				d_printf ("Disconnect on err: %d\n", cnx->priv->fd);
-				link_connection_state_changed_T (cnx, LINK_DISCONNECTED);
+				link_connection_state_changed_T_R (cnx, LINK_DISCONNECTED);
 			}
 			break;
 		}
