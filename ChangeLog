@@ -1,5 +1,9 @@
 2001-08-01  Mark McLoughlin <mark@skynet.ie>
 
+	* test/poa/*: re-indent. sigh.
+
+2001-08-01  Mark McLoughlin <mark@skynet.ie>
+
 	* include/orbit/poa/orbit-adaptor.h,
 	  src/orb/poa/orbit-adaptor.c
 	(ORBit_OAObject_invoke, 

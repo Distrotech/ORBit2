@@ -32,111 +32,112 @@
 #include "poatest.h"
 #include "poatest-exception.h"
 
-void poatest_test_impl( PortableServer_Servant servant, CORBA_Environment *ev ) { }
+void poatest_test_impl (PortableServer_Servant servant, CORBA_Environment *ev) { }
 
 PortableServer_ServantBase__epv base_epv = {
-   ._private    = NULL,
-   .finalize    = NULL,
-   .default_POA = NULL
-   };
+	._private    = NULL,
+	.finalize    = NULL,
+	.default_POA = NULL
+};
 
 POA_poatest__epv poatest_epv = {
-   ._private = NULL,
-   .test     = poatest_test_impl
-   };
+	._private = NULL,
+	.test     = poatest_test_impl
+};
 
 POA_poatest__vepv poatest_vepv = {
-   ._base_epv = &base_epv,
-   .poatest_epv  = &poatest_epv
-   };
+	._base_epv = &base_epv,
+	.poatest_epv  = &poatest_epv
+};
 
 POA_poatest poatest_servant = {
-   ._private = NULL,
-   .vepv     = &poatest_vepv
-   };
+	._private = NULL,
+	.vepv     = &poatest_vepv
+};
 
 poatest
-poatest_run( PortableServer_POA rootpoa,
-             PortableServer_POAManager rootpoa_mgr ) {
- CORBA_Environment       ev;
- poatest                 poatest_obj;
- CORBA_PolicyList        poa_policies;
- PortableServer_POA      child_poa;
- PortableServer_ObjectId *obj1id, *obj2id;
+poatest_run (PortableServer_POA        rootpoa,
+             PortableServer_POAManager rootpoa_mgr)
+{
+	CORBA_Environment        ev;
+	poatest                  poatest_obj;
+	CORBA_PolicyList         poa_policies;
+	PortableServer_POA       child_poa;
+	PortableServer_ObjectId *obj1id, *obj2id;
 
- CORBA_exception_init( &ev );
+	CORBA_exception_init (&ev);
  
- /*
-  * Create child POA with MULTIPLE_ID Object Id Uniqueness policy.
-  */
- poa_policies._maximum = 1;
- poa_policies._length = 1;
- poa_policies._buffer = CORBA_PolicyList_allocbuf(1);
- CORBA_sequence_set_release( &poa_policies, CORBA_FALSE );
+	/*
+	 * Create child POA with MULTIPLE_ID Object Id Uniqueness policy.
+	 */
+	poa_policies._maximum = 1;
+	poa_policies._length = 1;
+	poa_policies._buffer = CORBA_PolicyList_allocbuf (1);
+	CORBA_sequence_set_release (&poa_policies, CORBA_FALSE);
 
- poa_policies._buffer[0] = (CORBA_Policy)PortableServer_POA_create_id_uniqueness_policy(
-                                            rootpoa,
-                                            PortableServer_MULTIPLE_ID,
-                                            &ev );
+	poa_policies._buffer[0] = (CORBA_Policy)PortableServer_POA_create_id_uniqueness_policy (
+							rootpoa,
+							PortableServer_MULTIPLE_ID,
+							&ev);
 
- child_poa = PortableServer_POA_create_POA( rootpoa,
-                                            "Multiple Id POA",
-                                            rootpoa_mgr,
-                                            &poa_policies,
-                                            &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("create_POA : ", &ev);
-    return CORBA_OBJECT_NIL;
-    }
+	child_poa = PortableServer_POA_create_POA (rootpoa,
+						   "Multiple Id POA",
+						   rootpoa_mgr,
+						   &poa_policies,
+						   &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("create_POA : ", &ev);
+		return CORBA_OBJECT_NIL;
+	}
 
- CORBA_Policy_destroy( poa_policies._buffer[0], &ev );
- CORBA_free( poa_policies._buffer );
+	CORBA_Policy_destroy (poa_policies._buffer[0], &ev);
+	CORBA_free (poa_policies._buffer);
 
- /*
-  * Initialise the servant.
-  */
- POA_poatest__init( &poatest_servant, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("POA_poatest__init : ", &ev);
-    return CORBA_OBJECT_NIL;
-    }
+	/*
+	 * Initialise the servant.
+	 */
+	POA_poatest__init (&poatest_servant, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("POA_poatest__init : ", &ev);
+		return CORBA_OBJECT_NIL;
+	}
 
- /*
-  * Activate two objects.
-  */
- obj1id = PortableServer_POA_activate_object( child_poa, &poatest_servant, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("activate_object : ", &ev);
-    return CORBA_OBJECT_NIL;
-    }
- CORBA_free( obj1id );
+	/*
+	 * Activate two objects.
+	 */
+	obj1id = PortableServer_POA_activate_object (child_poa, &poatest_servant, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("activate_object : ", &ev);
+		return CORBA_OBJECT_NIL;
+	}
+	CORBA_free (obj1id);
 
- obj2id = PortableServer_POA_activate_object( child_poa, &poatest_servant, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("activate_object : ", &ev);
-    return CORBA_OBJECT_NIL;
-    }
+	obj2id = PortableServer_POA_activate_object (child_poa, &poatest_servant, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("activate_object : ", &ev);
+		return CORBA_OBJECT_NIL;
+	}
 
- /*
-  * Get reference for second object.
-  */
- poatest_obj = PortableServer_POA_id_to_reference( child_poa, obj2id, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("id_to_reference : ", &ev);
-    return CORBA_OBJECT_NIL;
-    }
- CORBA_free( obj2id );
+	/*
+	 * Get reference for second object.
+	 */
+	poatest_obj = PortableServer_POA_id_to_reference (child_poa, obj2id, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("id_to_reference : ", &ev);
+		return CORBA_OBJECT_NIL;
+	}
+	CORBA_free (obj2id);
 
- /*
-  * Activate the POAManager. POA will now accept requests
-  */
- PortableServer_POAManager_activate( rootpoa_mgr, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("POAManager_activate : ", &ev);
-    return CORBA_OBJECT_NIL;
-    }
+	/*
+	 * Activate the POAManager. POA will now accept requests
+	 */
+	PortableServer_POAManager_activate (rootpoa_mgr, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("POAManager_activate : ", &ev);
+		return CORBA_OBJECT_NIL;
+	}
 
- CORBA_Object_release( (CORBA_Object)child_poa, &ev );
+	CORBA_Object_release ((CORBA_Object)child_poa, &ev);
 
- return poatest_obj;
- }
+	return poatest_obj;
+}

@@ -19,5 +19,5 @@
  */
 
 interface poatest {
-   void test( );
-   };
+	void test ();
+};

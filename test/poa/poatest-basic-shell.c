@@ -29,72 +29,73 @@
 /*
  * Test specific function
  */
-extern poatest poatest_run( PortableServer_POA rootpoa, 
-                            PortableServer_POAManager rootpoa_mgr );
+extern poatest poatest_run (PortableServer_POA        rootpoa, 
+                            PortableServer_POAManager rootpoa_mgr);
 
-int main( int argc, char **argv ) {
- CORBA_Environment         ev;
- CORBA_ORB                 orb;
- PortableServer_POA        rootpoa;
- PortableServer_POAManager poa_mgr;
- poatest                   poatest_obj;
+int main (int argc, char **argv) 
+{
+	CORBA_Environment         ev;
+	CORBA_ORB                 orb;
+	PortableServer_POA        rootpoa;
+	PortableServer_POAManager poa_mgr;
+	poatest                   poatest_obj;
 
- CORBA_exception_init( &ev );
+	CORBA_exception_init (&ev);
 
- orb = CORBA_ORB_init( &argc, argv, "", &ev );
+	orb = CORBA_ORB_init (&argc, argv, "", &ev);
 
- /*
-  * Get the Root POA
-  */
- rootpoa = (PortableServer_POA)CORBA_ORB_resolve_initial_references( orb, "RootPOA", &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("resolve_initial_references : ", &ev);
-    return 1;
-    }
+	/*
+	 * Get the Root POA
+	 */
+	rootpoa = (PortableServer_POA)CORBA_ORB_resolve_initial_references (orb, "RootPOA", &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("resolve_initial_references : ", &ev);
+		return 1;
+	}
 
- /*
-  * Get the Root POA's POAManager
-  */
- poa_mgr = PortableServer_POA__get_the_POAManager( rootpoa, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("the_POAManager : ", &ev);
-    return 1;
-    }
+	/*
+	 * Get the Root POA's POAManager
+	 */
+	poa_mgr = PortableServer_POA__get_the_POAManager (rootpoa, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("the_POAManager : ", &ev);
+		return 1;
+	}
 
- /*
-  * Run the test
-  */
- poatest_obj = poatest_run( rootpoa, poa_mgr );
- if ( poatest_obj == CORBA_OBJECT_NIL ) {
-    return 1;
-    }
+	/*
+	 * Run the test
+	 */
+	poatest_obj = poatest_run (rootpoa, poa_mgr);
+	if (poatest_obj == CORBA_OBJECT_NIL) {
+		return 1;
+	}
 
- /*
-  * Call 'test' method and print out execption.
-  */
- poatest_test( poatest_obj, &ev );
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("test : ", &ev);
-    return 1;
-    }
+	/*
+	 * Call 'test' method and print out execption.
+	 */
+	poatest_test (poatest_obj, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("test : ", &ev);
+		return 1;
+	}
 
- CORBA_Object_release( (CORBA_Object)poatest_obj, &ev );
- CORBA_Object_release( (CORBA_Object)poa_mgr, &ev );
- CORBA_Object_release( (CORBA_Object)rootpoa, &ev );
+	CORBA_Object_release ((CORBA_Object)poatest_obj, &ev);
+	CORBA_Object_release ((CORBA_Object)poa_mgr, &ev);
+	CORBA_Object_release ((CORBA_Object)rootpoa, &ev);
 
- CORBA_ORB_shutdown(orb, CORBA_TRUE, &ev);
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("ORB_shutdown : ", &ev);
-    return 1;
-    }
+	CORBA_ORB_shutdown (orb, CORBA_TRUE, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("ORB_shutdown : ", &ev);
+		return 1;
+	}
 
- CORBA_ORB_destroy(orb, &ev);
- if ( POATEST_EX(&ev) ) {
-    POATEST_PRINT_EX("ORB_destroy : ", &ev);
-    return 1;
-    }
+	CORBA_ORB_destroy(orb, &ev);
+	if (POATEST_EX (&ev)) {
+		POATEST_PRINT_EX ("ORB_destroy : ", &ev);
+		return 1;
+	}
 
- CORBA_Object_release( (CORBA_Object)orb, &ev );
+	CORBA_Object_release ((CORBA_Object)orb, &ev);
 
- return 0;
- }
+	return 0;
+}
