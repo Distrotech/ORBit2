@@ -1206,6 +1206,11 @@ queue_request (ORBit_POAObject *pobj,
 	lc->pobj = *pobj;
 	lc->recv_buffer = *recv_buffer;
 
+	/* FIXME: this is the cause of ping-pong
+	   failure in threaded mode; the main thread is
+	   not running a loop, but instead blocking on a
+	   condition - we need to signal that condition,
+	   and make the re-enterancy happen there */
 	g_idle_add (local_main_handle, lc);
 
 	*pobj = NULL;
