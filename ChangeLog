@@ -1,3 +1,12 @@
+2003-10-08  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* src/orb/orb-core/corba-typecode.c: (CORBA_TypeCode_id),
+	(CORBA_TypeCode_name), (CORBA_TypeCode_member_name),
+	(CORBA_TypeCode_member_type), (CORBA_TypeCode_discriminator_type),
+	(CORBA_TypeCode_content_type):
+	duplicate return values of type string or TypeCode in
+	CORBA_TypeCode_* functions for spec conformance.
+
 2003-10-06  Olivier Andrieu  <oliv__a@users.sourceforge.net>
 
 	* src/services/imodule/orbit-imodule.c:
