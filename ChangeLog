@@ -1,3 +1,8 @@
+2001-09-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-typecode.c: fix alignment of
+	CORBA_TC_Object, or we get serious marshaling issues.
+
 2001-09-06 Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-object.c
