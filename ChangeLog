@@ -1,3 +1,7 @@
+2002-03-04  Mark McLoughlin  <mark@skynet.ie>
+
+	* configure.in: version 2.3.107
+
 2002-03-09  Dou Wen  <orbkernel@hotmail.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c
