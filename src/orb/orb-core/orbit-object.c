@@ -5,10 +5,6 @@ O_MUTEX_DEFINE(ORBit_RootObject_lifecycle_lock);
 void
 ORBit_RootObject_init(ORBit_RootObject obj, const ORBit_RootObject_Interface * interface)
 {
-#ifdef ORBIT_THREADSAFE
-  if(!ORBit_RootObject_lifecycle_lock)
-    O_MUTEX_INIT(ORBit_RootObject_lifecycle_lock);
-#endif
   obj->interface = interface;
   obj->refs = 0;
 }

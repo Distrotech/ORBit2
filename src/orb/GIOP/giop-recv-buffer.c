@@ -24,14 +24,14 @@ giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value
   gboolean do_bswap = giop_msg_conversion_needed(buf);
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 2);
-  if((buf->cur + 2) >= buf->end)
+  if((buf->cur + 2) > buf->end)
     return TRUE;
 
   switch(buf->msg.u.request_1_2.target._d)
     {
     case GIOP_KeyAddr:
       buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 4) >= buf->end)
+      if((buf->cur + 4) > buf->end)
 	return TRUE;
       buf->msg.u.request_1_2.target._u.object_key._release = CORBA_FALSE;
       if(do_bswap)
@@ -39,7 +39,7 @@ giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value
       else
 	buf->msg.u.request_1_2.target._u.object_key._length = *((guint32 *)buf->cur);
       buf->cur += 4;
-      if((buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) >= buf->end
+      if((buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) > buf->end
 	 || (buf->cur + buf->msg.u.request_1_2.target._u.object_key._length) < buf->cur)
 	return TRUE;
       buf->msg.u.request_1_2.target._u.object_key._buffer = buf->cur;
@@ -66,7 +66,7 @@ giop_IOP_ServiceContextList_demarshal(GIOPRecvBuffer *buf, IOP_ServiceContextLis
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 4) >= buf->end)
+  if((buf->cur + 4) > buf->end)
     return TRUE;
 
   value->_release = CORBA_TRUE;
@@ -80,7 +80,7 @@ giop_IOP_ServiceContextList_demarshal(GIOPRecvBuffer *buf, IOP_ServiceContextLis
   for(i = 0; i < value->_length; i++)
     {
       buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-      if((buf->cur + 8) >= buf->end)
+      if((buf->cur + 8) > buf->end)
 	return TRUE;
 
       if(do_bswap)
@@ -96,7 +96,7 @@ giop_IOP_ServiceContextList_demarshal(GIOPRecvBuffer *buf, IOP_ServiceContextLis
 	  value->_buffer[i].context_data._length = *((guint32 *)buf->cur);
 	}
       buf->cur += 4;
-      if((buf->cur + value->_buffer[i].context_data._length) >= buf->end
+      if((buf->cur + value->_buffer[i].context_data._length) > buf->end
 	 || (buf->cur + value->_buffer[i].context_data._length) < buf->cur)
 	return TRUE;
       value->_buffer[i].context_data._buffer = buf->cur;
@@ -119,7 +119,7 @@ giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 12) >= buf->end)
+  if((buf->cur + 12) > buf->end)
     return TRUE;
 
   if(do_bswap)
@@ -135,7 +135,7 @@ giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
     buf->msg.u.request_1_1.object_key._length = *((guint32 *)buf->cur);
   buf->cur += 4;
   
-  if((buf->cur + buf->msg.u.request_1_1.object_key._length + 4) >= buf->end
+  if((buf->cur + buf->msg.u.request_1_1.object_key._length + 4) > buf->end
      || (buf->cur + buf->msg.u.request_1_1.object_key._length + 4) < buf->cur)
     return TRUE;
 
@@ -150,7 +150,7 @@ giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
     oplen = *((guint32 *)buf->cur);
   buf->cur += 4;
 
-  if((buf->cur + oplen + 4) >= buf->end
+  if((buf->cur + oplen + 4) > buf->end
      || (buf->cur + oplen + 4) < buf->cur)
     return TRUE;
 
@@ -163,7 +163,7 @@ giop_recv_buffer_demarshal_request_1_1(GIOPRecvBuffer *buf)
     buf->msg.u.request_1_1.requesting_principal._length = *((guint32 *)buf->cur);
 
   buf->cur += 4;
-  if((buf->cur + buf->msg.u.request_1_1.requesting_principal._length) >= buf->end
+  if((buf->cur + buf->msg.u.request_1_1.requesting_principal._length) > buf->end
      || (buf->cur + buf->msg.u.request_1_1.requesting_principal._length) < buf->cur)
     return TRUE;
 
@@ -182,7 +182,7 @@ giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 8) >= buf->end)
+  if((buf->cur + 8) > buf->end)
     return TRUE;
 
   if(do_bswap)
@@ -196,7 +196,7 @@ giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
   giop_GIOP_TargetAddress_demarshal(buf, &buf->msg.u.request_1_2.target);
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) >= buf->end)
+  if((buf->cur + 4) > buf->end)
     return TRUE;
 
   if(do_bswap)
@@ -205,7 +205,7 @@ giop_recv_buffer_demarshal_request_1_2(GIOPRecvBuffer *buf)
     oplen = *((guint32 *)buf->cur);
   buf->cur += 4;
 
-  if((buf->cur + oplen + 4) >= buf->end
+  if((buf->cur + oplen + 4) > buf->end
      || (buf->cur + oplen + 4) < buf->cur)
     return TRUE;
 
@@ -225,7 +225,7 @@ giop_recv_buffer_demarshal_reply_1_1(GIOPRecvBuffer *buf)
   if(giop_IOP_ServiceContextList_demarshal(buf, &buf->msg.u.reply_1_1.service_context))
     return TRUE;
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 8) >= buf->end)
+  if((buf->cur + 8) > buf->end)
     return TRUE;
   if(do_bswap)
     {
@@ -250,7 +250,7 @@ giop_recv_buffer_demarshal_reply_1_2(GIOPRecvBuffer *buf)
   gboolean do_bswap = giop_msg_conversion_needed(buf);
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 8) >= buf->end)
+  if((buf->cur + 8) > buf->end)
     return TRUE;
   if(do_bswap)
     {
@@ -276,7 +276,7 @@ giop_recv_buffer_demarshal_cancel(GIOPRecvBuffer *buf)
   gboolean do_bswap = giop_msg_conversion_needed(buf);
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) >= buf->end)
+  if((buf->cur + 4) > buf->end)
     return TRUE;
   if(do_bswap)
     buf->msg.u.cancel_request.request_id = GUINT32_SWAP_LE_BE(*((guint32 *)buf->cur));
@@ -294,7 +294,7 @@ giop_recv_buffer_demarshal_locate_request_1_1(GIOPRecvBuffer *buf)
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 8) >= buf->end)
+  if((buf->cur + 8) > buf->end)
     return TRUE;
 
   if(do_bswap)
@@ -308,7 +308,7 @@ giop_recv_buffer_demarshal_locate_request_1_1(GIOPRecvBuffer *buf)
     buf->msg.u.locate_request_1_1.object_key._length = *((guint32 *)buf->cur);
   buf->cur += 4;
 
-  if((buf->cur + buf->msg.u.locate_request_1_1.object_key._length) >= buf->end
+  if((buf->cur + buf->msg.u.locate_request_1_1.object_key._length) > buf->end
      || (buf->cur + buf->msg.u.locate_request_1_1.object_key._length) < buf->cur)
     return TRUE;
 
@@ -326,7 +326,7 @@ giop_recv_buffer_demarshal_locate_request_1_2(GIOPRecvBuffer *buf)
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 4) >= buf->end)
+  if((buf->cur + 4) > buf->end)
     return TRUE;
 
   if(do_bswap)
@@ -345,7 +345,7 @@ giop_recv_buffer_demarshal_locate_reply_1_1(GIOPRecvBuffer *buf)
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
 
-  if((buf->cur + 8) >= buf->end)
+  if((buf->cur + 8) > buf->end)
     return TRUE;
 
   if(do_bswap)
@@ -527,14 +527,20 @@ GIOPRecvBuffer *
 giop_recv_buffer_use_encaps_buf(GIOPRecvBuffer *buf)
 {
   CORBA_unsigned_long len;
+  guchar *ptr;
 
   buf->cur = ALIGN_ADDRESS(buf->cur, 4);
-  if((buf->cur + 4) >= buf->end)
+  if((buf->cur + 4) > buf->end)
     return NULL;
   len = *(CORBA_unsigned_long *)buf->cur;
   buf->cur += 4;
+  if((buf->cur + len) > buf->end
+     || (buf->cur + len) < buf->cur)
+    return NULL;
+  ptr = buf->cur;
+  buf->cur += len;
 
-  return giop_recv_buffer_use_encaps(buf->cur, len);
+  return giop_recv_buffer_use_encaps(ptr, len);
 }
 
 void

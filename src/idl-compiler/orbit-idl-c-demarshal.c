@@ -147,10 +147,10 @@ c_demarshal_generate_check(OIDL_Marshal_Length *len, OIDL_C_Marshal_Info *cmi)
   curptr_name = cmi->curptr_in_local?"_ORBIT_curptr":"_ORBIT_recv_buffer->cur";
   fprintf(cmi->ci->fh, "{\nregister const long _ORBIT_checklen = %s;\n", len_str);
   if(is_const)
-    fprintf(cmi->ci->fh, "if((%s + %s) >= _ORBIT_buf_end)\n",
+    fprintf(cmi->ci->fh, "if((%s + %s) > _ORBIT_buf_end)\n",
 	    curptr_name, "_ORBIT_checklen");
   else
-    fprintf(cmi->ci->fh, "if((%s + %s) < %s || (%s + %s) >= _ORBIT_buf_end)\n", curptr_name, "_ORBIT_checklen", curptr_name,
+    fprintf(cmi->ci->fh, "if((%s + %s) < %s || (%s + %s) > _ORBIT_buf_end)\n", curptr_name, "_ORBIT_checklen", curptr_name,
 	    curptr_name, "_ORBIT_checklen");
   fprintf(cmi->ci->fh, "%s;\n", cmi->marshal_error_exit);
   fprintf(cmi->ci->fh, "}\n");
