@@ -37,10 +37,16 @@
 #include "orbitcpp_smartptr.hh"
 #include "orbitcpp_tools.hh"
 #include "orbitcpp_exception.hh"
-#include "orbitcpp_object.hh"
+
 #include "orbitcpp_orb.hh"
-#include "orbitcpp_sequence.hh"
 #include "orbitcpp_poa.hh"
+
+#include "orbitcpp_sequence.hh"
+#include "orbitcpp_compound_seq.hh"
+#include "orbitcpp_simple_seq.hh"
+#include "orbitcpp_string_seq.hh"
+
+#include "orbitcpp_object.hh"
 #include "orbitcpp_any.hh"
 
 // hopefully this will be removed when the object_var stuff gets

@@ -274,7 +274,15 @@ string
 IDLString::get_seq_typename (unsigned int      length,
 			     const IDLTypedef *active_typedef) const
 {
-#warning "WRITE ME"
+	if (!length)
+		return IDL_IMPL_NS "::StringUnboundedSeq";
+
+	char *tmp = g_strdup_printf (IDL_IMPL_NS "::StringBoundedSeq<%d>",
+				     length);
+
+	string retval = tmp;
+	g_free (tmp);
+	return retval;
 }
 
 string

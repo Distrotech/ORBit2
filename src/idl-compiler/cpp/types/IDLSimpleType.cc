@@ -304,7 +304,7 @@ IDLSimpleType::get_seq_typename (unsigned int      length,
 		tmp = g_strdup_printf ("::_orbitcpp::SimpleBoundedSeq< %s, %d>",
 				       traits.c_str (), length);
 	else
-		tmp = g_strdup_printf ("::_orbitcpp::SimpleUnboudedSeq< %s >",
+		tmp = g_strdup_printf ("::_orbitcpp::SimpleUnboundedSeq< %s >",
 				       traits.c_str ());
 
 	retval = tmp;

@@ -38,7 +38,7 @@
 #include "orbitcpp_orb.hh"
 #include "orbitcpp_object.hh"
 #include "orbitcpp_exception.hh"
-#include "orbitcpp_sequence.hh"
+#include "orbitcpp_simple_seq.hh"
 
 
 
