@@ -11,4 +11,5 @@
 /* Define to 'int' if it isn't defined in the header files. */
 #undef socklen_t
 
+#undef ENABLE_HTTP
 #undef  ORBIT_PURIFY
