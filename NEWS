@@ -1,3 +1,13 @@
+ORBit2-2.6.1
+
+	* Bugs fixed
+		+ install the imodule config (Mark McLouglin)
+		+ friendlier warning on orb ref problem (Michael)
+
+ORBit2-2.6.0
+
+	* bump version for release
+
 ORBit2-2.5.1
 
 	* bug fixes
