@@ -206,6 +206,8 @@ giop_connection_initiate (const char *proto_name,
 {
 	GIOPConnection *cnx;
 
+	g_return_val_if_fail (remote_host_info != NULL, NULL);
+
 	LINC_MUTEX_LOCK (cnx_list.lock);
 
 #ifndef ORBIT_THREADED
