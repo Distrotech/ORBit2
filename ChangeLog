@@ -1,3 +1,15 @@
+2003-08-08  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_try_connection_T): rename to this, return the
+	correct state, and handle the result.
+	(ORBit_object_get_connection): in here.
+	(ORBit_try_connection_T): drop the lock over the
+	[re-]connection phase - it's possibly re-enterant. #117970
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_try_reconnect): return the status.
+
 2003-08-07  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/corba-orb.c (shutdown_orb):
