@@ -9,6 +9,12 @@
 	(impl_BindingIterator__destroy, impl_BindingIterator__destroy):
 	don't de-activate ourselves in a finalize method.
 
+2002-05-02  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/orbit-idl-c-headers.c (ch_prep_sequence): Cast
+	return value of _allocbuf method to pointer to member type, to
+	make typesafe C++ compilers happy
+
 2002-04-23  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/iop-profiles.c:
