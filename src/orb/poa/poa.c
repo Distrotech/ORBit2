@@ -397,21 +397,18 @@ ORBit_POA_destroy_T (PortableServer_POA  poa,
 	for (i = 0; i < adaptors->len; i++) {
 		PortableServer_POA cpoa = g_ptr_array_index (adaptors, i);
 
-
-		LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
-
 		if (cpoa && cpoa != poa) {
-			ORBit_RootObject_duplicate (cpoa);
+			ORBit_RootObject_duplicate_T (cpoa);
+			LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 			POA_LOCK (cpoa);
 
 			if (cpoa->parent_poa == poa) 
 				ORBit_POA_destroy_T (cpoa, etherealize_objects, ev);
 
 			POA_UNLOCK (cpoa);
-			ORBit_RootObject_release (cpoa);
+			LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+			ORBit_RootObject_release_T (cpoa);
 		}
-
-		LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 	}
 
 	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);

@@ -1957,6 +1957,8 @@ test_time_noop (test_TestFactory   factory,
 	fprintf (stderr, "In proc (slow) took %g msecs\n",
 		 g_timer_elapsed (timer, NULL) * 1000);
 	ORBit_small_flags = old_flags;
+
+	g_timer_destroy (timer);
 }
 
 static void
