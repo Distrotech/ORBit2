@@ -32,7 +32,7 @@ noinst_PROGRAMS=	\
         poatest-basic11 \
         poatest-basic05
 
-check_PROGRAMS = $(TESTS)
+check_PROGRAMS = $(TESTS) test-poa
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
@@ -48,6 +48,7 @@ common_srcs = 			\
 	poatest-basic-shell.h	\
 	poatest-exception.h
 
+test_poa_SOURCES = test-poa.c
 poatest_basic01_SOURCES = $(common_srcs) poatest-basic01.c 
 poatest_basic02_SOURCES = $(common_srcs) poatest-basic02.c 
 poatest_basic03_SOURCES = $(common_srcs) poatest-basic03.c 

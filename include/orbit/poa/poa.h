@@ -123,6 +123,13 @@ CORBA_char *PortableServer_ObjectId_to_string(PortableServer_ObjectId *oid,
 CORBA_wchar *PortableServer_ObjectId_to_wstring(PortableServer_ObjectId *oid,
                                                 CORBA_Environment *ev);
 
+
+PortableServer_POA ORBit_POA_new_from (CORBA_ORB                  orb,
+				       PortableServer_POA         parent,
+				       const CORBA_char          *adaptor_name,
+				       const CORBA_PolicyList    *opt_policies,
+				       CORBA_Environment         *ev);
+
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
 void ORBit_skel_class_register (PortableServer_ClassInfo   *ci,
