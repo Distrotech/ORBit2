@@ -52,8 +52,8 @@ namespace CORBA {
 		explicit ORB(CORBA_ORB cobject);
 
 		void operator delete(void* cpp_orb) {
-			Object* pObject = static_cast<Object*>(cpp_orb);
-			_orbitcpp::release_guarded(pObject->_orbitcpp_cobj());
+			ORB* pObject = static_cast<ORB*>(cpp_orb);
+			_orbitcpp::release_guarded((CORBA_Object)pObject->m_target);
 		}
 	
 	

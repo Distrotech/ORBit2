@@ -47,7 +47,7 @@ IDLSequence::const_decl_write (ostream          &ostr,
 			  Indent           &indent,
 			  const string     &cpp_id,
 			  const string     &value,
-			  const IDLTypedef *active_typedef = 0) const
+			  const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -57,7 +57,7 @@ IDLSequence::typedef_decl_write (ostream          &ostr,
 				 Indent           &indent,
 				 IDLCompilerState &state,
 				 const IDLTypedef &target,
-				 const IDLTypedef *active_typedef = 0) const
+				 const IDLTypedef *active_typedef) const
 {
 	string cpp_type = target.get_cpp_identifier ();
 	string cpp_elem = m_element_type.get_cpp_member_typename ();
@@ -414,7 +414,7 @@ void
 IDLSequence::member_init_cpp (ostream          &ostr,
 			 Indent           &indent,
 			 const string     &cpp_id,
-			 const IDLTypedef *active_typedef = 0) const
+			 const IDLTypedef *active_typedef) const
 {
 }
 
@@ -422,7 +422,7 @@ void
 IDLSequence::member_init_c (ostream          &ostr,
 		       Indent           &indent,
 		       const string     &c_id,
-		       const IDLTypedef *active_typedef = 0) const
+		       const IDLTypedef *active_typedef) const
 {
 }
 

@@ -28,7 +28,7 @@
 
 IDLOperation::IDLOperation (string const &id,
 			    IDL_tree      node,
-			    IDLScope     *parentscope = 0):
+			    IDLScope     *parentscope):
 	IDLElement (id, node, parentscope),
 	IDLMethod (*(IDLInterface*)parentscope)
 {

@@ -1,3 +1,21 @@
+2002-06-29  ERDI Gergo  <cactus@cactus.rulez.org>
+
+	* src/idl-compiler/cpp/types/IDLInterface.cc
+	(get_seq_traits_typename): Override default implementation from
+	IDLType as that would mangle _mgr in the traits name
+
+	* src/orb-cpp/orbitcpp_smartptr.hh: Removed a bunch of
+	suspicious-looking reinterpret_cast<>s
+
+	* src/idl-compiler/orbit-idl-c-stubs.c (cs_small_output_stub):
+	Cast EPV from void* to correct type before assigning it to the
+	local temporary EPV pointer
+
+	* src/idl-compiler/orbit-idl-driver.c: s/namespace/ns/
+
+	* src/idl-compiler/cpp:
+	* src/orb-cpp: GCC 3.1 fixes
+
 2002-06-24  Murray Cumming  <murrayc@usa.net>
 
 	* I had not properly restored the -lc++ command - just the -lcpp

@@ -123,7 +123,7 @@ string idlTranslateConstant(IDL_tree const constant,IDLScope const &scope) {
 
 // IDLCaseStmt ---------------------------------------------------------------
 IDLCaseStmt::IDLCaseStmt(IDLMember *member, string const &id,
-						 IDL_tree node,IDLScope *parentscope = NULL)
+						 IDL_tree node,IDLScope *parentscope)
 	: IDLElement(id,node,parentscope), m_member(member),m_isDefault(false) {
 
 	// labels

@@ -26,7 +26,7 @@
 
 #include "IDLEnum.hh"
 
-IDLEnum::IDLEnum(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
+IDLEnum::IDLEnum(string const &id,IDL_tree node,IDLScope *parentscope)
 : IDLUserDefSimpleType(id,node,parentscope)
 {		
 

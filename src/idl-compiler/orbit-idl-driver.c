@@ -39,7 +39,7 @@ int
 orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 {
   OIDL_Backend_Info *binfo;
-  IDL_ns namespace;
+  IDL_ns ns;
   IDL_tree tree;
   int errcode;
   char *fbasename, *ctmp;
@@ -50,7 +50,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
   g_return_val_if_fail(binfo && binfo->op_output, 0);
 
   errcode = IDL_parse_filename(filename, rinfo->cpp_args, NULL,
-			       &tree, &namespace,
+			       &tree, &ns,
 			       (rinfo->show_cpp_errors?IDLF_SHOW_CPP_ERRORS:0)
 			       |IDLF_TYPECODES
 			       |IDLF_SRCFILES
@@ -59,7 +59,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 			         ?(IDLF_INHIBIT_INCLUDES):0)
 			       |IDLF_CODEFRAGS,
 			       rinfo->idl_warn_level);
-  rinfo->namespace = namespace;
+  rinfo->ns = ns;
 
   if(rinfo->debug_level > 3)
     orbit_idl_print_node(tree, 0);
@@ -78,7 +78,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   otree.tree = tree;
 
-  orbit_idl_tree_populate(otree.tree, namespace, &otree, TRUE);
+  orbit_idl_tree_populate(otree.tree, ns, &otree, TRUE);
   otree.ctxt = oidl_marshal_context_new (tree);
   if(rinfo->debug_level > 2)
     {
@@ -86,7 +86,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
       oidl_marshal_context_dump(otree.ctxt);
     }
 
-  orbit_idl_tree_populate(otree.tree, namespace, &otree, FALSE);
+  orbit_idl_tree_populate(otree.tree, ns, &otree, FALSE);
   orbit_idl_do_passes(otree.tree, rinfo);
 
   binfo->op_output(&otree, rinfo);

@@ -34,7 +34,7 @@
 IDLArray::IDLArray (IDLType const &element_type,
 		    string const  &id,
 		    IDL_tree       node,
-		    IDLScope      *parentscope = 0) :
+		    IDLScope      *parentscope) :
 	IDLElement  (id, node, parentscope),
 	m_element_type (element_type)
 {
@@ -225,7 +225,7 @@ IDLArray::typedef_decl_write (ostream          &ostr,
 			      Indent           &indent,
 			      IDLCompilerState &state,
 			      const IDLTypedef &target,
-			      const IDLTypedef *active_typedef = 0) const
+			      const IDLTypedef *active_typedef) const
 {
 	string array_id = target.get_cpp_identifier ();
 	string slice_id = array_id + "_slice";
@@ -391,7 +391,7 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 			     Indent           &indent,
 			     const string     &cpp_id,
 			     IDL_param_attr    direction,
-			     const IDLTypedef *active_typedef = 0) const
+			     const IDLTypedef *active_typedef) const
 {
 	g_assert (active_typedef);
 
@@ -419,7 +419,7 @@ IDLArray::stub_impl_arg_pre (ostream          &ostr,
 string
 IDLArray::stub_impl_arg_call (const string   &cpp_id,
 			      IDL_param_attr  direction,
-			      const IDLTypedef *active_typedef = 0) const
+			      const IDLTypedef *active_typedef) const
 {
 	if (!m_element_type.conversion_required ())
 		return cpp_id;
@@ -445,7 +445,7 @@ IDLArray::stub_impl_arg_post (ostream          &ostr,
 			      Indent           &indent,
 			      const string     &cpp_id,
 			      IDL_param_attr    direction,
-			      const IDLTypedef *active_typedef = 0) const
+			      const IDLTypedef *active_typedef) const
 {
 	if (!m_element_type.conversion_required ())
 		return;
@@ -486,7 +486,7 @@ IDLArray::stub_decl_ret_get (const IDLTypedef *active_typedef) const
 void
 IDLArray::stub_impl_ret_pre (ostream          &ostr,
 			     Indent           &indent,
-			     const IDLTypedef *active_typedef = 0) const
+			     const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -495,7 +495,7 @@ void
 IDLArray::stub_impl_ret_call (ostream          &ostr,
 			      Indent           &indent,
 			      const string     &c_call_expression,
-			      const IDLTypedef *active_typedef = 0) const
+			      const IDLTypedef *active_typedef) const
 {
 	g_assert (active_typedef);
 	
@@ -506,7 +506,7 @@ IDLArray::stub_impl_ret_call (ostream          &ostr,
 void
 IDLArray::stub_impl_ret_post (ostream          &ostr,
 			      Indent           &indent,
-			      const IDLTypedef *active_typedef = 0) const
+			      const IDLTypedef *active_typedef) const
 {
 	g_assert (active_typedef);
 	
@@ -742,7 +742,7 @@ void
 IDLArray::member_init_cpp (ostream          &ostr,
 			   Indent           &indent,
 			   const string     &cpp_id,
-			   const IDLTypedef *active_typedef = 0) const
+			   const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -751,7 +751,7 @@ void
 IDLArray::member_init_c (ostream          &ostr,
 			 Indent           &indent,
 			 const string     &c_id,
-			 const IDLTypedef *active_typedef = 0) const
+			 const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }

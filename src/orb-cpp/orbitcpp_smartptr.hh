@@ -36,7 +36,6 @@
 #include "orbitcpp_types.hh"
 #include "orbitcpp_tools.hh"
 
-
 namespace CORBA {
 	class Object;
 }
@@ -121,7 +120,7 @@ namespace _orbitcpp {
 
 		void free() {
 			if (m_objectref != O::_nil ())
-				::CORBA::release(reinterpret_cast<CORBA::Object*>(m_objectref));
+				::CORBA::release(m_objectref);
 			m_objectref = O::_nil();
 		}
 
@@ -179,10 +178,10 @@ namespace _orbitcpp {
 			return m_objectref;
 		}
 		operator CORBA_Object *() {
-			return &reinterpret_cast<CORBA_Object>(m_objectref);
+			return static_cast<CORBA_Object*>(&m_objectref);
 		}
 		operator CORBA_TypeCode *() {
-			return &reinterpret_cast<CORBA_TypeCode>(m_objectref);
+			return static_cast<CORBA_TypeCode*>(&m_objectref);
 		}
 		O_ptr ptr() const {
 			return m_objectref;

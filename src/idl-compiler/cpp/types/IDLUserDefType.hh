@@ -34,14 +34,13 @@
 
 
 // User defined types ---------------------------------------------------------
-class IDLUserDefType
-: public IDLElement,
-  public IDLType
+class IDLUserDefType : public IDLElement,
+		       public IDLType
 {
 public:
 	IDLUserDefType(string const &id,IDL_tree node,IDLScope *parentscope = NULL)
 		: IDLElement(id,node,parentscope) {}
-
+	
 	virtual bool isType() {
 		return true;
 	}

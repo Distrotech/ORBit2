@@ -27,6 +27,7 @@ libORBit_2_cppinclude_HEADERS = \
 			orbitcpp_typecode.hh
 
 libORBit_2_cpp_la_SOURCES = \
+			$(libORBit_2_cppinclude_HEADERS) \
 			orbitcpp_types.cc \
 			orbitcpp_exception.cc \
 			orbitcpp_tools.cc \

@@ -77,8 +77,6 @@ namespace CORBA {
 	  friend void release(Object_ptr o);
 	
   public:	
-		void operator delete(void* c_objref);
-		
 		static Object_ptr _duplicate(Object_ptr o);
 		static Object_ptr _narrow(Object_ptr o);
 		static Object_ptr _nil();

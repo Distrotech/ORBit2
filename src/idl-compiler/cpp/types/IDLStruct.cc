@@ -31,7 +31,7 @@
 
 IDLStruct::IDLStruct (const string &id,
 		      IDL_tree      node,
-		      IDLScope     *parentscope = 0):
+		      IDLScope     *parentscope):
 	IDLCompound (id, node, parentscope)
 {
 }

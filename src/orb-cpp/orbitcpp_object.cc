@@ -46,7 +46,7 @@ CORBA::Object::Object()
 {
 }
 
-CORBA::Object::Object(CORBA_Object cobject, bool take_copy = true)
+CORBA::Object::Object(CORBA_Object cobject, bool take_copy /* = true */)
 {
 	if (take_copy)
 	{
@@ -59,6 +59,9 @@ CORBA::Object::Object(CORBA_Object cobject, bool take_copy = true)
 
 CORBA::Object::~Object()
 {
+	CEnvironment ev;
+	CORBA_Object_release(_orbitcpp_cobj(), ev._orbitcpp_cobj());
+	ev.propagate_sysex();
 }
 
 CORBA::Object::Object* CORBA::Object::_orbitcpp_wrap(CORBA_Object cobject, bool take_copy /* = false */)
@@ -77,17 +80,6 @@ CORBA::Object_ptr CORBA::Object::_narrow(Object_ptr o) {
 CORBA::Object_ptr CORBA::Object::_nil() {
 	return CORBA_OBJECT_NIL;
 }
-
-
-void 
-CORBA::Object::operator delete(void* cpp_objref) {
-	Object* pObject = static_cast<Object*>(cpp_objref);
-	CEnvironment ev;
-	CORBA_Object_release(pObject->_orbitcpp_cobj(), ev._orbitcpp_cobj());
-	ev.propagate_sysex();
-}
-
-
 
 
 CORBA::Boolean 

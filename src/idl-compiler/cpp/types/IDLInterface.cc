@@ -191,7 +191,7 @@ IDLInterface::typedef_decl_write (ostream          &ostr,
 				  Indent           &indent,
 				  IDLCompilerState &state,
 				  const IDLTypedef &target,
-				  const IDLTypedef *active_typedef = 0) const
+				  const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -493,7 +493,7 @@ void
 IDLInterface::member_init_cpp (ostream          &ostr,
 			       Indent           &indent,
 			       const string     &cpp_id,
-			       const IDLTypedef *active_typedef = 0) const
+			       const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -502,7 +502,7 @@ void
 IDLInterface::member_init_c (ostream          &ostr,
 			     Indent           &indent,
 			     const string     &c_id,
-			     const IDLTypedef *active_typedef = 0) const
+			     const IDLTypedef *active_typedef) const
 {
 #warning "WRITE ME"
 }
@@ -649,4 +649,10 @@ IDLInterface::common_write_typedefs (ostream &ostr,
 	     << " " << get_cpp_identifier () << "Ref"
 	     << ';' << endl;
 	
+}
+
+string
+IDLInterface::get_seq_traits_typename (const IDLTypedef *active_typedef) const
+{
+	return get_cpp_typename () + "_seq_elem_traits";	
 }

@@ -31,7 +31,7 @@
 
 #include "IDLUserDefType.hh"
 
-class IDLTypedef : public IDLUserDefType
+class IDLTypedef: public IDLUserDefType
 {
 protected:
 	IDLType	&m_alias;

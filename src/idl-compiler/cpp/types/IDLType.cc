@@ -38,7 +38,7 @@ IDLType::const_decl_write (ostream          &ostr,
 }
 
 string
-IDLType::get_seq_traits_typename (const IDLTypedef *active_typedef = 0) const
+IDLType::get_seq_traits_typename (const IDLTypedef *active_typedef) const
 {
 	return get_cpp_member_typename () + "_seq_elem_traits";
 }

@@ -46,7 +46,7 @@ IDLSimpleType::typedef_decl_write (ostream          &ostr,
 				   Indent           &indent,
 				   IDLCompilerState &state,
 				   const IDLTypedef &target,
-				   const IDLTypedef *active_typedef = 0) const
+				   const IDLTypedef *active_typedef) const
 {
 	string src_id = get_fixed_cpp_typename ();
 	string target_id = target.get_cpp_identifier ();
@@ -315,7 +315,7 @@ void
 IDLSimpleType::member_init_cpp (ostream          &ostr,
 				Indent           &indent,
 				const string     &cpp_id,
-				const IDLTypedef *active_typedef = 0) const
+				const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }
@@ -324,7 +324,7 @@ void
 IDLSimpleType::member_init_c (ostream          &ostr,
 			      Indent           &indent,
 			      const string     &c_id,
-			      const IDLTypedef *active_typedef = 0) const
+			      const IDLTypedef *active_typedef) const
 {
 	// Do nothing
 }

@@ -34,7 +34,7 @@ object_hash_dump (gpointer key,
 	}
 	case ORBIT_ROT_TYPECODE: {
 		CORBA_TypeCode tc = (CORBA_TypeCode) obj;
-		str = g_strdup_printf ("TypeCode (type '%s', kind %d)",
+		str = g_strdup_printf ("TypeCode (type '%s', kind %s)",
 				       tc->repo_id,
 				       ORBit_tk_to_name (tc->kind));
 		break;
@@ -178,7 +178,6 @@ ORBit_RootObject_release (gpointer obj)
 	ORBit_RootObject robj = obj;
 
 	if (robj && robj->refs != ORBIT_REFCOUNT_STATIC) {
-
 		LINC_MUTEX_LOCK   (ORBit_RootObject_lifecycle_lock);
 
 		do_unref (robj);
