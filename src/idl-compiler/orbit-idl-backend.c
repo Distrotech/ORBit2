@@ -106,8 +106,10 @@ orbit_idl_backend_output (OIDL_Run_Info *rinfo,
 
 	g_slist_free (paths);
 
-	if (!func)
+	if (!func) {
+		g_warning("idl-compiler backend not found.");
 		return FALSE;
+	}
 
 	context.tree      = tree;
 	context.filename  = rinfo->input_filename;
