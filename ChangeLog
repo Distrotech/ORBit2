@@ -1,5 +1,14 @@
 2003-07-30  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/server.c, client.c: upd. to
+	"orbit-local-non-threaded-orb".
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_init): default to a thread-safe ORB, since we
+	can't have GConf initializing without threads, and then
+	libbonobo requiring that we have them later; and (it seems)
+	GConf won't change.
+
 	* Makefile.shared: parallel build messing.
 
 	* src/orb/orb-core/Makefile.am: parallel build fixage.

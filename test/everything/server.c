@@ -516,9 +516,9 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 	}
 
 	if (thread_safe)
-		orb_name = "orbit-local-mt-orb";
-	else
 		orb_name = "orbit-local-orb";
+	else
+		orb_name = "orbit-local-non-threaded-orb";
 
 	global_orb = CORBA_ORB_init (&argc, argv, orb_name, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);

@@ -338,8 +338,11 @@ CORBA_ORB_init (int *argc, char **argv,
 	/* the allocation code uses the bottom bit of any pointer */
 	g_assert (ORBIT_ALIGNOF_CORBA_DOUBLE > 2);
 
-	threaded = (orb_identifier &&
-		    strstr (orb_identifier, "orbit-local-mt-orb") != NULL);
+	if (orb_identifier &&
+	    strstr (orb_identifier, "orbit-local-non-threaded-orb") != NULL)
+		threaded = FALSE;
+	else
+		threaded = TRUE;
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
 	
