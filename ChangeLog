@@ -1,3 +1,18 @@
+2003-06-22  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
+
+	* docs/api/ORBit2-sections.txt: Created the orbit2-small section.
+
+	* docs/api/Makefile.am: Instead of specifying an include directory
+	for gtkdoc-scan, indicate a specific set of files to scan instead,
+	via the variable EXTRA_HFILES.
+
+	* docs/api/ORBit2-docs.sgml: Added the orbit2-small section.
+
+	* docs/api/tmpl/orbit2-small.sgml: New template file for the orbit-small.h header.
+
+	* docs/api/tmpl/orbit2-allocators.sgml: Added some documention for
+	this section.
+
 2003-06-19  Gustavo J. A. M. Carneiro  <gustavo@users.sourceforge.net>
 
 	* Makefile.shared: Moved the target 'distclean-local' out of the
