@@ -435,7 +435,7 @@ orbit_cbe_get_const_node(OIDL_Marshal_Node *node)
   if(node->tree)
     return orbit_cbe_get_const(node->tree);
   else
-    return g_strdup_printf("%d", node->u.const_info.amount);
+    return g_strdup_printf("%ld", node->u.const_info.amount);
 }
 
 void
@@ -446,6 +446,104 @@ orbit_cbe_write_const_node(FILE *of, OIDL_Marshal_Node *node)
   ctmp = orbit_cbe_get_const_node(node);
   fprintf(of, "%s", ctmp);
   g_free(ctmp);
+}
+
+static glong
+cbe_eval_const(IDL_tree tree)
+{
+  glong v1, v2;
+
+  switch(IDL_NODE_TYPE(tree)) {
+#if 0
+  case IDLN_BOOLEAN:
+    return IDL_BOOLEAN(tree).value?1:0;
+    break;
+  case IDLN_CHAR:
+    return IDL_CHAR(tree).value;
+    break;
+  case IDLN_FLOAT:
+    g_string_sprintf(tmpstr, "%f", IDL_FLOAT(tree).value);
+    break;
+  case IDLN_STRING:
+    g_string_sprintf(tmpstr, "\"%s\"", IDL_STRING(tree).value);
+    break;
+  case IDLN_WIDE_CHAR:
+    g_string_sprintf(tmpstr, "L'%ls'", IDL_WIDE_CHAR(tree).value);
+    break;
+  case IDLN_WIDE_STRING:
+    g_string_sprintf(tmpstr, "L\"%ls\"", IDL_WIDE_STRING(tree).value);
+    break;
+  case IDLN_IDENT:
+    {
+      char *id;
+      id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(tree), "_", 0);
+      g_string_sprintf(tmpstr, "%s", id);
+      g_free(id);
+    }
+    break;
+#endif
+  case IDLN_INTEGER:
+    return IDL_INTEGER(tree).value;
+    break;
+  case IDLN_BINOP:
+    v1 = cbe_eval_const(IDL_BINOP(tree).left);
+    v2 = cbe_eval_const(IDL_BINOP(tree).right);
+    switch(IDL_BINOP(tree).op) {
+    case IDL_BINOP_OR:
+      return v1|v2;
+      break;
+    case IDL_BINOP_XOR:
+      return v1^v2;
+      break;
+    case IDL_BINOP_AND:
+      return v1&v2;
+      break;
+    case IDL_BINOP_SHR:
+      return v1>>v2;
+      break;
+    case IDL_BINOP_SHL:
+      return v1<<v2;
+      break;
+    case IDL_BINOP_ADD:
+      return v1+v2;
+      break;
+    case IDL_BINOP_SUB:
+      return v1-v2;
+      break;
+    case IDL_BINOP_MULT:
+      return v1*v2;
+      break;
+    case IDL_BINOP_DIV:
+      return v1/v2;
+      break;
+    case IDL_BINOP_MOD:
+      return v1%v2;
+      break;
+    }
+    break;
+  case IDLN_UNARYOP:
+    v1 = cbe_eval_const(IDL_UNARYOP(tree).operand);
+    switch(IDL_UNARYOP(tree).op) {
+    case IDL_UNARYOP_PLUS: return v1; break;
+    case IDL_UNARYOP_MINUS: return -v1; break;
+    case IDL_UNARYOP_COMPLEMENT: return ~v1; break;
+    }
+    break;
+  default:
+    g_error("We were asked to eval a %s constant", IDL_tree_type_names[tree->_type]);
+    break;
+  }
+
+  return 0;
+}
+
+gint
+orbit_cbe_eval_const_node(OIDL_Marshal_Node *node)
+{
+  if(node->tree)
+    return cbe_eval_const(node->tree);
+  else
+    return node->u.const_info.amount;
 }
 
 char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node)

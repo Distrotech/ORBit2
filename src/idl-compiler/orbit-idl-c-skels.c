@@ -147,12 +147,8 @@ cbe_print_var_dcl(FILE *of, IDL_tree tree)
 static void
 cbe_skel_op_dcl_print_call_param(IDL_tree tree, OIDL_C_Info *ci)
 {
-  int i, n;
   gchar *id = IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str;
   IDL_tree ts;
-
-  n = oidl_param_numptrs(tree, oidl_attr_to_paramrole(IDL_PARAM_DCL(tree).attr));
-  n = MIN(n, 1);
 
   ts = orbit_cbe_get_typespec(IDL_PARAM_DCL(tree).param_type_spec);
   if ( IDL_NODE_TYPE(ts)==IDLN_TYPE_ARRAY 
@@ -161,12 +157,7 @@ cbe_skel_op_dcl_print_call_param(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "(const %s_slice*)", ts_str);
     g_free(ts_str);
   }
-
-  for(i = 0; i < n; i++)
-    fprintf(ci->fh, "&(");
   fprintf(ci->fh, "%s", id);
-  for(i = 0; i < n; i++)
-    fprintf(ci->fh, ")");
 }
 
 static void cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci);
@@ -189,6 +180,7 @@ ck_output_skel(IDL_tree tree, OIDL_C_Info *ci)
   orbit_cbe_op_write_proto(ci->fh, tree, "_impl_", TRUE);
   fprintf(ci->fh, ")\n");
   fprintf(ci->fh, "{\n");
+  fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
 
   oi = tree->data;
 
@@ -327,8 +319,8 @@ cbe_skel_param_subfree(IDL_tree tree, OIDL_C_Info *ci)
   g_free(id);
 }
 
-static void
-cbe_skel_op_retval_free(IDL_tree tree, OIDL_C_Info *ci)
+void
+cbe_op_retval_free(IDL_tree tree, OIDL_C_Info *ci)
 {
   IDL_tree ts;
 
@@ -347,12 +339,12 @@ cbe_skel_op_retval_free(IDL_tree tree, OIDL_C_Info *ci)
   case IDLN_TYPE_OBJECT:
   case IDLN_INTERFACE:
   case IDLN_FORWARD_DCL:
-    fprintf(ci->fh, "CORBA_Object_release(_ORBIT_retval, ev);\n");
+    fprintf(ci->fh, "CORBA_Object_release(" ORBIT_RETVAL_VAR_NAME ", ev);\n");
   default:
     return;
   }
 
-  fprintf(ci->fh, "CORBA_free(_ORBIT_retval);\n");
+  fprintf(ci->fh, "CORBA_free(" ORBIT_RETVAL_VAR_NAME ");\n");
 }
 
 static gboolean
@@ -392,8 +384,8 @@ cbe_skel_op_param_has_sequence(IDL_tree ts)
   }
 }
 
-static void
-cbe_skel_op_param_free(IDL_tree tree, OIDL_C_Info *ci)
+void
+cbe_op_param_free(IDL_tree tree, OIDL_C_Info *ci, gboolean is_skels)
 {
   IDL_tree ts;
 
@@ -403,31 +395,26 @@ cbe_skel_op_param_free(IDL_tree tree, OIDL_C_Info *ci)
 
   switch(IDL_PARAM_DCL(tree).attr) {
   case IDL_PARAM_IN:
-    switch(IDL_NODE_TYPE(ts)) {
-    case IDLN_TYPE_UNION:
-    case IDLN_TYPE_STRUCT:
-    case IDLN_TYPE_ARRAY:
-#if 0
-      /* I dont think this optimization makes sense -- it
-       * is a subset of the fixed_length check above! */
-      if( !orbit_cbe_type_contains_complex(ts) )
-	return;
-#endif
-    case IDLN_TYPE_ANY:
-    case IDLN_TYPE_SEQUENCE:
-      /* ANY and SEQUENCE always have allocated sub-memory that must
-       * be freed, regardless of the underlying types */
-      cbe_skel_param_subfree(tree, ci);
-      break;
-    case IDLN_TYPE_OBJECT:
-    case IDLN_INTERFACE:
-    case IDLN_FORWARD_DCL:
-      fprintf(ci->fh, "CORBA_Object_release(%s, ev);\n",
-	      IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
-      break;
-    default:
-      break;
-    }
+    if(is_skels)
+      switch(IDL_NODE_TYPE(ts)) {
+      case IDLN_TYPE_UNION:
+      case IDLN_TYPE_STRUCT:
+      case IDLN_TYPE_ARRAY:
+      case IDLN_TYPE_ANY:
+      case IDLN_TYPE_SEQUENCE:
+	/* ANY and SEQUENCE always have allocated sub-memory that must
+	 * be freed, regardless of the underlying types */
+	cbe_skel_param_subfree(tree, ci);
+	break;
+      case IDLN_TYPE_OBJECT:
+      case IDLN_INTERFACE:
+      case IDLN_FORWARD_DCL:
+	fprintf(ci->fh, "CORBA_Object_release(%s, ev);\n",
+		IDL_IDENT(IDL_PARAM_DCL(tree).simple_declarator).str);
+	break;
+      default:
+	break;
+      }
     break;
   case IDL_PARAM_OUT:
     switch(IDL_NODE_TYPE(ts)) {
@@ -471,13 +458,16 @@ cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci)
 
       param = IDL_LIST(curitem).data;
       if(IDL_PARAM_DCL(param).attr == IDL_PARAM_OUT)
-	cbe_skel_op_param_free(param, ci);
+	cbe_op_param_free(param, ci, TRUE);
     }
 
   if(IDL_OP_DCL(tree).op_type_spec)
-    cbe_skel_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci);
+    cbe_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci);
   fprintf(ci->fh, "}\n");
 
+  /* Concious decision made to not send back an exception to report the problem - if they are sending us total junk,
+     then it is probably not even a compliant ORB that needs to know. The real reason is that it would complicate the
+     code a lot, just to handle this corner case */
   if(IDL_OP_DCL(tree).context_expr)
     fprintf(ci->fh, "_context_demarshal_error: ORBit_Context_server_free(&_ctx);\n");
   for(curitem = IDL_list_nth(IDL_OP_DCL(tree).parameter_dcls, IDL_list_length(IDL_OP_DCL(tree).parameter_dcls) - 1);
@@ -489,9 +479,10 @@ cbe_skel_op_params_free(IDL_tree tree, OIDL_C_Info *ci)
       if(IDL_PARAM_DCL(param).attr != IDL_PARAM_OUT)
 	{
 	  fprintf(ci->fh, "%s_demarshal_error:\n", IDL_IDENT(IDL_PARAM_DCL(param).simple_declarator).str);
-	  cbe_skel_op_param_free(param, ci);
+	  cbe_op_param_free(param, ci, TRUE);
 	}
     }
+  fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
 }
 
 

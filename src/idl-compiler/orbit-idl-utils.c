@@ -463,6 +463,13 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     g_print("NEED_CURPTR_RECVBUF ");
   g_print("] ");
 
+  if(tree->pre)
+    g_print("pre-check %d+%s*%s ", tree->pre->len, tree->pre->mult_const,
+	    tree->pre->mult_expr?tree->pre->mult_expr->name:"(null)");
+  if(tree->post)
+    g_print("post-check %d+%s*%s ", tree->post->len, tree->post->mult_const,
+	    tree->post->mult_expr?tree->post->mult_expr->name:"(null)");
+
   g_print("*%d arch (%d,%d) iiop (%d,%d)\n", tree->nptrs,
 	  tree->arch_head_align, tree->arch_tail_align, tree->iiop_head_align, tree->iiop_tail_align);
 
@@ -526,7 +533,7 @@ oidl_marshal_node_dump(OIDL_Marshal_Node *tree, int indent_level)
     break;
   case MARSHAL_CONST:
     do_indent(indent_level + INDENT_INCREMENT_1);
-    g_print("amount: %d\n", tree->u.const_info.amount);
+    g_print("amount: %ld\n", tree->u.const_info.amount);
     break;
   default:
     g_warning("Don't know any details about %s nodes", nodenames[tree->type]);

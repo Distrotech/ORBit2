@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
   OIDL_C_Info *ci;
-  gchar *orb_name;
+  gchar *orb_name, *marshal_error_exit;
   gboolean curptr_in_local;
   guint8 last_tail_align;
   guint8 alloc_on_stack : 1; /* TRUE for demarshalling in skeletons, etc. */
@@ -59,5 +59,9 @@ void orbit_cbe_id_define_hack(FILE *fh, const char *def_prefix, const char *def_
 void orbit_cbe_id_cond_hack(FILE *fh, const char *def_prefix, const char *def_name, const char *def_value);
 
 void orbit_cbe_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
+
+void cbe_op_param_free(IDL_tree tree, OIDL_C_Info *ci, gboolean is_skels);
+void cbe_op_retval_free(IDL_tree tree, OIDL_C_Info *ci);
+gint orbit_cbe_eval_const_node(OIDL_Marshal_Node *node);
 
 #endif

@@ -118,6 +118,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   if(!IDL_OP_DCL(tree).f_oneway)
     fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
+  fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
 
   if(oi->out_stubs) /* Lame hack to ensure we get _ORBIT_retval available */
     orbit_cbe_alloc_tmpvars(oi->out_stubs, ci);
@@ -224,6 +225,30 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   } else
     fprintf(ci->fh, "return;\n");
 
+  if(!IDL_OP_DCL(tree).f_oneway) {
+    IDL_tree curitem;
+
+    for(curitem = IDL_list_nth(IDL_OP_DCL(tree).parameter_dcls, IDL_list_length(IDL_OP_DCL(tree).parameter_dcls) - 1);
+	curitem; curitem = IDL_LIST(curitem).prev)
+      {
+	IDL_tree param;
+
+	param = IDL_LIST(curitem).data;
+	if(IDL_PARAM_DCL(param).attr != IDL_PARAM_IN)
+	  {
+	    fprintf(ci->fh, "%s_demarshal_error:\n", IDL_IDENT(IDL_PARAM_DCL(param).simple_declarator).str);
+	    cbe_op_param_free(param, ci, FALSE);
+	  }
+      }    
+
+    if(IDL_OP_DCL(tree).op_type_spec)
+      {
+	fprintf(ci->fh, "%s_demarshal_error:\n", ORBIT_RETVAL_VAR_NAME);
+	cbe_op_retval_free(IDL_OP_DCL(tree).op_type_spec, ci);
+      }
+    fprintf(ci->fh, "_ORBIT_demarshal_error:\n");
+    fprintf(ci->fh, "_ORBIT_system_exception_minor = ex_CORBA_MARSHAL;\n");
+  }
   fprintf(ci->fh, "_ORBIT_system_exception:\n");
 #ifdef BACKWARDS_COMPAT_0_4
   fprintf(ci->fh, "CORBA_exception_set_system(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status);\n");
@@ -467,20 +492,22 @@ cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
 
   id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_EXCEPT_DCL(tree).ident), "_", 0);
 
-  fprintf(ci->fh, "void\n_ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev)\n", id);
+  fprintf(ci->fh, "gboolean\n_ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev)\n", id);
   fprintf(ci->fh, "{\n");
   if(IDL_EXCEPT_DCL(tree).members) {
     fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
-#if 0
+    fprintf(ci->fh, "register guchar *_ORBIT_buf_end;\n");
     orbit_cbe_alloc_tmpvars(ei->demarshal, ci);
-#endif
-
-    fprintf(ci->fh, "%s *_ORBIT_exdata = %s__alloc();\n", id, id);
+    fprintf(ci->fh, "%s *_ORBIT_exdata;\n", id);
     c_demarshalling_generate(ei->demarshal, ci, FALSE, FALSE);
   }
 
   fprintf(ci->fh, "CORBA_exception_set(ev, CORBA_USER_EXCEPTION, TC_%s_struct.repo_id, %s);\n",
 	  id, IDL_EXCEPT_DCL(tree).members?"_ORBIT_exdata":"NULL");
+
+  fprintf(ci->fh, "return FALSE;");
+
+  fprintf(ci->fh, "_ORBIT_demarshal_error:\nreturn TRUE;\n");
 
   fprintf(ci->fh, "}\n");
 }

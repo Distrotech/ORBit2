@@ -1,3 +1,4 @@
+#include "orbit-idl2.h"
 #include "orbit-idl-marshal.h"
 
 static const char *marshal_methods[] = {
@@ -63,12 +64,17 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
   OIDL_Type_Marshal_Info *tmi = NULL;
   gint add_size = 0;
   gint retval = 1;
+  IDL_tree realnode = node;
 
   if(!node)
     return 0;
 
   if(node->data)
     return 1;
+
+  realnode = orbit_cbe_get_typespec(node);
+  if(IDL_NODE_TYPE(node) == IDLN_TYPE_DCL)
+    node = realnode;
 
   switch(IDL_NODE_TYPE(node))
     {
@@ -77,10 +83,10 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
 	node = IDL_NODE_UP(node);
       return oidl_marshal_type_info(ctxt, IDL_NODE_UP(node), count_add, TRUE);
       break;
+
     case IDLN_TYPE_SEQUENCE:
     case IDLN_TYPE_UNION:
     case IDLN_TYPE_STRUCT:
-    case IDLN_EXCEPT_DCL:
     case IDLN_TYPE_ARRAY:
       add_it = TRUE;
       break;
@@ -99,14 +105,14 @@ oidl_marshal_type_info(OIDL_Marshal_Context *ctxt, IDL_tree node, gint count_add
 	  dmtype &= ~MARSHAL_INLINE;
 	}
 
-      tmi = g_hash_table_lookup(ctxt->type_marshal_info, node);
+      tmi = g_hash_table_lookup(ctxt->type_marshal_info, realnode);
       if(!tmi)
 	{
 	  tmi = g_new0(OIDL_Type_Marshal_Info, 1);
 	  tmi->mtype = mtype;
 	  tmi->dmtype = dmtype;
 	  tmi->tree = node;
-	  g_hash_table_insert(ctxt->type_marshal_info, node, tmi);
+	  g_hash_table_insert(ctxt->type_marshal_info, realnode, tmi);
 	}
 
       tmi->use_count += count_add;
@@ -233,10 +239,34 @@ oidl_marshal_context_populate(OIDL_Marshal_Context *ctxt, IDL_tree node)
     }
 }
 
+static IDL_tree
+idl_tree_normalize(IDL_tree t1)
+{
+  switch(IDL_NODE_TYPE(t1))
+    {
+    case IDLN_IDENT:
+      if(IDL_NODE_TYPE(IDL_NODE_UP(t1)) == IDLN_LIST)
+	t1 = IDL_NODE_UP(t1);
+      return idl_tree_normalize(IDL_NODE_UP(t1));
+      break;
+
+    case IDLN_TYPE_DCL:
+      return idl_tree_normalize(IDL_TYPE_DCL(t1).type_spec);
+      break;
+
+    default:
+      break;
+    }
+
+  return t1;
+}
+
 static guint
 idl_tree_hash(gconstpointer k1)
 {
   IDL_tree t1 = (gpointer)k1;
+
+  t1 = idl_tree_normalize(t1);
 
   return IDL_NODE_TYPE(t1);
 }
@@ -249,31 +279,41 @@ idl_tree_equal(gconstpointer k1, gconstpointer k2)
   if(k1 == k2)
     return TRUE;
 
+  t1 = idl_tree_normalize(t1);
+  t2 = idl_tree_normalize(t2);
+
   if(IDL_NODE_TYPE(t1) != IDL_NODE_TYPE(t2))
     return FALSE;
 
   switch(IDL_NODE_TYPE(t1))
     {
-    case IDLN_IDENT:
-      return idl_tree_equal(IDL_NODE_UP(t1), IDL_NODE_UP(t2));
-      break;
-
-    case IDLN_TYPE_STRUCT:
-    case IDLN_TYPE_ARRAY:
-    case IDLN_TYPE_DCL:
-    case IDLN_TYPE_UNION:
-    case IDLN_EXCEPT_DCL:
-      return (k1 == k2);
-      break;
-
     case IDLN_TYPE_SEQUENCE:
       return idl_tree_equal(IDL_TYPE_SEQUENCE(t1).simple_type_spec, IDL_TYPE_SEQUENCE(t2).simple_type_spec);
       break;
 
-    default:
+    case IDLN_TYPE_OCTET:
+    case IDLN_TYPE_STRING:
+    case IDLN_TYPE_BOOLEAN:
+    case IDLN_TYPE_OBJECT:
+    case IDLN_INTERFACE:
+    case IDLN_TYPE_TYPECODE:
+    case IDLN_TYPE_CHAR:
+    case IDLN_TYPE_WIDE_CHAR:
+    case IDLN_TYPE_WIDE_STRING:
       return TRUE;
       break;
+
+    case IDLN_TYPE_FLOAT:
+      break;
+
+    case IDLN_TYPE_INTEGER:
+      break;
+
+    default:
+      break;
     }
+
+  return (k1 == k2);
 }
 
 OIDL_Marshal_Context *

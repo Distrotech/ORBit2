@@ -54,6 +54,9 @@ oidl_marshal_node_new(OIDL_Marshal_Node *parent, OIDL_Marshal_Node_Type type, co
     case MARSHAL_COMPLEX:
       retval->flags |= MN_NEED_CURPTR_RECVBUF;
       break;
+    case MARSHAL_CONST:
+      retval->flags |= MN_NOMARSHAL;
+      break;
     default:
       break;
     }
@@ -580,6 +583,8 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
       g_error("Weird param direction for in pass.");
       break;
     }
+    sub->marshal_error_exit = g_strdup_printf("goto %s_demarshal_error",
+					      IDL_IDENT(IDL_PARAM_DCL(curparam).simple_declarator).str);
 
     if(isSlice)
       sub->flags |= MN_ISSLICE;
@@ -597,6 +602,7 @@ orbit_idl_marshal_populate_in(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Con
     mnode = oidl_marshal_node_new(retval, MARSHAL_COMPLEX, NULL, &pi);
     mnode->u.complex_info.type = CX_CORBA_CONTEXT;
     mnode->u.complex_info.context_item_count = i;
+    mnode->marshal_error_exit = g_strdup("goto _context_demarshal_error");
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, mnode);
   }
@@ -638,6 +644,7 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
     g_assert(! rvnode->name);
 
     rvnode->name = ORBIT_RETVAL_VAR_NAME;
+    rvnode->marshal_error_exit = g_strdup_printf("goto %s_demarshal_error", ORBIT_RETVAL_VAR_NAME);
   }
 
  out1:
@@ -674,6 +681,8 @@ orbit_idl_marshal_populate_out(IDL_tree tree, gboolean is_skels, OIDL_Marshal_Co
       sub->flags |= MN_ISSLICE;
 
     retval->u.set_info.subnodes = g_slist_append(retval->u.set_info.subnodes, sub);
+    sub->marshal_error_exit = g_strdup_printf("goto %s_demarshal_error",
+					      IDL_IDENT(IDL_PARAM_DCL(curparam).simple_declarator).str);
   }
 
   return retval;

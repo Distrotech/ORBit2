@@ -111,8 +111,8 @@ ch_output_types(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       char *id;
       id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_EXCEPT_DCL(tree).ident), "_", 0);
       fprintf(ci->fh, "#define ex_%s \"%s\"\n", id, IDL_IDENT(IDL_EXCEPT_DCL(tree).ident).repo_id);
-      fprintf(ci->fh, "void _ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev);\n", id);
-      fprintf(ci->fh, "void _ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev);\n", id);
+      fprintf(ci->fh, "gboolean _ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev);\n", id);
+      fprintf(ci->fh, "gboolean _ORBIT_%s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, CORBA_Environment *ev);\n", id);
       g_free(id);
       ch_output_type_struct(tree, rinfo, ci);
     }
@@ -928,7 +928,7 @@ print_marshal_funcs(gpointer key, gpointer value, gpointer data)
 
   if(tmi->dmtype & MARSHAL_FUNC)
     {
-      fprintf(ci->fh, "void %s_demarshal(GIOPSendBuffer *_ORBIT_recv_buffer, ", ctmp);
+      fprintf(ci->fh, "gboolean %s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
       orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
       fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev);\n");
     }
