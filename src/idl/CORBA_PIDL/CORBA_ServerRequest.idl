@@ -1,5 +1,5 @@
 // File: ServerRequest.idl
-// CORBA 2.3, Chapter 8
+// CORBA 3.0, Chapter 8
 
     interface ServerRequest { // PIDL
         readonly attribute  Identifier operation;

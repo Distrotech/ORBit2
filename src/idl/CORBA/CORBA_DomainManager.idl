@@ -1,5 +1,5 @@
 // File: CORBA_DomainManager.idl
-// CORBA 2.3, Chapter 4
+// CORBA 3.0, Chapter 4
 
     interface DomainManager {
         Policy get_domain_policy (
@@ -9,7 +9,7 @@
 
     const PolicyType SecConstruction = 11;
 
-    interface ConstructionPolicy: Policy        {
+    interface ConstructionPolicy: Policy {
         void make_domain_manager(
             in CORBA::InterfaceDef  object_type,
             in boolean              constr_policy
