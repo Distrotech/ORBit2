@@ -167,28 +167,24 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
     case CORBA_tk_ushort:
     case CORBA_tk_short:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_SHORT);
-	giop_send_buffer_align(buf, 2);
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_short));
+	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_short));
 	*val = ((guchar *)*val) + sizeof(CORBA_short);
 	break;
     case CORBA_tk_enum:
     case CORBA_tk_long:
     case CORBA_tk_ulong:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_LONG);
-	giop_send_buffer_align(buf, 4);
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_long));
+	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_long));
 	*val = ((guchar *)*val) + sizeof(CORBA_long);
 	break;
     case CORBA_tk_float:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_FLOAT);
-	giop_send_buffer_align(buf, sizeof(CORBA_float));
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_float));
+	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_float));
 	*val = ((guchar *)*val) + sizeof(CORBA_float);
 	break;
     case CORBA_tk_double:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_DOUBLE);
-	giop_send_buffer_align(buf, sizeof(CORBA_double));
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_double));
+	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_double));
 	*val = ((guchar *)*val) + sizeof(CORBA_double);
 	break;
     case CORBA_tk_boolean:
@@ -318,15 +314,13 @@ ORBit_marshal_value(GIOPSendBuffer *buf,
     case CORBA_tk_longlong:
     case CORBA_tk_ulonglong:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_LONG_LONG);
-	giop_send_buffer_align(buf, sizeof(CORBA_unsigned_long));
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_long_long));
-	return /* *val + sizeof(CORBA_long_long)*/;
+	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_long_long));
+	*val = ((guchar *)*val) + sizeof (CORBA_long_long);
 	break;
     case CORBA_tk_longdouble:
 	*val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_LONG_DOUBLE);
-	giop_send_buffer_align(buf, sizeof(CORBA_long_double));
-	giop_send_buffer_append(buf, *val, sizeof(CORBA_long_double));
-	return /* *val + sizeof(CORBA_long_double)*/;
+	giop_send_buffer_append_aligned(buf, *val, sizeof(CORBA_long_double));
+	*val = ((guchar *)*val) + sizeof (CORBA_long_double);
 	break;
     case CORBA_tk_fixed:
 	/* XXX todo */

@@ -49,7 +49,7 @@ void testConst()
   d_print("Testing constants...\n");
   g_assert(test_CONST_CHAR=='t');
   g_assert(test_CONST_LONG==0x12345678);
-  g_assert(test_CONST_LONGLONG==0x12345678);
+  g_assert(test_CONST_LONG_LONG==0x12345678);
   g_assert(strcmp(test_CONST_STRING,"ConstString")==0);
   /* I can never get constant floats to compare properly. */
   /* g_assert(test_CONST_FLOAT==1234.56); */
@@ -141,6 +141,26 @@ void testLong(test_TestFactory factory,
   g_assert(inoutArg == constants_LONG_INOUT_OUT);
   g_assert(outArg == constants_LONG_OUT);
   g_assert(retn == constants_LONG_RETN);
+  CORBA_Object_release(objref, ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+}
+
+void testLongLong(test_TestFactory factory, 
+		  CORBA_Environment *ev)
+{
+  test_BasicServer objref;
+  CORBA_long_long inArg,inoutArg,outArg,retn;
+  d_print("Testing long longs...\n");
+  objref = test_TestFactory_getBasicServer(factory,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  inArg = constants_LONG_LONG_IN;
+  inoutArg = constants_LONG_LONG_INOUT_IN;
+  retn = test_BasicServer_opLongLong(objref,inArg,&inoutArg,&outArg,ev);
+  g_assert(ev->_major == CORBA_NO_EXCEPTION);
+  g_assert(inArg == constants_LONG_LONG_IN);
+  g_assert(inoutArg == constants_LONG_LONG_INOUT_OUT);
+  g_assert(outArg == constants_LONG_LONG_OUT);
+  g_assert(retn == constants_LONG_LONG_RETN);
   CORBA_Object_release(objref, ev);
   g_assert(ev->_major == CORBA_NO_EXCEPTION);
 }
@@ -975,6 +995,7 @@ run_tests (test_TestFactory   factory,
 		testAttribute (factory, ev);
 		testString (factory, ev);
 		testLong (factory, ev);
+		testLongLong (factory, ev);
 		testEnum (factory, ev);
 #ifndef BIG_STUBS
 		testException (factory, ev);

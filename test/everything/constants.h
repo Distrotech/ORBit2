@@ -36,6 +36,12 @@ const CORBA_char * constants_STRING_RETN="Retn String";
 #define constants_LONG_OUT 0x78123456
 #define constants_LONG_RETN 0xAABBCCDD
 
+#define constants_LONG_LONG_IN constants_LONG_IN
+#define constants_LONG_LONG_INOUT_IN constants_LONG_INOUT_IN
+#define constants_LONG_LONG_INOUT_OUT constants_LONG_INOUT_OUT
+#define constants_LONG_LONG_OUT constants_LONG_OUT
+#define constants_LONG_LONG_RETN constants_LONG_RETN
+
 const CORBA_short constants_SHORT_IN=0x1234;
 const CORBA_short constants_SHORT_INOUT_IN=0x3456;
 const CORBA_short constants_SHORT_INOUT_OUT=0x5678;
