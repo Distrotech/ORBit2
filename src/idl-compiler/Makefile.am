@@ -23,6 +23,7 @@ orbit_idl_SOURCES=orbit-idl-main.c \
 		   orbit-idl-genmarshal.c \
 		   orbit-idl-utils.c \
 		   orbit-idl2.h \
+		   orbit-idl3-types.h \
         orbit-idl-c-backend.h \
         orbit-idl-c-backend.c \
         orbit-idl-c-stubs.c \
