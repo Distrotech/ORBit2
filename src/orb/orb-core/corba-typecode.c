@@ -278,7 +278,7 @@ CDR_get (GIOPRecvBuffer *buf,
 {
 	buf->cur = ALIGN_ADDRESS (buf->cur, len);
 
-	if ((buf->cur + len) > buf->end || len < 0)
+	if ((buf->cur + len) > buf->end)
 		return TRUE;
 
 	memcpy (ptr, buf->cur, len);
