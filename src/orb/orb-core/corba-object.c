@@ -21,7 +21,9 @@ g_CORBA_Object_hash (gconstpointer key)
 	CORBA_Object obj = (gpointer) key;
 
 	retval = obj->type_qid;
-	g_slist_foreach (obj->profile_list, IOP_profile_hash, &retval);
+
+	g_assert (obj->object_key != NULL);
+	retval ^= IOP_ObjectKey_hash (obj->object_key);
 
 	return retval;
 }
