@@ -24,7 +24,8 @@
 #include "everything.h"
 #include "constants.h"
 
-#define TIMING_RUN
+#undef TIMING_RUN
+#undef BIG_STUBS
 
 #ifdef TIMING_RUN
 #  define d_print(a)
@@ -39,8 +40,8 @@ void testConst()
   g_assert(test_CONST_LONG==0x12345678);
   g_assert(test_CONST_LONGLONG==0x12345678);
   g_assert(strcmp(test_CONST_STRING,"ConstString")==0);
-  // I can never get constant floats to compare properly. 
-  //g_assert(test_CONST_FLOAT==1234.56);
+  /* I can never get constant floats to compare properly. */
+  /* g_assert(test_CONST_FLOAT==1234.56); */
   g_assert(test_CONST_DOUBLE==1234.5678);
   g_assert(test_FAVORITE_COLOUR==test_red);
 
@@ -793,7 +794,9 @@ run_tests (test_TestFactory   factory,
     testString(factory,ev);
     testLong(factory,ev);
     testEnum(factory,ev);
+#ifndef BIG_STUBS
     testException(factory,ev);
+#endif
     testFixedLengthStruct(factory,ev);
     testVariableLengthStruct(factory,ev);
     testCompoundStruct(factory,ev);
@@ -801,17 +804,17 @@ run_tests (test_TestFactory   factory,
     testBoundedSequence(factory,ev);
     testFixedLengthUnion(factory,ev);
     testVariableLengthUnion(factory,ev);
+#ifndef BIG_STUBS
     testFixedLengthArray(factory,ev);
     testVariableLengthArray(factory,ev);
     testAnyLong(factory,ev);
     testAnyString(factory,ev);
     testAnyStruct(factory,ev);
-    if (in_proc)
-      testAnyException(factory,ev);
+    testAnyException(factory,ev);
     testSequenceOfAny(factory,ev);
-    if (in_proc) /* FIXME: */
-      testTypeCode(factory,ev);
+    testTypeCode(factory,ev);
     testContext(factory,ev);
+#endif
   }
 
 #ifdef TIMING_RUN

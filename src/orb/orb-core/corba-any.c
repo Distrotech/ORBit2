@@ -599,7 +599,7 @@ ORBit_demarshal_value(CORBA_TypeCode tc,
     *val = ALIGN_ADDRESS(*val, ALIGNOF_CORBA_POINTER);
     if(ORBit_decode_CORBA_TypeCode(*val, buf))
       return TRUE;
-    ORBit_RootObject_duplicate((CORBA_TypeCode *)*val);
+    ORBit_RootObject_duplicate(*(CORBA_TypeCode *)*val);
     *val = ((guchar *)*val) + sizeof(CORBA_TypeCode);
     break;
   case CORBA_tk_except:
@@ -750,6 +750,8 @@ CORBA_any__freekids(gpointer mem, gpointer dat)
 {
   CORBA_any *t;
   t = mem;
+  if(t->_type)
+    ORBit_RootObject_release ((ORBit_RootObject)t->_type);
   if(t->_release)
     CORBA_free(t->_value);
   return t + 1;

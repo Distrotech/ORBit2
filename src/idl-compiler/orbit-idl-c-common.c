@@ -86,7 +86,7 @@ cc_output_tc_walker(IDL_tree_func_data *tfd, gpointer user_data) {
 
 
 /************************************************/
-static void cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci);
+static void cc_alloc_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void cc_output_alloc_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
@@ -161,7 +161,7 @@ cc_output_alloc_struct(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   IDL_tree sub;
   char *tname;
 
-  cc_alloc_prep(tree, ci);
+  cc_alloc_prep(tree, rinfo, ci);
   cc_output_allocs(IDL_TYPE_STRUCT(tree).member_list, rinfo, ci);
 
   tname = orbit_cbe_get_typespec_str(tree);
@@ -223,7 +223,7 @@ cc_output_alloc_union(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   char *tname;
   gboolean hit_default = FALSE;
 
-  cc_alloc_prep(tree, ci);
+  cc_alloc_prep(tree, rinfo, ci);
   cc_output_allocs(IDL_TYPE_UNION(tree).switch_body, rinfo, ci);
 
   tname = orbit_cbe_get_typespec_str(tree);
@@ -369,7 +369,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
   IDL_tree sub, ts, tts;
   gboolean fixlen;
 
-  cc_alloc_prep(tree, ci);
+  cc_alloc_prep(tree, rinfo, ci);
   ts = IDL_TYPE_DCL(tree).type_spec;
   tts = orbit_cbe_get_typespec(ts);
 
@@ -406,11 +406,11 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
 
 static void
-cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
+cc_alloc_prep(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   switch(IDL_NODE_TYPE(tree)) {
   case IDLN_TYPE_SEQUENCE:
-    cc_alloc_prep_sequence(tree, NULL, ci);
+    cc_alloc_prep_sequence(tree, rinfo, ci);
     break;
   case IDLN_EXCEPT_DCL:
   case IDLN_TYPE_STRUCT:
@@ -418,12 +418,12 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
       IDL_tree sub;
 
       for(sub = IDL_TYPE_STRUCT(tree).member_list; sub; sub = IDL_LIST(sub).next) {
-	cc_alloc_prep(IDL_MEMBER(IDL_LIST(sub).data).type_spec, ci);
+	cc_alloc_prep(IDL_MEMBER(IDL_LIST(sub).data).type_spec, rinfo, ci);
       }
     }
     break;
   case IDLN_TYPE_DCL:
-    cc_alloc_prep(IDL_TYPE_DCL(tree).type_spec, ci);
+    cc_alloc_prep(IDL_TYPE_DCL(tree).type_spec, rinfo, ci);
     break;
   case IDLN_TYPE_UNION:
     {
@@ -434,16 +434,16 @@ cc_alloc_prep(IDL_tree tree, OIDL_C_Info *ci)
 
 	member = IDL_CASE_STMT(IDL_LIST(sub).data).element_spec;
 
-	cc_alloc_prep(IDL_MEMBER(member).type_spec, ci);
+	cc_alloc_prep(IDL_MEMBER(member).type_spec, rinfo, ci);
       }
     }
     break;
   case IDLN_TYPE_ARRAY:
-    cc_alloc_prep(IDL_NODE_UP(tree), ci);
+    cc_alloc_prep(IDL_NODE_UP(tree), rinfo, ci);
     break;
   case IDLN_IDENT:
   case IDLN_LIST:
-    cc_alloc_prep(IDL_NODE_UP(tree), ci);
+    cc_alloc_prep(IDL_NODE_UP(tree), rinfo, ci);
     break;
   default:
     break;

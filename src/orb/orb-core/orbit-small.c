@@ -32,10 +32,24 @@
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
 {
-	gpointer mem;
+	size_t			element_size;
+	ORBit_MemPrefix_TypeCode	*pre;
+	gpointer 			mem;
 
-	mem = ORBit_alloc_tcval (tc, 1);
+	if ((element_size = ORBit_gather_alloc_info(tc)) == 0)
+		return NULL;
+	
+	mem = ORBit_alloc_core (element_size,
+				ORBIT_MEMHOW_TYPECODE | 1,
+				sizeof(*pre), (gpointer)&pre,
+				/*align*/0);
 
+	memset (mem, 0, element_size);
+
+	ORBIT_MEM_MAGICSET(pre->magic);
+
+	pre->tc = ORBit_RootObject_duplicate(tc);
+	
 	return mem;
 }
 
@@ -74,12 +88,13 @@ dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
 }
 	
 static void
-dump (FILE *out, guint8 const *ptr, guint32 len)
+dump (FILE *out, guint8 const *ptr, guint32 len, guint32 offset)
 {
 	guint32 lp,lp2;
 	guint32 off;
 
 	for (lp = 0;lp<(len+15)/16;lp++) {
+		fprintf (out, "0x%4x ", offset + lp * 16);
 		for (lp2=0;lp2<16;lp2++) {
 			off = lp2 + (lp<<4);
 			off<len?fprintf (out, "%2x ", ptr[off]):fprintf (out, "XX ");
@@ -101,13 +116,15 @@ giop_dump_send (GIOPSendBuffer *send_buffer)
 {
 	gulong nvecs;
 	struct iovec *curvec;
+	guint32 offset = 0;
 
 	nvecs = send_buffer->num_used;
 	curvec = (struct iovec *) send_buffer->iovecs;
 
 	fprintf (stderr, "Outgoing IIOP data:\n");
 	while (nvecs-- > 0) {
-		dump (stderr, curvec->iov_base, curvec->iov_len);
+		dump (stderr, curvec->iov_base, curvec->iov_len, offset);
+		offset += curvec->iov_len;
 		curvec++;
 	}
 }
@@ -121,7 +138,7 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 
 	dump (stderr, recv_buffer->message_body,
 	      recv_buffer->msg.header.message_size +
-	      sizeof (GIOPMsgHeader));
+	      sizeof (GIOPMsgHeader), 0);
 }
 #endif /* DEBUG */
 

@@ -1,5 +1,31 @@
 2001-05-25  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-small.c (dump): print in-buffer
+	offsets as well as the data.
+
+	* src/orb/orb-core/corba-typecode.c (tc_dec_tk_except):
+	decode sub_parts sub-types not length.
+	(tc_enc_tk_except): ditto for encode.
+	(tc_enc): use the buffer length in the message header
+	instead of the current_idx, since we now marshal straight
+	into a single buffer without the encaps cruft.
+	(tc_dec): fix the recursive arithmetic, make it remember
+	to duplicate the recursive typecode references.
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_value):
+	duplicate the correct pointer.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_alloc): re-write
+	to memset 0 the returned memory.
+
+	* src/orb/orb-core/corba-any.c (CORBA_any__freekids): release
+	the typecode pointer as well.
+
+	* src/idl-compiler/orbit-idl-c-common.c (cc_alloc_prep): pass
+	rinfo around.
+
+2001-05-25  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/orb-core/corba-context.c (CORBA_Context_set_one_value):
 	remove the hash table value, so we don't screw up the key allocation.
 
