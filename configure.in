@@ -116,10 +116,11 @@ AC_SUBST(LIBIDL_REQUIRED)
 dnl Check for pkg-config version; want >= 0.14.0 because of -pthread bug
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 if test "$PKG_CONFIG" = "no" ; then
-     echo "*** The pkg-config script could not be found. Make sure it is"
-     echo "*** in your path, or set the PKG_CONFIG environment variable"
-     echo "*** to the full path to pkg-config."
-     echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+  echo "*** The pkg-config script could not be found. Make sure it is"
+  echo "*** in your path, or set the PKG_CONFIG environment variable"
+  echo "*** to the full path to pkg-config."
+  echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+  AC_MSG_ERROR(You need to install pkg-config or set the PKG_CONFIG environment variable to build ORBit2)
 fi
 PKG_CONFIG_MIN_VERSION=0.14.0
 if ! $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
@@ -154,7 +155,14 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
-AC_CHECK_HEADERS(netinet/in.h sys/un.h linux/irda.h openssl/ssl.h)
+AC_CHECK_HEADERS(netinet/in.h sys/un.h openssl/ssl.h)
+AC_CHECK_HEADERS([linux/socket.h])
+AC_CHECK_HEADERS([linux/irda.h], [], [],
+[#if HAVE_LINUX_SOCKET_H
+#include <linux/socket.h>
+#endif
+])
+
 
 if test $ac_cv_header_openssl_ssl_h = yes; then
 	HAVE_ORBIT_SSL_SUPPORT=1
