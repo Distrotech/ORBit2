@@ -1082,7 +1082,7 @@ linc_protocol_destroy_addr (const LINCProtocolInfo *proto,
 
 	if (fd >= 0) {
 #ifdef AF_UNIX
-		if (proto->destroy) {
+		if (proto->family == AF_UNIX && proto->destroy) {
 			/* We are AF_UNIX - we need the path to unlink */
 			struct sockaddr_un *addr_un =
 				(struct sockaddr_un *) saddr;
