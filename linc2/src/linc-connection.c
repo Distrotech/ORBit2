@@ -760,12 +760,9 @@ linc_connection_writev (LINCConnection       *cnx,
 			CNX_UNLOCK (cnx);
 			return LINC_IO_QUEUED_DATA;
 		}
-	} else {
-		if (cnx->options & LINC_CONNECTION_NONBLOCKING) {
-			while (cnx->status == LINC_CONNECTING)
-				linc_main_iteration (TRUE);
-		}
-	}
+	} else if (cnx->options & LINC_CONNECTION_NONBLOCKING)
+		linc_connection_wait_connected (cnx);
+
 	if (cnx->status == LINC_DISCONNECTED) {
 		CNX_UNLOCK (cnx);
 		return LINC_IO_FATAL_ERROR;
@@ -1021,8 +1018,10 @@ linc_connection_io_handler (GIOChannel  *gioc,
 
 				linc_connection_state_changed (cnx, LINC_CONNECTED);
 
-				if (cnx->priv->write_queue)
-					g_error ("Foo write queue");
+				if (cnx->priv->write_queue) {
+					d_printf ("Connected, with queued writes, start flush ...\n");
+					linc_connection_flush_write_queue (cnx);
+				}
 			} else {
 				d_printf ("Error connecting %d %d %d on fd %d\n",
 					   rv, n, errno, cnx->priv->fd);
@@ -1056,6 +1055,8 @@ linc_connection_get_status (LINCConnection *cnx)
 	status = cnx->status;
 	CNX_UNLOCK (cnx);
 
+	d_printf ("Get status on %p = %d", cnx, status);
+
 	return status;
 }
 
@@ -1082,4 +1083,16 @@ linc_connection_disconnect (LINCConnection *cnx)
 	cmd->cnx = linc_object_ref (cnx);
 
 	linc_exec_command ((LINCCommand *) cmd);
+}
+
+LINCConnectionStatus
+linc_connection_wait_connected (LINCConnection *cnx)
+{
+	g_return_val_if_fail (!linc_get_threaded (),
+			      LINC_CONNECTED);
+	
+	while (cnx && cnx->status == LINC_CONNECTING) 
+		linc_main_iteration (TRUE);
+
+	return cnx ? cnx->status : LINC_DISCONNECTED;
 }
