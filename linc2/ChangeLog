@@ -1,3 +1,8 @@
+2001-08-21 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
+
+	* src/linc.c (main): ignore SIGPIPE, handle this
+	here instead of in libbonobo
+
 2001-08-20  Theo van Klaveren  <t.vanklaveren@student.utwente.nl>
 
 	* include/linc/linc-protocol.h: Include <sys/types.h> to

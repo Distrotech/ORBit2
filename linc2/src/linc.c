@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "linc-private.h"
 
 GMainLoop    *linc_loop = NULL;
@@ -16,9 +17,51 @@ linc_init (gboolean init_threads)
 
 	g_type_init ();
 
+	/*
+	 * Linc's raison d'etre is for ORBit2 and Bonobo
+	 *
+	 * In Bonobo, components and containers must not crash if the
+	 * remote end crashes.  If a remote server crashes and then we
+	 * try to make a CORBA call on it, we may get a SIGPIPE.  So,
+	 * for lack of a better solution, we ignore SIGPIPE here.  This
+	 * is open for reconsideration in the future.
+	 *
+	 * When SIGPIPE is ignored, write() calls which would
+	 * ordinarily trigger a signal will instead return -1 and set
+	 * errno to EPIPE.  So linc will be able to catch these
+	 * errors instead of letting them kill the component.
+	 *
+	 * Possibilities are the MSG_PEEK trick, where you test if the
+	 * connection is dead right before doing the writev().  That
+	 * approach has two problems:
+	 *
+	 *   1. There is the possibility of a race condition, where
+	 *      the remote end calls right after the test, and right
+	 *      before the writev().
+	 * 
+	 *   2. An extra system call per write might be regarded by
+	 *      some as a performance hit.
+	 *
+	 * Another possibility is to surround the call to writev() in
+	 * linc_connection_writev (linc-connection.c) with something like
+	 * this:
+	 *
+	 *		linc_ignore_sigpipe = 1;
+	 *
+	 *		result = writev ( ... );
+	 *
+	 *		linc_ignore_sigpipe = 0;
+	 *
+	 * The SIGPIPE signal handler will check the global
+	 * linc_ignore_sigpipe variable and ignore the signal if it
+	 * is 1.  If it is 0, it can proxy to the user's original
+	 * signal handler.  This is a real possibility.
+	 */
+	signal (SIGPIPE, SIG_IGN);
+	
 	linc_context = g_main_context_new ();
 	linc_loop    = g_main_loop_new (linc_context, TRUE);
-
+	
 #ifdef LINC_SSL_SUPPORT
 	SSLeay_add_ssl_algorithms ();
 	linc_ssl_method = SSLv23_method ();
