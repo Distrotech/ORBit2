@@ -241,6 +241,76 @@ DISABLE_DEPRECATED_CFLAGS=" \
 	-DG_DISABLE_DEPRECATED"
 AC_SUBST(DISABLE_DEPRECATED_CFLAGS)
 
+
+dnl
+dnl        --------- start linc bits ---------
+dnl
+
+dnl Checks for libraries.
+PKG_CHECK_MODULES(LINC, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gthread-2.0 >= $GLIB_REQUIRED)
+AC_SUBST(LINC_LIBS)
+AC_SUBST(LINC_CFLAGS)
+
+LINC_SSL_SUPPORT=0
+AC_SUBST(LINC_SSL_SUPPORT)
+AC_SUBST(SSL_LIBS)
+AC_SUBST(SSL_CFLAGS)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
+AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
+AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h linux/irda.h)
+AC_CHECK_HEADERS(arpa/nameser.h resolv.h)
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(poll basename)
+AC_CHECK_FUNC(res_init,,[AC_CHECK_LIB(resolv,res_init)])
+AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
+AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
+AC_CHECK_FUNC(getaddrinfo,,[AC_CHECK_LIB(nsl,getaddrinfo)])
+if test x"$ac_cv_func_getaddrinfo" = "xyes" ; then
+	AC_DEFINE(HAVE_GETADDRINFO)
+fi
+AC_CHECK_FUNC(getnameinfo,,[AC_CHECK_LIB(nsl,getnameinfo)])
+if test x"$ac_cv_func_getnameinfo" = "xyes" ; then
+	AC_DEFINE(HAVE_GETNAMEINFO)
+fi
+have_inet_pton=no
+AC_CHECK_FUNC(inet_pton,,)
+if test x"$ac_cv_func_inet_pton" = "xyes" ; then
+	have_inet_pton=yes
+        AC_DEFINE(HAVE_INET_PTON)
+fi
+
+# AC_CHECK_TYPE doesn't work here.
+AC_MSG_CHECKING([for socklen_t])
+AC_TRY_COMPILE(
+  [#include <sys/types.h>
+#include <sys/socket.h>],
+  [socklen_t len;],
+  [AC_MSG_RESULT(yes)],
+  [AC_DEFINE(socklen_t, size_t)
+   AC_MSG_RESULT(no)])
+
+# Blatantly stolen from configure.in in the sample code from 
+# "UNIX Network Programming, Volume 1" by W. Richard Stevens 
+AC_CACHE_CHECK(if sockaddr has sa_len member,
+ac_cv_sockaddr_has_sa_len,
+        AC_TRY_COMPILE([
+#               include <sys/types.h>
+#               include <sys/socket.h>],
+                [unsigned int i = sizeof(((struct sockaddr *)0)->sa_len)],
+        ac_cv_sockaddr_has_sa_len=yes,
+        ac_cv_sockaddr_has_sa_len=no))
+if test x"$ac_cv_sockaddr_has_sa_len" = "xyes" ; then
+        AC_DEFINE(HAVE_SOCKADDR_SA_LEN)
+fi
+
+dnl
+dnl        --------- end linc bits ---------
+dnl
+
 AC_OUTPUT([
 Makefile
 orbit2-config
@@ -281,6 +351,12 @@ test/poa/Makefile
 docs/Makefile
 docs/devel/Makefile
 docs/internals/Makefile
+
+linc2/Makefile
+linc2/src/Makefile
+linc2/test/Makefile
+linc2/include/Makefile
+linc2/include/linc/Makefile
 ])
 
 echo "ORBit configuration:

@@ -1,3 +1,8 @@
+2003-05-30  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: merge a chunk of checks in
+	for linc2
+
 2003-05-30  <waschk@informatik.uni-rostock.de>
 
 	* test/everything/Makefile.am
