@@ -18,6 +18,8 @@
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 
+#include "linc-private.h"
+
 #undef DEBUG
 
 #ifdef HAVE_NETINET_IN_H
@@ -520,8 +522,7 @@ linc_protocol_get_sockinfo_ipv6 (const LINCProtocolInfo  *proto,
 				 gchar                  **portnum)
 {
 	struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)saddr;
-	struct hostent      *host;
-
+	struct hostent      *host = NULL;
 
 	g_assert (proto && saddr && saddr->sa_family == AF_INET6);
 
