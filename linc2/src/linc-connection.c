@@ -201,9 +201,13 @@ static void
 linc_connection_class_state_changed (LINCConnection      *cnx,
 				     LINCConnectionStatus status)
 {
+	gboolean changed;
+
 	d_printf ("State changing from '%s' to '%s' on fd %d\n",
 		 STATE_NAME (cnx->status), STATE_NAME (status),
 		 cnx->priv->fd);
+
+	changed = cnx->status != status;
 
 	cnx->status = status;
 
@@ -235,9 +239,9 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		linc_source_remove (cnx);
 		linc_close_fd (cnx);
 		/* don't free pending queue - we could get re-connected */
-
-		g_signal_emit (G_OBJECT (cnx),
-			       linc_connection_signals [BROKEN], 0);
+		if (changed)
+			g_signal_emit (G_OBJECT (cnx),
+				       linc_connection_signals [BROKEN], 0);
 		break;
 	}
 }
