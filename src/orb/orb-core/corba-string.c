@@ -32,3 +32,9 @@ CORBA_string__freekids(gpointer mem, gpointer data)
   CORBA_free(*pstr);
   return pstr + 1; 
 }
+
+CORBA_wchar *
+CORBA_wstring_alloc(CORBA_unsigned_long len)
+{
+  return ORBit_alloc_simple((len+1)*2);
+}

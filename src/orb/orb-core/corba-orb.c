@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <orbit/orbit.h>
+#include <string.h>
 
 static void
 CORBA_ORB_release_fn(ORBit_RootObject robj)

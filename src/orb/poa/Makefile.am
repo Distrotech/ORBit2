@@ -14,8 +14,9 @@ $(POA_IDLOUT) runidl_poa: poa-defs.idl $(IDL)
 	--define=Object=OObject --define=TypeCode=TTypeCode \
 	-I$(top_srcdir)/src/idl/CORBA \
 	-I$(top_srcdir)/src/idl/misc \
+	-I$(top_srcdir)/src/orb/orb-core \
 	--noskels --nodefskels --nostubs \
-                --showcpperrors $(top_srcdir)/src/orb/orb-core/poa-defs.idl
+                --showcpperrors $(top_srcdir)/src/orb/poa/poa-defs.idl
 	for I in $(POA_IDLOUT); do \
 	sed -e 's,OObject,Object,g' -e 's,TTypeCode,TypeCode,g' $$I > $$I.out; \
 	mv $$I.out $$I; done

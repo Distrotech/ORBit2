@@ -282,10 +282,11 @@ ch_output_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
     case IDLN_IDENT:
       {
 	fprintf(ci->fh, " %s;\n", ctmp);
-	fprintf(ci->fh, " #define %s_marshal(x,y,z) ", ctmp);
+	fprintf(ci->fh, "#define %s_marshal(x,y,z) ", ctmp);
 	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
 	fprintf(ci->fh, "_marshal((x),(y),(z))\n");
-	fprintf(ci->fh, " #define %s_demarshal(x,y,z,i) ", ctmp);
+
+	fprintf(ci->fh, "#define %s_demarshal(x,y,z,i) ", ctmp);
 	orbit_cbe_write_typespec(ci->fh, IDL_TYPE_DCL(tree).type_spec);
 	fprintf(ci->fh, "_demarshal((x),(y),(z),(i))\n");
       }
@@ -544,7 +545,7 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
   if(do_alloc) {
     gboolean extern_alloc = FALSE;
     gboolean extern_freekids = FALSE;
-    char *ctmp2;
+    char *ctmp2, *ctmp3;
 
     tts = orbit_cbe_get_typespec(tree);
 
@@ -567,15 +568,24 @@ ch_type_alloc_and_tc(IDL_tree tree, OIDL_C_Info *ci, gboolean do_alloc)
       fprintf(ci->fh, "#define %s__freekids CORBA_any__freekids\n", ctmp);
       break;
     case IDLN_TYPE_SEQUENCE:
-      ctmp2 = orbit_cbe_get_typespec_str(tts);
-      //Use #define unless the sequence is at its most basic unaliased type.
-      if (strcmp(ctmp, ctmp2) != 0) {
-	fprintf(ci->fh, "#define %s__alloc (%s *) %s__alloc\n", ctmp, ctmp, ctmp2);
-      } else {
+      ctmp2 = orbit_cbe_get_typespec_str(orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tts).simple_type_spec));
+      ctmp3 = orbit_cbe_get_typespec_str(IDL_TYPE_SEQUENCE(tts).simple_type_spec);
+      if(strcmp(ctmp2, ctmp3))
+	{
+	  if(IDL_NODE_TYPE(tree) != IDLN_IDENT)
+	    {
+	      fprintf(ci->fh, "#define %s__alloc() ((%s *)CORBA_sequence_%s__alloc())\n",
+		      ctmp, ctmp, ctmp2);
+	      fprintf(ci->fh, "#define %s_marshal(x,y,z) CORBA_sequence_%s_marshal((x),(y),(z))\n", ctmp, ctmp2);
+
+	      fprintf(ci->fh, "#define %s_demarshal(x,y,z,i) CORBA_sequence_%s_demarshal((x),(y),(z),(i))\n", ctmp, ctmp2);
+	    }
+	}
+      else
 	extern_alloc = TRUE;
-      }
-      fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
       g_free(ctmp2);
+      g_free(ctmp3);
+      fprintf(ci->fh, "#define %s__freekids CORBA_sequence__freekids\n", ctmp);
       break;
     case IDLN_EXCEPT_DCL:
     case IDLN_TYPE_STRUCT:
@@ -924,11 +934,24 @@ static void
 print_marshal_funcs(gpointer key, gpointer value, gpointer data)
 {
   OIDL_C_Info *ci = data;
-  IDL_tree tree = key;
+  IDL_tree tree = key, tts;
   OIDL_Type_Marshal_Info *tmi = value;
   char *ctmp;
 
-  ctmp = orbit_cbe_get_typespec_str(tree);
+  tts = orbit_cbe_get_typespec(tree);
+
+  if(IDL_NODE_TYPE(tts) == IDLN_TYPE_SEQUENCE)
+    {
+      char *ctmp2;
+      ctmp2 = orbit_cbe_get_typespec_str(orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tts).simple_type_spec));
+      ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp2);
+      g_free(ctmp2);
+    }
+  else
+    {
+      tts = tree;
+      ctmp = orbit_cbe_get_typespec_str(tree);
+    }
 
   if ( ci->do_impl_hack ) {
       fprintf(ci->fh, "#if !defined(MARSHAL_IMPL_%s_0)\n", ctmp);
@@ -937,14 +960,14 @@ print_marshal_funcs(gpointer key, gpointer value, gpointer data)
   if(tmi->avail_mtype & MARSHAL_FUNC)
     {
       fprintf(ci->fh, "void %s_marshal(GIOPSendBuffer *_ORBIT_send_buffer, ", ctmp);
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_IN);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tts, DATA_IN);
       fprintf(ci->fh, " _ORBIT_val, CORBA_Environment *ev);\n");
     }
 
   if(tmi->avail_dmtype & MARSHAL_FUNC)
     {
       fprintf(ci->fh, "gboolean %s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, ", ctmp);
-      orbit_cbe_write_param_typespec_raw(ci->fh, tree, DATA_INOUT);
+      orbit_cbe_write_param_typespec_raw(ci->fh, tts, DATA_INOUT);
       fprintf(ci->fh, " _ORBIT_val, CORBA_boolean do_dup, CORBA_Environment *ev);\n");
     }
   if ( ci->do_impl_hack )

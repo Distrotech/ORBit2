@@ -439,7 +439,8 @@ cc_alloc_prep_sequence(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   fprintf(ci->fh, "#if ");
   orbit_cbe_id_cond_hack(ci->fh, "ORBIT_IMPL", ctmp, ci->c_base_name);
-  fprintf(ci->fh, " && !defined(ORBIT_DEF_%s)\n", ctmp);
+  fprintf(ci->fh, " && !defined(ORBIT_DEF_%s)", ctmp);
+  fprintf(ci->fh, " && !defined(%s__alloc)\n", ctmp);
   fprintf(ci->fh, "#define ORBIT_DEF_%s 1\n\n", ctmp);
   fprintf(ci->fh, "%s *%s__alloc(void)\n", ctmp, ctmp);
   fprintf(ci->fh, "{\n");
@@ -491,7 +492,15 @@ build_marshal_funcs(gpointer key, gpointer value, gpointer data)
 
   pi.ctxt = ci->ctxt;
 
-  ctmp = orbit_cbe_get_typespec_str(tree);
+  if(IDL_NODE_TYPE(tree) == IDLN_TYPE_SEQUENCE)
+    {
+      char *ctmp2;
+      ctmp2 = orbit_cbe_get_typespec_str(orbit_cbe_get_typespec(IDL_TYPE_SEQUENCE(tree).simple_type_spec));
+      ctmp = g_strdup_printf("CORBA_sequence_%s", ctmp2);
+      g_free(ctmp2);
+    }
+  else
+    ctmp = orbit_cbe_get_typespec_str(tree);
 
   fprintf(ci->fh, "#if ");
   orbit_cbe_id_cond_hack(ci->fh, "MARSHAL_IMPL", ctmp, ci->c_base_name);

@@ -552,7 +552,6 @@
 
 #pragma pidl push
     interface TypeCode {                            // PIDL
-#       pragma version TypeCode 2.3
 #       pragma version TTypeCode 2.3
         exception   Bounds {};
         exception   BadKind {};

@@ -33,7 +33,12 @@ ORBit_RootObject_release(gpointer obj)
 
       robj->refs--;
       if(robj->refs == 0)
-	(* robj->interface->destroy)(robj);
+	{
+	  if(robj->interface && robj->interface->destroy)
+	    (* robj->interface->destroy)(robj);
+	  else
+	    g_free(robj);
+	}
     }
 
   O_MUTEX_UNLOCK(ORBit_RootObject_lifecycle_lock);
