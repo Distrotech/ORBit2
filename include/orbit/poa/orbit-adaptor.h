@@ -122,6 +122,8 @@ struct ORBit_ObjectAdaptor_type {
 	ORBit_AdaptorKey               adaptor_key;
 
 	ORBitThreadHint                thread_hint;
+
+	GMainContext                  *context;
 };
 
 int ORBit_adaptor_setup (ORBit_ObjectAdaptor adaptor, CORBA_ORB orb);

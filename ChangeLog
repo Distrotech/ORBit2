@@ -1,3 +1,26 @@
+2004-02-06  Chris Toshok  <toshok@ximian.com>
+
+	* src/orb/poa/poa.c (push_request_idle): add an @on_context arg,
+	so callers can specify the GMainContext to use.  Also, NULL out
+	pcl->pobj and pcl->recv_buffer.
+	(poa_destroy_idle_closure): new function.  free up the
+	PoaIdleClosure here, and release/unuse the POAObject/buffer if we
+	haven't hit the idle handler yet.
+	(ORBit_POA_handle_request): implement ORBIT_THREAD_HINT_ON_CONTEXT
+	case, and pass NULL to push_request_idle for the normal IDLE
+	cases.
+	(ORBit_poa_allow_cross_thread_call): add ON_CONTEXT where the
+	other idle poa policies are, and add a FIXME comment about needing
+	something along the lines of g_main_context_get_owner to implement
+	it properly.
+
+	* src/orb/poa/object-adaptor.c
+	(ORBit_ObjectAdaptor_set_thread_hintv): extract the GMainContext
+	out of the arg list in the ON_CONTEXT case.
+
+	* include/orbit/poa/orbit-adaptor.h (ORBit_ObjectAdaptor_type):
+	add context slot.
+
 2004-02-06  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/Makefile.am (IDL_DIR): set

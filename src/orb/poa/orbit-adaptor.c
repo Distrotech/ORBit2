@@ -16,7 +16,7 @@ ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adaptor,
 {
 	g_return_if_fail (adaptor != NULL);
 	g_return_if_fail (thread_hint >= ORBIT_THREAD_HINT_NONE &&
-			  thread_hint <= ORBIT_THREAD_HINT_ALL_AT_IDLE);
+			  thread_hint <= ORBIT_THREAD_HINT_ON_CONTEXT);
 
 	adaptor->thread_hint = thread_hint;
 	switch (thread_hint) {
@@ -32,6 +32,15 @@ ORBit_ObjectAdaptor_set_thread_hintv (ORBit_ObjectAdaptor adaptor,
 	case ORBIT_THREAD_HINT_ONEWAY_AT_IDLE:
 	case ORBIT_THREAD_HINT_ALL_AT_IDLE:
 		break;
+	}
+
+	if (thread_hint == ORBIT_THREAD_HINT_ON_CONTEXT) {
+		adaptor->context = va_arg (args, GMainContext*);
+		if (adaptor->context)
+			g_main_context_ref (adaptor->context);
+		else
+			g_warning ("POA thread policy of ORBIT_THREAD_HINT_ON_CONTEXT chosen, "
+				   "but NULL context supplied.  will dispatch to default context.");
 	}
 }
 
