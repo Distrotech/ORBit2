@@ -139,6 +139,7 @@ ORBit_setup_debug_flags (void)
 		{ "messages", ORBIT_DEBUG_MESSAGES },
 		{ "objects",  ORBIT_DEBUG_OBJECTS },
 		{ "giop",     ORBIT_DEBUG_GIOP },
+		{ "refs",     ORBIT_DEBUG_REFS },
 	};
 	const char *env_string;
 
