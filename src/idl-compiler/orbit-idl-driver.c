@@ -59,7 +59,7 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 			         ?(IDLF_INHIBIT_INCLUDES):0)
 			       |IDLF_CODEFRAGS,
 			       rinfo->idl_warn_level);
-  rinfo->ns = namespace;
+  rinfo->namespace = namespace;
 
   if(rinfo->debug_level > 3)
     orbit_idl_print_node(tree, 0);

@@ -36,6 +36,8 @@
 #include "orb-core-private.h"
 #include "orbit-debug.h"
 
+int ORBit_small_flags = ORBIT_SMALL_FAST_LOCALS;
+
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
 {
@@ -55,7 +57,6 @@ ORBit_small_freekids (CORBA_TypeCode tc, gpointer p, gpointer d)
 	/* see above */
 	ORBit_freekids_via_TypeCode (tc, p);
 }
-
 
 static void
 ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
@@ -327,7 +328,7 @@ orbit_small_marshal (CORBA_Object           obj,
 
 	dprintf (MESSAGES, "Marshal: id 0x%x\n", request_id);
 
-	for (i = 0; (m_data->arguments._buffer &&
+	for (i = 0; (i < m_data->arguments._length &&
 		     m_data->arguments._buffer [i].flags); i++) {
 
 		ORBit_IArg *a = &m_data->arguments._buffer [i];
@@ -379,6 +380,11 @@ typedef enum {
 	MARSHAL_CLEAN
 } DeMarshalRetType;
 
+typedef enum {
+	RECV_BUFFER_RELEASE,
+	RECV_BUFFER_KEEP
+} DeMarshalRecvRelease;
+
 static DeMarshalRetType
 orbit_small_demarshal (CORBA_Object           obj,
 		       GIOPConnection       **cnx,
@@ -386,7 +392,8 @@ orbit_small_demarshal (CORBA_Object           obj,
 		       CORBA_Environment     *ev,
 		       gpointer               ret,
 		       ORBit_IMethod         *m_data,
-		       gpointer              *args)
+		       gpointer              *args,
+		       DeMarshalRecvRelease   recv_release)
 {
 	gpointer        data, p;
 	CORBA_TypeCode  tc;
@@ -445,7 +452,7 @@ orbit_small_demarshal (CORBA_Object           obj,
 		int i;
 		int trace_have_out = 0;
 
-		for (i = 0; (m_data->arguments._buffer &&
+		for (i = 0; (i < m_data->arguments._length &&
 			     m_data->arguments._buffer [i].flags); i++) {
 			const ORBit_IArg *a;
 			gpointer          arg;
@@ -514,8 +521,9 @@ orbit_small_demarshal (CORBA_Object           obj,
 		if (trace_have_out)
 			tprintf (" )");
 	}
-	
-	giop_recv_buffer_unuse (recv_buffer);
+
+	if (recv_release == RECV_BUFFER_RELEASE)
+		giop_recv_buffer_unuse (recv_buffer);
 
 	return MARSHAL_CLEAN;
 
@@ -526,11 +534,16 @@ orbit_small_demarshal (CORBA_Object           obj,
 		*cnx = ORBit_handle_location_forward (recv_buffer, obj);
 		tprintf (" Exception: forward");
 
+		if (recv_release == RECV_BUFFER_RELEASE)
+			giop_recv_buffer_unuse (recv_buffer);
+
 		return MARSHAL_RETRY;
 	} else {
 		ORBit_handle_exception_array (
 			recv_buffer, ev, &m_data->exceptions, obj->orb);
-		giop_recv_buffer_unuse (recv_buffer);
+
+		if (recv_release == RECV_BUFFER_RELEASE)
+			giop_recv_buffer_unuse (recv_buffer);
 
 #ifdef G_ENABLE_DEBUG
 		if (_orbit_debug_flags & ORBIT_DEBUG_TRACES) {
@@ -545,6 +558,19 @@ orbit_small_demarshal (CORBA_Object           obj,
 
 		return MARSHAL_EXCEPTION_COMPLETE;
 	}
+}
+
+void
+ORBit_small_invoke_stub_n (CORBA_Object        object,
+			   ORBit_IMethods     *methods,
+			   glong               index,
+			   gpointer            ret,
+			   gpointer           *args,
+			   CORBA_Context       ctx,
+			   CORBA_Environment  *ev)
+{
+	/* FIXME: validate on the sequence length ? */
+	ORBit_small_invoke_stub (object, &methods->_buffer[index], ret, args, ctx, ev);
 }
 
 void
@@ -605,7 +631,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	}
 
 	switch (orbit_small_demarshal (obj, &cnx, &mqe, ev,
-				       ret, m_data, args))
+				       ret, m_data, args,
+				       RECV_BUFFER_RELEASE))
 	{
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		completion_status = CORBA_COMPLETED_YES;
@@ -1002,7 +1029,7 @@ ORBit_small_demarshal_async (ORBitAsyncQueueEntry *aqe,
 			     CORBA_Environment    *ev)
 {
 	switch (orbit_small_demarshal (aqe->obj, &aqe->mqe.cnx, &aqe->mqe, ev,
-				       ret, aqe->m_data, args)) {
+				       ret, aqe->m_data, args, RECV_BUFFER_KEEP)) {
 	case MARSHAL_SYS_EXCEPTION_COMPLETE:
 		aqe->completion_status = CORBA_COMPLETED_YES;
 		dprintf (MESSAGES, "Sys exception completed on id 0x%x\n\n",
@@ -1054,7 +1081,8 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 		CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 					    aqe->completion_status);
 
-	aqe->fn (aqe->obj, aqe->m_data, aqe, aqe->user_data, ev);
+	if (aqe->fn)
+		aqe->fn (aqe->obj, aqe->m_data, aqe, aqe->user_data, ev);
 
 	ORBit_RootObject_release (aqe->obj);
 /*	ORBit_RootObject_release (aqe->m_data); */

@@ -133,13 +133,15 @@ static void
 ORBit_setup_debug_flags (void)
 {
 	static GDebugKey debug_keys[] = {
-		{ "traces",   ORBIT_DEBUG_TRACES },
-		{ "timings",  ORBIT_DEBUG_TIMINGS },
-		{ "types",    ORBIT_DEBUG_TYPES },
-		{ "messages", ORBIT_DEBUG_MESSAGES },
-		{ "objects",  ORBIT_DEBUG_OBJECTS },
-		{ "giop",     ORBIT_DEBUG_GIOP },
-		{ "refs",     ORBIT_DEBUG_REFS },
+		{ "traces",        ORBIT_DEBUG_TRACES },
+		{ "inproc_traces", ORBIT_DEBUG_INPROC_TRACES },
+		{ "timings",       ORBIT_DEBUG_TIMINGS },
+		{ "types",         ORBIT_DEBUG_TYPES },
+		{ "messages",      ORBIT_DEBUG_MESSAGES },
+		{ "errors",        ORBIT_DEBUG_ERRORS },
+		{ "objects",       ORBIT_DEBUG_OBJECTS },
+		{ "giop",          ORBIT_DEBUG_GIOP },
+		{ "refs",          ORBIT_DEBUG_REFS },
 	};
 	const char *env_string;
 
@@ -156,6 +158,9 @@ ORBit_setup_debug_flags (void)
 			g_parse_debug_string (orbit_debug_options,
 					      debug_keys,
 					      G_N_ELEMENTS (debug_keys));
+
+	if (_orbit_debug_flags & ORBIT_DEBUG_INPROC_TRACES)
+		ORBit_small_flags &= ~ ORBIT_SMALL_FAST_LOCALS;
 }
 #endif /* G_ENABLE_DEBUG */
 
@@ -208,6 +213,8 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_setup_debug_flags ();
 #endif /* G_ENABLE_DEBUG */
 
+	ORBit_genuid_init (ORBit_genuid_type ());
+
 	giop_init ();
 
 	ORBit_locks_initialize ();
@@ -219,7 +226,6 @@ CORBA_ORB_init (int *argc, char **argv,
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 	g_atexit (shutdown_orb);
 
-	ORBit_genuid_init (ORBit_genuid_type ());
 	retval->default_giop_version = GIOP_LATEST;
 
 	retval->adaptors = g_ptr_array_new ();
@@ -481,8 +487,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	return ORBit_RootObject_duplicate (objref);
 }
 
-//This shouldn't be static because we use it in orbitcpp_tools.cc too:
-CORBA_TypeCode
+static CORBA_TypeCode
 CORBA_TypeCode_allocate (void)
 {
 	CORBA_TypeCode tc = g_new0 (struct CORBA_TypeCode_struct, 1);
@@ -548,7 +553,12 @@ static void
 copy_case_value (CORBA_long *dest,
 		 CORBA_any  *src)
 {
-        switch (src->_type->kind) {
+	CORBA_TypeCode tc = src->_type;
+
+	if (tc->kind == CORBA_tk_alias)
+		tc = tc->subtypes [0];
+
+        switch (tc->kind) {
         case CORBA_tk_ulong:
         case CORBA_tk_long:
         case CORBA_tk_enum:
@@ -1080,9 +1090,11 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa &&
 	    ((ORBit_RootObject) root_poa)->refs != 1) {
+#ifdef G_ENABLE_DEBUG
 		g_warning ("CORBA_ORB_destroy: Application still has %d "
 			   "refs to RootPOA.",
 			   ((ORBit_RootObject)root_poa)->refs - 1);
+#endif
 		CORBA_exception_set_system (
 			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 	}
@@ -1109,14 +1121,18 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 		}
 
 		if (leaked_adaptors) {
+#ifdef G_ENABLE_DEBUG
 			g_warning ("CORBA_ORB_destroy: leaked '%d' Object Adaptors", leaked_adaptors);
+#endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}
 
 		if (((ORBit_RootObject)orb)->refs != 2 + leaked_adaptors) {
+#ifdef G_ENABLE_DEBUG
 			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
 				   ((ORBit_RootObject)orb)->refs - 1 - leaked_adaptors);
+#endif
 			CORBA_exception_set_system (
 				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 		}

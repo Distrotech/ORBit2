@@ -42,7 +42,7 @@ typedef struct {
   gboolean small_skels;
   gboolean idata;
 
-  IDL_ns ns;
+  IDL_ns namespace;
 } OIDL_Run_Info;
 
 /* yadda yadda:

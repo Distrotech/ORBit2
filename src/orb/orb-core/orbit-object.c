@@ -32,11 +32,17 @@ object_hash_dump (gpointer key,
 				       g_quark_to_string (o->type_qid));
 		break;
 	}
+	case ORBIT_ROT_TYPECODE: {
+		CORBA_TypeCode tc = (CORBA_TypeCode) obj;
+		str = g_strdup_printf ("TypeCode (type '%s', kind %d)",
+				       tc->repo_id,
+				       ORBit_tk_to_name (tc->kind));
+		break;
+	}
 		/* psuedo-objects */
 		TYPE_CASE (ORB, "ORB");
 		TYPE_CASE (ADAPTOR, "Adaptor");
 		TYPE_CASE (POLICY, "Policy");
-		TYPE_CASE (TYPECODE, "TypeCode");
 		TYPE_CASE (REQUEST, "Request");
 		TYPE_CASE (SERVERREQUEST, "Server Request");
 		TYPE_CASE (CONTEXT, "Context");
@@ -61,6 +67,7 @@ object_hash_dump (gpointer key,
 int
 ORBit_RootObject_shutdown (void)
 {
+#ifdef G_ENABLE_DEBUG
 	int valid_running = 1; /* The ORB */
 
 	if (!ORBit_RootObject_lifecycle_lock &&
@@ -74,16 +81,16 @@ ORBit_RootObject_shutdown (void)
 			   "objects were leaked",
 			   total_refs - valid_running);
 	else
+#endif
 		return 0;
 
 #ifdef G_ENABLE_DEBUG
 	if (_orbit_debug_flags & ORBIT_DEBUG_REFS)
 		g_hash_table_foreach (
 			object_hash, object_hash_dump, NULL);
-#endif
-
 
 	return 1;
+#endif
 }
 
 void

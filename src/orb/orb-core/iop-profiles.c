@@ -312,6 +312,24 @@ IOP_ObjectKey_equal (ORBit_ObjectKey *a,
 	return TRUE;
 }
 
+static guint
+IOP_mem_hash (gconstpointer key, gulong len)
+{
+	guint h = 0;
+	const char *p, *pend;
+
+	for (p = key, pend = p + len; p < pend; p++)
+		h = (h << 5) - h + *p;
+
+	return h;
+}
+
+guint
+IOP_ObjectKey_hash (ORBit_ObjectKey *k)
+{
+	return IOP_mem_hash (k->_buffer, k->_length);
+}
+
 gboolean
 IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
 		   gpointer d1, gpointer d2)
@@ -390,56 +408,46 @@ IOP_profile_equal (CORBA_Object obj1, CORBA_Object obj2,
 	return TRUE;
 }
 
-static guint
-IOP_mem_hash (gconstpointer key, gulong len)
-{
-  const char *p, *pend;
-  guint h = 0;
-
-  for(p = key, pend = p + len; p < pend; p++)
-    h = (h << 5) - h + *p;
-
-  return h;
-}
-
+/*
+ * This performs really badly, and is pretty useless.
+ */
 void
-IOP_profile_hash(gpointer item, gpointer data)
+IOP_profile_hash (gpointer item, gpointer data)
 {
-  IOP_Profile_info *p = item;
-  guint *h = data;
-  IOP_TAG_INTERNET_IOP_info *iiop;
-  IOP_TAG_GENERIC_IOP_info *giop;
-  IOP_TAG_ORBIT_SPECIFIC_info *osi;
-  IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
-  IOP_UnknownProfile_info *upi;
+	IOP_Profile_info *p = item;
+	guint *h = data;
+	IOP_TAG_INTERNET_IOP_info *iiop;
+	IOP_TAG_GENERIC_IOP_info *giop;
+	IOP_TAG_ORBIT_SPECIFIC_info *osi;
+	IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
+	IOP_UnknownProfile_info *upi;
 
-  *h ^= p->profile_type;
-  switch(p->profile_type)
-    {
-    case IOP_TAG_ORBIT_SPECIFIC:
-      osi = item;
-      *h ^= g_str_hash(osi->unix_sock_path);
-      break;
-    case IOP_TAG_INTERNET_IOP:
-      iiop = item;
-      *h ^= g_str_hash(iiop->host);
-      *h ^= iiop->port;
-      break;
-    case IOP_TAG_GENERIC_IOP:
-      giop = item;
-      *h ^= g_str_hash(giop->proto);
-      *h ^= g_str_hash(giop->host);
-      *h ^= g_str_hash(giop->service);
-      break;
-    case IOP_TAG_MULTIPLE_COMPONENTS:
-      mci = item;
-      *h ^= g_slist_length(mci->components);
-      break;
-    default:
-      upi = item;
-      *h ^= IOP_mem_hash(upi->data._buffer, upi->data._length);
-      break;
-    }
+	*h ^= p->profile_type;
+	switch (p->profile_type) {
+	case IOP_TAG_ORBIT_SPECIFIC:
+		osi = item;
+		*h ^= g_str_hash(osi->unix_sock_path);
+		break;
+	case IOP_TAG_INTERNET_IOP:
+		iiop = item;
+		*h ^= g_str_hash(iiop->host);
+		*h ^= iiop->port;
+		break;
+	case IOP_TAG_GENERIC_IOP:
+		giop = item;
+		*h ^= g_str_hash(giop->proto);
+		*h ^= g_str_hash(giop->host);
+		*h ^= g_str_hash(giop->service);
+		break;
+	case IOP_TAG_MULTIPLE_COMPONENTS:
+		mci = item;
+		*h ^= g_slist_length(mci->components);
+		break;
+	default:
+		upi = item;
+		*h ^= IOP_mem_hash(upi->data._buffer, upi->data._length);
+		break;
+	}
 }
 
 void
@@ -1150,7 +1158,7 @@ CodeSetComponent_demarshal (GIOPRecvBuffer *buf,
 		if (!(warned++))
 			g_warning ("Ignoring incoming code_sets component");
 
-		if (buf->cur + sequence_length * 4 < buf->end)
+		if (buf->cur + sequence_length * 4 <= buf->end)
 			buf->cur += sequence_length * 4;
 		else
 			return FALSE;
@@ -1644,7 +1652,7 @@ ORBit_demarshal_IOR (CORBA_ORB        orb,
 		len = GUINT32_SWAP_LE_BE (len);
 	buf->cur += 4;
 
-	if (len < 0 || (buf->cur + len) > buf->end)
+	if ((buf->cur + len) > buf->end)
 		return TRUE;
 
 	type_id = buf->cur;

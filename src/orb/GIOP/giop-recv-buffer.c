@@ -10,6 +10,11 @@
 
 #undef DEBUG
 
+void (*giop_debug_hook_unexpected_reply) (GIOPRecvBuffer *buf) = NULL;
+
+
+#define MORE_FRAGMENTS_FOLLOW(buf) ((buf)->msg.header.flags & GIOP_FLAG_FRAGMENTED)
+
 /*
  * FIXME: pretty much this whole module,
  * and all the giop-types headers should be
@@ -463,7 +468,6 @@ giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 
 	switch (buf->giop_version) {
 	case GIOP_1_0:
-		break;
 	case GIOP_1_1:
 		switch (buf->msg.header.message_type) {
 		case GIOP_REPLY:
@@ -513,6 +517,7 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		next = l->next;
 
 		if (ent->cnx == cnx) {
+			giop_recv_buffer_unuse (ent->buffer);
 			ent->buffer = NULL;
 #ifdef ORBIT_THREADED
 			notify = g_slist_prepend (notify, ent);
@@ -717,19 +722,176 @@ giop_recv_buffer_init (void)
 	giop_queued_messages_lock = linc_mutex_new ();
 }
 
-
-static gboolean
-giop_recv_buffer_handle_fragmented (GIOPRecvBuffer *buf,
-				    GIOPConnection *cnx)
+static void
+giop_connection_add_frag (GIOPConnection *cnx,
+			  GIOPRecvBuffer *buf)
 {
-	/* FIXME: Drop fragmented packets on the floor for now */
-	g_warning ("Dropping a fragmented packed on the floor !");
+	cnx->incoming_frags = g_list_prepend (cnx->incoming_frags,
+					      g_list_prepend (NULL, buf));
+}
 
-	buf->connection = cnx;
-	buf->end = buf->message_body + buf->msg.header.message_size;
-	giop_recv_buffer_unuse (buf);
+static GList *
+giop_connection_get_frag (GIOPConnection     *cnx,
+			  CORBA_unsigned_long request_id,
+			  gboolean            return_first_if_none)
+{
+	GList *l;
 
-	return TRUE;
+	for (l = cnx->incoming_frags; l; l = l->next) {
+		GList *frags = l->data;
+
+		if (giop_recv_buffer_get_request_id (frags->data) == request_id)
+			return l->data;
+	}
+
+	/* This sucks, but it's prolly a GIOP-1.1 spec issue */
+	if (return_first_if_none && cnx->incoming_frags) {
+		static int warned = 0;
+		if (!warned++)
+			dprintf (MESSAGES, "GIOP-1.1 1 fragment set per cnx (?)");
+
+		return cnx->incoming_frags->data;
+	}
+
+	return NULL;
+}
+
+static void
+giop_connection_remove_frag (GIOPConnection *cnx, GList *frags)
+{
+	cnx->incoming_frags = g_list_remove (cnx->incoming_frags, frags);
+	g_list_free (frags);
+}
+
+static void
+alloc_buffer (GIOPRecvBuffer *buf, gpointer old_alloc, gulong body_size)
+{
+	buf->message_body = g_realloc (old_alloc, body_size + 12);
+	/*
+	 *   We assume that this is 8 byte aligned, for efficiency -
+	 * so we can align to the memory address rather than the offset
+	 * into the buffer.
+	 */
+	g_assert (((gulong)buf->message_body & 0x3) == 0);
+	buf->free_body = TRUE;
+	buf->cur = buf->message_body + 12;
+	buf->end = buf->cur + body_size;
+	buf->left_to_read = body_size;
+}
+
+static void
+concat_frags (GList *list)
+{
+	GList *l;
+	guchar *ptr;
+	gulong length = 0;
+	gulong initial_length;
+	gulong initial_offset;
+	GIOPRecvBuffer *head;
+
+	head = list->data;
+
+	for (l = list; l; l = l->next) {
+		GIOPRecvBuffer *buf = l->data;
+
+		/* to account for fragment (msg id) header */
+		length += buf->end - buf->cur;
+	}
+
+	initial_offset = (head->cur - head->message_body);
+	initial_length = (head->end - head->cur);
+
+	length += initial_offset - 12; /* include what we read of the header */
+
+	g_assert (head->free_body);
+	alloc_buffer (head, head->message_body, length);
+	head->msg.header.message_size = length;
+	head->left_to_read = 0;
+	head->cur = head->message_body + initial_offset;
+
+	ptr = head->cur + initial_length;
+
+	for (l = list->next; l; l = l->next) {
+		gulong len;
+		GIOPRecvBuffer *buf = l->data;
+			
+		len = buf->end - buf->cur;
+		memcpy (ptr, buf->cur, len);
+		ptr+= len;
+
+		giop_recv_buffer_unuse (buf);
+	}
+}
+
+/**
+ * giop_recv_buffer_handle_fragmented:
+ * @buf: pointer to recv buffer pointer
+ * @cnx: current connection.
+ * 
+ *   This will append @buf to the right list of buffers
+ * on the connection, forming a complete message, and
+ * re-write *@buf to the first buffer in the chain.
+ * 
+ * Return value: TRUE on error else FALSE
+ **/
+static gboolean
+giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
+				    GIOPConnection  *cnx)
+{
+	GList *list;
+	gboolean giop_1_1;
+	CORBA_long message_id;
+	GIOPRecvBuffer *buf = *ret_buf;
+
+	giop_1_1 = (buf->giop_version == GIOP_1_1);
+
+	switch (buf->msg.header.message_type) {
+	case GIOP_REPLY:
+	case GIOP_LOCATEREPLY:
+	case GIOP_REQUEST:
+	case GIOP_LOCATEREQUEST:
+		message_id = giop_recv_buffer_get_request_id (buf);
+		break;
+	case GIOP_FRAGMENT:
+		if (!giop_1_1) {
+			buf->cur = ALIGN_ADDRESS (buf->cur, 4);
+
+			if ((buf->cur + 4) > buf->end)
+				return TRUE;
+			if (giop_msg_conversion_needed (buf))
+				message_id = GUINT32_SWAP_LE_BE (*((guint32 *)buf->cur));
+			else
+				message_id = *(guint32 *) buf->cur;
+			buf->cur += 4;
+		} else
+			message_id = 0;
+		break;
+	default:
+		dprintf (ERRORS, "Bogus fragment packet type %d",
+			 buf->msg.header.message_type);
+		return TRUE;
+	}
+
+	if (!(list = giop_connection_get_frag (cnx, message_id, giop_1_1)))
+		giop_connection_add_frag (cnx, buf);
+
+	else {
+		*ret_buf = list->data;
+		g_assert ((*ret_buf)->msg.header.message_type != GIOP_FRAGMENT);
+
+		g_list_append (list, buf);
+			
+		if (!MORE_FRAGMENTS_FOLLOW (buf)) {
+			g_assert (buf->msg.header.message_type == GIOP_FRAGMENT);
+
+			/* concat all fragments - re-write & continue */
+			concat_frags (list);
+
+			giop_connection_remove_frag (cnx, list);
+		}
+	}
+
+	return FALSE;
 }
 
 static void
@@ -764,8 +926,10 @@ handle_reply (GIOPRecvBuffer *buf)
 
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 
-		if (ent->u.unthreaded.cb)
+		if (ent->u.unthreaded.cb) {
 			ent->u.unthreaded.cb (ent);
+			giop_recv_buffer_unuse (buf);
+		}
 #endif
 	} else {
 		LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
@@ -779,8 +943,15 @@ handle_reply (GIOPRecvBuffer *buf)
 			 * system exception in reply.
 			 */
  		} else {
-			g_warning ("We received an unexpected reply:");
-			giop_dump_recv (buf);
+			if (giop_debug_hook_unexpected_reply)
+				giop_debug_hook_unexpected_reply (buf);
+
+#ifdef G_ENABLE_DEBUG
+			else if (_orbit_debug_flags & ORBIT_DEBUG_ERRORS) {
+				dprintf (ERRORS, "We received an unexpected reply:");
+				giop_dump_recv (buf);
+			}
+#endif /* G_ENABLE_DEBUG */
 		}
 
 		giop_recv_buffer_unuse (buf);
@@ -791,7 +962,7 @@ static gboolean
 giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 			    gboolean        is_auth)
 {
-	dprintf (GIOP, "Incoming IIOP data:\n");
+	dprintf (GIOP, "Incoming IIOP header:\n");
 
 	do_giop_dump (stderr, (guint8 *)buf, 12, 0);
 
@@ -829,17 +1000,7 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 	if (!is_auth && (buf->msg.header.message_size > GIOP_INITIAL_MSG_SIZE_LIMIT))
 		return TRUE;
 
-	buf->message_body = g_malloc (buf->msg.header.message_size + 12);
-	/*
-	 *   We assume that this is 8 byte aligned, for efficiency -
-	 * so we can align to the memory address rather than the offset
-	 * into the buffer.
-	 */
-	g_assert (((gulong)buf->message_body & 0x3) == 0);
-	buf->free_body = TRUE;
-	buf->cur = buf->message_body + 12;
-	buf->end = buf->cur + buf->msg.header.message_size;
-	buf->left_to_read = buf->msg.header.message_size;
+	alloc_buffer (buf, NULL, buf->msg.header.message_size);
 
 	return FALSE;
 }
@@ -850,7 +1011,9 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
  * twice in order to get fresh input (?)
  * or should we poll ourselves on the source to see what's up?
  *
- * The whole locking concept here looks broken to me.
+ * The whole locking concept here looks broken to me,
+ * especially since 'read' can flag the connection disconnected
+ * giving a nice deadlock.
  */
 gboolean
 giop_connection_handle_input (LINCConnection *lcnx)
@@ -902,30 +1065,36 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				buf->state = GIOP_MSG_READING_BODY;
 				break;
 
-			case GIOP_MSG_READING_BODY:
+			case GIOP_MSG_READING_BODY: {
+
+				dprintf (GIOP, "Incoming IIOP body:\n");
+
+				buf->cur = buf->message_body + 12;
+				if ((buf->cur + buf->msg.header.message_size) > buf->end)
+					goto msg_error;
+				do_giop_dump (stderr, buf->cur, buf->msg.header.message_size, 0);
+
 				buf->state = GIOP_MSG_READY;
 
-				if (buf->msg.header.flags & GIOP_FLAG_FRAGMENTED) {
-					if (giop_recv_buffer_handle_fragmented (buf, cnx))
+				if (giop_recv_buffer_demarshal (buf))
+					goto msg_error;
+
+				if (MORE_FRAGMENTS_FOLLOW (buf)) {
+					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
-				} else {
-					buf->cur = buf->message_body + 12;
-
-					if ((buf->cur + buf->msg.header.message_size) > buf->end)
-						goto msg_error;
-
-					do_giop_dump (stderr, buf->message_body + 12,
-						      buf->msg.header.message_size, 12);
-
-					if (giop_recv_buffer_demarshal (buf))
-						goto msg_error;
-
-					if (buf->msg.header.message_type == GIOP_FRAGMENT) {
-						if (giop_recv_buffer_handle_fragmented (buf, cnx))
-							goto msg_error;
+					else {
+						cnx->incoming_msg = NULL;
+						LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+						goto frag_out;
 					}
+
+				} else if (buf->msg.header.message_type == GIOP_FRAGMENT) {
+					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
+						goto msg_error;
+					/* else last fragment */
 				}
 				break;
+			}
 
 			case GIOP_MSG_AWAITING_FRAGMENTS:
 			case GIOP_MSG_READY:
@@ -969,20 +1138,22 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		break;
 
 	default:
-		if (!warned++) {
+		if (!warned++)
 			g_warning ("dropping an out of bound input buffer "
 				   "on the floor 0x%x", buf->msg.header.message_type);
-			giop_dump_recv (buf);
-		}
 		giop_recv_buffer_unuse (buf);
 		break;
 	}
-	
+
+ frag_out:	
 	g_object_unref ((GObject *) cnx);
 
 	return TRUE;
 
  msg_error:
+	cnx->incoming_msg = NULL;
+	LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
+
 	buf->msg.header.message_type = GIOP_MESSAGEERROR;
 	buf->msg.header.message_size = 0;
 

@@ -29,6 +29,8 @@
 
 #define NUM_RUNS 1
 
+#undef TIMING_RUN
+
 #ifdef TIMING_RUN
 #  define d_print(a)
 #else
@@ -391,6 +393,16 @@ testIInterface (test_TestFactory   factory,
 }
 
 static void
+testIsA (test_TestFactory   factory, 
+	 CORBA_Environment *ev)
+{
+	g_assert (CORBA_Object_is_a (factory, "IDL:CORBA/Object:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	g_assert (CORBA_Object_is_a (factory, "IDL:omg.org/CORBA/Object:1.0", ev));
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+}
+
+static void
 testFixedLengthStruct (test_TestFactory   factory, 
 		       CORBA_Environment *ev)
 {
@@ -707,6 +719,7 @@ testMiscUnions (test_TestFactory   factory,
 	test_UnionServer   obj;
 	test_EnumUnion     retn;
 	test_unionSeq      inSeq;
+	test_VariableLengthUnion inSeq_buffer[3];
 	test_BooleanUnion  inArg;
 	test_ArrayUnion   *outArg;
 	int                i;
@@ -716,17 +729,17 @@ testMiscUnions (test_TestFactory   factory,
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
 	inSeq._length  = inSeq._maximum = 3;
-	inSeq._buffer  = test_unionSeq_allocbuf (3);
-	inSeq._release = CORBA_TRUE;
+	inSeq._buffer  = inSeq_buffer;
+	inSeq._release = CORBA_FALSE;
 	inSeq._buffer [0]._d   = 4;
 	inSeq._buffer [0]._u.z = CORBA_TRUE;
 	inSeq._buffer [1]._d   = 2;
-	inSeq._buffer [1]._u.y = CORBA_string_dup ("blah");
+	inSeq._buffer [1]._u.y = "blah";
 	inSeq._buffer [2]._d   = 55;
 	inSeq._buffer [2]._u.w = constants_LONG_IN;
 
 	inArg._d   = 1;
-	inArg._u.y = CORBA_string_dup ("blah de blah");
+	inArg._u.y = "blah de blah";
 
 	retn = test_UnionServer_opMisc (obj, &inSeq, &inArg, &outArg, ev);
 
@@ -1248,7 +1261,7 @@ testMisc (test_TestFactory   factory,
 		/* Invoke a BasicServer method on a TestFactory */
 		foo = test_BasicServer__get_foo (factory, ev);
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-		g_assert (!strcmp (ev->_id, "IDL:CORBA/BAD_OPERATION:1.0"));
+		g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/BAD_OPERATION:1.0"));
 		CORBA_exception_free (ev);
 	}
 
@@ -1264,19 +1277,21 @@ testMisc (test_TestFactory   factory,
 		CORBA_char *ior;
 		CORBA_Object o2;
 
-		ior = CORBA_ORB_object_to_string (global_orb, factory, &ev);
+		ior = CORBA_ORB_object_to_string (global_orb, factory, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
-		o2 = CORBA_ORB_string_to_object (global_orb, ior, &ev);
+		o2 = CORBA_ORB_string_to_object (global_orb, ior, ev);
 		g_assert (ev->_major == CORBA_NO_EXCEPTION);
 		
+		CORBA_free (ior);
+
 		g_assert (o2 == factory);
-		CORBA_Object_release (o2, &ev);
+		CORBA_Object_release (o2, ev);
 	}
 	
 	test_BasicServer_noImplement (objref, ev);
 	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-	g_assert (!strcmp (ev->_id, "IDL:CORBA/NO_IMPLEMENT:1.0"));
+	g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/NO_IMPLEMENT:1.0"));
 	CORBA_exception_free (ev);
 
 	if (!in_proc) {
@@ -1581,6 +1596,20 @@ testPingPong (test_TestFactory   factory,
 	g_assert (!CORBA_Object_is_equivalent (
 		CORBA_OBJECT_NIL, l_objref, ev));
 
+#if 0
+	/* Test blocking bits - try to blow the remote guy's stack */
+	if (!in_proc) {
+		int i;
+
+		d_print ("Testing client limiting of stack smash on remote server\n");
+		for (i = 0; i < 10000; i++) {
+			test_PingPongServer_opOneWayCallback (r_objref, l_objref, ev);
+			g_assert (ev->_major == CORBA_NO_EXCEPTION);
+		}
+		test_PingPongServer_opRoundTrip (r_objref, ev);
+	}
+#endif
+
 	if (!in_proc) {
 		int i;
 		ORBitConnection *cnx = ORBit_small_get_connection (r_objref);
@@ -1668,7 +1697,7 @@ testSegv (test_TestFactory   factory,
 		test_TestFactory_segv (factory, "do it!", ev); 
 #ifdef DO_HARDER_SEGV
 		g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
-		g_assert (!strcmp (ev->_id, "IDL:CORBA/COMM_FAILURE:1.0"));
+		g_assert (!strcmp (ev->_id, "IDL:omg.org/CORBA/COMM_FAILURE:1.0"));
 		CORBA_exception_free (ev);
 
 		g_assert (ORBit_small_get_connection_status (factory) ==
@@ -1722,6 +1751,36 @@ test_initial_references (CORBA_ORB          orb,
 	CORBA_free (list);
 }
 
+#define TIME_TEST_RUNS 1000
+
+static void
+test_time_noop (test_TestFactory   factory, 
+		CORBA_Environment *ev)
+{
+	int i;
+	int old_flags;
+	GTimer *timer;
+
+	timer = g_timer_new ();
+	g_timer_start (timer);
+	for (i = 0; i < TIME_TEST_RUNS; i++)
+		test_TestFactory_noOp (factory, ev);
+	g_timer_stop (timer);
+	fprintf (stderr, "In proc (fast) took %g msecs\n",
+	g_timer_elapsed (timer, NULL) * 1000);
+
+	old_flags = ORBit_small_flags;
+	ORBit_small_flags &= ~ORBIT_SMALL_FAST_LOCALS;
+	g_timer_reset (timer);
+	g_timer_start (timer);
+	for (i = 0; i < TIME_TEST_RUNS; i++)
+		test_TestFactory_noOp (factory, ev);
+	g_timer_stop (timer);
+	fprintf (stderr, "In proc (slow) took %g msecs\n",
+		 g_timer_elapsed (timer, NULL) * 1000);
+	ORBit_small_flags = old_flags;
+}
+
 static void
 run_tests (test_TestFactory   factory, 
 	   CORBA_Environment *ev)
@@ -1739,6 +1798,7 @@ run_tests (test_TestFactory   factory,
 		testLongDouble (factory, ev);
 		testEnum (factory, ev);
 		testException (factory, ev);
+		testIsA (factory, ev);
 		testFixedLengthStruct (factory, ev);
 		testVariableLengthStruct (factory, ev);
 		testCompoundStruct (factory, ev);
@@ -1762,7 +1822,9 @@ run_tests (test_TestFactory   factory,
 		testContext (factory, ev);
 		testIInterface (factory, ev);
 		testMisc (factory, ev);
+#ifndef TIMING_RUN
 		testAsync (factory, ev);
+#endif
 		if (!in_proc)
 			testPingPong (factory, ev);
 #if NUM_RUNS == 1
@@ -1834,7 +1896,10 @@ main (int argc, char *argv [])
 	factory = get_server (global_orb, &ev);
 	g_assert (factory->profile_list == NULL);
 	g_assert (ORBit_object_get_connection (factory) == NULL);
+
+	test_time_noop (factory, &ev);
 	run_tests (factory, &ev);
+
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 	factory = CORBA_OBJECT_NIL;
@@ -1861,7 +1926,6 @@ main (int argc, char *argv [])
 			g_error  ("Start the server before running the client");
 		g_assert (ev._major == CORBA_NO_EXCEPTION);
 	}
-
 	run_tests (factory, &ev);
 
 	CORBA_Object_release (factory, &ev);

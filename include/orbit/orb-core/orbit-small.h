@@ -46,12 +46,25 @@ void                  ORBit_connection_set_max_buffer   (ORBitConnection *cnx,
 
 #if defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API)
 
+#define ORBIT_SMALL_FAST_LOCALS 1
+extern int     ORBit_small_flags;
+
+/* Deprecated - only for bin-compat with pre 2.4 stubs */
 void           ORBit_small_invoke_stub (CORBA_Object        object,
 					ORBit_IMethod      *m_data,
 					gpointer            ret,
 					gpointer           *args,
 					CORBA_Context       ctx,
 					CORBA_Environment  *ev);
+
+
+void           ORBit_small_invoke_stub_n (CORBA_Object        object,
+					  ORBit_IMethods     *methods,
+					  glong               index,
+					  gpointer            ret,
+					  gpointer           *args,
+					  CORBA_Context       ctx,
+					  CORBA_Environment  *ev);
 
 #endif /* defined(ORBIT2_INTERNAL_API) || defined (ORBIT2_STUBS_API) */
 
