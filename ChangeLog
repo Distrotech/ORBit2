@@ -1,3 +1,9 @@
+2004-02-10  Tomasz K³oczko <kloczek@pld.org.pl>
+
+	* acinclude.m4: added missing [] quotation first parameter of
+	  AC_DEFUN(). This fix is for aclocal from automake 1.8.x and is
+	  backward compatible with older auto tools.
+
 2004-02-10  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/orb-core/Makefile.am: always dist. HTTP_FILES.
