@@ -133,7 +133,7 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	}
 
 	if (obj->connection)
-		linc_object_unref (obj->connection);
+		giop_connection_unref (obj->connection);
 
 	p_free (obj, struct CORBA_Object_type);
 }
@@ -285,7 +285,7 @@ ORBit_try_connection (CORBA_Object obj)
 
 	if (disconnect) {
 		if (obj->connection) {
-			linc_object_unref (obj->connection);
+			giop_connection_unref (obj->connection);
 			obj->connection = NULL;
 		}
 		retval = FALSE;
@@ -309,7 +309,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 	OBJECT_LOCK (obj);
 	if (ORBit_try_connection (obj)) {
 		cnx = obj->connection;
-		linc_object_ref (cnx);
+		giop_connection_ref (cnx);
 		OBJECT_UNLOCK (obj);
 		return cnx;
 	}
@@ -342,7 +342,7 @@ ORBit_object_get_connection (CORBA_Object obj)
 					 proto, host, service);
 
 				cnx = obj->connection;
-				linc_object_ref (cnx);
+				giop_connection_ref (cnx);
 				break;
 			}
 		}
@@ -422,7 +422,7 @@ CORBA_Object_non_existent (CORBA_Object       obj,
 	cnx = ORBit_object_get_connection (obj);
 	retval = cnx ? CORBA_FALSE : CORBA_TRUE;
 	if (cnx)
-		linc_object_unref (cnx);
+		giop_connection_unref (cnx);
 
 	return retval;
 }

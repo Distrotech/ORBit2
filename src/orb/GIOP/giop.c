@@ -435,8 +435,6 @@ giop_init (gboolean threaded, gboolean blank_wire_data)
 
 	giop_tmpdir_init ();
 
-	giop_connection_list_init ();
-
 	giop_send_buffer_init (blank_wire_data);
 	giop_recv_buffer_init ();
 }
@@ -460,14 +458,6 @@ giop_incoming_signal_T (GIOPThread *tdata)
 
 	if (tdata->wake_context)
 		wakeup_mainloop ();
-}
-
-static void
-giop_incoming_signal (GIOPThread *tdata)
-{
-	g_mutex_lock (tdata->lock); /* ent_lock */
-	giop_incoming_signal_T (tdata);
-	g_mutex_unlock (tdata->lock); /* ent_unlock */
 }
 
 void

@@ -1,4 +1,28 @@
+2003-05-23  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-server.c
+	(giop_server_handle_create_connection): upd.
+	cnx instantiaton.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_get_property, giop_connection_set_property): impl.
+	(giop_connection_class_init): upd.
+	(giop_connection_set_orb_n_ver): kill.
+
+	* src/orb/orb-core/corba-object.c,
+	* src/orb/orb-core/orbit-small.c: sed:
+	s/linc_object_ref/giop_connection_ref/
+	s/linc_object_unref/giop_connection_unref/
+
 2003-05-22  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_initiate): use new linc API.
+	(giop_connection_list_lookup_T): bin. 
+	(giop_connection_list_add, giop_connection_list_init),
+	(giop_connection_list_remove): bin.
+	
+	* src/orb/GIOP/giop.c (giop_init): upd.
 
 	* src/orb/GIOP/giop.c (giop_thread_request_push_key):
 	fix HINT_PER_REQUEST policy by not inserting NULL into
