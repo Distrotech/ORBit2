@@ -1,3 +1,9 @@
+2002-07-31  jacob berkman  <jacob@ximian.com>
+
+	* src/linc-connection.c (LINC_IOV_MAX): bump to 1024 on os x, as
+	the macros isn't defined unless we are defining KERNEL, which we
+	aren't
+
 2002-07-31  Michael Meeks  <michael@ximian.com>
 
 	* test/test-linc.c (test_hosts_lookup): regression test.
