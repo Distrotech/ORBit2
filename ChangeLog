@@ -1,3 +1,8 @@
+2005-01-01  Jules Colding  <colding@omesc.com>
+
+	* src/idl-compiler/orbit-idl-c-skelimpl.c (cbe_ski_do_list): Fix the former 
+	fix for excessive newline output (integer overflow bug fixed).
+
 2004-12-28  Jules Colding  <colding@omesc.com>
 
 	* src/idl-compiler/orbit-idl-c-skelimpl.c (cbe_ski_do_list): Prevent excessive 
