@@ -1,3 +1,47 @@
+2002-05-27  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/server.c (TestFactory_noOp): impl.
+
+2002-05-24  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-small.c
+	(ORBit_small_invoke_stub_n): impl. to help bin-compat,
+	we add this method, and leave 'ORBit_small_invoke_stub'
+
+	* src/idl-compiler/orbit-idl-c-stubs.c
+	(cs_small_output_stub): remove bulky system exception
+	setting logic.
+	(cs_small_output_stub): call invoke_stub_n instead, so
+	we have the method index, so we could do strange, but
+	index rather than name based associations on methods
+	later.
+
+	* include/orbit/poa/poa-types.h
+	(ORBIT_STUB_GetEpv): cast to gpointer, to save
+	huge & ugly cast in the stubs.
+
+	* src/orb/orb-core/orbit-object.c
+	(ORBit_RootObject_shutdown): only dump debug on
+	exit if we have G_ENABLE_DEBUG.
+
+2002-05-22  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_setup_debug_flags): add inproc_traces,
+	disable fast calls if flag is on.
+
+	* include/orbit/orb-core/orbit-small.h: add
+	ORBIT_SMALL_FAST_LOCALS.
+
+	* src/idl-compiler/orbit-idl-marshal.c: update all
+	the printed strings to 'orbit-idl-2'
+
+	* src/idl-compiler/*.c: update all the auto-generated
+	warnings to a standard define in
+
+	* src/idl-compiler/orbit-idl-c-backend.h (OIDL_C_WARNING):
+	here and version to orbit-idl-2 correctly.
+
 2002-05-24  Richard Kinder <r_kinder@yahoo.com>
 	* src/orb/orb-core/orbhttp.c: cleanup magic numbers, closes #78938
 

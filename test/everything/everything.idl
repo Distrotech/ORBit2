@@ -68,6 +68,7 @@ module test {
 		TransientObj createTransientObj();
 		DeadReferenceObj createDeadReferenceObj();
 		PingPongServer createPingPongServer ();
+		void noOp ();
 	};
 
 	interface DeadReferenceObj {

@@ -852,7 +852,9 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
  * twice in order to get fresh input (?)
  * or should we poll ourselves on the source to see what's up?
  *
- * The whole locking concept here looks broken to me.
+ * The whole locking concept here looks broken to me,
+ * especially since 'read' can flag the connection disconnected
+ * giving a nice deadlock.
  */
 gboolean
 giop_connection_handle_input (LINCConnection *lcnx)

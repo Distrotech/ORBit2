@@ -36,6 +36,8 @@
 #include "orb-core-private.h"
 #include "orbit-debug.h"
 
+int ORBit_small_flags = ORBIT_SMALL_FAST_LOCALS;
+
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
 {
@@ -55,7 +57,6 @@ ORBit_small_freekids (CORBA_TypeCode tc, gpointer p, gpointer d)
 	/* see above */
 	ORBit_freekids_via_TypeCode (tc, p);
 }
-
 
 static void
 ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
@@ -557,6 +558,19 @@ orbit_small_demarshal (CORBA_Object           obj,
 
 		return MARSHAL_EXCEPTION_COMPLETE;
 	}
+}
+
+void
+ORBit_small_invoke_stub_n (CORBA_Object        object,
+			   ORBit_IMethods     *methods,
+			   glong               index,
+			   gpointer            ret,
+			   gpointer           *args,
+			   CORBA_Context       ctx,
+			   CORBA_Environment  *ev)
+{
+	/* FIXME: validate on the sequence length ? */
+	ORBit_small_invoke_stub (object, &methods->_buffer[index], ret, args, ctx, ev);
 }
 
 void
