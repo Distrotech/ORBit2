@@ -169,6 +169,9 @@ IDLStruct::stub_impl_arg_post (ostream          &ostr,
 		// Do nothing
 		return;
 
+	string cpp_type = active_typedef ?
+		active_typedef->get_cpp_typename () : get_cpp_typename ();
+
 	// Load back values
 	switch (direction)
 	{
@@ -184,6 +187,7 @@ IDLStruct::stub_impl_arg_post (ostream          &ostr,
 			ostr << indent << cpp_id << "._orbitcpp_unpack "
 			     << "(*_c_" << cpp_id << ");" << endl;
 		else
+			ostr << indent << cpp_id << " = new " << cpp_type << ";" << endl;
 			ostr << indent << cpp_id << "->_orbitcpp_unpack "
 			     << "(*_c_" << cpp_id << ");" << endl;			
 		break;
@@ -336,8 +340,7 @@ IDLStruct::skel_impl_arg_pre (ostream          &ostr,
 			     << c_id << ");" << endl;
 			break;
 		case IDL_PARAM_OUT:
-			ostr << indent << cpp_type << " *" << cpp_id << " = "
-			     << "new " << cpp_type << ";" << endl;
+			ostr << indent << cpp_type << "_var " << cpp_id << ";" << endl;
 			break;
 		}
 	}
@@ -383,7 +386,6 @@ IDLStruct::skel_impl_arg_post (ostream          &ostr,
 	case IDL_PARAM_OUT:
 		ostr << indent << "*" << c_id << " = "
 		     << cpp_id << "->_orbitcpp_pack ();" << endl;
-		ostr << indent << "delete " << cpp_id << ";" << endl;
 		break;
 	}
 }
