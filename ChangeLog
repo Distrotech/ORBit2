@@ -1,3 +1,9 @@
+2004-03-19  Mark McLoughlin  <mark@skynet.ie>
+
+	* orbit2-config.in: return -lORBitCosNaming-2 with
+	--use-service=name rather than -lORBitCosNaming.
+	This script is still deprecated old cruft, though.
+
 2004-03-04  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.10.0
