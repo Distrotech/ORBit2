@@ -39,7 +39,7 @@ static void
 init_tmp (void)
 {
 	char *dir;
-	const char *user = g_getenv ("USER");
+	const char *user = g_get_user_name ();
 
 	dir = g_strconcat ("/tmp/orbit-", user, NULL);
 

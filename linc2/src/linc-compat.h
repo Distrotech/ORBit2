@@ -36,8 +36,12 @@
 #endif
 
 #include <arpa/inet.h>
+#ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
 #include <resolv.h>
+#endif
 
 #if !defined (NI_MAXSERV) || !defined (NI_MAXHOST)
 #  include <netdb.h>

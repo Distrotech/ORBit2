@@ -47,12 +47,14 @@ make_local_tmpdir (const char *dirname)
 			if (stat (dirname, &statbuf) != 0)
 				g_error ("Can not stat %s\n", dirname);
 
+#ifndef __CYGWIN__
 			if (statbuf.st_uid != getuid ())
 				g_error ("Owner of %s is not the current user\n", dirname);
 
 			if ((statbuf.st_mode & (S_IRWXG|S_IRWXO)) ||
 			    !S_ISDIR (statbuf.st_mode))
 				g_error ("Wrong permissions for %s\n", dirname);
+#endif
 
 			break;
 				
@@ -110,7 +112,7 @@ linc_get_tmpdir (void)
 #define LINC_SET_SOCKADDR_LEN(saddr, len)
 #endif
 
-#if defined(AF_INET6) && defined(RES_USE_INET6)
+#if defined(HAVE_RESOLV_H) && defined(AF_INET6) && defined(RES_USE_INET6)
 #define LINC_RESOLV_SET_IPV6     _res.options |= RES_USE_INET6
 #define LINC_RESOLV_UNSET_IPV6   _res.options &= ~RES_USE_INET6
 #else
@@ -358,8 +360,10 @@ linc_protocol_get_sockaddr_ipv4 (const LINCProtocolInfo *proto,
 	        int i;
 
 		LINC_RESOLV_UNSET_IPV6;
+#ifdef HAVE_RESOLV_H
 		if (!(_res.options & RES_INIT))
 			res_init();
+#endif
 		
 		host = gethostbyname (hostname);
 		if (!host) {
@@ -452,8 +456,10 @@ linc_protocol_get_sockaddr_ipv6 (const LINCProtocolInfo *proto,
 	return (struct sockaddr *)saddr;
 #else
 
+#ifdef HAVE_RESOLV_H
 	if (!(_res.options & RES_INIT))
 		res_init();
+#endif
 
 	LINC_RESOLV_SET_IPV6;
 	host = gethostbyname (hostname);
