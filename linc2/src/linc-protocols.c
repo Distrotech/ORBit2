@@ -44,7 +44,16 @@
 #include <resolv.h>
 
 #if !defined (NI_MAXSERV) || !defined (NI_MAXHOST)
-#include <netdb.h>
+#  include <netdb.h>
+#  include <sys/param.h>
+#endif
+
+#if !defined (NI_MAXHOST)
+#  define NI_MAXHOST MAXHOSTNAMELEN
+#endif
+
+#if !defined (NI_MAXSERV)
+#  define NI_MAXSERV 64
 #endif
 
 #include <linc/linc-protocol.h>
