@@ -493,7 +493,7 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 {
 	struct sockaddr_un *saddr;
 	int                 pathlen;
-	char                buf[64], *actual_path;
+	char                buf[LINC_UNIX_PATH_MAX], *actual_path;
 
 	g_assert (proto->family == AF_UNIX);
 

@@ -56,4 +56,11 @@
 #  define INADDR_NONE (-1)
 #endif
 
+#if !defined (UNIX_PATH_MAX)
+/* UNP: 14.2 - Posix.1g at least 100 bytes */
+#  define LINC_UNIX_PATH_MAX 100
+#else
+#  define LINC_UNIX_PATH_MAX UNIX_PATH_MAX
+#endif
+
 #endif /* LINC_HACKS_H */
