@@ -11,4 +11,4 @@ liblinc_la_SOURCES=\
 	linc-server.c \
 	linc-private.h
 
-liblinc_la_LDFLAGS=$(GLIB_LIBS)
+liblinc_la_LDFLAGS=$(GLIB_LIBS) $(SSL_LIBS)

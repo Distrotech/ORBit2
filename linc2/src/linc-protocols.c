@@ -167,7 +167,7 @@ irda_find_device(guint32 *addr, char *name, gboolean name_to_addr)
   len = sizeof(struct irda_device_list) +
     sizeof(struct irda_device_info) * MAX_IRDA_DEVICES;
 
-  buf = orbit_alloca(len);
+  buf = g_alloca(len);
   list = (struct irda_device_list *) buf;
         
   if (getsockopt(fd, SOL_IRLMP, IRLMP_ENUMDEVICES, buf, &len))
