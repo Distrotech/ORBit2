@@ -1,8 +1,10 @@
+#include <config.h>
+#include <string.h>
+#include <stdlib.h>
 #include <orbit/orbit.h>
 #include <orb-core-export.h>
 #include <orbit-debug.h>
-#include <string.h>
-#include <stdlib.h>
+#include "../util/orbit-purify.h"
 
 #include "orbit-poa.h"
 
@@ -61,8 +63,7 @@ ORBit_POAList_add_child (gpointer key, gpointer value, gpointer data)
 	PortableServer_POA      poa    = value;
 	PortableServer_POAList *retval = data;
 
-	retval->_buffer[retval->_maximum++] =
-		CORBA_Object_duplicate ((CORBA_Object)poa, NULL);
+	retval->_buffer[retval->_maximum++] = ORBit_RootObject_duplicate (poa);
 }
 
 /* PortableServer_Current interface */
@@ -74,7 +75,7 @@ ORBit_POACurrent_free_fn (ORBit_RootObject obj_in)
 	ORBit_RootObject_release_T (poacur->orb);
 	poacur->orb = NULL;
 
-	g_free (poacur);
+	p_free (poacur, struct PortableServer_Current_type);
 }
 
 static const ORBit_RootObject_Interface ORBit_POACurrent_epv = {
@@ -508,7 +509,7 @@ ORBit_POA_free_fn (ORBit_RootObject obj)
 	ORBit_free_T (((ORBit_ObjectAdaptor)poa)->adaptor_key._buffer);
 
 	poa->orb = NULL;
-	g_free (poa);
+	p_free (poa, struct PortableServer_POA_type);
 }
 
 static const ORBit_RootObject_Interface ORBit_POA_epv = {
@@ -666,7 +667,7 @@ ORBit_POA_new (CORBA_ORB orb, const CORBA_char *nom,
   
 	poa = g_new0 (struct PortableServer_POA_type, 1);
 
-	ORBit_RootObject_init ((ORBit_RootObject)poa, &ORBit_POA_epv);
+	ORBit_RootObject_init ((ORBit_RootObject) poa, &ORBit_POA_epv);
 	/* released in ORBit_POA_destroy */
 	ORBit_RootObject_duplicate (poa);
 
@@ -1530,10 +1531,7 @@ PortableServer_Current_get_POA (PortableServer_Current  obj,
 
 	pobj = ORBit_POACurrent_get_object (obj, ev);
 
-	if (!pobj) 
-		return CORBA_OBJECT_NIL;
-
-	return (PortableServer_POA)CORBA_Object_duplicate ((CORBA_Object)pobj->poa, ev);
+	return ORBit_RootObject_duplicate (pobj->poa);
 }
 
 PortableServer_ObjectId *
@@ -1597,7 +1595,7 @@ PortableServer_POA_find_POA (PortableServer_POA   poa,
 			   adapter_name);
 
 	if (child_poa)
-		CORBA_Object_duplicate ((CORBA_Object)child_poa, ev);
+		ORBit_RootObject_duplicate (child_poa);
 	else
 		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 				     ex_PortableServer_POA_AdapterNonExistent,
@@ -1639,8 +1637,7 @@ PortableServer_POA
 PortableServer_POA__get_the_parent (PortableServer_POA  poa,
 				    CORBA_Environment  *ev)
 {
-	return (PortableServer_POA)
-			CORBA_Object_duplicate ((CORBA_Object)poa->parent_poa, ev);
+	return ORBit_RootObject_duplicate (poa->parent_poa);
 }
 
 PortableServer_POAList*
@@ -1664,16 +1661,14 @@ PortableServer_POAManager
 PortableServer_POA__get_the_POAManager (PortableServer_POA  poa,
 					CORBA_Environment  *ev)
 {
-	return (PortableServer_POAManager)
-			CORBA_Object_duplicate ((CORBA_Object)poa->poa_manager, ev);
+	return ORBit_RootObject_duplicate (poa->poa_manager);
 }
 
 PortableServer_AdapterActivator
 PortableServer_POA__get_the_activator (PortableServer_POA  poa,
 				       CORBA_Environment  *ev)
 {
-	return (PortableServer_AdapterActivator)
-			CORBA_Object_duplicate ((CORBA_Object)poa->the_activator, ev);
+	return ORBit_RootObject_duplicate (poa->the_activator);
 }
 
 void
@@ -1692,8 +1687,7 @@ PortableServer_ServantManager
 PortableServer_POA_get_servant_manager (PortableServer_POA  poa,
 					CORBA_Environment  *ev)
 {
-	return (PortableServer_ServantManager)
-			CORBA_Object_duplicate ((CORBA_Object)poa->servant_manager, ev);
+	return ORBit_RootObject_duplicate (poa->servant_manager);
 }
 
 void

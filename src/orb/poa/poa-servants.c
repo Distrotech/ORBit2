@@ -1,3 +1,4 @@
+#include <config.h>
 #include <orbit/poa/poa.h>
 
 #define ORBit_return_bad_param_if_fail(expr)  G_STMT_START {		\

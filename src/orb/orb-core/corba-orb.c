@@ -1,3 +1,4 @@
+#include <config.h>
 #include <ctype.h>
 #include <string.h>
 #include <popt.h>
@@ -7,6 +8,7 @@
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
 #include "../util/orbit-options.h"
+#include "../util/orbit-purify.h"
 #include "orb-core-private.h"
 #include "orbhttp.h"
 
@@ -29,7 +31,7 @@ CORBA_ORB_release_fn (ORBit_RootObject robj)
 
 	g_hash_table_destroy (orb->initial_refs);
 
-	g_free (orb);
+	p_free (orb, struct CORBA_ORB_type);
 }
 
 GMutex *ORBit_RootObject_lifecycle_lock = NULL;
@@ -54,8 +56,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	};
 
 	if ((retval = _ORBit_orb))
-		return (CORBA_ORB) CORBA_Object_duplicate (
-			(CORBA_Object) retval, ev);
+		return ORBit_RootObject_duplicate (retval);
 
 	ORBit_option_parse (argc, argv, orbit_supported_options);
 
@@ -75,8 +76,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	retval->adaptors = g_ptr_array_new ();
 	ORBit_init_internals (retval, ev);
 
-	return (CORBA_ORB) CORBA_Object_duplicate (
-		(CORBA_Object) retval, ev);
+	return ORBit_RootObject_duplicate (retval);
 }
 
 CORBA_char *
@@ -319,10 +319,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 
 	objref = g_hash_table_lookup (orb->initial_refs, identifier);
 
-	if (objref)
-		return CORBA_Object_duplicate (objref, ev);
-
-	return CORBA_OBJECT_NIL;
+	return ORBit_RootObject_duplicate (objref);
 }
 
 static CORBA_TypeCode

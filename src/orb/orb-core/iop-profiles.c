@@ -1,7 +1,8 @@
-#include <orbit/orbit.h>
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <orbit/orbit.h>
 
 #include "iop-profiles.h"
 #include "orb-core-private.h"

@@ -1,12 +1,13 @@
 #include "config.h"
 #include <orbit/orbit.h>
+#include "../util/orbit-purify.h"
 
 static void
 ORBit_Policy_release (ORBit_RootObject obj)
 {
 	struct CORBA_Policy_type *policy = (struct CORBA_Policy_type *)obj;
 
-	g_free (policy);
+	p_free (policy, struct CORBA_Policy_type);
 }
 
 static ORBit_RootObject_Interface ORBit_Policy_interface = {

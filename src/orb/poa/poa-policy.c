@@ -1,3 +1,4 @@
+#include <config.h>
 #include <orbit/orbit.h>
 
 #define POLICY__get_value(name)                                              \

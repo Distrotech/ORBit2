@@ -8,6 +8,7 @@ INCLUDES =						\
 	$(ORBIT_CFLAGS)
 
 liborb_util_la_SOURCES= \
+	orbit-purify.h  \
 	genrand.c       \
 	orbit-options.c \
 	orbit-options.h \
