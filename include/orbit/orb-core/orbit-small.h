@@ -35,6 +35,8 @@ void           ORBit_sequence_set_size (gpointer            sequence,
 #define        ORBit_sequence_index(sequence,idx) (sequence)->_buffer[(idx)]
 void           ORBit_sequence_concat   (gpointer            sequence,
 					gconstpointer       append);
+void           ORBit_sequence_remove   (gpointer            sequence,
+                                        guint               idx);
 
 typedef enum {
 	ORBIT_CONNECTION_CONNECTED,

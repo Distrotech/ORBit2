@@ -71,6 +71,8 @@ testSequenceHelpers (void)
 	CORBA_long           l    = 0;
 	test_BoundedLongSeq *lseq = NULL;
 
+	d_print ("Testing ORBit_sequence helpers...\n");
+
 	lseq = ORBit_sequence_alloc (TC_test_BoundedLongSeq, 2);
 	g_assert (lseq != NULL);
 	g_assert (lseq->_length ==  2);
@@ -87,6 +89,10 @@ testSequenceHelpers (void)
 	g_assert (lseq->_length == 4);
 	g_assert (ORBit_sequence_index (lseq, 2) == 1);
 	g_assert (ORBit_sequence_index (lseq, 3) == 2);
+
+        ORBit_sequence_remove(lseq, 2);
+	g_assert (lseq->_length == 3);
+	g_assert (ORBit_sequence_index (lseq, 2) == 2);
 
 	ORBit_sequence_set_size (lseq, 100);
 	ORBit_sequence_set_size (lseq, 0);
