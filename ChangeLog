@@ -1,3 +1,10 @@
+2001-06-25  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/poa/poa.h: add string_to_ObjectId etc.
+
+	* src/orb/poa/poa.c: make root POA have non default
+	IMPLICIT_ACTIVATION policy.
+
 2001-06-25  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/dynamic/dynany.c
