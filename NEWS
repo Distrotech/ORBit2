@@ -1,3 +1,12 @@
+ORBit2-2.12.1
+        * bug fixes
+                + Fix mem leak on exception overwrite (Michael)
+                + Fix demarshalling CORBA_any containing
+                  null or void values (Michael)
+                + IDL generation (esp. skelimpl) fixes (Jules Colding)
+                + Ongoing Win32 port work (Tor Lillqvist)
+                + Fix linking on Darwin (Hans Petter Jansson)
+
 ORBit2-2.9.6
 
 	* bug fixes
