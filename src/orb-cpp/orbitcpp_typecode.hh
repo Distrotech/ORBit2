@@ -39,7 +39,8 @@ namespace CORBA {
 	 * UnionMemberSeq
 	 * EnumMemberSeq
 	 */
-	
+
+#if 0 // !!!
 	/* try this for now */
 	class StructMember : public CORBA::Object
 	{
@@ -52,11 +53,10 @@ namespace CORBA {
 		}
 	};
 
-	ORBITCPP_DECLARE_SIMPLE_SEQUENCE(CORBA::StructMember,
-		CORBA_sequence_CORBA_StructMember__alloc,
-		CORBA_sequence_CORBA_StructMember_allocbuf,
-		CORBA_sequence_CORBA_StructMember,
-		StructMemberSeq)
+	ORBITCPP_DECLARE_OBJECT_SEQUENCE(StructMemberSeq,
+									 CORBA::StructMember,
+									 CORBA_StructMember, 
+									 CORBA_sequence_CORBA_StructMember);
 
 	class UnionMember : public CORBA::Object
 	{
@@ -91,7 +91,8 @@ namespace CORBA {
 		CORBA_sequence_CORBA_Identifier_allocbuf,
 		CORBA_Identifier,
 		EnumMemberSeq)
-
+#endif
+		
 	typedef short ValueModifier;
 	const ValueModifier VM_NONE = 0;
 	const ValueModifier VM_CUSTOM = 1;

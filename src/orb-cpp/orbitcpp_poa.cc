@@ -260,9 +260,10 @@ PortableServer::POA::reference_to_id(CORBA::Object_ptr obj) {
 PortableServer::Servant
 PortableServer::POA::id_to_servant(PortableServer::ObjectId const &oid) {
 	CEnvironment ev;
-	PortableServer_ObjectId* c_oid = oid._orbitcpp_get_c_sequence_ptr();
+	PortableServer_ObjectId* c_oid = oid._orbitcpp_pack ();
 	PortableServer_Servant c_servant = PortableServer_POA_id_to_servant(_orbitcpp_cobj(),c_oid, ev._orbitcpp_cobj());
 	PortableServer::Servant srv = ((_orbitcpp_Servant *)c_servant)->m_cppservant;
+	CORBA_free (c_oid);
 	return srv;
 }
 
@@ -272,9 +273,10 @@ PortableServer::POA::id_to_servant(PortableServer::ObjectId const &oid) {
 CORBA::Object_ptr
 PortableServer::POA::id_to_reference(ObjectId const &oid) {
 	CEnvironment ev;
-	PortableServer_ObjectId* c_oid = oid._orbitcpp_get_c_sequence_ptr();
+	PortableServer_ObjectId* c_oid = oid._orbitcpp_pack();
 	CORBA_Object o =
 	    PortableServer_POA_id_to_reference(_orbitcpp_cobj(), c_oid, ev._orbitcpp_cobj());
+	CORBA_free (c_oid);
 	ev.propagate_sysex();
 	
 	return new CORBA::Object(o);
