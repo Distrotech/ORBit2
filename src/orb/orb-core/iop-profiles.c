@@ -262,6 +262,7 @@ IOP_profile_get_info (CORBA_Object  obj,
 	  }
       }
 #endif
+      return TRUE;
       break;
     case IOP_TAG_ORBIT_SPECIFIC:
       /* Due to (a) my brain deadness in putting multiple protocols in
