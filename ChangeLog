@@ -1,5 +1,9 @@
 2002-08-23  Michael Meeks  <michael@ximian.com>
 
+	* Version 2.4.3
+
+2002-08-23  Michael Meeks  <michael@ximian.com>
+	
 	* src/orb/orb-core/corba-any.c
 	(ORBit_demarshal_value): don't do expensive re-allocs
 	on every sequence from length 1 upwards, re-assuring
