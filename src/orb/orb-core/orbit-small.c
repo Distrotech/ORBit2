@@ -571,6 +571,8 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	adaptor_obj = obj->adaptor_obj;
 
 	if (adaptor_obj) {
+		tprintf_header (obj, m_data);
+		tprintf ("[in-proc]");
 		ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
 					    args, ctx, NULL, ev);
 		goto clean_out;
