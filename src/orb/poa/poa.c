@@ -1197,7 +1197,8 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		small_skel (pobj->servant, ret, args, ctx, ev, imp);
 
  clean_out:
-	CORBA_exception_free (ev);
+	if (recv_buffer)
+		CORBA_exception_free (ev);
 
 	if (poa->p_servant_retention == PortableServer_NON_RETAIN)
 		switch (poa->p_request_processing) {
