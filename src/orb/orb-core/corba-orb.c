@@ -254,6 +254,75 @@ shutdown_orb (void)
 	CORBA_exception_free (&ev);
 }
 
+static
+void 
+ORBit_initial_references_by_user (CORBA_ORB          orb, 
+				  gchar             *naming_ref,
+				  GSList            *initref_list,
+				  CORBA_Environment *ev)
+{
+	/* return if exception */ 
+	if (ev->_major != CORBA_NO_EXCEPTION) return;
+
+	/* set user defined references */ 
+	if (naming_ref != NULL) {
+		CORBA_Object objref
+			= CORBA_ORB_string_to_object (orb,
+						      naming_ref, 
+						      ev);
+		
+		/* FIXME, should abort if invalid option, don't forget
+		 * to free resources allocated by ORB */ 
+		if (ev->_major != CORBA_NO_EXCEPTION) {
+			g_warning ("Option ORBNamingIOR has invalid object reference: %s", 
+				   naming_ref);
+			CORBA_exception_free (ev);
+		}
+		else
+		{
+			/* FIXME, test type of object for
+			 * IDL:omg.org/CosNaming/NamingContext using _is_a()
+			 * operation */ 
+			ORBit_set_initial_reference (orb, 
+						     "NameService", 
+						     objref);
+		}
+	}
+
+	{ 
+		CORBA_Object objref = CORBA_OBJECT_NIL;
+		gint i = 0;
+		for (i = 0; i < g_slist_length (initref_list); ++i) {
+			ORBit_OptionKeyValue *tuple 
+				= (ORBit_OptionKeyValue*) g_slist_nth_data (
+					initref_list, i);
+
+			g_assert (tuple != NULL);
+			g_assert (tuple->key   != (gchar*)NULL);
+			g_assert (tuple->value != (gchar*)NULL);
+			
+			objref=CORBA_ORB_string_to_object (orb,
+							   tuple->value, 
+							   ev);
+
+			/* FIXME, should abort if invalid option,
+			 * don't forget to free resources allocated by
+			 * ORB */ 
+			if (ev->_major != CORBA_NO_EXCEPTION) {
+				g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
+					   tuple->key, tuple->value);
+				CORBA_exception_free (ev);
+			}
+			else
+			{
+				ORBit_set_initial_reference (orb, 
+							     tuple->key, 
+							     objref);
+			}
+		}
+	}
+}
+
 CORBA_ORB
 CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORBid orb_identifier,
@@ -313,65 +382,11 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_init_internals (retval, ev);
 	/* FIXME, handle exceptions */ 
 
-	/* FIXME, define procedure for following initialization */ 
-
-	/* set user defined references */ 
-	if (orbit_naming_ref != NULL) {
-		CORBA_Object objref
-			= CORBA_ORB_string_to_object (retval,
-						      orbit_naming_ref, 
-						      ev);
-		
-		/* FIXME, should abort if invalid option, don't forget
-		 * to free resources allocated by ORB */ 
-		if (ev->_major != CORBA_NO_EXCEPTION) {
-			g_warning ("Option ORBNamingIOR has invalid object reference: %s", 
-				   orbit_naming_ref);
-			CORBA_exception_free (ev);
-		}
-		else
-		{
-			/* FIXME, test type of object for
-			 * IDL:omg.org/CosNaming/NamingContext using _is_a()
-			 * operation */ 
-			ORBit_set_initial_reference (retval, 
-						     "NameService", 
-						     objref);
-		}
-	}
-
-	{ 
-		CORBA_Object objref = CORBA_OBJECT_NIL;
-		gint i = 0;
-		for (i = 0; i < g_slist_length (orbit_initref_list); ++i) {
-			ORBit_OptionKeyValue *tuple 
-				= (ORBit_OptionKeyValue*) g_slist_nth_data (
-					orbit_initref_list, i);
-
-			g_assert (tuple != NULL);
-			g_assert (tuple->key   != (gchar*)NULL);
-			g_assert (tuple->value != (gchar*)NULL);
-			
-			objref=CORBA_ORB_string_to_object (retval,
-							   tuple->key, 
-							   ev);
-
-			/* FIXME, should abort if invalid option,
-			 * don't forget to free resources allocated by
-			 * ORB */ 
-			if (ev->_major != CORBA_NO_EXCEPTION) {
-				g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
-					   tuple->key, tuple->value);
-				CORBA_exception_free (ev);
-			}
-			else
-			{
-				ORBit_set_initial_reference (retval, 
-							     tuple->key, 
-							     objref);
-			}
-		}
-	}
+	ORBit_initial_references_by_user (retval, 
+					  orbit_naming_ref,
+					  orbit_initref_list,
+					  ev);
+	/* FIXME, handle exceptions */ 
 
 	return ORBit_RootObject_duplicate (retval);
 }
@@ -647,6 +662,10 @@ CORBA_ORB_list_initial_services (CORBA_ORB          orb,
 	return retval;
 }
 
+/** The InvalidName exception is raised at @ev when
+ *  ORB.resolve_initial_references is passed an @identifier for which
+ *  there is no initial reference.
+ */
 CORBA_Object
 CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 				      const CORBA_char  *identifier,
@@ -658,9 +677,9 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	 * service names, valid names might be: NameService, RootPOA,
 	 * SecurityCurrent, PolicyCurrent, etc. */
  
-	if (!orb->initial_refs
-	    || (objref=g_hash_table_lookup (orb->initial_refs, identifier))==NULL)
-		return CORBA_OBJECT_NIL;
+	if (!orb->initial_refs ||
+	    !(objref=g_hash_table_lookup (orb->initial_refs, identifier)))
+		goto raise_invalid_name;
 	
 	return ORBit_RootObject_duplicate (objref);
 
