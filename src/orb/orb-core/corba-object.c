@@ -8,8 +8,8 @@
 #undef DEBUG
 
 /*
- * HashTable of POA generated refs that have been
- * externalised and refs that we have received.
+ * HashTable of Object Adaptor generated refs that have 
+ * been externalised and refs that we have received.
  */
 static GHashTable *objrefs = NULL;
 
@@ -103,8 +103,8 @@ CORBA_Object_release_cb(ORBit_RootObject robj)
   IOP_delete_profiles (&obj->profile_list);
   IOP_delete_profiles (&obj->forward_locations);
 
-  if ( obj->pobj != NULL )
-    ORBit_RootObject_release_T (obj->pobj);
+  if ( obj->adaptor_obj != NULL )
+    ORBit_RootObject_release_T (obj->adaptor_obj);
 
   g_free (obj);
 }
@@ -308,10 +308,12 @@ CORBA_boolean
 CORBA_Object_non_existent(CORBA_Object       obj,
 			  CORBA_Environment *ev)
 {
+  ORBit_OAObject adaptor_obj = obj->adaptor_obj;
+
   if(obj == CORBA_OBJECT_NIL)
     return TRUE;
 
-  if (obj->pobj && obj->pobj->servant)
+  if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
     return FALSE;
 
   return ORBit_object_get_connection(obj)?CORBA_FALSE:CORBA_TRUE;

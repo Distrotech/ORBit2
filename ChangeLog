@@ -1,3 +1,44 @@
+2001-07-31  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/poa/orbit-adaptor.h,
+	  src/orb/poa/orbit-adaptor.c,
+	  include/orbit/poa/Makefile.am,
+	  src/orb/poa/Makefile.am:
+	added orbit-adaptor.[ch]. Virtual Object Adaptor
+	interface.  
+
+	* include/orbit/poa/poa-basics.h: added
+	typedefs for ORBit_OAObject and ORBit_ObjectAdaptor.
+
+	* include/orbit/poa/poa-types.h,
+	  include/orbit/poa/portableserver-poa-type.h:
+	Included base structures in ORBIt_POAObject and
+	PortableServer_POA.
+
+	* src/orb/poa/orbit-poa-export.h 
+	(ORBit_handle_request, ORBit_small_handle_request,
+	ORBit_POA_object_to_okey): kill.
+
+	* src/orb/poa/poa.c 
+	(ORBit_POAObject_is_active, ORBit_POAObject_invoke): impl.
+	(ORBit_POA_object_to_okey) rename to 
+	ORBit_POAObject_object_to_objkey.
+	(ORBit_handle_request) rename to 
+	ORBit_POA_handle_request.
+	(ORBit_small_handle_rquest) rename to
+	ORBit_POAObject_handle_request.
+
+	* include/orbit/orb-core/corba-object-type.h,,
+	  include/orbit/orb-core/corba-orb-type.h,
+	  include/orbit/orb-core/orbit-object.h,
+	  include/orbit/orb-core/orbit-small.h,
+	  src/orb/orb-core/corba-object.c,
+	  src/orb/orb-core/corba-orb.c,
+	  src/orb/orb-core/iop-profiles.c,
+	  src/orb/orb-core/orbit-small.c,
+	  test/everything/server.c: host of minor
+	supporting changes.
+
 2001-07-31  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.3.92

@@ -569,14 +569,11 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	CORBA_completion_status completion_status;
 	GIOPConnection         *cnx;
 	GIOPMessageQueueEntry   mqe;
-	ORBit_POAInvocation     invoke_rec G_GNUC_UNUSED;
+	ORBit_OAObject          adaptor_obj = obj->adaptor_obj;
 
-	ORBIT_STUB_PreCall (obj, invoke_rec);
-
-	if (obj->pobj) {
-		ORBit_small_handle_request(
-			obj->pobj, m_data->name, ret,
-			args, ctx, NULL, ev);
+	if (adaptor_obj) {
+		ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
+					    args, ctx, NULL, ev);
 		goto clean_out;
 	}
 
@@ -626,7 +623,6 @@ retry_request:
 		break;
 	};
  clean_out:
-	ORBIT_STUB_PostCall (obj, invoke_rec);
 	return;
 
  system_exception:
@@ -635,78 +631,27 @@ retry_request:
 	goto clean_out;
 }
 
-static gboolean
-quick_compare (ORBit_IMethod *a,
-	       ORBit_IMethod *b)
-{
-	return (a->name_len == b->name_len &&
-		a->arguments._length == b->arguments._length &&
-		a->contexts._length  == b->contexts._length &&
-		a->flags == b->flags &&
-		a->exceptions._length == b->exceptions._length);
-}
-
 void
-ORBit_small_invoke (CORBA_Object                object,
-		    ORBit_IMethod              *m_data,
-		    gpointer                    ret,
-		    gpointer                   *args,
-		    CORBA_Context               ctx,
-		    CORBA_Environment          *ev)
+ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
+			    GIOPRecvBuffer    *recv_buffer,
+			    ORBit_IMethod     *m_data,
+			    gpointer           data,
+			    CORBA_Environment *ev)
 {
-	if (object->pobj && object->pobj->servant) {
-		PortableServer_ServantBase *servant;
-		ORBitSmallSkeleton          small_skel;
-		PortableServer_ClassInfo   *klass;
-		ORBit_IMethod              *real_mdata;
-		gpointer                    imp;
-
-		servant = object->pobj->servant;
-
-		klass = ORBIT_SERVANT_TO_CLASSINFO (servant);
-		
-		small_skel = klass->small_relay_call(
-			servant, m_data->name, (gpointer *)&real_mdata, &imp);
-		
-		if (!quick_compare (real_mdata, m_data))
-			g_warning ("Wierd, different type data '%s' '%s'",
-				   real_mdata->name, m_data->name);
-		
-		if (!imp) /* is_a ? */
-			CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
-						    CORBA_COMPLETED_NO);
-		else
-			small_skel (servant, ret, args, ctx, ev, imp);
-
-	} else
-		ORBit_small_invoke_stub (
-			object, m_data, ret, args, ctx, ev);
-}
-
-void
-ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
-			GIOPRecvBuffer             *recv_buffer,
-			ORBit_IMethod              *m_data,
-			ORBitSmallSkeleton          small_skel,
-			gpointer                    impl,
-			CORBA_Environment          *ev)
-{
-	int             i;
-	gpointer       *args = NULL;
-	gpointer       *scratch = NULL;
-	gpointer        pretval = NULL;
-	gpointer        retval = NULL;
-	GIOPSendBuffer *send_buffer;
-	CORBA_ORB       orb;
-	CORBA_TypeCode  tc;
-	gboolean        has_context;
-	struct CORBA_Context_type ctx;
-
-/*	fprintf (stderr, "Method '%s' on '%p'\n", m_data->name, servant); */
+	struct CORBA_Context_type  ctx;
+	gpointer                  *args = NULL;
+	gpointer                  *scratch = NULL;
+	gpointer                   pretval = NULL;
+	gpointer                   retval = NULL;
+	GIOPSendBuffer            *send_buffer;
+	CORBA_ORB                  orb;
+	CORBA_TypeCode             tc;
+	gboolean                   has_context;
+	int                        i;
 
 	do_giop_dump_recv (recv_buffer);
 
-	orb = ORBIT_SERVANT_TO_ORB (servant);
+	orb = adaptor_obj->objref->orb;
 
 	has_context = (m_data->contexts._length > 0);
 
@@ -802,7 +747,7 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 			g_warning ("FIXME: handle context demarshaling failure");
 	}
 
-	small_skel (servant, retval, args, &ctx, ev, impl);
+	adaptor_obj->interface->invoke (adaptor_obj, retval, args, &ctx, data, ev);
 
 	if (has_context)
 		ORBit_Context_server_free (&ctx);
@@ -965,35 +910,22 @@ ORBit_small_invoke_poa (PortableServer_ServantBase *servant,
 	CORBA_exception_free (ev);
 }
 
-#ifdef DEBUG
-gpointer
-ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
+ORBit_IInterface *
+ORBit_iinterface_from_idl (IDL_tree idl)
 {
-	gpointer epv;
-	ORBit_POAObject pobj;
-	PortableServer_ServantBase *servant;
-	PortableServer_ClassInfo   *class_info;
-	CORBA_unsigned_long         offset;
-	
-	pobj       = obj->pobj;
-	servant    = pobj->servant;
-	class_info = servant->vepv[0]->_private;
-	g_assert (class_info != NULL);
-	g_assert (class_id < class_info->vepvlen);
-	offset     = class_info->vepvmap [class_id];
+	g_warning ("Implement me");
 
-	epv = servant->vepv [offset];
-		
-	return epv;
+	return NULL;
 }
-#endif
 
 CORBA_char *
 ORBit_small_get_type_id (CORBA_Object       object,
 			 CORBA_Environment *ev)
 {
+	ORBit_OAObject adaptor_obj = object->adaptor_obj;
+
 	/* We stay always maximaly qualified localy */
-	if (object->pobj && object->pobj->servant)
+	if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
 		return CORBA_string_dup (object->type_id);
 
 	else {

@@ -21,13 +21,6 @@ void           ORBit_small_freekids    (CORBA_TypeCode      tc,
 					gpointer            p,
 					gpointer            d);
 
-void           ORBit_small_invoke      (CORBA_Object                object,
-					ORBit_IMethod              *m_data,
-					gpointer                    ret,
-					gpointer                   *args,
-					CORBA_Context               ctx,
-					CORBA_Environment          *ev);
-
 void           ORBit_small_invoke_stub (CORBA_Object        object,
 					ORBit_IMethod      *m_data,
 					gpointer            ret,
@@ -35,12 +28,11 @@ void           ORBit_small_invoke_stub (CORBA_Object        object,
 					CORBA_Context       ctx,
 					CORBA_Environment  *ev);
 
-void           ORBit_small_invoke_poa  (PortableServer_ServantBase *servant,
-					GIOPRecvBuffer             *recv_buffer,
-					ORBit_IMethod              *m_data,
-					ORBitSmallSkeleton          small_skel,
-					gpointer                    impl,
-					CORBA_Environment          *ev);
+void           ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
+					   GIOPRecvBuffer    *recv_buffer,
+					   ORBit_IMethod     *m_data,
+					   gpointer           data,
+					   CORBA_Environment *ev);
 
 CORBA_char       *ORBit_small_get_type_id         (CORBA_Object       object,
 						   CORBA_Environment *ev);

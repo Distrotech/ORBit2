@@ -1,7 +1,8 @@
 #ifndef _POA_BASICS_H_
 #define _POA_BASICS_H_ 1
 
-typedef struct ORBit_POAObject_type        *ORBit_POAObject;
+typedef struct ORBit_POAObject_type *ORBit_POAObject;
+typedef struct ORBit_OAObject_type  *ORBit_OAObject;
 
 #if !defined(_PortableServer_Servant_defined)
 #define _PortableServer_Servant_defined 1

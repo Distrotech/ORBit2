@@ -70,7 +70,7 @@ TestFactory_getBasicServerIOR(PortableServer_Servant servant,
   
 
   return CORBA_ORB_object_to_string (
-	  ORBIT_SERVANT_TO_ORB (servant),
+	  ORBIT_SERVANT_TO_FIRST_POAOBJECT(servant)->poa->orb,
 	  this->basicServerRef,ev);
 }
 
