@@ -1,6 +1,7 @@
 #include "config.h"
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <orbit/orbit.h>
 #include "poa/orbit-poa.h"
