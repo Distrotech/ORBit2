@@ -1,3 +1,16 @@
+2002-02-05  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-object.c
+	(object_hash_dump): impl.
+	(ORBit_RootObject_shutdown),
+	(ORBit_RootObject_init, do_unref): add more verbose
+	and powerful object debugging.
+
+	* src/orb/orb-core/corba-orb.c
+	(ORBit_setup_debug_flags): add 'refs'
+
+	* src/orb/orb-core/orbit-debug.h: fix bitmask cockup.
+
 2002-02-05  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/orb-core/corba-any.c: (ORBit_value_equivalent):
