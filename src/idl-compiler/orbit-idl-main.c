@@ -111,6 +111,7 @@ static const
 struct poptOption options[] = {
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_cpp_callback_options, 0, NULL, NULL},
   {NULL, '\0', POPT_ARG_INCLUDE_TABLE, &cl_libIDL_callback_options, 0, NULL, NULL},
+  {"lang", 'l', POPT_ARG_STRING, &cl_output_lang, 0, "Output language (default is C)", NULL},
   {"debug", 'd', POPT_ARG_INT, &cl_debuglevel, 0, "Debug level 0 to 4, default is 2", NULL},
   {"nostubs", '\0', POPT_ARG_NONE, &cl_disable_stubs, 0, "Don't output stubs", NULL},
   {"noskels", '\0', POPT_ARG_NONE, &cl_disable_skels, 0, "Don't output skels", NULL},
