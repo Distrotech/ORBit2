@@ -26,10 +26,10 @@ static int irda_getnameinfo(const struct sockaddr *sa, socklen_t sa_len,
 			    int flags);
 
 static LINCProtocolInfo protocol_ents[] = {
-#if defined(AF_INET) && defined(IPPROTO_TCP)
+#if defined(AF_INET)
   {"IPv4", AF_INET, sizeof(struct sockaddr_in), IPPROTO_TCP, 0, NULL, getaddrinfo /* also covers IPv6 & UNIX */, getnameinfo},
 #endif
-#if defined(AF_INET6) && defined(IPPROTO_TCP)
+#if defined(AF_INET6)
   {"IPv6", AF_INET6, sizeof(struct sockaddr_in6), IPPROTO_TCP, 0},
 #endif
 #ifdef AF_UNIX

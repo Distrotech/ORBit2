@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <linc/linc-config.h>
 
 typedef enum {
   LINC_CONNECTION_SSL

@@ -3,6 +3,7 @@
 /* So we can check if we need to retry */
 #include <openssl/bio.h>
 #endif
+#include "linc-private.h"
 #include <linc/linc-connection.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -77,14 +78,12 @@ linc_connection_connected(GIOChannel *gioc, GIOCondition condition, gpointer dat
 {
   LINCConnection *cnx = data;
 
+  cnx->tag = 0;
+
   if(condition == G_IO_OUT)
-    {
-      linc_connection_state_changed(cnx, LINC_CONNECTED);
-    }
+    linc_connection_state_changed(cnx, LINC_CONNECTED);
   else
-    {
-      linc_connection_state_changed(cnx, LINC_DISCONNECTED);
-    }
+    linc_connection_state_changed(cnx, LINC_DISCONNECTED);
 
   return FALSE;
 }
@@ -123,6 +122,7 @@ linc_connection_from_fd(LINCConnection *cnx, int fd, const LINCProtocolInfo *pro
 			LINCConnectionStatus status,
 			LINCConnectionOptions options)
 {
+  cnx->fd = fd;
   cnx->gioc = g_io_channel_unix_new(fd);
   cnx->was_initiated = was_initiated;
   cnx->is_auth = (proto->flags & LINC_PROTOCOL_SECURE)?TRUE:FALSE;
@@ -209,6 +209,11 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
   int n;
   int written = 0;
 
+  while(cnx->status == LINC_CONNECTING)
+    g_main_iteration(TRUE);
+
+  g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
+
   do {
 #if LINC_SSL_SUPPORT
     if(cnx->options & LINC_CONNECTION_SSL)
@@ -223,7 +228,7 @@ linc_connection_read(LINCConnection *cnx, guchar *buf, int len, gboolean block_f
 	  if(cnx->options & LINC_CONNECTION_SSL)
 	    {
 	      gulong rv;
-	      rv = SSL_get_error(n);
+	      rv = SSL_get_error(cnx->ssl, n);
 	      if(rv == SSL_ERROR_WANT_READ
 		 || rv == SSL_ERROR_WANT_WRITE)
 		g_main_iteration(FALSE);
@@ -257,6 +262,11 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 {
   int n;
 
+  while(cnx->status == LINC_CONNECTING)
+    g_main_iteration(TRUE);
+
+  g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
+
   while(len > 0)
     {
 #if LINC_SSL_SUPPORT
@@ -272,7 +282,7 @@ linc_connection_write(LINCConnection *cnx, const guchar *buf, gulong len)
 	  if(cnx->options & LINC_CONNECTION_SSL)
 	    {
 	      gulong rv;
-	      rv = SSL_get_error(n);
+	      rv = SSL_get_error(cnx->ssl, n);
 	      if(rv == SSL_ERROR_WANT_READ
 		 || rv == SSL_ERROR_WANT_WRITE)
 		g_main_iteration(FALSE);
@@ -307,6 +317,11 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
   register struct iovec *vptr;
   register gulong size_left;
 
+  while(cnx->status == LINC_CONNECTING)
+    g_main_iteration(TRUE);
+
+  g_return_val_if_fail(cnx->status == LINC_CONNECTED, -1);
+
 #if LINC_SSL_SUPPORT
   if(cnx->options & LINC_CONNECTION_SSL)
     {
@@ -329,9 +344,10 @@ linc_connection_writev(LINCConnection *cnx, struct iovec *vecs, int nvecs, gulon
       if(n < 0)
 	{
 	  if(errno == EAGAIN)
-	    g_main_iteration(FALSE); /* Try to give other things a chance to run */
+	    g_main_iteration(FALSE); /* Try to give other things a
+					chance to run */
 	  else
-	    return -1; /* Unhandleable error */
+	    return -1; /* Unhandlable error */
 	}
       else if(n == 0)
 	return -1;
