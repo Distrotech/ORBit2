@@ -1,5 +1,4 @@
-#include <orbit/orb-core/orb-core.h>
-#include <linc/linc.h>
+#include <orbit/orbit.h>
 
 static void
 CORBA_ORB_release_fn(ORBit_RootObject robj)
@@ -57,6 +56,18 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
 			   const CORBA_Object obj,
 			   CORBA_Environment * ev)
 {
+  g_return_val_if_fail(ev, NULL);
+
+  if(!obj
+     || !_obj
+     || ORBIT_ROOT_OBJECT_TYPE(obj) != ORBIT_ROT_OBJREF)
+    {
+      CORBA_exception_set_system(ev,
+				 ex_CORBA_BAD_PARAM,
+				 CORBA_COMPLETED_NO);
+      return NULL;
+    }
+
   return NULL;
 }
 

@@ -7,7 +7,7 @@
 
 struct CORBA_TypeCode_struct {
 	struct ORBit_RootObject_struct parent;
-	CORBA_TCKind kind;
+	CORBA_unsigned_long kind;
 	const char *name;
 	const char *repo_id;
 	CORBA_unsigned_long length;

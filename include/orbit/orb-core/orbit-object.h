@@ -1,7 +1,7 @@
 #ifndef ORBIT_OBJECT_H
 #define ORBIT_OBJECT_H 1
 
-#include <orbit/GIOP/giop-types.h>
+#include <glib.h>
 
 typedef enum {
 	ORBIT_ROT_NULL,
@@ -25,12 +25,10 @@ typedef struct ORBit_RootObject_struct *ORBit_RootObject;
 
 typedef void (* ORBit_RootObject_DestroyFunc)(ORBit_RootObject obj);
 
-typedef struct _ORBit_RootObject_Interface ORBit_RootObject_Interface;
-
-struct _ORBit_RootObject_Interface {
+typedef struct _ORBit_RootObject_Interface {
   ORBit_RootObject_Type type;
   ORBit_RootObject_DestroyFunc destroy;
-};
+} ORBit_RootObject_Interface;
 
 struct ORBit_RootObject_struct {
   const ORBit_RootObject_Interface * interface;
@@ -43,9 +41,10 @@ struct ORBit_RootObject_struct {
 #define ORBIT_REFCOUNT_MAX (1<<20)
 
 #define ORBIT_ROOT_OBJECT(obj) ((ORBit_RootObject)(obj))
-#define ORBIT_ROOT_OBJECT_TYPE(obj) ((ORBit_RootObject)(obj)->interface->type)
+#define ORBIT_ROOT_OBJECT_TYPE(obj) (((ORBit_RootObject)(obj))->interface->type)
 
 void ORBit_RootObject_init(ORBit_RootObject obj, const ORBit_RootObject_Interface * interface);
+
 gpointer ORBit_RootObject_duplicate(gpointer obj);
 void ORBit_RootObject_release(gpointer obj);
 

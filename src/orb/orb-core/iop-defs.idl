@@ -1,0 +1,7 @@
+#pragma inhibit push
+#include "corba-defs.idl"
+#pragma inhibit pop
+
+#include "GIOP.idl"
+#include "BiDirPolicy.idl"
+#include "conv_frame.idl"

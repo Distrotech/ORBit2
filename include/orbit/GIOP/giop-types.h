@@ -7,15 +7,11 @@
 #include <orbit/orbit-config.h>
 #include <orbit/util/orbit-util.h>
 
-#ifdef LINC_THREADSAFE
-#define ORBIT_THREADSAFE 1
-#endif
+#include <orbit/orb-core/corba-defs.h>
+#include <orbit/orb-core/iop-defs.h>
+#include <orbit/GIOP/giop-basics.h>
 
 #define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
-
-typedef struct _GIOPRecvBuffer GIOPRecvBuffer;
-typedef struct _GIOPSendBuffer GIOPSendBuffer;
-typedef struct _GIOPConnection GIOPConnection;
 
 typedef enum {
   GIOP_CONNECTION_SSL
@@ -52,6 +48,7 @@ typedef enum
   GIOP_NUM_MSG_TYPES
 } GIOPMsgType;
 
+#if 0
 typedef enum
 {
   GIOP_NO_EXCEPTION,
@@ -83,13 +80,9 @@ typedef struct {
   IOP_ServiceContext *_buffer;
   CORBA_boolean _release : 1;
 } IOP_ServiceContextList;
+#endif
 
 typedef CORBA_sequence_octet CORBA_Principal;
-
-typedef struct {
-} CORBA_sequence_IOP_TaggedComponent;
-
-typedef gushort IOP_ProfileId;
 
 typedef struct {
   IOP_ServiceContextList service_context;
@@ -110,95 +103,6 @@ typedef struct {
   CORBA_Principal requesting_principal;
 } GIOPMsgRequest_1_1;
 
-typedef enum {
-  GIOP_KeyAddr = 0,
-  GIOP_ProfileAddr = 1,
-  GIOP_ReferenceAddr = 2
-} GIOP_AddressingDisposition;
-
-#define IOP_TAG_ORBIT_SPECIFIC 0xbadfaecal
-typedef struct {
-  CORBA_char *unix_sock_path;
-  CORBA_unsigned_long ipv6_port;
-} TAG_ORBIT_SPECIFIC_info;
-
-#define IOP_TAG_INTERNET_IOP 0
-typedef struct {
-  CORBA_char *host;
-  CORBA_unsigned_short port;
-} TAG_INTERNET_IOP_info;
-
-#define IOP_TAG_MULTIPLE_COMPONENTS 1
-typedef struct {
-} TAG_MULTIPLE_COMPONENTS_info;
-
-#define IOP_TAG_IRDA_IOP 0x4f425400
-typedef struct {
-  CORBA_octet lsap_sel; /* If 0xFF, LSAP_ANY */
-  CORBA_unsigned_long addr; /* Device address */
-  CORBA_char *name; /* service name, similar to port# semantics. */
-  CORBA_sequence_octet object_key;
-  CORBA_sequence_IOP_TaggedComponent components;
-} TAG_IRDA_IOP_info;
-
-#define IOP_TAG_IPV6_IOP 0x4f425401
-typedef struct {
-  CORBA_char *host;
-  CORBA_unsigned_short port;
-  CORBA_sequence_octet object_key;
-  CORBA_sequence_IOP_TaggedComponent components;
-} TAG_IPV6_IOP_info;
-
-#define IOP_TAG_UNIX_IOP 0x4f425402
-typedef struct {
-  CORBA_char *sock_path;
-  CORBA_sequence_octet object_key;
-} TAG_UNIX_IOP_info;
-
-typedef enum {
-  CORBA_Security_NoProtection = 1,
-  CORBA_Security_Integrity = 2,
-  CORBA_Security_Confidentiality = 4,
-  CORBA_Security_DetectReplay = 8,
-  CORBA_Security_DetectMisordering = 16,
-  CORBA_Security_EstablishTrustInTarget = 32,
-  CORBA_Security_EstablishTrustInClient = 64
-} CORBA_Security_AssociationOptions;
-
-#define TAG_SSL_SEC_TRANS 20
-
-typedef struct {
-  CORBA_Security_AssociationOptions target_supports, target_requires;
-  CORBA_unsigned_short port;
-} TAG_SSL_SEC_TRANS_info;
-
-typedef struct {
-  CORBA_Security_AssociationOptions target_supports, target_requires;
-  CORBA_char *service;
-} TAG_SSL_SEC_TRANS_EXT_info; /* A more generic version of TAG_SSL_SEC_TRANS */
-
-typedef struct {
-  CORBA_octet giop_major, giop_minor;
-  IOP_ProfileId profile_type;
-  gpointer profile_info;
-} IOP_TaggedProfile;
-
-typedef struct {
-  CORBA_Object ior;
-} GIOP_IORAddressingInfo;
-
-typedef struct {
-  GIOP_AddressingDisposition _d;
-  union {
-    /* case KeyAddr */
-    CORBA_sequence_octet object_key;
-    /* case ProfileAddr */
-    IOP_TaggedProfile profile;
-    /* case ReferenceAddr */
-    GIOP_IORAddressingInfo ior;
-  } _u;
-} GIOP_TargetAddress;
-
 typedef struct {
   CORBA_unsigned_long request_id;
   CORBA_octet response_flags;
@@ -211,14 +115,14 @@ typedef struct {
 typedef struct {
   IOP_ServiceContextList service_context;
   CORBA_unsigned_long request_id;
-  GIOPReplyStatusType_1_2 reply_status; /* lame */
+  CORBA_unsigned_long reply_status; /* lame */
 } GIOPMsgReply_1_0;
 
 typedef GIOPMsgReply_1_0 GIOPMsgReply_1_1;
 
 typedef struct {
   CORBA_unsigned_long request_id;
-  GIOPReplyStatusType_1_2 reply_status;
+  CORBA_unsigned_long reply_status;
   IOP_ServiceContextList service_context;
 } GIOPMsgReply_1_2;
 
@@ -240,14 +144,14 @@ typedef struct {
 
 typedef struct {
   CORBA_unsigned_long request_id;
-  GIOPLocateStatusType_1_2 locate_status; /* lame */
+  CORBA_unsigned_long locate_status; /* lame */
 } GIOPMsgLocateReply_1_0;
 
 typedef GIOPMsgLocateReply_1_0 GIOPMsgLocateReply_1_1;
 
 typedef struct {
   CORBA_unsigned_long request_id;
-  GIOPLocateStatusType_1_2 locate_status;
+  CORBA_unsigned_long locate_status;
 } GIOPMsgLocateReply_1_2;
 
 typedef struct {
