@@ -300,6 +300,11 @@ giop_thread_free (GIOPThread *tdata)
 	giop_thread_list = g_list_remove (giop_thread_list, tdata);
 	G_UNLOCK (giop_thread_list);
 
+	g_mutex_free (tdata->lock);
+	g_cond_free (tdata->incoming);
+	g_queue_free (tdata->async_ents);
+	g_queue_free (tdata->request_queue);
+ 
 	g_free (tdata);
 }
 
