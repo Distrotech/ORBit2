@@ -1,5 +1,11 @@
 2001-08-07  Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/poa/poa.c
+	(PortableServer_string_to_ObjectId): set _release
+	to TRUE.
+
+2001-08-07  Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/orb-core/corba-policy.c
 	(ORBit_Policy_release): impl.
 	(ORBit_Policy_new): ref the policy.
