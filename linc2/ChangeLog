@@ -1,5 +1,38 @@
 2001-11-22  Michael Meeks  <michael@ximian.com>
 
+	* src/linc-connection.c (linc_source_unwatch_out): fix
+	brainless not listening for input.
+
+	* src/linc.c (linc_io_add_watch): beef up
+	watch debug.
+
+	* src/linc-connection.c (linc_source_add): impl.
+	(linc_connection_class_state_changed),
+	(linc_source_unwatch_out): use it.
+
+	* src/linc-private.h (LINC_IN_CONDS,
+	LINC_ERR_CONDS): move here.
+
+	* src/linc-connection.c: update IO conditions.
+
+	* src/linc-server.c
+	(linc_server_handle_io): accept G_IO_PRI
+	(linc_server_handle): kill, not used.
+	(linc_server_setup): take note of G_IO_PRI
+
+	* src/linc-protocols.c
+	(linc_protocol_get_sockaddr_unix): make the UDS name
+	more random; include the pid when debugging.
+
+	* src/linc-connection.c: instrument more.
+
+	* src/linc-server.c (linc_server_setup): convert
+	to new debug framework.
+
+	* src/linc-debug.h: add.
+
+2001-11-22  Michael Meeks  <michael@ximian.com>
+
 	* src/linc-connection.c
 	(linc_connection_connected): split out re-connect
 	(linc_source_unwatch_out): this to clarify.

@@ -30,8 +30,7 @@
 #include <linc/linc-connection.h>
 
 #include "linc-private.h"
-
-#define DEBUG
+#include "linc-debug.h"
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -333,11 +332,23 @@ linc_protocol_get_sockaddr_unix (const LINCProtocolInfo *proto,
 
 	if (!path) {
 		struct timeval t;
+		static guint pid = 0, idx = 0;
+
+		if (!pid)
+			pid = getpid ();
+
 		gettimeofday (&t, NULL);
 		g_snprintf (buf, sizeof (buf),
+/* We'd do this all the time, but the pid is not very random,
+ * and this string is truncated by some unixes */
+#ifdef CONNECTION_DEBUG
+			    "%s/l-%d-%x%x", linc_tmpdir, pid,
+#else
 			    "%s/linc-%x%x", linc_tmpdir,
-			     rand(), (guint)(t.tv_sec^t.tv_usec));
-#ifdef DEBUG
+#endif
+			    (guint) (rand() ^ t.tv_sec ^ pid),
+			    (guint) (idx++ ^ t.tv_usec));
+#ifdef CONNECTION_DEBUG
 		if (g_file_test (buf, G_FILE_TEST_EXISTS))
 			g_warning ("'%s' already exists !", buf);
 #endif

@@ -19,18 +19,10 @@
 #include <openssl/ssl.h>
 #endif
 
+#include "linc-debug.h"
 #include "linc-private.h"
 #include <linc/linc-config.h>
 #include <linc/linc-connection.h>
-
-#undef DEBUG
-
-#ifndef DEBUG
-  static inline void dprintf (const char *format, ...) { };
-#else
-#  include <stdio.h>
-#  define dprintf(format...) fprintf(stderr, format)
-#endif
 
 struct _LINCConnectionPrivate {
 #ifdef LINC_SSL_SUPPORT
@@ -49,6 +41,11 @@ enum {
 };
 static guint linc_connection_signals [LAST_SIGNAL];
 
+
+static gboolean linc_connection_connected (GIOChannel  *gioc,
+					   GIOCondition condition,
+					   gpointer     data);
+
 static void
 linc_source_remove (LINCConnection *cnx)
 {
@@ -56,14 +53,29 @@ linc_source_remove (LINCConnection *cnx)
 		LincWatch *thewatch = cnx->priv->tag;
 		cnx->priv->tag = NULL;
 		linc_io_remove_watch (thewatch);
+		d_printf ("Removed watch on %d\n", cnx->priv->fd);
 	}
+}
+
+static void
+linc_source_add (LINCConnection *cnx,
+		 GIOCondition    condition)
+{
+	g_assert (cnx->priv->tag == NULL);
+
+	cnx->priv->tag = linc_io_add_watch (
+		cnx->priv->gioc, condition,
+		linc_connection_connected, cnx);
+
+	d_printf ("Added watch on %d (0x%x)\n",
+		 cnx->priv->fd, condition);
 }
 
 static void
 linc_close_fd (LINCConnection *cnx)
 {
 	if (cnx->priv->fd >= 0) {
-		dprintf ("Close %d\n", cnx->priv->fd);
+		d_printf ("Close %d\n", cnx->priv->fd);
 		close (cnx->priv->fd);
 	}
 	cnx->priv->fd = -1;
@@ -99,10 +111,18 @@ linc_connection_finalize (GObject *obj)
 	parent_class->finalize (obj);
 }
 
-#define ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)
-#define IN_CONDS  (G_IO_PRI|G_IO_IN)
 
-static void linc_source_unwatch_out (LINCConnection *cnx);
+/*
+ * FIXME: a horribly inefficient way to simply stop
+ * listening for G_IO_OUT - which we use initialy to
+ * be notified of connection.
+ */
+static void
+linc_source_unwatch_out (LINCConnection *cnx)
+{
+	linc_source_remove (cnx);
+	linc_source_add (cnx, LINC_ERR_CONDS | LINC_IN_CONDS);
+}
 
 static gboolean
 linc_connection_connected (GIOChannel  *gioc,
@@ -119,55 +139,44 @@ linc_connection_connected (GIOChannel  *gioc,
 	klass = LINC_CONNECTION_CLASS (G_OBJECT_GET_CLASS (data));
 
 	if (cnx->status == LINC_CONNECTED &&
-	    (condition & IN_CONDS) &&
-	    klass->handle_input) 
+	    (condition & LINC_IN_CONDS) &&
+	    klass->handle_input) {
 
+		d_printf ("Handle input on fd %d\n", cnx->priv->fd);
 		klass->handle_input (cnx);
 
-	else if (condition & (ERR_CONDS | G_IO_OUT)) {
+	} else if (condition & (LINC_ERR_CONDS | G_IO_OUT)) {
 
 		switch (cnx->status) {
 		case LINC_CONNECTING:
 			n = 0;
 			rv = getsockopt (cnx->priv->fd, SOL_SOCKET, SO_ERROR, &n, &n_size);
 			if (!rv && !n && condition == G_IO_OUT) {
-				dprintf ("State changed to connected on %d\n", cnx->priv->fd);
+				d_printf ("State changed to connected on %d\n", cnx->priv->fd);
 				linc_source_unwatch_out (cnx);
 				linc_connection_state_changed (cnx, LINC_CONNECTED);
 				
 			} else {
-				dprintf ("Error connecting %d %d %d on fd %d\n",
+				d_printf ("Error connecting %d %d %d on fd %d\n",
 					   rv, n, errno, cnx->priv->fd);
 				linc_connection_state_changed (cnx, LINC_DISCONNECTED);
 			}
 			break;
 		case LINC_CONNECTED: {
-			dprintf ("Disconnect %d\n", cnx->priv->fd);
+			d_printf ("Disconnect %d\n", cnx->priv->fd);
 			linc_connection_state_changed (cnx, LINC_DISCONNECTED);
 			break;
 		}
 		default:
 			break;
 		}
-	}
+	} else
+		g_warning ("Dropping state on fd %d on the floor (%d)",
+			   cnx->priv->fd, condition);
 
 	g_object_unref (G_OBJECT (cnx));
 
 	return TRUE;
-}
-
-/*
- * FIXME: a horribly inefficient way to simply stop
- * listening for G_IO_OUT - which we use initialy to
- * be notified of connection.
- */
-static void
-linc_source_unwatch_out (LINCConnection *cnx)
-{
-	linc_source_remove (cnx);
-	cnx->priv->tag = linc_io_add_watch (
-		cnx->priv->gioc, ERR_CONDS,
-		linc_connection_connected, cnx);
 }
 
 /*
@@ -190,7 +199,9 @@ static void
 linc_connection_class_state_changed (LINCConnection      *cnx,
 				     LINCConnectionStatus status)
 {
-	dprintf ("State changed to %d on fd %d\n", status, cnx->priv->fd);
+	d_printf ("State changing from '%s' to '%s' on fd %d\n",
+		 STATE_NAME (cnx->status), STATE_NAME (status),
+		 cnx->priv->fd);
 
 	switch (status) {
 	case LINC_CONNECTED:
@@ -203,22 +214,18 @@ linc_connection_class_state_changed (LINCConnection      *cnx,
 		}
 #endif
 		if (!cnx->priv->tag)
-			cnx->priv->tag = linc_io_add_watch (
-				cnx->priv->gioc, ERR_CONDS | IN_CONDS,
-				linc_connection_connected, cnx);
+			linc_source_add (cnx, LINC_ERR_CONDS | LINC_IN_CONDS);
 		break;
 
 	case LINC_CONNECTING:
 		/* FIXME: We might be re-connecting, and need to watch
 		 * G_IO_OUT - again this could be more efficient */
 		linc_source_remove (cnx);
-		cnx->priv->tag = linc_io_add_watch (
-			cnx->priv->gioc, G_IO_OUT|ERR_CONDS,
-			linc_connection_connected, cnx);
+		linc_source_add (cnx, G_IO_OUT | LINC_ERR_CONDS);
 		break;
 
 	case LINC_DISCONNECTED:
-		dprintf ("State changed to disconnected\n");
+		d_printf ("State changed to disconnected\n");
 		linc_source_remove (cnx);
 		linc_close_fd (cnx);
 
@@ -263,8 +270,13 @@ linc_connection_from_fd (LINCConnection         *cnx,
 	cnx->priv->fd      = fd;
 	cnx->priv->gioc    = g_io_channel_unix_new (fd);
 
-	cnx->remote_host_info  = remote_host_info;
+	cnx->remote_host_info = remote_host_info;
 	cnx->remote_serv_info = remote_serv_info;
+
+	d_printf ("Cnx from fd (%d) '%s', '%s', '%s'\n",
+		 fd, proto->name, 
+		 remote_host_info ? remote_host_info : "<Null>",
+		 remote_serv_info ? remote_serv_info : "<Null>");
 
 	if (proto->setup)
 		proto->setup (fd, options);
@@ -339,6 +351,9 @@ linc_connection_initiate (LINCConnection        *cnx,
 	if (rv && errno != EINPROGRESS)
 		goto out;
 
+	d_printf ("initiate 'connect' on new fd %d [ %d; %d ]\n",
+		 fd, rv, errno);
+
 	retval = linc_connection_from_fd (
 		cnx, fd, proto, 
 		g_strdup (host), g_strdup (service),
@@ -346,8 +361,10 @@ linc_connection_initiate (LINCConnection        *cnx,
 		options);
 
  out:
-	if (!cnx && fd >= 0)
+	if (!cnx && fd >= 0) {
+		d_printf ("initiation failed\n");
 		close (fd);
+	}
 
 	g_free (saddr);
 
@@ -391,6 +408,8 @@ linc_connection_read (LINCConnection *cnx,
 		      gboolean        block_for_full_read)
 {
 	int bytes_read = 0;
+
+	d_printf ("Read up to %d bytes from fd %d\n", len, cnx->priv->fd);
 
 	if (!len)
 		return 0;
@@ -449,6 +468,8 @@ linc_connection_read (LINCConnection *cnx,
 		}
 	} while (len > 0 && block_for_full_read);
 
+	d_printf ("we read %d bytes\n", bytes_read);
+
 	return bytes_read;
 }
 
@@ -481,6 +502,8 @@ linc_connection_write (LINCConnection *cnx,
 	}
 
 	g_return_val_if_fail (cnx->status == LINC_CONNECTED, -1);
+
+	d_printf ("Write %ld bytes to fd %d\n", len, cnx->priv->fd);
 
 	while (len > 0) {
 #ifdef LINC_SSL_SUPPORT
@@ -558,7 +581,7 @@ linc_connection_writev (LINCConnection *cnx,
 			linc_main_iteration (TRUE);
 	}
 
-	dprintf ("Write to fd %d\n", cnx->priv->fd);
+	d_printf ("Writev %ld bytes to fd %d\n", total_size, cnx->priv->fd);
 
 	g_return_val_if_fail (cnx->status == LINC_CONNECTED, -1);
 
