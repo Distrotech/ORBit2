@@ -910,6 +910,29 @@ ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 	CORBA_exception_free (ev);
 }
 
+#ifdef DEBUG
+gpointer
+ORBit_small_getepv (CORBA_Object obj, CORBA_unsigned_long class_id)
+{
+	PortableServer_ServantBase *servant;
+	PortableServer_ClassInfo   *class_info;
+	CORBA_unsigned_long         offset;
+	ORBit_POAObject             pobj;
+
+	if (obj->adaptor_obj->interface->adaptor_type != ORBIT_ADAPTOR_POA)
+		return NULL;
+
+	pobj        = (ORBit_POAObject)obj->adaptor_obj;
+	servant     = pobj->servant;
+	class_info  = servant->vepv[0]->_private;
+	g_assert (class_info != NULL);
+	g_assert (class_id < class_info->vepvlen);
+	offset     = class_info->vepvmap [class_id];
+
+	return servant->vepv [offset];
+}
+#endif
+
 ORBit_IInterface *
 ORBit_iinterface_from_idl (IDL_tree idl)
 {
