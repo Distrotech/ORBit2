@@ -1,4 +1,10 @@
+2001-08-23  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: require linc 0.1.4
+	bump version to 2.3.94
+
 2001-08-23  Sander Vesik <Sander.Vesik@sun.com>
+
 	* configure.in: check for popt.h
 
 2001-08-23  Mark McLoughlin <mark@skynet.ie>
