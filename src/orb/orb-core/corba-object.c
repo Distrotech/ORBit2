@@ -617,9 +617,9 @@ IOP_components_marshal(GIOPSendBuffer *buf, GSList *components)
 	case IOP_TAG_GENERIC_SSL_SEC_TRANS:
 	case IOP_TAG_SSL_SEC_TRANS:
 	  /* Help out with putting an encaps thing on the wire */
-	  len = buf->msg.header.message_size;
 	  lenptr = (CORBA_unsigned_long *)
 	    giop_send_buffer_append_indirect(buf, &len, 4);
+	  len = buf->msg.header.message_size;
 	  giop_send_buffer_append(buf, &buf->msg.header.flags, 1);
 	  break;
 	default:
@@ -845,6 +845,7 @@ IOP_TAG_SSL_SEC_TRANS_demarshal(IOP_ComponentId id, GIOPRecvBuffer *buf)
     return NULL;
 
   sub->cur = ALIGN_ADDRESS(sub->cur, 4);
+
   if((sub->cur + 10) > sub->end)
     {
       giop_recv_buffer_unuse(sub);

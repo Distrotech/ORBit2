@@ -12,7 +12,7 @@
 static GSList *send_buffer_list;
 O_MUTEX_DEFINE_STATIC(send_buffer_list_lock);
 O_MUTEX_DEFINE_STATIC(request_id_lock);
-static const char giop_zero_buf[GIOP_CHUNK_ALIGN] = {0};
+static const char giop_zero_buf[GIOP_CHUNK_ALIGN*10] = {0};
 
 static void giop_send_buffer_append_real(GIOPSendBuffer *buf, gconstpointer mem, gulong len);
 
@@ -363,6 +363,8 @@ giop_send_buffer_append_indirect(GIOPSendBuffer *buf, gconstpointer mem, gulong 
   retval = indirect;
   if(mem)
     memcpy(indirect, mem, len);
+  else
+    memset(indirect, 0, len);
   giop_send_buffer_append_real(buf, indirect, len);
 
   buf->indirect = indirect + len;
