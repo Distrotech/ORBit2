@@ -67,7 +67,8 @@ cl_cpp_callback(poptContext con, enum poptCallbackReason reason,
 {
   g_assert(opt!=NULL);
 
-  if(opt->shortName=='D')
+  if(!strcmp(opt->longName, "D")
+     || !strcmp(opt->longName, "define"))
     g_string_append(cl_cpp_args, "-D");
   else if(opt->shortName=='I')
     g_string_append(cl_cpp_args, "-I");
