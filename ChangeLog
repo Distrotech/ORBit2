@@ -1,3 +1,13 @@
+2001-08-09  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/Makefile.am: add orbit-typelib.c
+
+	* src/orb/orb-core/orbit-small.c: split out type libraries
+
+	* src/orb/orb-core/orbit-typelib.c: to here.
+
+	* src/orb/orb-core/orbit-trace.c (ORBit_trace_value): fixup.
+
 2001-08-08  Michael Meeks  <michael@ximian.com>
 
 	* test/Makefile.am: add typelib-dump

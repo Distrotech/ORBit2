@@ -16,6 +16,7 @@ main_src = \
 	orbhttp.h \
 	orbit-object.c \
 	orbit-small.c \
+	orbit-typelib.c \
 	orbit-trace.c \
 	corba-object.c \
 	corba-policy.c \

@@ -29,6 +29,7 @@
 #undef PROFILING
 #undef TIMING_RUN
 #undef BIG_STUBS
+#define NUM_RUNS 1000
 
 
 #ifdef PROFILING
@@ -950,7 +951,7 @@ run_tests (test_TestFactory   factory,
 	int i;
 
 #ifdef TIMING_RUN
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < NUM_RUNS; i++) {
 #else
 	for (i = 0; i < 1; i++) {
 #endif

@@ -101,8 +101,8 @@ module test {
 	interface SequenceServer {
 		StrSeq opStrSeq(in StrSeq inArg, inout StrSeq inoutArg, out StrSeq outArg);
 		BoundedStructSeq opBoundedStructSeq(in BoundedStructSeq inArg,
-											inout BoundedStructSeq inoutArg,
-											out BoundedStructSeq outArg);
+						    inout BoundedStructSeq inoutArg,
+						    out BoundedStructSeq outArg);
 	};
   
 	enum AnEnum { 
