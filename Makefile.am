@@ -6,7 +6,6 @@ bin_SCRIPTS=orbit2-config
 
 EXTRA_DIST =            \
 	ORBit2.m4       \
-	ORBit.spec	\
 	HACKING         \
 	MAINTAINERS
 
