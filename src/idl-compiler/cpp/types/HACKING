@@ -56,9 +56,9 @@ TYPE		IN	OUT	INOUT	Ret	Attrib	Array	Seq	Struct	Union
 Simple		Y	Y	Y	Y	Y	Y	-	y	-
 Object		Y	Y	Y	Y	y	Y	-	w	-
 Struct/fixed	Y	Y	Y	Y	y	-	-	-	-
-Struct/var	w	w	w	w	w	-	-	-	-
+Struct/var	Y	y	y	Y	y	-	-	-	-
 Union		-	-	-	-	-	-	-	-	-
-String		Y	Y	Y	y	y	w	-	w	-
+String		Y	Y	Y	y	y	Y	-	Y	-
 Sequence	-	-	-	-	-	-	-	-	-
-Array/fixed	Y	Y	Y	Y	y	y	-	-	-
-Array/var	Y	Y	Y	Y	y	y	-	-	-
+Array/fixed	Y	Y	Y	Y	y	y	-	y	-
+Array/var	Y	Y	Y	Y	y	y	-	y	-
