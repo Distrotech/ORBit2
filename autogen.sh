@@ -46,7 +46,7 @@ do
   echo processing $i
   (cd $i; \
     libtoolize --copy --force; \
-    aclocal; autoheader; \
+    aclocal $ACLOCAL_FLAGS; autoheader; \
     automake --add-missing; \
     autoheader; \
     autoconf)
@@ -56,7 +56,7 @@ echo processing libIDL
 (cd libIDL; \
     libtoolize --copy --force; \
     automake --add-missing; \
-    aclocal; \
+    aclocal $ACLOCAL_FLAGS; \
     autoconf)
 
 echo "Running ./configure --enable-maintainer-mode" "$@"
