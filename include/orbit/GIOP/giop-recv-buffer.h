@@ -42,7 +42,7 @@ struct _GIOPRecvBuffer {
 
 	GIOPVersion giop_version;
 	gulong      left_to_read;
-	guchar      free_body : 1;
+	guint       free_body : 1;
 };
 
 #define         giop_msg_conversion_needed(msg)     giop_endian_conversion_needed(GIOP_MSG(msg)->header.flags)

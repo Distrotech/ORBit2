@@ -884,7 +884,9 @@ ORBit_POA_setup_root (CORBA_ORB orb, CORBA_Environment *ev)
 {
 	PortableServer_POA poa;
 	CORBA_Policy       policybuf[1];
-	CORBA_PolicyList   policies = {1, 1, (CORBA_Object *) policybuf, CORBA_FALSE};
+	CORBA_PolicyList   policies = {1, 1, NULL, CORBA_FALSE};
+
+	policies._buffer = (CORBA_Object *) policybuf;
 
 	policies._buffer [0] = (CORBA_Policy)
 		PortableServer_POA_create_implicit_activation_policy (

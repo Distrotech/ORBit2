@@ -7,7 +7,15 @@
 #undef CONNECTION_DEBUG
 
 #ifndef CONNECTION_DEBUG
-   static inline void d_printf (const char *format, ...) { }
+#ifdef G_HAVE_ISO_VARARGS
+#  define d_printf(...)
+#elif defined(G_HAVE_GNUC_VARARGS)
+#  define d_printf(args...)
+#else
+static inline void d_printf (const char *format, ...)
+{
+}
+#endif
 #  define STATE_NAME(s) ""
 #else
 #  include <stdio.h>
