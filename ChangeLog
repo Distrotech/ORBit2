@@ -1,3 +1,14 @@
+2002-02-26  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_list_initial_services): update
+	assertion to not do an assignment.
+
+2002-02-26  Yanko Kaneti <yaneti@declera.com>
+
+	* src/orb/orb-core/orbit-debug.h: handle different
+	var-arg cases in the parser.
+
 2002-02-24  Sam Couter <scouter@bigpond.net.au>
 
 	* Add G_BEGIN_DECLS and G_END_DECLS to installed headers to allow

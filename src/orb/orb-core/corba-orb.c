@@ -435,9 +435,8 @@ CORBA_ORB_list_initial_services (CORBA_ORB          orb,
 
 		retval->_release = CORBA_TRUE;
 
-		g_assert (info->index = retval->_length);
-	}
-	else {
+		g_assert (info->index == retval->_length);
+	} else {
 		retval->_length = 0;
 		retval->_buffer = NULL;
 	}
