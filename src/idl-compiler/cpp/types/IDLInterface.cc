@@ -273,6 +273,12 @@ IDLInterface::getForwarder () const
     return getCPPIdentifier () + "_forwarder";
 }
 
+string
+IDLInterface::getQualifiedForwarder () const
+{
+    return getNSScopedCPPTypeName () + "_forwarder";
+}
+
 void
 IDLInterface::writeForwarder (ostream &header_ostr,
 			      Indent  &header_indent,

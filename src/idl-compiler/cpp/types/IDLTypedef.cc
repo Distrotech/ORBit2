@@ -26,6 +26,12 @@
 
 #include "IDLTypedef.hh"
 
+string
+IDLTypedef::getQualifiedForwarder () const
+{
+    return m_alias.getQualifiedForwarder ();
+}
+
 void
 IDLTypedef::writeForwarder (ostream &header_ostr,
 			    Indent  &header_indent,
