@@ -1,3 +1,12 @@
+2001-07-05  Mark McLoughlin <mark@skynet.ie>
+	
+	* test/poa/poatest-basic04.c,
+	  test/poa/poatest-basic05.c,
+	  test/poa/poatest-basic06.c,
+	  test/poa/poatest-basic07.c,
+	  test/poa/poatest-basic08.c: use 
+	CORBA_PolicyList_allocbuf instead of g_new0.
+
 2001-07-04  Mark McLoughlin <mark@skynet.ie>
 
 	* configure.in: updated glib check.
