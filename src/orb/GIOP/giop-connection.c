@@ -5,12 +5,26 @@
 
 #include "giop-private.h"
 
+#undef CNX_LIST_DEBUG
+
 static LINCConnectionClass *parent_class = NULL;
 
 static struct {
 	GMutex *lock;
 	GList  *list;
 } cnx_list = { NULL, NULL };
+
+#ifdef CNX_LIST_DEBUG
+static char *
+giop_cnx_descr (GIOPConnection *cnx)
+{
+	return g_strdup_printf ("Cnx (%p) - '%s' '%s' '%s' - %s",
+				cnx, cnx->parent.proto->name,
+				cnx->parent.remote_host_info ? cnx->parent.remote_host_info : "<Null>",
+				cnx->parent.remote_serv_info ? cnx->parent.remote_serv_info : "<Null>",
+				cnx->parent.options & LINC_CONNECTION_SSL ? "ssl" : "no ssl");
+}
+#endif
 
 void
 giop_connection_list_init (void)
@@ -22,6 +36,11 @@ giop_connection_list_init (void)
 static void
 giop_connection_list_add (GIOPConnection *cnx)
 {
+#ifdef CNX_LIST_DEBUG
+	g_warning ("Add '%s'", giop_cnx_descr (cnx));
+	g_assert (cnx->parent.was_initiated);
+#endif
+
 	cnx_list.list = g_list_prepend (
 		cnx_list.list, 
 		g_object_ref (G_OBJECT (cnx)));
@@ -30,7 +49,11 @@ giop_connection_list_add (GIOPConnection *cnx)
 static void
 giop_connection_list_remove (GIOPConnection *cnx)
 {
-	cnx_list.list = g_list_remove (cnx_list.list, cnx);
+#ifdef CNX_LIST_DEBUG
+	g_warning ("Remove '%s'", giop_cnx_descr (cnx));
+#endif
+	if (cnx->parent.was_initiated)
+		cnx_list.list = g_list_remove (cnx_list.list, cnx);
 }
 
 static GIOPConnection *
@@ -40,12 +63,11 @@ giop_connection_list_lookup (const char *proto_name,
 			     gboolean    is_ssl)
 {
 	GList *l;
-	GIOPConnection *retval = NULL;
 	const LINCProtocolInfo *proto;
 
 	proto = linc_protocol_find (proto_name);
 
-	for (l = cnx_list.list; l && !retval; l = l->next) {
+	for (l = cnx_list.list; l; l = l->next) {
 		GIOPConnection *cnx = l->data;
 
 		if (cnx->parent.proto == proto &&
@@ -58,7 +80,7 @@ giop_connection_list_lookup (const char *proto_name,
 			return g_object_ref (G_OBJECT (cnx));
 	}
 
-	return retval;
+	return NULL;
 }
 
 static void
@@ -192,7 +214,7 @@ giop_connection_initiate (const char *proto_name,
 #endif
 
 	cnx = giop_connection_list_lookup (
-		proto_name, remote_serv_info,
+		proto_name, remote_host_info,
 		remote_serv_info, (options & LINC_CONNECTION_SSL));
 
 	if (!cnx) {

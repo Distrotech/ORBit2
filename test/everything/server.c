@@ -472,6 +472,8 @@ test_TestFactory_Servant servant;
 	CORBA_Object_release (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
+	g_warning ("released factory");
+
 	CORBA_ORB_destroy (global_orb, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 

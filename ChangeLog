@@ -1,3 +1,19 @@
+2001-11-19  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_list_lookup): kill retval.
+	(giop_cnx_descr): impl. for debug.
+	(giop_connection_initiate): DOH ! pass the right args to
+	the connection cache.
+	(giop_connection_list_add): validate connection, add debug.
+	(giop_connection_list_remove): only try to remove
+	initiated connections, add debug.
+
+2001-11-16  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c
+	(test_BasicServer_opStringA_cb): free the returned strings.
+
 2001-11-18  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: add warning cflags : -Wall -Wunused

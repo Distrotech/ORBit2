@@ -59,7 +59,8 @@ giop_GIOP_TargetAddress_demarshal(GIOPRecvBuffer *buf, GIOP_TargetAddress *value
 }
 
 static gboolean
-giop_IOP_ServiceContextList_demarshal(GIOPRecvBuffer *buf, IOP_ServiceContextList *value)
+giop_IOP_ServiceContextList_demarshal (GIOPRecvBuffer *buf,
+				       IOP_ServiceContextList *value)
 {
   gboolean do_bswap = giop_msg_conversion_needed(buf);
   int i;

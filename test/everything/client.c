@@ -1198,6 +1198,10 @@ test_BasicServer_opStringA_cb (CORBA_Object          object,
 	g_assert (!strcmp (out_str, constants_STRING_OUT));
 	g_assert (!strcmp (ret_str, constants_STRING_RETN));
 
+	CORBA_free (inout_str);
+	CORBA_free (out_str);
+	CORBA_free (ret_str);
+
 	done = 1;
 }
 
@@ -1487,6 +1491,8 @@ main (int argc, char *argv [])
 
 	CORBA_Object_release (factory, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
+
+	g_warning ("released factory");
 
 	CORBA_Object_release ((CORBA_Object) global_poa, &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
