@@ -385,7 +385,9 @@ ORBit_Context_demarshal (CORBA_Context   parent,
 	initme->parent.refs = ORBIT_REFCOUNT_STATIC;
 
 	initme->parent_ctx = parent;
-
+	
+	initme->mappings = NULL; /* init, in case 'goto errout' occures */
+ 
 	buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 	if ((buf->cur + 4) > buf->end)
 		goto errout;
