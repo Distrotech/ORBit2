@@ -307,7 +307,7 @@ testException (test_TestFactory   factory,
 	g_assert (rev->_major == CORBA_NO_EXCEPTION);
 }
 
-static gboolean
+static CORBA_TypeCode
 find_tc (CORBA_sequence_CORBA_TypeCode *tcs, 
 	 const char                    *repo_id)
 {
@@ -315,15 +315,16 @@ find_tc (CORBA_sequence_CORBA_TypeCode *tcs,
 
 	for (i = 0; i < tcs->_length; i++)
 		if (!strcmp (tcs->_buffer [i]->repo_id, repo_id))
-			return TRUE;
+			return tcs->_buffer [i];
 
-	return FALSE;
+	return NULL;
 }
 
 static void
 testIInterface (test_TestFactory   factory, 
 		CORBA_Environment *ev)
 {
+	CORBA_TypeCode    tc;
 	test_StructServer objref;
 	CORBA_char       *type_id;
 	ORBit_IInterface *iinterface;
@@ -389,6 +390,12 @@ testIInterface (test_TestFactory   factory,
 	g_assert (find_tc (tcs, "IDL:orbit/test/Soup:1.0"));
 	g_assert (find_tc (tcs, "IDL:orbit/test/EnumUnion/Colour:1.0"));
 	g_assert (find_tc (tcs, "IDL:orbit/test/ArrayUnion:1.0"));
+	
+	tc = find_tc (tcs, "IDL:orbit/test/StrSeq:1.0");
+	g_assert (!strcmp (tc->repo_id, "IDL:orbit/test/StrSeq:1.0"));
+	g_assert (tc->kind == CORBA_tk_alias);
+	g_assert (tc->subtypes[0]->kind);
+
 	CORBA_free (tcs);
 }
 

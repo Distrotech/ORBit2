@@ -575,10 +575,16 @@ orbit_cbe_flatten_ref (IDL_ParamRole role, IDL_tree typespec)
 void
 orbit_cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
 {
+	int i = 0;
 	IDL_tree l;
 
-	fprintf (of, "gpointer %s[] = { \n", name);
+	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
+	     l = IDL_LIST(l).next)
+		i++;
+
+	fprintf (of, "gpointer %s[%d];\n", name, i);
 	
+	i = 0;
 	for (l = IDL_OP_DCL(tree).parameter_dcls; l;
 	     l = IDL_LIST(l).next) {
 		IDL_tree decl = IDL_LIST (l).data;
@@ -593,11 +599,12 @@ orbit_cbe_flatten_args (IDL_tree tree, FILE *of, const char *name)
 			g_error("Unknown IDL_PARAM type");
 		}
 		
-		fprintf (of, "%s%s%c ", orbit_cbe_flatten_ref (r, tspec),
-			 IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str,
-			 IDL_LIST (l).next ? ',' : ' ');
+		fprintf (of, "%s[%d] = %s%s;\n",
+			 name, i,
+			 orbit_cbe_flatten_ref (r, tspec),
+			 IDL_IDENT (IDL_PARAM_DCL (decl).simple_declarator).str);
+		i++;
 	}
-	fprintf (of, "};");
 }
 
 static char *

@@ -1,3 +1,13 @@
+2002-10-16  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (testIInterface):
+	  add type regression tests for James' work.
+
+	* src/idl-compiler/orbit-idl-c-utils.c
+	(orbit_cbe_flatten_args): use _args[i] =...;
+	initialization instead of array init, to make
+	HP/UX happy.
+
 2002-10-14  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/poa/orbit-adaptor.c: (ORBit_handle_request): init
@@ -50,6 +60,10 @@
 	to correct type before storing it
 
 2002-09-30  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (find_tc): return
+	the typecode.
+	(testIInterface): do some tests on StrSeq.
 
 	* src/orb/orb-core/orbit-small.c
 	(orbit_small_marshal, orbit_small_demarshal),
