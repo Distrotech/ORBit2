@@ -41,8 +41,8 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
   fi
 
   AC_PATH_PROG(ORBIT_CONFIG, orbit-config, no)
-  min_orbit_version=ifelse([$1], ,0.99.7,$1)
-  AC_MSG_CHECKING(for ORBIT - version >= $min_orbit_version)
+  min_orbit_version=ifelse([$1], , 0.5.1, $1)
+  AC_MSG_CHECKING(for ORBit - version >= $min_orbit_version)
   no_orbit=""
   if test "$ORBIT_CONFIG" = "no" ; then
     no_orbit=yes
@@ -50,11 +50,11 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
     ORBIT_CFLAGS=`$ORBIT_CONFIG $orbit_config_args --cflags`
     ORBIT_LIBS=`$ORBIT_CONFIG $orbit_config_args --libs`
     orbit_config_major_version=`$ORBIT_CONFIG $orbit_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
     orbit_config_minor_version=`$ORBIT_CONFIG $orbit_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
     orbit_config_micro_version=`$ORBIT_CONFIG $orbit_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
     if test "x$enable_orbittest" = "xyes" ; then
       ac_save_CFLAGS="$CFLAGS"
       ac_save_LIBS="$LIBS"
@@ -191,6 +191,7 @@ main ()
      ORBIT_LIBS=""
      ifelse([$3], , :, [$3])
   fi
+  AC_PATH_PROG(ORBIT_IDL, orbit-idl, , ifelse([$3], , :, [$3]))
   AC_SUBST(ORBIT_CFLAGS)
   AC_SUBST(ORBIT_LIBS)
   rm -f conf.orbittest
