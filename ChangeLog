@@ -1,3 +1,9 @@
+2001-12-01  Theo van Klaveren  <t.vanklaveren@student.utwente.nl>
+
+	* src/orb/include/Makefile.am: make -> $(MAKE).
+	* src/orb/GIOP/giop-send-buffer.c: add <sys/types.h> to the
+	includes. Fixes the build on FreeBSD.
+
 2001-11-29  Mark McLoughlin  <mark@skynet.ie>
 
 	* src/orb/GIOP/giop.c: (giop_dump_recv): print the 
