@@ -117,6 +117,8 @@ test_broken_cnx_handle_input (LINCConnection *cnx)
 
 	g_assert (ret == LINC_IO_FATAL_ERROR);
 
+	linc_connection_state_changed (cnx, LINC_DISCONNECTED);
+
 	return TRUE;
 }
 
