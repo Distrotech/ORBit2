@@ -102,7 +102,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/include/*
 %{prefix}/info/libIDL.info.gz
 %{prefix}/lib/*.sh
-%{prefix}/lib/ORBit
 %{prefix}/lib/lib*.a
 %{prefix}/lib/lib*.so
 %{prefix}/share/aclocal/*
