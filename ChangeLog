@@ -1,5 +1,10 @@
 2002-06-21  Michael Meeks  <michael@ximian.com>
 
+	* test/test-giop.c (run_test): add symmetry test.
+	(main): test things both ways around.
+
+2002-06-21  Michael Meeks  <michael@ximian.com>
+
 	* test/test-giop.c (test_spoof_callback),
 	(test_spoof_hook, test_spoofing): impl.
 	(run_test): impl.
