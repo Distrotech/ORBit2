@@ -1,5 +1,10 @@
 2002-03-01  Mark McLoughlin  <mark@skynet.ie>
 
+	* test/poa/poatest-basic*.c: don't use lovely C99 compliant
+	structure initialisation .... just to keep forte happy.
+
+2002-03-01  Mark McLoughlin  <mark@skynet.ie>
+
 	* src/idl-compiler/orbit-idl-c-headers.c: (ch_output_type_union):
 	output the enum decl here if need be.
 

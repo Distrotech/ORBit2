@@ -35,24 +35,24 @@ static void
 poatest_test_impl (PortableServer_Servant servant, CORBA_Environment *ev) { }
 
 PortableServer_ServantBase__epv base_epv = {
-	._private    = NULL,
-	.finalize    = NULL,
-	.default_POA = NULL
+	NULL,    /* _private    */
+	NULL,    /* finalize    */
+	NULL     /* default_POA */
 };
 
 POA_poatest__epv poatest_epv = {
-	._private = NULL,
-	.test     = poatest_test_impl
+	NULL,               /* _private */
+	poatest_test_impl   /* test     */
 };
 
 POA_poatest__vepv poatest_vepv = {
-	._base_epv = &base_epv,
-	.poatest_epv  = &poatest_epv
+	&base_epv,    /* _base_epv    */
+	&poatest_epv  /* poatest_epv  */
 };
 
 POA_poatest poatest_servant = {
-	._private = NULL,
-	.vepv     = &poatest_vepv
+	NULL,         /* _private */
+	&poatest_vepv /* vepv     */
 };
 
 poatest
