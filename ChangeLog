@@ -1,5 +1,16 @@
 2001-08-27 Mark McLoughlin <mark@skynet.ie>
 
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_component_free): free object key.
+	(IOP_TAG_INTERNET_IOP_free): ditto.
+	(IOP_TAG_ORBIT_SPECIFIC_free): ditto.
+	Note: To avoid deadlock use ORBit_free_T, even 
+	      though the lock is not neccessarily taken.
+	      This doesn't matter, because no RootObjects
+	      are affected.
+
+2001-08-27 Mark McLoughlin <mark@skynet.ie>
+
 	* src/orb/poa/poa.c(ORBit_POA_setup_root): release
 	the policy.
 
