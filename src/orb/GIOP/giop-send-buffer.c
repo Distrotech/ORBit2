@@ -411,6 +411,8 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 	if (!blocking && retval == LINC_IO_QUEUED_DATA)
 		retval = 0;
 
+	/* FIXME: we need to flag the connection disconnected on fatal error */
+
 	LINC_MUTEX_UNLOCK (cnx->outgoing_mutex);
 
 	return retval;

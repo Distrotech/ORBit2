@@ -48,6 +48,8 @@ g_CORBA_Object_equal (gconstpointer a, gconstpointer b)
 				b = IOP_profile_dump (other_object, cur2->data);
 				fprintf (stderr, "Profiles match:\n'%s':%s\n'%s':%s\n",
 					 _obj->type_id, a, other_object->type_id, b);
+				g_free (a);
+				g_free (b);
 #endif
 				return TRUE;
 			}
@@ -144,8 +146,11 @@ ORBit_objref_find (CORBA_ORB   orb,
 	{
 		GSList *l;
 		g_print ("Profiles: ");
-		for (l = profiles; l; l = l->next)
-			g_print ("%s", IOP_profile_dump (&fakeme, l->data));
+		for (l = profiles; l; l = l->next) {
+			char *str;
+			g_print ("%s", (str = IOP_profile_dump (&fakeme, l->data)));
+			g_free (str);
+		}
 		g_print ("\n");
 	}
 #endif
@@ -434,7 +439,10 @@ ORBit_marshal_object (GIOPSendBuffer *buf, CORBA_Object obj)
 	if (obj)
 		for (cur = obj->profile_list; cur; cur = cur->next) {
 #ifdef OBJECT_DEBUG
-			fprintf (stderr, "%s\n", IOP_profile_dump (obj, cur->data));
+			char *str;
+			fprintf (stderr, "%s\n",
+				 (str = IOP_profile_dump (obj, cur->data)));
+			g_free (str);
 #endif
 			IOP_profile_marshal (obj, buf, cur->data);
 		}

@@ -1,3 +1,12 @@
+2002-01-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/corba-object.c: update to free
+	result of IOP profile dumpage.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_components_free): make it free the list too,
+	and NULL the list for safety.
+
 2002-01-14  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/orb-core/corba-policy-type.h,
