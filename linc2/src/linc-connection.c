@@ -533,6 +533,7 @@ linc_connection_write (LINCConnection *cnx,
 
 				else if (errno == EAGAIN &&
 					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
+
 					linc_main_iteration (FALSE);
 
 				else if (errno == EBADF) {
@@ -542,13 +543,16 @@ linc_connection_write (LINCConnection *cnx,
 				} else
 					return -1;
 			}
-		} else if (n == 0)
+		} else if (n == 0) /* CHECK: is this really an error condition */
 			return -1;
 
 		else {
 			buf += n;
 			len -= n;
 		}
+
+		if (cnx->status != LINC_CONNECTED)
+			return -1;
 	}
 
 	return 0;
@@ -618,6 +622,7 @@ linc_connection_writev (LINCConnection *cnx,
 
 				else if (errno == EAGAIN &&
 					 (cnx->options & LINC_CONNECTION_NONBLOCKING))
+
 					linc_main_iteration (FALSE);
 
 				else if (errno == EBADF) {
@@ -626,7 +631,7 @@ linc_connection_writev (LINCConnection *cnx,
 				} else
 					return -1; /* Unhandlable error */
 
-			} else if (n == 0)
+			} else if (n == 0) /* CHECK: is this really an error condition */
 				return -1;
 
 			else {
@@ -640,6 +645,9 @@ linc_connection_writev (LINCConnection *cnx,
 					vptr->iov_len -= n;
 				}
 			}
+
+			if (cnx->status != LINC_CONNECTED)
+				return -1;
 		}
 	}
 

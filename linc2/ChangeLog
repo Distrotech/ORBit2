@@ -1,3 +1,10 @@
+2001-12-08  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-connection.c (linc_connection_write),
+	(linc_connection_writev): handle the connection
+	dying in mid-write, it seems EAGAIN gets fired to
+	distinguish from a 0 length write == an error conditon (?)
+
 2001-12-07  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-connection.c
