@@ -1,3 +1,9 @@
+2002-05-14  Sean Atkinson  <sean@cantab.net>
+
+	* src/orb/orb-core/orbit-trace.c
+	(ORBit_trace_value): Replace middle of long strings with dots.
+	(ORBit_trace_timestamp): Pad microseconds with zeros.
+
 2002-05-13  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.3.109
