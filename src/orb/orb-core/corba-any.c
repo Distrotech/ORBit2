@@ -1310,6 +1310,35 @@ ORBit_sequence_append (gpointer      sequence,
 }
 
 void
+ORBit_sequence_remove (gpointer sequence,
+                       guint    idx)
+{
+	guint element_size, remaining;
+	guchar *elem;
+	CORBA_TypeCode tc, subtc;
+  	CORBA_sequence_CORBA_octet *seq = sequence;
+
+	tc = ORBit_alloc_get_tcval (sequence);
+	SKIP_ALIAS (tc);
+	g_return_if_fail (tc->kind == CORBA_tk_sequence);
+	g_return_if_fail (seq != NULL);
+	g_return_if_fail (seq->_length <= seq->_maximum);
+	g_return_if_fail (idx < seq->_length);
+
+	subtc = tc->subtypes [0];
+	element_size = ORBit_gather_alloc_info (subtc);
+	elem = seq->_buffer + element_size*idx;
+        remaining = seq->_length - idx - 1;
+        ORBit_freekids_via_TypeCode (subtc, elem);
+          /* shift remaining elements into free slot */
+        memcpy (elem, elem + element_size, element_size*remaining);
+          /* zero last element */
+        memset (elem + element_size*remaining, 0, element_size);
+
+	seq->_length--;
+}
+
+void
 ORBit_sequence_concat (gpointer      sequence,
 		       gconstpointer append)
 {
