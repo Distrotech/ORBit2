@@ -80,19 +80,6 @@ module test {
 		VariableLengthStruct a;
 	};
 
-
-	interface StructServer {
-		FixedLengthStruct opFixed(in FixedLengthStruct inArg, 
-								  inout FixedLengthStruct inoutArg,
-								  out FixedLengthStruct outArg);
-		VariableLengthStruct opVariable(in VariableLengthStruct inArg, 
-								  inout VariableLengthStruct inoutArg,
-								  out VariableLengthStruct outArg);
-		CompoundStruct opCompound(in CompoundStruct inArg, 
-								  inout CompoundStruct inoutArg,
-								  out CompoundStruct outArg);
-	};
-
 	typedef sequence<string> StrSeq;
 	typedef sequence<CompoundStruct,2> BoundedStructSeq;
 	typedef sequence<long,2> BoundedLongSeq;
@@ -144,6 +131,18 @@ module test {
 		long opLong(in long inArg, inout long inoutArg, out long outArg);
 		AnEnum opEnum(in AnEnum inArg, inout AnEnum inoutArg, out AnEnum outArg);
 		void opException() raises(TestException);
+	};
+
+	interface StructServer {
+		FixedLengthStruct opFixed(in FixedLengthStruct inArg, 
+					  inout FixedLengthStruct inoutArg,
+					  out FixedLengthStruct outArg);
+		VariableLengthStruct opVariable(in VariableLengthStruct inArg, 
+						inout VariableLengthStruct inoutArg,
+						out VariableLengthStruct outArg);
+		CompoundStruct opCompound(in CompoundStruct inArg, 
+					  inout CompoundStruct inoutArg,
+					  out CompoundStruct outArg);
 	};
 
 	interface BaseServer {
