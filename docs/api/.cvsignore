@@ -1,0 +1,16 @@
+Makefile
+Makefile.in
+*.stamp
+*.lo
+.libs
+html
+xml
+ORBit2-decl-list.txt
+ORBit2-decl.txt
+ORBit2-undocumented.txt
+ORBit2-unused.txt
+ORBit2.hierarchy
+ORBit2.signals
+ORBit2.args
+ORBit2.interfaces
+ORBit2.prerequisites

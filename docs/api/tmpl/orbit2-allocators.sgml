@@ -1,0 +1,65 @@
+<!-- ##### SECTION Title ##### -->
+orbit2-allocators
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO CORBA_sequence_set_release ##### -->
+<para>
+
+</para>
+
+@s: 
+@r: 
+
+
+<!-- ##### MACRO CORBA_sequence_get_release ##### -->
+<para>
+
+</para>
+
+@s: 
+
+
+<!-- ##### FUNCTION CORBA_free ##### -->
+<para>
+
+</para>
+
+@mem: 
+
+
+<!-- ##### FUNCTION ORBit_alloc_tcval ##### -->
+<para>
+
+</para>
+
+@tc: 
+@nelements: 
+@Returns: 
+
+
+<!-- ##### FUNCTION ORBit_realloc_tcval ##### -->
+<para>
+
+</para>
+
+@old: 
+@tc: 
+@old_num_elements: 
+@num_elements: 
+@Returns: 
+
+

@@ -1,0 +1,9 @@
+<SECTION>
+<FILE>orbit2-allocators</FILE>
+CORBA_sequence_set_release
+CORBA_sequence_get_release
+CORBA_free
+ORBit_alloc_tcval
+ORBit_realloc_tcval
+</SECTION>
+

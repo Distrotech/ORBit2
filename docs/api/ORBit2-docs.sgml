@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+    <!ENTITY orbit2-allocators SYSTEM "xml/orbit2-allocators.xml">
+    ]>
+
+<book id="index">
+    <bookinfo>
+	<title>ORBit2 Reference Manual</title>
+    </bookinfo>
+
+    <!--   <chapter> -->
+    <!--     <title>Libbonobo API Reference Manual</title> -->
+
+    <chapter id="general">
+	<title>API</title>
+	&orbit2-allocators;
+    </chapter>
+
+</book>
