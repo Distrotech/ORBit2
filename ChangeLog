@@ -1,5 +1,10 @@
 2003-07-28  Frank Rehberger  <Frank.Rehberger@web.de>
 
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_object_to_string):
+	feature allows stringified represantation in corbaloc syntax
+
+2003-07-28  Frank Rehberger  <Frank.Rehberger@web.de>
+
 	* test/Makefile.am (noinst_PROGRAMS): add target test-corbaloc
 
 	* test/test-corbaloc.c: test verifies string->object
