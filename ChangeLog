@@ -1,3 +1,14 @@
+2001-10-30  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/orb-core/orbit-object.c
+	(ORBit_RootObject_shutdown): upd. to account for the ORB
+	hanging around.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_destroy): set
+	exceptions on an unclean shutdown, release default ctx.
+	(CORBA_ORB_release_fn): check refs where we have an ev,
+	don't release default ctx here.
+
 2001-10-29  Mark McLoughlin  <mark@skynet.ie>
 
 	* include/orbit/poa/poa-basics.h

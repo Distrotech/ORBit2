@@ -3,16 +3,25 @@
 static glong alive_root_objects = 0;
 static glong total_refs = 0;
 
-void
+int
 ORBit_RootObject_shutdown (void)
 {
-	if (alive_root_objects)
+	int valid_running = 1; /* The ORB */
+
+	if (!ORBit_RootObject_lifecycle_lock &&
+	    alive_root_objects - valid_running)
 		g_warning ("ORB: a total of %ld refs to %ld ORB "
 			   "objects were leaked",
-			   total_refs, alive_root_objects);
-	else if (total_refs)
+			   total_refs - valid_running,
+			   alive_root_objects - valid_running);
+	else if (total_refs - valid_running)
 		g_warning ("ORB: a total of %ld refs to ORB "
-			   "objects were leaked", total_refs);
+			   "objects were leaked",
+			   total_refs - valid_running);
+	else
+		return 0;
+
+	return 1;
 }
 
 void

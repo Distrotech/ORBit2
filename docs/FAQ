@@ -269,3 +269,20 @@ optimize the marshal / de-marshal process to make it arbitarily fast.
 
 	See the OMG website at http://www.omg.org. Alternatively read
 the ORBit headers, and pseudo IDL available in ORBit2/src/idl/.
+
+* What is the "purify cleanliness" autoconf option ?
+
+	This (unfinished) option allows the ORB to be configured to
+run in a slightly slower, but 'cleaner' mode. Purify is a tool that
+performs advanced memory debugging, and it will detect many common
+errors. Some of the things ORBit2 can do eg. using uninitialized stack
+space as a source of randomness will flag false positives as purify
+errors ( an Uninitialized Memory Read or UMR ). Enabling this flag
+ensures that all such memory will be blanked first before being read.
+This also applies to initializing return values before returning them,
+even on exceptions - a case where CORBA specifies an uninitialized
+return value.
+
+	The performance impact of having a putify clean ORB is
+probably fairly minimal, perhaps ~10% slower max., finger in the air
+guestimation.

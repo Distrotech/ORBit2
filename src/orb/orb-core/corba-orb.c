@@ -27,11 +27,7 @@ CORBA_ORB_release_fn (ORBit_RootObject robj)
 
 	g_ptr_array_free (orb->adaptors, TRUE);
 
-	ORBit_RootObject_release_T (orb->default_ctx);
-
 	g_hash_table_destroy (orb->initial_refs);
-
-	ORBit_RootObject_shutdown ();
 
 	g_free (orb);
 }
@@ -868,14 +864,20 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa &&
-	    ((ORBit_RootObject) root_poa)->refs != 1)
+	    ((ORBit_RootObject) root_poa)->refs != 1) {
 		g_warning ("CORBA_ORB_destroy: Application still has %d "
 			   "refs to RootPOA.",
 			   ((ORBit_RootObject)root_poa)->refs - 1);
+		CORBA_exception_set_system (
+			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
+	}
 
 	g_hash_table_foreach (orb->initial_refs,
 			      (GHFunc)ORBit_service_list_free_ref,
 			      NULL);
+
+	ORBit_RootObject_release (orb->default_ctx);
+	orb->default_ctx = CORBA_OBJECT_NIL;
 
 	{
 		int i;
@@ -891,17 +893,29 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 				leaked_poas++;
 		}
 
-		if (leaked_poas)
+		if (leaked_poas) {
 			g_warning ("CORBA_ORB_destroy: leaked '%d' POAs", leaked_poas);
+			CORBA_exception_set_system (
+				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
+		}
 
-		if (((ORBit_RootObject)orb)->refs != 2 + leaked_poas)
+		if (((ORBit_RootObject)orb)->refs != 2 + leaked_poas) {
 			g_warning ("CORBA_ORB_destroy: ORB still has %d refs.",
 				   ((ORBit_RootObject)orb)->refs - 1 - leaked_poas);
+			CORBA_exception_set_system (
+				ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
+		}
 	}
 
 	orb->life_flags |= ORBit_LifeF_Destroyed;
 
 	ORBit_RootObject_release (orb);
+
+	/* At this stage there should be 1 ref left in the system -
+	 * on the ORB */
+	if (ORBit_RootObject_shutdown ())
+		CORBA_exception_set_system (
+			ev, ex_CORBA_FREE_MEM, CORBA_COMPLETED_NO);
 }
 
 CORBA_Policy

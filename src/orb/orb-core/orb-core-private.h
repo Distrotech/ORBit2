@@ -55,7 +55,7 @@ GSList          *IOP_profiles_copy        (GSList         *profile_list);
 gboolean ORBit_demarshal_IOR (CORBA_ORB orb, GIOPRecvBuffer *buf,
 			      char **ret_type_id, GSList **ret_profiles);
 
-void     ORBit_RootObject_shutdown (void);
+int      ORBit_RootObject_shutdown (void);
 char   **ORBit_get_typelib_paths   (void);
 gboolean ORBit_proto_use           (const char *name);
 
