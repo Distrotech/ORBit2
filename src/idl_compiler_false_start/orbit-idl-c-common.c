@@ -311,7 +311,7 @@ cc_output_alloc_type_dcl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
       ident = IDL_TYPE_ARRAY(node).ident;
       break;
     default:
-      g_error("Huh?");
+      g_assert_not_reached();
       break;
     }
 
