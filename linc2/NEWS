@@ -1,3 +1,11 @@
+Version 1.1.1
+
+	* much improved threading (Michael)
+	* much improved docs (Gustavo Carneiro)
+	* cygwin support (Masahiro Sakai)
+	* Unix socket length fix (Masahiro)
+	* OSF/1 True64 support (mmokrejs)
+
 Version 1.0.1
 
 	* fixes
