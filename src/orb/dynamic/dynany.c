@@ -255,7 +255,13 @@ dynany_kind_mismatch (DynAny *dynany,
 		      CORBA_TCKind kind,
 		      CORBA_Environment *ev)
 {
-	if (dynany->any->_type->kind != kind) {
+	CORBA_TypeCode real_tc;
+
+	real_tc = dynany->any->_type;
+	while (real_tc->kind == CORBA_tk_alias)
+		real_tc = real_tc->subtypes [0];
+
+	if (real_tc->kind != kind) {
 		CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
 				     ex_DynamicAny_DynAny_TypeMismatch, NULL);
 		return TRUE;
@@ -1796,6 +1802,109 @@ DynamicAny_DynSequence_set_elements (DynamicAny_DynSequence   obj,
 	for (i = 0; i < value->_length; i++) {
 		CORBA_any *a = &value->_buffer [i];
 		gconstpointer src = a->_value;
+
+		ORBit_copy_value_core (&src, &dest, subtc);
+	}
+}
+
+DynamicAny_DynAnySeq *
+DynamicAny_DynStruct_get_elements_as_dyn_any (DynamicAny_DynSequence obj,
+					      CORBA_Environment     *ev)
+{
+	DynAny *dynany;
+	int i;
+	CORBA_sequence_CORBA_octet *s;
+	DynamicAny_DynAnySeq *retval;
+	CORBA_TypeCode subtc;
+
+	o_return_val_if_fail (obj != NULL, NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_val_if_fail (dynany != NULL &&
+			      dynany->any != NULL &&
+			      dynany->any->_type != NULL, NULL);
+
+	if (dynany_kind_mismatch (dynany, CORBA_tk_sequence, ev))
+		return NULL;
+
+	s = dynany->any->_value;
+	if (!s)
+		return NULL;
+	
+	retval = CORBA_sequence_DynamicAny_DynAny__alloc ();
+	retval->_buffer  = CORBA_sequence_DynamicAny_DynAny_allocbuf (s->_length);
+	retval->_length  = s->_length;
+	retval->_release = CORBA_TRUE;
+
+	subtc = dynany->any->_type->subtypes [0];
+
+	for (i = 0; i < s->_length; i++) {
+		DynamicAny_DynAny newdyn;
+		DynAny *subdyn;
+		gpointer src;
+
+		subdyn = GET_DYNANY (&s->_buffer [i]);
+		src = subdyn->any->_value;
+
+		(DynamicAny_DynAny) retval->_buffer [i] = dynany_create (subtc, src, dynany, ev);
+	}
+
+	return retval;
+}
+
+void
+DynamicAny_DynSequence_set_elements_as_dyn_any (DynamicAny_DynSequence      obj,
+						const DynamicAny_DynAnySeq *value,
+						CORBA_Environment          *ev)
+{
+	DynAny *dynany;
+	CORBA_sequence_CORBA_octet *s;
+	int i;
+	gpointer dest;
+	CORBA_TypeCode real_tc, subtc;
+
+	o_return_if_fail (obj != NULL);
+	o_return_if_fail (value != NULL);
+
+	dynany = GET_DYNANY (obj);
+	b_return_if_fail (dynany != NULL &&
+			  dynany->any != NULL &&
+			  dynany->any->_type != NULL);
+
+	if (dynany_kind_mismatch (dynany, CORBA_tk_sequence, ev))
+		return;
+
+	s = dynany->any->_value;
+	if (!s)
+		return;
+	
+	real_tc = dynany->any->_type;
+	while (real_tc->kind == CORBA_tk_alias)
+		real_tc = real_tc->subtypes [0];
+
+	subtc = real_tc->subtypes [0];
+
+	for (i = 0; i < value->_length && i < s->_length; i++) {
+		DynamicAny_DynAny a = (DynamicAny_DynAny) value->_buffer [i];
+		DynAny *subdyn;
+
+		subdyn = a ? GET_DYNANY (a) : NULL;
+
+		if (!a || !subdyn || !subdyn->any || !subdyn->any->_type ||
+		    !CORBA_TypeCode_equal (subtc, subdyn->any->_type, ev)) {
+			CORBA_exception_set (ev, CORBA_USER_EXCEPTION,
+					     ex_DynamicAny_DynAny_InvalidValue, NULL);
+			return;
+		}
+	}
+
+	dynany_invalidate (dynany, FALSE, TRUE);
+
+	dest = s->_buffer;
+	for (i = 0; i < value->_length; i++) {
+		DynamicAny_DynAny a = (DynamicAny_DynAny) value->_buffer [i];
+		DynAny *subdyn = GET_DYNANY (a);
+		gconstpointer src = subdyn->any->_value;
 
 		ORBit_copy_value_core (&src, &dest, subtc);
 	}
