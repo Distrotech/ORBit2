@@ -1,8 +1,8 @@
 #include <config.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/uio.h>
 #include "giop-private.h"
+#include <sys/uio.h>
 #include <orbit/GIOP/giop.h>
 #include "../util/orbit-purify.h"
 
