@@ -56,6 +56,9 @@ void ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 				 CORBA_boolean do_etherealize,
 				 CORBA_boolean is_cleanup);
 extern int ORBit_class_assignment_counter;
-
+void ORBit_POAObject_post_invoke(ORBit_POAObject *pobj);
+CORBA_boolean ORBit_POA_okey_to_oid(/*in*/PortableServer_POA poa,
+				    /*in*/CORBA_sequence_CORBA_octet *okey,
+				    /*out*/PortableServer_ObjectId *oid);
 
 #endif

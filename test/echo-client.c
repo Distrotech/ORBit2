@@ -48,7 +48,7 @@ main (int argc, char *argv[])
 #ifdef LOCATE_TEST
     ORBit_object_locate(echo_client, &ev);
     if(ev._major != CORBA_NO_EXCEPTION) {
-    	g_error("Couldn't locate that object! (Exception %d)\n", ev._major);
+    	g_error("Couldn't locate that object! (Exception %s)\n", ev._id);
 	return(1);
     }
 #endif
@@ -56,7 +56,7 @@ main (int argc, char *argv[])
 	    g_snprintf(buf, sizeof(buf), "Hello, world [%d]", i);
 	    bec = Echo_echoString(echo_client, buf, &rv, &ev);
 	    if(ev._major != CORBA_NO_EXCEPTION) {
-	      g_error("we got exception %d from echoString!\n", ev._major);
+	      g_error("we got exception %s from echoString!\n", ev._id);
 	      return 1;
 	    }
 

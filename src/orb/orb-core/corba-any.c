@@ -259,7 +259,6 @@ CORBA_any__freekids(gpointer mem, gpointer dat)
   CORBA_any *t;
   t = mem;
   if(t->_release)
-    g_free(t->_value); /* XXX fixme */
-  g_free(t);
+    ORBit_free(t->_value); /* XXX fixme */
   return t + 1;
 }

@@ -93,10 +93,98 @@ CORBA_exception_as_any(CORBA_Environment *ev)
 }
 
 void
-ORBit_handle_exception(GIOPRecvBuffer *buf, CORBA_Environment *ev,
+ORBit_handle_exception(GIOPRecvBuffer *rb, CORBA_Environment *ev,
 		       ORBit_exception_demarshal_info *ex_info, CORBA_ORB orb)
 {
+  CORBA_SystemException *new;
+  CORBA_unsigned_long len, completion_status, reply_status;
+  CORBA_char *my_repoid;
+
+  CORBA_exception_free(ev);
+
+  rb->cur = ALIGN_ADDRESS(rb->cur, sizeof(len));
+  if((rb->cur + 4) > rb->end)
+    goto errout;
+  len = *(CORBA_unsigned_long *)rb->cur;
+  rb->cur += 4;
+  if(giop_msg_conversion_needed(rb))
+    len = GUINT32_SWAP_LE_BE(len);
+
+  if(len)
+    {
+      my_repoid = rb->cur;
+      rb->cur += len;
+    }
+  else
+    my_repoid = NULL;
+
+  reply_status = giop_recv_buffer_reply_status(rb);
+  if(reply_status == CORBA_SYSTEM_EXCEPTION)
+    {
+      CORBA_unsigned_long minor;
+
+      ev->_major = CORBA_SYSTEM_EXCEPTION;
+
+      rb->cur = ALIGN_ADDRESS(rb->cur, sizeof(minor));
+      if((rb->cur + sizeof(minor)) > rb->end)
+	goto errout;
+      minor = *(CORBA_unsigned_long*)rb->cur;
+      rb->cur += 4;
+      if(giop_msg_conversion_needed(rb))
+	minor = GUINT32_SWAP_LE_BE(minor);
+
+      rb->cur = ALIGN_ADDRESS(rb->cur, sizeof(completion_status));
+      if((rb->cur + sizeof(completion_status)) > rb->end)
+	goto errout;
+      completion_status = *(CORBA_unsigned_long*)rb->cur;
+      rb->cur += 4;
+      if(giop_msg_conversion_needed(rb))
+	completion_status = GUINT32_SWAP_LE_BE(completion_status);
+
+      new = CORBA_SystemException__alloc();
+      new->minor=minor;
+      new->completed=completion_status;
+			
+      /* XXX what should the repo ID be? */
+      CORBA_exception_set(ev, CORBA_SYSTEM_EXCEPTION,
+			  my_repoid,
+			  new);
+    }
+  else if(reply_status == CORBA_USER_EXCEPTION)
+    {
+      int i;
+
+      if(!ex_info)
+	{
+	  /* weirdness; they raised an exception that we don't
+	     know about */
+	  CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
+				     CORBA_COMPLETED_MAYBE);
+	}
+      else
+	{
+	  for(i = 0; ex_info[i].tc != CORBA_OBJECT_NIL;
+	      i++)
+	    if(!strcmp(ex_info[i].tc->repo_id,
+		       my_repoid))
+	      break;
+
+	  if(ex_info[i].tc == CORBA_OBJECT_NIL)
+				/* weirdness; they raised an exception
+				   that we don't know about */
+	    CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
+				       CORBA_COMPLETED_MAYBE);
+	  else
+	    ex_info[i].demarshal(rb, ev);
+	}
+    };
+
+  return;
   
+  /* ignore LOCATION_FORWARD here, that gets handled in the stub */
+ errout:
+  CORBA_exception_set_system(ev, ex_CORBA_MARSHAL,
+			     CORBA_COMPLETED_MAYBE);
 }
 
 GIOPConnection *

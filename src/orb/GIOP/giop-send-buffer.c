@@ -172,7 +172,7 @@ giop_send_buffer_use_reply(GIOPVersion giop_version,
 {
   GIOPSendBuffer *buf = giop_send_buffer_use(giop_version);
 
-  buf->msg.header.message_type = GIOP_REQUEST;
+  buf->msg.header.message_type = GIOP_REPLY;
 
   switch(giop_version)
     {
@@ -187,8 +187,8 @@ giop_send_buffer_use_reply(GIOPVersion giop_version,
     case GIOP_1_2:
       buf->msg.u.reply_1_2.reply_status = reply_status;
       buf->msg.u.reply_1_2.request_id = request_id;
-      giop_send_buffer_append(buf, &buf->msg.u.reply_1_0.request_id, sizeof(CORBA_unsigned_long));
-      giop_send_buffer_append(buf, &buf->msg.u.reply_1_0.reply_status, sizeof(CORBA_unsigned_long));
+      giop_send_buffer_append(buf, &buf->msg.u.reply_1_2.request_id, sizeof(CORBA_unsigned_long));
+      giop_send_buffer_append(buf, &buf->msg.u.reply_1_2.reply_status, sizeof(CORBA_unsigned_long));
       giop_send_buffer_append(buf, (const guchar *)iop_service_context_data, sizeof(iop_service_context_data));
       giop_send_buffer_align(buf, 8); /* alignment for the body */
     default:

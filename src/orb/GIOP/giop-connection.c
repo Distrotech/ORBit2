@@ -111,7 +111,6 @@ giop_connection_destroy    (GObject             *obj)
     giop_recv_buffer_unuse(cnx->incoming_msg);
   g_source_remove(cnx->incoming_tag);
 
-  O_MUTEX_LOCK(cnx->outgoing_mutex);
   if(cnx->parent.status == LINC_CONNECTED
      && (!cnx->parent.was_initiated
 	 || cnx->giop_version == GIOP_1_2))
@@ -122,6 +121,7 @@ giop_connection_destroy    (GObject             *obj)
       giop_send_buffer_write(buf, cnx);
       giop_send_buffer_unuse(buf);
     }
+  O_MUTEX_LOCK(cnx->outgoing_mutex);
 
   O_MUTEX_UNLOCK(cnx->incoming_mutex);
   O_MUTEX_DESTROY(cnx->incoming_mutex);
@@ -138,6 +138,7 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
   GIOPConnection *cnx = data;
   int n;
   GIOPMessageInfo info;
+  gboolean retval = TRUE;
 
   O_MUTEX_LOCK(cnx->incoming_mutex);
 
@@ -146,22 +147,27 @@ giop_connection_handle_input(GIOChannel *gioc, GIOCondition cond, gpointer data)
 
   n = linc_connection_read(LINC_CONNECTION(cnx), cnx->incoming_msg->cur, cnx->incoming_msg->left_to_read, FALSE);
   if(n < 0)
-    goto out;
+    {
+      retval = FALSE;
+      goto out;
+    }
 
-  info = giop_recv_buffer_data_read(cnx->incoming_msg, n, cnx->parent.is_auth);
+  info = giop_recv_buffer_data_read(cnx->incoming_msg, n, cnx->parent.is_auth,
+				    cnx);
   if(info != GIOP_MSG_UNDERWAY)
     {
       cnx->incoming_msg = NULL;
       if(info == GIOP_MSG_INVALID)
-	linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED); /* Zap it for badness.
-										   XXX We should probably handle oversized
-										   messages more graciously XXX */
+	/* Zap it for badness.
+	   XXX We should probably handle oversized
+	   messages more graciously XXX */
+	linc_connection_state_changed(LINC_CONNECTION(cnx), LINC_DISCONNECTED);
     }
 
  out:
   O_MUTEX_UNLOCK(cnx->incoming_mutex);
 
-  return TRUE;
+  return retval;
 }
 
 static void

@@ -21,6 +21,7 @@
 typedef struct {
   LINCServer parent;
   GIOPVersion giop_version;
+  gpointer orb_data;
 } GIOPServer;
 
 typedef struct {
@@ -31,6 +32,7 @@ GType giop_server_get_type(void) G_GNUC_CONST;
 GIOPServer *giop_server_new(GIOPVersion giop_version,
 			    const char *proto_name,
 			    const char *local_host_info, const char *local_serv_info,
-			    LINCConnectionOptions create_options);
+			    LINCConnectionOptions create_options,
+			    gpointer create_orb_data);
 
 #endif

@@ -1,6 +1,25 @@
 #include <orbit/orbit.h>
 #include "orbit-poa.h"
 #include <string.h>
+#include "../orb-core/orb-core-export.h"
+
+static PortableServer_Servant
+ORBit_POA_ServantManager_use_servant
+(PortableServer_POA poa,
+ ORBit_POAInvocation *irec,
+ CORBA_Identifier opname,
+ PortableServer_ServantLocator_Cookie *the_cookie,
+ PortableServer_ObjectId *oid,
+ CORBA_Environment *ev);
+static void
+ORBit_POA_ServantManager_unuse_servant
+(PortableServer_POA poa,
+ ORBit_POAInvocation *irec,
+ CORBA_Identifier opname,
+ PortableServer_ServantLocator_Cookie cookie,
+ PortableServer_ObjectId *oid,
+ PortableServer_Servant servant,
+ CORBA_Environment *ev);
 
 int ORBit_class_assignment_counter = 0;
 
@@ -975,7 +994,7 @@ IOP_ObjectKey_info*
 ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
 			/*in*/const PortableServer_ObjectId *oid)
 {
-  guint32	keynum, *iptr;
+  gint32	keynum, *iptr;
   int			restlen;
   CORBA_octet*	restbuf;
   IOP_ObjectKey_info *retval;
@@ -1028,7 +1047,7 @@ ORBit_POA_oid_to_okey(	/*in*/PortableServer_POA poa,
   retval->object_key_data._length = okey_len;
   okey->_release = CORBA_FALSE;
   memcpy( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length);
-  iptr = (guint32*)(okey->_buffer+poa->poa_key._length);
+  iptr = (gint32*)(okey->_buffer+poa->poa_key._length);
   *iptr = keynum;
   memcpy( okey->_buffer + poa->poa_key._length + sizeof(guint32),
 	  restbuf, restlen);
@@ -1302,7 +1321,6 @@ ORBit_POA_new(CORBA_ORB orb, const CORBA_char *nom,
   ORBit_RootObject_duplicate(poa);
   if(!manager)
     manager = ORBit_POAManager_new(orb, ev);
-  poa->poa_manager = ORBit_RootObject_duplicate(manager);
   if(ev->_major != CORBA_NO_EXCEPTION) goto error;
   poa->child_poas = NULL;
   poa->orb = ORBit_RootObject_duplicate(orb);
@@ -1573,4 +1591,392 @@ ORBit_POA_deactivate_object(PortableServer_POA poa, ORBit_POAObject *pobj,
 #if 0
     ORBit_RootObject_release(pobj);
 #endif
+}
+
+/* Request processing */
+static PortableServer_POA
+ORBit_POA_okey_to_poa(	/*in*/CORBA_ORB orb,
+		        /*in*/CORBA_sequence_CORBA_octet *okey)
+{
+  gint32		poanum;	/* signed */
+  PortableServer_POA	poa;
+
+  if ( okey->_length < sizeof(guint32) )
+    return NULL;
+
+  poanum = *(gint32*)(okey->_buffer);
+  if( poanum < 0 || poanum >= orb->poas->len )
+    return NULL;
+  poa = g_ptr_array_index(orb->poas, poanum);
+
+  if( okey->_length < poa->poa_key._length )
+    return NULL;
+  if( memcmp( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length))
+    return NULL;
+
+  return poa;
+}
+
+static PortableServer_POA
+ORBit_ORB_find_POA_for_okey(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey)
+{
+  PortableServer_POA	 poa;
+#if 0
+  ORBit_SrvForwBind	*bd;
+#endif
+
+  /* try it as a directly encoded okey (POAnum is first 4 bytes) */
+  if ( (poa = ORBit_POA_okey_to_poa(orb, okey)) )
+    return poa;
+
+#if 0
+    /* try it as a server-side forwarded okey */
+  if ( orb->srv_forw_bindings != 0
+       && (bd=g_hash_table_lookup(orb->srv_forw_bindings, okey)) != 0 ) {
+    if ( bd->to_okey._length > 0 ) {
+      /* This is a bit of a hack! */
+      g_assert( okey->_release == 0 );
+      okey->_length = bd->to_okey._length;
+      okey->_buffer = bd->to_okey._buffer;
+      return ORBit_ORB_find_POA_for_okey(orb, okey);
+    }
+  }
+#endif
+
+  return NULL;
+}
+
+void
+ORBit_handle_request(CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
+{
+  PortableServer_POA poa;
+  CORBA_sequence_CORBA_octet *objkey;
+  PortableServer_ServantBase *servant;
+  PortableServer_ServantLocator_Cookie cookie;
+  ORBit_POAObject *pobj = NULL, tmp_pobj;
+  ORBitSkeleton skel;
+  gpointer imp = NULL;
+  CORBA_Environment env, *ev = &env;
+  PortableServer_ObjectId oid;
+  PortableServer_POAManager_State	mgr_state;
+  ORBit_POAInvocation invoke_rec;
+  CORBA_Identifier opname;
+
+  CORBA_exception_init(ev);
+  objkey = giop_recv_buffer_get_objkey(recv_buffer);
+  poa = ORBit_ORB_find_POA_for_okey(orb, objkey);
+  if(!poa)
+    return;
+
+  mgr_state = (poa->life_flags & ORBit_LifeF_DestroyDo)
+    ? PortableServer_POAManager_INACTIVE : poa->poa_manager->state;
+    
+  switch(mgr_state) {
+  case PortableServer_POAManager_HOLDING:
+    poa->held_requests = g_slist_prepend(poa->held_requests,
+					 recv_buffer);
+    return;
+  case PortableServer_POAManager_DISCARDING:
+    CORBA_exception_set_system(ev,
+			       ex_CORBA_TRANSIENT,
+			       CORBA_COMPLETED_NO);
+    goto errout;
+  case PortableServer_POAManager_INACTIVE:
+    CORBA_exception_set_system(ev,
+			       ex_CORBA_OBJ_ADAPTER,
+			       CORBA_COMPLETED_NO);
+    goto errout;
+  case PortableServer_POAManager_ACTIVE:
+    break;
+  default:
+    g_assert_not_reached();
+    break;
+  }
+  
+
+  if ( !ORBit_POA_okey_to_oid( poa, objkey, &oid) ) {
+    /* the okey itself is malformed -- no way to recover */
+    CORBA_exception_set_system(ev,
+			       ex_CORBA_OBJECT_NOT_EXIST,
+			       CORBA_COMPLETED_NO);
+    goto errout;
+  }
+
+  pobj = 0;
+  if(poa->p_servant_retention == PortableServer_RETAIN)
+    pobj = ORBit_POA_oid_to_obj(poa, &oid, /*active*/FALSE, ev);
+  /* NOTE that any combination of RETAIN and DEFAULT_SERVANT is legal */
+  if ( pobj == 0 )
+    {
+      switch ( poa->p_request_processing )
+	{
+	case PortableServer_USE_ACTIVE_OBJECT_MAP_ONLY:
+	  CORBA_exception_set_system(ev,
+				     ex_CORBA_OBJECT_NOT_EXIST, CORBA_COMPLETED_NO);
+	  goto errout;
+	case PortableServer_USE_DEFAULT_SERVANT:
+	  if ( (pobj = poa->default_pobj) == 0 || pobj->servant==0 )
+	    {
+	      CORBA_exception_set_system(ev,
+					 ex_CORBA_OBJ_ADAPTER, CORBA_COMPLETED_NO);
+	      goto errout;
+	    }
+	  break;
+	case PortableServer_USE_SERVANT_MANAGER:
+	  pobj = &tmp_pobj;
+	  /* XXX: pobj->parent init */
+	  pobj->object_id = &oid;
+	  pobj->servant = 0;
+	  pobj->poa = poa;
+#if 0
+	  pobj->use_cnt = 0;
+#endif
+	  pobj->life_flags = 0;
+	  break;
+	}
+    }
+  g_assert( pobj );
+
+    /* From here down, we must not error out until 
+     * postinvoke() is called (if appropriate) 
+     * and we decrement the counters.
+    */
+#if 0
+  ++(poa->use_cnt);
+  ++(pobj->use_cnt);
+#endif
+  invoke_rec.pobj = pobj;
+  invoke_rec.doUnuse = 0;
+#if 0
+  invoke_rec.oid = &oid;
+#endif
+  invoke_rec.prev = poa->orb->poa_current_invocations;
+  poa->orb->poa_current_invocations = &invoke_rec;
+
+  opname = giop_recv_buffer_get_opname(recv_buffer);
+  if ( !(servant = pobj->servant)
+       && poa->p_request_processing==PortableServer_USE_SERVANT_MANAGER )
+    servant = ORBit_POA_ServantManager_use_servant(poa,
+						   &invoke_rec, opname,
+						   &cookie, &oid, ev);
+
+  if(ev->_major == CORBA_NO_EXCEPTION
+     && !servant)
+    CORBA_exception_set_system(ev,
+			       ex_CORBA_OBJECT_NOT_EXIST, CORBA_COMPLETED_NO);
+
+  if (ev->_major == CORBA_NO_EXCEPTION)
+    {
+      skel = ORBIT_SERVANT_TO_CLASSINFO(servant)->
+	relay_call(servant, recv_buffer, &imp);
+      if(!skel)
+	{
+	  if (opname[0] == '_' && strcmp(opname + 1, "is_a") == 0)
+	    skel = (gpointer)&ORBit_impl_CORBA_Object_is_a;
+	  else
+	    CORBA_exception_set_system(ev, ex_CORBA_BAD_OPERATION,
+				       CORBA_COMPLETED_NO);
+	}
+      else if (!imp)
+	CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT,
+				   CORBA_COMPLETED_NO);
+    }
+
+  if (ev->_major == CORBA_NO_EXCEPTION)
+    {
+#if 0
+      if(!ORBIT_request_validator)
+	{
+	  /* If it got through the random keys, 
+	   * and nobody else had the opportunity to say otherwise, 
+	   * it must be auth'd */
+	  GIOP_MESSAGE_BUFFER(recv_buffer)->connection->is_auth = TRUE;
+	}
+#endif
+
+      skel(servant, recv_buffer, ev, imp);
+      /* Currently, the skel handles sending any and all exceptions
+       * that occur within the skel/implementation.
+       */
+      CORBA_exception_free(ev);
+    }
+
+  if( invoke_rec.doUnuse )
+    {
+      ORBit_POA_ServantManager_unuse_servant(poa,
+					     &invoke_rec, opname, cookie, &oid, servant, ev);
+      /* NOTE: if the ServantManager raises an exception,
+       * then weird stuff will occur! 
+       */
+    }
+
+  g_assert( poa->orb->poa_current_invocations == &invoke_rec );
+  poa->orb->poa_current_invocations = invoke_rec.prev;
+#if 0
+  --(pobj->use_cnt);
+  --(poa->use_cnt);
+#endif
+  if ( pobj->life_flags & ORBit_LifeF_NeedPostInvoke )
+    ORBit_POAObject_post_invoke(pobj);
+  /* WATCHOUT: dont touch pobj beyond here -- it may be gone! */
+
+ errout:
+  if(ev->_major == CORBA_SYSTEM_EXCEPTION)
+    {
+      GIOPSendBuffer *reply_buf;
+      reply_buf = giop_send_buffer_use_reply(recv_buffer->connection->giop_version,
+					     giop_recv_buffer_get_request_id(recv_buffer),
+					     CORBA_SYSTEM_EXCEPTION);
+      ORBit_send_system_exception(reply_buf, ev);
+      giop_send_buffer_write(reply_buf, recv_buffer->connection);
+      giop_send_buffer_unuse(reply_buf);
+  }
+  else
+    {
+      /* User exceptions are handled in the skels! */
+      g_assert(ev->_major == CORBA_NO_EXCEPTION);
+    }
+
+  giop_recv_buffer_unuse(recv_buffer);
+  CORBA_exception_free(ev);
+}
+
+/***************************************************************************
+ *
+ *		POAObject invocation
+ *		Code for invoking requests on POAObject and its servant.
+ *
+ ***************************************************************************/
+
+static PortableServer_Servant
+ORBit_POA_ServantManager_use_servant
+(PortableServer_POA poa,
+ ORBit_POAInvocation *irec,
+ CORBA_Identifier opname,
+ PortableServer_ServantLocator_Cookie *the_cookie,
+ PortableServer_ObjectId *oid,
+ CORBA_Environment *ev)
+{
+  PortableServer_ServantBase *retval;
+  if(poa->p_servant_retention == PortableServer_RETAIN)
+    {
+      POA_PortableServer_ServantActivator *sm;
+      POA_PortableServer_ServantActivator__epv *epv;
+		
+      sm = (POA_PortableServer_ServantActivator *)poa->servant_manager;
+      epv = sm->vepv->PortableServer_ServantActivator_epv;
+      retval = epv->incarnate(sm, oid, poa, ev);
+      if ( retval )
+	{
+	  g_assert( retval->_private == 0 );
+	  retval->_private = irec->pobj;
+	  irec->pobj->servant = retval;
+	  /* XXX: handle MULT_ID case */
+	}
+    }
+  else
+    {
+      POA_PortableServer_ServantLocator *sm;
+      POA_PortableServer_ServantLocator__epv *epv;
+
+      sm = (POA_PortableServer_ServantLocator *)poa->servant_manager;
+      epv = sm->vepv->PortableServer_ServantLocator_epv;
+      retval = epv->preinvoke(sm, oid, poa, opname, the_cookie, ev);
+
+      if ( retval )
+	{
+	  irec->doUnuse = 1;
+	  g_assert( retval->_private == 0 );
+	  retval->_private = irec->pobj;
+	  irec->pobj->servant = retval;
+	}
+    }
+
+  return retval;
+}
+
+static void
+ORBit_POA_ServantManager_unuse_servant
+(PortableServer_POA poa,
+ ORBit_POAInvocation *irec,
+ CORBA_Identifier opname,
+ PortableServer_ServantLocator_Cookie cookie,
+ PortableServer_ObjectId *oid,
+ PortableServer_Servant servant,
+ CORBA_Environment *ev)
+{
+  POA_PortableServer_ServantLocator *sm;
+  POA_PortableServer_ServantLocator__epv *epv;
+  PortableServer_ServantBase *serv = servant;
+
+  g_assert(poa->p_servant_retention == PortableServer_NON_RETAIN);
+
+  sm = (POA_PortableServer_ServantLocator *)poa->servant_manager;
+  epv = sm->vepv->PortableServer_ServantLocator_epv;
+	
+  g_assert( serv->_private == irec->pobj);
+  serv->_private = NULL;
+  epv->postinvoke(sm, oid, poa, opname, cookie, servant, ev);
+}
+
+/**
+   {okey} will be looked up within the context of {poa}, and {*oid}
+   will be filled in.  {oid->_buffer} will either point into {okey}, or
+   some internal data (but not a static buffer). Thus its life-time is
+   short: dup it if you want to keep it! 
+   Returns TRUE if an oid is found, FALSE otherwise. Note
+   that simply finding an oid does *not* mean that it is a valid
+   or active object.
+   WATCHOUT: This doesn't follow normal CORBA calling conventions:
+   {oid->_buffer} must not be freed!
+**/
+CORBA_boolean
+ORBit_POA_okey_to_oid(	/*in*/PortableServer_POA poa,
+			/*in*/CORBA_sequence_CORBA_octet *okey,
+			/*out*/PortableServer_ObjectId *oid)
+{
+    int		poa_keylen = poa->poa_key._length;
+    int	keynum;	/* this must be signed! */
+
+    oid->_length = 0;
+    if ( okey->_length < poa_keylen+sizeof(CORBA_long)
+      || memcmp(okey->_buffer, poa->poa_key._buffer, poa_keylen)!=0 )
+    	return FALSE;
+    keynum = *(gint32*)(okey->_buffer + poa_keylen);
+    if ( keynum > 0 ) {
+	ORBit_POAKOid	*koid;
+        if ( poa->num_to_koid_map==NULL || keynum >= poa->num_to_koid_map->len )
+	    return FALSE;
+	if ( (koid = g_ptr_array_index(poa->num_to_koid_map, keynum))==0 )
+    	    return FALSE;
+    	oid->_length = ORBIT_POAKOID_OidLenOf(koid);
+        oid->_buffer = ORBIT_POAKOID_OidBufOf(koid);
+    } else {
+    	oid->_buffer = okey->_buffer + sizeof(CORBA_long) + poa_keylen;
+    	oid->_length = okey->_length - sizeof(CORBA_long) - poa_keylen; 
+    }
+    /* NOTE that the oid length may be zero -- that is ok */
+    return TRUE;
+}
+
+/**
+    This function is invoked from the generated stub code, after
+    invoking the servant method.
+**/
+void
+ORBit_POAObject_post_invoke(ORBit_POAObject *pobj)
+{
+#if 0
+    if ( pobj->use_cnt > 0 )
+    	return;
+#endif
+    if ( pobj->life_flags & ORBit_LifeF_DeactivateDo )
+      {
+	/* NOTE that the "desired" values of etherealize and cleanup
+	 * are stored in pobj->life_flags and they dont need
+	 * to be passed in again!
+	 */
+	ORBit_POA_deactivate_object(pobj->poa, pobj, /*ether*/0, /*cleanup*/0);
+    	/* WATCHOUT: pobj may not exist anymore! */
+    }
 }

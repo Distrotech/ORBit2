@@ -2,6 +2,7 @@
 #include <orbit/orbit.h>
 #include <string.h>
 #include "../orbit-init.h"
+#include "../poa/orbit-poa-export.h"
 
 static void
 CORBA_ORB_release_fn(ORBit_RootObject robj)
@@ -54,14 +55,14 @@ CORBA_ORB_init(int *argc, char **argv, CORBA_ORBid orb_identifier,
       GIOPServer *server;
 
       server = giop_server_new(retval->default_giop_version,
-			       info->name, NULL, NULL, 0);
+			       info->name, NULL, NULL, 0, retval);
       if(server)
 	{
 	  retval->servers = g_slist_prepend(retval->servers, server);
 	  if(!(info->flags & LINC_PROTOCOL_SECURE))
 	    {
 	      server = giop_server_new(retval->default_giop_version, info->name,
-				       NULL, NULL, LINC_CONNECTION_SSL);
+				       NULL, NULL, LINC_CONNECTION_SSL, retval);
 	      if(server)
 		retval->servers = g_slist_prepend(retval->servers, server);
 	    }
@@ -456,75 +457,18 @@ CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
   g_main_iteration(FALSE);
 }
 
-static PortableServer_POA
-ORBit_POA_okey_to_poa(	/*in*/CORBA_ORB orb,
-		        /*in*/CORBA_sequence_CORBA_octet *okey)
-{
-  gint32		poanum;	/* signed */
-  PortableServer_POA	poa;
-
-  if ( okey->_length < sizeof(guint32) )
-    return NULL;
-
-  poanum = *(gint32*)(okey->_buffer);
-  if( poanum < 0 || poanum >= orb->poas->len )
-    return NULL;
-  poa = g_ptr_array_index(orb->poas, poanum);
-
-  if( okey->_length < poa->poa_key._length )
-    return NULL;
-  if( memcmp( okey->_buffer, poa->poa_key._buffer, poa->poa_key._length))
-    return NULL;
-
-  return poa;
-}
-
-static PortableServer_POA
-ORBit_ORB_find_POA_for_okey(CORBA_ORB orb, CORBA_sequence_CORBA_octet *okey)
-{
-  PortableServer_POA	 poa;
-#if 0
-  ORBit_SrvForwBind	*bd;
-#endif
-
-  /* try it as a directly encoded okey (POAnum is first 4 bytes) */
-  if ( (poa = ORBit_POA_okey_to_poa(orb, okey)) )
-    return poa;
-
-#if 0
-    /* try it as a server-side forwarded okey */
-  if ( orb->srv_forw_bindings != 0
-       && (bd=g_hash_table_lookup(orb->srv_forw_bindings, okey)) != 0 ) {
-    if ( bd->to_okey._length > 0 ) {
-      /* This is a bit of a hack! */
-      g_assert( okey->_release == 0 );
-      okey->_length = bd->to_okey._length;
-      okey->_buffer = bd->to_okey._buffer;
-      return ORBit_ORB_find_POA_for_okey(orb, okey);
-    }
-  }
-#endif
-
-  return NULL;
-}
-
 void
 CORBA_ORB_run(CORBA_ORB _obj, CORBA_Environment * ev)
 {
   while(1)
     {
       GIOPRecvBuffer *in_buf;
-      CORBA_ORB orb;
 
       in_buf = giop_recv_buffer_use();
       if(in_buf->msg.header.message_type == GIOP_REQUEST)
-	{
-	  PortableServer_POA poa;
-	  CORBA_sequence_CORBA_octet *objkey;
-	  poa = ORBit_ORB_find_POA_for_okey(orb, objkey);
-	}
-
-      giop_recv_buffer_unuse(in_buf);
+	ORBit_handle_request(_obj, in_buf);
+      else
+	giop_recv_buffer_unuse(in_buf);
     }
 }
 

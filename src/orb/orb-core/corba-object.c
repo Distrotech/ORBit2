@@ -67,7 +67,7 @@ static CORBA_Object
 ORBit_objref_new(CORBA_ORB orb, const char *type_id, GSList *profiles)
 {
   CORBA_Object retval;
-  retval = g_new(struct CORBA_Object_type, 1);
+  retval = g_new0(struct CORBA_Object_type, 1);
 
   ORBit_RootObject_init((ORBit_RootObject)retval, &objref_if);
   retval->type_id = g_strdup(type_id);
@@ -282,7 +282,10 @@ _ORBit_object_get_connection(CORBA_Object obj)
 	  obj->oki = oki;
 
 	  if(ORBit_try_connection(obj))
-	    return obj->connection;
+	    {
+	      obj->connection->orb_data = obj->orb;
+	      return obj->connection;
+	    }
 	}
     }
 
@@ -315,6 +318,58 @@ void
 CORBA_Object_release(CORBA_Object _obj, CORBA_Environment * ev)
 {
   ORBit_RootObject_release(_obj);
+}
+
+void
+ORBit_impl_CORBA_Object_is_a(gpointer servant,
+			     GIOPRecvBuffer * _ORBIT_recv_buffer,
+			     CORBA_Environment *ev,
+			     gpointer dummy_impl)
+{
+  GIOPSendBuffer *_ORBIT_send_buffer;
+  CORBA_boolean retval;
+  char *repo_id;
+  CORBA_unsigned_long slen;
+  guchar *curptr;
+  PortableServer_ServantBase *_ORBIT_servant;
+
+  _ORBIT_servant = servant;
+
+	/* XXX security implications */
+  curptr = _ORBIT_recv_buffer->cur;
+  curptr = ALIGN_ADDRESS(curptr, 4);
+  if((curptr + 4) > _ORBIT_recv_buffer->end)
+    goto errout;
+  if(giop_msg_conversion_needed(_ORBIT_recv_buffer))
+    slen = GUINT32_SWAP_LE_BE(*((CORBA_unsigned_long *)curptr));
+  else
+    slen = *((CORBA_unsigned_long *)curptr);
+  curptr += 4;
+  if((curptr + slen) > _ORBIT_recv_buffer->end
+     || (curptr + slen) < curptr)
+    goto errout;
+
+  repo_id = curptr;
+  /* the terminaling NULL is included in the length! */
+  g_assert( slen > 1 && repo_id[slen-1] == '\0' );
+
+  {
+    PortableServer_ClassInfo *ci = ORBIT_SERVANT_TO_CLASSINFO(servant);
+    CORBA_unsigned_long clsid;
+    clsid = ORBit_classinfo_lookup_id(repo_id);
+    retval = (clsid && clsid < ci->vepvlen && ci->vepvmap[clsid]);
+  }
+
+  _ORBIT_send_buffer = giop_send_buffer_use_reply(_ORBIT_recv_buffer->connection->giop_version,
+						  giop_recv_buffer_get_request_id
+						  (_ORBIT_recv_buffer),
+						  ev->_major);
+  giop_send_buffer_append(_ORBIT_send_buffer,
+			  &retval, sizeof(retval));
+  giop_send_buffer_write(_ORBIT_send_buffer, _ORBIT_recv_buffer->connection);
+  giop_send_buffer_unuse(_ORBIT_send_buffer);
+  return;
+    errout:
 }
 
 CORBA_boolean

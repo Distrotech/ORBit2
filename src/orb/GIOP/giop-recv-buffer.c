@@ -9,8 +9,9 @@
 static GSList *recv_buffer_list;
 O_MUTEX_DEFINE_STATIC(recv_buffer_list_lock);
 
-static void giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf);
-static void giop_recv_list_push(GIOPRecvBuffer *buf);
+static void giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf,
+					       GIOPConnection *cnx);
+static void giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx);
 
 void
 giop_recv_buffer_init(void)
@@ -426,7 +427,7 @@ giop_recv_buffer_demarshal(GIOPRecvBuffer *buf)
 }
 
 GIOPMessageInfo
-giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth)
+giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth, GIOPConnection *cnx)
 {
   GIOPMessageInfo retval = GIOP_MSG_UNDERWAY;
 
@@ -484,13 +485,13 @@ giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state,
       if(giop_recv_buffer_demarshal(buf))
 	goto msg_error;
       if(buf->msg.header.message_type == GIOP_FRAGMENT)
-	giop_recv_buffer_handle_fragmented(buf);
+	giop_recv_buffer_handle_fragmented(buf, cnx);
       else
-	giop_recv_list_push(buf);
+	giop_recv_list_push(buf, cnx);
       break;
     case GIOP_MSG_AWAITING_FRAGMENTS:
       retval = GIOP_MSG_COMPLETE;
-      giop_recv_buffer_handle_fragmented(buf);
+      giop_recv_buffer_handle_fragmented(buf, cnx);
       break;
     }
 
@@ -520,7 +521,7 @@ giop_recv_buffer_use_buf(gboolean is_auth)
       retval = g_new0(GIOPRecvBuffer, 1);
     }
 
-  giop_recv_buffer_state_change(retval, GIOP_MSG_READING_HEADER, is_auth);
+  giop_recv_buffer_state_change(retval, GIOP_MSG_READING_HEADER, is_auth, NULL);
 
   return retval;
 }
@@ -578,9 +579,10 @@ giop_recv_buffer_unuse(GIOPRecvBuffer *buf)
 }
 
 static void
-giop_recv_list_push(GIOPRecvBuffer *buf)
+giop_recv_list_push(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
   O_MUTEX_LOCK(giop_queued_messages_lock);
+  buf->connection = cnx;
   giop_queued_messages = g_list_append(giop_queued_messages, buf);
   O_MUTEX_UNLOCK(giop_queued_messages_lock);
 }
@@ -750,15 +752,17 @@ giop_recv_buffer_use(void)
 }
 
 static void
-giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf)
+giop_recv_buffer_handle_fragmented(GIOPRecvBuffer *buf, GIOPConnection *cnx)
 {
   /* Drop fragmented packets on the floor for now */
+  buf->connection = cnx;
   buf->end = buf->message_body + buf->msg.header.message_size;
   giop_recv_buffer_unuse(buf);
 }
 
 GIOPMessageInfo
-giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth)
+giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth,
+			   GIOPConnection *cnx)
 {
   GIOPMessageBufferState new_state;
 
@@ -784,7 +788,7 @@ giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth)
       break;
     }
 
-  return giop_recv_buffer_state_change(buf, new_state, is_auth);
+  return giop_recv_buffer_state_change(buf, new_state, is_auth, cnx);
 }
 
 guint

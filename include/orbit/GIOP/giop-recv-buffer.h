@@ -39,8 +39,12 @@ GIOPRecvBuffer *giop_recv_buffer_use_reply(GIOPConnection *cnx, CORBA_unsigned_l
 GIOPRecvBuffer *giop_recv_buffer_use_locate_reply(GIOPConnection *cnx, CORBA_unsigned_long request_id, gboolean block_for_reply);
 GIOPRecvBuffer *giop_recv_buffer_use(void);
 void giop_recv_buffer_unuse(GIOPRecvBuffer *buf);
-GIOPMessageInfo giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth);
-GIOPMessageInfo giop_recv_buffer_data_read(GIOPRecvBuffer *buf, int n, gboolean is_auth);
+GIOPMessageInfo giop_recv_buffer_state_change(GIOPRecvBuffer *buf, GIOPMessageBufferState state, gboolean is_auth, GIOPConnection *cnx);
+
+GIOPMessageInfo giop_recv_buffer_data_read(GIOPRecvBuffer *buf,
+					   int n, gboolean is_auth,
+					   GIOPConnection *cnx);
+
 extern inline guint giop_recv_buffer_reply_status(GIOPRecvBuffer *buf)
 {
   switch(buf->msg.header.version[1])

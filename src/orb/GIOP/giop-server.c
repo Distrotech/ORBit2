@@ -52,7 +52,8 @@ GIOPServer *
 giop_server_new(GIOPVersion giop_version,
 		const char *proto_name, const char *local_host_info,
 		const char *local_serv_info,
-		LINCConnectionOptions create_options)
+		LINCConnectionOptions create_options,
+		gpointer create_orb_data)
 {
   GIOPServer *server = (GIOPServer *)g_object_new(giop_server_get_type(), NULL);
 
@@ -62,6 +63,8 @@ giop_server_new(GIOPVersion giop_version,
     {
       g_object_unref((GObject *)server); server = NULL;
     }
+  else
+    server->orb_data = create_orb_data;
 
   return server;
 }
@@ -73,6 +76,7 @@ giop_server_handle_create_connection(LINCServer *server)
   GIOPServer *gserver = (GIOPServer *)server;
 
   retval->giop_version = gserver->giop_version;
+  retval->orb_data = gserver->orb_data;
 
   return (LINCConnection *)retval;
 }
