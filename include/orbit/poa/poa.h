@@ -153,7 +153,8 @@ void ORBit_classinfo_register  (PortableServer_ClassInfo   *ci);
 
 PortableServer_ClassInfo *ORBit_classinfo_lookup                 (const char *type_id);
 void                      ORBit_POAObject_post_invoke            (ORBit_POAObject obj);
-gboolean                  ORBit_poa_allow_cross_thread_call      (ORBit_POAObject pobj);
+gboolean                  ORBit_poa_allow_cross_thread_call      (ORBit_POAObject   pobj,
+								  ORBit_IMethodFlag method_flags);
 void                      ORBit_recv_buffer_return_sys_exception (GIOPRecvBuffer    *buf,
 								  CORBA_Environment *ev);
 void                      ORBit_poa_init (void);

@@ -2464,7 +2464,9 @@ ORBit_poa_init (void)
 }
 
 gboolean
-ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj)
+ORBit_poa_allow_cross_thread_call (ORBit_POAObject   pobj,
+				   ORBit_IMethodFlag method_flags)
+
 {
 	gpointer key = NULL;
 	GIOPThread *self;
@@ -2481,7 +2483,10 @@ ORBit_poa_allow_cross_thread_call (ORBit_POAObject pobj)
 
 	case PortableServer_ORB_CTRL_MODEL: {
 		ORBit_ObjectAdaptor adaptor = (ORBit_ObjectAdaptor) poa;
-				
+
+		if (method_flags & ORBit_I_METHOD_1_WAY)
+			return FALSE;
+
 		switch (adaptor->thread_hint) {
 		case ORBIT_THREAD_HINT_PER_OBJECT:
 			key = pobj;
@@ -2518,7 +2523,8 @@ static gpointer
 get_c_method (CORBA_Object                 obj,
 	      glong                        class_id,
 	      PortableServer_ServantBase **servant,
-	      glong                        method_offset)
+	      glong                        method_offset,
+	      ORBit_IMethodFlag            method_flags)
 {
 	guchar *epv_start;
 	ORBit_POAObject pobj;
@@ -2532,7 +2538,7 @@ get_c_method (CORBA_Object                 obj,
 	if (method_offset <= 0 || class_id <= 0)
 		return NULL;
 
-	if (!ORBit_poa_allow_cross_thread_call (pobj))
+	if (!ORBit_poa_allow_cross_thread_call (pobj, method_flags))
 		return NULL;
 
 	if (ORBit_small_flags & ORBIT_SMALL_FORCE_GENERIC_MARSHAL)
@@ -2570,9 +2576,16 @@ ORBit_c_stub_invoke (CORBA_Object        obj,
 	gpointer method_impl;
 	PortableServer_ServantBase *servant;
 
+	if (method_index < 0 || method_index > methods->_length) {
+		CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT,
+					    CORBA_COMPLETED_NO);
+		return;
+	}
+
 	if (skel_impl &&
 	    (method_impl = get_c_method (obj, class_id,
-					 &servant, method_offset))) {
+					 &servant, method_offset,
+					 methods->_buffer[method_index].flags))) {
 		
 		/* Unwound PreCall
 		   ++( ((ORBit_POAObject)(obj)->adaptor_obj)->use_cnt );	    \
