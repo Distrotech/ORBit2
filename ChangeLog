@@ -1,3 +1,9 @@
+2003-07-02  Frank Rehberger  <frehberg@localhost.localdomain>
+
+	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval): prevent
+	SEGV on empty sequences; if(old_num_elements==0 && !old_buffer)
+	return ORBit_alloc_tcval(tc,num_elements);
+
 2003-07-01  Frank Rehberger  <frehberg@localhost.localdomain>
 
 	* src/orb/orb-core/corba-any.c (ORBit_sequence_alloc): invoke
