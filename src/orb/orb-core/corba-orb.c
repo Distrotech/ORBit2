@@ -187,62 +187,69 @@ CORBA_ORB_object_to_string(CORBA_ORB _obj,
 }
 
 CORBA_Object
-CORBA_ORB_string_to_object(CORBA_ORB _obj,
-			  const CORBA_char * str,
-			  CORBA_Environment * ev)
+CORBA_ORB_string_to_object (CORBA_ORB          orb,
+			    const CORBA_char  *string,
+			    CORBA_Environment *ev)
 {
-  CORBA_Object retval = CORBA_OBJECT_NIL;
-  GIOPRecvBuffer *buf;
-  CORBA_unsigned_long len;
-  int i;
-  char *tbuf;
-  char *realstr = NULL;
+	CORBA_Object         retval = CORBA_OBJECT_NIL;
+	CORBA_unsigned_long  len;
+	GIOPRecvBuffer      *buf;
+	gchar               *ior = NULL;
+	guchar              *tmpbuf;
+	int                  i;
 
-  if(strstr(str, "://"))
-    {
-      realstr = orb_http_resolve(str);
-      if(!realstr)
-	goto out;
-      str = realstr;
-    }
-  if(strncmp(str, "IOR:", 4))
-    {
-      CORBA_exception_set_system(ev,
-				 ex_CORBA_BAD_PARAM,
-				 CORBA_COMPLETED_NO);
-      goto out;
-    }
+	if (strncmp (string, "IOR:", 4)) {
+		if (strstr (string, "://")) {
+			ior = orb_http_resolve (string);
+			if (!ior)
+				return CORBA_OBJECT_NIL;
 
-  str += 4;
-  len = strlen(str);
-  while(len > 0 && !isxdigit(str[len-1])) len--;
-  if(len % 2)
-    goto out;
+			string = ior;
+		} else {
+			CORBA_exception_set_system (
+					ev,
+					ex_CORBA_BAD_PARAM,
+					CORBA_COMPLETED_NO);
 
-  tbuf = g_alloca(len / 2);
-#define HEXDIGIT(c) (isdigit((guchar)(c))?(c)-'0':tolower((guchar)(c))-'a'+10)
-#define HEXOCTET(a,b) ((HEXDIGIT((a)) << 4) | HEXDIGIT((b)))
+			return CORBA_OBJECT_NIL;
+		}
+	}
 
-  for(i = 0; i < len; i += 2)
-    tbuf[i/2] = HEXOCTET(str[i],str[i+1]);
+	string += 4;
+	len = strlen (string);
+	while (len > 0 && !g_ascii_isxdigit (string [len - 1]))
+		len--;
 
-  buf = giop_recv_buffer_use_encaps(tbuf, len / 2);
+	if (len % 2) {
+		if (ior)
+			g_free (ior);
 
-  if(ORBit_demarshal_object(&retval, buf, _obj))
-    {
-      CORBA_exception_set_system(ev,
-				 ex_CORBA_MARSHAL,
-				 CORBA_COMPLETED_NO);
-      retval = CORBA_OBJECT_NIL;
-    }
+		return CORBA_OBJECT_NIL;
+	}
 
-  giop_recv_buffer_unuse(buf);
+	tmpbuf = g_alloca (len / 2);
 
- out:
-  if(realstr)
-    g_free(realstr);
+	for (i = 0; i < len; i += 2)
+		tmpbuf [i/2] = (g_ascii_xdigit_value (string [i]) << 4) |
+					g_ascii_xdigit_value (string [i + 1]);
 
-  return retval;
+	buf = giop_recv_buffer_use_encaps (tmpbuf, len / 2);
+
+	if (ORBit_demarshal_object (&retval, buf, orb)) {
+		CORBA_exception_set_system (
+				ev,
+				ex_CORBA_MARSHAL,
+				CORBA_COMPLETED_NO);
+
+		retval = CORBA_OBJECT_NIL;
+	}
+
+	giop_recv_buffer_unuse (buf);
+
+	if (ior)
+		g_free (ior);
+
+	return retval;
 }
 
 void

@@ -1,3 +1,9 @@
+2001-12-05  Mark McLoughlin  <mark@skynet.ie>
+
+	* src/orb/orb-core/corba-orb.c:
+	(CORBA_ORB_string_to_object): tidy up a bit. Use g_ascii_*
+	functions.
+
 2001-12-04  Michael Meeks  <michael@ximian.com>
 
 	* test/everything/basicServer.c
