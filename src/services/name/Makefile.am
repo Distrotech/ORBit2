@@ -51,9 +51,6 @@ LDADDS =                                                        \
 	-lm                                                     \
 	$(ORBIT_NAME_LIBS)
 
-$(srcdir)/name-client.c $(srcdir)/orbit-name-server.c \
-$(srcdir)/boot.c: CosNaming.h
-
 name_client_2_SOURCES = name-client.c name-support.c name-support.h
 name_client_2_LDFLAGS = $(FLAGS)
 name_client_2_DEPENDENCIES = $(DEPS) CosNaming.h
@@ -67,6 +64,8 @@ orbit_name_server_2_SOURCES = boot.c
 orbit_name_server_2_LDFLAGS = $(FLAGS)
 orbit_name_server_2_DEPENDENCIES = $(DEPS) CosNaming.h
 orbit_name_server_2_LDADD = libname-server-2.a $(LDADDS)
+
+$(name_client_2_SOURCES) $(orbit_name_server_2_SOURCES) : CosNaming.h
 
 EXTRA_DIST = $(idl_DATA)
 
