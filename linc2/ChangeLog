@@ -1,3 +1,10 @@
+2003-06-04  Michael Meeks  <michael@ximian.com>
+
+	* src/linc-protocols.c,
+	* test/test-linc.c: fix Linc->Link sanfu's -
+	autotools dependency tracking gets progressively
+	more wonderful.
+
 2003-06-03  Michael Meeks  <michael@ximian.com>
 
 	* src/linc-source.c (link_watch_unlisten): split

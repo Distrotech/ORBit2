@@ -174,7 +174,7 @@ ipv4_addr_from_addr (struct in_addr *dest_addr,
 static gboolean
 link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 			      const struct sockaddr   *saddr,
-			      LincSockLen              saddr_len)
+			      LinkSockLen              saddr_len)
 {
 	static int warned = 0;
 #if defined (AF_INET6) && defined (HAVE_GETADDRINFO)
@@ -336,7 +336,7 @@ static struct sockaddr *
 link_protocol_get_sockaddr_ipv4 (const LinkProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *portnum,
-				 LincSockLen            *saddr_len)
+				 LinkSockLen            *saddr_len)
 {
 	struct sockaddr_in *saddr;
 	struct hostent     *host;
@@ -407,7 +407,7 @@ static struct sockaddr *
 link_protocol_get_sockaddr_ipv6 (const LinkProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *portnum,
-				 LincSockLen            *saddr_len)
+				 LinkSockLen            *saddr_len)
 {
 	struct sockaddr_in6 *saddr;
 #ifdef HAVE_GETADDRINFO
@@ -495,7 +495,7 @@ static struct sockaddr *
 link_protocol_get_sockaddr_unix (const LinkProtocolInfo *proto,
 				 const char             *dummy,
 				 const char             *path,
-				 LincSockLen            *saddr_len)
+				 LinkSockLen            *saddr_len)
 {
 	struct sockaddr_un *saddr;
 	int                 pathlen;
@@ -562,7 +562,7 @@ static struct sockaddr *
 link_protocol_get_sockaddr_irda (const LinkProtocolInfo *proto,
 				 const char             *hostname,
 				 const char             *service,
-				 LincSockLen            *saddr_len)
+				 LinkSockLen            *saddr_len)
 {
 	g_assert (proto->family == AF_IRDA);
 
@@ -587,7 +587,7 @@ struct sockaddr *
 link_protocol_get_sockaddr (const LinkProtocolInfo *proto,
 			    const char             *hostname,
 			    const char             *service,
-			    LincSockLen            *saddr_len)		   
+			    LinkSockLen            *saddr_len)		   
 {
 	if (proto && proto->get_sockaddr)
 		return proto->get_sockaddr (proto, hostname, service, saddr_len);
@@ -862,7 +862,7 @@ link_protocol_get_sockinfo (const LinkProtocolInfo  *proto,
 gboolean
 link_protocol_is_local (const LinkProtocolInfo  *proto,
 			const struct sockaddr   *saddr,
-			LincSockLen              saddr_len)
+			LinkSockLen              saddr_len)
 {
 	if (proto && proto->is_local)
 		return proto->is_local (proto, saddr, saddr_len);
@@ -890,7 +890,7 @@ link_protocol_unix_destroy (int         fd,
 static gboolean
 link_protocol_unix_is_local (const LinkProtocolInfo *proto,
 			     const struct sockaddr   *saddr,
-			     LincSockLen              saddr_len)
+			     LinkSockLen              saddr_len)
 {
 	return TRUE;
 }
@@ -1139,7 +1139,7 @@ irda_getaddrinfo (const char             *nodename,
 
 static int
 irda_getnameinfo (const struct sockaddr *sa,
-		  LincSockLen            sa_len,
+		  LinkSockLen            sa_len,
 		  char                  *host,
 		  size_t                 hostlen,
 		  char                  *serv,
