@@ -1,5 +1,5 @@
 #define GIOP_DO_NOT_INLINE_IIOP_BYTESWAP
-#include <orbit/IIOP/giop-endian.h>
+#include <orbit/GIOP/giop-endian.h>
 
 void giop_byteswap(guchar *outdata,
 		   const guchar *data,

@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include "giop-private.h"
-#include <orbit/IIOP/giop-types.h>
-#include <orbit/IIOP/giop-send-buffer.h>
+#include <orbit/GIOP/giop-types.h>
+#include <orbit/GIOP/giop-send-buffer.h>
 #include <sys/uio.h>
 
 #define GIOP_CHUNK_ALIGN 8

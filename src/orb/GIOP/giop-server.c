@@ -1,6 +1,6 @@
 #include "config.h"
-#include <orbit/IIOP/giop-server.h>
-#include <orbit/IIOP/giop-connection.h>
+#include <orbit/GIOP/giop-server.h>
+#include <orbit/GIOP/giop-connection.h>
 
 static void giop_server_init       (GIOPServer      *server);
 static void giop_server_class_init (GIOPServerClass *klass);

@@ -245,14 +245,14 @@ src/Makefile
 src/idl-compiler/Makefile
 src/orb/Makefile
 src/orb/util/Makefile
-src/orb/IIOP/Makefile
+src/orb/GIOP/Makefile
 src/orb/orb-core/Makefile
 src/orb/dynamic/Makefile
 src/orb/poa/Makefile
 include/Makefile
 include/orbit/Makefile
 include/orbit/orbit-config.h
-include/orbit/IIOP/Makefile
+include/orbit/GIOP/Makefile
 include/orbit/util/Makefile
 docs/Makefile
 docs/devel/Makefile

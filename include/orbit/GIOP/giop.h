@@ -4,12 +4,12 @@
 #include <linc/linc.h>
 #define ORBIT_SSL_SUPPORT LINC_SSL_SUPPORT
 
-#include <orbit/IIOP/giop-types.h>
-#include <orbit/IIOP/giop-msg-buffer.h>
-#include <orbit/IIOP/giop-send-buffer.h>
-#include <orbit/IIOP/giop-recv-buffer.h>
-#include <orbit/IIOP/giop-connection.h>
-#include <orbit/IIOP/giop-server.h>
+#include <orbit/GIOP/giop-types.h>
+#include <orbit/GIOP/giop-msg-buffer.h>
+#include <orbit/GIOP/giop-send-buffer.h>
+#include <orbit/GIOP/giop-recv-buffer.h>
+#include <orbit/GIOP/giop-connection.h>
+#include <orbit/GIOP/giop-server.h>
 
 void giop_init(void);
 

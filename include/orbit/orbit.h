@@ -10,4 +10,6 @@
 #ifndef ORBIT_H
 #define ORBIT_H 1
 
+#include <orbit/GIOP/giop.h>
+
 #endif
