@@ -289,16 +289,16 @@ CDR_get (GIOPRecvBuffer *buf,
 
 	memcpy (ptr, buf->cur, len);
 
-	if (giop_msg_conversion_needed (buf))
+	if (len != 1 && giop_msg_conversion_needed (buf))
 		switch (len) {
 		case 2:
-			*ptr = GUINT16_SWAP_LE_BE (*ptr);
+			*(guint16 *)ptr = GUINT16_SWAP_LE_BE (*(guint16 *)ptr);
 			break;
 		case 4:
-			*ptr = GUINT32_SWAP_LE_BE (*ptr);
+			*(guint32 *)ptr = GUINT32_SWAP_LE_BE (*(guint32 *)ptr);
 			break;
 		case 8:
-			*ptr = GUINT64_SWAP_LE_BE (*ptr);
+			*(guint64 *)ptr = GUINT64_SWAP_LE_BE (*(guint64 *)ptr);
 			break;
 		default:
 			g_assert_not_reached ();
