@@ -158,6 +158,7 @@ ORBit_setup_debug_flags (void)
 #endif /* G_ENABLE_DEBUG */
 
 static CORBA_ORB _ORBit_orb = NULL;
+static gulong    init_level = 0;
 
 CORBA_ORB
 CORBA_ORB_init (int *argc, char **argv,
@@ -169,6 +170,8 @@ CORBA_ORB_init (int *argc, char **argv,
 		ORBIT_ROT_ORB,
 		CORBA_ORB_release_fn
 	};
+
+	init_level++;
 
 	if ((retval = _ORBit_orb))
 		return ORBit_RootObject_duplicate (retval);
@@ -900,7 +903,7 @@ CORBA_ORB_create_array_tc(CORBA_ORB _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_value_tc (CORBA_ORB                   _obj,
+CORBA_ORB_create_value_tc (CORBA_ORB                   obj,
 			   const CORBA_char           *id,
 			   const CORBA_char           *name,
 			   const CORBA_ValueModifier   type_modifier,
@@ -912,26 +915,26 @@ CORBA_ORB_create_value_tc (CORBA_ORB                   _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_value_box_tc (CORBA_ORB                 _obj,
-			       const CORBA_char         *id,
-			       const CORBA_char         *name,
-			       const CORBA_TypeCode      boxed_type,
-			       CORBA_Environment        *ev)
+CORBA_ORB_create_value_box_tc (CORBA_ORB            obj,
+			       const CORBA_char    *id,
+			       const CORBA_char    *name,
+			       const CORBA_TypeCode boxed_type,
+			       CORBA_Environment   *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_native_tc (CORBA_ORB                 _obj,
-			    const CORBA_char         *id,
-			    const CORBA_char         *name,
-			    CORBA_Environment        *ev)
+CORBA_ORB_create_native_tc (CORBA_ORB          obj,
+			    const CORBA_char  *id,
+			    const CORBA_char  *name,
+			    CORBA_Environment *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_recursive_tc (CORBA_ORB          _obj,
+CORBA_ORB_create_recursive_tc (CORBA_ORB          obj,
 			       const CORBA_char  *id,
 			       CORBA_Environment *ev)
 {
@@ -939,25 +942,26 @@ CORBA_ORB_create_recursive_tc (CORBA_ORB          _obj,
 }
 
 CORBA_TypeCode
-CORBA_ORB_create_abstract_interface_tc (CORBA_ORB                 _obj,
-				        const CORBA_char         *id,
-				        const CORBA_char         *name,
-				        CORBA_Environment        *ev)
+CORBA_ORB_create_abstract_interface_tc (CORBA_ORB          obj,
+				        const CORBA_char  *id,
+				        const CORBA_char  *name,
+				        CORBA_Environment *ev)
 {
   return CORBA_OBJECT_NIL;
 }
 
 CORBA_boolean
-CORBA_ORB_work_pending(CORBA_ORB _obj,
-		       CORBA_Environment * ev)
+CORBA_ORB_work_pending (CORBA_ORB          obj,
+			CORBA_Environment *ev)
 {
-  return linc_main_pending();
+  return linc_main_pending ();
 }
 
 void
-CORBA_ORB_perform_work(CORBA_ORB _obj, CORBA_Environment * ev)
+CORBA_ORB_perform_work (CORBA_ORB          obj,
+			CORBA_Environment *ev)
 {
-  linc_main_iteration(FALSE);
+	linc_main_iteration (FALSE);
 }
 
 void
@@ -968,11 +972,14 @@ CORBA_ORB_run (CORBA_ORB          orb,
 }
 
 void
-CORBA_ORB_shutdown (CORBA_ORB            orb,
-		    const CORBA_boolean  wait_for_completion,
-		    CORBA_Environment   *ev)
+CORBA_ORB_shutdown (CORBA_ORB           orb,
+		    const CORBA_boolean wait_for_completion,
+		    CORBA_Environment  *ev)
 {
 	PortableServer_POA root_poa;
+
+	if (init_level > 0)
+		return;
 
 	root_poa = g_ptr_array_index (orb->adaptors, 0);
 	if (root_poa) {
@@ -995,11 +1002,16 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 {
 	PortableServer_POA root_poa;
 
-	g_assert (_ORBit_orb == orb);
-	_ORBit_orb = NULL;
-
 	if (orb->life_flags & ORBit_LifeF_Destroyed)
 		return;
+
+	init_level--;
+
+	if (init_level > 0)
+		return;
+
+	g_assert (_ORBit_orb == orb);
+	_ORBit_orb = NULL;
 
 	CORBA_ORB_shutdown (orb, TRUE, ev);
 	if (ev->_major)

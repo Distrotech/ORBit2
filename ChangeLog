@@ -1,3 +1,14 @@
+2002-01-25  Michael Meeks  <michael@ximian.com>
+
+	* test/everything/client.c (main): upd.
+	(test_init): test it.
+
+	* src/orb/orb-core/corba-orb.c
+	(CORBA_ORB_shutdown, CORBA_ORB_init),
+	(CORBA_ORB_destroy): count init / destroy pairs
+	and don't allow people to destroy if someone else
+	has inited.
+
 2002-01-25  Mark McLoughlin  <mark@skynet.ie>
 
 	* acinclude.m4: (AC_CHECK_ALIGNOF): error out if an alignment

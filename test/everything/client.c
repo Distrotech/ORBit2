@@ -1584,6 +1584,17 @@ dump_protos (void)
 	g_assert (enabled_count > 0);
 }
 
+static void
+test_init (CORBA_Environment *ev)
+{
+	g_assert (CORBA_ORB_init (NULL, NULL, "", ev) == global_orb);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+
+	CORBA_ORB_destroy (global_orb, ev);
+	g_assert (ev->_major == CORBA_NO_EXCEPTION);
+	CORBA_Object_release ((CORBA_Object)global_orb, ev);
+}
+
 int
 main (int argc, char *argv [])
 {
@@ -1598,6 +1609,7 @@ main (int argc, char *argv [])
 	global_orb = CORBA_ORB_init (&argc, argv, "", &ev);
 	g_assert (ev._major == CORBA_NO_EXCEPTION);
 
+	test_init (&ev);
 	test_initial_references (global_orb, &ev);
 
 	free (malloc (8)); /* -lefence */
