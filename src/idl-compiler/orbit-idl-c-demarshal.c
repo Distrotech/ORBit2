@@ -171,6 +171,10 @@ c_demarshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
   c_demarshal_generate_check(node->pre, cmi);
 
+  /* This needs to be done _after_ generate_check because we don't
+     want to free the data for a parameter if it cannot possibly be
+     demarshalled - the marshal_error_exit label points to stuff that
+     knows how to free the demarshalled version of that parameter */
   if(node->marshal_error_exit)
     cmi->marshal_error_exit = node->marshal_error_exit;
 

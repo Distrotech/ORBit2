@@ -19,12 +19,6 @@ typedef gdouble CORBA_long_double;
 /* Bad hack, oh well */
 typedef CORBA_char *CORBA_string;
 
-typedef struct {
-  CORBA_unsigned_long _length;
-  CORBA_octet *_buffer;
-  CORBA_boolean _release : 1;
-} CORBA_sequence_octet;
-
 #if !defined(ORBIT_DECL_CORBA_Object) && !defined(_CORBA_Object_defined)
 #define ORBIT_DECL_CORBA_Object 1
 #define _CORBA_Object_defined 1

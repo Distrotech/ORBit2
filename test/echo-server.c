@@ -20,10 +20,13 @@ main (int argc, char *argv[])
 
     CORBA_exception_init(&ev);
     orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
+    g_assert(ev._major == CORBA_NO_EXCEPTION);
 
     echo_srv_start_poa(orb, &ev);
+    g_assert(ev._major == CORBA_NO_EXCEPTION);
     echo_client = echo_srv_start_object(&ev);
     retval = CORBA_ORB_object_to_string(orb, echo_client, &ev);
+    g_assert(ev._major == CORBA_NO_EXCEPTION);
     fprintf(stdout, "%s\n", retval); fflush(stdout);
     CORBA_free(retval);
 
@@ -31,6 +34,7 @@ main (int argc, char *argv[])
 
     echo_srv_finish_object(&ev);
     echo_srv_finish_poa(&ev);
+    CORBA_exception_free(&ev);
 
     return 0;
 }
