@@ -1025,11 +1025,11 @@ cbe_tc_generate (OIDL_C_Info  *ci,
 
 	fprintf (ci->fh, ",\n");
 
-	orbit_output_tcstruct_recurse_depth (ci->fh);
+	orbit_output_tcstruct_default_index (ci->fh, union_default_index);
 
 	fprintf (ci->fh, ",\n");
 
-	orbit_output_tcstruct_default_index (ci->fh, union_default_index);
+	orbit_output_tcstruct_recurse_depth (ci->fh);
 
 	fprintf (ci->fh, ",\n");
 
