@@ -1,5 +1,7 @@
 2003-06-04  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/Makefile.am: add dep on linc lib.
+
 	* test/everything/test.sh,
 	* test/everything/client.c: run more tests.
 

@@ -513,8 +513,9 @@ link_connection_initiate (GType                 derived_type,
 
 	CNX_LIST_LOCK();
 
+	/* FIXME: hash this if it's slow */
 	for (l = cnx_list; l; l = l->next) {
-		LinkConnection *cnx = l->data;
+		cnx = l->data;
 
 		if (cnx->was_initiated && cnx->proto == proto &&
 		    cnx->status != LINK_DISCONNECTED &&
@@ -522,10 +523,11 @@ link_connection_initiate (GType                 derived_type,
 		    !strcmp (remote_host_info, cnx->remote_host_info) &&
 		    !strcmp (remote_serv_info, cnx->remote_serv_info)) {
 			cnx = link_connection_ref_T (cnx);
-			/* FIXME: pull last hit to head of list ? */
 			break;
 		}
 	}
+
+	cnx = l ? l->data : NULL;
 
 	if (!cnx) {
 		cnx = LINK_CONNECTION

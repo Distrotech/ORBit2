@@ -30,4 +30,6 @@ libORBit_2_la_LIBADD= \
 	dynamic/liborb-dynamic.la \
 	$(LOCAL_LINC_LIBS)
 
+libORBit_2_la_DEPENDENCIES = $(LOCAL_LINC_LIBS)
+
 inst-lib: all-recursive install-libLTLIBRARIES
