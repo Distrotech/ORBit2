@@ -1,5 +1,22 @@
 2001-11-21  Michael Meeks  <michael@ximian.com>
 
+	* test/everything/client.c (testPingPong): add a
+	scad of equivalence tests.
+
+	* src/orb/orb-core/corba-object.c
+	(ORBit_register_objref): add pre-condition.
+	(g_CORBA_Object_equal): allow NULL object keys -
+	these are local objects.
+	(CORBA_Object_is_equivalent): fix to cope with
+	the concept of 'local' and NULL objects.
+	(g_CORBA_Object_equal): remove checks.
+
+	* src/orb/orb-core/iop-profiles.c
+	(IOP_delete_profiles): cope with no ORB on
+	remote objects.
+
+2001-11-21  Michael Meeks  <michael@ximian.com>
+
 	* src/orb/dynamic/dynany.c
 	(dynany_sequence_realloc_to): undo a stupidity.
 
