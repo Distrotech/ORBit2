@@ -53,6 +53,11 @@ giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 	  ent->buffer = buf;
 #ifdef ORBIT_THREADED
 	  pthread_cond_signal(&ent->condvar);
+#else
+	  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
+
+	  if (ent->u.unthreaded.cb)
+		  ent->u.unthreaded.cb (ent);
 #endif
 	}
       else
@@ -67,8 +72,8 @@ giop_recv_list_push (GIOPRecvBuffer *buf, GIOPConnection *cnx)
 	  g_error("This is a known bug that hasn't yet been fixed because the"
 		  " most obvious solution involves creating other bugs. "
 		  "Please make noise so this gets fixed.");
+	  LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
 	}
-      LINC_MUTEX_UNLOCK (giop_queued_messages_lock);
       break;
     default:
       LINC_MUTEX_LOCK (incoming_recv_buffer_list_lock);
@@ -795,6 +800,8 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
 	LINC_MUTEX_INIT (ent->condvar_lock);
 	pthread_cond_init(&ent->condvar, NULL);
 	LINC_MUTEX_LOCK (ent->condvar_lock);
+#else
+	ent->u.unthreaded.cb = NULL;
 #endif
 
 	ent->cnx = cnx;
@@ -808,6 +815,15 @@ giop_recv_list_setup_queue_entry(GIOPMessageQueueEntry *ent,
 	ent->buffer = NULL;
 }
 
+void
+giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
+					GIOPAsyncCallback      cb)
+{
+	g_return_if_fail (ent != NULL);
+
+	ent->u.unthreaded.cb = cb;
+}
+
 GIOPRecvBuffer *
 giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
 {
@@ -816,11 +832,11 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
 	pthread_cond_wait (&ent->condvar, &ent->condvar_lock);
 	LINC_MUTEX_UNLOCK (ent->condvar_lock);
 #else
-	linc_main_iteration (block_for_reply);
 	if (block_for_reply) {
 		while (!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
 			linc_main_iteration (block_for_reply);
-	}
+	} else
+		linc_main_iteration (FALSE);
 #endif
 
 	giop_recv_list_destroy_queue_entry (ent);

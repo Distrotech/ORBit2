@@ -1,3 +1,25 @@
+2001-10-11  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get):
+	don't do a blocking iteration, check the queue first.
+	(giop_recv_list_push): re-jig locking.
+
+	* test/everything/client.c (testAsync): impl.
+	(test_BasicServer_opExceptionA): impl.
+	(test_BasicServer_opExceptionA_cb): impl.
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_list_setup_queue_entry_async): impl.
+
+	* src/orb/orb-core/orbit-small.c (orbit_small_marshal): split
+	out the recv_list_setup_queue_entry.
+	(ORBit_small_invoke_stub): put it here instead.
+	(async_recv_cb): impl.
+	(ORBit_small_invoke_async): impl.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_push): add
+	an async callback on a GIOPMessageQueueEntry
+
 2001-10-02  Mark McLoughlin <mark@skynet.ie>
 
 	* test/Makefile.am(test_dynany_LDFLAGS): add -lm

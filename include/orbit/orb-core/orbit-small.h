@@ -33,6 +33,7 @@ void           ORBit_small_invoke_adaptor (ORBit_OAObject     adaptor_obj,
 					   gpointer           data,
 					   CORBA_Environment *ev);
 
+/* Type library work */
 CORBA_char       *ORBit_small_get_type_id         (CORBA_Object       object,
 						   CORBA_Environment *ev);
 ORBit_IInterface *ORBit_small_get_iinterface      (CORBA_Object       opt_object,
@@ -43,5 +44,21 @@ CORBA_sequence_CORBA_TypeCode *
                   ORBit_small_get_types           (const char        *name);
 CORBA_sequence_ORBit_IInterface *
                   ORBit_small_get_iinterfaces     (const char        *name);
+
+typedef void (*ORBitAsyncInvokeFunc) (CORBA_Object       object,
+				      ORBit_IMethod     *m_data,
+				      const CORBA_any   *ret,
+				      gpointer          *args,
+				      gpointer           user_data, 
+				      CORBA_Environment *ev);
+
+/* Various bits for Async work */
+void              ORBit_small_invoke_async        (CORBA_Object           obj,
+						   ORBit_IMethod         *m_data,
+						   ORBitAsyncInvokeFunc   fn,
+						   gpointer               user_data,
+						   gpointer              *args,
+						   CORBA_Context          ctx,
+						   CORBA_Environment     *ev);
 
 #endif /* CORBA_SMALL_H */
