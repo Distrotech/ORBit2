@@ -1,7 +1,4 @@
-Code for an ORB written in C will spontaneously evolve here. C, ObjC, and
-Scheme bindings will be supported, eventually. (OK that's a lie. It has
-been over a year now and nobody has done much about any languages except
-C.)
+Code for an ORB written in C will spontaneously evolve here.
 
 ORBit is part of the GNU project, and is a GNU program. For more
 information on the Free Software Foundation and GNU, visit
