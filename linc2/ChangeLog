@@ -1,3 +1,8 @@
+2003-11-14  Padraig O'Briain  <padraig.obriain@sun.com>
+
+	* linc2/src/linc-server.c (link_server_handle_io): Add comment
+	about change of g_error to g_warning for bug #126209.
+
 2003-10-24  Michael Meeks  <michael@ximian.com>
 
 	* src/linc.c (link_set_io_thread): don't allocate
