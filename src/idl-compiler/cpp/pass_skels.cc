@@ -395,14 +395,17 @@ IDLPassSkels::doOperationPrototype(IDLInterface &iface,IDL_tree node) {
 	m_header
 	<< indent << "virtual " << ret_typespec << ' ' << ret_typedcl << '('
 	<< op.getCPPOpParameterList() << ')' << endl;
+
 	indent++;
 	m_header
 	<< indent << "throw ("IDL_CORBA_NS "::SystemException";
 	IDLOperation::ExceptionList::const_iterator firstx = op.m_raises.begin(),
 	        lastx = op.m_raises.end();
-	while (firstx != lastx)
+
+	while (firstx != lastx && *firstx)
 		m_header
 		<< ',' << (*firstx++)->getQualifiedCPPIdentifier();
+
 	m_header
 	<< ") = 0;" << endl;
 	indent--;
