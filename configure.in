@@ -39,13 +39,17 @@ AC_MSG_WARN([host is $host])
 case "$host" in
   *-*-mingw*)
     os_win32=yes
+    LIBM=
     ;;
   *)
     os_win32=no
+    LIBM=-lm
     ;;
 esac
 
 AM_CONDITIONAL(OS_WIN32, [test "$os_win32" = "yes"])
+
+AC_SUBST(LIBM)
 
 if test "$os_win32" = "yes"; then
   if test x$enable_static = xyes -o x$enable_static = x; then

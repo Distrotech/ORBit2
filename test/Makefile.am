@@ -1,11 +1,5 @@
 SUBDIRS = everything inhibit poa
 
-if OS_WIN32
-libm=
-else
-libm=-lm
-endif
-
 INCLUDES =                          \
 	-I$(top_srcdir)/include     \
 	-I$(top_srcdir)/src/orb     \
@@ -68,7 +62,7 @@ typelib_dump_SOURCES=typelib-dump.c
 
 DYNANY_IDLOUT=dynany.h dynany-common.c dynany-skels.c dynany-stubs.c
 test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
-test_dynany_LDFLAGS=$(libm)
+test_dynany_LDFLAGS=$(LIBM)
 
 IDL_FLAGS =  --showcpperrors
 IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl
