@@ -67,7 +67,8 @@ PortableServer_POA_find_POA(PortableServer_POA _obj,
   PortableServer_POA child_poa;
 
 
-  child_poa = g_hash_table_lookup(_obj->child_poas, adapter_name);
+  if(_obj->child_poas)
+    child_poa = g_hash_table_lookup(_obj->child_poas, adapter_name);
 
   if(activate_it)
     g_warning("Don't yet know how to activate POA named \"%s\"",
