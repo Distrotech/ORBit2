@@ -94,13 +94,14 @@ namespace CORBA {
 		CORBA_Object m_target;
 	};
 	
-	
+		
+	Boolean is_nil(Object_ptr o);
+
 	inline void release(Object_ptr o)
 	{
-		_orbitcpp::release_guarded(o->_orbitcpp_get_c_object());
+		if (!is_nil (o))
+			_orbitcpp::release_guarded(o->_orbitcpp_get_c_object());
 	}
-	
-	Boolean is_nil(Object_ptr o);
 }
 
 
