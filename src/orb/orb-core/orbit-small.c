@@ -1077,7 +1077,8 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 	/* So we don't get invoked again */
 	aqe->mqe.u.unthreaded.cb = NULL;
 
-	if (aqe->mqe.cnx->parent.status == LINC_DISCONNECTED)
+	if (!aqe->mqe.cnx ||
+	    aqe->mqe.cnx->parent.status == LINC_DISCONNECTED)
 		CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 					    aqe->completion_status);
 

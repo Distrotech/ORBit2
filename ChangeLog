@@ -1,3 +1,43 @@
+2002-06-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_list_zap):
+	always remove the stale ent from the list, and NULL the
+	dying cnx.
+	(giop_recv_buffer_get): check for a NULL ent's cnx.
+	(giop_connection_destroy_frags): impl.
+	(giop_recv_buffer_handle_fragmented): check that we
+	don't have an inconsistant 'fragments_follow' state.
+
+	* src/orb/GIOP/giop-connection.c
+	(giop_connection_dispose): dispose the fragments.
+	
+	* src/orb/orb-core/orbit-small.c (async_recv_cb): treat
+	a NULL cnx, like the disconnection it is.
+
+	* src/orb/orb-core/corba-any.c
+	(ORBit_demarshal_value): do exponential growing of
+	sequences so we don't blow the memory - since we
+	find it hard to do pre-alloc bounds checking on
+	arbitrary sequence contents.
+	Free the sequence on failing to de-marshal.
+
+	* src/orb/orb-core/allocators.c
+	(ORBit_realloc_tcval): impl. for the above scheme.
+
+2002-06-27  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_connection_handle_input): update reporting
+	to make DEBUG=errors more useful.
+	(handle_reply): don't dump the reply.
+
+	* test/test-giop.c (test_mangling): impl.
+	(main): upd.
+	(test_incoming_mangler): randomly mangle passing data.
+
+	* src/orb/GIOP/giop-server.c: conditionalize
+	new_connection debug hook.
+
 2002-06-26  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (concat_frags):

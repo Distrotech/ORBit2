@@ -8,9 +8,13 @@ G_BEGIN_DECLS
 #define CORBA_sequence_set_release(s,r) (s)->_release = r
 #define CORBA_sequence_get_release(s) (s)->_release
 
-void     CORBA_free        (gpointer mem);
-gpointer ORBit_alloc_tcval (CORBA_TypeCode tc,
-			    guint          nelements);
+void     CORBA_free          (gpointer mem);
+gpointer ORBit_alloc_tcval   (CORBA_TypeCode tc,
+			      guint          nelements);
+gpointer ORBit_realloc_tcval (gpointer       old,
+			      CORBA_TypeCode tc,
+			      guint          old_num_elements,
+			      guint          num_elements);
 
 #ifdef ORBIT2_INTERNAL_API
 

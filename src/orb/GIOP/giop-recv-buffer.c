@@ -524,16 +524,15 @@ giop_recv_list_zap (GIOPConnection *cnx)
 		if (ent->cnx == cnx) {
 			giop_recv_buffer_unuse (ent->buffer);
 			ent->buffer = NULL;
+			ent->cnx = NULL;
 #ifdef ORBIT_THREADED
 			notify = g_slist_prepend (notify, ent);
 #else
-			if (ent->u.unthreaded.cb) {
-				giop_queued_messages = g_list_delete_link (
-					giop_queued_messages, l);
-
+			if (ent->u.unthreaded.cb)
 				notify = g_slist_prepend (notify, ent);
-			}
 #endif
+			giop_queued_messages = g_list_delete_link (
+				giop_queued_messages, l);
 		}
 	}
 
@@ -673,7 +672,8 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent, gboolean block_for_reply)
 	LINC_MUTEX_UNLOCK (ent->condvar_lock);
 #else
 	if (block_for_reply) {
-		while (!ent->buffer && (ent->cnx->parent.status != LINC_DISCONNECTED))
+		while (!ent->buffer && ent->cnx &&
+		       (ent->cnx->parent.status != LINC_DISCONNECTED))
 			linc_main_iteration (block_for_reply);
 	} else
 		linc_main_iteration (FALSE);
@@ -775,6 +775,23 @@ giop_connection_remove_frag (GIOPConnection *cnx, GList *frags)
 	g_list_free (frags);
 }
 
+void
+giop_connection_destroy_frags (GIOPConnection *cnx)
+{
+	GList *l;
+
+	for (l = cnx->incoming_frags; l; l = l->next) {
+		GList *l2;
+
+		for (l2 = l->data; l2; l2 = l2->next)
+			giop_recv_buffer_unuse (l2->data);
+
+		g_list_free (l->data);
+	}
+	g_list_free (cnx->incoming_frags);
+	cnx->incoming_frags = NULL;
+}
+
 static gboolean
 alloc_buffer (GIOPRecvBuffer *buf, gpointer old_alloc, gulong body_size)
 {
@@ -817,8 +834,10 @@ concat_frags (GList *list)
 
 	g_assert (head->free_body);
 
-	if (alloc_buffer (head, head->message_body, length))
+	if (alloc_buffer (head, head->message_body, length)) {
+		dprintf (ERRORS, "failed to allocate fragment collation buffer");
 		return TRUE;
+	}
 
 	head->left_to_read = 0;
 	head->cur = head->message_body + initial_offset;
@@ -873,8 +892,10 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 		if (!giop_1_1) {
 			buf->cur = ALIGN_ADDRESS (buf->cur, 4);
 
-			if ((buf->cur + 4) > buf->end)
+			if ((buf->cur + 4) > buf->end) {
+				dprintf (ERRORS, "incoming bogus fragment length");
 				return TRUE;
+			}
 			if (giop_msg_conversion_needed (buf))
 				message_id = GUINT32_SWAP_LE_BE (*((guint32 *)buf->cur));
 			else
@@ -889,10 +910,13 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 		return TRUE;
 	}
 
-	if (!(list = giop_connection_get_frag (cnx, message_id, giop_1_1)))
+	if (!(list = giop_connection_get_frag (cnx, message_id, giop_1_1))) {
+		if (!MORE_FRAGMENTS_FOLLOW (buf))
+			return TRUE;
+
 		giop_connection_add_frag (cnx, buf);
 
-	else {
+	} else {
 		GIOPRecvBuffer *head = list->data;
 
 		*ret_buf = head;
@@ -955,6 +979,7 @@ handle_reply (GIOPRecvBuffer *buf)
 #endif
 
 			dprintf (ERRORS, "We received a bogus reply\n");
+
 			giop_recv_buffer_unuse (buf);
 			return TRUE;
 		}
@@ -989,13 +1014,8 @@ handle_reply (GIOPRecvBuffer *buf)
 #ifdef G_ENABLE_DEBUG
 			if (giop_debug_hook_unexpected_reply)
 				giop_debug_hook_unexpected_reply (buf);
-#endif
-
-#ifdef G_ENABLE_DEBUG
-			else if (_orbit_debug_flags & ORBIT_DEBUG_ERRORS) {
-				dprintf (ERRORS, "We received an unexpected reply:");
-				giop_dump_recv (buf);
-			}
+			else
+				dprintf (ERRORS, "We received an unexpected reply\n");
 #endif /* G_ENABLE_DEBUG */
 			error = TRUE;
 		}
@@ -1068,9 +1088,8 @@ giop_recv_msg_reading_body (GIOPRecvBuffer *buf,
 gboolean
 giop_connection_handle_input (LINCConnection *lcnx)
 {
-	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 	GIOPRecvBuffer *buf;
-	static int      warned = 0;
+	GIOPConnection *cnx = (GIOPConnection *) lcnx;
 
 	g_object_ref ((GObject *) cnx);
 	LINC_MUTEX_LOCK (cnx->incoming_mutex);
@@ -1115,8 +1134,10 @@ giop_connection_handle_input (LINCConnection *lcnx)
 			switch (buf->state) {
 
 			case GIOP_MSG_READING_HEADER:
-				if (giop_recv_msg_reading_body (buf, cnx->parent.is_auth))
+				if (giop_recv_msg_reading_body (buf, cnx->parent.is_auth)) {
+					dprintf (ERRORS, "OOB incoming msg header data\n");
 					goto msg_error;
+				}
 				buf->state = GIOP_MSG_READING_BODY;
 				break;
 
@@ -1125,18 +1146,23 @@ giop_connection_handle_input (LINCConnection *lcnx)
 				dprintf (GIOP, "Incoming IIOP body:\n");
 
 				buf->cur = buf->message_body + 12;
-				if ((buf->cur + buf->msg.header.message_size) > buf->end)
+				if ((buf->cur + buf->msg.header.message_size) > buf->end) {
+					dprintf (ERRORS, "broken incoming length data\n");
 					goto msg_error;
+				}
 				do_giop_dump (stderr, buf->cur, buf->msg.header.message_size, 0);
 
 				buf->state = GIOP_MSG_READY;
 
-				if (giop_recv_buffer_demarshal (buf))
+				if (giop_recv_buffer_demarshal (buf)) {
+					dprintf (ERRORS, "broken incoming header data\n");
 					goto msg_error;
+				}
 
 				if (MORE_FRAGMENTS_FOLLOW (buf)) {
 					if (giop_recv_buffer_handle_fragmented (&buf, cnx))
 						goto msg_error;
+
 					else {
 						cnx->incoming_msg = NULL;
 						LINC_MUTEX_UNLOCK (cnx->incoming_mutex);
@@ -1180,11 +1206,8 @@ giop_connection_handle_input (LINCConnection *lcnx)
 	case GIOP_CANCELREQUEST:
 	case GIOP_LOCATEREQUEST:
 	case GIOP_MESSAGEERROR:
-		if (!warned++) {
-			g_warning ("dropping an unusual & unhandled input buffer 0x%x",
-				   buf->msg.header.message_type);
-			giop_dump_recv (buf);
-		}
+		dprintf (ERRORS, "dropping an unusual & unhandled input buffer 0x%x",
+			 buf->msg.header.message_type);
 		giop_recv_buffer_unuse (buf);
 		break;
 
@@ -1193,10 +1216,11 @@ giop_connection_handle_input (LINCConnection *lcnx)
 		linc_connection_state_changed (lcnx, LINC_DISCONNECTED);
 		break;
 
+	case GIOP_FRAGMENT:
+		dprintf (ERRORS, "Fragment got in the wrong channel\n");
 	default:
-		if (!warned++)
-			g_warning ("dropping an out of bound input buffer "
-				   "on the floor 0x%x", buf->msg.header.message_type);
+		dprintf (ERRORS, "dropping an out of bound input buffer "
+			 "on the floor 0x%x\n", buf->msg.header.message_type);
 		goto msg_error;
 		break;
 	}

@@ -293,6 +293,34 @@ ORBit_alloc_tcval (CORBA_TypeCode tc,
 }
 
 gpointer
+ORBit_realloc_tcval (gpointer       old,
+		     CORBA_TypeCode tc,
+		     guint          old_num_elements,
+		     guint          num_elements)
+{
+	guint element_size;
+	ORBit_MemPrefix *prefix;
+
+	g_assert (num_elements > old_num_elements);
+
+	if (!num_elements)
+		return NULL;
+
+	if (!(element_size = ORBit_gather_alloc_info (tc)))
+		return NULL;
+
+	prefix = g_realloc ((guchar *) old - LONG_PREFIX_LEN,
+			    LONG_PREFIX_LEN +
+			    element_size * num_elements);
+
+	memset ((guchar *) prefix + LONG_PREFIX_LEN +
+		old_num_elements * element_size,
+		0, (num_elements - old_num_elements) * element_size);
+
+	return (guchar *) prefix + LONG_PREFIX_LEN;
+}
+
+gpointer
 ORBit_alloc_by_tc (CORBA_TypeCode tc)
 {
 	guchar *mem;

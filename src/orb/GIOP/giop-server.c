@@ -2,8 +2,10 @@
 #include <orbit/GIOP/giop.h>
 #include <orbit/GIOP/giop-connection.h>
 
+#ifdef G_ENABLE_DEBUG
 void (*giop_debug_hook_new_connection) (GIOPServer     *server,
 					GIOPConnection *new_cnx) = NULL;
+#endif
 
 GIOPServer *
 giop_server_new (GIOPVersion            giop_version,

@@ -147,6 +147,8 @@ giop_connection_dispose (GObject *obj)
 		cnx->outgoing_mutex = NULL;
 	}
 
+	giop_connection_destroy_frags (cnx);
+
 	giop_connection_list_remove (cnx);
 
 	g_assert (cnx->incoming_msg == NULL);

@@ -1,9 +1,7 @@
 TODO:
 
 * GIOP fragments
-	+ slighty unfinished
 	+ need to handle a cancel request in the middle of a fragment stream
-	+ need to free the fragments on abnormal connection termination.
 
 
 * It seems the local case optimization can go wrong when
