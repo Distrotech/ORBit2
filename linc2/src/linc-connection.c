@@ -684,9 +684,10 @@ linc_connection_flush_write_queue (LINCConnection *cnx)
 
 /* Always called in main thread */
 static int
-linc_connection_flush_write_queue_cb (gpointer cnx)
+linc_connection_flush_write_queue_cb (LINCConnection *cnx)
 {
-	linc_connection_flush_write_queue (cnx);
+	if (cnx->status != LINC_CONNECTING)
+		linc_connection_flush_write_queue (cnx);
 	linc_object_unref (cnx);
 	return FALSE;
 }
@@ -719,12 +720,12 @@ linc_connection_writev (LINCConnection       *cnx,
 
 	if (linc_get_threaded () &&
 	    !linc_in_io_thread ()) {
-		g_warning ("Transfer output to main thread ...");
+		d_printf ("Transfer output to main thread");
 		linc_object_ref (cnx);
 		queue_flattened (cnx, vecs, nvecs);
 		LINC_MUTEX_UNLOCK (cnx->priv->write_lock);
 		linc_main_idle_add
-			(linc_connection_flush_write_queue_cb, cnx);
+			((GSourceFunc)linc_connection_flush_write_queue_cb, cnx);
 		return LINC_IO_QUEUED_DATA;
 	}
 
