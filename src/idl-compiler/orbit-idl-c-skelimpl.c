@@ -389,7 +389,7 @@ cbe_ski_do_inherited_methods(IDL_tree interface, CBESkelImplInfo *ski)
 {
   CBESkelImplInfo subski= *ski;
   IDL_tree curitem;
-  char *id, *inherit_id;
+  char *id = NULL, *inherit_id = NULL; /* Quiet gcc */
 
   if(interface==ski->tree)
     return;

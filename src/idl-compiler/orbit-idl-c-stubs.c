@@ -140,7 +140,7 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
     fprintf(ci->fh, "ORBIT_STUB_PreCall(_obj);\n");
     fprintf(ci->fh, "%s _epv->%s(ORBIT_STUB_GetServant(_obj), ",
 	    IDL_OP_DCL(tree).op_type_spec?"_ORBIT_retval = ":"",
-	    IDL_IDENT(IDL_OP_DCL(tree).ident).str, id);
+	    IDL_IDENT(IDL_OP_DCL(tree).ident).str);
     g_free(id);
     for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
 	curitem = IDL_LIST(curitem).next) {
@@ -235,6 +235,13 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 #else
   fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
 #endif
+  if(IDL_OP_DCL(tree).op_type_spec)
+    /* This will avoid warning about uninitialized memory while
+     * compiling the stubs with no extra code size cost */
+    fprintf(ci->fh, "#if defined(__GNUC__) && defined(__OPTIMIZE__)\n"
+	    "if(&%s);\n"
+	    "#endif\n", ORBIT_RETVAL_VAR_NAME);
+
   cs_stub_print_return (tree, ci);
 
   if(!IDL_OP_DCL(tree).f_oneway) {

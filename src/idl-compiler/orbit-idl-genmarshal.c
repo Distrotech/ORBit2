@@ -341,7 +341,7 @@ marshal_populate(IDL_tree tree, OIDL_Marshal_Node *parent, gboolean is_out, OIDL
   case IDLN_MEMBER:
     {
       IDL_tree curitem, curnode;
-      OIDL_Marshal_Node *tnode;
+      OIDL_Marshal_Node *tnode = NULL; /* Quiet gcc */
 
       retval = oidl_marshal_node_new(parent, MARSHAL_SET, NULL);
       for(curitem = IDL_MEMBER(tree).dcls; curitem; curitem = IDL_LIST(curitem).next) {

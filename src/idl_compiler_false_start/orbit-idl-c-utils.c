@@ -106,7 +106,7 @@ orbit_cbe_write_typespec(FILE *of, IDL_tree tree)
   }
 }
 
-IDL_tree
+static IDL_tree
 orbit_cbe_get_efftype(IDL_tree tree)
 {
   switch(IDL_NODE_TYPE(tree)) {
@@ -341,7 +341,7 @@ orbit_cbe_op_write_proto(FILE *of,
       fprintf(of, "_slice*");
 
     {
-      IDL_ParamRole r;
+      IDL_ParamRole r = 0; /* Quiet gcc */
 
       switch(IDL_PARAM_DCL(parm).attr) {
       case IDL_PARAM_IN: r = DATA_IN; break;
@@ -364,7 +364,7 @@ orbit_cbe_op_write_proto(FILE *of,
 }
 
 /* Writes the value of the constant in 'tree' to file handle 'of' */
-char *
+static char *
 orbit_cbe_get_const(IDL_tree tree)
 {
   char *opc = NULL, *retval, *ctmp;
@@ -474,7 +474,7 @@ orbit_cbe_write_const(FILE *of, IDL_tree tree)
   g_free(ctmp);
 }
 
-char *
+static char *
 orbit_cbe_get_const_node(OIDL_Marshal_Node *node)
 {
   if(node->tree)

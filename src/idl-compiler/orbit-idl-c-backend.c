@@ -56,7 +56,7 @@ orbit_idl_output_c(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo)
 static FILE *
 out_for_pass(const char *input_filename, int pass, OIDL_Run_Info *rinfo)
 {
-  char *tack_on;
+  char *tack_on = NULL; /* Quiet gcc */
   char *basein;
   char *ctmp;
   char *cmdline;
