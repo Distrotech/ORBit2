@@ -201,6 +201,11 @@ testException (test_TestFactory   factory,
 	objref = test_TestFactory_getBasicServer (factory, ev);
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 
+	test_BasicServer_opException (CORBA_OBJECT_NIL, ev);
+	g_assert (ev->_major == CORBA_SYSTEM_EXCEPTION);
+	g_assert (strcmp (CORBA_exception_id (ev), ex_CORBA_INV_OBJREF) == 0);
+	CORBA_exception_free (ev);
+
 	test_BasicServer_opException (objref, ev);
   
 	g_assert (ev->_major == CORBA_USER_EXCEPTION);

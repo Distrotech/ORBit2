@@ -90,9 +90,9 @@ struct ORBit_POAObject_type {
 		ORBIT_SERVANT_MAJOR_TO_EPVPTR ((pobj)->servant,			\
 		ORBIT_POAOBJECT_TO_EPVIDX ((pobj), (clsid)) )
 
-#define ORBIT_STUB_IsBypass(obj, classid) \
-		(((CORBA_Object)obj)->adaptor_obj && \
-		((CORBA_Object)obj)->adaptor_obj->interface->adaptor_type == ORBIT_ADAPTOR_POA && \
+#define ORBIT_STUB_IsBypass(obj, classid)								\
+		((obj) && ((CORBA_Object)obj)->adaptor_obj &&						\
+		((CORBA_Object)obj)->adaptor_obj->interface->adaptor_type == ORBIT_ADAPTOR_POA &&	\
 		((ORBit_POAObject)((CORBA_Object)obj)->adaptor_obj)->servant && classid)
 
 #define ORBIT_STUB_GetEpv(obj, clsid) \

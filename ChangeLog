@@ -1,3 +1,17 @@
+2002-01-03  Mark McLoughlin  <mark@skynet.ie>
+
+	* include/orbit/poa/poa-types.h:
+	(ORBIT_STUB_IsBypass): check for nil reference, and pawn off
+	on ORBit_small_invoke_stub if it is nil.
+
+	* src/orb/orb-core/orbit-small.c: (ORBit_small_invoke_stub):
+	return INV_OBJREF exception if obj is nil.
+
+	* test/everything/client.c: (testException): test.
+
+	* test/everything/pingServer.c: (PingPongServer_opSleep):
+	kill unused variable.
+
 2001-12-31  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: require the new linc.

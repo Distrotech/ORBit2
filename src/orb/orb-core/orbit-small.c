@@ -558,7 +558,16 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	CORBA_completion_status completion_status;
 	GIOPConnection         *cnx;
 	GIOPMessageQueueEntry   mqe;
-	ORBit_OAObject          adaptor_obj = obj->adaptor_obj;
+	ORBit_OAObject          adaptor_obj;
+
+	if (!obj) {
+		dprintf ("Cannot invoke method on null object\n");
+		CORBA_exception_set_system (ev, ex_CORBA_INV_OBJREF,
+					    CORBA_COMPLETED_NO);
+		goto clean_out;
+	}
+
+	adaptor_obj = obj->adaptor_obj;
 
 	if (adaptor_obj) {
 		ORBit_small_handle_request (adaptor_obj, m_data->name, ret,
