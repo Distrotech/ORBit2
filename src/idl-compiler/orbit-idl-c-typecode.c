@@ -44,6 +44,109 @@ orbit_output_typecode(OIDL_C_Info *ci,
   g_free(tci.structname);
 }
 
+static gint
+orbit_find_c_alignment (IDL_tree node)
+{
+	gint retval = 1;
+
+	node = orbit_cbe_get_typespec (node);	
+
+	switch (IDL_NODE_TYPE (node)) {
+	case IDLN_TYPE_INTEGER:
+		switch (IDL_TYPE_INTEGER (node).f_type) {
+		case IDL_INTEGER_TYPE_SHORT:
+			retval = ORBIT_ALIGNOF_CORBA_SHORT;
+			break;
+		case IDL_INTEGER_TYPE_LONG:
+			retval = ORBIT_ALIGNOF_CORBA_LONG;
+			break;
+		case IDL_INTEGER_TYPE_LONGLONG:
+			retval = ORBIT_ALIGNOF_CORBA_LONG_LONG;
+			break;
+		}
+		break;
+	case IDLN_TYPE_FLOAT:
+		switch (IDL_TYPE_FLOAT (node).f_type) {
+		case IDL_FLOAT_TYPE_FLOAT:
+			retval = ORBIT_ALIGNOF_CORBA_FLOAT;
+			break;
+		case IDL_FLOAT_TYPE_DOUBLE:
+			retval = ORBIT_ALIGNOF_CORBA_DOUBLE;
+			break;
+		case IDL_FLOAT_TYPE_LONGDOUBLE:
+			retval = ORBIT_ALIGNOF_CORBA_LONG_DOUBLE;
+			break;
+		}
+		break;
+	case IDLN_TYPE_ENUM:
+		retval = ORBIT_ALIGNOF_CORBA_LONG;
+		break;
+	case IDLN_TYPE_CHAR: /* drop through */
+	case IDLN_TYPE_BOOLEAN:
+	case IDLN_TYPE_OCTET:
+		retval = ORBIT_ALIGNOF_CORBA_CHAR;
+		break;
+	case IDLN_TYPE_WIDE_CHAR:
+		retval = ORBIT_ALIGNOF_CORBA_SHORT;
+		break;
+	case IDLN_TYPE_UNION: {
+		IDL_tree disriminator = IDL_TYPE_UNION (node).switch_type_spec;
+		IDL_tree body = IDL_TYPE_UNION (node).switch_body;
+
+		retval = orbit_find_c_alignment (disriminator);
+
+		for (; body; body = IDL_LIST (body).next) {
+			IDL_tree subtype = IDL_MEMBER (IDL_CASE_STMT (
+					IDL_LIST (body).data).element_spec).type_spec;
+
+			retval = MAX (retval, orbit_find_c_alignment (subtype));
+		}
+		}
+		break;
+	case IDLN_EXCEPT_DCL: /* drop through */
+	case IDLN_TYPE_STRUCT: {
+		IDL_tree members = IDL_TYPE_STRUCT (node).member_list;
+					
+		for (; members; members = IDL_LIST (members).next) {
+			IDL_tree subtype = IDL_MEMBER (IDL_LIST (members).data).type_spec;
+
+			retval = MAX (retval, orbit_find_c_alignment (subtype));
+		}
+		}
+		break;
+	case IDLN_TYPE_STRING: /* drop through */
+	case IDLN_TYPE_WIDE_STRING:
+	case IDLN_TYPE_OBJECT:
+	case IDLN_TYPE_TYPECODE:
+	case IDLN_FORWARD_DCL:
+	case IDLN_INTERFACE:
+		retval = ORBIT_ALIGNOF_CORBA_POINTER;
+		break;
+	case IDLN_TYPE_ARRAY: {
+		IDL_tree subtype = IDL_TYPE_DCL (IDL_get_parent_node (node, IDLN_TYPE_DCL, NULL)
+							).type_spec;
+
+		retval = orbit_find_c_alignment (subtype);
+		}
+		break;
+	case IDLN_TYPE_SEQUENCE:
+		retval = MAX (MAX (ORBIT_ALIGNOF_CORBA_STRUCT,
+				   ORBIT_ALIGNOF_CORBA_LONG),
+				   ORBIT_ALIGNOF_CORBA_POINTER);
+		break;
+	case IDLN_TYPE_ANY:
+		retval =  MAX( ORBIT_ALIGNOF_CORBA_STRUCT,
+			       ORBIT_ALIGNOF_CORBA_POINTER);
+		break;
+	default:
+		g_error ("Can't find alignment %s\n", 
+			 IDL_tree_type_names[IDL_NODE_TYPE (node)]);
+		break;
+	}
+
+	return retval;
+}
+
 static char *
 cbe_tc_generate_tcstruct_name(IDL_tree ts)
 {
@@ -756,11 +859,16 @@ cbe_tc_generate(CBETCGenInfo *tci)
   fprintf(tci->of, ", ");
 
   if(IDL_NODE_TYPE(tci->ts) == IDLN_TYPE_FIXED) {
-    fprintf(tci->of, "%d, %d, 0",
+    fprintf(tci->of, "%d, %d",
 	    (int)IDL_INTEGER(IDL_TYPE_FIXED(tci->ts).positive_int_const).value,
 	    (int)IDL_INTEGER(IDL_TYPE_FIXED(tci->ts).integer_lit).value);
   } else
-    fprintf(tci->of, "0, 0, 0");
+    fprintf(tci->of, "0, 0");
+
+  fprintf(tci->of, ", ");
+
+  /* c_align */
+  fprintf(tci->of, "%d", orbit_find_c_alignment (tci->ts));
 
   fprintf(tci->of, "\n};\n");
   if(strncmp(tci->structname, "anon", 4))
