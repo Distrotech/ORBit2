@@ -1,3 +1,14 @@
+2001-09-24  Mark McLoughlin <mark@skynet.ie>
+
+	* linc/configure.in: clean up libtool versioning. Use
+	pkg-config to check for libs. Kill unused vprintf and
+	alloca check.
+
+	* linc.pc.in, linc.spec.in: update.
+
+	* linc/src/Makefile.am: update and include libtool 
+	version-info.
+
 2001-09-20  Mark McLoughlin <mark@skynet.ie>
 
 	Patch from Frank Belew <frb@ximian.com>.

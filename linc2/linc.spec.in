@@ -1,6 +1,6 @@
 Name:		 linc
 Summary:	 Network client/server library.
-Version:	 @VERSION@
+Version:	 @LINC_VERSION@
 Release:	 1
 License:	 GPL
 Group:		 Development/Libraries
@@ -74,5 +74,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/*
 
 %changelog
-* Tue Sep 28 2001 Jens Finke <jens@gnome.org>
+* Mon Sep 24 2001 Mark McLoughlin <mark@skynet.ie>
+- use LINC_VERSION instead of VERSION
+
+* Tue Sep 18 2001 Jens Finke <jens@gnome.org>
 - Created initial spec file.
