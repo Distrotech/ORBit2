@@ -1,3 +1,9 @@
+2002-03-24  Murray Cumming  <murrayc@usa.net>
+
+	* Added --headerguardprefix option to orbit-idl-2. This allows the
+	C++ bindings to use generated C bindings which in turn #include
+	already-generated installed C bindings.
+
 2002-03-16  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/cpp/types/IDLType.cc: Don't use _forwarder
