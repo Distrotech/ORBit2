@@ -1,3 +1,9 @@
+2001-07-25  Maciej Stachowiak  <mjs@noisehavoc.org>
+
+	* src/idl-compiler/orbit-idl-c-headers.c: (ch_output_codefrag):
+	Add a newline after emitted codefrag lines to avoid line
+	directives running together with the next line.
+
 2001-07-25  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/iop-profiles.c(IOP_components_marshal),
