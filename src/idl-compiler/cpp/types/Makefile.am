@@ -15,7 +15,7 @@ noinst_LTLIBRARIES = libidl-cpp-types.la
 headers = 		\
 #  IDLAny.hh		\
   IDLArray.hh		\
-#  IDLArrayList.hh	\
+  IDLArrayList.hh	\
   IDLAttribAccessor.hh	\
   IDLBoolean.hh		\
   IDLCompound.hh	\
@@ -44,7 +44,7 @@ headers = 		\
 modules =		\
 #  IDLAny.cc		\
   IDLArray.cc		\
-#  IDLArrayList.cc	\
+  IDLArrayList.cc	\
   IDLAttribAccessor.cc	\
   IDLBoolean.cc		\
   IDLCompound.cc	\

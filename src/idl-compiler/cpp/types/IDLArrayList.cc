@@ -26,18 +26,44 @@
 
 #include "IDLArrayList.hh"
 
+IDLArrayList::IDLArrayKey::IDLArrayKey (const string &member_type,
+					int           length):
+	m_member_type (member_type),
+	m_length (length)
+{
+}
+
 bool
-IDLArrayList::doesArrayTypeExist(IDLArray const& array) {
-	string typespec, dcl="";
-	array.m_elementType.getCPPMemberDeclarator(dcl,typespec,dcl);
-	typespec += dcl;
-	int length = 1;
-	for(const_iterator it = array.begin(); it != array.end(); it++)
-		length *= *it;
-	IDLArrayKey new_array_key(typespec, length);
-	if( m_arraySet.find(new_array_key) == m_arraySet.end() ) {
-		m_arraySet.insert(new_array_key);
-		return false;
-	} else
+IDLArrayList::IDLArrayKey::operator< (const IDLArrayKey &other_key) const
+{
+	// Try to discriminate based on length (because that's cheaper
+	if (m_length < other_key.m_length)
 		return true;
+
+	if (m_length > other_key.m_length)
+		return false;
+
+	// If that fails, use type names
+	return (m_member_type < other_key.m_member_type);
+}
+
+
+bool
+IDLArrayList::array_exists (const IDLArray &array)
+{
+	string member_type = array.m_element_type.get_cpp_member_typename ();
+	
+	int length = 1;
+	for (IDLArray::const_iterator i = array.begin(); i != array.end(); i++)
+		length *= *i;
+	
+	IDLArrayKey new_array_key (member_type, length);
+
+	if (m_arrays.find (new_array_key) == m_arrays.end ())
+	{
+	    m_arrays.insert (new_array_key);
+	    return false;
+	} else {
+	    return true;
+	}
 }

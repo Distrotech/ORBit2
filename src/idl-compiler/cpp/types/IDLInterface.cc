@@ -187,6 +187,7 @@ IDLInterface::get_cpp_poa_namespace (string &ns_begin,
 void
 IDLInterface::typedef_decl_write (ostream          &ostr,
 				  Indent           &indent,
+				  IDLCompilerState &state,
 				  const IDLTypedef &target,
 				  const IDLTypedef *active_typedef = 0) const
 {

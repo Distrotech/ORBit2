@@ -93,7 +93,7 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 		}
 #endif
 		const IDLType &targetType = td.getAlias();
-		targetType.typedef_decl_write (m_header, indent, td);
+		targetType.typedef_decl_write (m_header, indent, m_state, td);
 
 		m_header << indent;
 		if (scope.getTopLevelInterface ())
@@ -109,26 +109,22 @@ IDLPassXlate::doTypedef (IDL_tree  node,
 
 }
 
-
-#if 0
+#if 0 //!!!
 void 
 IDLPassXlate::doStruct (IDL_tree  node,
 			IDLScope &scope)
 {
 	IDLStruct &idlStruct = (IDLStruct &) *scope.getItem(node);
 
-	m_header << indent << "class " << idlStruct.getCPPIdentifier() << endl
+	m_header << indent << "struct " << idlStruct.get_cpp_identifier () << endl
 		 << indent++ << "{" << endl;
 
-	m_header << indent << idlStruct.getCTypeName () << " c_struct;" << endl;
-	
-	m_header << endl << --indent << "public:" << endl;
-	indent++;
+	// Create members
+	struct_create_members (idlStruct);
 
-	// Method to access the underlying C object
-	struct_create_wrapper (idlStruct);
-	struct_create_unwrapper (idlStruct);
+	m_header << --indent << "};" << endl;
 	
+#if 0
 	// Member accessors
 	struct_create_accessors (idlStruct);
 	struct_create_constructor (idlStruct);
@@ -174,8 +170,11 @@ IDLPassXlate::doStruct (IDL_tree  node,
 	<< "const CORBA::TypeCode_ptr _tc_" << idlStruct.getCPPIdentifier() << " = " 
 	<< "(CORBA::TypeCode_ptr)TC_" + idlStruct.getQualifiedCIdentifier() + ";" << endl;
 	ORBITCPP_MEMCHECK( new IDLWriteStructAnyFuncs(idlStruct, m_state, *this) );
+#endif
 }
+#endif
 
+#if 0
 void 
 IDLPassXlate::doUnion(IDL_tree node,IDLScope &scope) {
 	IDLUnion &idlUnion = (IDLUnion &) *scope.getItem(node);
@@ -712,169 +711,202 @@ void IDLPassXlate::enumHook(IDL_tree next,IDLScope &scope) {
 	if (!scope.getTopLevelInterface())
 		runJobs(IDL_EV_TOPLEVEL);
 }
+#endif
 
+#if 0
+void IDLPassXlate::struct_create_members (const IDLStruct &strct)
+{
+	for (IDLStruct::const_iterator i = strct.begin (); i != strct.end (); i++)
+	{
+		IDLMember &member = (IDLMember &) **i;
+		
+		m_header << indent << member.getType ()->get_cpp_member_typename ()
+			 << " " << member.get_cpp_identifier ()
+			 << ";" << endl;
+	}
+	m_header << endl;
+}
+#endif
 
 // IDLWriteArrayProps -------------------------------------------------------
 void IDLWriteArrayProps::run()
 {
-	string ident = m_dest.getQualifiedCPPIdentifier(m_dest.getRootScope());
-	m_header
-	<< indent << "inline " << ident << "_slice *" << ident << "Props::alloc()" << endl
-	<< indent << "{" << endl;
+	string array_id = m_dest.get_cpp_typename ();
+	string slice_id = array_id + "_slice";
+	string props_id = array_id + "Props";
 
-	m_header
-	<< ++indent << "return " << ident << "_alloc();\n";
-	m_header
-	<< --indent  << "}" << endl << endl;
-	
+	int length = 1;
+	for (IDLArray::const_iterator i = m_array.begin ();
+	     i != m_array.end (); i++)
+	{
+		length *= *i;
+	}
 
-	m_header
-	<< indent << "inline void " << ident << "Props::free(" << ident << "_slice * target)" << endl
-	<< indent << "{" << endl;
+	// Alloc
+	m_header << indent << "inline " << slice_id + " * " << props_id << "::alloc ()" << endl
+		 << indent++ << "{" << endl;
+	m_header << indent << "return " << array_id + "_alloc ();" << endl;
+	m_header << --indent << "}" << endl << endl;
 
-	m_header
-	<< ++indent << ident << "_free(target);\n";
-	m_header
-	<< --indent  << "}\n\n";
+	// Free
+	m_header << indent << "inline void " << props_id << "::free ("
+		 << slice_id << " * target)" << endl
+		 << indent++ << "{" << endl;
+	m_header << indent << array_id + "_free (target);" << endl;
+	m_header << --indent << "}" << endl << endl;
 
-	m_header
-	<< indent << "inline void " << ident << "Props::copy(" << ident << "_slice * m_dest, " << ident << "_slice const * src)" << endl
-	<< indent << "{" << endl;
-
-	m_header
-	<< ++indent << ident << "_copy(m_dest,src);\n";
-	m_header
-	<< --indent  << "}\n\n";
+	// Copy
+	m_header << indent << "inline void " << props_id << "::copy ("
+		 << slice_id << " * dest, "
+		 << "const " << slice_id << " * source)" << endl
+		 << indent++ << "{" << endl;
+	m_header << indent << array_id + "_copy (dest, source);" << endl;
+	m_header << --indent << "}" << endl << endl;
 }
 
-void IDLWriteAnyFuncs::writeAnyFuncs(bool pass_value, string const& cpptype, 
-	string const& ctype)
+void IDLWriteAnyFuncs::writeAnyFuncs (bool          pass_value,
+				      const string &cpptype, 
+				      const string &ctype)
 {
-	if( pass_value ) {
-		writeInsertFunc(m_header, indent, FUNC_VALUE, cpptype, ctype);
-		writeExtractFunc(m_header, indent, FUNC_VALUE, cpptype, ctype);
+	if (pass_value)
+	{
+		writeInsertFunc (m_header, indent, FUNC_VALUE, cpptype, ctype);
+		writeExtractFunc (m_header, indent, FUNC_VALUE, cpptype, ctype);
 	} else {
-		writeInsertFunc(m_header, indent, FUNC_COPY, cpptype, ctype);
-		writeInsertFunc(m_header, indent, FUNC_NOCOPY, cpptype, ctype);
-		writeExtractFunc(m_header, indent, FUNC_NOCOPY, cpptype, ctype);
+		writeInsertFunc (m_header, indent, FUNC_COPY, cpptype, ctype);
+		writeInsertFunc (m_header, indent, FUNC_NOCOPY, cpptype, ctype);
+		writeExtractFunc (m_header, indent, FUNC_NOCOPY, cpptype, ctype);
 	}
 }
 
-void IDLWriteAnyFuncs::writeInsertFunc(ostream& ostr, Indent &indent, FuncType func, 
-										string ident, string const& ctype)
+void IDLWriteAnyFuncs::writeInsertFunc (ostream      &ostr,
+					Indent       &indent,
+					FuncType      func, 
+					string        ident,
+					const string &ctype)
 {
 	string any_func, any_arg;
 	any_func = "insert_simple";
 	any_arg = "&val";
-	if( func == FUNC_COPY ) {
+	if (func == FUNC_COPY) {
 		ident += " const &";
 	}
-	else if( func == FUNC_NOCOPY ) {
+	else if (func == FUNC_NOCOPY) {
 		ident += "*";
 		any_arg = "val, CORBA_FALSE";
 	}
 
-	ostr
-  << indent << "inline void operator<<=(CORBA::Any& the_any, " << ident << " val)" << endl
-	<< indent++ << "{" << endl;
-
+	ostr << indent << "inline void operator <<= "
+	     <<	"(CORBA::Any& the_any, " << ident << " val)" << endl
+	     << indent++ << "{" << endl;
+	
 	ostr << indent << "the_any." << any_func 
-	<< "( (CORBA::TypeCode_ptr)TC_"
-	<< ctype << ", "
-	<< any_arg << ");" ;
+	     <<" ((CORBA::TypeCode_ptr)TC_" << ctype << ", "
+	     << any_arg << ");" << endl;
+	
 	ostr << --indent << endl << "}" << endl << endl;
 }
 
-void IDLWriteAnyFuncs::writeExtractFunc(ostream& ostr, Indent &indent, FuncType func, 
-										string ident, string const& ctype)
+void IDLWriteAnyFuncs::writeExtractFunc (ostream      &ostr,
+					 Indent       &indent,
+					 FuncType      func, 
+					 string        ident,
+					 const string &ctype)
 {
 	string any_func, any_arg;
 	any_arg = "val";
-	if( func == FUNC_VALUE ) {
+	if (func == FUNC_VALUE) {
 		ident += "&";
 		any_func = "extract";
-	}
-	else {
+	} else {
 		ident += " const *&";
 		any_func = "extract_ptr";
 	}
-	ostr << indent
-	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " << ident << " val)" << endl
-	<< indent << "{" << endl;
+	
+	ostr << indent << "inline CORBA::Boolean operator >>= "
+	     << "(const CORBA::Any& the_any, " << ident << " val)" << endl
+	     << indent++ << "{" << endl;
+	
+	ostr << indent << "return the_any." << any_func
+	     << " ((CORBA::TypeCode_ptr)TC_" << ctype << ", "
+	     << any_arg << ");" << endl;
 
-	ostr << ++indent << "return the_any." << any_func
-	<< "( (CORBA::TypeCode_ptr)TC_"
-	<< ctype << ", "
-	<< any_arg << ");" ;
 	ostr << --indent << endl << "}" << endl << endl;
 }
 
 void
-IDLWriteExceptionAnyFuncs::run() {
-	m_header << indent
-	<< "inline void operator <<=(CORBA::Any& the_any, " 
-	<< m_element.getQualifiedCPPIdentifier() << " const & val)" << endl
-	<< indent << "{" << endl;
+IDLWriteExceptionAnyFuncs::run ()
+{
+	string tc = "(CORBA::TypeCode_ptr)TC_" + m_element.get_c_typename ();
+	string cpp_id = m_element.get_cpp_typename ();
+	string c_id = m_element.get_c_typename ();
+	
+	// Operator <<=
+	m_header << indent << "inline void operator <<= "
+		 << "(CORBA::Any& the_any, " << cpp_id << " const &val)" << endl;
+	m_header << indent++ << "{" << endl;
 
-	m_header << ++indent
-	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)TC_"
-	<< m_element.getQualifiedCIdentifier() << ", const_cast< "
-	<< m_element.getQualifiedCPPIdentifier() << "&>(val)._orbitcpp_pack(), CORBA_FALSE);" << endl;
-	m_header
-	  << --indent << endl << "}" << endl;
+	m_header << indent << "the_any.insert_simple (" << tc << ", "
+		 << "const_cast< " << cpp_id << " &>(val)._orbitcpp_pack(), CORBA_FALSE);" << endl;
 
-	m_header << indent
-	<< "inline CORBA::Boolean operator>>=(const CORBA::Any& the_any, " 
-	<< m_element.getQualifiedCPPIdentifier() << " & val)" << endl
-	<< indent << "{" << endl;
-	m_header
-	<< ++indent << "const " << m_element.getQualifiedCIdentifier() << " *ex;" << endl;
-	m_header
-	<< indent << "if( the_any.extract_ptr( (CORBA::TypeCode_ptr)TC_"
-	<< m_element.getQualifiedCIdentifier() << ", ex)){" << endl;
-	m_header
-	<< ++indent << "val._orbitcpp_unpack(*ex);" << endl;
-	m_header
-	<< indent << "return true;" << endl;
-	m_header
-	<< --indent << "} else {" << endl;	
-	m_header
-	<< ++indent << "return false;" << endl;
-	m_header
-	<< --indent << "}" << endl;
-	m_header
-	<< --indent << "}" << endl << endl;
+	m_header << --indent << endl << "}" << endl << endl;
+
+	// Operator >>=
+	m_header << indent << "inline CORBA::Boolean operator >>= "
+		 << "(const CORBA::Any& the_any, "<< cpp_id << " &val)" << endl;
+	m_header << indent++ << "{" << endl;
+
+	
+	m_header << indent << "const " << c_id << " *ex;" << endl;
+	m_header << indent << "if (the_any.extract_ptr (" << tc << ", ex))" << endl
+		 << indent++ << "{" << endl;
+
+	m_header << indent << "val._orbitcpp_unpack (*ex);"
+		 << indent << "return true;" << endl;
+
+	m_header << --indent << "} else {" << endl;
+	indent++;
+	
+	m_header << indent << "return false;" << endl;
+	m_header << --indent << "}" << endl;
+
+	m_header << --indent << "}" << endl << endl;
 }
-
 
 void
 IDLWriteArrayAnyFuncs::run()
 {
-	m_header << indent
-	<< "inline void operator <<=(CORBA::Any& the_any, " 
-	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr)" << endl
-	<< indent << "{" << endl;
+	string array_id = m_dest.get_cpp_typename ();
+	string slice_id = array_id + "_slice";
+	string forany_id = array_id + "_forany";
+	string tc =  m_dest.getParentScope ()->get_cpp_typename () +
+		"::_tc_" + m_dest.get_cpp_identifier ();
 
-	m_header << ++indent
-	<< "the_any.insert_simple( (CORBA::TypeCode_ptr)TC_"
-	<< m_dest.getQualifiedCIdentifier() << ", ("
-	<< m_dest.getQualifiedCPPIdentifier() << "_slice*)_arr, "
-	<< "!_arr._nocopy());" << --indent << endl << "}" << endl;
 	
-	m_header << indent
-	<< "inline CORBA::Boolean operator >>=(CORBA::Any& the_any, " 
-	<< m_dest.getQualifiedCPPIdentifier() << "_forany &_arr)" << endl
-	<< indent << "{" << endl;
+	// Operator <<=
+	m_header << indent << "inline void operator <<= "
+		 << "(CORBA::Any& the_any, " << forany_id << " &_arr)" << endl
+		 << indent++ << "{" << endl;
 
-	m_header
-	<< ++indent
-	<< m_dest.getQualifiedCPPIdentifier() << "_slice const* tmp;" << endl 
-	<< indent << "CORBA::Boolean _retval;" << endl
-	<< indent << "_retval = the_any.extract_ptr( (CORBA::TypeCode_ptr)TC_"
-	<< m_dest.getQualifiedCIdentifier() << ", tmp);" << endl
-	<< indent << "_arr = (" << m_dest.getQualifiedCPPIdentifier() 
-    << "_slice*)tmp;" << endl << indent << "return _retval;" << endl;
-	m_header
-	<< --indent << "}" << endl << endl;
+	m_header << indent
+		 << "the_any.insert_simple (" << tc << ", "
+		 << "(" << slice_id << "*)_arr, !_arr._nocopy());" << endl;
+
+	m_header << --indent << endl << "}" << endl;
+
+	
+	// Operator >>=
+	m_header << indent << "inline CORBA::Boolean operator >>= "
+		 << "(CORBA::Any& the_any, " << forany_id << " &_arr)" << endl
+		 << indent++ << "{" << endl;
+
+	m_header << indent << "const " << slice_id << " *tmp;" << endl
+		 << indent << "CORBA::Boolean _retval;" << endl << endl;
+
+	m_header << indent << "_retval = the_any.extract_ptr "
+		 << "(" << tc << ", tmp);" << endl;
+	m_header << indent << "_arr = (" << slice_id << "*)tmp;" << endl;
+	m_header << indent << "return _retval;" << endl;
+
+	m_header << --indent << "}" << endl << endl;
 }	
-#endif

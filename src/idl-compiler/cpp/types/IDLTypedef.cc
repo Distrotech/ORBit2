@@ -41,11 +41,12 @@ IDLTypedef::const_decl_write (ostream          &ostr,
 void
 IDLTypedef::typedef_decl_write (ostream          &ostr,
 				Indent           &indent,
+				IDLCompilerState &state,
 				const IDLTypedef &target,
 				const IDLTypedef *active_typedef = 0) const
 {
 	// Don't fill active_typedef with `this'
-	m_alias.typedef_decl_write (ostr, indent, target, active_typedef);
+	m_alias.typedef_decl_write (ostr, indent, state, target, active_typedef);
 }
 
 string

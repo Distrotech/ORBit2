@@ -35,6 +35,7 @@ class IDLArray: public IDLElement,
 		public IDLType
 {
         typedef IDLElement                 Super;
+public:
         typedef std::vector<int>           Dimensions;
         typedef Dimensions::const_iterator const_iterator;
 
@@ -42,6 +43,8 @@ private:
         Dimensions     m_dims;
         IDLType const &m_element_type;
 
+	friend class IDLArrayList;
+	
 public:
 	IDLArray (IDLType const &element_type,
 		  string const  &id,
@@ -53,11 +56,14 @@ public:
 	
 public:
 
+	bool conversion_required () const;
+
 	////////////////////////////////////////////
 	// Creating typedefs
 
 	void typedef_decl_write (ostream          &ostr,
 				 Indent           &indent,
+				 IDLCompilerState &state,
 				 const IDLTypedef &target,
 				 const IDLTypedef *active_typedef = 0) const;
 	
@@ -180,6 +186,11 @@ private:
 			     Indent       &indent,
 			     const string &cpp_id,
 			     const string &c_id) const;
+
+	void copy_cpp_array (ostream      &ostr,
+			     Indent       &indent,
+			     const string &src_id,
+			     const string &dest_id) const;
 };
 
 #endif //ORBITCPP_TYPES_IDLARRAY

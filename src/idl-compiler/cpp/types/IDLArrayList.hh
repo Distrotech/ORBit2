@@ -30,30 +30,23 @@
 
 #include <language.hh>
 #include "IDLArray.hh"
+#include <set>
 
 class IDLArrayList
 {
-	struct IDLArrayKey {
-		string m_type;
+	struct IDLArrayKey
+	{
+		string m_member_type;
 		int m_length;
 		
-		IDLArrayKey(string const& type, int length)
-			: m_type(type), m_length(length) {}
-		bool operator <(IDLArrayKey const & key) const {
-			if( m_length < key.m_length )
-				return true;
-			else if( m_length == key.m_length )
-				return (m_type < key.m_type);
-			else	
-				return false;
-		}
+		IDLArrayKey (const string &member_type, int length);
+		bool operator< (const IDLArrayKey &other_key) const;
 	};
-	typedef std::vector<int>::const_iterator const_iterator;
-	std::multiset<IDLArrayKey> m_arraySet;
+	std::set<IDLArrayKey> m_arrays;
+
 public:
-	IDLArrayList() {}
-	bool doesArrayTypeExist(IDLArray const& array);
-	void clear() { m_arraySet.clear(); }
+	bool array_exists (const IDLArray &array);
+	void clear() { m_arrays.clear(); }
 };
 
 #endif //ORBITCPP_TYPES_IDLARRAYLIST

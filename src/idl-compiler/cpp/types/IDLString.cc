@@ -43,6 +43,7 @@ IDLString::const_decl_write (ostream          &ostr,
 void
 IDLString::typedef_decl_write (ostream          &ostr,
 			       Indent           &indent,
+			       IDLCompilerState &state,
 			       const IDLTypedef &target,
 			       const IDLTypedef *active_typedef = 0) const
 {

@@ -45,7 +45,6 @@ void IDLIteratingPass::doStruct(IDL_tree node, IDLScope &scope) {
 	doMemberList(IDL_TYPE_STRUCT(node).member_list,scope);
 }
 
-
 void IDLIteratingPass::doUnion(IDL_tree node, IDLScope &scope) {
 	doSwitchBody(IDL_TYPE_UNION(node).switch_body,scope);
 }
