@@ -3,7 +3,6 @@
 
 #include <orbit/orb-core/orb-types.h>
 #include <orbit/orb-core/corba-nvlist-type.h>
-#include <orbit/orb-core/corba-object-type.h>
 #include <orbit/orb-core/corba-orb-type.h>
 #include <orbit/orb-core/corba-typecode-type.h>
 #include <orbit/orb-core/corba-ir.h>

@@ -11,6 +11,8 @@
 
 #include <orbit/orb-core/corba-environment.h>
 #include <orbit/orb-core/corba-any.h>
+#include <orbit/orb-core/poa-types.h>
+#include <orbit/orb-core/corba-object-type.h>
 #include <orbit/orb-core/corba-object.h>
 
 #endif

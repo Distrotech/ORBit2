@@ -1,8 +1,6 @@
 #ifndef CORBA_OBJECT_TYPE_H
 #define CORBA_OBJECT_TYPE_H 1
 
-typedef gpointer ORBit_POAObject;
-
 typedef struct {
   IOP_ProfileId profile_type;
 } IOP_Profile_info;
@@ -84,7 +82,7 @@ struct CORBA_Object_type {
   CORBA_char *type_id;
   GSList *profile_list, *forward_locations;
 
-  ORBit_POAObject bypass_obj;
+  ORBit_POAObject *bypass_obj;
 };
 
 #endif

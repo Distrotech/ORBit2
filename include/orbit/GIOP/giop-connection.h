@@ -39,12 +39,18 @@ typedef struct {
 
 GType giop_connection_get_type(void) G_GNUC_CONST;
 
-GIOPConnection *giop_connection_from_fd(int fd, const LINCProtocolInfo *proto, const char *remote_host_info,
-					const char *remote_serv_info, gboolean was_initiated,
+GIOPConnection *giop_connection_from_fd(int fd, const LINCProtocolInfo *proto,
+					const char *remote_host_info,
+					const char *remote_serv_info,
+					gboolean was_initiated,
 					LINCConnectionStatus status,
 					LINCConnectionOptions options,
 					GIOPVersion giop_version);
-GIOPConnection *giop_connection_initiate(const char *proto_name, const char *remote_host_info, const char *remote_serv_info,
+GIOPConnection *giop_connection_initiate(const char *proto_name,
+					 const char *remote_host_info,
+					 const char *remote_serv_info,
 					 LINCConnectionOptions options,
 					 GIOPVersion giop_version);
+void giop_connection_unref(GIOPConnection *cnx);
+
 #endif

@@ -1,5 +1,10 @@
 #include <orbit/orbit.h>
 
+static IOP_Profile_info *IOP_profile_find(GSList *list, IOP_ProfileId type,
+					  GSList **pos);
+static IOP_Component_info *IOP_component_find(GSList *list, IOP_ComponentId type,
+					      GSList **pos);
+
 static gboolean
 ORBit_try_connection(CORBA_Object obj)
 {
@@ -10,13 +15,14 @@ ORBit_try_connection(CORBA_Object obj)
 	g_main_iteration(TRUE);
 	break;
       case LINC_CONNECTED:
-	return obj->connection;
+	return TRUE;
 	break;
       case LINC_DISCONNECTED:
 	giop_connection_unref(obj->connection); obj->connection = NULL;
 	return FALSE;
 	break;
       }
+  return FALSE;
 }
 
 static IOP_Profile_info *
@@ -33,7 +39,7 @@ IOP_profile_find(GSList *list, IOP_ProfileId type)
 }
 
 static IOP_Component_info *
-IOP_component_find(GSList *list, IOP_ComponentId type)
+IOP_component_find(GSList *list, IOP_ComponentId type, GSList **pos)
 {
   for(; list; list = list->next)
     {
@@ -46,8 +52,8 @@ IOP_component_find(GSList *list, IOP_ComponentId type)
 }
 
 static gboolean
-IOP_profile_get_info(CORBA_Object obj, GIOPVersion *iiop_version,
-		     IOP_Profile_info *pi, char **proto,
+IOP_profile_get_info(CORBA_Object obj, IOP_Profile_info *pi,
+		     GIOPVersion *iiop_version, char **proto,
 		     char **host, char **service, gboolean *ssl,
 		     IOP_ObjectKey_info **oki, char *tmpbuf)
 {
@@ -166,29 +172,39 @@ _ORBit_object_get_connection(CORBA_Object obj)
 
   /* Information we have to come up with */
   IOP_ObjectKey_info *oki;
-  char *proto, *host, *service;
+  char *proto = NULL, *host, *service;
   gboolean is_ssl = FALSE;
+  GIOPVersion iiop_version = GIOP_1_2;
 
   plist = obj->forward_locations;
   if(!plist)
     plist = obj->profile_list;
 
+  if(obj->connection && ORBit_try_connection(obj))
+    return obj->connection;
+  
   for(cur = plist; cur; cur = cur->next)
     {
-      GSList *clist;
       IOP_Profile_info *pi = cur->data;
-
-      if(IOP_profile_holds_address(pi->profile_type))
+      if(IOP_profile_get_info(obj, pi, &iiop_version, &proto,
+			      &host, &service, &is_ssl, &oki, tbuf))
 	{
-	  clist = 
+	  obj->connection =
+	    giop_connection_initiate(proto, host, service,
+				     is_ssl?LINC_CONNECTION_SSL:0, iiop_version);
+	  if(ORBit_try_connection(obj))
+	    return obj->connection;
 	}
     }
+
+  return NULL;
 }
 
 CORBA_InterfaceDef
 CORBA_Object_get_interface(CORBA_Object _obj,
 			   CORBA_Environment * ev)
 {
+  /* XXX fixme */
   return CORBA_OBJECT_NIL;
 }
 
@@ -217,19 +233,174 @@ CORBA_Object_is_a(CORBA_Object _obj,
 		  const CORBA_char * logical_type_id,
 		  CORBA_Environment * ev)
 {
+  if(!strcmp(logical_type_id, "IDL:CORBA/Object:1.0"))
+    return CORBA_TRUE;
+
+  if(!_obj)
+    return CORBA_FALSE;
+
+  if(!strcmp(logical_type_id, _obj->type_id))
+    return CORBA_TRUE;
+
+  if(_obj->bypass_obj)
+    {
+      CORBA_unsigned_long clsid
+	= ORBit_classinfo_lookup_id(logical_type_id);
+      PortableServer_ClassInfo *ci 
+	= ORBIT_SERVANT_TO_CLASSINFO(obj->bypass_obj->servant);
+      return (clsid && (clsid < ci->vepvlen) && ci->vepvmap[clsid]);
+  
+      return CORBA_FALSE;
+    }
+  else
+    return CORBA_Object__is_a(_obj, logical_type_id, ev);
 }
 
 CORBA_boolean
 CORBA_Object_non_existent(CORBA_Object _obj,
 			  CORBA_Environment * ev)
 {
+  if(_obj)
+    return ORBit_object_get_connection(_obj)?CORBA_TRUE:CORBA_FALSE;
+  return CORBA_FALSE;
+}
+
+static gboolean
+IOP_Profile_equal(gpointer d1, gpointer p2)
+{
+  IOP_TAG_INTERNET_IOP_info *iiop1, *iiop2;
+  IOP_TAG_GENERIC_IOP_info *giop1, *giop2;
+  IOP_ProfileId t1, t2;
+
+  t1 = ((IOP_Profile_info *)d1)->profile_type;
+  t2 = ((IOP_Profile_info *)d2)->profile_type;
+  if(t1 != t2)
+    return FALSE;
+
+  switch(t1)
+    {
+    case IOP_TAG_INTERNET_IOP:
+      iiop1 = d1; iiop2 = d2;
+      if(iiop1->oki->object_key._length != iiop2->oki->object_key._length)
+	return FALSE;
+      if(iiop1->port != iiop2->port)
+	return FALSE;
+      if(memcmp(iiop1->oki->object_key._buffer,
+		iiop2->oki->object_key._buffer,
+		iiop1->oki->object_key._length))
+	return FALSE;
+      break;
+    case IOP_TAG_GENERIC_IOP:
+      giop1 = d1; giop2 = d2;
+      if(strcmp(giop1->proto, giop2->proto))
+	return FALSE;
+      if(strcmp(giop1->host, giop2->host))
+	return FALSE;
+      if(strcmp(giop1->service, giop2->service))
+	return FALSE;
+      if(memcmp(iiop1->oki->object_key._buffer,
+		iiop2->oki->object_key._buffer,
+		iiop1->oki->object_key._length))
+	return FALSE;
+      break;
+    default:
+      return FALSE;
+      break;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+g_CORBA_Object_equal(CORBA_Object _obj, CORBA_Object other_object)
+{
+  GSList *cur1, *cur2;
+
+  if(_obj == other_object)
+    return TRUE;
+  if(!(_obj && other_object))
+    return FALSE;
+
+  for(cur1 = _obj->profile_list; cur1; cur1 = cur1->next)
+    {
+      for(cur2 = other_object->profile_list; cur2; cur2 = cur2->next)
+	{
+	  if(IOP_Profile_equal(cur1->data, cur2->data))
+	    return TRUE;
+	}
+    }
+  
+  return FALSE;
 }
 
 CORBA_boolean
 CORBA_Object_is_equivalent(CORBA_Object _obj,
-			   const CORBA_Object other_object,
+			   CORBA_Object other_object,
 			   CORBA_Environment * ev)
 {
+  return g_CORBA_Object_equal(_obj, other_object);
+}
+
+static guint
+mem_hash (gconstpointer key, gulong len)
+{
+  const char *p, *pend;
+  guint h = 0;
+
+  for(p = key, pend = p + len; p < pend; p++)
+    h = (h << 5) - h + *p;
+
+  return h;
+}
+
+static void
+profile_hash(gpointer item, gpointer data)
+{
+  IOP_Profile_info *p = item;
+  guint *h = data;
+  IOP_TAG_INTERNET_IOP *iiop;
+  IOP_TAG_GENERIC_IOP *giop;
+  IOP_TAG_ORBIT_SPECIFIC *osi;
+  IOP_TAG_MULTIPLE_COMPONENTS_info *mci;
+  IOP_UnknownProfile_info *upi;
+
+  *h ^= p->profile_type;
+  switch(p->profile_type)
+    {
+    case IOP_TAG_ORBIT_SPECIFIC:
+      osi = item;
+      *h ^= g_str_hash(osi->unix_sock_path);
+      break;
+    case IOP_TAG_INTERNET_IOP:
+      iiop = item;
+      *h ^= g_str_hash(iiop->host);
+      *h ^= iiop->port;
+      break;
+    case IOP_TAG_GENERIC_IOP:
+      giop = item;
+      *h ^= g_str_hash(giop->proto);
+      *h ^= g_str_hash(giop->host);
+      *h ^= g_str_hash(giop->service);
+      break;
+    case IOP_TAG_MULTIPLE_COMPONENTS:
+      mci = item;
+      *h ^= g_slist_length(mci->components);
+      break;
+    default:
+      upi = item;
+      *h ^= mem_hash(upi->data._buffer, upi->data._length);
+      break;
+    }
+}
+
+static guint
+g_CORBA_Object_hash(CORBA_Object _obj)
+{
+  guint retval;
+
+  retval = g_str_hash(_obj->type_id);
+  g_slist_foreach(_obj->profile_list, profile_hash, &retval);
+  return retval;
 }
 
 CORBA_unsigned_long
@@ -237,6 +408,11 @@ CORBA_Object_hash(CORBA_Object _obj,
 		  const CORBA_unsigned_long maximum,
 		  CORBA_Environment * ev)
 {
+  CORBA_unsigned_long retval;
+
+  retval = g_CORBA_Object_hash(_obj);
+
+  return maximum?(retval%maximum):retval;
 }
 
 void
@@ -249,6 +425,7 @@ CORBA_Object_create_request(CORBA_Object _obj,
 			    const CORBA_Flags req_flag,
 			    CORBA_Environment * ev)
 {
+  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
 }
 
 CORBA_Policy
@@ -256,12 +433,16 @@ CORBA_Object_get_policy(CORBA_Object _obj,
 			const CORBA_PolicyType policy_type,
 			CORBA_Environment * ev)
 {
+  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+  return CORBA_OBJECT_NIL;
 }
 
 CORBA_DomainManagersList *
 CORBA_Object_get_domain_managers(CORBA_Object _obj,
 				 CORBA_Environment * ev)
 {
+  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+  return NULL;
 }
 
 CORBA_Object
@@ -270,6 +451,8 @@ CORBA_Object_set_policy_overrides(CORBA_Object _obj,
 				  const CORBA_SetOverrideType set_add,
 				  CORBA_Environment * ev)
 {
+  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+  return CORBA_OBJECT_NIL;
 }
 
 static void
