@@ -68,7 +68,6 @@ orbit_idl_to_backend(const char *filename, OIDL_Run_Info *rinfo)
 
   otree.tree = tree;
 
-  orbit_idl_print_node(tree, 0);
   orbit_idl_tree_populate(otree.tree);
   orbit_idl_do_passes(otree.tree);
 
