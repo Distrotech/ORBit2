@@ -205,6 +205,7 @@ src/idl/CORBA/Makefile
 src/idl/CORBA_PIDL/Makefile
 src/idl/interop/Makefile
 src/idl/misc/Makefile
+src/cleanup/Makefile
 src/orb/Makefile
 src/orb/include/Makefile
 src/orb/util/Makefile

@@ -1,3 +1,22 @@
+2002-05-16  Michael Meeks  <michael@ximian.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c
+	(giop_recv_buffer_unuse): free GIOP_1_0 service
+	contexts in the same way as GIOP_1_1, that's how we
+	de-marshal them in giop_recv_buffer_demarshal.
+
+	* test/everything/client.c (testMisc): fix leak.
+	(testMiscUnions): don't dup inArg's string.
+	don't alloc the inSeq's _buffer, or dup it's string.
+
+2002-05-15  Michael Meeks  <michael@ximian.com>
+
+	* src/cleanup/Makefile.am,
+	* src/cleanup/cleanup.c: add.
+
+	* configure.in,
+	* src/Makefile.am: add cleanup.
+
 2002-05-14  Sean Atkinson  <sean@cantab.net>
 
 	* src/orb/orb-core/orbit-trace.c

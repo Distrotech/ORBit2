@@ -463,7 +463,6 @@ giop_recv_buffer_unuse (GIOPRecvBuffer *buf)
 
 	switch (buf->giop_version) {
 	case GIOP_1_0:
-		break;
 	case GIOP_1_1:
 		switch (buf->msg.header.message_type) {
 		case GIOP_REPLY:
