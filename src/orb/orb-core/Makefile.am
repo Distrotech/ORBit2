@@ -28,6 +28,8 @@ main_src = \
 	orbit-trace.c \
 	corba-object.c \
 	corba-policy.c \
+	orbit-policy.c \
+	orbit-policy.h \
 	corba-env.c \
 	corba-string.c \
 	allocators.c \

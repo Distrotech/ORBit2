@@ -1,5 +1,9 @@
 2003-06-05  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/orb-core/orbit-policy.[ch]: stub.
+
+2003-06-05  Michael Meeks  <michael@ximian.com>
+
 	* test/everything/Makefile.am: use check_PROGRAMS
 	instead of noinst_PROGRAMS - Mac people have
 	problems with their static libraries it seems.
