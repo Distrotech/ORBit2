@@ -5,6 +5,16 @@ TODO:
 	  we need a single point of dispatch - in the GIOP
 	  code, preferably queue based. Re-read ORBitMT to see
 	  how that is done.
+	+ unsafe bits
+		+ 'random' number generation - the per obj idx ?
+	+ Lock order:
+		POAManager
+			POAObject
+				POA (OAObject)
+					ORB lock
+	+ bin redundant forwards in poa.c
+	+ ** ERROR **: Need to handle zapped cnx' async callbacks
+
 
 * User friendliness
 	+ tolerate NULL CORBA_Environments in stubs
