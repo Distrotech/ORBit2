@@ -1,3 +1,8 @@
+2004-05-07  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: bump version to 2.11.0 (after branch),
+	update configure message to point to gnome-2-6 branch.
+
 2004-05-02  Frank Rehberger  <frehberg@gnome-de.org>
 
 	* src/orb/orb-core/corba-loc.c (corbaloc_profile_iiop): reference
@@ -12,6 +17,10 @@
 	attributes defined in there
 	* include/orbit/orb-core/orb-types.h: comment typedef being
 	defined in generated include/orbit/orb-core/corba-defs.h now.
+
+2004-05-07  Michael Meeks  <michael@ximian.com>
+
+	* Branch for Gnome 2.6
 
 2004-04-24  Dan Winship  <danw@ximian.com>
 

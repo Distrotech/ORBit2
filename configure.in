@@ -15,8 +15,8 @@ LT_VERSION=0:0:0
 AC_SUBST(LT_VERSION)
 
 ORBIT_MAJOR_VERSION=2
-ORBIT_MINOR_VERSION=10
-ORBIT_MICRO_VERSION=1
+ORBIT_MINOR_VERSION=11
+ORBIT_MICRO_VERSION=0
 ORBIT_VERSION=$ORBIT_MAJOR_VERSION.$ORBIT_MINOR_VERSION.$ORBIT_MICRO_VERSION
 AC_SUBST(ORBIT_MAJOR_VERSION)
 AC_SUBST(ORBIT_MINOR_VERSION)
@@ -373,5 +373,5 @@ echo "ORBit configuration:
 	Purify cleanliness:	${enable_purify}
 
 	This is the Development branch of ORBit2, if
-you want something more stable checkout -r gnome-2-2.
+you want something more stable checkout -r gnome-2-6.
 "
