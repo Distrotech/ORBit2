@@ -1,3 +1,8 @@
+2002-05-10  Diego Sevilla Ruiz  <dsevilla@um.es>
+
+	* src/orb-cpp/orbitcpp_smartptr.hh: Changed ArrayVariable_var
+	operator logic to allow compilation of tests
+
 2002-05-03  ERDI Gergo  <cactus@cactus.rulez.org>
 
 	* src/idl-compiler/orbit-idl-c-headers.c (ch_type_alloc_and_tc):
