@@ -400,7 +400,7 @@ dynany_any_new_default (const CORBA_TypeCode tc)
 	gpointer value;
 	gpointer p;
 
-	p = value = ORBit_alloc_tcval (tc, 1);
+	p = value = ORBit_alloc_by_tc (tc);
 	dynany_init_default (&p, tc);
 
 	return value;
@@ -418,7 +418,7 @@ dynany_sequence_realloc_to (CORBA_sequence_CORBA_octet *s,
 	CORBA_unsigned_long old_len;
 	int i;
 
-	buf = ORBit_alloc_tcval (tc, len);
+	buf = ORBit_alloc_by_tc (tc);
 
 	if (!buf)
 		return FALSE;
@@ -1400,7 +1400,7 @@ DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 
 		any->_type = (CORBA_TypeCode) CORBA_Object_duplicate (
 			(CORBA_Object) subtc, ev);
-		to = any->_value = ORBit_alloc_tcval (subtc, 1);
+		to = any->_value = ORBit_alloc_by_tc (subtc);
 		
 		ORBit_copy_value_core (&src, &to, subtc);
 	}
@@ -1752,7 +1752,7 @@ DynamicAny_DynSequence_get_elements (DynamicAny_DynSequence obj,
 
 		any->_type = (CORBA_TypeCode) CORBA_Object_duplicate (
 			(CORBA_Object) subtc, ev);
-		to = any->_value = ORBit_alloc_tcval (subtc, 1);
+		to = any->_value = ORBit_alloc_by_tc (subtc);
 		
 		ORBit_copy_value_core (&src, &to, subtc);
 	}

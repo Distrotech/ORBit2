@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <orbit/orbit.h>
 
+#include "orbit-init.h"
 #include "poa/orbit-poa.h"
 #include "orb-core/orb-core-private.h"
 

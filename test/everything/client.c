@@ -194,7 +194,7 @@ testException (test_TestFactory   factory,
 {
 	test_BasicServer    objref;
 	test_TestException *ex;
-	CORBA_Environment  *cpyev, *rev;
+	CORBA_Environment  *cpyev, *rev = ev;
 
 	d_print ("Testing exceptions...\n");
 
@@ -213,7 +213,6 @@ testException (test_TestFactory   factory,
 
 	cpyev = CORBA_exception__copy (ev);
 	CORBA_exception_free (ev);
-	rev = ev;
 	ev = cpyev;
 
 	g_assert (ev->_major == CORBA_USER_EXCEPTION);
