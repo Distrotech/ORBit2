@@ -1,3 +1,7 @@
+2004-01-06  Michael Meeks  <michael@ximian.com>
+
+	* configure.in: fix 'if !' bug for Morten.
+
 2003-12-10  Michael Meeks  <michael@ximian.com>
 
 	* src/orb/GIOP/giop.c (giop_init): make the

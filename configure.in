@@ -122,7 +122,10 @@ if test "$PKG_CONFIG" = "no" ; then
   AC_MSG_ERROR(You need to install pkg-config or set the PKG_CONFIG environment variable to build ORBit2)
 fi
 PKG_CONFIG_MIN_VERSION=0.14.0
-if ! $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
+AC_MSG_CHECKING([for pkg-config >= $PKG_CONFIG_MIN_VERSION])
+if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
+  AC_MSG_RESULT(found)
+else
   AC_MSG_ERROR(You need at least version $PKG_CONFIG_MIN_VERSION of pkg-config)
 fi
 
