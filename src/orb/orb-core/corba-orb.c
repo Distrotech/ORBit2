@@ -162,6 +162,27 @@ ORBit_setup_debug_flags (void)
 static CORBA_ORB _ORBit_orb = NULL;
 static gulong    init_level = 0;
 
+/*
+ *   This is neccessary to clean up any remaining UDS
+ * and to flush any remaining oneway traffic in buffers.
+ */
+static void
+shutdown_orb (void)
+{
+	CORBA_ORB orb;
+	CORBA_Environment ev;
+
+	if (!(orb = _ORBit_orb))
+		return;
+	
+	CORBA_exception_init (&ev);
+
+	CORBA_ORB_destroy (orb, &ev);
+	ORBit_RootObject_release (orb);
+
+	CORBA_exception_free (&ev);
+}
+
 CORBA_ORB
 CORBA_ORB_init (int *argc, char **argv,
 		CORBA_ORBid orb_identifier,
@@ -196,6 +217,7 @@ CORBA_ORB_init (int *argc, char **argv,
 	ORBit_RootObject_init (&retval->root_object, &orb_if);
 	/* released by CORBA_ORB_destroy */
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
+	g_atexit (shutdown_orb);
 
 	ORBit_genuid_init (ORBit_genuid_type ());
 	retval->default_giop_version = GIOP_LATEST;
@@ -459,8 +481,7 @@ CORBA_ORB_resolve_initial_references (CORBA_ORB          orb,
 	return ORBit_RootObject_duplicate (objref);
 }
 
-//This shouldn't be static because we use it in orbitcpp_tools.cc too:
-CORBA_TypeCode
+static CORBA_TypeCode
 CORBA_TypeCode_allocate (void)
 {
 	CORBA_TypeCode tc = g_new0 (struct CORBA_TypeCode_struct, 1);

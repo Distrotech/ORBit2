@@ -6,7 +6,7 @@ bin_PROGRAMS = name-client-2 orbit-name-server-2
 
 lib_LIBRARIES = libname-server-2.a
 
-libORBitCosNaming_2_la_SOURCES = 						\
+libORBitCosNaming_2_la_SOURCES = 					\
 	CosNaming-common.c 						\
 	CosNaming-stubs.c
 
@@ -14,8 +14,12 @@ libORBitservicesinclude_HEADERS = 					\
 	CosNaming.h							\
 	CosNaming_impl.h
 
-libORBitCosNaming_2_la_LDFLAGS = \
-	-version-info $(LT_VERSION)
+libORBitCosNaming_2_la_LDFLAGS =					\
+	-version-info $(LT_VERSION)					\
+	$(ORBIT_NAME_LIBS)
+
+libORBitCosNaming_2_la_LDFLAGS =					\
+	$(top_builddir)/src/orb/libORBit-2.la
 
 INCLUDES =				\
 	-I.				\

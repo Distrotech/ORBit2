@@ -67,18 +67,16 @@ const CORBA_short constants_SHORT_OUT=0x7812;
 const CORBA_short constants_SHORT_RETN=0xAABB;
 
 
-const CORBA_char * constants_SEQ_STRING_IN[] = { "in1","in2" };
-const CORBA_char * constants_SEQ_STRING_OUT[] = { "out1","out2" };
-const CORBA_char * constants_SEQ_STRING_INOUT_IN[] = { "inout1","inout2" };
-const CORBA_char * constants_SEQ_STRING_INOUT_OUT[] = { "inout21","inout22" };
-const CORBA_char * constants_SEQ_STRING_RETN[] = { "retn1","retn2" };
+const CORBA_char * constants_SEQ_STRING_IN[] = { "in1","in2","in3","in4" };
+const CORBA_char * constants_SEQ_STRING_OUT[] = { "out1","out2","out3","out4" };
+const CORBA_char * constants_SEQ_STRING_INOUT_IN[] = { "inout1","inout2","inout3","inout4" };
+const CORBA_char * constants_SEQ_STRING_INOUT_OUT[] = { "inout21","inout22","inout23","inout24" }; 
+const CORBA_char * constants_SEQ_STRING_RETN[] = { "retn1","retn2","retn3","retn4" };
 
-const CORBA_long constants_SEQ_LONG_IN[] = { constants_LONG_IN,constants_LONG_INOUT_IN  };
-const CORBA_long constants_SEQ_LONG_OUT[] = { constants_LONG_INOUT_IN, constants_LONG_INOUT_OUT };
-const CORBA_long constants_SEQ_LONG_INOUT_IN[] = { constants_LONG_INOUT_OUT, constants_LONG_OUT };
-const CORBA_long constants_SEQ_LONG_INOUT_OUT[] = { constants_LONG_OUT, constants_LONG_RETN };
-const CORBA_long constants_SEQ_LONG_RETN[] = { constants_LONG_RETN, constants_LONG_IN };
-
-const CORBA_long constants_SEQLEN=2;
+const CORBA_long constants_SEQ_LONG_IN[] = { constants_LONG_IN,constants_LONG_INOUT_IN,15,7  };
+const CORBA_long constants_SEQ_LONG_OUT[] = { constants_LONG_INOUT_IN, constants_LONG_INOUT_OUT,15,7 };
+const CORBA_long constants_SEQ_LONG_INOUT_IN[] = { constants_LONG_INOUT_OUT, constants_LONG_OUT,7,15 };
+const CORBA_long constants_SEQ_LONG_INOUT_OUT[] = { constants_LONG_OUT, constants_LONG_RETN,8,9 };
+const CORBA_long constants_SEQ_LONG_RETN[] = { constants_LONG_RETN, constants_LONG_IN,2,3 };
 
 #endif

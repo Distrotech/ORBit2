@@ -1,3 +1,7 @@
+2002-04-18  Murray Cumming  <murrayc@usa.net>
+
+	* Merged from HEAD.
+
 2002-04-16  Murray Cumming  <murrayc@usa.net>
 
 	* Renamed _orbitcpp_get_c_object() to _orbitcpp_cobj() all over

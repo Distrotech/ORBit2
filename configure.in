@@ -16,7 +16,7 @@ AC_SUBST(LT_VERSION)
 
 ORBIT_MAJOR_VERSION=2
 ORBIT_MINOR_VERSION=3
-ORBIT_MICRO_VERSION=107
+ORBIT_MICRO_VERSION=108
 ORBIT_VERSION=$ORBIT_MAJOR_VERSION.$ORBIT_MINOR_VERSION.$ORBIT_MICRO_VERSION
 AC_SUBST(ORBIT_MAJOR_VERSION)
 AC_SUBST(ORBIT_MINOR_VERSION)
@@ -125,7 +125,7 @@ fi
 AC_PROG_AWK
 
 GLIB_REQUIRED=2.0.0
-LINC_REQUIRED=0.1.20
+LINC_REQUIRED=0.1.21
 LIBIDL_REQUIRED=0.7.4
 AC_SUBST(GLIB_REQUIRED)
 AC_SUBST(LINC_REQUIRED)
@@ -174,30 +174,12 @@ AC_TYPE_SIZE_T
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS(poll basename)
 AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
 
 AC_CHECK_LIB(popt, poptStrippedArgv, POPT_LIBS=-lpopt, AC_MSG_ERROR([You must have popt version 1.5 or greater installed.]))
 AC_SUBST(POPT_LIBS)
 AC_CHECK_HEADER(popt.h,,AC_MSG_ERROR([Failed to find popt.h - you may have to adjust your environment]))
-
-# AC_CHECK_TYPE doesn't work here.
-AC_MSG_CHECKING([for socklen_t])
-AC_TRY_COMPILE(
-  [#include <sys/types.h>
-#include <sys/socket.h>],
-  [socklen_t len;],
-  [AC_MSG_RESULT(yes)],
-  [AC_DEFINE(socklen_t, size_t)
-   AC_MSG_RESULT(no)])
-
-AC_CHECK_FUNC(inet_aton,,[AC_CHECK_LIB(resolv,inet_aton)])
-if test x$ac_cv_func_inet_aton = xno && test x$ac_cv_lib_resolv_inet_aton = xno
-then :
-else
-  AC_DEFINE(HAVE_INET_ATON)
-fi
 
 dnl This generates warnings from autoconf...
 AC_C_BIGENDIAN
