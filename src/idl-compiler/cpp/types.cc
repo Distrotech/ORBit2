@@ -1901,49 +1901,52 @@ IDLSequence::writeCPPSpecCode(ostream &ostr, Indent &indent, IDLCompilerState &s
 	
 	if( state.m_seq_list.doesSeqTypeExist(*this) == true )
 		return;
-		
-	ostr
-	<< indent << "inline void *" << id
-	<< "::operator new(size_t) {" << endl;
-
-	ostr
-	<< ++indent << "return "
-	<< getNSScopedCTypeName() << "__alloc();" << endl;
-	ostr
-	<< --indent << "}" << endl << endl;
+	
+  g_warning("ORBit -lc++: Sequences not fully implemented yet.\n");
+  //The following results in multiple identical template specializations being generated, one for each use of the sequence type:	
+//	ostr
+//	<< indent << "inline void *" << id
+//	<< "::operator new(size_t) {" << endl;
+//
+//	ostr
+//	<< ++indent << "return "
+//	<< getNSScopedCTypeName() << "__alloc();" << endl;
+//	ostr
+//	<< --indent << "}" << endl << endl;
 
 	string typespec,dcl;
 	m_elementType.getCPPMemberDeclarator(id,typespec,dcl);
 
-	if(m_elementType.isVariableLength()) {		
-		ostr
-		<< indent << "inline " << typespec << " *" << dcl
-		<< "::allocbuf(CORBA::ULong len) {" << endl;
-		// create the sequence
-		ostr
-		<< ++indent << typespec << " *buf = reinterpret_cast< "+ typespec +"*>("
-		<< getNSScopedCTypeName()
-		<< "_allocbuf(len));" << endl
-		<< indent++ << "for (CORBA::ULong h=0;h<len;h++){" << endl;
-		m_elementType.writeInitCode(ostr,indent,"buf[h]");	
-		ostr
-		<< --indent << "}" << endl;
+//	if(m_elementType.isVariableLength()) {		
+//		ostr
+//		<< indent << "inline " << typespec << " *" << dcl
+//		<< "::allocbuf(CORBA::ULong len) {" << endl;
+//		// create the sequence
+//		ostr
+//		<< ++indent << typespec << " *buf = reinterpret_cast< "+ typespec +"*>("
+//		<< getNSScopedCTypeName()
+//		<< "_allocbuf(len));" << endl
+//		<< indent++ << "for (CORBA::ULong h=0;h<len;h++){" << endl;
+//		m_elementType.writeInitCode(ostr,indent,"buf[h]");	
+//		ostr
+//		<< --indent << "}" << endl;
+//
+//		// and return it
+//		ostr
+//		<< indent << "return buf;" << endl;
+//		ostr
+//		<< --indent << "};" << endl << endl;
+//	} else {
+//		ostr
+//		<< indent << "inline " << typespec << " *" << dcl
+//		<< "::allocbuf(CORBA::ULong len) {" << endl;
+//		ostr
+//		<< ++indent << "return reinterpret_cast< "+ typespec +"*>("
+//		<< getNSScopedCTypeName() << "_allocbuf(len));" << endl;
+//		ostr
+//		<< --indent << "};" << endl << endl;
+//	}
 
-		// and return it
-		ostr
-		<< indent << "return buf;" << endl;
-		ostr
-		<< --indent << "};" << endl << endl;
-	} else {
-		ostr
-		<< indent << "inline " << typespec << " *" << dcl
-		<< "::allocbuf(CORBA::ULong len) {" << endl;
-		ostr
-		<< ++indent << "return reinterpret_cast< "+ typespec +"*>("
-		<< getNSScopedCTypeName() << "_allocbuf(len));" << endl;
-		ostr
-		<< --indent << "};" << endl << endl;
-	}
 	IDLWriteAnyFuncs::writeInsertFunc(ostr, indent, IDLWriteAnyFuncs::FUNC_COPY, 
 			id, getCTypeName());
 	IDLWriteAnyFuncs::writeInsertFunc(ostr, indent, IDLWriteAnyFuncs::FUNC_NOCOPY,
@@ -2429,12 +2432,15 @@ IDLTypeParser::parseTypeSpec(IDLScope &scope,IDL_tree typespec) {
 		case IDLN_TYPE_SEQUENCE:
 			{
 				// parse the sequence element type
-				IDLSequence* seq;
+
+      	//TODO: Sequences need to be fixed. murrayc. See
+				//http://lists.gnome.org/archives/orbit-list/2002-February/msg00131.html
 				IDLType *type_seq = parseTypeSpec(scope,IDL_TYPE_SEQUENCE(typespec).simple_type_spec);
+				IDLSequence* seq = 0;
 				if (IDL_TYPE_SEQUENCE(typespec).positive_int_const == NULL){
 					seq = new IDLSequence(*type_seq,0);
 				} else {
-					string len_str = 
+					string len_str =
 						idlTranslateConstant(IDL_TYPE_SEQUENCE(typespec).positive_int_const,scope);
 					int length = atoi(len_str.c_str());
 					seq = new IDLSequence(*type_seq,length);

@@ -1,3 +1,11 @@
+2002-03-01  Murray Cumming  <murrayc@usa.net>
+
+	* src/idl-compiler/cpp/types.cc: Commented out the generation of
+	operator new() and allocbuf() template specializations for 
+	sequences because we are generating duplicate, clashing, code
+	whenever the same sequence type is used twice. This means that
+	sequences aren't properly implemented yet.
+
 2002-02-28  Sam Couter <scouter@bigpond.net.au>
 
 	* src/orb/orb-core/corba-typecode.c: Copied TypeCode operations from
