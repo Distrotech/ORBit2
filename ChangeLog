@@ -1,3 +1,16 @@
+2001-09-17  Mark McLoughlin <mark@skynet.ie>
+
+	* include/orbit/orb-core/orbit-small.h: don't include
+	IDL.h.
+
+	* src/orb/GIOP/giop.c: include stdio.h.
+
+	* src/orb/orb-core/orbit-typelib.c
+	(ORBit_iinterface_from_idl): kill. This is never going
+	to be implemented as it would require linking against
+	libIDL.
+	Also include stdlib.h.
+
 2001-09-11  Mark McLoughlin <mark@skynet.ie>
 
 	* src/orb/orb-core/iop-profiles.c
