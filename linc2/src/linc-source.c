@@ -110,14 +110,16 @@ link_source_check (GSource *source)
 			  link_strerror (WSAGetLastError ()));
 	else {
 		d_printf ("events={%s}\n", fd_mask (events.lNetworkEvents));
+		if (watch->pollfd.revents != 0 &&
+		    events.lNetworkEvents == 0)
+		  {
+		    watch->event_mask = 0;
+		    d_printf ("check: WSAEventSelect(%d, %#x, {})\n",
+			      watch->socket, watch->pollfd.fd);
+		    WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd, 0);
+		    ResetEvent ((HANDLE) watch->pollfd.fd);
+		  }
 		watch->pollfd.revents = 0;
-		if (events.lNetworkEvents & FD_ACCEPT) {
-			watch->event_mask = 0;
-			d_printf ("check: WSAEventSelect(%d, %#x, {})\n",
-				  watch->socket, watch->pollfd.fd);
-			WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd, 0);
-			ResetEvent ((HANDLE) watch->pollfd.fd);
-		}
 		if (events.lNetworkEvents & (FD_READ | FD_ACCEPT))
 			watch->pollfd.revents |= G_IO_IN;
 		if (events.lNetworkEvents & (FD_WRITE | FD_CONNECT))

@@ -28,7 +28,7 @@ static inline void d_printf (const char *format, ...)
 			 "Invalid state")
 #  ifdef CONNECTION_DEBUG_FLAG
 extern gboolean link_connection_debug_flag;
-#    define d_printf(format...) (link_connection_debug_flag ? fprintf (stderr, format) : 0)
+#    define d_printf(format...) (link_connection_debug_flag ? (fprintf (stderr, format), fflush (stderr)) : 0)
 #  else
 #    define d_printf(format...) fprintf (stderr, format)
 #  endif
