@@ -28,7 +28,8 @@ c_marshalling_generate(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 static void
 c_marshal_generate(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  g_return_if_fail(node);
+  if(!node) return;
+
   if(node->flags & MN_NOMARSHAL) return;
 
   switch(node->type) {
@@ -59,13 +60,15 @@ c_marshal_append(FILE *of, OIDL_Marshal_Node *node, char *itemstr, char *sizestr
 {
   gboolean indirect = NEEDS_INDIRECT(node), addrof = FALSE;
 
-  if(indirect)
-     fprintf(of, "{ guchar *_ORBIT_t; _ORBIT_t = alloca(%s); memcpy(_ORBIT_t, %s, %s);\n", sizestr, itemstr, sizestr);
-
-  if((node->type == MARSHAL_DATUM)
+  if(((node->type == MARSHAL_DATUM)
+      || (node->type == MARSHAL_SET))
      && ((node->up->type != MARSHAL_LOOP)
 	 || (node != node->up->u.loop_info.contents)))
     addrof = TRUE;
+
+  if(indirect)
+     fprintf(of, "{ guchar *_ORBIT_t; _ORBIT_t = alloca(%s); memcpy(_ORBIT_t, %s(%s), %s);\n", sizestr, addrof?"&":"",
+	     itemstr, sizestr);
 
   fprintf(of, "giop_message_buffer_append_mem(GIOP_MESSAGE_BUFFER(_ORBIT_send_buffer), %s(%s), %s);\n",
 	  (addrof && !indirect)?"&":"",
@@ -135,11 +138,14 @@ c_marshal_switch(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 
     sub = ltmp->data;
     g_assert(sub->type == MARSHAL_CASE);
-    for(ltmp2 = sub->u.case_info.labels; ltmp2; ltmp2 = g_slist_next(ltmp2)) {
-      fprintf(cmi->ci->fh, "case ");
-      orbit_cbe_write_const_node(cmi->ci->fh, ltmp2->data);
-      fprintf(cmi->ci->fh, ":\n");
-    }
+    if(sub->u.case_info.labels) {
+      for(ltmp2 = sub->u.case_info.labels; ltmp2; ltmp2 = g_slist_next(ltmp2)) {
+	fprintf(cmi->ci->fh, "case ");
+	orbit_cbe_write_const_node(cmi->ci->fh, ltmp2->data);
+	fprintf(cmi->ci->fh, ":\n");
+      }
+    } else
+      fprintf(cmi->ci->fh, "default:\n");
     c_marshal_generate(sub->u.case_info.contents, cmi);
     fprintf(cmi->ci->fh, "break;\n");
   }
@@ -197,13 +203,33 @@ c_marshal_loop(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 static void
 c_marshal_complex(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  g_error("Complex marshalling NYI");
+  char *ctmp;
+
+  ctmp = oidl_marshal_node_valuestr(node);
+
+  switch(node->u.complex_info.type) {
+  case CX_CORBA_ANY:
+    fprintf(cmi->ci->fh, "ORBit_marshal_any(_ORBIT_send_buffer, &(%s));\n", ctmp);
+    break;
+  case CX_CORBA_OBJECT:
+    fprintf(cmi->ci->fh, "ORBit_marshal_object(_ORBIT_send_buffer, %s);\n", ctmp);
+    break;
+  case CX_CORBA_FIXED:
+    g_error("CORBA_fixed marshalling NYI.");
+    break;
+  case CX_CORBA_TYPECODE:
+    fprintf(cmi->ci->fh, "ORBit_encode_CORBA_TypeCode(%s, _ORBIT_send_buffer);\n", ctmp);
+    break;
+  }
+
+  g_free(ctmp);
 }
 
 static void
 c_marshal_set(OIDL_Marshal_Node *node, OIDL_C_Marshal_Info *cmi)
 {
-  if(node->flags & MN_COALESCABLE) {
+  if(node->name
+     && (node->flags & MN_COALESCABLE)) {
     char *ctmp;
     GString *tmpstr = g_string_new(NULL);
 

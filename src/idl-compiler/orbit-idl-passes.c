@@ -11,6 +11,8 @@ static void oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out);
 static void oidl_pass_set_coalescibility(OIDL_Marshal_Node *node);
 static void oidl_pass_set_alignment(OIDL_Marshal_Node *node);
 static gboolean oidl_pass_set_endian_dependant(OIDL_Marshal_Node *node);
+static void oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node);
+static void oidl_pass_del_tail_update(OIDL_Marshal_Node *node); /* Must run after coalescibility */
 
 static struct {
   const char *name;
@@ -23,7 +25,9 @@ static struct {
   {"Alignment calculation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_alignment, FOR_IN|FOR_OUT},
   {"Endian dependancy", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_endian_dependant, FOR_IN|FOR_OUT},
   {"Coalescibility", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_coalescibility, FOR_IN|FOR_OUT},
+  {"Extra update removal", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_del_tail_update, FOR_OUT},
   {"Variable assignment", (OIDL_Pass_Func)oidl_pass_tmpvars, NULL, FOR_IN|FOR_OUT},
+  {"Variable allocation", (OIDL_Pass_Func)oidl_pass_run_for_ops, oidl_pass_set_corba_alloc, FOR_OUT},
   {NULL, NULL}
 };
 
@@ -50,6 +54,9 @@ static void
 orbit_idl_assign_tmpvar_names(OIDL_Marshal_Node *node, int *counter)
 {
   if(!(node->flags & MN_NEED_TMPVAR))
+    return;
+
+  if(node->name)
     return;
 
   /* Special case TODO - if loop contents are coalescable, don't need to have a tmpvar for the loop var */
@@ -92,11 +99,15 @@ oidl_pass_tmpvars(IDL_tree tree, GFunc dummy, gboolean is_out)
       oi = tree->data;
 
       if(is_out) {
-	if(oi->out)
-	  orbit_idl_tmpvars_assign(oi->out, &oi->counter);
+	if(oi->out_stubs)
+	  orbit_idl_tmpvars_assign(oi->out_stubs, &oi->counter);
+	if(oi->in_skels)
+	  orbit_idl_tmpvars_assign(oi->in_skels, &oi->counter);
       } else {
-	if(oi->in)
-	  orbit_idl_tmpvars_assign(oi->in, &oi->counter);
+	if(oi->in_stubs)
+	  orbit_idl_tmpvars_assign(oi->in_stubs, &oi->counter);
+	if(oi->out_skels)
+	  orbit_idl_tmpvars_assign(oi->out_skels, &oi->counter);
       }
     }
     break;
@@ -142,11 +153,15 @@ oidl_pass_run_for_ops(IDL_tree tree, GFunc func, gboolean is_out)
       OIDL_Op_Info *oi = (OIDL_Op_Info *)tree->data;
 
       if(is_out) {
-	if(oi->out)
-	  func(oi->out, NULL);
+	if(oi->out_stubs)
+	  func(oi->out_stubs, NULL);
+	if(oi->in_skels)
+	  func(oi->in_skels, NULL);
       } else {
-	if(oi->in)
-	  func(oi->in, NULL);
+	if(oi->in_stubs)
+	  func(oi->in_stubs, NULL);
+	if(oi->out_skels)
+	  func(oi->out_skels, NULL);
       }
     }
     break;
@@ -300,7 +315,30 @@ oidl_pass_set_alignment(OIDL_Marshal_Node *node)
     node->arch_head_align = node->arch_tail_align = node->iiop_head_align = node->iiop_tail_align = 1;
     break;
   case MARSHAL_COMPLEX:
-    g_error("Complex alignment NYI");
+    switch(node->u.complex_info.type) {
+    case CX_CORBA_FIXED:
+      node->arch_head_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_SHORT);
+      node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_SHORT);
+      node->iiop_head_align = sizeof(CORBA_short);
+      node->iiop_tail_align = 1;
+      break;
+    case CX_CORBA_OBJECT:
+      node->arch_head_align = node->arch_tail_align = sizeof(gpointer);
+      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* Leading type_id string */
+      node->iiop_tail_align = 1;
+      break;
+    case CX_CORBA_ANY:
+      node->arch_head_align = node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT, ALIGNOF_CORBA_POINTER);
+      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* TCKind enum */
+      node->iiop_tail_align = 1;
+      break;
+    case CX_CORBA_TYPECODE:
+      node->arch_head_align = node->arch_tail_align = MAX(ALIGNOF_CORBA_STRUCT,
+							  MAX(ALIGNOF_CORBA_POINTER, ALIGNOF_CORBA_LONG));
+      node->iiop_head_align = sizeof(CORBA_unsigned_long); /* TCKind enum */
+      node->iiop_tail_align = 1;
+      break;
+    }
     break;
   case MARSHAL_LOOP:
     oidl_pass_set_alignment(node->u.loop_info.loop_var);
@@ -511,6 +549,7 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
     oidl_pass_make_updates(node->u.loop_info.loop_var);
     oidl_pass_make_updates(node->u.loop_info.length_var);
     oidl_pass_make_updates(node->u.loop_info.contents);
+    node->flags |= MN_DEMARSHAL_UPDATE_AFTER;
     break;
   case MARSHAL_SET:
     {
@@ -520,6 +559,8 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
 	sub = ltmp->data;
 	oidl_pass_make_updates(sub);
       }
+
+      node->flags |= MN_DEMARSHAL_UPDATE_AFTER;
     }
     break;
   case MARSHAL_SWITCH:
@@ -532,6 +573,81 @@ oidl_pass_make_updates(OIDL_Marshal_Node *node)
     break;
   case MARSHAL_COMPLEX:
     break;
+  default:
+    break;
+  }
+}
+
+static void
+oidl_pass_del_tail_update(OIDL_Marshal_Node *node)
+{
+  if(node->flags & MN_NOMARSHAL) return;
+
+  switch(node->type) {
+  case MARSHAL_DATUM:
+    node->flags &= ~MN_DEMARSHAL_UPDATE_AFTER;
+    break;
+  case MARSHAL_LOOP:
+    if(node->flags & MN_COALESCABLE)
+      node->flags &= ~MN_DEMARSHAL_UPDATE_AFTER;
+    break;
+  case MARSHAL_SET:
+    {
+      GSList *ltmp;
+
+      if(node->flags & MN_COALESCABLE)
+	node->flags &= ~MN_DEMARSHAL_UPDATE_AFTER;
+      ltmp = g_slist_last(node->u.set_info.subnodes);
+      if(ltmp)
+	oidl_pass_del_tail_update(ltmp->data);
+    }
+    break;
+  case MARSHAL_SWITCH:
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_del_tail_update, NULL);
+    break;
+  case MARSHAL_CASE:
+    oidl_pass_del_tail_update(node->u.case_info.contents);
+    break;
+  case MARSHAL_COMPLEX:
+  default:
+    break;
+  }
+}
+
+static void
+oidl_pass_set_corba_alloc(OIDL_Marshal_Node *node)
+{
+  OIDL_Marshal_Node *sub;
+
+  if(node->up
+     && (node->up->flags & MN_DEMARSHAL_CORBA_ALLOC))
+    node->flags |= MN_DEMARSHAL_CORBA_ALLOC;
+
+  switch(node->type) {
+  case MARSHAL_LOOP:
+    oidl_pass_set_corba_alloc(node->u.loop_info.loop_var);
+    oidl_pass_set_corba_alloc(node->u.loop_info.length_var);
+    oidl_pass_set_corba_alloc(node->u.loop_info.contents);
+    break;
+  case MARSHAL_SET:
+    {
+      GSList *ltmp;
+
+      for(ltmp = node->u.set_info.subnodes; ltmp; ltmp = g_slist_next(ltmp)) {
+	sub = ltmp->data;
+	oidl_pass_set_corba_alloc(sub);
+      }
+    }
+    break;
+  case MARSHAL_SWITCH:
+    oidl_pass_set_corba_alloc(node->u.switch_info.discrim);
+    g_slist_foreach(node->u.switch_info.cases, (GFunc)oidl_pass_set_corba_alloc, NULL);
+    break;
+  case MARSHAL_CASE:
+    g_slist_foreach(node->u.case_info.labels, (GFunc)oidl_pass_set_corba_alloc, NULL);
+    oidl_pass_set_corba_alloc(node->u.case_info.contents);
+    break;
+
   default:
     break;
   }

@@ -492,3 +492,18 @@ char *oidl_marshal_node_valuestr(OIDL_Marshal_Node *node)
   else
     return oidl_marshal_node_fqn(node);
 }
+
+void
+orbit_cbe_write_node_typespec(FILE *of, OIDL_Marshal_Node *node)
+{
+  if(node->tree)
+    orbit_cbe_write_typespec(of, node->tree);
+  else if(node->type == MARSHAL_DATUM) {
+    static const char * const size_names[] = {NULL, "CORBA_unsigned_char", "CORBA_unsigned_short", NULL, "CORBA_unsigned_long",
+					      NULL, NULL, NULL, "CORBA_unsigned_long_long"};
+    const char *ctmp;
+    ctmp = size_names[node->u.datum_info.datum_size];
+    fprintf(of, "%s", ctmp);
+  } else
+    g_error("Don't know how to write a typespec for node type %d.", node->type);
+}

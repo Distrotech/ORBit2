@@ -17,6 +17,7 @@ orbit_idl_output_c_stubs(OIDL_Output_Tree *tree, OIDL_Run_Info *rinfo, OIDL_C_In
 }
 
 static void cs_output_stub(IDL_tree tree, OIDL_C_Info *ci);
+static void cs_output_except(IDL_tree tree, OIDL_C_Info *ci);
 
 static void
 cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
@@ -50,6 +51,9 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
   case IDLN_OP_DCL:
     cs_output_stub(tree, ci);
     break;
+  case IDLN_EXCEPT_DCL:
+    cs_output_except(tree, ci);
+    break;
   default:
     break;
   }
@@ -57,6 +61,8 @@ cs_output_stubs(IDL_tree tree, OIDL_C_Info *ci)
 
 /* Here's the fun part ;-) */
 static void cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci);
+static void cs_stub_alloc_params(IDL_tree tree, OIDL_C_Info *ci);
+static void cs_free_inout_params(IDL_tree tree, OIDL_C_Info *ci);
 
 static void
 cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
@@ -89,15 +95,16 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "register GIOPRecvBuffer *_ORBIT_recv_buffer;\n");
   fprintf(ci->fh, "register GIOPConnection *_cnx;\n");
 
+  /* XXX fixup location forward system */
+  fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
+
   if(!IDL_OP_DCL(tree).f_oneway) /* For location forwarding */
     fprintf(ci->fh, "_ORBIT_retry_request:\n");
 
-  fprintf(ci->fh, "_ORBIT_send_buffer = _ORBIT_recv_buffer = NULL;\n");
+  fprintf(ci->fh, "_ORBIT_send_buffer = NULL;\n_ORBIT_recv_buffer = NULL;\n");
   fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_NO;\n");
 
-  fprintf(ci->fh, "_ORBIT_request_id = alloca(0);\n");
-
-  fprintf(ci->fh, "_cnx = ORBit_object_get_connection(_obj);\n");
+  fprintf(ci->fh, "_ORBIT_request_id = (GIOP_unsigned_long)alloca(0);\n");
 
   fprintf(ci->fh, "{ /* marshalling */\n");
   fprintf(ci->fh, "static const struct { CORBA_unsigned_long len; char opname[%d]; } _ORBIT_operation_name_data = { %d, \"%s\" };\n",
@@ -108,30 +115,42 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
 	  sizeof(CORBA_unsigned_long) +
 	  strlen(IDL_IDENT(IDL_OP_DCL(tree).ident).str) + 1);
 
-  cs_stub_alloc_tmpvars(oi->in, ci);
+  cs_stub_alloc_tmpvars(oi->in_stubs, ci);
 
   fprintf(ci->fh, "_ORBIT_send_buffer = \n");
   fprintf(ci->fh, "giop_send_request_buffer_use(_cnx, NULL, _ORBIT_request_id, %s,\n",
 	  IDL_OP_DCL(tree).f_oneway?"CORBA_FALSE":"CORBA_TRUE");
   fprintf(ci->fh, "&(_obj->active_profile->object_key_vec), &_ORBIT_operation_vec, &ORBit_default_principal_iovec);\n\n");
-  fprintf(ci->fh, "if(!_ORBIT_send_buffer) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; goto _ORBIT_system_exception; }");
+  fprintf(ci->fh, "_ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE;\n");
+  fprintf(ci->fh, "if(!_ORBIT_send_buffer) goto _ORBIT_system_exception;");
 
-  c_marshalling_generate(oi->in, ci);
+  c_marshalling_generate(oi->in_stubs, ci);
 
-  fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; _ORBIT_completion_status = CORBA_COMPLETED_MAYBE; goto _ORBIT_system_exception; }\n");
+  fprintf(ci->fh, "if(giop_send_buffer_write(_ORBIT_send_buffer)) goto _ORBIT_system_exception;\n");
+  fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_MAYBE;\n");
   fprintf(ci->fh, "giop_send_buffer_unuse(_ORBIT_send_buffer); _ORBIT_send_buffer = NULL;\n");
   fprintf(ci->fh, "}\n");
 
   if(!IDL_OP_DCL(tree).f_oneway) {
+    /* free inout params as needed */
+    cs_free_inout_params(tree, ci);
+
     fprintf(ci->fh, "{ /* demarshalling */\n");
 
-    cs_stub_alloc_tmpvars(oi->out, ci);
+    fprintf(ci->fh, "register guchar *_ORBIT_curptr;\n");
+
+    cs_stub_alloc_tmpvars(oi->out_stubs, ci);
 
     fprintf(ci->fh, "_ORBIT_recv_buffer = giop_recv_reply_buffer_use_2(_cnx, _ORBIT_request_id, TRUE);\n");
 
-    fprintf(ci->fh, "if(!_ORBIT_recv_buffer) { _ORBIT_system_exception_minor = ex_CORBA_COMM_FAILURE; goto _ORBIT_system_exception; }");
+    fprintf(ci->fh, "if(!_ORBIT_recv_buffer) goto _ORBIT_system_exception;");
+    fprintf(ci->fh, "_ORBIT_completion_status = CORBA_COMPLETED_YES;\n");
 
-    c_demarshalling_generate(oi->out, ci);
+    fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status != GIOP_NO_EXCEPTION) goto _ORBIT_msg_exception;\n");
+
+    cs_stub_alloc_params(tree, ci);
+
+    c_demarshalling_generate(oi->out_stubs, ci, FALSE);
 
     fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
     if(IDL_OP_DCL(tree).op_type_spec)
@@ -147,17 +166,123 @@ cs_output_stub(IDL_tree tree, OIDL_C_Info *ci)
   fprintf(ci->fh, "ORBit_handle_system_exception(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status, _ORBIT_recv_buffer, _ORBIT_send_buffer);\n");
   fprintf(ci->fh, "return;\n");
 
-#if 0
-  fprintf(ci->fh, "CORBA_exception_set_system(ev, _ORBIT_system_exception_minor, _ORBIT_completion_status);\n");
-  fprintf(ci->fh, "if(_ORBIT_send_buffer) giop_send_buffer_unuse(_ORBIT_send_buffer);\n");
-  fprintf(ci->fh, "if(_ORBIT_recv_buffer) giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+  fprintf(ci->fh, "_ORBIT_msg_exception:\n");
+  /* deal with LOCATION_FORWARD exceptions */
+  fprintf(ci->fh, "if(_ORBIT_recv_buffer->message.u.reply.reply_status == GIOP_LOCATION_FORWARD) {\n");
+  fprintf(ci->fh, "_cnx = ORBit_handle_location_forward(_ORBIT_recv_buffer, _obj);\n");
+  fprintf(ci->fh, "_ORBIT_recv_buffer = NULL;\n");
+  fprintf(ci->fh, "\ngoto _ORBIT_retry_request;\n");
+  fprintf(ci->fh, "} else {\n");
 
+  /* This should also pass a structure that lists info about the
+     operation-specific exceptions raised. */
   fprintf(ci->fh, "ORBit_handle_exception(_ORBIT_recv_buffer, ev, %s, _obj->orb);\n",
 	  IDL_OP_DCL(tree).raises_expr?"_ORBIT_user_exceptions":"NULL");
-  fprintf(ci->fh, "return;");
-#endif
+  fprintf(ci->fh, "giop_recv_buffer_unuse(_ORBIT_recv_buffer);\n");
+  fprintf(ci->fh, "return;\n  }\n");
 
   fprintf(ci->fh, "}\n");
+}
+
+static void
+cbe_stub_op_param_alloc(FILE *of, IDL_tree node, GString *tmpstr)
+{
+  int n, i;
+  char *id;
+  IDL_tree ts = orbit_cbe_get_typespec(node);
+
+  n = oidl_param_numptrs(node, 
+			 oidl_attr_to_paramrole(IDL_PARAM_DCL(node).attr));
+
+  if(((n - 1) <= 0) && IDL_NODE_TYPE(ts) != IDLN_TYPE_ARRAY)
+    return;
+
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_ARRAY:
+    if((IDL_PARAM_DCL(node).attr != IDL_PARAM_OUT)
+       || orbit_cbe_type_is_fixed_length(ts))
+      return;
+    n++;
+    break;
+  case IDLN_TYPE_SEQUENCE:
+  case IDLN_TYPE_ANY:
+    if(IDL_PARAM_DCL(node).attr == IDL_PARAM_INOUT)
+      return;
+    break;
+  case IDLN_TYPE_UNION:
+  case IDLN_TYPE_STRUCT:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      return;
+  default:
+    break;
+  }
+
+  g_string_assign(tmpstr, "");
+  for(i = 0; i < n - 1; i++)
+    g_string_append_c(tmpstr, '*');
+
+  g_string_sprintfa(tmpstr, "%s",
+		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
+
+  id = orbit_cbe_get_typename(IDL_PARAM_DCL(node).param_type_spec);
+  fprintf(of, "%s = %s__alloc();\n", tmpstr->str, id);
+  g_free(id);
+}
+
+static void
+cbe_stub_op_retval_alloc(FILE *of, IDL_tree node, GString *tmpstr)
+{
+  int n;
+  char *id;
+  IDL_tree ts = orbit_cbe_get_typespec(node);
+
+  n = oidl_param_numptrs(node, DATA_RETURN);
+
+  if((n <= 0)
+     && (IDL_NODE_TYPE(ts) != IDLN_TYPE_ARRAY))
+    return;
+
+  g_string_assign(tmpstr, "_ORBIT_retval");
+
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_UNION:
+  case IDLN_TYPE_STRUCT:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      return;
+  case IDLN_TYPE_ANY:
+  case IDLN_TYPE_SEQUENCE:
+  case IDLN_TYPE_ARRAY:
+    break;
+  default:
+    return;
+  }
+
+  id = orbit_cbe_get_typename(node);
+  fprintf(of, "%s = %s__alloc();\n", tmpstr->str, id);
+  g_free(id);
+}
+
+static void
+cs_stub_alloc_params(IDL_tree tree, OIDL_C_Info *ci)
+{
+  IDL_tree curitem, param;
+  GString *tmpstr = g_string_new(NULL);
+
+  if(IDL_OP_DCL(tree).op_type_spec)
+    cbe_stub_op_retval_alloc(ci->fh, IDL_OP_DCL(tree).op_type_spec,
+			     tmpstr);
+
+  for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem;
+      curitem = IDL_LIST(curitem).next) {
+
+    param = IDL_LIST(curitem).data;
+
+    if(IDL_PARAM_DCL(param).attr == IDL_PARAM_INOUT
+       || IDL_PARAM_DCL(param).attr == IDL_PARAM_OUT)
+      cbe_stub_op_param_alloc(ci->fh, param, tmpstr);
+  }
+
+  g_string_free(tmpstr, TRUE);
 }
 
 static void
@@ -170,10 +295,11 @@ cs_stub_alloc_tmpvar(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
     fprintf(ci->fh, "register "); /* Help the compiler out */
 
   if(node->tree) {
-    char *id;
+    int i;
     orbit_cbe_write_typespec(ci->fh, node->tree);
+    for(i = 0; i < node->nptrs; i++)
+      fprintf(ci->fh, "*");
     fprintf(ci->fh, " %s;\n", node->name);
-    g_free(id);
   } else if(node->type == MARSHAL_DATUM) {
     const char * ctmp;
     static const char * const size_names[] = {NULL, "CORBA_unsigned_char", "CORBA_unsigned_short", NULL, "CORBA_unsigned_long",
@@ -189,4 +315,100 @@ static void
 cs_stub_alloc_tmpvars(OIDL_Marshal_Node *node, OIDL_C_Info *ci)
 {
   orbit_idl_node_foreach(node, (GFunc)cs_stub_alloc_tmpvar, ci);
+}
+
+/* This param freeing stuff really could be done better - perhaps shared code with the skels generation. */
+static void
+cbe_stub_op_param_free(FILE *of, IDL_tree node, GString *tmpstr)
+{
+  int n, i;
+  IDL_tree ts;
+  char *id;
+
+  ts = orbit_cbe_get_typespec(IDL_PARAM_DCL(node).param_type_spec);
+  n = oidl_param_numptrs(node, DATA_INOUT);
+  g_string_assign(tmpstr, "");
+
+  if(IDL_NODE_TYPE(ts) == IDLN_TYPE_STRUCT
+     || IDL_NODE_TYPE(ts) == IDLN_TYPE_UNION)
+    n--;
+
+  for(i = 0; i < n; i++)
+    g_string_append_c(tmpstr, '*');
+  
+  g_string_sprintfa(tmpstr, "%s",
+		    IDL_IDENT(IDL_PARAM_DCL(node).simple_declarator).str);
+  switch(IDL_NODE_TYPE(ts)) {
+  case IDLN_TYPE_ANY:
+    fprintf(of, "if((%s)._release) CORBA_free((%s)._value);\n",
+	    tmpstr->str, tmpstr->str);
+    fprintf(of, "CORBA_Object_release((%s)._type, ev);\n", tmpstr->str);
+    break;
+  case IDLN_TYPE_SEQUENCE:
+    fprintf(of, "if((%s)._release) CORBA_free((%s)._buffer);\n",
+	    tmpstr->str, tmpstr->str);
+    break;
+  case IDLN_TYPE_STRUCT:
+  case IDLN_TYPE_UNION:
+  case IDLN_TYPE_ARRAY:
+    if(orbit_cbe_type_is_fixed_length(ts))
+      break;
+    id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_TYPE_STRUCT(ts).ident), "_", 0);
+    fprintf(of, "%s__free(%s, NULL, CORBA_TRUE);\n", id, tmpstr->str);
+    g_free(id);
+    break;
+  case IDLN_TYPE_STRING:
+    fprintf(of, "CORBA_free(%s);\n", tmpstr->str);
+    break;
+  case IDLN_TYPE_OBJECT:
+    fprintf(of, "CORBA_Object_release(%s, ev);\n", tmpstr->str);
+    break;
+  default:
+    g_assert(orbit_cbe_type_is_fixed_length(node));
+    break;
+  }
+}
+
+static void
+cs_free_inout_params(IDL_tree tree, OIDL_C_Info *ci)
+{
+  IDL_tree curitem;
+  GString *tmpstr;
+
+  tmpstr = g_string_new(NULL);
+  for(curitem = IDL_OP_DCL(tree).parameter_dcls; curitem; curitem = IDL_LIST(curitem).next) {
+    IDL_tree curparam;
+
+    curparam = IDL_LIST(curitem).data;
+
+    if(IDL_PARAM_DCL(curparam).attr != IDL_PARAM_INOUT) continue;
+
+    cbe_stub_op_param_free(ci->fh, curparam, tmpstr);
+  }
+  g_string_free(tmpstr, TRUE);
+}
+
+static void
+cs_output_except(IDL_tree tree, OIDL_C_Info *ci)
+{
+  char *id;
+  OIDL_Except_Info *ei;
+
+  ei = tree->data;
+  g_assert(ei);
+
+  id = IDL_ns_ident_to_qstring(IDL_IDENT_TO_NS(IDL_EXCEPT_DCL(tree).ident), "_", 0);
+
+  fprintf(ci->fh, "void\n_ORBIT_%s_demarshal(GIOPRecvBuffer *_ORBIT_recv_buffer, CORBA_Environment *ev)\n", id);
+  fprintf(ci->fh, "{\n");
+  if(IDL_EXCEPT_DCL(tree).members) {
+    fprintf(ci->fh, "guchar *_ORBIT_curptr;\n");
+    fprintf(ci->fh, "%s *_ORBIT_exdata = %s__alloc();\n", id, id);
+    c_demarshalling_generate(ei->demarshal, ci, FALSE);
+  }
+
+  fprintf(ci->fh, "CORBA_exception_set(ev, CORBA_USER_EXCEPTION, TC_%s_struct.repo_id, %s);\n",
+	  id, IDL_EXCEPT_DCL(tree).members?"_ORBIT_exdata":"NULL");
+
+  fprintf(ci->fh, "}\n");
 }
