@@ -843,8 +843,7 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 
 
 		case IDLN_TYPE_ARRAY:
-                        /* Kill any unwanted array size specifiers in cast */
-			retval = g_strdup ("");
+			retval = g_strdup_printf ("(%s_slice *)", typestr);
 			break;
 
 		case IDLN_TYPE_STRUCT:
@@ -865,8 +864,7 @@ cs_small_unflatten_ref (IDL_ParamRole role, IDL_tree typespec)
 	case DATA_INOUT:
 		switch (IDL_NODE_TYPE (typespec)) {
 		case IDLN_TYPE_ARRAY:
-                        /* Kill any unwanted array size specifiers in cast */
-			retval = g_strdup ("");
+			retval = g_strdup_printf ("(%s_slice *)", typestr);
 			break;
 
 		case BASE_TYPES:
