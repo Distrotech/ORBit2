@@ -1,3 +1,9 @@
+2001-10-16  Mark McLoughlin <mark@skynet.ie>
+
+	* Makefile.am (EXTRA_DIST): kill linc-config.in,
+	linc.pc.in, linc.spec and linc.spec.in. Add HACKING
+	and MAINTAINERS.
+
 2001-10-10  Abel Cheung  <maddog@linux.org.hk>
 
 	* linc-config.in(cflags): move headers to subdir
