@@ -1,3 +1,9 @@
+2003-11-15  Frank Rehberger  <frehberg@xtradyne.de>
+
+	* src/idl-compiler/orbit-idl-c-skelimpl.c (cbe_ski_do_interface):
+	fix mem-leak in generated code: g_free (servant) in destructor
+	impl_*__destroy() by default
+	
 2003-11-13  Michael Meeks  <michael@ximian.com>
 
 	* Version 2.9.1
