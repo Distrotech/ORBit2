@@ -1,5 +1,12 @@
 2001-10-24  Michael Meeks  <michael@ximian.com>
 
+	* src/orb/GIOP/giop-server.c (giop_server_destroy): 
+	kill misleadingly named method.
+	(giop_server_class_init): don't init it, or setup
+	parent_class
+
+2001-10-24  Michael Meeks  <michael@ximian.com>
+
 	* include/orbit/orb-core/Makefile.am: prune broken special
 	case for orbit-interface.idl.
 

@@ -2,8 +2,6 @@
 #include <orbit/GIOP/giop.h>
 #include <orbit/GIOP/giop-connection.h>
 
-static GObjectClass *parent_class = NULL;
-
 GIOPServer *
 giop_server_new (GIOPVersion            giop_version,
 		 const char            *proto_name, 
@@ -13,7 +11,7 @@ giop_server_new (GIOPVersion            giop_version,
 		 gpointer               create_orb_data)
 {
 	GIOPServer *server = (GIOPServer *)
-				g_object_new (GIOP_TYPE_SERVER, NULL);
+		g_object_new (GIOP_TYPE_SERVER, NULL);
 
 	server->giop_version = giop_version;
 
@@ -22,68 +20,57 @@ giop_server_new (GIOPVersion            giop_version,
 				create_options)) {
 
 		g_object_unref (G_OBJECT (server));
+
 		return NULL;
-	}
-	else
+	} else
 		server->orb_data = create_orb_data;
 
 	return server;
 }
 
 static LINCConnection *
-giop_server_handle_create_connection(LINCServer *server)
+giop_server_handle_create_connection (LINCServer *server)
 {
-  GIOPConnection *retval = g_object_new(giop_connection_get_type(), NULL);
-  GIOPServer *gserver = (GIOPServer *)server;
+	GIOPConnection *retval;
+	GIOPServer     *gserver = (GIOPServer *) server;
 
-  retval->giop_version = gserver->giop_version;
-  retval->orb_data = gserver->orb_data;
+	retval = g_object_new (giop_connection_get_type (), NULL);
 
-  return (LINCConnection *)retval;
-}
+	retval->giop_version = gserver->giop_version;
+	retval->orb_data     = gserver->orb_data;
 
-static void
-giop_server_destroy (GObject *obj)
-{
-  if(parent_class->dispose)
-    parent_class->dispose(obj);
+	return (LINCConnection *)retval;
 }
 
 static void
 giop_server_class_init (GIOPServerClass *klass)
 {
-  parent_class = g_type_class_peek_parent(klass);
-
-  G_OBJECT_CLASS(klass)->dispose = giop_server_destroy;
-
-  klass->parent_class.create_connection = giop_server_handle_create_connection;
+	klass->parent_class.create_connection = giop_server_handle_create_connection;
 }
 
 GType
 giop_server_get_type(void)
 {
-  static GType object_type = 0;
+	static GType object_type = 0;
 
-  if (!object_type)
-    {
-      static const GTypeInfo object_info =
-      {
-        sizeof (GIOPServerClass),
-        (GBaseInitFunc) NULL,
-        (GBaseFinalizeFunc) NULL,
-        (GClassInitFunc) giop_server_class_init,
-        NULL,           /* class_finalize */
-        NULL,           /* class_data */
-        sizeof (GIOPServer),
-        0,              /* n_preallocs */
-        (GInstanceInitFunc) NULL,
-      };
+	if (!object_type) {
+		static const GTypeInfo object_info = {
+			sizeof (GIOPServerClass),
+			(GBaseInitFunc) NULL,
+			(GBaseFinalizeFunc) NULL,
+			(GClassInitFunc) giop_server_class_init,
+			NULL,           /* class_finalize */
+			NULL,           /* class_data */
+			sizeof (GIOPServer),
+			0,              /* n_preallocs */
+			(GInstanceInitFunc) NULL,
+		};
       
-      object_type = g_type_register_static (linc_server_get_type(),
-                                            "GIOPServer",
-                                            &object_info,
-					    0);
-    }  
+		object_type = g_type_register_static (
+			linc_server_get_type (),
+			"GIOPServer",
+			&object_info, 0);
+	}  
 
-  return object_type;
+	return object_type;
 }

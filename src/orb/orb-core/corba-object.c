@@ -196,44 +196,44 @@ ORBit_objref_get_proxy (CORBA_Object obj)
 void
 ORBit_start_servers (CORBA_ORB orb)
 {
-  LINCProtocolInfo *info;
+	LINCProtocolInfo *info;
 
-  for(info = linc_protocol_all(); info->name; info++)
-    {
-      GIOPServer *server;
-      LINCConnectionOptions options = 0;
+	for (info = linc_protocol_all (); info->name; info++) {
+		GIOPServer           *server;
+		LINCConnectionOptions options = 0;
 
-      if (!ORBit_proto_use (info->name))
-        continue;
+		if (!ORBit_proto_use (info->name))
+			continue;
 
 #ifndef ORBIT_THREADED
-      options |= LINC_CONNECTION_NONBLOCKING;
+		options |= LINC_CONNECTION_NONBLOCKING;
 #endif
-      server = giop_server_new(orb->default_giop_version,
-                               info->name, NULL, NULL,
-                               options, orb);
-      if(server)
-        {
-          orb->servers = g_slist_prepend(orb->servers, server);
-          if(!(info->flags & LINC_PROTOCOL_SECURE))
-            {
-              if (!ORBit_proto_use ("SSL"))
-                continue;
+		server = giop_server_new (orb->default_giop_version,
+					  info->name, NULL, NULL,
+					  options, orb);
+		if (server) {
+			orb->servers = g_slist_prepend (orb->servers, server);
 
-              server = giop_server_new(orb->default_giop_version, info->name,
-                                       NULL, NULL, LINC_CONNECTION_SSL, orb);
-              if(server)
-                orb->servers = g_slist_prepend(orb->servers, server);
-            }
+			if (!(info->flags & LINC_PROTOCOL_SECURE)) {
+				if (!ORBit_proto_use ("SSL"))
+					continue;
+
+				server = giop_server_new (
+					orb->default_giop_version, info->name,
+					NULL, NULL, LINC_CONNECTION_SSL, orb);
+
+				if (server)
+					orb->servers = g_slist_prepend (orb->servers, server);
+			}
 #ifdef DEBUG
-          fprintf (stderr, "ORB created giop server '%s'\n", info->name);
+			fprintf (stderr, "ORB created giop server '%s'\n", info->name);
 #endif
-        }
+		}
 #ifdef DEBUG
-      else
-        fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
+		else
+			fprintf (stderr, "ORB failed to create giop server '%s'\n", info->name);
 #endif
-    }
+	}
 }
 
 static gboolean
@@ -365,36 +365,36 @@ CORBA_boolean
 CORBA_Object_non_existent(CORBA_Object       obj,
 			  CORBA_Environment *ev)
 {
-  ORBit_OAObject adaptor_obj;
+	ORBit_OAObject adaptor_obj;
 
-  if(obj == CORBA_OBJECT_NIL)
-    return TRUE;
+	if (obj == CORBA_OBJECT_NIL)
+		return TRUE;
 
-  adaptor_obj = obj->adaptor_obj;
-  if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
-    return FALSE;
+	adaptor_obj = obj->adaptor_obj;
+	if (adaptor_obj && adaptor_obj->interface->is_active (adaptor_obj))
+		return FALSE;
 
-  return ORBit_object_get_connection(obj)?CORBA_FALSE:CORBA_TRUE;
+	return ORBit_object_get_connection (obj) ? CORBA_FALSE : CORBA_TRUE;
 }
 
 CORBA_boolean
-CORBA_Object_is_equivalent(CORBA_Object _obj,
-			   CORBA_Object other_object,
-			   CORBA_Environment * ev)
+CORBA_Object_is_equivalent(CORBA_Object       obj,
+			   CORBA_Object       other_object,
+			   CORBA_Environment *ev)
 {
-  return g_CORBA_Object_equal(_obj, other_object);
+	return g_CORBA_Object_equal (obj, other_object);
 }
 
 CORBA_unsigned_long
-CORBA_Object_hash(CORBA_Object _obj,
-		  const CORBA_unsigned_long maximum,
-		  CORBA_Environment * ev)
+CORBA_Object_hash (CORBA_Object              obj,
+		   const CORBA_unsigned_long maximum,
+		   CORBA_Environment        *ev)
 {
-  CORBA_unsigned_long retval;
+	CORBA_unsigned_long retval;
 
-  retval = g_CORBA_Object_hash(_obj);
+	retval = g_CORBA_Object_hash (obj);
 
-  return maximum?(retval%maximum):retval;
+	return maximum ? (retval % maximum) : retval;
 }
 
 void
@@ -407,7 +407,7 @@ CORBA_Object_create_request (CORBA_Object         _obj,
 			     const CORBA_Flags    req_flag,
 			     CORBA_Environment   *ev)
 {
-  CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+	CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
 }
 
 CORBA_Policy
@@ -415,15 +415,15 @@ CORBA_Object_get_policy (CORBA_Object           obj,
 			 const CORBA_PolicyType policy_type,
 			 CORBA_Environment     *ev)
 {
-	CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+	CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
 	return CORBA_OBJECT_NIL;
 }
 
 CORBA_DomainManagersList *
-CORBA_Object_get_domain_managers (CORBA_Object      obj,
-				 CORBA_Environment *ev)
+CORBA_Object_get_domain_managers (CORBA_Object       obj,
+				  CORBA_Environment *ev)
 {
-	CORBA_exception_set_system(ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
+	CORBA_exception_set_system (ev, ex_CORBA_NO_IMPLEMENT, CORBA_COMPLETED_NO);
 	return NULL;
 }
 
