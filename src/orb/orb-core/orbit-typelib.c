@@ -6,6 +6,7 @@
 #include <glib/garray.h>
 
 #include "orb-core-private.h"
+#include "orbit-debug.h"
 
 ORBit_IInterface *
 ORBit_iinterface_from_idl (IDL_tree idl)

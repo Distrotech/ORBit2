@@ -34,10 +34,7 @@
 
 #include "../poa/orbit-poa-export.h"
 #include "orb-core-private.h"
-
-#undef DEBUG
-#undef TYPE_DEBUG
-#undef TRACE_DEBUG
+#include "orbit-debug.h"
 
 gpointer
 ORBit_small_alloc (CORBA_TypeCode tc)
@@ -77,38 +74,6 @@ ORBit_small_freekids (CORBA_TypeCode tc, gpointer p, gpointer d)
 	ORBit_freekids_via_TypeCode (tc, p);
 }
 
-
-#ifndef DEBUG
-
-static inline void dprintf (const char *format, ...) { };
-#define dump_arg(a,b)
-#define do_giop_dump_send(a)
-#define do_giop_dump_recv(a)
-
-#else /* DEBUG */
-
-#define dprintf(format...) fprintf(stderr, format)
-#define do_giop_dump_send(a) giop_dump_send(a)
-#define do_giop_dump_recv(a) giop_dump_recv(a)
-
-static void
-dump_arg (const ORBit_IArg *a, CORBA_TypeCode tc)
-{
-	fprintf (stderr, " '%s' : kind - %d, %c%c",
-		 a->name, tc->kind, a->flags & (ORBit_I_ARG_IN | ORBit_I_ARG_INOUT) ? 'i' : ' ',
-		 a->flags & (ORBit_I_ARG_OUT | ORBit_I_ARG_INOUT) ? 'o' : ' ');
-}
-
-#endif /* DEBUG */
-
-#ifndef TRACE_DEBUG
-static inline void tprintf (const char *format, ...) { };
-#define tprintf_trace_value(a,b)
-#else
-#define tprintf(format...) fprintf(stderr, format)
-#define tprintf_trace_value(a,b) \
-	ORBit_trace_value ((gconstpointer *)(a), (b))
-#endif
 
 static void
 ORBit_handle_exception_array (GIOPRecvBuffer     *rb,

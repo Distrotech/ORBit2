@@ -1,3 +1,13 @@
+2001-08-16  Mark McLoughlin <mark@skynet.ie>
+
+	* src/orb/orb-core/orbit-debug.h:
+	add.
+
+	* src/orb/orb-core/orbit-small.c,
+	* src/orb/orb-core/orbit-typelib.c,
+	  src/orb/orb-core/orbit-trace.c:
+	move debug/trace stuff to orbit-debug.h
+
 2001-08-16  Michael Meeks  <michael@ximian.com>
 
 	* configure.in: require linc >= 0.1.2
