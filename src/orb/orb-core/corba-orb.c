@@ -325,13 +325,16 @@ ORBit_initial_references_by_user (CORBA_ORB          orb,
 			g_warning ("Option ORBInitRef has invalid object reference: %s=%s",  
 				   tuple->key, tuple->value);
 			CORBA_exception_free (ev);
-		}  else if (ORBit_initial_reference_protected_id(tuple->key)) {
-                        g_warning ("Option ORBInitRef permission denied: %s=%s",
-
-                                   tuple->key, tuple->value);
-                } else {
-                        ORBit_set_initial_reference (orb, tuple->key, objref);
-                }
+		} else {
+			if (ORBit_initial_reference_protected_id(tuple->key)) {
+				g_warning ("Option ORBInitRef permission denied: %s=%s",
+					   tuple->key, tuple->value);
+			} else {
+				ORBit_set_initial_reference (orb, tuple->key, objref);
+			}
+			
+			ORBit_RootObject_release (objref);
+		}
 	}
 
 }
@@ -1287,13 +1290,15 @@ ORBit_set_initial_reference (CORBA_ORB  orb,
 			     gchar     *identifier,
 			     gpointer   objref)
 {
+	CORBA_Object old_objref;
+
 	if (!orb->initial_refs)
 		orb->initial_refs = g_hash_table_new (g_str_hash, g_str_equal);
 
-	if (g_hash_table_lookup (orb->initial_refs, identifier))
-               /* FIXME, release object before removing from hash-table,
-                   Frank 2003/06/22 */
+	if ((old_objref = g_hash_table_lookup (orb->initial_refs, identifier))) {
+		ORBit_RootObject_release (old_objref);
 		g_hash_table_remove (orb->initial_refs, identifier);
+	}
 
 	g_hash_table_insert (orb->initial_refs,
 			     identifier,

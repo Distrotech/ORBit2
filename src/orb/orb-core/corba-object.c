@@ -366,6 +366,7 @@ ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 {
 	GIOPConnection *retval = NULL;
 	GSList         *profiles = NULL;
+	GIOPConnection *old_connection;
 
 	if (ORBit_demarshal_IOR (obj->orb, buf, NULL, &profiles))
 		goto out;
@@ -373,7 +374,14 @@ ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 	OBJECT_LOCK (obj);
 	IOP_delete_profiles (obj->orb, &obj->forward_locations);
 	obj->forward_locations = profiles;
+
+	/* We need to clear the connection because 
+	   forwarding results in a different connection */
+	old_connection = obj->connection;
+	obj->connection = NULL;
 	OBJECT_UNLOCK (obj);
+
+	giop_connection_unref (old_connection);
 
 	retval = ORBit_object_get_connection (obj);
 

@@ -1,4 +1,25 @@
-2005-02-13  Arvind Samptur  <arvind.samptur@wipro.com
+2005-04-07  Jules Colding  <colding@omesc.com>
+
+	* configure.in: Bump version to 2.12.2
+
+	* NEWS: Update
+
+2005-04-06  Anders Carlsson  <andersca@imendio.com>
+ 
+	* src/orb/orb-core/corba-orb.c: 
+	(ORBit_initial_references_by_user):
+	Release objects.
+	
+	(ORBit_set_initial_reference):
+	Release existing objects.
+ 	
+2005-04-06  Anders Carlsson  <andersca@imendio.com>
+
+	* src/orb/orb-core/corba-object.c: 
+ 	(ORBit_handle_location_forward):
+ 	Reset the connection since the forwarded object has a new 
+
+2005-02-13  Arvind Samptur <arvind.samptur@wipro.com>
 
 	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers): if we
 	are using LocalOnly option or only UNIX sockets then set
