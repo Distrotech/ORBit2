@@ -62,7 +62,8 @@ Everything_module_la_LDFLAGS = \
 Everything_module_la_SOURCES = \
 	everything-imodule.c
 Everything_module_la_LIBADD = \
-        $(top_builddir)/src/orb/libORBit-2.la
+        $(top_builddir)/src/orb/libORBit-2.la \
+	$(ORBIT_LIBS)
 
 server_SOURCES=server.c ${EVERYTHING_BUILT} everything.idl constants.h
 server_LDFLAGS = -static -module

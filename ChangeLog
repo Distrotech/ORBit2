@@ -1,3 +1,9 @@
+2005-04-11  Tor Lillqvist  <tml@novell.com>
+
+	* test/everything/Makefile.am (Everything_module_la_LIBADD): Need
+	to link with ORBIT_LIBS thanks to a recent change for Win32 in
+	HEAD GLib.
+
 2005-04-11  James Henstridge  <james@jamesh.id.au>
 
 	* configure.in: rename PKG_CONFIG_MIN_VERSION variable to
