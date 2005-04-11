@@ -1,3 +1,8 @@
+2005-04-11  James Henstridge  <james@jamesh.id.au>
+
+	* configure.in: rename PKG_CONFIG_MIN_VERSION variable to
+	xPKG_CONFIG_MIN_VERSION, to work with pkg-config >= 0.16.0.
+
 2005-04-06  Anders Carlsson  <andersca@imendio.com>
 
 	* src/orb/orb-core/corba-orb.c: 
