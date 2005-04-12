@@ -1,3 +1,9 @@
+2005-04-12  Mark McLoughlin  <mark@skynet.ie>
+
+	* ORBit-2.0.pc.in: require gmodule-no-export-2.0 rather
+	than gmodule-2.0 so we don't -export-dynamic on our
+	link line.
+
 2005-04-11  Tor Lillqvist  <tml@novell.com>
 
 	* test/everything/Makefile.am (Everything_module_la_LIBADD): Need
