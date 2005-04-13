@@ -1,3 +1,12 @@
+2005-04-13  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc.c
+	* src/linc-protocols.c: Use gstdio wrappers for better localized
+	filename support on Win32.
+
+	* src/linc-compat.c (link_strerror): Use g_strerror() instead of
+	strerror() to get UTF-8 messages.
+
 2005-03-24  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-source.c (link_source_check): One more iteration of the

@@ -17,12 +17,9 @@
 
 #include "linc-private.h"
 
-#undef LOCAL_DEBUG
+#include <glib/gstdio.h>
 
-#ifdef G_OS_WIN32
-#  include <io.h>
-#  define mkdir(path, mode) _mkdir (path)
-#endif
+#undef LOCAL_DEBUG
 
 static char *link_tmpdir = NULL;
 static gboolean use_local_host = FALSE;
@@ -43,13 +40,13 @@ make_local_tmpdir (const char *dirname)
 {
 	struct stat statbuf;
 		
-	if (mkdir (dirname, 0700) != 0) {
+	if (g_mkdir (dirname, 0700) != 0) {
 		int e = errno;
 			
 		switch (e) {
 		case 0:
 		case EEXIST:
-			if (stat (dirname, &statbuf) != 0)
+			if (g_stat (dirname, &statbuf) != 0)
 				g_error ("Can not stat %s\n", dirname);
 
 #if !defined (__CYGWIN__) && !defined(_WIN32)
@@ -887,7 +884,7 @@ link_protocol_unix_destroy (int         fd,
 			    const char *dummy,
 			    const char *pathname)
 {
-	unlink (pathname);
+	g_unlink (pathname);
 }
 
 static gboolean

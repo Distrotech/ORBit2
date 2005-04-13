@@ -8,10 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef G_OS_WIN32
-#  include <io.h>
-#  define mkdir(path, mode) _mkdir (path)
-#endif
+#include <glib/gstdio.h>
 
 static FILE *out_for_pass(const char *input_filename, int pass, 
 			  OIDL_Run_Info *rinfo);
@@ -137,30 +134,30 @@ out_for_pass (const char    *input_filename,
 	
 	if (pass == OUTPUT_DEPS) {
 		if (!g_file_test (".deps", G_FILE_TEST_IS_DIR)) {
-			if (mkdir (".deps", 0775) < 0) {
+			if (g_mkdir (".deps", 0775) < 0) {
 				g_warning ("failed to create '.deps' directory '%s'",
-					   strerror (errno));
+					   g_strerror (errno));
 				return NULL;
 			}
 		}
 		
 		if (rinfo->deps_file)
-			fp =  fopen (rinfo->deps_file, "w");
+			fp =  g_fopen (rinfo->deps_file, "w");
 		else
 			fp = NULL;
 
 		if (fp == NULL) 
 			g_warning ("failed to open '%s': %s\n",
-				   rinfo->deps_file, strerror (errno));
+				   rinfo->deps_file, g_strerror (errno));
 		
 	} else {
 		output_filename = orbit_idl_c_filename_for_pass (input_filename, pass);
 		output_full_path = g_build_path (G_DIR_SEPARATOR_S, rinfo->output_directory, output_filename, NULL);
 		g_free (output_filename);
 
-		fp = fopen (output_full_path, "w+");
+		fp = g_fopen (output_full_path, "w+");
 		if (fp == NULL)
-			g_error ("failed to fopen '%s': %s\n", output_full_path, strerror(errno));
+			g_error ("failed to fopen '%s': %s\n", output_full_path, g_strerror(errno));
 
 		g_free (output_full_path);
 	}

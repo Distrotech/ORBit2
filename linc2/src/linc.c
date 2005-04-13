@@ -180,7 +180,7 @@ link_init (gboolean thread_safe)
 						      g_strdup_printf ("link_debug.%d", getpid ()),
 						      NULL);
 		int fd;
-		fd = open (stderr_file, O_WRONLY|O_CREAT);
+		fd = g_open (stderr_file, O_WRONLY|O_CREAT, 0666);
 		if (fd >= 0) {
 			char *prgname = g_get_prgname ();
 			d_printf ("Redirecting stderr of %s to %s\n",

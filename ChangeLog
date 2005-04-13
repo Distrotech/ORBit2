@@ -1,3 +1,15 @@
+2005-04-13  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/GIOP/giop.c
+	* src/idl-compiler/orbit-idl-c-backend.c: Use gstdio wrappers for
+	better localized filename support on Win32. Use GLib directory and
+	filename API. Don't bother with the rather useless utime() setting
+	on the GIOP tmpdir on Win32. Use g_strerror() instead of
+	strerror().
+
+	* src/orb/util/orbit-options.c: As we reguire GLib 2.6, no need to
+	use GLIB_CHECK_VERSION.
+
 2005-04-12  Mark McLoughlin  <mark@skynet.ie>
 
 	* ORBit-2.0.pc.in: require gmodule-no-export-2.0 rather

@@ -4,9 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#if GLIB_CHECK_VERSION (2,6,0)
 #include <glib/gstdio.h>
-#endif
 
 #include "orbit-options.h"
 
@@ -117,11 +115,7 @@ ORBit_option_rc_parse (const gchar         *rcfile,
 	gchar  line [1024];
 	FILE  *fh;
 
-#if GLIB_CHECK_VERSION (2,6,0)
 	fh = g_fopen (rcfile, "r");
-#else
-	fh = fopen (rcfile, "r");
-#endif
 	if (!fh)
 		return;
 

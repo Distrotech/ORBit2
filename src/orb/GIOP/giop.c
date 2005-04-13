@@ -4,27 +4,18 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
 #ifdef HAVE_UTIME_H
 #  include <utime.h>
-#else
-#  ifdef HAVE_SYS_UTIME_H
-#    include <sys/utime.h>
-#  endif
 #endif
 
 #include "giop-private.h"
 #include "giop-debug.h"
 #include <orbit/util/orbit-genrand.h>
-
-#ifdef G_OS_WIN32
-#include <io.h>
-#define mkdir(path, mode) _mkdir (path)
-#endif
+#include <glib/gstdio.h>
 
 /* FIXME: need to clean this up at shutdown */
 static int      corba_wakeup_fds[2];
@@ -51,7 +42,7 @@ test_safe_socket_dir (const char *dirname)
 {
 	struct stat statbuf;
 
-	if (stat (dirname, &statbuf) != 0) {
+	if (g_stat (dirname, &statbuf) != 0) {
 		S_PRINT (("Can not stat %s\n", dirname));
 		return FALSE;
 	}
@@ -82,24 +73,24 @@ scan_socket_dir (const char *dir, const char *prefix)
 {
 	int prefix_len;
 	char *cur_dir = NULL;
-	DIR   *dirh;
-	struct dirent *dent;
+	GDir   *dirh;
+	const char *dent;
 
 	g_return_val_if_fail (dir != NULL, NULL);
 	g_return_val_if_fail (prefix != NULL, NULL);
 	
-	dirh = opendir (dir);
+	dirh = g_dir_open (dir, 0, NULL);
 	if (!dirh)
 		return NULL;
 	prefix_len = strlen (prefix);
 
-	while ((dent = readdir (dirh))) {
+	while ((dent = g_dir_read_name (dirh))) {
 		char *name;
 
-		if (strncmp (dent->d_name, prefix, prefix_len))
+		if (strncmp (dent, prefix, prefix_len))
 			continue;
 
-		name = g_strconcat (dir, "/", dent->d_name, NULL);
+		name = g_build_filename (dir, dent, NULL);
 
 		/* Check it's credentials */
 		if (!test_safe_socket_dir (name)) {
@@ -115,7 +106,7 @@ scan_socket_dir (const char *dir, const char *prefix)
 		} else
 			g_free (name);
 	}
-	closedir (dirh);
+	g_dir_close (dirh);
 
 	return cur_dir;
 }
@@ -147,7 +138,7 @@ giop_tmpdir_init (void)
 		}
 
 		if (iteration == 0)
-			newname = g_strconcat (tmp_root, "/", dirname, NULL);
+			newname = g_build_filename (tmp_root, dirname, NULL);
 		else {
 			struct {
 				guint32 a;
@@ -158,10 +149,11 @@ giop_tmpdir_init (void)
 					     ORBIT_GENUID_OBJECT_ID);
 
 			newname = g_strdup_printf (
-				"%s/%s-%4x", tmp_root, dirname, id.b);
+				"%s" G_DIR_SEPARATOR_S "%s-%4x",
+				tmp_root, dirname, id.b);
 		}
 
-		if (mkdir (newname, 0700) < 0) {
+		if (g_mkdir (newname, 0700) < 0) {
 			switch (errno) {
 			case EACCES:
 				g_error ("I can't write to '%s', ORB init failed",
@@ -169,7 +161,7 @@ giop_tmpdir_init (void)
 				break;
 				
 			case ENAMETOOLONG:
-				g_error ("Name '%s' too long your unix is broken",
+				g_error ("Name '%s' too long your system is broken",
 					 newname);
 				break;
 
@@ -187,13 +179,15 @@ giop_tmpdir_init (void)
 				break;
 			}
 		}
+#if defined (HAVE_UTIME_H) && !defined (G_OS_WIN32)
+		/* This seems pretty useless, forget it on Win32 */
 
 		{ /* Hide some information ( apparently ) */
 			struct utimbuf utb;
 			memset (&utb, 0, sizeof (utb));
 			utime (newname, &utb);
 		}
-		
+#endif		
 		/* Possible race - so we re-scan. */
 
 		iteration++;
