@@ -242,6 +242,6 @@ link_strerror (int number)
 	  return "Socket is not connected";
 #endif
 	default:
-		return strerror (number);
+		return g_strerror (number);
 	}
 }
