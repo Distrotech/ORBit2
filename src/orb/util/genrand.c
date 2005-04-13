@@ -13,8 +13,16 @@
 
 #include "orbit-purify.h"
 
+#ifdef G_OS_WIN32
+#include <wincrypt.h>
+#endif
+
 static ORBitGenUidType  genuid_type = ORBIT_GENUID_STRONG;
+#ifndef G_OS_WIN32
 static int              random_fd = -1;
+#else
+static HCRYPTPROV	hprov = 0;
+#endif
 static GRand           *glib_prng = NULL;
 static pid_t            genuid_pid;
 #ifndef G_OS_WIN32
@@ -64,7 +72,11 @@ ORBit_genuid_init (ORBitGenUidType type)
 
 		hit_strength = (random_fd >= 0);
 #else
-		hit_strength = FALSE;
+		if (CryptAcquireContext (&hprov, NULL, NULL, PROV_RSA_FULL,
+					 CRYPT_VERIFYCONTEXT))
+			hit_strength = TRUE;
+		else
+			hit_strength = FALSE;
 #endif
 #if LINK_SSL_SUPPORT
 		hit_strength = TRUE; /* foolishly trust OpenSSL */
@@ -81,11 +93,17 @@ ORBit_genuid_init (ORBitGenUidType type)
 void
 ORBit_genuid_fini (void)
 {
+#ifndef G_OS_WIN32
 	if (random_fd >= 0) {
 		close (random_fd);
 		random_fd = -1;
 	}
-	
+#else
+	if (hprov) {
+		CryptReleaseContext (hprov, 0);
+		hprov = 0;
+	}
+#endif
 	if (glib_prng) {
 		g_rand_free (glib_prng);
 		glib_prng = NULL;
@@ -96,6 +114,8 @@ ORBit_genuid_fini (void)
 		inc_lock = NULL;
 	}
 }
+
+#ifndef G_OS_WIN32
 
 static gboolean
 genuid_rand_device (guchar *buffer, int length)
@@ -122,6 +142,8 @@ genuid_rand_device (guchar *buffer, int length)
 
 	return TRUE;
 }
+
+#endif
 
 #if LINK_SSL_SUPPORT
 #include <openssl/rand.h>
@@ -217,9 +239,15 @@ ORBit_genuid_buffer (guint8         *buffer,
 	switch (type) {
 
 	case ORBIT_GENUID_STRONG:
+#ifndef G_OS_WIN32
 		if (random_fd >= 0 &&
 		    genuid_rand_device (buffer, length))
 			return;
+#else
+		if (hprov &&
+		    CryptGenRandom (hprov, length, buffer))
+			return;
+#endif
 #if LINK_SSL_SUPPORT
 		else if (genuid_rand_openssl (buffer, length))
 			return;
@@ -232,7 +260,7 @@ ORBit_genuid_buffer (guint8         *buffer,
 		break;
 
 	default:
-		g_error ("serious randomnes failure");
+		g_error ("serious randomness failure");
 		break;
 	}
 }

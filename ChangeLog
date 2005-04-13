@@ -1,5 +1,7 @@
 2005-04-13  Tor Lillqvist  <tml@novell.com>
 
+	* src/orb/util/genrand.c: Use the Win32 crypto API.
+
 	* src/orb/GIOP/giop.c
 	* src/idl-compiler/orbit-idl-c-backend.c: Use gstdio wrappers for
 	better localized filename support on Win32. Use GLib directory and
