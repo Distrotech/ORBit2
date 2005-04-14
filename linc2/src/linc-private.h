@@ -164,8 +164,6 @@ struct _LinkWatch {
 
 #endif
 
-const char      *link_get_local_hostname    (void);
-
 struct sockaddr *link_protocol_get_sockaddr (const LinkProtocolInfo *proto,
 					     const char             *hostname,
 					     const char             *service,
