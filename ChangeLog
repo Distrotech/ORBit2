@@ -1,3 +1,11 @@
+2005-04-14  Arvind Samptur  <arvind.samptur@wipro.com>
+
+	* src/orb/orb-core/corba-object.c :
+	(ORBit_object_get_connection): if we have failed on the unix
+	socket, have IPv4 or IPv6 connections enabled and are on localhost,
+	then don't connect on the corresponding port from the profiles.
+	Patch reviewed by Michael Meeks.
+
 2005-04-13  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/util/genrand.c: Use the Win32 crypto API.

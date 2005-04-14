@@ -1,3 +1,9 @@
+2005-04-14  Arvind Samptur  <arvind.samptur@wipro.com>
+
+	* include/linc/linc-protocol.h: Add link_get_local_hostname ()
+	* src/linc-private.h: Remove link_get_local_hostname ()
+	Patch approved by Michael Meeks
+
 2005-04-13  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc.c

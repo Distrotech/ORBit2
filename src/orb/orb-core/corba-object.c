@@ -211,6 +211,12 @@ ORBit_objref_find (CORBA_ORB   orb,
 	return retval;
 }
 
+static gboolean
+is_localhost (const char *host)
+{
+	return (host && !strcmp (link_get_local_hostname (), host)) ? TRUE : FALSE;
+}
+
 /**
  * ORBit_objref_get_proxy:
  * @obj: the local object
@@ -307,8 +313,14 @@ ORBit_object_get_connection (CORBA_Object obj)
 	gboolean is_ssl = FALSE;
 	GIOPVersion iiop_version = GIOP_1_2;
 	GIOPConnection *cnx = NULL;
+	gboolean unix_socket_enabled = FALSE;
+	gboolean ipv4_ipv6_enabled = FALSE;
+	gboolean unix_socket_failed = FALSE;
 
 	OBJECT_LOCK (obj);
+
+	unix_socket_enabled = ORBit_proto_use ("UNIX");
+	ipv4_ipv6_enabled = (ORBit_proto_use ("IPv4") || ORBit_proto_use ("IPv6"));
 
 	if (obj->connection) {
 		if (ORBit_try_connection_T (obj)) {
@@ -338,10 +350,18 @@ ORBit_object_get_connection (CORBA_Object obj)
 		if (IOP_profile_get_info (obj, pinfo, &iiop_version, &proto,
 					  &host, &service, &is_ssl, tbuf)) {
 
+			if (unix_socket_failed && ipv4_ipv6_enabled && is_localhost (host))
+				continue;
+
 			obj->connection = giop_connection_initiate (
 				obj->orb, proto, host, service,
 				is_ssl ? LINK_CONNECTION_SSL : 0, iiop_version);
 
+			if (!obj->connection && unix_socket_enabled && ipv4_ipv6_enabled) {
+				if (!strcmp (proto,"UNIX")) 
+					unix_socket_failed = TRUE;
+			}
+	
 			if (obj->connection && ORBit_try_connection_T (obj)) {
 				obj->object_key = objkey;
 				obj->connection->orb_data = obj->orb;
