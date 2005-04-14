@@ -21,6 +21,8 @@
 #include "linc-private.h"
 #include "linc-compat.h"
 
+#include <glib/gstdio.h>
+
 /* whether we do locking or not */
 static gboolean link_is_thread_safe = TRUE;
 /* an inferior loop/context for std. processing */
