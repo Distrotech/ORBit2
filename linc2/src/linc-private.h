@@ -104,6 +104,7 @@ typedef struct {
         GIOChannel   *channel;
 	GPollFD       pollfd;
 #ifdef G_OS_WIN32
+	LinkWatch    *link_watch;
 	SOCKET	      socket;
 	int	      event_mask;
 	gboolean      write_would_have_blocked;
@@ -116,6 +117,9 @@ typedef struct {
 struct _LinkWatch {
 	GSource *main_source;
 	GSource *link_source;
+#ifdef G_OS_WIN32
+	LinkUnixWatch *last_polled_source;
+#endif
 };
 
 #define LINK_ERR_CONDS (G_IO_ERR|G_IO_HUP|G_IO_NVAL)

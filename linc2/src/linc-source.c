@@ -74,6 +74,12 @@ link_source_prepare (GSource *source,
 	if (watch->condition & G_IO_HUP)
 		event_mask |= FD_CLOSE;
 
+	if (watch->link_watch != NULL &&
+	    watch->link_watch->last_polled_source != watch) {
+		watch->link_watch->last_polled_source = watch;
+		watch->event_mask = 0;
+	}
+
 	if (watch->event_mask != event_mask) {
 		d_printf ("prepare: WSAEventSelect(%d, %#x, {%s})\n",
 			  watch->socket, watch->pollfd.fd, fd_mask (event_mask));
@@ -111,14 +117,15 @@ link_source_check (GSource *source)
 	else {
 		d_printf ("events={%s}\n", fd_mask (events.lNetworkEvents));
 		if (watch->pollfd.revents != 0 &&
-		    events.lNetworkEvents == 0)
-		  {
-		    watch->event_mask = 0;
-		    d_printf ("check: WSAEventSelect(%d, %#x, {})\n",
-			      watch->socket, watch->pollfd.fd);
-		    WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd, 0);
-		    ResetEvent ((HANDLE) watch->pollfd.fd);
-		  }
+		    events.lNetworkEvents == 0) {
+			watch->event_mask = 0;
+			d_printf ("check: WSAEventSelect(%d, %#x, {})\n",
+				  watch->socket, watch->pollfd.fd);
+			WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd, 0);
+			d_printf ("check: ResetEvent(%#x)\n",
+				  watch->pollfd.fd);
+			ResetEvent ((HANDLE) watch->pollfd.fd);
+		}
 		watch->pollfd.revents = 0;
 		if (events.lNetworkEvents & (FD_READ | FD_ACCEPT))
 			watch->pollfd.revents |= G_IO_IN;
@@ -218,6 +225,7 @@ link_source_create_watch (GMainContext *context,
 #ifdef G_OS_WIN32
 	watch->pollfd.fd = (int) WSACreateEvent ();
 	d_printf ("WSACreateEvent(): for socket %d: %#x\n", fd, watch->pollfd.fd);
+	watch->link_watch = NULL;
 	watch->socket = fd;
 	watch->event_mask = 0;
 	watch->write_would_have_blocked = FALSE;
@@ -239,6 +247,26 @@ link_source_create_watch (GMainContext *context,
 	g_source_attach (source, context);
 
 	return source;
+}
+
+static GSource *
+link_source_create_watch_for_watch (LinkWatch    *watch,
+				    GMainContext *context,
+				    int           fd,
+				    GIOChannel   *opt_channel,
+				    GIOCondition  condition,
+				    GIOFunc       func,
+				    gpointer      user_data)
+{
+	GSource *retval =
+		link_source_create_watch (context, fd, opt_channel,
+					  condition, func, user_data);
+
+#ifdef G_OS_WIN32
+	((LinkUnixWatch *) retval)->link_watch = watch;
+#endif
+
+	return retval;
 }
 
 #ifdef G_OS_WIN32
@@ -268,19 +296,19 @@ link_io_add_watch_fd (int          fd,
 
 	if ((thread_ctx = link_thread_io_context ())) {
 		/* Have a dedicated I/O worker thread */
-		w->link_source = link_source_create_watch
-			(thread_ctx, fd, NULL, condition, func, user_data);
+		w->link_source = link_source_create_watch_for_watch
+			(w, thread_ctx, fd, NULL, condition, func, user_data);
 
 	} else {
 		/* Have an inferior and hook into the glib context */
 
 		/* Link loop */
-		w->link_source = link_source_create_watch
-			(link_main_get_context (), fd, NULL,
+		w->link_source = link_source_create_watch_for_watch
+			(w, link_main_get_context (), fd, NULL,
 			 condition, func, user_data);
 		
-		w->main_source = link_source_create_watch
-			(NULL, fd, NULL,
+		w->main_source = link_source_create_watch_for_watch
+			(w, NULL, fd, NULL,
 			 condition, func, user_data);
 	}
 
@@ -315,6 +343,9 @@ link_watch_unlisten (LinkWatch *w)
 		g_source_unref   (w->link_source);
 		w->link_source = NULL;
 	}
+#ifdef G_OS_WIN32
+	w->last_polled_source = NULL;
+#endif
 }
 
 void
@@ -358,8 +389,8 @@ link_watch_move_io (LinkWatch *w,
 
 	link_watch_unlisten (w);
 
-	w->link_source = link_source_create_watch
-		(link_thread_io_context (),
+	w->link_source = link_source_create_watch_for_watch
+		(w, link_thread_io_context (),
 #ifdef G_OS_WIN32
 		 w_cpy.socket,
 #else
