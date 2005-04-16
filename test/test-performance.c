@@ -105,10 +105,10 @@ create_mult_id_poa (CORBA_Environment *ev)
 	return retval;
 }
 
-PortableServer_ServantBase__epv base_epv = { NULL, NULL, NULL };
-POA_Test__epv                   test_epv = { NULL, NULL };
-POA_Test__vepv                  test_vepv = { &base_epv, &test_epv };
-POA_Test                        test_servant = { NULL, &test_vepv };
+static PortableServer_ServantBase__epv base_epv = { NULL, NULL, NULL };
+static POA_Test__epv                   test_epv = { NULL, NULL };
+static POA_Test__vepv                  test_vepv = { &base_epv, &test_epv };
+static POA_Test                        test_servant = { NULL, &test_vepv };
 
 static void
 test_activation (void)

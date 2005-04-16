@@ -57,15 +57,15 @@ do_doNothing (PortableServer_Servant servant,
 {
 }
 
-PortableServer_ServantBase__epv base_epv = {
+static PortableServer_ServantBase__epv base_epv = {
 	NULL,
 	NULL,
 	NULL
 };
 
-POA_Echo__epv echo_epv = { NULL, do_echoString, do_doNothing, NULL };
-POA_Echo__vepv poa_echo_vepv = { &base_epv, &echo_epv };
-POA_Echo poa_echo_servant = { NULL, &poa_echo_vepv };
+static POA_Echo__epv echo_epv = { NULL, do_echoString, do_doNothing, NULL };
+static POA_Echo__vepv poa_echo_vepv = { &base_epv, &echo_epv };
+static POA_Echo poa_echo_servant = { NULL, &poa_echo_vepv };
 
 void
 echo_srv_start_poa (CORBA_ORB orb, CORBA_Environment *ev)

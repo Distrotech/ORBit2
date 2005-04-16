@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <orbit/orbit.h>
+#include <orbit/orb-core/orb-types.h>
 
 #include "../orbit-init.h"
 #include "../poa/orbit-poa-export.h"
@@ -579,13 +580,13 @@ CORBA_ORB_create_list (CORBA_ORB          obj,
 		       CORBA_NVList      *new_list,
 		       CORBA_Environment *ev)
 {
-	CORBA_NVList new;
+	CORBA_NVList nvlist;
 
-	new = g_new0 (struct CORBA_NVList_type, 1);
+	nvlist = g_new0 (struct CORBA_NVList_type, 1);
 
-	new->list = g_array_new (FALSE, TRUE, sizeof (CORBA_NamedValue));
+	nvlist->list = g_array_new (FALSE, TRUE, sizeof (CORBA_NamedValue));
 
-	*new_list = new;
+	*new_list = nvlist;
 }
 
 void

@@ -3,10 +3,10 @@
 
 #include "echo.h"
 
-int niters = 10000;
-int nthreads = 8;
-char *server_ior;
-CORBA_ORB orb;
+static int niters = 10000;
+static int nthreads = 8;
+static char *server_ior;
+static CORBA_ORB orb;
 
 static gpointer
 echo_client_thread (gpointer data)

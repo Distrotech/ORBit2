@@ -34,7 +34,7 @@ typedef struct {
 	       PASS_IMPLSTUBS, PASS_LAST } pass;
 } CBESkelImplInfo;
 
-const char *passnames[] = {
+static const char *passnames[] = {
 	"App-specific servant structures",
 	"Implementation stub prototypes",
 	"epv structures",

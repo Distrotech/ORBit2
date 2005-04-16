@@ -116,7 +116,7 @@ struct ObjrefPair
 };
 
 
-const struct ObjrefPair objref_str[] = 
+static const struct ObjrefPair objref_str[] = 
 {
 	/* OMG corbaloc */ 
 	{ "corbaloc:iiop:localhost:9999/NameService",

@@ -30,7 +30,7 @@ if ((_ev)->_major != CORBA_NO_EXCEPTION) {                   \
   abort();                                                   \
 }
 
-Echo echo_client, bec;
+static Echo echo_client, bec;
 
 gboolean echo_opt_quiet = FALSE;
 
