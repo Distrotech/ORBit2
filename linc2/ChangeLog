@@ -1,13 +1,13 @@
 2005-04-15  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-private.h: On Win32, keep a pointer back to the
-	LinkWatch in the LinkUnixWatch. Also, keep a pointer to the last
-	polled LinkUnixWatch in the LinkWatch.
+	embedding LinkWatch in the LinkUnixWatch. Also, keep a pointer to
+	the last polled LinkUnixWatch in the LinkWatch.
 
 	* src/linc-source.c (link_source_prepare): On Win32, if changing
-	which of the two sources associated with a LinkUnixWatch we are
-	polling, we have to re-associate the correct event with the socket
-	by calling WSAEventSelect().
+	which of the two LinkUnixWatch GSources associated with a
+	LinkWatch we are polling, we have to associate the corresponding
+	event with the socket by calling WSAEventSelect().
 	(link_source_create_watch_for_watch): New helper function that
 	calls link_source_create_watch() and then on Win32 associates a
 	LinkWatch with the LinkUnixWatch().
