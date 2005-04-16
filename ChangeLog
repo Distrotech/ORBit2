@@ -1,3 +1,22 @@
+2005-04-16  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* linc2/test/test-linc.c: Make some variables static.
+	* src/idl-compiler/orbit-idl-c-skelimpl.c: Same
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_create_list):
+	Don't use the C++ reserved word 'new' for variables.
+	* test/echo-client-t.c: Make vars static.
+	* test/echo-client.c: Same
+	* test/echo-srv.c: Same
+	* test/empty-client.c: Same
+	* test/empty-server.c: Same
+	* test/poa/poatest-basic01.c: Again
+	* test/poa/poatest-basic05.c: Again
+	* test/poa/poatest-basic11.c: Again
+	* test/test-any-server.c: Again
+	* test/test-corbaloc.c: Again
+	* test/test-giop-frag.h: Again
+	* test/test-performance.c: And again
+
 2005-04-14  Arvind Samptur  <arvind.samptur@wipro.com>
 
 	* src/orb/orb-core/corba-object.c :

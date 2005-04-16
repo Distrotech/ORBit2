@@ -49,9 +49,9 @@ init_tmp (void)
 	g_free (dir);
 }
 
-GType    test_server_cnx_type = 0;
-GType    test_client_cnx_type = 0;
-gboolean connected = FALSE;
+static GType    test_server_cnx_type = 0;
+static GType    test_client_cnx_type = 0;
+static gboolean connected = FALSE;
 
 static LinkConnection *
 test_server_create_connection (LinkServer *cnx)

@@ -23,18 +23,18 @@
 #include <signal.h>
 #include "empty.h"
 
-Empty empty_client = CORBA_OBJECT_NIL;
+static Empty empty_client = CORBA_OBJECT_NIL;
 
 static void do_Nothing(PortableServer_Servant servant, CORBA_Environment *ev);
 
-PortableServer_ServantBase__epv base_epv = {
+static PortableServer_ServantBase__epv base_epv = {
 	NULL,
 	NULL,
 	NULL
 };
-POA_Empty__epv empty_epv = { NULL, do_Nothing };
-POA_Empty__vepv poa_empty_vepv = { &base_epv, &empty_epv };
-POA_Empty poa_empty_servant = { NULL, &poa_empty_vepv };
+static POA_Empty__epv empty_epv = { NULL, do_Nothing };
+static POA_Empty__vepv poa_empty_vepv = { &base_epv, &empty_epv };
+static POA_Empty poa_empty_servant = { NULL, &poa_empty_vepv };
 
 static void do_exit(int arg)
 {

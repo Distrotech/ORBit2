@@ -3,22 +3,22 @@
 #include <string.h>
 #include "test-any.h"
 
-TestAny client;
+static TestAny client;
 
 static CORBA_any *
 do_print(PortableServer_Servant servant,
 	 const CORBA_any *any,
 	 CORBA_Environment *ev);
 
-PortableServer_ServantBase__epv base_epv = {
+static PortableServer_ServantBase__epv base_epv = {
 	NULL,
 	NULL,
 	NULL
 };
 
-POA_TestAny__epv TestAny_epv = { NULL, do_print };
-POA_TestAny__vepv poa_TestAny_vepv = { &base_epv, &TestAny_epv };
-POA_TestAny poa_TestAny_servant = { NULL, &poa_TestAny_vepv };
+static POA_TestAny__epv TestAny_epv = { NULL, do_print };
+static POA_TestAny__vepv poa_TestAny_vepv = { &base_epv, &TestAny_epv };
+static POA_TestAny poa_TestAny_servant = { NULL, &poa_TestAny_vepv };
 
 int
 main (int argc, char *argv[])

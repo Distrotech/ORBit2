@@ -22,7 +22,7 @@
 
 #include "empty.h"
 
-Empty empty_client;
+static Empty empty_client;
 
 #define ABORT_IF_EXCEPTION(_ev, _message)                    \
 if ((_ev)->_major != CORBA_NO_EXCEPTION) {                   \

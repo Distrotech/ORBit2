@@ -1,6 +1,6 @@
 
-CORBA_unsigned_long giop_fragment_request_id = 0xbfffd8e0;
-guint8 giop_fragment_data[] = {
+static const CORBA_unsigned_long giop_fragment_request_id = 0xbfffd8e0;
+static const guint8 giop_fragment_data[] = {
 /* Incoming IIOP header: */
 	0x47,0x49,0x4f,0x50, 0x01,0x02,0x02,0x01, 0x00,0x00,0x03,0xf4,                      /* GIOP........**** */
 /* Incoming IIOP body: */
