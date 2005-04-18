@@ -1,3 +1,15 @@
+2005-04-18  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/corba-orb.c (DllMain): As we reguire GLib 2.6,
+	no need to use GLIB_CHECK_VERSION(). And anyway, what we really
+	should have used here was the run-time glib_check_version() and
+	not compile-time GLIB_CHECK_VERSION()... Also, only check for a
+	"bin" subfolder. DLLs are always installed in "bin" and not "lib"
+	nowadays.
+
+	* src/orb/orb-core/orb-core-private.h: As we require GLib 2.6,
+	G_IS_DIR_SEPARATOR() is always present.
+
 2005-04-16  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* linc2/test/test-linc.c: Make some variables static.
