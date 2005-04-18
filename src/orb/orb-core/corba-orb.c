@@ -1385,26 +1385,19 @@ DllMain (HINSTANCE hinstDLL,
   
   switch (fdwReason) {
   case DLL_PROCESS_ATTACH:
-	  if (GLIB_CHECK_VERSION (2, 6, 0)) {
-		  /* GLib 2.6 uses UTF-8 file names */
-		  if (GetVersion () < 0x80000000) {
-			  /* NT-based Windows has wide char API */
-			  if (GetModuleFileNameW ((HMODULE) hinstDLL,
-						  wcbfr, G_N_ELEMENTS (wcbfr)))
-			      dll_name = g_utf16_to_utf8 (wcbfr, -1,
-							  NULL, NULL, NULL);
-		  } else {
-			  /* Win9x, yecch */
-			  if (GetModuleFileNameA ((HMODULE) hinstDLL,
-						  cpbfr, G_N_ELEMENTS (cpbfr)))
-				  dll_name = g_locale_to_utf8 (cpbfr, -1,
-							       NULL, NULL, NULL);
-		  }
+	  /* GLib 2.6 uses UTF-8 file names */
+	  if (GetVersion () < 0x80000000) {
+		  /* NT-based Windows has wide char API */
+		  if (GetModuleFileNameW ((HMODULE) hinstDLL,
+					  wcbfr, G_N_ELEMENTS (wcbfr)))
+			  dll_name = g_utf16_to_utf8 (wcbfr, -1,
+						      NULL, NULL, NULL);
 	  } else {
-		  /* Earlier GLibs use system codepage file names */
+		  /* Win9x, yecch */
 		  if (GetModuleFileNameA ((HMODULE) hinstDLL,
 					  cpbfr, G_N_ELEMENTS (cpbfr)))
-			  dll_name = g_strdup (cpbfr);
+			  dll_name = g_locale_to_utf8 (cpbfr, -1,
+						       NULL, NULL, NULL);
 	  }
 
 	  if (dll_name) {
@@ -1414,8 +1407,7 @@ DllMain (HINSTANCE hinstDLL,
 			  *p = '\0';
 
 		  p = strrchr (dll_name, '\\');
-		  if (p && (g_ascii_strcasecmp (p + 1, "bin") == 0 ||
-			    g_ascii_strcasecmp (p + 1, "lib") == 0))
+		  if (p && (g_ascii_strcasecmp (p + 1, "bin") == 0))
 			  *p = '\0';
 		  
 		  prefix = dll_name;
