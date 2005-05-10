@@ -1,3 +1,11 @@
+2005-05-10  Mark McLoughlin  <mark@skynet.ie>
+
+	Use a 256k stack for the IO thread rather than
+	the system default (10M on FC4). bug #303649
+
+	* src/linc.c: (link_exec_set_io_thread): Use
+	a 256k stack.
+
 2005-03-11  Arvind Samptur  <arvind.samptur@wipro.com>
 
 	* src/linc-server.c (link_server_setup): Fill the LinkServer proto

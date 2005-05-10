@@ -427,7 +427,7 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 		 link_mainloop_handle_input, NULL);
 	
 	link_io_thread = g_thread_create_full
-		(link_io_thread_fn, NULL, 0, TRUE, FALSE,
+		(link_io_thread_fn, NULL, 256 * 1024, TRUE, FALSE,
 		 G_THREAD_PRIORITY_NORMAL, &error);
 	
 	if (!link_io_thread || error)
