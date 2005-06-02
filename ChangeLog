@@ -1,3 +1,7 @@
+2005-06-02  Sandie Vanderme  <sandie.vanderme@bull.net>
+
+	* configure.in: add missing AC_CHECK_HEADERS(netdb.h)
+
 2005-04-18  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/orb-core/corba-orb.c (DllMain): As we reguire GLib 2.6,
