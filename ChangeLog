@@ -1,3 +1,7 @@
+2005-06-02  Sandie Vanderme  <sandie.vanderme@bull.net>
+
+	* configure.in: add missing AC_CHECK_HEADERS(netdb.h)
+
 2005-04-11  James Henstridge  <james@jamesh.id.au>
 
 	* configure.in: rename PKG_CONFIG_MIN_VERSION variable to
