@@ -1,3 +1,8 @@
+2005-06-03  Jules Colding  <colding@omesc.com>
+
+	* docs/README: Added pointers to documentation and sample code 
+	for developers using ORBit2, not ORBit2 hackers.
+
 2005-06-02  Sandie Vanderme  <sandie.vanderme@bull.net>
 
 	* configure.in: add missing AC_CHECK_HEADERS(netdb.h)
