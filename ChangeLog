@@ -1,3 +1,15 @@
+2005-06-20  Fernando Herrera  <fherrera@onirica.com>
+
+	* include/orbit/orb-core/corba-orb-type.h:
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_init),
+	(CORBA_ORB_destroy), (ORBit_ORB_forw_bind): 
+	* src/orb/poa/orbit-adaptor.c: (ORBit_forw_bind_find),
+	(ORBit_handle_request): implement forward binding.
+
+	Patch by Alejandro García Castro <acastro@igalia.com>
+
+	reviewed by: Michael Meeks
+
 2005-06-03  Jules Colding  <colding@omesc.com>
 
 	* docs/README: Added pointers to documentation and sample code 

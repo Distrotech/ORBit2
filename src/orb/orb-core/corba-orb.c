@@ -411,6 +411,13 @@ CORBA_ORB_init (int *argc, char **argv,
 	retval->default_giop_version = GIOP_LATEST;
 
 	retval->adaptors = g_ptr_array_new ();
+
+	/* init the forward bind hashtable*/
+	retval->forw_binds = g_hash_table_new_full (
+		g_str_hash, g_str_equal,
+		g_free,
+		NULL); 
+
 	ORBit_init_internals (retval, ev);
 	/* FIXME, handle exceptions */ 
 
@@ -1249,6 +1256,9 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 		}
 	}
 
+	/* destroy the forward bind hashtable*/
+	g_hash_table_destroy (orb->forw_binds);
+	
 	orb->life_flags |= ORBit_LifeF_Destroyed;
 
 	ORBit_RootObject_release (orb);
@@ -1319,7 +1329,13 @@ ORBit_ORB_forw_bind (CORBA_ORB                   orb,
 		     CORBA_Object                obj,
 		     CORBA_Environment          *ev)
 {
-	g_warning ("ORBit_ORB_forw_bind NYI");
+	
+	if (obj)
+		g_hash_table_insert (orb->forw_binds, objkey->_buffer, obj);
+	else {
+		g_hash_table_remove(orb->forw_binds, objkey->_buffer);
+	}
+	
 }
 
 gboolean

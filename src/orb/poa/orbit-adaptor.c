@@ -173,6 +173,40 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 	return adaptor;
 }
 
+static CORBA_Object
+ORBit_forw_bind_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
+{
+	CORBA_Object object = NULL;
+	gchar *objectId = NULL; 
+
+	if (!objkey)
+		return NULL;
+
+	objectId = (gchar *) g_malloc0 (sizeof(gchar)*objkey->_length+1);
+
+	memcpy (objectId, objkey->_buffer, objkey->_length);
+
+	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
+	{
+		const gchar *typeid;
+		object = g_hash_table_lookup (orb->forw_binds, objectId);
+		
+		if (object) {
+			typeid = g_quark_to_string (object->type_qid);
+			if (!typeid) {
+				g_assert(g_hash_table_remove(orb->forw_binds,
+							     objectId));
+				object = NULL;
+			}
+		}
+	}
+	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
+	
+	g_free (objectId);
+	
+	return object;
+}
+ 
 void
 ORBit_handle_locate_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 {
@@ -221,21 +255,39 @@ ORBit_handle_request (CORBA_ORB orb, GIOPRecvBuffer *recv_buffer)
 	adaptor = ORBit_adaptor_find (orb, objkey);
 
 	if (!adaptor || !objkey) {
-		CORBA_Environment env;
+		CORBA_Object forw_obj = ORBit_forw_bind_find (orb, objkey);
+		if (forw_obj) {			
+			GIOPSendBuffer *send_buffer = 
+				giop_send_buffer_use_reply
+				(recv_buffer->giop_version,
+				 giop_recv_buffer_get_request_id (recv_buffer),
+				 GIOP_LOCATION_FORWARD);
+			
+			ORBit_marshal_object(send_buffer, forw_obj);
 
-		CORBA_exception_init (&env);
+			giop_send_buffer_write (send_buffer, recv_buffer->connection, FALSE);
+			giop_send_buffer_unuse (send_buffer);
 
-		tprintf ("Error: failed to find adaptor or objkey for "
-			 "object while invoking method '%s'",
-			 giop_recv_buffer_get_opname (recv_buffer));
+			giop_recv_buffer_unuse (recv_buffer);
+		}
+		else {
+			
+			CORBA_Environment env;
+			
+			CORBA_exception_init (&env);
+
+			tprintf ("Error: failed to find adaptor or objkey for "
+				 "object while invoking method '%s'",
+				 giop_recv_buffer_get_opname (recv_buffer));
 		
-		CORBA_exception_set_system (
-			&env, ex_CORBA_OBJECT_NOT_EXIST, 
-			CORBA_COMPLETED_NO);
-		ORBit_recv_buffer_return_sys_exception (recv_buffer, &env);
-
-		CORBA_exception_free (&env);
-
+			CORBA_exception_set_system (
+				&env, ex_CORBA_OBJECT_NOT_EXIST, 
+				CORBA_COMPLETED_NO);
+			ORBit_recv_buffer_return_sys_exception (recv_buffer, &env);
+			
+			CORBA_exception_free (&env);
+		}
+		
 	} else {
 		dprintf (MESSAGES, "p %d: handle request '%s'\n",
 			 getpid (),
