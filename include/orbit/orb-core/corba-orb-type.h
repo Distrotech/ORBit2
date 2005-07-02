@@ -67,6 +67,7 @@ struct CORBA_ORB_type {
 	GSList                         *servers;
 	GSList                         *profiles;
 	GPtrArray                      *adaptors;
+	GHashTable                     *forw_binds;
 	GSList                         *current_invocations;
 	gpointer                        default_ctx;
 	GHashTable                     *initial_refs;
