@@ -1,3 +1,8 @@
+2005-07-09  Sebastian Rittau  <srittau@jroger.in-berlin.de>
+
+	* src/cleanup.c: (main): Use g_get_tmpdir() instead of hardcoding
+	/tmp.
+
 2005-05-10  Mark McLoughlin  <mark@skynet.ie>
 
 	Use a 256k stack for the IO thread rather than
