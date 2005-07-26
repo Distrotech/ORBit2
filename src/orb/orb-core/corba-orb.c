@@ -49,6 +49,7 @@ static gboolean     orbit_use_irda           = FALSE;
 static gboolean     orbit_use_ssl            = FALSE;
 static gboolean     orbit_use_genuid_simple  = FALSE;
 static gboolean     orbit_local_only         = FALSE;
+static char        *orbit_net_id             = NULL;
 static gboolean     orbit_use_http_iors      = FALSE;
 static char        *orbit_ipsock             = NULL;
 static char        *orbit_ipname             = NULL;
@@ -74,8 +75,28 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 		create_options |= LINK_CONNECTION_LOCAL_ONLY;
 
 	if (orbit_local_only || (orbit_use_usocks && !(orbit_use_ipv4 || orbit_use_ipv6 || orbit_use_irda || orbit_use_ssl)))
-			link_use_local_hostname (TRUE);
-
+			link_use_local_hostname (LINK_NET_ID_IS_LOCAL);
+	else {
+		do {
+			if (!strcmp(orbit_net_id, "local")) {
+				link_use_local_hostname (LINK_NET_ID_IS_LOCAL);
+				break;
+			}
+			if (!strcmp(orbit_net_id, "short")) {
+				link_use_local_hostname (LINK_NET_ID_IS_SHORT_HOSTNAME);
+				break;
+			}
+			if (!strcmp(orbit_net_id, "fqdn")) {
+				link_use_local_hostname (LINK_NET_ID_IS_FQDN);
+				break;
+			}
+			if (!strcmp(orbit_net_id, "ipaddr")) {
+				link_use_local_hostname (LINK_NET_ID_IS_IPADDR);
+				break;
+			}
+		} while (0);
+	}
+		    
 	for (info = link_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
 
@@ -1363,6 +1384,7 @@ const ORBit_option orbit_supported_options[] = {
  	{ "ORBIIOPIPSock",      ORBIT_OPTION_STRING,  &orbit_ipsock },
 	{ "ORBInitialMsgLimit", ORBIT_OPTION_INT,     &orbit_initial_recv_limit },
 	{ "ORBLocalOnly",       ORBIT_OPTION_BOOLEAN, &orbit_local_only },
+ 	{ "ORBNetID",           ORBIT_OPTION_STRING,  &orbit_net_id },
 	/* warning: this option is a security risk unless used with LocalOnly */
 	{ "ORBIIOPIPv4",        ORBIT_OPTION_BOOLEAN, &orbit_use_ipv4 },
 	{ "ORBIIOPIPv6",        ORBIT_OPTION_BOOLEAN, &orbit_use_ipv6 },
