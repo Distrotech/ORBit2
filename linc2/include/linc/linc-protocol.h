@@ -70,12 +70,20 @@ struct _LinkProtocolInfo {
 	gpointer                    dummy[8];
 };
 
+typedef enum {
+	LINK_NET_ID_IS_LOCAL,
+	LINK_NET_ID_IS_SHORT_HOSTNAME,
+	LINK_NET_ID_IS_FQDN,
+	LINK_NET_ID_IS_IPADDR
+} LinkNetIdType;
+
+
 LinkProtocolInfo * const link_protocol_find     (const char *name);
 LinkProtocolInfo * const link_protocol_find_num (const int   family);
 LinkProtocolInfo * const link_protocol_all      (void);
 char                    *link_get_tmpdir        (void);
 void                     link_set_tmpdir        (const char *dir);
-void                     link_use_local_hostname (gboolean use);
+void                     link_use_local_hostname (LinkNetIdType use);
 const char*              link_get_local_hostname (void);
 
 G_END_DECLS

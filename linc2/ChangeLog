@@ -1,3 +1,19 @@
+2005-07-25  Jules Colding  <colding@omesc.com>
+
+	* src/linc-protocols.c (get_netid): New function get_netid(). This 
+	function will full a preallocated buffer with a string describing 
+	the name of the local host according to the value of use_local_host.
+
+	link_get_local_hostname(): Modified to produce a resolvable hostname 
+	according to the value of use_local_host. This hostname will be used 
+	when composing IORs. 
+
+	use_local_host: Defaults now to LINK_NET_ID_IS_IPADDR fopr maximum
+	resolvability.
+
+	* include/linc/linc-protocol.h: Added new enum type "LinkNetIdType" to
+	use as argument in link_use_local_hostname().
+
 2005-07-09  Sebastian Rittau  <srittau@jroger.in-berlin.de>
 
 	* src/cleanup.c: (main): Use g_get_tmpdir() instead of hardcoding

@@ -1,3 +1,14 @@
+2005-07-25  Jules Colding  <colding@omesc.com>
+
+	* src/orb/orb-core/corba-orb.c: Added new ORB_init option, ORBNetID.
+	Valid values for a hypothetical local host (FQDN:thor.test.com, IP:10.0.3.2):
+	   "local": all attempts to resolve the local host will be done using "localhost"
+	   "short": all attempts to resolve the local host will be done using "thor".
+	   "fqdn" : all attempts to resolve the local host will be done using "thor.test.com".
+	   "ipaddr: all attempts to resolve the local host will be done using "10.0.3.2".
+	The new option will be evaluated after ORBLocalOnly but ORBLocalOnly will always take
+	precedence.
+
 2005-06-20  Fernando Herrera  <fherrera@onirica.com>
 
 	* include/orbit/orb-core/corba-orb-type.h:

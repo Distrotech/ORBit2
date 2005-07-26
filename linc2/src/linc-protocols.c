@@ -19,10 +19,13 @@
 
 #include <glib/gstdio.h>
 
+#include <net/if.h>
+#include <sys/ioctl.h>
+
 #undef LOCAL_DEBUG
 
 static char *link_tmpdir = NULL;
-static gboolean use_local_host = FALSE;
+static LinkNetIdType use_local_host = LINK_NET_ID_IS_IPADDR;
 
 /*
  * make_local_tmpdir:
@@ -124,22 +127,90 @@ link_get_tmpdir (void)
 #define LINK_RESOLV_UNSET_IPV6
 #endif
 
+static char *
+get_netid(LinkNetIdType which, 
+	  char *buf, 
+	  size_t len)
+{
+	if (LINK_NET_ID_IS_LOCAL == which)
+		return strncpy(buf, "localhost", len);
+
+	if (LINK_NET_ID_IS_IPADDR == which) {
+		struct ifreq my_ifreqs[2];
+		struct ifconf my_ifconf;
+		my_ifconf.ifc_len = sizeof(my_ifreqs);
+		my_ifconf.ifc_req = my_ifreqs;
+		int sock = socket(AF_INET,SOCK_DGRAM,0);
+		if (-1 == sock) 
+			goto out;;
+
+		if (ioctl(sock,SIOCGIFCONF,&my_ifconf) < 0) {
+			close(sock);
+			goto out;;
+		}
+		close(sock);
+
+		int num = my_ifconf.ifc_len / sizeof(struct ifreq);
+		if (!num) 
+			goto out;
+
+		int i;
+		struct sockaddr_in *adr = NULL;
+ 		for (i = 0; i < num; i++) {
+			adr = (struct sockaddr_in *)&my_ifreqs[i].ifr_ifru.ifru_addr;
+			if (strcmp("127.0.0.1", inet_ntoa((struct in_addr)adr->sin_addr)))
+				break;
+		}
+		// will be 127.0.0.1 anyway, if no other address is defined...
+		return strncpy(buf, (const char*)inet_ntoa((struct in_addr)adr->sin_addr), len);
+	}
+
+	if ((LINK_NET_ID_IS_SHORT_HOSTNAME == which) || (LINK_NET_ID_IS_FQDN == which)) {
+		if (gethostname(buf, len))
+			goto out;
+		if (errno == EINVAL)
+			goto out;
+
+		if (LINK_NET_ID_IS_SHORT_HOSTNAME == which) {
+			char *retv = buf;
+			while (*buf) {
+				if ('.' == *buf)
+					*buf = '\0';
+				buf++;
+			}
+			return retv;
+		}
+	}
+
+	if (LINK_NET_ID_IS_FQDN == which) {
+		struct addrinfo *result, hints;
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_flags = AI_CANONNAME;
+		if (!getaddrinfo(buf, NULL, &hints, &result)) {
+			strncpy(buf, result->ai_canonname, len);
+			freeaddrinfo(result);
+		} else
+			goto out;
+
+		return buf;
+	}
+
+out:
+	return NULL;
+}
 
 
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
 const char *
 link_get_local_hostname (void)
 {
-	static char local_host[NI_MAXHOST] = { 0 };
+	static char local_host[HOST_NAME_MAX] = { 0 };
 
-	if (use_local_host)
-		return "localhost";
-
-	if (local_host [0])
+	if (local_host[0])
 		return local_host;
 
-	if (gethostname (local_host, NI_MAXHOST) == -1)
-		return NULL;
+	get_netid(use_local_host, local_host, HOST_NAME_MAX);
+
 #ifdef G_OS_WIN32
 	{
 		/* Make sure looking up that name works */
@@ -166,7 +237,7 @@ link_get_local_hostname (void)
 }
 
 void
-link_use_local_hostname (gboolean use)
+link_use_local_hostname (LinkNetIdType use)
 {
         use_local_host = use;
 }
