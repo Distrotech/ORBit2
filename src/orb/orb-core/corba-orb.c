@@ -78,6 +78,9 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 			link_use_local_hostname (LINK_NET_ID_IS_LOCAL);
 	else {
 		do {
+			if (!orbit_net_id)
+				break;
+
 			if (!strcmp(orbit_net_id, "local")) {
 				link_use_local_hostname (LINK_NET_ID_IS_LOCAL);
 				break;
