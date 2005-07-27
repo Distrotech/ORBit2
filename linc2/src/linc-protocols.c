@@ -204,12 +204,12 @@ out:
 const char *
 link_get_local_hostname (void)
 {
-	static char local_host[HOST_NAME_MAX] = { 0 };
+	static char local_host[NI_MAXHOST] = { 0 };
 
 	if (local_host[0])
 		return local_host;
 
-	get_netid(use_local_host, local_host, HOST_NAME_MAX);
+	get_netid(use_local_host, local_host, NI_MAXHOST);
 
 #ifdef G_OS_WIN32
 	{
