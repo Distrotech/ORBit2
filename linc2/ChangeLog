@@ -1,3 +1,9 @@
+2005-07-28  Jules Colding  <colding@omesc.com>
+
+	* src/linc-protocols.c: Change default use_local_host to
+	LINK_NET_ID_IS_FQDN. 
+	(get_netid): Convert to C89-style.
+
 2005-07-25  Jules Colding  <colding@omesc.com>
 
 	* src/linc-protocols.c (get_netid): New function get_netid(). This 
