@@ -11,7 +11,6 @@
  */
 #include <config.h>
 #include "linc-compat.h"
-#include <dirent.h>
 #include <linc/linc-protocol.h>
 #include <linc/linc-connection.h>
 
@@ -19,8 +18,10 @@
 
 #include <glib/gstdio.h>
 
+#ifndef G_OS_WIN32
 #include <net/if.h>
 #include <sys/ioctl.h>
+#endif
 
 #undef LOCAL_DEBUG
 
@@ -127,6 +128,8 @@ link_get_tmpdir (void)
 #define LINK_RESOLV_UNSET_IPV6
 #endif
 
+#if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
+
 static char *
 get_netid(LinkNetIdType which, 
 	  char *buf, 
@@ -136,6 +139,7 @@ get_netid(LinkNetIdType which,
 		return strncpy(buf, "localhost", len);
 
 	if (LINK_NET_ID_IS_IPADDR == which) {
+#ifndef G_OS_WIN32
 		struct sockaddr_in *adr = NULL;
 		struct ifreq my_ifreqs[2];
 		struct ifconf my_ifconf;
@@ -164,14 +168,58 @@ get_netid(LinkNetIdType which,
 		}
 		// will be 127.0.0.1 anyway, if no other address is defined...
 		return strncpy(buf, (const char*)inet_ntoa((struct in_addr)adr->sin_addr), len);
+#else
+		SOCKET sock;
+		DWORD nbytes;
+		/* Let's hope 20 interfaces is enough. There doesn't
+		 * seem to be any way to get information about how
+		 * many interfaces there are.
+		 */
+		INTERFACE_INFO interfaces[20]; 
+		int i;
+
+		sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (sock == INVALID_SOCKET)
+			goto out;
+
+		if (WSAIoctl (sock, SIO_GET_INTERFACE_LIST, NULL, 0,
+			      interfaces, sizeof (interfaces),
+			      &nbytes, NULL, NULL) == SOCKET_ERROR ||
+		    nbytes == 0 ||
+		    (nbytes % sizeof (INTERFACE_INFO)) != 0) {
+			closesocket (sock);
+			goto out;
+		}
+		closesocket (sock);
+
+		/* First look for a non-loopback IPv4 address */
+		for (i = 0; i < nbytes / sizeof (INTERFACE_INFO); i++) {
+			if ((interfaces[i].iiFlags & IFF_UP) &&
+			    !(interfaces[i].iiFlags & IFF_LOOPBACK) &&
+			    interfaces[i].iiAddress.Address.sa_family == AF_INET)
+				return strncpy(buf, inet_ntoa(interfaces[i].iiAddress.AddressIn.sin_addr), len);
+		}
+
+		/* Next look for a loopback IPv4 address */
+		for (i = 0; i < nbytes / sizeof (INTERFACE_INFO); i++) {
+			if ((interfaces[i].iiFlags & IFF_UP) &&
+			    (interfaces[i].iiFlags & IFF_LOOPBACK) &&
+			    interfaces[i].iiAddress.Address.sa_family == AF_INET)
+				return strncpy(buf, inet_ntoa(interfaces[i].iiAddress.AddressIn.sin_addr), len);
+		}
+
+		/* Fail */
+		goto out;
+#endif
 	}
 
 	if ((LINK_NET_ID_IS_SHORT_HOSTNAME == which) || (LINK_NET_ID_IS_FQDN == which)) {
 		if (gethostname(buf, len))
 			goto out;
+#ifndef G_OS_WIN32
 		if (errno == EINVAL)
 			goto out;
-
+#endif
 		if (LINK_NET_ID_IS_SHORT_HOSTNAME == which) {
 			char *retv = buf;
 			while (*buf) {
@@ -200,8 +248,6 @@ out:
 	return NULL;
 }
 
-
-#if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
 const char *
 link_get_local_hostname (void)
 {
@@ -211,28 +257,6 @@ link_get_local_hostname (void)
 		return local_host;
 
 	get_netid(use_local_host, local_host, NI_MAXHOST);
-
-#ifdef G_OS_WIN32
-	{
-		/* Make sure looking up that name works */
-		struct hostent *he = gethostbyname (local_host);
-		char *dot;
-
-		if (he == NULL &&
-		    (dot = strchr (local_host, '.')) != NULL) {
-			*dot = '\0';
-			he = gethostbyname (local_host);
-		}
-		if (he == NULL) {
-			DWORD namelen = NI_MAXHOST;
-			if (!GetComputerName (local_host, &namelen))
-				return NULL;
-			he = gethostbyname (local_host);
-		}
-		if (he == NULL)
-			return NULL;
-	}
-#endif
 
 	return local_host;
 }
