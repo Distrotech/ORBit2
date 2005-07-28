@@ -1,3 +1,15 @@
+2005-07-28  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-compat.h: Include also ws2tcpip.h on Win32.
+
+	* src/linc-protocols.c: Drop unnecessary inclusion of
+	<dirent.h>. Don't include Unix-only headers on Win32.
+	(get_netid): Add Win32 implementation of interface listing.
+	(link_get_local_hostname): Drop the Win32-only code snippet that
+	made sure looking up the hostname works. Will have to rethink
+	whether it's necessary later, and add back inside the appropriate
+	place in get_netid().
+
 2005-07-28  Jules Colding  <colding@omesc.com>
 
 	* src/linc-protocols.c: Change default use_local_host to
