@@ -25,7 +25,7 @@
 #undef LOCAL_DEBUG
 
 static char *link_tmpdir = NULL;
-static LinkNetIdType use_local_host = LINK_NET_ID_IS_IPADDR;
+static LinkNetIdType use_local_host = LINK_NET_ID_IS_FQDN;
 
 /*
  * make_local_tmpdir:
@@ -136,11 +136,14 @@ get_netid(LinkNetIdType which,
 		return strncpy(buf, "localhost", len);
 
 	if (LINK_NET_ID_IS_IPADDR == which) {
+		struct sockaddr_in *adr = NULL;
 		struct ifreq my_ifreqs[2];
 		struct ifconf my_ifconf;
+		int num, i, sock;
+
 		my_ifconf.ifc_len = sizeof(my_ifreqs);
 		my_ifconf.ifc_req = my_ifreqs;
-		int sock = socket(AF_INET,SOCK_DGRAM,0);
+		sock = socket(AF_INET,SOCK_DGRAM,0);
 		if (-1 == sock) 
 			goto out;;
 
@@ -150,12 +153,10 @@ get_netid(LinkNetIdType which,
 		}
 		close(sock);
 
-		int num = my_ifconf.ifc_len / sizeof(struct ifreq);
+		num = my_ifconf.ifc_len / sizeof(struct ifreq);
 		if (!num) 
 			goto out;
 
-		int i;
-		struct sockaddr_in *adr = NULL;
  		for (i = 0; i < num; i++) {
 			adr = (struct sockaddr_in *)&my_ifreqs[i].ifr_ifru.ifru_addr;
 			if (strcmp("127.0.0.1", inet_ntoa((struct in_addr)adr->sin_addr)))
