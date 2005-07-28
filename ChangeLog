@@ -1,3 +1,8 @@
+2005-07-28  Tor Lillqvist  <tml@novell.com>
+
+	* configure.in: Include ws2tcpip.h on Win32 when looking for
+	socklen_t.
+
 2005-07-25  Jules Colding  <colding@omesc.com>
 
 	* src/orb/orb-core/corba-orb.c: Added new ORB_init option, ORBNetID.

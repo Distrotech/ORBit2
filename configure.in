@@ -296,8 +296,12 @@ fi
 # AC_CHECK_TYPE doesn't work here.
 AC_MSG_CHECKING([for socklen_t])
 AC_TRY_COMPILE(
-  [#include <sys/types.h>
-#include <sys/socket.h>],
+  [#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#endif],
   [socklen_t len;],
   [AC_MSG_RESULT(yes)],
   [AC_DEFINE(socklen_t, size_t, [Define socklen_t to be of type size_t])
