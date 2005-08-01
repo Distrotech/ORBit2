@@ -149,11 +149,11 @@ get_netid(LinkNetIdType which,
 		my_ifconf.ifc_req = my_ifreqs;
 		sock = socket(AF_INET,SOCK_DGRAM,0);
 		if (-1 == sock) 
-			goto out;;
+			goto out;
 
 		if (ioctl(sock,SIOCGIFCONF,&my_ifconf) < 0) {
 			close(sock);
-			goto out;;
+			goto out;
 		}
 		close(sock);
 
