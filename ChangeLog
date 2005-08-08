@@ -1,3 +1,8 @@
+2005-08-08  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_destroy): Release
+	the lock here. Patch from Aivars Kalvans. Closes bug #153897.
+
 2005-07-28  Tor Lillqvist  <tml@novell.com>
 
 	* configure.in: Include ws2tcpip.h on Win32 when looking for

@@ -1285,6 +1285,11 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 	
 	orb->life_flags |= ORBit_LifeF_Destroyed;
 
+	if (orb->lock) {
+		g_mutex_free (orb->lock);
+		orb->lock = NULL;
+	}
+
 	ORBit_RootObject_release (orb);
 
 	/* At this stage there should be 1 ref left in the system -
