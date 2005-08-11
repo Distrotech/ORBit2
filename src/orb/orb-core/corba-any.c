@@ -684,6 +684,7 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 							   buf, orb)) {
 					CORBA_free (p->_buffer);
 					p->_buffer = NULL;
+					p->_length = 0;
 					return TRUE;
 				}
 			}
@@ -718,7 +719,11 @@ ORBit_demarshal_arg (GIOPRecvBuffer *buf,
 
 	retval = val = ORBit_alloc_by_tc (tc);
 
-	ORBit_demarshal_value (tc, &val, buf, orb);
+	if (ORBit_demarshal_value (tc, &val, buf, orb))
+	{
+	    CORBA_free (retval);
+	    return NULL;
+	}
 
 	return retval;
 }
