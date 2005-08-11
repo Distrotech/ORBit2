@@ -1,3 +1,12 @@
+2005-08-11  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_demarshal_arg):
+	propagate the error condition we laboured hard to get right
+	to our caller.
+	(ORBit_demarshal_value): when sequence de-marshalling
+	dies, nail the length as well as freeing the buffer.
+	Fixes #310270#
+
 2005-08-08  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_destroy): Release
