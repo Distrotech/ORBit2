@@ -18,6 +18,10 @@
 
 #include <glib/gstdio.h>
 
+#ifdef HAVE_SYS_SOCKIO_H
+#include <sys/sockio.h>
+#endif
+
 #ifndef G_OS_WIN32
 #include <net/if.h>
 #include <sys/ioctl.h>

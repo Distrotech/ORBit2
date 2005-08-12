@@ -165,6 +165,7 @@ AC_CHECK_HEADERS(sys/un.h openssl/ssl.h sys/uio.h syslog.h)
 AC_CHECK_HEADERS(sys/wait.h netdb.h)
 AC_CHECK_HEADERS(utime.h sys/utime.h)
 AC_CHECK_HEADERS([linux/socket.h])
+AC_CHECK_HEADERS(sys/sockio.h)
 AC_CHECK_HEADERS(winsock2.h)
 
 if test $ac_cv_header_openssl_ssl_h = yes; then

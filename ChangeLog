@@ -1,3 +1,10 @@
+2005-08-13  Davyd Madeley  <davyd@madeley.id.au>
+	
+	* configure.in:
+	* linc2/src/linc-protocols.c: Check for sys/sockio.h, required for
+	  building on Solaris 9. Patch from James Andrewartha
+	  <trs80@ucc.asn.au>.
+
 2005-08-11  Michael Meeks  <michael.meeks@novell.com>
 
 	* src/orb/orb-core/corba-any.c (ORBit_demarshal_arg):
