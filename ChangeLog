@@ -1,3 +1,8 @@
+2005-08-12  Michael Meeks  <michael.meeks@novell.com>
+
+	* configure.in: AC_PREREQ(2.54) not 2.12 for
+	Gustavo Gama, #313274.
+
 2005-08-13  Davyd Madeley  <davyd@madeley.id.au>
 	
 	* configure.in:
