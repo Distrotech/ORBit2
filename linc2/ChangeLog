@@ -1,3 +1,7 @@
+2005-08-16  Michael Meeks  <michael.meeks@novell.com>
+
+	* Version 2.12.13
+
 2005-05-10  Mark McLoughlin  <mark@skynet.ie>
 
 	Use a 256k stack for the IO thread rather than

@@ -1,9 +1,23 @@
 ORBit2-2.12.2
+
+	* bug fixes
+		+ reduce stack size for I/O thread (Mark)
+		+ work with pkg-config >= 0.16 (James H)
+		+ check for netdb.h (Sandie Vanderme)
+		+ release lock in ORB destroy (Aivars Kalvans)
+		+ error condition fix in demarshaling (Michael)
+		+ check for sys/sockio.h (James Andrewartha)
+		+ AC_PREREQ bump (Gustavo Gama)
+		+ add threading libs to name service (Diego Petteno)
+
+ORBit2-2.12.2
+
         * bug fixes
                 + Fix infinite loop when using ORBInitRef (Anders Carlsson)
                 + Fix memory leak in initial references (Anders Carlsson)
 		+ Use correct host name for unix sockets (Arvind Samptur)
 ORBit2-2.12.1
+
         * bug fixes
                 + Fix mem leak on exception overwrite (Michael)
                 + Fix demarshalling CORBA_any containing
