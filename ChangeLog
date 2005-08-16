@@ -1,3 +1,7 @@
+2005-08-16  Michael Meeks  <michael.meeks@novell.com>
+
+	* Version 2.12.13
+
 2005-08-15  Michael Meeks  <michael.meeks@novell.com>
 
 	* configure.in: add threading libraries to ORBIT_NAME
