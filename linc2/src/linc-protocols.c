@@ -19,6 +19,10 @@
 
 #undef LOCAL_DEBUG
 
+#ifdef HAVE_SYS_SOCKIO_H
+#include <sys/sockio.h>
+#endif
+
 #ifdef G_OS_WIN32
 #  include <io.h>
 #  define mkdir(path, mode) _mkdir (path)
