@@ -1,3 +1,8 @@
+2005-08-15  Michael Meeks  <michael.meeks@novell.com>
+
+	* configure.in: add threading libraries to ORBIT_NAME
+	pkg-config check: #313403
+
 2005-08-12  Michael Meeks  <michael.meeks@novell.com>
 
 	* configure.in: AC_PREREQ(2.54) not 2.12 for
