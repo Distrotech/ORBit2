@@ -4,6 +4,11 @@
 	  interfaces have changed since the initial ORBit2
 	  release and it has never been bumped, but 
 	  interfaces have been added since that time. 
+	  Sorry for commiting this twice, but I didn't
+	  read the comments closely to see that you
+	  modify it to C+1:0:A+1 to indicate interfaces
+	  have been added but binary compatibility has
+	  been preserved.
 
 2005-08-15  Michael Meeks  <michael.meeks@novell.com>
 
