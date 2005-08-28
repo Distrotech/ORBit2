@@ -26,6 +26,7 @@ include/orbit-2.0
 lib/libORBit-2.dll.a
 lib/libORBit-imodule-2.dll.a
 lib/libORBitCosNaming-2.dll.a
+lib/libname-server-2.a
 lib/pkgconfig/ORBit-2.0.pc
 lib/pkgconfig/ORBit-CosNaming-2.0.pc
 lib/pkgconfig/ORBit-idl-2.0.pc
