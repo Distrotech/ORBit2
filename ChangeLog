@@ -1,3 +1,8 @@
+2005-08-28  Tor Lillqvist  <tml@novell.com>
+
+	* orbit2-zip.in: Include also lib/libname-server-2.a in the
+	developer package.
+
 2005-08-26  Brian Cameron  <Brian.Cameron@sun.com>
 
 	* configure.in: Bumping minor LT_VERSION since 
