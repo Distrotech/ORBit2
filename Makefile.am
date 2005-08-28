@@ -12,6 +12,7 @@ EXTRA_DIST =		\
 	orbit2-zip.in	\
 	HACKING		\
 	MAINTAINERS	\
+	README.win32	\
 	Makefile.shared
 
 rpms: distcheck
