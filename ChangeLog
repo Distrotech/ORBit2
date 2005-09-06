@@ -1,5 +1,9 @@
 2005-09-06  Mark McLoughlin  <mark@skynet.ie>
 
+	* Version 2.12.4
+
+2005-09-06  Mark McLoughlin  <mark@skynet.ie>
+
 	Backported patch Tor Lillqvist  <tml@novell.com> from HEAD
 
 	* include/orbit/orb-core/orbit-object.h: Add macro
@@ -18,7 +22,7 @@
 	
 2005-08-16  Michael Meeks  <michael.meeks@novell.com>
 
-	* Version 2.12.13
+	* Version 2.12.3
 
 2005-08-15  Michael Meeks  <michael.meeks@novell.com>
 
