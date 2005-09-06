@@ -1,4 +1,9 @@
-ORBit2-2.12.2
+ORBit2-2.12.4
+
+	* bug fixes
+		+ add ORBIT2_MAYBE_CONST (Tor, Mark)
+
+ORBit2-2.12.3
 
 	* bug fixes
 		+ reduce stack size for I/O thread (Mark)
