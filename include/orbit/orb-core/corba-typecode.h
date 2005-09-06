@@ -30,7 +30,7 @@ struct CORBA_TypeCode_struct {
 	CORBA_short scale;	            /* for fixed */
 };
 
-extern ORBit_RootObject_Interface ORBit_TypeCode_epv;
+extern ORBIT2_MAYBE_CONST ORBit_RootObject_Interface ORBit_TypeCode_epv;
 
 #define TC_null ((CORBA_TypeCode)&TC_null_struct)
 #define TC_void ((CORBA_TypeCode)&TC_void_struct)
@@ -54,27 +54,27 @@ extern ORBit_RootObject_Interface ORBit_TypeCode_epv;
 #define TC_CORBA_string ((CORBA_TypeCode)&TC_CORBA_string_struct)
 #define TC_CORBA_wstring ((CORBA_TypeCode)&TC_CORBA_wstring_struct)
 
-extern struct CORBA_TypeCode_struct TC_null_struct;
-extern struct CORBA_TypeCode_struct TC_void_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_char_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_wchar_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_string_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_wstring_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_long_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_short_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_unsigned_short_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_octet_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_null_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_void_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_char_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_wchar_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_string_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_wstring_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_long_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_short_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_unsigned_short_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_octet_struct;
 #define TC_Object_struct TC_CORBA_Object_struct
-extern struct CORBA_TypeCode_struct TC_CORBA_Object_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_any_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_TypeCode_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_boolean_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_float_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_double_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_long_double_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_long_long_struct;
-extern struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_long_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_Object_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_any_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_TypeCode_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_boolean_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_float_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_double_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_long_double_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_long_long_struct;
+extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_unsigned_long_long_struct;
 
 #ifdef ORBIT2_INTERNAL_API
 

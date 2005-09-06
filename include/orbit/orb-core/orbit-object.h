@@ -3,6 +3,12 @@
 
 #include <glib.h>
 
+#ifdef G_OS_WIN32
+#define ORBIT2_MAYBE_CONST
+#else
+#define ORBIT2_MAYBE_CONST const
+#endif
+
 G_BEGIN_DECLS
 
 typedef enum {
