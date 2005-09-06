@@ -28,7 +28,7 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 #define TC_IMPL_TC_CORBA_ORB_ObjectId_7 'e'
 #define TC_IMPL_TC_CORBA_ORB_ObjectId_8 'f'
 #define TC_IMPL_TC_CORBA_ORB_ObjectId_9 's'
-   extern struct CORBA_TypeCode_struct TC_CORBA_ORB_ObjectId_struct;
+   extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_ORB_ObjectId_struct;
 #define TC_CORBA_ORB_ObjectId ((CORBA_TypeCode)&TC_CORBA_ORB_ObjectId_struct)
 #endif
 #define CORBA_ORB_ObjectId__freekids CORBA_string__freekids
@@ -50,7 +50,7 @@ typedef struct CORBA_ORB_type *CORBA_ORB;
 #define TC_IMPL_TC_CORBA_InterfaceDef_7 'e'
 #define TC_IMPL_TC_CORBA_InterfaceDef_8 'f'
 #define TC_IMPL_TC_CORBA_InterfaceDef_9 's'
-   extern struct CORBA_TypeCode_struct TC_CORBA_InterfaceDef_struct;
+   extern ORBIT2_MAYBE_CONST struct CORBA_TypeCode_struct TC_CORBA_InterfaceDef_struct;
 #define TC_CORBA_InterfaceDef ((CORBA_TypeCode)&TC_CORBA_InterfaceDef_struct)
 #endif
 #endif
