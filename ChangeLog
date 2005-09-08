@@ -1,3 +1,10 @@
+2005-09-07  Jules Colding  <colding@omesc.com>
+
+	* configure.in (LT_VERSION): Version 2.13.2. This is needed as the change 
+	below actually makes some programs run when they would otherwise not.
+
+	* src/orb/GIOP/giop.c (giop_main_run): Remove g_assert().
+
 2005-09-06  Mark McLoughlin  <mark@skynet.ie>
 
 	* configure.in: Version 2.13.1

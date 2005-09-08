@@ -625,7 +625,6 @@ void
 giop_main_run (void)
 {
 	if (giop_thread_io ()) {
-		g_assert (giop_thread_self () == giop_main_thread);
 		g_assert (giop_main_loop == NULL);
 		giop_main_loop = g_main_loop_new (NULL, TRUE);
 		g_main_loop_run (giop_main_loop);
