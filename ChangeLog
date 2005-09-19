@@ -1,3 +1,10 @@
+2005-09-16  Jules Colding  <colding@omesc.com>
+
+	* include/orbit/orb-core/corba-orb.h: Added ORBit_proto_use() to 
+	ORBIT2_EXTENSIONS section. This is needed to deduce protocol
+	capabilities if you are not the fortunate first thread to invoke 
+	CORBA_ORB_init().
+
 2005-09-07  Jules Colding  <colding@omesc.com>
 
 	* configure.in (LT_VERSION): Version 2.13.2. This is needed as the change 
