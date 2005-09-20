@@ -332,6 +332,12 @@ dnl
 dnl        --------- end linc bits ---------
 dnl
 
+dnl
+dnl --------- set additional gcc flags to catch errors ---------
+dnl
+CFLAGS="-Werror-implicit-function-declaration -std=gnu89 $CFLAGS"
+AC_SUBST(CFLAGS)
+
 
 dnl ----- gtk-doc ------
 GTK_DOC_CHECK([1.0])
