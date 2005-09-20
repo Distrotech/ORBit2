@@ -1,3 +1,8 @@
+2005-09-20  Jules Colding  <colding@omesc.com>
+
+	* configure.in (CFLAGS): Stricter coding style checks by adding
+	"-Werror-implicit-function-declaration -std=gnu89" to CFLAGS.
+
 2005-09-16  Jules Colding  <colding@omesc.com>
 
 	* include/orbit/orb-core/corba-orb.h: Added ORBit_proto_use() to 
