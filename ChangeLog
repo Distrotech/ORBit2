@@ -1,3 +1,8 @@
+2005-09-24  Tor Lillqvist  <tml@novell.com>
+
+	* orbit2-zip.in: Add share/aclocal/ORBit2.m4 to the developer
+	package.
+
 2005-09-20  Jules Colding  <colding@omesc.com>
 
 	* configure.in (CFLAGS): Stricter coding style checks by adding

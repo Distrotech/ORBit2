@@ -31,6 +31,7 @@ lib/pkgconfig/ORBit-2.0.pc
 lib/pkgconfig/ORBit-CosNaming-2.0.pc
 lib/pkgconfig/ORBit-idl-2.0.pc
 lib/pkgconfig/ORBit-imodule-2.0.pc
+share/aclocal/ORBit2.m4
 share/idl/orbit-2.0
 share/gtk-doc/html/ORBit2
 EOF
