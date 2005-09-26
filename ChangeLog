@@ -1,3 +1,9 @@
+2005-09-26  Martin Blom  <martin@blom.org>
+
+	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval):
+	realloc should update the length/tracking information.
+	#316393#
+
 2005-09-24  Tor Lillqvist  <tml@novell.com>
 
 	* orbit2-zip.in: Add share/aclocal/ORBit2.m4 to the developer

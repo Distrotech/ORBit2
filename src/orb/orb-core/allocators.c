@@ -305,6 +305,7 @@ ORBit_realloc_tcval (gpointer       old,
 {
 	guint element_size;
 	ORBit_MemPrefix *prefix;
+	guchar *mem;
 
 	g_assert (num_elements > old_num_elements);
 
@@ -326,7 +327,12 @@ ORBit_realloc_tcval (gpointer       old,
 		old_num_elements * element_size,
 		0, (num_elements - old_num_elements) * element_size);
 
-	return (guchar *) prefix + LONG_PREFIX_LEN;
+	mem = (guchar *)prefix + LONG_PREFIX_LEN;
+
+	*((ORBitMemHow *)mem - 1) = ORBIT_MEMHOW_MAKE (
+		ORBIT_MEMHOW_TYPECODE, num_elements);
+
+	return mem;
 }
 
 CORBA_TypeCode
