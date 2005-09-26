@@ -1,3 +1,9 @@
+2005-09-26  Martin Blom  <martin@blom.org>
+
+	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval):
+	realloc should update the length/tracking information.
+	#316393#
+
 2005-09-06  Mark McLoughlin  <mark@skynet.ie>
 
 	* Version 2.12.4
