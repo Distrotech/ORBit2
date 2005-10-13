@@ -345,8 +345,11 @@ link_server_setup (LinkServer            *srv,
 	}
 #endif
 	if (n && errno == EADDRINUSE) {
-		d_printf ("bind failed; retrying\n");
-		goto address_in_use;
+               close(fd);
+               if (!local_serv_info) {
+                   d_printf ("bind failed; retrying\n");
+                   goto address_in_use;
+               }
 	}
 
 	if (n)

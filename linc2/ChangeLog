@@ -1,3 +1,8 @@
+2005-10-13  Dmitry Maksyoma  <ledestin@gmail.com>
+
+	* src/linc-server.c (link_server_setup): fix potential
+	socket leak, don't spin forever with a specified port.
+
 2005-08-01  Jules Colding  <colding@omesc.com>
 
 	* src/linc-protocols.c (get_netid): Replace two silly ';;'s with ';'.
