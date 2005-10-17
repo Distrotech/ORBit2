@@ -208,7 +208,7 @@ main (int argc, char **argv)
 {
 	char *dir;
 
-	dir = g_strdup_printf ("/tmp/orbit-%s", g_get_user_name ());
+	dir = g_strdup_printf ("%s/orbit-%s", g_get_tmp_dir (), g_get_user_name ());
 
 #ifdef AF_UNIX
 	clean_dir (dir);

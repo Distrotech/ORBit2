@@ -1,3 +1,8 @@
+2005-10-17  Frederic Crozat  <fcrozat@mandriva.com>
+
+	* src/cleanup.c: (main):
+	Make sure linc-cleanup-sockets is TMPDIR aware.
+
 2005-08-16  Michael Meeks  <michael.meeks@novell.com>
 
 	* Version 2.12.13
