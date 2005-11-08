@@ -1,4 +1,8 @@
 2005-11-08  Anders Carlsson  <andersca@imendio.com>
+   
+   * configure.in: Up version to 2.13.3
+
+2005-11-08  Anders Carlsson  <andersca@imendio.com>
 
 	* src/orb/orb-core/corba-object.c (CORBA_Object_release_cb): 
 	Allow releasing objects even if orb is NULL.
