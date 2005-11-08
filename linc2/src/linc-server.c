@@ -71,6 +71,19 @@ link_server_init (LinkServer *srv)
 	srv->priv->fd = -1;
 }
 
+
+static void
+link_server_client_connection_broken (LinkConnection *connection,
+				      gpointer        user_data)
+{
+	LinkServer *server = user_data;
+
+	server->priv->connections =
+		g_slist_remove (server->priv->connections, connection);
+
+	link_connection_unref (connection);
+}
+
 static void
 link_server_dispose (GObject *obj)
 {
@@ -95,6 +108,10 @@ link_server_dispose (GObject *obj)
 
 	while ((l = srv->priv->connections)) {
 		GObject *o = l->data;
+
+		g_signal_handlers_disconnect_by_func (o,
+						      link_server_client_connection_broken,
+						      srv);
 
 		srv->priv->connections = l->next;
 		g_slist_free_1 (l);
@@ -205,6 +222,9 @@ link_server_accept_connection (LinkServer      *server,
 		(*connection, fd, server->proto, NULL, NULL,
 		 FALSE, LINK_CONNECTED, server->create_options);
 
+	g_signal_connect (*connection, "broken",
+			  G_CALLBACK (link_server_client_connection_broken), server);
+	
 	server->priv->connections = g_slist_prepend (
 		server->priv->connections, *connection);
 
