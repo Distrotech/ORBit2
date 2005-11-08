@@ -110,9 +110,7 @@ CORBA_Object_release_cb (ORBit_RootObject robj)
 	CORBA_Object obj = (CORBA_Object) robj;
 	CORBA_ORB    orb = obj->orb;
 
-	g_assert (orb != NULL);
-
-	if (obj->profile_list) {
+	if (orb && obj->profile_list) {
 		LINK_MUTEX_LOCK (orb->lock);
 		g_hash_table_remove (orb->objrefs, obj);
 		LINK_MUTEX_UNLOCK (orb->lock);
@@ -363,7 +361,20 @@ ORBit_object_get_connection (CORBA_Object obj)
 			}
 	
 			if (obj->connection && ORBit_try_connection_T (obj)) {
-				obj->object_key = objkey;
+				if (!IOP_ObjectKey_equal (obj->object_key, objkey)) {
+					/* We need to remove and re-add the object from the
+					 * objrefs hash table since changing the object key will
+					 * change the object's hash value.
+					 */
+					LINK_MUTEX_LOCK (obj->orb->lock);
+					g_hash_table_remove (obj->orb->objrefs, obj);
+					obj->object_key = objkey;
+					g_hash_table_insert (obj->orb->objrefs, obj, obj);
+					LINK_MUTEX_UNLOCK (obj->orb->lock);
+				} else {
+					obj->object_key = objkey;
+				}
+
 				obj->connection->orb_data = obj->orb;
 
 				dprintf (OBJECTS, "Initiated a connection to '%s' '%s' '%s'\n",

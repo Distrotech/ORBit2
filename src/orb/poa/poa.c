@@ -1111,7 +1111,11 @@ ORBit_POA_deactivate_object_T (PortableServer_POA poa,
 			}
 		}
 		pobj->use_cnt--; /* allow re-activation */
-		g_assert (ev->_major == 0);
+
+		if (ev->_major != 0) {
+		  g_error ("finalize function for object %p threw an exception (%s). This is not allowed.",
+			   pobj, CORBA_exception_id (ev));
+		}
 
 		CORBA_exception_free (ev);
 	}

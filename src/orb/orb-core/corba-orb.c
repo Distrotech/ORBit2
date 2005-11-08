@@ -145,8 +145,11 @@ static void
 strip_object_profiles (gpointer o, gpointer b, gpointer c)
 {
 	CORBA_Object obj = o;
+
 	IOP_delete_profiles (obj->orb, &obj->profile_list);
 	IOP_delete_profiles (obj->orb, &obj->forward_locations);
+
+	obj->orb = NULL;
 }
 
 static void
