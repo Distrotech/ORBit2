@@ -1,3 +1,19 @@
+2005-11-08  Anders Carlsson  <andersca@imendio.com>
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object_release_cb): 
+	Allow releasing objects even if orb is NULL.
+
+        (ORBit_object_get_connection):
+	Make sure to remove and re-add the object from the objref hash
+	table so we won't be left with dangling references which will lead
+	to crashes when trying to shut down the ORB.
+	
+	* src/orb/orb-core/corba-orb.c (strip_object_profiles): 
+	Set object's orb to NULL.
+
+	* src/orb/poa/poa.c (ORBit_POA_deactivate_object_T): 
+	Write out an error message here instead of "assertion failed".
+
 2005-09-26  Martin Blom  <martin@blom.org>
 
 	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval):
