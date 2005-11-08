@@ -1,6 +1,13 @@
+2005-11-08  Richard Hult  <richard@imendio.com>
+
+	* Release 2.13.2.
+	
+	* configure.in (LT_VERSION): Set back to 2.13.2, the version was
+	already bumped.
+
 2005-11-08  Anders Carlsson  <andersca@imendio.com>
    
-   * configure.in: Up version to 2.13.3
+	* configure.in: Up version to 2.13.3
 
 2005-11-08  Anders Carlsson  <andersca@imendio.com>
 
