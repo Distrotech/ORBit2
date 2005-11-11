@@ -127,7 +127,7 @@ prev_char_is_nl(FILE *f)
 
 	pos = ftell(f);
 	if (pos < sizeof(char)) 
-		return 0; // beginning of file
+		return 0; /* beginning of file */
 
         if (fseek(f, (-1)*sizeof(char), SEEK_CUR)) 
 		goto out;

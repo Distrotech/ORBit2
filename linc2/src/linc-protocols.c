@@ -170,7 +170,7 @@ get_netid(LinkNetIdType which,
 			if (strcmp("127.0.0.1", inet_ntoa((struct in_addr)adr->sin_addr)))
 				break;
 		}
-		// will be 127.0.0.1 anyway, if no other address is defined...
+		/* will be 127.0.0.1 anyway, if no other address is defined... */
 		return strncpy(buf, (const char*)inet_ntoa((struct in_addr)adr->sin_addr), len);
 #else
 		SOCKET sock;
