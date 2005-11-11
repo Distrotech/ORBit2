@@ -1,3 +1,7 @@
+2005-11-11  Jens Granseuer  <jensgr@gmx.net>
+
+	* src/linc-protocols.c (get_netid): fix // comment.
+
 2005-11-08  Anders Carlsson  <andersca@imendio.com>
  
  	* src/linc-server.c (link_server_accept_connection): 
