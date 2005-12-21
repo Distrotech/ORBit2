@@ -1,3 +1,8 @@
+2005-12-21  Jules Colding  <colding@omesc.com>
+
+	* src/linc-protocols.c (get_netid): Remove unnecessary casts (Bug #324686). 
+	The fix was created by Damien Carbery.
+
 2005-11-11  Jens Granseuer  <jensgr@gmx.net>
 
 	* src/linc-protocols.c (get_netid): fix // comment.

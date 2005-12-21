@@ -167,11 +167,11 @@ get_netid(LinkNetIdType which,
 
  		for (i = 0; i < num; i++) {
 			adr = (struct sockaddr_in *)&my_ifreqs[i].ifr_ifru.ifru_addr;
-			if (strcmp("127.0.0.1", inet_ntoa((struct in_addr)adr->sin_addr)))
+			if (strcmp("127.0.0.1", inet_ntoa(adr->sin_addr)))
 				break;
 		}
 		/* will be 127.0.0.1 anyway, if no other address is defined... */
-		return strncpy(buf, (const char*)inet_ntoa((struct in_addr)adr->sin_addr), len);
+		return strncpy(buf, (const char*)inet_ntoa(adr->sin_addr), len);
 #else
 		SOCKET sock;
 		DWORD nbytes;
