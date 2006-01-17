@@ -1000,7 +1000,7 @@ giop_recv_buffer_handle_fragmented (GIOPRecvBuffer **ret_buf,
 		/* (end - cur) to account for fragment (msg id) header */
 		head->msg.header.message_size += (buf->end - buf->cur);
 
-		g_list_append (list, buf);
+		list = g_list_append (list, buf);
 
 		if (!cnx->parent.is_auth &&
 		    buf->msg.header.message_size > giop_initial_msg_size_limit) {
