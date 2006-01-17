@@ -1,3 +1,12 @@
+2006-01-13  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/GIOP/giop-recv-buffer.c: Fix a compiler warning
+	about unused result.
+	(giop_recv_buffer_handle_fragmented):
+	* src/orb/poa/orbit-adaptor.c: (ORBit_adaptor_find): Guard
+	against NULL adaptor. (Michael). Closes bug #326283. Seen as
+	an invalid read on startup of the drivemount applet.
+
 2005-11-11  Jens Granseuer  <jensgr@gmx.net>
 
 	* src/idl-compiler/orbit-idl-c-skelimpl.c

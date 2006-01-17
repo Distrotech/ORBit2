@@ -159,14 +159,14 @@ ORBit_adaptor_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 
 	LINK_MUTEX_LOCK (ORBit_RootObject_lifecycle_lock);
 	{
-		adaptor = g_ptr_array_index (orb->adaptors, adaptorId);
-
-		if (memcmp (objkey->_buffer,
-			    adaptor->adaptor_key._buffer,
-			    ORBIT_ADAPTOR_PREFIX_LEN))
-			adaptor = NULL;
-		else
-			ORBit_RootObject_duplicate_T (adaptor);
+		if ((adaptor = g_ptr_array_index (orb->adaptors, adaptorId))) {
+			if (memcmp (objkey->_buffer,
+				    adaptor->adaptor_key._buffer,
+				    ORBIT_ADAPTOR_PREFIX_LEN))
+				adaptor = NULL;
+			else
+				ORBit_RootObject_duplicate_T (adaptor);
+		}
 	}
 	LINK_MUTEX_UNLOCK (ORBit_RootObject_lifecycle_lock);
 
