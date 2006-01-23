@@ -1,3 +1,9 @@
+2006-01-09  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/orb/poa/orbit-adaptor.c (ORBit_adaptor_find):
+	cope with NULL slots in adaptors: shutdown / release ?
+	#322730#
+
 2005-09-26  Martin Blom  <martin@blom.org>
 
 	* src/orb/orb-core/allocators.c (ORBit_realloc_tcval):
