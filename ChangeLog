@@ -1,3 +1,17 @@
+2006-02-01  Tor Lillqvist  <tml@novell.com>
+
+	Improve configury on Win32, patch by Georg Steffers:
+
+	* configure.in: Set MINGW_LDFLAGS to
+	-Wl,--enable-runtime-pseudo-reloc on Win32. AC_SUBST it. That GNU
+	ld flag is needed when building software that uses DLLs containing
+	code produced by the ORBit2 IDL compiler, because of the way
+	variables imported from DLLs are used.
+
+	* ORBit-2.0.pc.in: Add @MINGW_LDFLAGS@ (empty on Unix) to Libs .
+
+	* ORBit2.m4: If no orbit2-config script is found, use pkg-config.
+
 2006-01-13  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/GIOP/giop-recv-buffer.c: Fix a compiler warning

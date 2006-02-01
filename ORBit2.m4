@@ -46,11 +46,20 @@ AC_ARG_ENABLE(orbittest, [  --disable-orbittest       Do not try to compile and 
   AC_MSG_CHECKING(for ORBit - version >= $min_orbit_version)
   no_orbit=""
   if test "$ORBIT_CONFIG" = "no" ; then
-    no_orbit=yes
+    if test "$PKG_CONFIG" = "no" ; then
+      no_orbit=yes
+    else
+      ORBIT_CFLAGS=`$PKG_CONFIG --cflags ORBit-2.0`
+      ORBIT_LIBS=`$PKG_CONFIG --libs ORBit-2.0`
+    fi
   else
     ORBIT_CFLAGS=`$ORBIT_CONFIG $orbit_config_args --cflags`
     ORBIT_LIBS=`$ORBIT_CONFIG $orbit_config_args --libs`
+  fi
+
+  if test "x$no_orbit" = x ; then
     ORBIT_VERSION=`$PKG_CONFIG --modversion ORBit-2.0`
+
     orbit_config_major_version=`echo $ORBIT_VERSION | \
 	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
     orbit_config_minor_version=`echo $ORBIT_VERSION | \
