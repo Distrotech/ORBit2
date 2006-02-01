@@ -1,3 +1,12 @@
+2006-02-01  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-protocols.c (get_netid): Use getaddrinfo() only if
+	HAVE_GETADDRINFO, otherwise gethostbyname(). This means we won't
+	use getaddrinfo() on Windows, as the configure test as currently
+	written doesn't find it on Windows. (It is present only on XP
+	anyway, so if we use it the ORBit2 DLL will not load on Windows
+	2000.)
+
 2005-12-21  Jules Colding  <colding@omesc.com>
 
 	* src/linc-protocols.c (get_netid): Remove unnecessary casts (Bug #324686). 

@@ -236,6 +236,7 @@ get_netid(LinkNetIdType which,
 	}
 
 	if (LINK_NET_ID_IS_FQDN == which) {
+#ifdef HAVE_GETADDRINFO
 		struct addrinfo *result, hints;
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_flags = AI_CANONNAME;
@@ -244,7 +245,14 @@ get_netid(LinkNetIdType which,
 			freeaddrinfo(result);
 		} else
 			goto out;
+#else
+		struct hostent *he;
 
+		/* gethostbyname() is MT-safe on Windows, btw */
+		he = gethostbyname(buf);
+
+		strncpy(buf, he->h_name, len);
+#endif
 		return buf;
 	}
 
