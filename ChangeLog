@@ -6,7 +6,8 @@
 	-Wl,--enable-runtime-pseudo-reloc on Win32. AC_SUBST it. That GNU
 	ld flag is needed when building software that uses DLLs containing
 	code produced by the ORBit2 IDL compiler, because of the way
-	variables imported from DLLs are used.
+	variables imported from DLLs are used. Add MINGW_LDFLAGS to the
+	LDFLAGS used when building ORBit2 itself, too.
 
 	* ORBit-2.0.pc.in: Add @MINGW_LDFLAGS@ (empty on Unix) to Libs .
 
