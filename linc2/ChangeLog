@@ -1,3 +1,8 @@
+2006-02-03  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-protocols.c [Win32] (get_netid): Guard against
+	gethostbyname() failing.
+
 2006-02-01  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-protocols.c (get_netid): Use getaddrinfo() only if

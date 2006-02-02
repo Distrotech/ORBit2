@@ -251,6 +251,9 @@ get_netid(LinkNetIdType which,
 		/* gethostbyname() is MT-safe on Windows, btw */
 		he = gethostbyname(buf);
 
+		if (!he)
+		  goto out;
+
 		strncpy(buf, he->h_name, len);
 #endif
 		return buf;
