@@ -1,3 +1,11 @@
+ORBit2-2.12.5
+
+	* bug fixes
+		+ cope with NULL slots in adaptors shutdown / release (Michael)
+		  Fixes a crash and bug #322730.
+		+ Realloc should update the length/tracking information
+		  (Martin Blom)
+ 
 ORBit2-2.12.4
 
 	* bug fixes
