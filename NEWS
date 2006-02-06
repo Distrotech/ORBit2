@@ -1,3 +1,74 @@
+ORBit2-2.13.3
+
+	* bug fixes
+		+ Fix crash on null adaptor (Michael)
+		+ Fix compiler warnings (Kjartan, Jens Granseuer)
+		+ Improve configure stage on Win32 (Tor)
+
+ORBit2-2.13.2
+
+	* bug fixes
+		+ realloc should update length/tracking information
+		  (Martin Blom)
+		+ Fix memory management and crashew when shutting down
+		  the ORB. (Anders Carlsson)
+		+ Build/correctness fixes (Tor, Jules)
+ORBit2-2.13.1
+
+	* features
+		+ More work on porting to Win32 (Tor)
+		+ Implement forward binding (Fernando Herrera)
+		+ Implement new ORB_init option ORBNetID (Jules Colding)
+	* bug fixes
+		+ Build fix (James Henstridge)
+		+ Memory management fixes (Anders Carlsson)
+		+ Reset connection for forwarded objects (Anders)
+		+ Don't use -export-dynamic (Mark)
+		+ if we have failed on the unix socket, have IPv4 or 
+		  IPv6 connections enabled and are on localhost, then 
+		  don't connect on the corresponding port from the profiles
+		  (Arvind Samtur)
+		+ Fix a bunch of compiler warnings and make some code static
+		  (Kjartan)
+		+ Add threading libs to ORBIT_NAME (Michael)
+		+ Check for netdb.h (Sandie Vanderme)
+		+ Check for sys/sockio.h (James Andrewartha)
+	* Other
+		+ Improve docs for users of ORBit2 (Jules Colding)
+
+ORBit2-2.12.4
+
+        * bug fixes
+                + add ORBIT2_MAYBE_CONST (Tor, Mark)
+
+ORBit2-2.12.3
+
+        * bug fixes
+                + reduce stack size for I/O thread (Mark)
+                + work with pkg-config >= 0.16 (James H)
+                + check for netdb.h (Sandie Vanderme)
+                + release lock in ORB destroy (Aivars Kalvans)
+                + error condition fix in demarshaling (Michael)
+                + check for sys/sockio.h (James Andrewartha)
+                + AC_PREREQ bump (Gustavo Gama)
+                + add threading libs to name service (Diego Petteno)
+
+ORBit2-2.12.2
+
+        * bug fixes
+                + Fix infinite loop when using ORBInitRef (Anders Carlsson)
+                + Fix memory leak in initial references (Anders Carlsson)
+                + Use correct host name for unix sockets (Arvind Samptur)
+ORBit2-2.12.1
+
+        * bug fixes
+                + Fix mem leak on exception overwrite (Michael)
+                + Fix demarshalling CORBA_any containing
+                  null or void values (Michael)
+                + IDL generation (esp. skelimpl) fixes (Jules Colding)
+                + Ongoing Win32 port work (Tor Lillqvist)
+                + Fix linking on Darwin (Hans Petter Jansson)
+
 ORBit2-2.9.6
 
 	* bug fixes
