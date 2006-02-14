@@ -21,12 +21,12 @@ main (int argc, char *argv[])
 }
 #else
 
-LinkWriteOpts  *non_blocking = NULL;
-GIOPServer     *server     = NULL;
-GIOPConnection *server_cnx = NULL;
-GIOPConnection *cnx        = NULL;
+static LinkWriteOpts  *non_blocking = NULL;
+static GIOPServer     *server     = NULL;
+static GIOPConnection *server_cnx = NULL;
+static GIOPConnection *cnx        = NULL;
 
-gboolean fragment_done;
+static gboolean fragment_done;
 
 static void
 wait_for_disconnect (void)
@@ -87,8 +87,8 @@ test_fragments (void)
 	giop_debug_hook_unexpected_reply = NULL;
 }
 
-gboolean spoof_done;
-gboolean spoof_succeeded;
+static gboolean spoof_done;
+static gboolean spoof_succeeded;
 
 static void
 test_spoof_callback (GIOPMessageQueueEntry *ent)
@@ -140,8 +140,10 @@ test_spoofing (void)
 			break;
 		case 1: /* invalid */
 			g_assert (!spoof_succeeded);
+			link_connection_ref (cnx);
 			wait_for_disconnect ();
 			g_assert (LINK_CONNECTION (cnx)->status == LINK_DISCONNECTED);
+			link_connection_unref (cnx);
 			break;
 		default:
 			g_assert_not_reached ();
