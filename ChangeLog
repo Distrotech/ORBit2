@@ -1,3 +1,10 @@
+2006-02-14  Tor Lillqvist  <tml@novell.com>
+
+	* test/test-giop.c: Make global variables static.
+	(test_spoofing): Fix crash: Keep an extra reference to the
+	connection so that it won't be disposed too early. Unref only
+	after checking that its status is disconnected.
+
 2006-02-06  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* configure.in: Release 2.13.3.
