@@ -176,18 +176,20 @@ AC_CHECK_HEADERS(sys/wait.h netdb.h)
 AC_CHECK_HEADERS(utime.h sys/utime.h)
 AC_CHECK_HEADERS([linux/socket.h])
 AC_CHECK_HEADERS(sys/sockio.h)
-AC_CHECK_HEADERS(winsock2.h)
+
+if test "$os_win32" = "yes"; then
+	AC_CHECK_HEADERS(winsock2.h)
+	if test $ac_cv_header_winsock2_h = yes; then
+		dnl If we have <winsock2.h>, assume we find the functions
+		dnl in -lws2_32.
+		LIBS="-lws2_32 $LIBS"
+	fi
+fi
 
 if test $ac_cv_header_openssl_ssl_h = yes; then
 	HAVE_ORBIT_SSL_SUPPORT=1
 fi
 AC_SUBST(HAVE_ORBIT_SSL_SUPPORT)
-
-if test $ac_cv_header_winsock2_h = yes; then
-	dnl If we have <winsock2.h>, assume we find the functions
-	dnl in -lws2_32.
-	LIBS="-lws2_32 $LIBS"
-fi
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
