@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#ifdef G_OS_WIN32
+#ifdef G_PLATFORM_WIN32
 #define ORBIT2_MAYBE_CONST
 #else
 #define ORBIT2_MAYBE_CONST const
