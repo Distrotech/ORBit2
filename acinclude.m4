@@ -17,6 +17,8 @@ AC_DEFUN([AC_CHECK_ALIGNOF],
 	AC_CACHE_VAL(AC_CV_NAME,
 		[AC_TRY_RUN(
 			[ #include <stdio.h>
+                          #include <stdlib.h>
+
 			#include "$srcdir/include/orbit/util/basic_types.h"
 			typedef struct {char s1;} CORBA_struct;
 			typedef void *CORBA_pointer;
