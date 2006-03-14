@@ -1,3 +1,9 @@
+ORBit2-2.14.0
+
+	* bug fixes
+		+ Fix build on Cygwin (Tor)
+		+ Fix giop test compilation/crash (Tor)
+
 ORBit2-2.13.3
 
 	* bug fixes
