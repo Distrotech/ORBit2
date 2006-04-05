@@ -74,6 +74,9 @@ char   **ORBit_get_typelib_paths   (void);
 gboolean ORBit_proto_use           (const char *name);
 void     _ORBit_object_init        (void);
 
+glong ORBit_get_giop_recv_limit (void);
+
+
 #ifdef G_OS_WIN32
 extern const gchar *ORBit_win32_typelib_dir;
 #undef ORBIT_TYPELIB_DIR
