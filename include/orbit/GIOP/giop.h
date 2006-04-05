@@ -24,6 +24,7 @@ gboolean    giop_thread_io         (void);
 GIOPThread *giop_thread_self       (void);
 void        giop_invoke_async      (GIOPMessageQueueEntry *ent);
 void        giop_recv_set_limit    (glong limit);
+glong       giop_recv_get_limit    (void);
 void        giop_incoming_signal_T (GIOPThread *tdata, GIOPMsgType t);
 
 typedef struct _GIOPQueue GIOPQueue;
