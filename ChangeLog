@@ -2,6 +2,7 @@
 
 	* ORBit.spec.in: linc is now intagrated into ORBit2 so the requirements in 
 	the spec file must go.
+	(%files): Fix rpmbuild issues with missing files in this section. 
 
 2006-04-04  Jules Colding  <colding@omesc.com>
 
