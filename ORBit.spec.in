@@ -79,11 +79,12 @@ rm -rf %{buildroot}
 %defattr(-,root,root)
 %doc AUTHORS COPYING ChangeLog NEWS README TODO
 %{_libdir}/*.so.*
-%{_libdir}/orbit-2.0/*.so.*
 %dir %{_libdir}/orbit-2.0/
+%{_bindir}/linc-cleanup-sockets
 
 %files devel
 %defattr(-,root,root)
+%doc /usr/share/gtk-doc/html/ORBit2/
 %{_bindir}/orbit-idl-2
 %{_bindir}/typelib-dump
 %{_bindir}/orbit2-config
