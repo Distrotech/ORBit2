@@ -1384,6 +1384,12 @@ ORBit_proto_use (const char *name)
 	return FALSE;
 }
 
+glong
+ORBit_get_giop_recv_limit (void)
+{
+	return giop_recv_get_limit ();
+}
+
 const ORBit_option orbit_supported_options[] = {
 	{ "ORBid",              ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
 	{ "ORBImplRepoIOR",     ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */

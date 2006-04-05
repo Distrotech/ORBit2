@@ -932,6 +932,12 @@ giop_recv_set_limit (glong limit)
 		giop_initial_msg_size_limit = limit;
 }
 
+glong
+giop_recv_get_limit (void)
+{
+	return giop_initial_msg_size_limit;
+}
+
 /**
  * giop_recv_buffer_handle_fragmented:
  * @buf: pointer to recv buffer pointer
