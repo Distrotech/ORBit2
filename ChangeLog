@@ -1,3 +1,19 @@
+2006-04-04  Jules Colding  <colding@omesc.com>
+
+	* configure.in (ORBIT_VERSION): Version 1.14.1. The micro version must be 
+	bumped as a new function has been added.
+
+	* src/orb/orb-core/orb-core-private.h: Declared ORBit_get_giop_recv_limit()
+
+	* include/orbit/orb-core/corba-orb.h: Added ORBit_get_giop_recv_limit()
+	to ORBIT2_EXTENSIONS section.
+
+	* src/orb/orb-core/corba-orb.c (ORBit_get_giop_recv_limit): Added function
+	to retrieve the maximum allowed GIOP receive limit.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_get_limit): New function. 
+	Clients must be able to retrieve the maximum allowed GIOP receive limit.
+
 2006-03-14  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
 
 	* configure.in: Version 2.14.0.

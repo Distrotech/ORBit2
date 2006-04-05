@@ -27,6 +27,13 @@ CORBA_ORB CORBA_ORB_init (int                *argc,
  * method return FALSE.*/
 gboolean  ORBit_proto_use (const char *name);
 
+/* Will return the maximum allowed GIOP buffer size. You will
+ * need to know this if your are e.g. streaming large data chunks
+ * to an ORBit2 client. The return type should be gulong but we 
+ * are bound by the type chosen internally by linc2.
+ */
+glong ORBit_get_giop_recv_limit (void);
+
 #endif /* ORBIT2_EXTENSIONS */
 
 #ifdef ORBIT2_INTERNAL_API
