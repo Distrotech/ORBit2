@@ -1,3 +1,8 @@
+2006-04-05  Jules Colding  <colding@omesc.com>
+
+	* ORBit.spec.in: linc is now intagrated into ORBit2 so the requirements in 
+	the spec file must go.
+
 2006-04-04  Jules Colding  <colding@omesc.com>
 
 	* configure.in (ORBIT_VERSION): Version 1.14.1. The micro version must be 
