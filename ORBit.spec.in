@@ -11,10 +11,8 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-root
 Prereq:           /sbin/install-info
 URL:              http://www.labs.redhat.com/orbit/
 BuildRequires:    pkgconfig >= 0.8
-Requires:         linc >= @LINC_REQUIRED@
 Requires:         glib2 >= @GLIB_REQUIRED@
 Requires:         libIDL >= @LIBIDL_REQUIRED@
-BuildRequires:    linc-devel >= @LINC_REQUIRED@
 BuildRequires:    glib2-devel >= @GLIB_REQUIRED@
 BuildRequires:    libIDL-devel >= @LIBIDL_REQUIRED@
 
@@ -37,8 +35,6 @@ Group:            Development/Libraries
 Requires:         %name = %{version}
 Requires:         indent
 Requires:         pkgconfig >= 0.8
-Requires:         linc >= @LINC_REQUIRED@
-Requires:         linc-devel >= @LINC_REQUIRED@
 Requires:         glib2 >= @GLIB_REQUIRED@
 Requires:         glib2-devel >= @GLIB_REQUIRED@
 Requires:         libIDL >= @LIBIDL_REQUIRED@
