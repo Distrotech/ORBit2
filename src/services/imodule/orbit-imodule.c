@@ -221,7 +221,7 @@ ORBit_iinterface_fill_method (GHashTable    *typecodes,
 					typecodes,
 					IDL_OP_DCL (tree).op_type_spec);
 	else
-		ret_imethod->ret = CORBA_OBJECT_NIL;
+		ret_imethod->ret = TC_void;
 
 	method = IDL_IDENT (IDL_OP_DCL (tree).ident).str;
 	ret_imethod->name     = CORBA_string_dup (method);
