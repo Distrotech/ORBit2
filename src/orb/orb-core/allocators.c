@@ -355,7 +355,7 @@ ORBit_alloc_get_tcval (gpointer mem)
 
 		return ORBit_RootObject_duplicate (prefix->u.tc);
 	} else
-		g_error ("Can't determine type of %p (%d)", mem, how);
+		g_error ("Can't determine type of %p (%u)", mem, how);
 
 	return NULL;
 }

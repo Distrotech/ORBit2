@@ -224,7 +224,7 @@ dynany_get_cur_type (DynAny *dynany)
 		goto find_type;
 		
 	default:
-		g_warning ("Unknown kind '%d'", tc->kind);
+		g_warning ("Unknown kind '%u'", tc->kind);
 		break;
 	}
 
@@ -495,7 +495,7 @@ dynany_get_value (DynAny *dynany, CORBA_Environment *ev)
 			if (!s || dynany->idx >= s->_length) {
 				value = NULL;
 				g_warning ("Serious internal sequence related "
-					   "error %p %d >= %d", s,
+					   "error %p %u >= %d", s,
 					   s ? s->_length: -1, dynany->idx);
 			} else
 				value = DYNANY_GET_OFFSET (s->_buffer, dynany->idx,
@@ -530,7 +530,7 @@ dynany_get_value (DynAny *dynany, CORBA_Environment *ev)
 			value = NULL;
 
 		default:
-			g_warning ("Unknown kind '%d'", any->_type->kind);
+			g_warning ("Unknown kind '%u'", any->_type->kind);
 			value = NULL;
 			break;
 		}
@@ -1041,7 +1041,7 @@ DynamicAny_DynAny_seek (DynamicAny_DynAny obj, CORBA_long index, CORBA_Environme
 		goto validate_seek;
 
 	default:
-		g_error ("Unknown kind '%d'", tc->kind);
+		g_error ("Unknown kind '%u'", tc->kind);
 	}
 
 	dynany->idx = -1;
@@ -1100,7 +1100,7 @@ DynamicAny_DynAny_component_count (DynamicAny_DynAny obj,
 		goto count_type;
 
 	default:
-		g_error ("Unknown kind '%d'", tc->kind);
+		g_error ("Unknown kind '%u'", tc->kind);
 		break;
 	}
 
@@ -1157,7 +1157,7 @@ DynamicAny_DynAny_current_component (DynamicAny_DynAny obj,
 			dynany_get_value (dynany, ev), dynany, ev);
 
 	default:
-		g_error ("Unknown kind '%d'", any->_type->kind);
+		g_error ("Unknown kind '%u'", any->_type->kind);
 	}
 
 	return CORBA_OBJECT_NIL;

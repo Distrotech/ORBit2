@@ -155,14 +155,11 @@ clean_dir (const char *dir)
 {
 	int open_max;
 	int pending = 0;
-	int dirty_files = 0;
 	GList *files, *l, *next;
 
 	open_max = sysconf (_SC_OPEN_MAX);
 
 	files = read_sockets (dir);
-
-	dirty_files = g_list_length (files);
 
 	for (l = files; l; l = next) {
 		SocketEntry *se = l->data;

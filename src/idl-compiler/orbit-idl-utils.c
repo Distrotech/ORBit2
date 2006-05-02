@@ -86,17 +86,6 @@ static void do_indent(int level) {
   for(i = 0; i < level; i++) g_print(" ");
 }
 
-static const char * const nodenames[] = {
-  "DATUM",
-  "LOOP",
-  "SWITCH",
-  "CASE",
-  "COMPLEX",
-  "CONST",
-  "SET",
-  NULL
-};
-
 void
 orbit_idl_print_node(IDL_tree node, int indent_level)
 {
@@ -425,7 +414,7 @@ IDL_tree_traverse_parents (IDL_tree p,
 }
 
 /* For use by below function */
-static const int * const
+static const int *
 orbit_cbe_get_typeoffsets_table (void)
 {
   static int typeoffsets[IDLN_LAST];

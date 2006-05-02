@@ -484,10 +484,9 @@ IOP_start_profiles (CORBA_ORB orb)
 
 	for (l = orb->servers ; l != NULL ; l = l->next) {
 		LinkServer *serv = l->data;
-		gboolean   ipv4, ipv6, uds, ssl;
+		gboolean   ipv4, uds, ssl;
 
 		ipv4 = !strcmp (serv->proto->name, "IPv4");
-		ipv6 = !strcmp (serv->proto->name, "IPv6");
 		uds  = !strcmp (serv->proto->name, "UNIX");
 
 		ssl  = (serv->create_options & LINK_CONNECTION_SSL);

@@ -49,7 +49,7 @@ main (int argc, char *argv[])
 	}
 	else
 	{
-		printf("we got exception %d from TestAny_print!\n", ev._major);
+		printf("we got exception %u from TestAny_print!\n", ev._major);
 		return 1;
 	}
   

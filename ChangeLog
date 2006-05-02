@@ -1,3 +1,38 @@
+2006-05-02  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* configure.in: Remove SSL bits.
+	* linc2/include/linc/linc-protocol.h: Remove redundant const
+	* linc2/src/cleanup.c: (clean_dir): Remove unused code.
+	* linc2/src/linc-protocols.c: More const removal
+	* linc2/src/linc-server.c: (link_server_setup): s/if !/ifndef
+	* src/idl-compiler/orbit-idl-c-common.c: (cc_output_skel):
+	Remove unused code.
+	* src/idl-compiler/orbit-idl-c-imodule.c:
+	(orbit_idl_output_c_imodule): Fix format specifiers.
+	* src/idl-compiler/orbit-idl-utils.c: Remove unused code and
+	redundant const marker.
+	* src/orb/dynamic/dynany.c: (dynany_get_cur_type),
+	(dynany_get_value), (DynamicAny_DynAny_seek),
+	(DynamicAny_DynAny_component_count),
+	(DynamicAny_DynAny_current_component): Format specifiers again.
+	* src/orb/orb-core/allocators.c: (ORBit_alloc_get_tcval): Same.
+	* src/orb/orb-core/corba-context.c: (CORBA_Context_get_values):
+	Remove unused code.
+	* src/orb/orb-core/corba-loc.c: (corbaloc_profile_uiop_parse):
+	More unused code.
+	* src/orb/orb-core/iop-profiles.c: (IOP_start_profiles): And here
+	* src/orb/poa/orbit-adaptor.c: Fix typos in comment.
+	* src/orb/poa/poa.c: (ORBit_POA_obj_to_ref): More unused code.
+	* src/orb/util/genrand.c: (ORBit_genuid_init): s/if/ifdef
+	* test/echo-client.c: Mark a var static
+	* test/echo-srv.c: (echo_srv_start_poa), (echo_srv_start_object),
+	(echo_srv_finish_object), (echo_srv_finish_poa): Format specifiers
+	and a small buglet.
+	* test/ior-decode.c: (print_objkey), (print_components): Format specifiers
+	* test/poa/poatest-basic11.c: (poatest_run): Unused code
+	* test/test-any-client.c: (main): More format specifiers
+	* test/typelib-dump.c: (dump_iface), (main): And again.
+
 2006-04-24  Kuang-Chun Cheng <kccheng@linuxdaq-labs.org>
 
 	* src/idl-compiler/orbit-idl-c-headers.c

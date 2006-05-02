@@ -78,9 +78,9 @@ typedef enum {
 } LinkNetIdType;
 
 
-LinkProtocolInfo * const link_protocol_find     (const char *name);
-LinkProtocolInfo * const link_protocol_find_num (const int   family);
-LinkProtocolInfo * const link_protocol_all      (void);
+LinkProtocolInfo * link_protocol_find     (const char *name);
+LinkProtocolInfo * link_protocol_find_num (const int   family);
+LinkProtocolInfo * link_protocol_all      (void);
 char                    *link_get_tmpdir        (void);
 void                     link_set_tmpdir        (const char *dir);
 void                     link_use_local_hostname (LinkNetIdType use);

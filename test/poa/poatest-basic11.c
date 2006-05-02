@@ -64,7 +64,6 @@ poatest_run (PortableServer_POA        rootpoa,
 	PortableServer_ObjectId *objid;
 	PortableServer_ObjectId *objid_back;
 	CORBA_char              *objid_str;
-	int                      objid_str_length;
 
 	CORBA_exception_init( &ev );
 
@@ -90,7 +89,6 @@ poatest_run (PortableServer_POA        rootpoa,
 	g_assert (objid_str != NULL);
 	g_assert (strlen (objid_str) == objid->_length);
 
-	objid_str_length = strlen (objid_str);
 	objid_back = PortableServer_string_to_ObjectId (objid_str, &ev);
 
 	g_assert (objid->_length == objid_back->_length);

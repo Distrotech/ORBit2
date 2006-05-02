@@ -858,7 +858,6 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 		      const CORBA_char   *intf,
 		      CORBA_Environment  *ev)
 {
-	PortableServer_ObjectId *oid;
 	const char              *type_id = intf;
 
 	g_assert (pobj && !pobj->base.objref);
@@ -869,8 +868,6 @@ ORBit_POA_obj_to_ref (PortableServer_POA  poa,
 	}
 
 	g_assert (type_id != NULL);
-
-	oid = pobj->object_id;
 
 	pobj->base.objref = ORBit_objref_new (poa->poa_manager->orb,
 					      &pobj->base,

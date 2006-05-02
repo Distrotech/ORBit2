@@ -186,11 +186,6 @@ if test "$os_win32" = "yes"; then
 	fi
 fi
 
-if test $ac_cv_header_openssl_ssl_h = yes; then
-	HAVE_ORBIT_SSL_SUPPORT=1
-fi
-AC_SUBST(HAVE_ORBIT_SSL_SUPPORT)
-
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
@@ -406,7 +401,4 @@ echo "ORBit configuration:
 	Compiler:		${CC} 
 
 	Purify cleanliness:	${enable_purify}
-
-	This is the Development branch of ORBit2, if
-you want something more stable checkout -r gnome-2-10.
 "

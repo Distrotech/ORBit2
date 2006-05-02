@@ -68,10 +68,10 @@ ORBit_ObjectAdaptor_get_thread_hint (ORBit_ObjectAdaptor adaptor)
 
 /*
  * Tie a object adaptor object to the current thread. This means that
- * incomming requests to the servant will be handled by this thread only.
+ * incoming requests to the servant will be handled by this thread only.
  * The object must be created by a POA with the ORBIT_THREAD_HINT_PER_OBJECT
  * hint set, and if the thread exits the behaviour will fallback to the
- * default for HINT_PER_OBJECT, i.e. a new thread will be spawned to handle the
+ * default for HINT_PER_OBJECT, i.e. a new thread will be spawned to handle
  * all calls for the object. You need to call this function before any
  * requests for the object arrive, since otherwise a thread for the
  * object will be created.

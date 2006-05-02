@@ -109,12 +109,8 @@ corbaloc_profile_uiop_parse (gchar           *profile,
 			     gchar          **socket_path,
 			     gushort         *ipv6_port )
 {
-	long len = 0; 
-
 	g_assert (profile && strlen (profile) > 0 );
 	
-	len = strlen (profile);
-
 	/*  [uiop]: ['//'] socket-path ':' [ port ] */ 
 
 	if (strncmp (profile, "uiop:", strlen ("uiop:"))) 

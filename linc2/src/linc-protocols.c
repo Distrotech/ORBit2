@@ -1138,7 +1138,7 @@ link_protocol_destroy_addr (const LinkProtocolInfo *proto,
  *
  * Return Value: an array of #LinkProtocolInfo structures.
  */
-LinkProtocolInfo * const
+LinkProtocolInfo *
 link_protocol_all (void)
 {
 	return static_link_protocols;
@@ -1153,7 +1153,7 @@ link_protocol_all (void)
  * Return Value: a pointer to a valid #LinkProtocolInfo structure if 
  *               the protocol is supported by linc, NULL otherwise.
  */
-LinkProtocolInfo * const
+LinkProtocolInfo *
 link_protocol_find (const char *name)
 {
 	int i;
@@ -1175,7 +1175,7 @@ link_protocol_find (const char *name)
  * Return Value: a pointer to a valid #LinkProtocolInfo structure if
  *               the protocol is supported by linc, NULL otherwise.
  */
-LinkProtocolInfo * const
+LinkProtocolInfo * 
 link_protocol_find_num (const int family)
 {
 	int i;

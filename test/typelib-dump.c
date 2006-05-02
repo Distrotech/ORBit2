@@ -28,7 +28,7 @@ dump_iface (ORBit_IInterface *iface)
 {
 	int i;
 
-	printf ("Interface '%s', %d methods\n",
+	printf ("Interface '%s', %u methods\n",
 		iface->tc->repo_id, iface->methods._length);
 
 	for (i = 0; i < iface->base_interfaces._length; i++) {
@@ -47,7 +47,7 @@ dump_iface (ORBit_IInterface *iface)
 		for (i = 0; i < iface->methods._length; i++) {
 			ORBit_IMethod *m = &iface->methods._buffer [i];
 			
-			printf ("  %s (%d args, %s) %s%s\n",
+			printf ("  %s (%u args, %s) %s%s\n",
 				m->name, m->arguments._length,
 				m->contexts._length ? "has context," : "",
 				m->ret ? "returns " : "",
@@ -118,7 +118,7 @@ main (int argc, char *argv [])
 	if (!tcs || tcs->_length == 0)
 		printf ("No types\n");
 	else {
-		printf ("%d types:\n", tcs->_length);
+		printf ("%u types:\n", tcs->_length);
 		for (i = 0; i < tcs->_length; i++)
 			dump_tc (tcs->_buffer [i], 0);
 	}
@@ -127,7 +127,7 @@ main (int argc, char *argv [])
 	if (!ifaces || ifaces->_length == 0)
 		printf ("No IInterfaces\n");
 	else {
-		printf ("%d interfaces:\n", ifaces->_length);
+		printf ("%u interfaces:\n", ifaces->_length);
 		for (i = 0; i < ifaces->_length; i++)
 			dump_iface (&ifaces->_buffer [i]);
 	}
