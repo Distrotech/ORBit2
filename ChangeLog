@@ -1,3 +1,8 @@
+2006-04-24  Kuang-Chun Cheng <kccheng@linuxdaq-labs.org>
+
+	* src/idl-compiler/orbit-idl-c-headers.c
+	emit per interface enum for index of xyz_imethods[].
+
 2006-04-09  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
 
 	* src/services/imodule/orbit-imodule.c
