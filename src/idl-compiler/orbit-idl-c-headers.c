@@ -10,6 +10,128 @@ static void ch_output_poa(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_itypes (IDL_tree tree, OIDL_C_Info *ci);
 static void ch_output_stub_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
 static void ch_output_skel_protos(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci);
+static GSList *ch_build_interfaces (GSList *list, IDL_tree tree);
+static void ch_output_method (FILE *of, IDL_tree tree, const char *id);
+static void ch_output_imethods_index (GSList *list, OIDL_C_Info *ci);
+
+typedef struct {
+    IDL_tree tree;
+    GSList  *methods; /* IDLN_OP_DCLs */
+} Interface;
+
+/* this is hardcopy from cc_build_interfaces() defined in orbit-idl-c-common.c */
+static GSList *
+ch_build_interfaces (GSList *list, IDL_tree tree)
+{
+	if (!tree)
+		return list;
+
+	switch (IDL_NODE_TYPE (tree)) {
+	case IDLN_MODULE:
+		list = ch_build_interfaces (
+			list, IDL_MODULE (tree).definition_list);
+		break;
+	case IDLN_LIST: {
+		IDL_tree sub;
+		for (sub = tree; sub; sub = IDL_LIST (sub).next)
+			list = ch_build_interfaces (
+				list, IDL_LIST (sub).data);
+		break;
+	}
+	case IDLN_ATTR_DCL: {
+		IDL_tree curitem;
+      
+		for (curitem = IDL_ATTR_DCL (tree).simple_declarations;
+		     curitem; curitem = IDL_LIST (curitem).next) {
+			OIDL_Attr_Info *ai = IDL_LIST (curitem).data->data;
+	
+			list = ch_build_interfaces (list, ai->op1);
+			if (ai->op2)
+				list = ch_build_interfaces (list, ai->op2);
+		}
+		break;
+	}
+	case IDLN_INTERFACE: {
+		Interface *i = g_new0 (Interface, 1);
+
+		i->tree = tree;
+
+		list = g_slist_append (list, i);
+
+		list = ch_build_interfaces (list, IDL_INTERFACE(tree).body);
+
+		break;
+	}
+	case IDLN_OP_DCL: {
+		Interface *i;
+
+		g_return_val_if_fail (list != NULL, NULL);
+
+		i = ( g_slist_last(list) )->data;
+		i->methods = g_slist_append (i->methods, tree);
+		break;
+	}
+	case IDLN_EXCEPT_DCL:
+		break;
+	default:
+		break;
+	}
+
+	return list;
+}
+                                                                                                   
+static void
+ch_output_method (FILE *of, IDL_tree tree, const char *id)
+{
+	char *fullname = NULL;
+
+	fullname = g_strconcat (id, "_", IDL_IDENT (
+		IDL_OP_DCL (tree).ident).str, NULL);
+
+	fprintf (of, "\t%s_IMETHODS_INDEX", fullname);
+
+	g_free (fullname);
+}
+
+static void
+ch_output_imethods_index (GSList *list, OIDL_C_Info *ci)
+{
+	GSList *l;
+	FILE *of = ci->fh;
+
+	for (l = list; l; l = l->next) {
+		Interface *i = l->data;
+		char      *id;
+		GSList    *m;
+
+		id = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (
+			IDL_INTERFACE (i->tree).ident), "_", 0);
+
+		if (i->methods) {
+			fprintf (of, "typedef enum {\n");
+
+			for (m = i->methods; m; m = m->next) {
+				ch_output_method (of, m->data, id);
+				if (m->next)
+					fprintf(of, ",\n");
+				else
+					fprintf(of, "\n");
+			}
+
+			fprintf (of, "} %s__imethods_index;\n\n", id);
+		}
+
+		g_free (id);
+	}
+
+	for (l = list; l; l = l->next) {
+		g_slist_free (((Interface *)l->data)->methods);
+		g_free (l->data);
+	}
+
+	g_slist_free (list);
+}
+
 
 void
 orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
@@ -50,6 +172,19 @@ orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
 
     ch_output_itypes(tree, ci);
   }
+
+  if (rinfo->idata) {
+	GSList *list = NULL;
+	fprintf (ci->fh, "\n/* IMethods index */\n\n");
+                                                                                                           
+	list = ch_build_interfaces (list, tree);
+	ch_output_imethods_index (list, ci);
+  }
+
+  fprintf(ci->fh, "#ifndef __ORBIT_IMETHODS_INDEX\n");
+  fprintf(ci->fh, "#define __ORBIT_IMETHODS_INDEX\n");
+  fprintf(ci->fh, "#define ORBIT_IMETHODS_INDEX(m) (m ## _IMETHODS_INDEX)\n");
+  fprintf(ci->fh, "#endif /* __ORBIT_IMETHODS_INDEX */\n");
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");
