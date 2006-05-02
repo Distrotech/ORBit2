@@ -78,7 +78,7 @@ ORBit_genuid_init (ORBitGenUidType type)
 		else
 			hit_strength = FALSE;
 #endif
-#if LINK_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
 		hit_strength = TRUE; /* foolishly trust OpenSSL */
 #endif
 		break;
@@ -145,7 +145,7 @@ genuid_rand_device (guchar *buffer, int length)
 
 #endif
 
-#if LINK_SSL_SUPPORT
+#ifdef LINK_SSL_SUPPORT
 #include <openssl/rand.h>
 
 static gboolean

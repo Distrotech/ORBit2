@@ -32,7 +32,7 @@ if ((_ev)->_major != CORBA_NO_EXCEPTION) {                   \
 
 static Echo echo_client, bec;
 
-gboolean echo_opt_quiet = FALSE;
+static gboolean echo_opt_quiet = FALSE;
 
 int
 main (int argc, char *argv[]) {

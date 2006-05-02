@@ -229,9 +229,6 @@ CORBA_Context_get_values (CORBA_Context      ctx,
 			  CORBA_NVList      *values,
 			  CORBA_Environment *ev)
 {
-	char *ctmp;
-	int wc_pos;
-
 	if (start_scope && *start_scope) {
 		while (ctx && (!ctx->the_name ||
 			       strcmp (ctx->the_name, start_scope)))
@@ -243,12 +240,6 @@ CORBA_Context_get_values (CORBA_Context      ctx,
 			return;
 		}
 	}
-
-	ctmp = strchr (prop_name, '*');
-	if (ctmp)
-		wc_pos = ctmp - prop_name;
-	else
-		wc_pos = -1;
 
 	CORBA_ORB_create_list (CORBA_OBJECT_NIL, 0, values, ev);
 

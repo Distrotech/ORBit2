@@ -228,7 +228,7 @@ orbit_idl_output_c_imodule (IDL_tree       tree,
 	fprintf (ci->fh, "ORBit_IModule orbit_imodule_data = {\n");
 	fprintf (ci->fh, "   %d,\n", ORBIT_CONFIG_SERIAL);
 	fprintf (ci->fh, "   %s__iinterfaces,\n", ci->c_base_name);
-	fprintf (ci->fh, " { %d, %d, %s__itypes, FALSE }\n",
+	fprintf (ci->fh, " { %u, %u, %s__itypes, FALSE }\n",
 		 count, count, ci->c_base_name);
 	fprintf (ci->fh, "};\n\n");
 }

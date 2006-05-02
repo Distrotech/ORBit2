@@ -301,7 +301,7 @@ link_server_setup (LinkServer            *srv,
 	const char             *local_host;
 	char                   *service, *hostname;
 
-#if !LINK_SSL_SUPPORT
+#ifndef LINK_SSL_SUPPORT
 	if (create_options & LINK_CONNECTION_SSL)
 		return FALSE;
 #endif

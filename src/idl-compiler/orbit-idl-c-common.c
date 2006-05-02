@@ -526,7 +526,6 @@ cc_output_skel (IDL_tree     tree,
 		int         *idx)
 {
 	IDL_tree  intf;
-	gboolean  has_args;
 	gboolean  has_retval;
 	char     *opname;
 	char     *ifname;
@@ -535,7 +534,6 @@ cc_output_skel (IDL_tree     tree,
 
 	intf = IDL_get_parent_node (tree, IDLN_INTERFACE, NULL);
 
-	has_args   = IDL_OP_DCL (tree).parameter_dcls != NULL;
 	has_retval = IDL_OP_DCL (tree).op_type_spec != NULL;
 
 	opname = IDL_ns_ident_to_qstring (IDL_IDENT_TO_NS (IDL_OP_DCL (tree).ident), "_", 0);

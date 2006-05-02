@@ -74,7 +74,7 @@ echo_srv_start_poa (CORBA_ORB orb, CORBA_Environment *ev)
 
 	the_orb = orb;
 	the_poa = (PortableServer_POA)
-		CORBA_ORB_resolve_initial_references(orb,
+		CORBA_ORB_resolve_initial_references(the_orb,
 						     "RootPOA", ev);
 
 	mgr = PortableServer_POA__get_the_POAManager(the_poa, ev);
@@ -87,19 +87,19 @@ echo_srv_start_object(CORBA_Environment *ev)
 {
 	POA_Echo__init(&poa_echo_servant, ev);
 	if ( ev->_major ) {
-		printf("object__init failed: %d\n", ev->_major);
+		printf("object__init failed: %u\n", ev->_major);
 		exit(1);
 	}
 	the_objid = PortableServer_POA_activate_object(the_poa,
 						       &poa_echo_servant, ev);
 	if ( ev->_major ) {
-		printf("activate_object failed: %d\n", ev->_major);
+		printf("activate_object failed: %u\n", ev->_major);
 		exit(1);
 	}
 	the_echo_client = PortableServer_POA_servant_to_reference(the_poa,
 								  &poa_echo_servant, ev);
 	if ( ev->_major ) {
-		printf("servant_to_reference failed: %d\n", ev->_major);
+		printf("servant_to_reference failed: %u\n", ev->_major);
 		exit(1);
 	}
 	return the_echo_client;
@@ -110,20 +110,20 @@ echo_srv_finish_object(CORBA_Environment *ev)
 {
 	CORBA_Object_release(the_echo_client, ev);
 	if ( ev->_major ) {
-		printf("object_release failed: %d\n", ev->_major);
+		printf("object_release failed: %u\n", ev->_major);
 		exit(1);
 	}
 	the_echo_client = NULL;
 	PortableServer_POA_deactivate_object(the_poa, the_objid, ev);
 	if ( ev->_major ) {
-		printf("deactivate_object failed: %d\n", ev->_major);
+		printf("deactivate_object failed: %u\n", ev->_major);
 		exit(1);
 	}
 	CORBA_free(the_objid);
 	the_objid = NULL;
 	POA_Echo__fini(&poa_echo_servant, ev);
 	if ( ev->_major ) {
-		printf("object__fini failed: %d\n", ev->_major);
+		printf("object__fini failed: %u\n", ev->_major);
 		exit(1);
 	}
 }
@@ -134,7 +134,7 @@ echo_srv_finish_poa(CORBA_Environment *ev)
 {
 	CORBA_Object_release((CORBA_Object)the_poa, ev);
 	if ( ev->_major ) {
-		printf("POA release failed: %d\n", ev->_major);
+		printf("POA release failed: %u\n", ev->_major);
 		exit(1);
 	}
 	the_poa = NULL;

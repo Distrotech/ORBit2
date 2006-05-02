@@ -15,7 +15,7 @@ print_objkey (ORBit_ObjectKey *objkey)
 	for (i = 0; i < objkey->_length; i++)
 		g_string_append_printf (str, "%02x", objkey->_buffer [i]);
 
-	printf ("(%d) '%s'", objkey->_length, str->str);
+	printf ("(%u) '%s'", objkey->_length, str->str);
 
 	g_string_free (str, TRUE);
 }
@@ -38,7 +38,7 @@ print_components (CORBA_Object obj, GSList *components)
 
 		case IOP_TAG_SSL_SEC_TRANS: {
 			IOP_TAG_SSL_SEC_TRANS_info *sst = l->data;
-			printf ("    IOP_TAG_SSL_SEC_TRANS: %d:%d port %d\n",
+			printf ("    IOP_TAG_SSL_SEC_TRANS: %u:%u port %d\n",
 				sst->target_supports, sst->target_requires,
 				sst->port);
 			break;
