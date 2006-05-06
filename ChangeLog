@@ -1,3 +1,11 @@
+2006-05-06  Kuang-Chun Cheng <kccheng@linuxdaq-labs.org>
+
+	* src/idl-compiler/orbit-idl-c-headers.c:
+	Add guarding macros around emitted per interface enum of xyz_imethods[].
+	Fix Bug #340532.
+	* test/everything/client.c
+	Use ORBIT_METHODS_INDEX() for ORBit_small_invoke_async() test.
+
 2006-05-02  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* configure.in: Remove SSL bits.
