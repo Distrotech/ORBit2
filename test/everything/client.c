@@ -1888,7 +1888,7 @@ test_BasicServer_opExceptionA (CORBA_Object       obj,
 {
 	ORBit_IMethod *m_data;
 
-	m_data = &test_BasicServer__iinterface.methods._buffer [10];
+	m_data = &test_BasicServer__iinterface.methods._buffer [ORBIT_IMETHODS_INDEX(test_BasicServer_opException)];
 	/* if this failed, we re-ordered the IDL ... */
 	g_assert (!strcmp (m_data->name, "opException"));
 
@@ -1944,7 +1944,7 @@ test_BasicServer_opStringA (CORBA_Object       obj,
 	args[1] = &inout_str;
 	args[2] = NULL;
 
-	m_data = &test_BasicServer__iinterface.methods._buffer[3];
+	m_data = &test_BasicServer__iinterface.methods._buffer[ORBIT_IMETHODS_INDEX(test_BasicServer_opString)];
 	/* if this failed, we re-ordered the IDL ... */
 	g_assert (!strcmp (m_data->name, "opString"));
 

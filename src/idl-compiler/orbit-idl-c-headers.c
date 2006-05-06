@@ -88,7 +88,7 @@ ch_output_method (FILE *of, IDL_tree tree, const char *id)
 	fullname = g_strconcat (id, "_", IDL_IDENT (
 		IDL_OP_DCL (tree).ident).str, NULL);
 
-	fprintf (of, "\t%s_IMETHODS_INDEX", fullname);
+	fprintf (of, "\t%s__imethods_index", fullname);
 
 	g_free (fullname);
 }
@@ -108,6 +108,10 @@ ch_output_imethods_index (GSList *list, OIDL_C_Info *ci)
 			IDL_INTERFACE (i->tree).ident), "_", 0);
 
 		if (i->methods) {
+
+			fprintf (of, "#ifndef __%s__imethods_index\n", id);
+			fprintf (of, "#define __%s__imethods_index\n", id);
+
 			fprintf (of, "typedef enum {\n");
 
 			for (m = i->methods; m; m = m->next) {
@@ -118,7 +122,8 @@ ch_output_imethods_index (GSList *list, OIDL_C_Info *ci)
 					fprintf(of, "\n");
 			}
 
-			fprintf (of, "} %s__imethods_index;\n\n", id);
+			fprintf (of, "} %s__imethods_index;\n", id);
+			fprintf (of, "#endif /* __%s__imethods_index */\n\n", id);
 		}
 
 		g_free (id);
@@ -175,7 +180,7 @@ orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
 
   if (rinfo->idata) {
 	GSList *list = NULL;
-	fprintf (ci->fh, "\n/* IMethods index */\n\n");
+	fprintf (ci->fh, "\n/** IMethods index */\n\n");
                                                                                                            
 	list = ch_build_interfaces (list, tree);
 	ch_output_imethods_index (list, ci);
@@ -183,8 +188,8 @@ orbit_idl_output_c_headers (IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
 
   fprintf(ci->fh, "#ifndef __ORBIT_IMETHODS_INDEX\n");
   fprintf(ci->fh, "#define __ORBIT_IMETHODS_INDEX\n");
-  fprintf(ci->fh, "#define ORBIT_IMETHODS_INDEX(m) (m ## _IMETHODS_INDEX)\n");
-  fprintf(ci->fh, "#endif /* __ORBIT_IMETHODS_INDEX */\n");
+  fprintf(ci->fh, "#define ORBIT_IMETHODS_INDEX(m) (m ## __imethods_index)\n");
+  fprintf(ci->fh, "#endif /* __ORBIT_IMETHODS_INDEX */\n\n");
 
   fprintf(ci->fh, "#ifdef __cplusplus\n");
   fprintf(ci->fh, "}\n");
