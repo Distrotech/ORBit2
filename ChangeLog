@@ -1,5 +1,12 @@
 2006-05-18  Kjartan Maraas  <kmaraas@gnome.org>
 
+	* src/orb/orb-core/corba-loc.c: (corbaloc_profile_iiop_parse):
+	Fix a warning from coverity.
+	* src/orb/orb-core/corba-loc.c: (orbit_url_decode):
+	Fix a signedness warning.
+
+2006-05-18  Kjartan Maraas  <kmaraas@gnome.org>
+
 	* src/orb/orb-core/orbit-small.c: (ORBit_handle_exception_array):
 	Fix more NULL refs. Coverity.
 

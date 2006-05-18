@@ -61,7 +61,7 @@ corbaloc_profile_iiop_parse (gchar  *profile,
 		++_token;
 	}
 	else {
-		_ver = ssl ? "1.1" : "1.0";
+		_ver = *ssl ? "1.1" : "1.0";
 	}
 	
 	_host = _token;
@@ -236,7 +236,7 @@ static ORBit_ObjectKey*
 orbit_url_decode (const char * ptr)
 {
 	ORBit_ObjectKey *retval  = NULL;
-	gchar * buf = NULL; 
+	guchar * buf = NULL; 
 	
         retval = CORBA_sequence_CORBA_octet__alloc ();
 	retval->_length  = 0;
@@ -253,7 +253,7 @@ orbit_url_decode (const char * ptr)
 				CORBA_free (retval);
 				return NULL;
 			}
-			*buf = (char) (orbit_from_xdigit(ptr[1])<<4 |
+			*buf = (orbit_from_xdigit(ptr[1])<<4 |
 				       orbit_from_xdigit(ptr[2]));
 			ptr += 3;
 		}
