@@ -581,7 +581,7 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		if ((buf->cur + i) > buf->end
 		    || (buf->cur + i) < buf->cur)
 			return TRUE;
-		*(char **)*val = CORBA_string_dup (buf->cur);
+		*(char **)*val = CORBA_string_dup ((char *)buf->cur);
 		*val = ((guchar *)*val) + sizeof (CORBA_char *);
 		buf->cur += i;
 		break;
@@ -1130,10 +1130,11 @@ ORBit_any_equivalent (CORBA_any *obj, CORBA_any *any, CORBA_Environment *ev)
 	gpointer a, b;
 
 	/* Is this correct ? */
-	if (obj == NULL &&
+	if (obj == NULL ||
 	    any == NULL)
 		return TRUE;
-
+	if (!obj || !any)
+		return FALSE;
 	if (!obj->_type || !any->_type) {
 		CORBA_exception_set_system (
 			ev, ex_CORBA_BAD_PARAM, CORBA_COMPLETED_NO);

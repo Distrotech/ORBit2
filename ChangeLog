@@ -1,3 +1,8 @@
+2006-05-18  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/orb-core/corba-any.c: (ORBIT_demarshal_value):
+	Avoid NULL dereference. Found by the coverity checker.
+
 2006-05-06  Kuang-Chun Cheng <kccheng@linuxdaq-labs.org>
 
 	* src/idl-compiler/orbit-idl-c-headers.c:
