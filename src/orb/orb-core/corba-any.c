@@ -1130,7 +1130,7 @@ ORBit_any_equivalent (CORBA_any *obj, CORBA_any *any, CORBA_Environment *ev)
 	gpointer a, b;
 
 	/* Is this correct ? */
-	if (obj == NULL ||
+	if (obj == NULL &&
 	    any == NULL)
 		return TRUE;
 	if (!obj || !any)
