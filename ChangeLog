@@ -1,5 +1,10 @@
 2006-05-18  Kjartan Maraas  <kmaraas@gnome.org>
 
+	* src/orb/orb-core/orbit-small.c: (ORBit_handle_exception_array):
+	Fix more NULL refs. Coverity.
+
+2006-05-18  Kjartan Maraas  <kmaraas@gnome.org>
+
 	* src/orb/orb-core/corba-any.c: (ORBIT_demarshal_value):
 	Avoid NULL dereference. Found by the coverity checker.
 

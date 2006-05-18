@@ -136,12 +136,12 @@ ORBit_handle_exception_array (GIOPRecvBuffer     *rb,
 
 		dprintf (MESSAGES, "user exception\n");
 
-		for (i = 0; i < types->_length; i++) {
+		for (i = 0; my_repoid && i < types->_length; i++) {
 			if (!strcmp (types->_buffer[i]->repo_id, my_repoid))
 				break;
 		}
 
-		if (!types || types->_length == 0) {
+		if (!types || types->_length == 0 || i >= types->_length) {
 			/* weirdness; they raised an exception that we don't
 			   know about */
 			CORBA_exception_set_system (
