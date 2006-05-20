@@ -1,3 +1,9 @@
+2006-05-20  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/poa/poa.c: (ORBit_POAObject_handle_request):
+	Patch from Pascal Terjan to fix a null deref found by
+	the coverity checker. Closes bug #341336.
+
 2006-05-18  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/orb-core/corba-loc.c: (corbaloc_profile_iiop_parse):
