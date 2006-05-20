@@ -1382,8 +1382,10 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 		ORBit_POAObject_post_invoke (pobj);             
 
  clean_out:
-	POA_UNLOCK (poa);
-	ORBit_RootObject_release (poa);
+	if(poa) {
+		POA_UNLOCK (poa);
+		ORBit_RootObject_release (poa);
+	}
 }
 
 static ORBit_POAObject
