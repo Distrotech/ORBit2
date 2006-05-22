@@ -534,7 +534,9 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 	CORBA_Object         retval = CORBA_OBJECT_NIL;
 	CORBA_unsigned_long  len;
 	GIOPRecvBuffer      *buf;
+#if defined ENABLE_HTTP
 	gchar               *ior = NULL;
+#endif
 	guchar              *tmpbuf;
 	int                  i;
 
@@ -574,9 +576,9 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 			len--;
 		
 		if (len % 2) {
-			if (ior)
-				g_free (ior);
-			
+#if defined ENABLE_HTTP
+			g_free (ior);
+#endif
 			return CORBA_OBJECT_NIL;
 		}
 		
@@ -598,10 +600,9 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 		}
 		
 		giop_recv_buffer_unuse (buf);
-		
-		if (ior)
-			g_free (ior);
-		
+#if defined ENABLE_HTTP		
+		g_free (ior);
+#endif
 		return retval;
 	} else {
 		return ORBit_object_by_corbaloc (orb, string, ev);
