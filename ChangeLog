@@ -1,3 +1,9 @@
+2006-05-22  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_string_to_object):
+	#ifdef out some code that is only used with ENABLE_HTTP.
+	Closes bug #342406.
+
 2006-05-20  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/poa/poa.c: (ORBit_POAObject_handle_request):
