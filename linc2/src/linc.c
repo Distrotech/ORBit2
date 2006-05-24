@@ -106,8 +106,10 @@ link_mainloop_handle_input (GIOChannel   *source,
 		link_dispatch_command (l->data, FALSE);
 
 		if (sync) {
+			g_mutex_lock (link_cmd_queue_lock);
 			((LinkSyncCommand *)l->data)->complete = TRUE;
 			g_cond_signal (link_cmd_queue_cond);
+			g_mutex_unlock (link_cmd_queue_lock);
 		}
 	}
 
@@ -135,7 +137,7 @@ link_exec_command (LinkCommand *cmd)
 	}
 
 	if (!link_cmd_queue) {
-		char c = 'A'; /* magic */
+		char c = 'L'; /* magic */
 #ifdef HAVE_WINSOCK2_H
 		while ((res = send (LINK_WAKEUP_WRITE, &c, sizeof (c), 0)) == SOCKET_ERROR  &&
 		       (WSAGetLastError () == WSAEWOULDBLOCK));
