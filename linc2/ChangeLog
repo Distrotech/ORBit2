@@ -1,3 +1,10 @@
+2006-05-24  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/linc.c (link_mainloop_handle_input): fix
+	race causing lockup of e-d-s at times.
+	(link_exec_command): change magic char on pipe to
+	'L' to distinguish from glib's wakeup.
+
 2006-02-03  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-protocols.c [Win32] (get_netid): Guard against
