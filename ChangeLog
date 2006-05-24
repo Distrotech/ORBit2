@@ -1,3 +1,8 @@
+2006-05-24  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/linc.c (link_mainloop_handle_input): fix
+	race causing lockup of e-d-s at times.
+
 2006-02-06  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* Version 2.12.5

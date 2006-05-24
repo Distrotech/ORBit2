@@ -103,8 +103,10 @@ link_mainloop_handle_input (GIOChannel   *source,
 		link_dispatch_command (l->data, FALSE);
 
 		if (sync) {
+			g_mutex_lock (link_cmd_queue_lock);
 			((LinkSyncCommand *)l->data)->complete = TRUE;
 			g_cond_signal (link_cmd_queue_cond);
+			g_mutex_unlock (link_cmd_queue_lock);
 		}
 	}
 
