@@ -1,3 +1,12 @@
+2006-05-29  Christian Persch  <chpe@cvs.gnome.org>
+
+	* configure.in: Remove popt check.
+	* src/idl-compiler/orbit-idl-main.c: (cl_libIDL_version_callback),
+	(cl_cpp_define_callback), (cl_cpp_include_callback),
+	(cl_version_callback), (cl_c_output_formatter_callback), (main):
+	* src/services/name/boot.c: (main): Port from popt to goption argument
+	parsing. Bug #341587.
+
 2006-05-22  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_string_to_object):
