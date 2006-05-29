@@ -113,7 +113,7 @@ fi
 
 AC_PROG_AWK
 
-GLIB_REQUIRED=2.6.0
+GLIB_REQUIRED=2.8.0
 LIBIDL_REQUIRED=0.8.2
 AC_SUBST(GLIB_REQUIRED)
 AC_SUBST(LIBIDL_REQUIRED)
@@ -198,10 +198,6 @@ AC_CHECK_FUNC(socket,,[AC_CHECK_LIB(socket,socket)])
 AC_CHECK_FUNC(gethostbyname,,[AC_CHECK_LIB(nsl,gethostbyname)])
 AC_CHECK_FUNC(sigaction)
 AC_CHECK_FUNC(syslog)
-
-AC_CHECK_LIB(popt, poptStrippedArgv, POPT_LIBS=-lpopt, AC_MSG_ERROR([You must have popt version 1.5 or greater installed.]))
-AC_SUBST(POPT_LIBS)
-AC_CHECK_HEADER(popt.h,,AC_MSG_ERROR([Failed to find popt.h - you may have to adjust your environment]))
 
 dnl This generates warnings from autoconf...
 AC_C_BIGENDIAN

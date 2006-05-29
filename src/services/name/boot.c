@@ -6,8 +6,13 @@
 #  include <syslog.h>
 #endif
 #include <signal.h>
-#include <popt.h>
+#include <glib/goption.h>
+#include <glib/gi18n.h>
 #include "CosNaming_impl.h"
+
+#ifndef GETTEXT_PACKAGE
+#define GETTEXT_PACKAGE NULL
+#endif
 
 static void
 signal_handler(int signo){
@@ -24,13 +29,9 @@ signal_handler(int signo){
 
 static char *opt_corbaloc_key = NULL;
 
-static const struct poptOption TheOptions[] = {
-    { "key", 0, POPT_ARG_STRING, &opt_corbaloc_key, 0, 
-    	"Respond to corbaloc requests with this object key", "string" },
-#if 0
-    ORBIT_POPT_TABLE,
-#endif
-    POPT_AUTOHELP
+static const GOptionEntry goptions[] = {
+    { "key", 0, 0, G_OPTION_ARG_STRING, &opt_corbaloc_key,
+      N_("Respond to corbaloc requests with this object key"), N_("KEY") },
     { NULL }
 };
 
@@ -80,22 +81,22 @@ main (int argc, char *argv[])
   orb = CORBA_ORB_init (&argc, argv, "orbit-local-orb", &ev);
   
   {
-  	poptContext	pcxt;
-	int		rc;
-        pcxt = poptGetContext(progname, argc, (const char**)argv, 
-		TheOptions, 0);
-      	if ( (rc=poptGetNextOpt(pcxt)) < -1 ) {
-	    g_warning("%s: bad argument %s: %s\n",
-	    		progname, 
-			poptBadOption(pcxt, POPT_BADOPTION_NOALIAS), 
-			poptStrerror(rc));
+        GOptionContext *context;
+        GError *error = NULL;
+        gboolean result;
+
+        context = g_option_context_new("");
+        g_option_context_add_main_entries(context, goptions, GETTEXT_PACKAGE);
+
+        result = g_option_context_parse(context, &argc, &argv, &error);
+        g_option_context_free(context);
+
+        if (!result) {
+            g_warning("%s: bad arguments: %s\n",
+                      progname, error->message);
+            g_error_free(error);
 	    exit(1);
-      }
-      if ( poptGetArg(pcxt) != 0 ) {
-	    g_warning("%s: leftover arguments.\n", progname);
-	    exit(1);
-      }
-      poptFreeContext(pcxt);
+        }
   }
 
   {
