@@ -1,3 +1,9 @@
+2006-06-02  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/linc.c (link_mainloop_handle_input, link_signal):
+	use broadcast instead of signal - bug#341238 - many thanks
+	to Jeff Cai <jeff.cai@sun.com> for the fix.
+
 2005-10-17  Frederic Crozat  <fcrozat@mandriva.com>
 
 	* src/cleanup.c: (main):
