@@ -108,7 +108,7 @@ link_mainloop_handle_input (GIOChannel   *source,
 		if (sync) {
 			g_mutex_lock (link_cmd_queue_lock);
 			((LinkSyncCommand *)l->data)->complete = TRUE;
-			g_cond_signal (link_cmd_queue_cond);
+			g_cond_broadcast (link_cmd_queue_cond);
 			g_mutex_unlock (link_cmd_queue_lock);
 		}
 	}
@@ -530,7 +530,7 @@ link_signal (void)
 	if (link_is_thread_safe && link_is_io_in_thread) {
 		g_assert (link_main_cond != NULL);
 		g_assert (link_is_locked ());
-		g_cond_signal (link_main_cond);
+		g_cond_broadcast (link_main_cond);
 	}
 }
 
