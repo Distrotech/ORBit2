@@ -73,7 +73,7 @@ make_local_tmpdir (const char *dirname)
 		}
 	}
 
-#if defined (HAVE_UTIME_H) || defined (HAVE_SYS_UTIME_H)
+#if (defined (HAVE_UTIME_H) || defined (HAVE_SYS_UTIME_H)) && !defined (G_OS_WIN32)
 	{ /* Hide some information ( apparently ) */
 		struct utimbuf utb;
 		memset (&utb, 0, sizeof (utb));
