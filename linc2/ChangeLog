@@ -1,3 +1,12 @@
+2006-06-16  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-protocols.c (make_local_tmpdir): Don't do the utime()
+	trick on Win32 here either, as we don't have any gstdio wrapper
+	for utime() (so it won't work anyway if the username or temp
+	folder path have non-ASCII characters), and the usefulness of it
+	is questionable on Win32. But why is the utime() code snippet
+	duplicated here and in giop_tmpdir_init()?
+
 2006-06-02  Michael Meeks  <michael.meeks@novell.com>
 
 	* src/linc.c (link_mainloop_handle_input, link_signal):
