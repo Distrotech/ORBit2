@@ -1,3 +1,10 @@
+2006-06-17  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl-compiler/orbit-idl-c-deps.c: (orbit_idl_output_c_deps):
+	Plug a leak. Closes bug #344976.
+	* test/typelib-dump.c: (dump_tc): Plug leak. Closes bug #344977.
+	Both found by the Coverity checker.
+
 2006-05-29  Christian Persch  <chpe@cvs.gnome.org>
 
 	* configure.in: Remove popt check.
