@@ -21,6 +21,7 @@ dump_tc (CORBA_TypeCode tc, int ident)
 	printf ("%sType %12s: '%s'\n",
 		id_str, kind->subnames [tc->kind],
 		tc->repo_id);
+	g_free (id_str);
 }
 
 static void
