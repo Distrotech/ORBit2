@@ -346,6 +346,20 @@ link_server_setup (LinkServer            *srv,
 		return FALSE;
 	}
 
+#ifdef HAVE_WINSOCK2_H
+	{
+		SOCKET newfd;
+
+		if (!DuplicateHandle (GetCurrentProcess (), (HANDLE) fd,
+				      GetCurrentProcess (), (LPHANDLE) &newfd,
+				      0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+			d_printf ("DuplicateHandle failed: %s\n", link_strerror (WSAGetLastError ()));
+			return FALSE;
+		}
+		fd = newfd;
+	}
+#endif	
+
 	{
 		static const int oneval = 1;
 
@@ -365,7 +379,7 @@ link_server_setup (LinkServer            *srv,
 	}
 #endif
 	if (n && errno == EADDRINUSE) {
-               close(fd);
+               LINK_CLOSE_SOCKET(fd);
                if (!local_serv_info) {
                    d_printf ("bind failed; retrying\n");
                    goto address_in_use;
