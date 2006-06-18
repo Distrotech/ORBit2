@@ -95,7 +95,7 @@ link_connection_unref_unlock (gpointer cnx)
 void
 link_connection_exec_cnx_unref (LinkCommandCnxUnref *cmd, gboolean immediate)
 {
-	d_printf ("Exec defered unref on %p", cmd->cnx);
+	d_printf ("Exec defered unref on %p\n", cmd->cnx);
 
 	if (immediate) /* In I/O thread - with just 1 ref left */
 		g_object_unref (cmd->cnx);
@@ -559,6 +559,19 @@ link_connection_do_initiate (LinkConnection        *cnx,
 	if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0)
 		goto out;
 #endif
+#ifdef HAVE_WINSOCK2_H
+	{
+		SOCKET newfd;
+
+		if (!DuplicateHandle (GetCurrentProcess (), (HANDLE) fd,
+				      GetCurrentProcess (), (LPHANDLE) &newfd,
+				      0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+			d_printf ("DuplicateHandle failed: %s\n", link_strerror (WSAGetLastError ()));
+			return FALSE;
+		}
+		fd = newfd;
+	}
+#endif	
 
 	LINK_TEMP_FAILURE_RETRY_SOCKET (connect (fd, saddr, saddr_len), rv);
 #ifdef HAVE_WINSOCK2_H
