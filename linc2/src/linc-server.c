@@ -207,6 +207,19 @@ link_server_accept_connection (LinkServer      *server,
 		return FALSE;
 	}
 #endif
+#ifdef HAVE_WINSOCK2_H
+	{
+		SOCKET newfd;
+
+		if (!DuplicateHandle (GetCurrentProcess (), (HANDLE) fd,
+				      GetCurrentProcess (), (LPHANDLE) &newfd,
+				      0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+			d_printf ("DuplicateHandle failed: %s\n", link_strerror (WSAGetLastError ()));
+			return FALSE;
+		}
+		fd = newfd;
+	}
+#endif
 
 	klass = (LinkServerClass *) G_OBJECT_GET_CLASS (server);
 
