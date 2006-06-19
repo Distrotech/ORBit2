@@ -1,12 +1,13 @@
 2006-06-19  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-connection.c (link_connection_do_initiate)
-	* src/linc-server.c (link_server_setup): Make the sockets we
-	create non-inheritable. In retrospect, it is rather embarrassing
-	that it should take this long for me to notice how essential it is
-	to do this... but the root cause of the ill effects was not
-	immediately obvious. This corresponds to the FD_CLOEXEC that is
-	used on Unix.
+	* src/linc-server.c (link_server_setup)
+	(link_server_accept_connection): Make the sockets we create
+	non-inheritable on Windows. In retrospect, it is rather
+	embarrassing that it should take this long for me to notice how
+	essential it is to do this... but the root cause of the ill
+	effects was not immediately obvious. This corresponds to the
+	FD_CLOEXEC that is used on Unix.
 
 	Use LINK_CLOSE_SOCKET() instead of close().
 
