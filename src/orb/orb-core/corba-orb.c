@@ -280,6 +280,7 @@ static CORBA_ORB _ORBit_orb = NULL;
 static gulong    init_level = 0;
 static gboolean  atexit_shutdown = FALSE;
 
+#ifndef G_OS_WIN32 /* See comment at g_atexit() call below */
 /*
  *   This is neccessary to clean up any remaining UDS
  * and to flush any remaining oneway traffic in buffers.
@@ -305,6 +306,7 @@ shutdown_orb (void)
 
 	atexit_shutdown = FALSE;
 }
+#endif
 
 static
 gboolean
@@ -433,7 +435,28 @@ CORBA_ORB_init (int *argc, char **argv,
 	/* released by CORBA_ORB_destroy */
 	_ORBit_orb = ORBit_RootObject_duplicate (retval);
 	_ORBit_orb->lock = link_mutex_new ();
+#ifndef G_OS_WIN32
+	/* atexit(), which g_atexit() is just a #define for on Win32,
+	 * often causes breakage when invoked from DLLs. It causes the
+	 * registered function to be called when the calling DLL is
+	 * being unloaded. At that time, however, random other DLLs
+	 * might also have already been unloaded. There is no
+	 * guarantee WinSock even works any longer. Etc. Best to avoid
+	 * atexit() completely on Win32, and hope that just exiting
+	 * the process and thus severing all connections will be
+	 * noticed by all peers the process was connected to and acted
+	 * upon properly.
+	 *
+	 * In the evolution-exchange-storage process's case, the
+	 * shutdown_orb() function caused the process to hang and not
+	 * exit, leaving the sockets it was listening on still in a
+	 * LISTEN state. bonobo-activation-server thought the bonobo
+	 * servers in evolution-exchange-storage were still OK and
+	 * tried to contact them when Evolution was started the next
+	 * time, causing it to hang, too.
+	 */
 	g_atexit (shutdown_orb);
+#endif
 
 	retval->default_giop_version = GIOP_LATEST;
 

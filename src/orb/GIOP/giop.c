@@ -277,9 +277,6 @@ giop_dump_recv (GIOPRecvBuffer *recv_buffer)
 		   recv_buffer->msg.header.message_size, 12);
 }
 
-G_LOCK_DEFINE_STATIC (giop_thread_list);
-static GList *giop_thread_list = NULL;
-
 static GIOPThread *
 giop_thread_new (GMainContext *context)
 {
@@ -294,10 +291,6 @@ giop_thread_new (GMainContext *context)
 
 	if (giop_main_thread)
 		tdata->request_handler = giop_main_thread->request_handler;
-
-	G_LOCK (giop_thread_list);
-	giop_thread_list = g_list_prepend (giop_thread_list, tdata);
-	G_UNLOCK (giop_thread_list);
 
 	return tdata;
 }
@@ -324,10 +317,6 @@ giop_thread_free (GIOPThread *tdata)
 {
 	GList *l;
 	
-	G_LOCK (giop_thread_list);
-	giop_thread_list = g_list_remove (giop_thread_list, tdata);
-	G_UNLOCK (giop_thread_list);
-
 	if (giop_thread_safe ()) {
 		g_mutex_lock (giop_pool_hash_lock);
 		for (l = tdata->keys; l != NULL; l = l->next) {
@@ -464,7 +453,6 @@ giop_mainloop_handle_input (GIOChannel     *source,
 		LINK_MUTEX_LOCK (tdata->lock);
 	}
 	LINK_MUTEX_UNLOCK (tdata->lock);
-
 
 	return TRUE;
 }
