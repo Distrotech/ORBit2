@@ -1,3 +1,11 @@
+2006-06-20  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-compat.c (link_map_winsock_error_to_errno): Keep the
+	return value from WSAGetLastError() in a variable so it's easier
+	to look at in in the debugger...
+	(link_pipe): Make the Win32 socket pair sockets non-inheritable,
+	just for cleanliness, isn't actually required for it to work.
+
 2006-06-19  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-connection.c (link_connection_do_initiate)
