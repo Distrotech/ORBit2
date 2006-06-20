@@ -24,8 +24,9 @@
 void
 link_map_winsock_error_to_errno (void)
 {
-	errno = WSAGetLastError ();
-	d_printf ("WSAGetLastError: %d\n", errno);
+	int wsa_error = WSAGetLastError ();
+	d_printf ("WSAGetLastError: %d\n", wsa_error);
+	errno = wsa_error;
 	switch (errno) {
 	case WSAEBADF:
 		errno = EBADF; break;
@@ -45,7 +46,7 @@ link_pipe (int *handles)
 
 #else
 
-  SOCKET temp, socket1 = -1, socket2 = -1;
+  SOCKET temp, temp2, socket1 = -1, socket2 = -1;
   struct sockaddr_in saddr;
   int len;
   u_long arg;
@@ -97,6 +98,13 @@ link_pipe (int *handles)
       goto out0;
     }
   
+  if (!DuplicateHandle (GetCurrentProcess (), (HANDLE) socket1,
+			GetCurrentProcess (), (LPHANDLE) &temp2,
+			0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+    goto out1;
+  }
+  socket1 = temp2;
+
   arg = 1;
   if (ioctlsocket (socket1, FIONBIO, &arg) == SOCKET_ERROR)
     { 
@@ -153,6 +161,13 @@ link_pipe (int *handles)
       errno = WSAECONNREFUSED;
       goto out2;
     }
+
+  if (!DuplicateHandle (GetCurrentProcess (), (HANDLE) socket2,
+			GetCurrentProcess (), (LPHANDLE) &temp2,
+			0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+    goto out2;
+  }
+  socket2 = temp2;
 
   arg = 0;
   if (ioctlsocket (socket1, FIONBIO, &arg) == SOCKET_ERROR)
