@@ -1,3 +1,16 @@
+2006-06-20  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/GIOP/giop.c: Remove the giop_thread_list, isn't used for
+	anything.
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): Don't call
+	g_atexit() on Win32. It can cause bizarre bugs. The semantics of
+	atexit() are very hard to specify exactly in the presence of
+	dynamic libraries, and Win32's implementation is perhaps
+	particularily random in its behaviour. Just rely on any peers we
+	are talking to noticing that the connections are severed and
+	acting appropriately.
+
 2006-06-17  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/idl-compiler/orbit-idl-c-deps.c: (orbit_idl_output_c_deps):
