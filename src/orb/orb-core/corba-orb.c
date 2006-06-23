@@ -48,7 +48,11 @@ static gint         orbit_initial_recv_limit = -1;
 static gboolean     orbit_use_irda           = FALSE;
 static gboolean     orbit_use_ssl            = FALSE;
 static gboolean     orbit_use_genuid_simple  = FALSE;
+#ifdef G_OS_WIN32
+static gboolean     orbit_local_only         = TRUE;
+#else
 static gboolean     orbit_local_only         = FALSE;
+#endif
 static char        *orbit_net_id             = NULL;
 static gboolean     orbit_use_http_iors      = FALSE;
 static char        *orbit_ipsock             = NULL;
