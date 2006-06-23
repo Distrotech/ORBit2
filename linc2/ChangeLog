@@ -1,3 +1,14 @@
+2006-06-23  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-protocols.c (link_protocol_get_sockinfo_ipv4): In the
+	Win32-only code snippet that verifies looking up the name works,
+	don't bother looking up "localhost", as it will return a hostent
+	containing the host name (and not "localhost"). Using the host
+	name will then cause us to use a real interface anyway and not the
+	loopback interface as the intention was. In the case of
+	"localhost", actually even use the name "127.0.0.1" for extra
+	safety.
+
 2006-06-20  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-compat.c (link_map_winsock_error_to_errno): Keep the

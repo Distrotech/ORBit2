@@ -795,8 +795,10 @@ link_protocol_get_sockinfo_ipv4 (const LinkProtocolInfo  *proto,
 		hname = host->h_name;
 	}
 #ifdef G_OS_WIN32
-	{
-		/* Make sure looking up that name works */
+	/* Make sure looking up that name works */
+	if (strcmp (hname, "localhost") == 0)
+		hname = "127.0.0.1"; /* Don't take any risk */
+	else {
 		char *hname_copy = g_strdup (hname);
 		host = gethostbyname (hname_copy);
 		

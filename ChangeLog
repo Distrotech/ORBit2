@@ -1,3 +1,11 @@
+2006-06-23  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/corba-orb.c: Set orbit_local_only to TRUE on
+	Win32, to go with the use of IPv4 on Win32. We don't want to
+	create world-contactable sockets by default. Note that for
+	orbit_local_only to actually work, a small fix to the linc2 code
+	was also needed, see the ChangeLog over there.
+
 2006-06-20  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/GIOP/giop.c: Remove the giop_thread_list, isn't used for
