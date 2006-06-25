@@ -54,7 +54,7 @@ orbit_idl_output_c_deps (IDL_tree       tree,
 	g_return_if_fail (ci->fh != NULL);
 
 	for (i = 0; i < OUTPUT_NUM_PASSES - 1; i++) {
-		const char *name = orbit_idl_c_filename_for_pass (
+		char *name = orbit_idl_c_filename_for_pass (
 			rinfo->input_filename, 1 << i);
 		fprintf (ci->fh, "%s ", name);
 		g_free (name);
