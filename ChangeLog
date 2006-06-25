@@ -1,3 +1,8 @@
+2006-06-25  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl-compiler/orbit-idl-c-deps.c: (orbit_idl_output_c_deps):
+	Fix compiler warning I introduced with the leak fix.
+
 2006-06-23  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/orb-core/corba-orb.c: Set orbit_local_only to TRUE on
