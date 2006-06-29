@@ -32,3 +32,6 @@ autom4te.cache
 ORBit-imodule-2.0.pc
 stamp-h1
 autom4te*
+depcomp
+gtk-doc.make
+orbit2-zip
