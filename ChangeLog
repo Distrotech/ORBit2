@@ -1,3 +1,9 @@
+2006-07-19  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/orb-core/corba-env.c: (ORBit_handle_exception):
+	Fix null dereference. Found by Coverity in CID #1179.
+	Closes bug #347596.
+
 2006-06-25  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/idl-compiler/orbit-idl-c-deps.c: (orbit_idl_output_c_deps):

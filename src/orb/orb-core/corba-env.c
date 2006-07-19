@@ -235,7 +235,7 @@ ORBit_handle_exception(GIOPRecvBuffer *rb, CORBA_Environment *ev,
 	{
 	  for(i = 0; ex_info[i].tc != CORBA_OBJECT_NIL;
 	      i++)
-	    if(!strcmp(ex_info[i].tc->repo_id,
+	    if(my_repoid && !strcmp(ex_info[i].tc->repo_id,
 		       my_repoid))
 	      break;
 
