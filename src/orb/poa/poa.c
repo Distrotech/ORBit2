@@ -1211,7 +1211,7 @@ ORBit_POAObject_handle_request (ORBit_POAObject    pobj,
 				CORBA_Environment *ev)
 {
 	PortableServer_POA                   poa = pobj->poa;
-	PortableServer_ServantLocator_Cookie cookie;
+	PortableServer_ServantLocator_Cookie cookie = NULL;
 	PortableServer_ObjectId             *oid = NULL;
 	PortableServer_ClassInfo            *klass;
 	ORBit_IMethod                       *m_data = NULL;

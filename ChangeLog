@@ -1,3 +1,8 @@
+2006-07-20  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/poa/poa.c: (ORBit_POAObject_handle_request): Initialize
+	a variable to avoid using it uninitialized later. Coverity #1189.
+
 2006-07-19  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/orb-core/corba-env.c: (ORBit_handle_exception):
