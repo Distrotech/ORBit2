@@ -12,7 +12,10 @@ ORBit2-2.14.1
 		  (Kuang-Chun Cheng)
 		+ Port to GOption (Christian Persch)
 		+ Win32 fixes (Tor Lillqvist)
-
+		+ Emit exception for bad URL in string_to_object
+		  (Frank Rehberger)
+		+ Fix C++ compatibility in generated code (Vladimir Panov)
+ 
 ORBit2-2.14.0
 
 	* bug fixes
