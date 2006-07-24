@@ -249,7 +249,7 @@ cbe_skel_do_interface(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 
   /* registering after other __inits() makes the classids increment nicely. */
   fprintf (ci->fh, "   ORBit_skel_class_register (&class_info,\n");
-  fprintf (ci->fh, "   servant, POA_%s__fini,\n", id);
+  fprintf (ci->fh, "   (PortableServer_ServantBase *)servant, POA_%s__fini,\n", id);
   fprintf (ci->fh, "   ORBIT_VEPV_OFFSET (POA_%s__vepv, %s_epv),\n", id, id);
   ti.for_id = id; ti.ci = ci;
   IDL_tree_traverse_parents_full (tree, (GFunc) cbe_skel_interface_print_vepvmap_offsets, &ti, FALSE);
