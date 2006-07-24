@@ -13,7 +13,8 @@ EXTRA_DIST =		\
 	HACKING		\
 	MAINTAINERS	\
 	README.win32	\
-	Makefile.shared
+	Makefile.shared \
+	gtk-doc.make
 
 rpms: distcheck
 	rpm -ta $(top_builddir)/@PACKAGE@-@VERSION@.tar.gz

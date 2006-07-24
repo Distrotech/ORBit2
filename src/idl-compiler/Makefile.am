@@ -16,7 +16,7 @@ INCLUDES =							\
 
 orbit_idl_2_LDADD =                     \
 	$(ORBIT_IDL_LIBS)		\
-	-lpopt $(LIBM)
+	$(LIBM)
 
 orbit_idl_2_SOURCES =			\
 	orbit-idl-main.c		\
