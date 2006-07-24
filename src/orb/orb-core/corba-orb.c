@@ -579,9 +579,19 @@ CORBA_ORB_string_to_object (CORBA_ORB          orb,
 		    strstr (string, "://")) {
 			/* FIXME: this code is a security hazard */
 			ior = orb_http_resolve (string);
-			if (!ior)
-				return CORBA_OBJECT_NIL;
+			if (!ior) {
+				/* FIXME, set error minor code
+				 * (vendor's error code) to tell user
+				 * initial location of error, ie my
+				 * local ORB, proxy's ORB, server's
+				 * ORB, etc. */
+				CORBA_exception_set_system (
+					ev,
+					ex_CORBA_BAD_PARAM,
+					CORBA_COMPLETED_NO);
 
+				return CORBA_OBJECT_NIL;
+			}
 			string = ior;
 		} else 
 #endif
