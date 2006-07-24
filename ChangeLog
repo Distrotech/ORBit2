@@ -1,3 +1,9 @@
+2006-07-24  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl-compiler/orbit-idl-c-skels.c: (cbe_skel_do_interface):
+	Fix C++ compatibility in generated code. Patch from Vladimir
+	Panov. Closes bug #322473.
+
 2006-07-20  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/poa/poa.c: (ORBit_POAObject_handle_request): Initialize
