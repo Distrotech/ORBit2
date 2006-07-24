@@ -1,3 +1,18 @@
+ORBit2-2.14.1
+
+	* bug fixes
+		+ Cleanups, leak fixes and fixes for reports
+		  from the Coverity checker (Kjartan, Pascal)
+		+ New function ORBit_get_giop_recv_limit().
+		  Clients must be able to retrieve the 
+		  maximum allowed GIOP receive limit. (Jules Colding)
+		+ Bug 323201: marshalling of void retval typecode generated
+		  by "imodule service" crashes. (Gustavo Carneiro)
+		+ emit per interface enum for index of xyz_imethods[].
+		  (Kuang-Chun Cheng)
+		+ Port to GOption (Christian Persch)
+		+ Win32 fixes (Tor Lillqvist)
+
 ORBit2-2.14.0
 
 	* bug fixes
