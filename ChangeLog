@@ -1,3 +1,10 @@
+2006-07-24  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* Makefile.am: Dist gtk-doc.make too.
+	* src/idl-compiler/Makefile.am: Remove popt
+	* src/orb/Makefile.am: Same here. Found by Daniel
+	Holbach.
+
 ======================= ORBit2-2.14.1 ======================
 
 2006-07-24  Kjartan Maraas  <kmaraas@gnome.org>
