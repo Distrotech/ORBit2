@@ -364,11 +364,27 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 		if ((af != AF_INET6) && (af != AF_INET))
 			continue;
 
+		/*
+		 * We set the local_addr port number to the same value as
+		 * in the incoming_addr since the port number does not
+		 * affect testing whether the IP address is local or not.
+		 * On some machines, access() fills in the port value so
+		 * saddr will have a non-zero port value, and calling
+		 * getaddrinfo() on "localhost" will have 0 for the port
+		 * value.  So doing this ensures the test will not fail
+		 * if the port numbers are different.  Note that this code
+		 * is protected by the I/O thread so this is handled
+		 * synchronously, so it is safe to modify the static
+		 * local_addr value.
+		 */
 		if (proto->family == AF_INET) {
 			if (af == AF_INET) {
-				if (!memcmp ((struct sockaddr_in *)result->ai_addr,
-					     (struct sockaddr_in *)saddr,
-					     result->ai_addrlen)) {
+				struct sockaddr_in * localaddr;
+				struct sockaddr_in * incomingaddr;
+				localaddr = (struct sockaddr_in *)result->ai_addr;
+				incomingaddr = (struct sockaddr_in *)saddr;
+				localaddr->sin_port = incomingaddr->sin_port;
+				if (!memcmp (localaddr, incomingaddr, result->ai_addrlen)) {
 #ifdef LOCAL_DEBUG
 					g_warning ("local ipv4 address");
 #endif
@@ -378,9 +394,12 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 		}
 		else {
 			if (af == AF_INET6) {
-				if (!memcmp ((struct sockaddr_in6 *)result->ai_addr,
-					     (struct sockaddr_in6 *)saddr,
-					     result->ai_addrlen)) {
+				struct sockaddr_in6 * localaddr;
+				struct sockaddr_in6 * incomingaddr;
+				localaddr = (struct sockaddr_in6 *)result->ai_addr;
+				incomingaddr = (struct sockaddr_in6 *)saddr;
+				localaddr->sin6_port = incomingaddr->sin6_port;
+				if (!memcmp (localaddr, incomingaddr, result->ai_addrlen)) {
 #ifdef LOCAL_DEBUG
 					g_warning ("local ipv6 address");
 #endif
