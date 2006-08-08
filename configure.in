@@ -332,7 +332,8 @@ dnl
 dnl
 dnl --------- set additional gcc flags to catch errors ---------
 dnl
-CFLAGS="-Werror-implicit-function-declaration -std=gnu89 $CFLAGS"
+AX_CFLAGS_GCC_OPTION(-Werror-implicit-function-declaration)
+AX_CFLAGS_GCC_OPTION(-std=gnu89)
 AC_SUBST(CFLAGS)
 
 

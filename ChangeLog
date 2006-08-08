@@ -1,3 +1,9 @@
+2006-08-07  Jules Colding  <colding@omesc.com>
+
+	* configure.in (CFLAGS): Fix #147556
+
+	* acinclude.m4: Added AX_CFLAGS_GCC_OPTION
+
 2006-07-24  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* Makefile.am: Dist gtk-doc.make too.
