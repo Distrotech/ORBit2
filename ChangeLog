@@ -1,3 +1,13 @@
+2006-08-08  Brian Cameron  <Brian.Cameron@sun.com>
+
+	* linc2/src/linc-protocols.c: Modify ORBLocalOnly test for TCP/IP
+	  connections so that differences in the port number does not cause
+	  the test to fail.  Since the port number does not affect whether
+          the IP address is local, this should make the test work properly
+	  on platforms where the access () function fills in the port value
+	  that is being compared.  On Solaris, this fixes a bug that causes
+	  Java a11y to break, from an end-user perspective.
+
 2006-08-07  Jules Colding  <colding@omesc.com>
 
 	* configure.in (CFLAGS): Fix #147556
