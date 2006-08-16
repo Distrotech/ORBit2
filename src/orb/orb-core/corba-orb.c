@@ -1422,6 +1422,19 @@ ORBit_proto_use (const char *name)
 	return FALSE;
 }
 
+/**
+ * ORBit_get_giop_recv_limit:
+ * 
+ * This function will return the GIOP receive limit. The
+ * GIOP receive limit is the maximum number of bytes that
+ * are allowed be received in any one ingoing GIOP 
+ * communication. This function is essential if an application
+ * is about to receive a big amount of data. Knowing the GIOP 
+ * receive limit will enable the application to poll to data
+ * in chunks that are below the receive limit.
+ *
+ * Since: 2.14.1
+ **/
 glong
 ORBit_get_giop_recv_limit (void)
 {
