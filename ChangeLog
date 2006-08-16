@@ -1,3 +1,8 @@
+2006-08-16  Jules Colding  <colding@omesc.com>
+
+	* src/orb/orb-core/corba-orb.c (ORBit_get_giop_recv_limit): Added
+	gtk-doc documentation.
+
 2006-08-08  Brian Cameron  <Brian.Cameron@sun.com>
 
 	* linc2/src/linc-protocols.c: Modify ORBLocalOnly test for TCP/IP
