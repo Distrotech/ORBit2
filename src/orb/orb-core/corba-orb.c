@@ -1434,7 +1434,7 @@ ORBit_proto_use (const char *name)
  * in chunks that are below the receive limit.
  *
  * Since: 2.14.1
- **/
+ */
 glong
 ORBit_get_giop_recv_limit (void)
 {
