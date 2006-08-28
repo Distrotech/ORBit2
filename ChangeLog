@@ -1,3 +1,8 @@
+2006-08-28  Brian Cameron  <brian.cameron@sun.com>
+
+	* linc2/src/linc-connection.c: Patch to correct problem where
+	  DHCP hostname changes caused login to block.
+
 2006-08-16  Jules Colding  <colding@omesc.com>
 
 	* src/orb/orb-core/corba-orb.c (ORBit_get_giop_recv_limit): Added

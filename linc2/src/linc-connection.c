@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #ifdef LINK_SSL_SUPPORT
 #  include <openssl/ssl.h>
@@ -494,6 +495,27 @@ link_connection_from_fd (LinkConnection         *cnx,
 	CNX_UNLOCK (cnx);
 }
 
+static unsigned long
+get_inet_addr (const char *str)
+{
+        struct hostent *hp;
+        struct in_addr *addr_ptr;
+        unsigned long addr;
+
+        if (isdigit (*str)) {
+                        addr = inet_addr (str);
+                } else {
+                        if ((hp = gethostbyname (str)) != NULL) {
+
+                                addr_ptr = (struct in_addr *) hp->h_addr;
+
+                                addr = inet_addr (inet_ntoa (*addr_ptr));
+                        }
+                }
+
+        return addr;
+}
+
 static gboolean
 link_connection_do_initiate (LinkConnection        *cnx,
 			     const char            *proto_name,
@@ -512,6 +534,21 @@ link_connection_do_initiate (LinkConnection        *cnx,
 
 	if (!proto)
 		return FALSE;
+
+	if (host && (strcmp (proto_name, "IPv4") == 0)) {
+		
+		const char *local_host;
+		local_host = link_get_local_hostname ();
+
+		if (strcmp (host, local_host)) {
+			unsigned long inet_addr_host, inet_addr_local_host;
+			inet_addr_host = get_inet_addr (host);
+			inet_addr_local_host = get_inet_addr (local_host);
+
+			if (inet_addr_host != inet_addr_local_host)
+				return FALSE;
+		}
+	}
 
 	saddr = link_protocol_get_sockaddr (
 		proto, host, service, &saddr_len);
