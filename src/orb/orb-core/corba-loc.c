@@ -11,7 +11,6 @@
 #include "../util/orbit-purify.h"
 
 #include "iop-profiles.h"
-#include "orb-core-private.h"
 
 #define OMG_LOCATOR "2809"
 
