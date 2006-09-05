@@ -1,3 +1,5 @@
+====================== ORBit2-2.14.3 ======================
+
 2006-08-28  Brian Cameron  <brian.cameron@sun.com>
 
 	* linc2/src/linc-connection.c: Patch to correct problem where
@@ -23,6 +25,8 @@
 	* configure.in (CFLAGS): Fix #147556
 
 	* acinclude.m4: Added AX_CFLAGS_GCC_OPTION
+
+====================== ORBit2-2.14.2 =======================
 
 2006-07-24  Kjartan Maraas  <kmaraas@gnome.org>
 

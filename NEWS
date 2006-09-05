@@ -1,3 +1,11 @@
+ORBit2-2.14.2
+
+	* bug fixes
+		+ Don't hang when the hostname changes (Brian)
+		+ Fix problems with a11y on Solaris (Brian)
+		+ Doc improvements (Jules Colding)
+		+ Build fixes (Jules, Kjartan)
+ 
 ORBit2-2.14.1
 
 	* bug fixes

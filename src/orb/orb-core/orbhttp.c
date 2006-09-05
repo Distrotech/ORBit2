@@ -52,7 +52,6 @@
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
 #endif
-#include <string.h>
 
 
 #define CHECK_URI(str) \
