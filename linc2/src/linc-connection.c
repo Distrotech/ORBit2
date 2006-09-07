@@ -535,7 +535,11 @@ link_connection_do_initiate (LinkConnection        *cnx,
 	if (!proto)
 		return FALSE;
 
-	if (host && (strcmp (proto_name, "IPv4") == 0)) {
+	if (host &&
+#ifdef G_OS_WIN32
+	    (strcmp (host, "127.0.0.1") != 0) &&
+#endif
+	    (strcmp (proto_name, "IPv4") == 0)) {
 		
 		const char *local_host;
 		local_host = link_get_local_hostname ();

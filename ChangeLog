@@ -1,3 +1,10 @@
+2006-09-07  Tor Lillqvist  <tml@novell.com>
+
+	* linc2/src/linc-connection.c (link_connection_do_initiate):
+	Workaround for problem introduced on Win32 with Brian's patch
+	below: If host is "127.0.0.1", don't need to check whether it is
+	local.
+
 ====================== ORBit2-2.14.3 ======================
 
 2006-08-28  Brian Cameron  <brian.cameron@sun.com>
