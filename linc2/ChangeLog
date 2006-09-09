@@ -1,3 +1,8 @@
+2006-09-09  Jules Colding  <colding@omesc.com>
+
+	* src/linc-connection.c (link_connection_do_initiate): Remove code
+	that disabled any non-local IPv4 connection.
+
 2006-06-23  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-protocols.c (link_protocol_get_sockinfo_ipv4): In the
