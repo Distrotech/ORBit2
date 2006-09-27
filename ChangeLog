@@ -1,3 +1,11 @@
+2006-09-27  Leena Gunda  <leena.gunda@wipro.com>
+
+	* src/orb/GIOP/giop.c: (scan_socket_dir): Patch to fix
+	the warning message for users with similar prefixes.
+	Fixes bug #152659.
+
+	Patch given by Manjunath Kadajji <manjunath.kadajji@wipro.com>
+
 2006-09-07  Tor Lillqvist  <tml@novell.com>
 
 	* linc2/src/linc-connection.c (link_connection_do_initiate):

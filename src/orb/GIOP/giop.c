@@ -72,9 +72,11 @@ static char *
 scan_socket_dir (const char *dir, const char *prefix)
 {
 	int prefix_len;
+	int len;
 	char *cur_dir = NULL;
 	GDir   *dirh;
 	const char *dent;
+	char *prefix_with_hyphen;
 
 	g_return_val_if_fail (dir != NULL, NULL);
 	g_return_val_if_fail (prefix != NULL, NULL);
@@ -82,12 +84,16 @@ scan_socket_dir (const char *dir, const char *prefix)
 	dirh = g_dir_open (dir, 0, NULL);
 	if (!dirh)
 		return NULL;
-	prefix_len = strlen (prefix);
+
+	prefix_with_hyphen = g_strdup_printf ("%s-", prefix);
+	prefix_len = strlen (prefix_with_hyphen);
 
 	while ((dent = g_dir_read_name (dirh))) {
 		char *name;
+		len = (strlen (dent) > strlen (prefix)) ? strlen (dent) : strlen (prefix);
 
-		if (strncmp (dent, prefix, prefix_len))
+		if (strncmp (dent, prefix, len) && 
+		    strncmp (dent, prefix_with_hyphen, prefix_len))
 			continue;
 
 		name = g_build_filename (dir, dent, NULL);
@@ -107,6 +113,8 @@ scan_socket_dir (const char *dir, const char *prefix)
 			g_free (name);
 	}
 	g_dir_close (dirh);
+
+	g_free (prefix_with_hyphen);
 
 	return cur_dir;
 }
