@@ -8,6 +8,6 @@ orbit_idl=@bindir@/orbit-idl-2@EXEEXT@
 Name: ORBit-2.0
 Description: High-performance CORBA Object Request Broker.
 Version: @ORBIT_VERSION@
-Requires: glib-2.0 gmodule-no-export-2.0 gthread-2.0
+Requires: glib-2.0 gmodule-no-export-2.0 gthread-2.0 gobject-2.0
 Libs: -L${libdir} @MINGW_LDFLAGS@ -lORBit-2 @LIBM@
 Cflags: -I${includedir}/orbit-2.0 -DORBIT2=1
