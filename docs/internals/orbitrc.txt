@@ -70,12 +70,6 @@ implications.
     sockets, so Java a11y could be supported without needing to make ORBit run
     over TCP/IP.
 
-   ORBIIOPSSL (BOOLEAN)
-   ====================
-
-   - Uses OpenSSL.  ORBit is set up to never compile the code to support OpenSSL
-     due to licensing issues.
-
    ORBHTTPIORs (BOOLEAN)
    =====================
 
