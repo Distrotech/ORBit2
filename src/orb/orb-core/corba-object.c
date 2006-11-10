@@ -484,7 +484,7 @@ CORBA_Object_non_existent (CORBA_Object       obj,
  */
 CORBA_boolean
 CORBA_Object_is_equivalent (CORBA_Object       obj,
-			    CORBA_Object       other_object,
+			    const CORBA_Object other_object,
 			    CORBA_Environment *ev)
 {
 	return obj == other_object;
