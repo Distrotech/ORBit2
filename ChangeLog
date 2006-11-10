@@ -1,3 +1,17 @@
+2006-11-10  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/dynamic/dynany.c: (DynamicAny_DynAny_assign),
+	(DynamicAny_DynAny_equal), (DynamicAny_DynAny_seek),
+	(DynamicAny_DynEnum_set_as_ulong),
+	(DynamicAny_DynUnion_set_discriminator),
+	(DynamicAny_DynSequence_set_length):
+	* src/orb/orb-core/corba-object.c: (CORBA_Object_is_equivalent):
+	* src/orb/orb-core/corba-typecode.c: (CORBA_TypeCode_equal),
+	(CORBA_TypeCode_equivalent), (CORBA_TypeCode_member_name),
+	(CORBA_TypeCode_member_type), (CORBA_TypeCode_member_label):
+	Patch from Georg Schwarz to fix lack of constification in ORBit2.
+	Closes bug #171012.
+
 2006-10-30  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* ORBit-2.0.pc.in: Add gobject-2.0 to the Requires line

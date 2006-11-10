@@ -688,7 +688,7 @@ typecode_equiv_internal (CORBA_TypeCode obj,
 
 CORBA_boolean
 CORBA_TypeCode_equal (CORBA_TypeCode obj,
-		      CORBA_TypeCode tc,
+		      const CORBA_TypeCode tc,
 		      CORBA_Environment *ev)
 {
 	return typecode_equiv_internal (obj, tc, TRUE, ev);
@@ -696,7 +696,7 @@ CORBA_TypeCode_equal (CORBA_TypeCode obj,
 
 CORBA_boolean
 CORBA_TypeCode_equivalent (CORBA_TypeCode obj,
-			   CORBA_TypeCode tc,
+			   const CORBA_TypeCode tc,
 			   CORBA_Environment *ev)
 {
 	return typecode_equiv_internal (obj, tc, FALSE, ev);
@@ -786,7 +786,7 @@ CORBA_TypeCode_member_count (CORBA_TypeCode     typecode,
 
 CORBA_Identifier
 CORBA_TypeCode_member_name (CORBA_TypeCode       typecode,
-			    CORBA_unsigned_long  index,
+			    const CORBA_unsigned_long index,
 			    CORBA_Environment   *ev)
 {
 	if (!(typecode->kind == CORBA_tk_struct ||
@@ -812,7 +812,7 @@ CORBA_TypeCode_member_name (CORBA_TypeCode       typecode,
 
 CORBA_TypeCode
 CORBA_TypeCode_member_type (CORBA_TypeCode       typecode,
-			    CORBA_unsigned_long  index,
+			    const CORBA_unsigned_long index,
 			    CORBA_Environment   *ev)
 {
 	if (!(typecode->kind == CORBA_tk_struct ||
@@ -838,7 +838,7 @@ CORBA_TypeCode_member_type (CORBA_TypeCode       typecode,
 
 CORBA_any *
 CORBA_TypeCode_member_label (CORBA_TypeCode       typecode,
-			     CORBA_unsigned_long  index,
+			     const CORBA_unsigned_long index,
 			     CORBA_Environment   *ev)
 {
 	CORBA_any *retval;

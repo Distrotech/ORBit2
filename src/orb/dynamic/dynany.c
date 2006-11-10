@@ -703,7 +703,7 @@ DynamicAny_DynAny_type (DynamicAny_DynAny obj, CORBA_Environment *ev)
 
 void
 DynamicAny_DynAny_assign (DynamicAny_DynAny dest,
-		     DynamicAny_DynAny src,
+		     const DynamicAny_DynAny src,
 		     CORBA_Environment *ev)
 {
 	DynAny *dynany_src;
@@ -782,7 +782,7 @@ DynamicAny_DynAny_to_any (DynamicAny_DynAny obj,
 
 CORBA_boolean
 DynamicAny_DynAny_equal (DynamicAny_DynAny obj_a,
-			 DynamicAny_DynAny obj_b,
+			 const DynamicAny_DynAny obj_b,
 			 CORBA_Environment *ev)
 {
 	DynAny *dynanya;
@@ -883,7 +883,7 @@ DynamicAny_DynAny_insert_any (DynamicAny_DynAny  obj,
 										\
 void										\
 DynamicAny_DynAny_insert_##apiname (DynamicAny_DynAny       obj,		\
-			       CORBA_##ctype      value,			\
+			       const CORBA_##ctype      value,			\
 			       CORBA_Environment *ev)				\
 {										\
 	DynAny  *dynany;							\
@@ -970,7 +970,7 @@ MAKE_DYNANY_GET (unsigned_long_long,  TC_CORBA_unsigned_long_long, ulonglong)
 /* 9.2.3.9 */
 
 CORBA_boolean
-DynamicAny_DynAny_seek (DynamicAny_DynAny obj, CORBA_long index, CORBA_Environment *ev)
+DynamicAny_DynAny_seek (DynamicAny_DynAny obj, const CORBA_long index, CORBA_Environment *ev)
 {
 	DynAny *dynany;
 	CORBA_any *any;
@@ -1281,7 +1281,7 @@ DynamicAny_DynEnum_get_as_ulong (DynamicAny_DynEnum obj,
 
 void
 DynamicAny_DynEnum_set_as_ulong (DynamicAny_DynEnum obj,
-			    CORBA_unsigned_long value_as_ulong,
+			    const CORBA_unsigned_long value_as_ulong,
 			    CORBA_Environment *ev)
 {
 	DynAny *dynany;
@@ -1605,7 +1605,7 @@ DynamicAny_DynUnion_get_discriminator (DynamicAny_DynUnion obj,
 
 void
 DynamicAny_DynUnion_set_discriminator (DynamicAny_DynUnion obj,
-				  DynamicAny_DynAny   d,
+				  const DynamicAny_DynAny d,
 				  CORBA_Environment *ev)
 {
 	g_assert (!"Not yet implemented");
@@ -1967,7 +1967,7 @@ DynamicAny_DynSequence_get_length (DynamicAny_DynSequence  obj,
 
 void
 DynamicAny_DynSequence_set_length (DynamicAny_DynSequence   obj,
-				   CORBA_unsigned_long length,
+				   const CORBA_unsigned_long length,
 				   CORBA_Environment  *ev)
 {
 	DynAny *dynany;
