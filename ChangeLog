@@ -1,5 +1,10 @@
 2006-11-10  Kjartan Maraas  <kmaraas@gnome.org>
 
+	* ORBit-2.0.pc.in: move gmodules-no-export-2.0 to Requires-private.
+	Reported by Samuel Thibault. Closes bug #352198.
+
+2006-11-10  Kjartan Maraas  <kmaraas@gnome.org>
+
 	* src/orb/dynamic/dynany.c: (DynamicAny_DynAny_assign),
 	(DynamicAny_DynAny_equal), (DynamicAny_DynAny_seek),
 	(DynamicAny_DynEnum_set_as_ulong),
