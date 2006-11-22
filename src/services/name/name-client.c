@@ -245,7 +245,7 @@ main (int argc, char *argv[])
   CORBA_ORB orb;
   CORBA_Environment ev;
 
-  guchar objref_str[2048];
+  gchar objref_str[2048];
   CORBA_Object object = CORBA_OBJECT_NIL, outobject = CORBA_OBJECT_NIL;
 
   int i;
@@ -290,7 +290,7 @@ main (int argc, char *argv[])
 
   if (strcmp (argv[1], "--gnome") == 0)
     {
-      guchar principal_str[2048];
+      gchar principal_str[2048];
 #if 0
       CORBA_Principal request_cookie;
 #endif
