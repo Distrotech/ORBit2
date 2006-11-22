@@ -12,7 +12,6 @@ INCLUDES =                         \
 	-I$(top_builddir)/linc2/include  \
 	-I$(top_srcdir)/linc2/include    \
 	$(LINC_CFLAGS)             \
-	$(SSL_CFLAGS)              \
 	$(WARN_CFLAGS)             \
 	-DG_DISABLE_DEPRECATED	   \
 	-D_GNU_SOURCE
@@ -30,7 +29,6 @@ liblinc_la_SOURCES =		\
 
 liblinc_la_LDFLAGS =                 \
 	$(LINC_LIBS)                 \
-	$(SSL_LIBS)                  \
 	-version-info $(LT_VERSION)  \
 	-no-undefined
 
