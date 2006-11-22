@@ -1,3 +1,8 @@
+2006-11-22  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/services/name/name-client.c: (main): Fix some signedness
+	compiler warnings.
+
 2006-11-10  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* ORBit-2.0.pc.in: move gmodules-no-export-2.0 to Requires-private.
