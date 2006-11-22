@@ -1,5 +1,12 @@
 2006-11-22  Kjartan Maraas  <kmaraas@gnome.org>
 
+	* ORBit-2.0.pc.in: Move MINGW_CFLAGS and LIBM to Libs.private
+	Sebastian Rittau.
+	* configure.in: Use PKG_PROG_PKG_CONFIG instead of manual stuff.
+	suggested by dmacks at netspace org. Closes bug #345729.
+
+2006-11-22  Kjartan Maraas  <kmaraas@gnome.org>
+
 	* src/services/name/name-client.c: (main): Fix some signedness
 	compiler warnings.
 

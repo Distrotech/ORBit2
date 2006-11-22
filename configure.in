@@ -119,21 +119,7 @@ AC_SUBST(GLIB_REQUIRED)
 AC_SUBST(LIBIDL_REQUIRED)
 
 dnl Check for pkg-config version; want >= 0.14.0 because of -pthread bug
-AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-if test "$PKG_CONFIG" = "no" ; then
-  echo "*** The pkg-config script could not be found. Make sure it is"
-  echo "*** in your path, or set the PKG_CONFIG environment variable"
-  echo "*** to the full path to pkg-config."
-  echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
-  AC_MSG_ERROR(You need to install pkg-config or set the PKG_CONFIG environment variable to build ORBit2)
-fi
-xPKG_CONFIG_MIN_VERSION=0.14.0
-AC_MSG_CHECKING([for pkg-config >= $xPKG_CONFIG_MIN_VERSION])
-if $PKG_CONFIG --atleast-pkgconfig-version $xPKG_CONFIG_MIN_VERSION; then
-  AC_MSG_RESULT(found)
-else
-  AC_MSG_ERROR(You need at least version $xPKG_CONFIG_MIN_VERSION of pkg-config)
-fi
+PKG_PROG_PKG_CONFIG([0.18])
 
 LOCAL_LINC_LIBS='$(top_builddir)/linc2/src/liblinc.la'
 LOCAL_LINC_CFLAGS='-I$(top_srcdir)/linc2/include -I$(top_builddir)/linc2/include'
