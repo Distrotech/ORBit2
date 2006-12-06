@@ -61,7 +61,7 @@ static char        *orbit_debug_options      = NULL;
 static char        *orbit_naming_ref         = NULL;
 static GSList      *orbit_initref_list       = NULL; 
 static gboolean     orbit_use_corbaloc       = FALSE;
-
+static gint         orbit_timeout_limit      = -1;
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
 {
@@ -417,8 +417,8 @@ CORBA_ORB_init (int *argc, char **argv,
 	}
 #endif /* G_ENABLE_DEBUG */
 
-
 	giop_recv_set_limit (orbit_initial_recv_limit);
+	giop_recv_set_timeout (orbit_timeout_limit);
 	giop_init (thread_safe,
 		   orbit_use_ipv4 || orbit_use_ipv6 ||
 		   orbit_use_irda || orbit_use_ssl);
@@ -1467,6 +1467,7 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBDebugFlags",      ORBIT_OPTION_STRING,  &orbit_debug_options },
 	{ "ORBInitRef",         ORBIT_OPTION_KEY_VALUE,  &orbit_initref_list},
 	{ "ORBCorbaloc",        ORBIT_OPTION_BOOLEAN, &orbit_use_corbaloc},
+	{ "GIOPTimeoutLimit",   ORBIT_OPTION_INT,     &orbit_timeout_limit },
 	{ NULL,                 0,                    NULL },
 };
 

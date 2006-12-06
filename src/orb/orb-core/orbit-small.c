@@ -591,6 +591,7 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	GIOPRecvBuffer         *recv_buffer = NULL;
 	CORBA_Object            xt_proxy = CORBA_OBJECT_NIL;
 	ORBitPolicy            *invoke_policy = CORBA_OBJECT_NIL;
+	gboolean                timeout = FALSE;
 
 	if (!obj) {
 		dprintf (MESSAGES, "Cannot invoke method on null object\n");
@@ -654,7 +655,9 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 		goto clean_out;
 	}
 
-	recv_buffer = giop_recv_buffer_get (&mqe);
+	recv_buffer = giop_recv_buffer_get (&mqe, &timeout);
+	if (timeout)
+		goto timeout_exception;
 
 	switch (orbit_small_demarshal (obj, &cnx, recv_buffer, ev,
 				       ret, m_data, args))
@@ -698,6 +701,12 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	tprintf ("[System exception comm failure] )");
 	CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 				    completion_status);
+	goto clean_out;
+
+ timeout_exception:
+	tprintf ("[System exception timeout] )");
+	CORBA_exception_set_system (ev, ex_CORBA_TIMEOUT,
+				    CORBA_COMPLETED_NO);
 	goto clean_out;
 }
 

@@ -35,7 +35,9 @@ struct _GIOPThread {
 					gpointer dummy);
 };
 
-#define GIOP_INITIAL_MSG_SIZE_LIMIT 256*1024
+#define GIOP_INITIAL_TIMEOUT_LIMIT (30000000) /* 30 seconds */
+
+#define GIOP_INITIAL_MSG_SIZE_LIMIT (256*1024) /* in bytes */
 
 typedef enum {
 	GIOP_CONNECTION_SSL

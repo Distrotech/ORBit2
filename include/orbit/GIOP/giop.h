@@ -23,6 +23,7 @@ gboolean    giop_thread_safe       (void);
 gboolean    giop_thread_io         (void);
 GIOPThread *giop_thread_self       (void);
 void        giop_invoke_async      (GIOPMessageQueueEntry *ent);
+void        giop_recv_set_timeout  (const glong timeout);
 void        giop_recv_set_limit    (glong limit);
 glong       giop_recv_get_limit    (void);
 void        giop_incoming_signal_T (GIOPThread *tdata, GIOPMsgType t);
@@ -45,6 +46,7 @@ void        giop_thread_new_check        (GIOPThread *opt_self);
 void        giop_thread_queue_process    (GIOPThread *tdata);
 gboolean    giop_thread_queue_empty_T    (GIOPThread *tdata);
 void        giop_thread_queue_tail_wakeup(GIOPThread *tdata);
+
 
 #endif /* ORBIT2_INTERNAL_API */
 

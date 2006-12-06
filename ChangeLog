@@ -1,3 +1,95 @@
+2006-12-05  Jules Colding  <colding@omesc.com>
+
+	* ORBit2: The previous two ChangeLog entries are hiding a lot of 
+	details which I'll hereby try to expand upon. 
+
+	The rationale for these changes is that any and all occurrences of 
+	g_cond_wait() in ORBit2 has the potential to block forever if it 
+	waits for a connection attempt to complete if said connection 
+	attempt is made towards a remote server which happens to be 
+	physically disconnected or powered off. 
+
+	This blocking behavior can be demonstrated by invoking an operation 
+	on a remote object that is physically inaccessible such as when
+	the remote server is powered down or physically disconnected.
+
+	Pseudo code:
+	
+	{
+	    CORBA_ORB orb = get_orb();
+	    char *objref = get_corbaloc_str();
+	    CORBA_Object obj = CORBA_OBJECT_NIL;
+	    CORBA_Environment ev[1];
+	
+	    CORBA_exception_init(ev);
+	    obj = CORBA_ORB_string_to_object(orb, objref, ev);
+
+	    FOO_INTERFACE_method(obj, <arguments>, ev); 
+	}
+
+	The last statement above will block forever in g_cond_wait() while
+	waiting for the recieve buffer to be ready if the remote server is, 
+	say, powered down. An exception is on the other hand immediately 
+	thrown if the server object is merely gone.
+
+	The changes to the code therefore boils down to the implementation 
+	of the ex_CORBA_TIMEOUT system exception being thrown if 
+	g_cond_timed_wait() times out. Most occurrences of g_cond_wait() 
+	has been replaced by g_cond_timed_wait(). 
+
+	The only remaining instance of g_cond_wait() is found in 
+	link_exec_command(). I haven't observed any problems with 
+	link_exec_command() so I've not touched that code.
+
+	The affected code is:
+
+	1) A new ORB command line option: GIOPTimeoutLimit - timeout limit 
+	in microseconds. Defaults to 30 seconds.
+
+	2) giop_recv_buffer_get(). This one is obvious. We do not want to 
+	wait indefinitely for data to be received from a downed host. The 
+	waiting interval is configurable with the new GIOPTimeoutLimit ORB 
+	option.
+
+	3) Any code invoking link_wait():
+
+	   a) link_connection_wait_connected_T()
+	   b) link_connection_try_reconnect()
+	   c) giop_connection_try_reconnect(), calls link_connection_try_reconnect()
+	   d) ORBit_try_connection_T(), calls giop_connection_try_reconnect()
+	   e) ORBit_object_get_connection(), calls ORBit_try_connection_T()
+
+	4) The waiting time in link_wait() is set at compile time to 
+	LINK_WAIT_TIMEOUT_USEC which is presently 10 seconds.
+
+	5) link_wait() has been modified to return a gboolean. FALSE if the
+	timeout expired, TRUE otherwise.
+
+	6) link_connection_wait_connected_T() and link_connection_try_reconnect() 
+	will both disconnect the connection if link_wait() experienced a timeout.
+
+2006-12-04  Jules Colding  <colding@omesc.com>
+
+	* configure.in: Added autoconf 2.60+ required datarootdir variable
+
+2006-12-03  Jules Colding  <colding@omesc.com>
+
+	* include/orbit/GIOP/giop.h: Declare giop_recv_set_timeout().
+
+	* src/orb/orb-core/corba-orb.c (CORBA_ORB_init): Set GIOP timeout 
+	limit from the ORB option.
+	Added new ORB option - GIOPTimeoutLimit.
+
+	* src/orb/orb-core/orbit-small.c (ORBit_small_invoke_stub): Throw a 
+	TIMEOUT exception if a reply hasn't been recieved within the GIOP
+	timeout limit.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get): Replaced 
+	a g_cond_wait() with a g_cond_timed_wait(). The original g_cond_wait()
+	could potentially block forever if a remote server was physically
+	offline.
+	(giop_recv_set_timeout): Function to adjust the GIOP timeout limit.
+
 2006-11-22  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* ORBit-2.0.pc.in: Move MINGW_CFLAGS and LIBM to Libs.private

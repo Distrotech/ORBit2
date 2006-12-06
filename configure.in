@@ -37,6 +37,9 @@ AM_CONFIG_HEADER(config.h)
 dnl Initialize automake stuff
 AM_INIT_AUTOMAKE(ORBit2, $ORBIT_VERSION, no-define)
 
+dnl Required by autoconf 2.60
+AC_SUBST(datarootdir)
+
 AC_CANONICAL_HOST
 AC_MSG_CHECKING([for Win32])
 case "$host" in
