@@ -52,6 +52,9 @@ SSL_METHOD *link_ssl_method;
 SSL_CTX    *link_ssl_ctx;
 #endif
 
+/* max time to wait for the link condition to get signaled - 10 seconds */
+#define LINK_WAIT_TIMEOUT_USEC (10000000) 
+
 static void link_dispatch_command (gpointer data, gboolean immediate);
 
 gboolean
@@ -534,17 +537,28 @@ link_signal (void)
 	}
 }
 
-void
+gboolean
 link_wait (void)
 {
+	GTimeVal gtime;
+
 	if (!(link_is_thread_safe && link_is_io_in_thread)) {
 		link_unlock ();
 		link_main_iteration (TRUE);
 		link_lock ();
 	} else {
 		g_assert (link_main_cond != NULL);
-		g_cond_wait (link_main_cond, link_main_lock);
+
+		g_get_current_time (&gtime);
+		g_time_val_add (&gtime, LINK_WAIT_TIMEOUT_USEC);
+		if (!g_cond_timed_wait (link_main_cond, link_main_lock, &gtime)) {
+			if (link_is_locked ())
+				link_unlock ();
+			return FALSE;
+		}
 	}
+
+	return TRUE;
 }
 
 

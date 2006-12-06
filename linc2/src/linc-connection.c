@@ -635,8 +635,10 @@ link_connection_do_initiate (LinkConnection        *cnx,
 static LinkConnectionStatus
 link_connection_wait_connected_T (LinkConnection *cnx)
 {
-	while (cnx && cnx->status == LINK_CONNECTING)
-		link_wait ();
+	while (cnx && cnx->status == LINK_CONNECTING) {
+		if (!link_wait ())
+			link_connection_disconnect (cnx);
+	}
 
 	return cnx ? cnx->status : LINK_DISCONNECTED;
 }
@@ -659,8 +661,12 @@ link_connection_try_reconnect (LinkConnection *cnx)
 			cnx->inhibit_reconnect = FALSE;
 			dispatch_callbacks_drop_lock (cnx);
 			g_main_context_release (NULL);
-		} else 
-			link_wait ();
+		} else {
+			if (!link_wait ()) {
+				link_connection_disconnect (cnx);
+				break;
+			}
+		}
 	}
 
 	if (cnx->status != LINK_DISCONNECTED)

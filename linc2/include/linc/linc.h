@@ -33,7 +33,7 @@ GMainLoop *link_main_get_loop    (void);
 guint      link_main_idle_add    (GSourceFunc function,
 				  gpointer    data);
 
-void       link_wait             (void);
+gboolean   link_wait             (void);
 void       link_signal           (void);
 
 gboolean   link_thread_io        (void);

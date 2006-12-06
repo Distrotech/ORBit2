@@ -690,10 +690,21 @@ check_got (GIOPMessageQueueEntry *ent)
 		(ent->cnx->parent.status == LINK_DISCONNECTED));
 }
 
+static glong giop_initial_timeout_limit = GIOP_INITIAL_TIMEOUT_LIMIT;
+
+void
+giop_recv_set_timeout (const glong timeout)
+{
+	if (0 < timeout) /* We really do not want (timeout <= 0) as that would potentially block forever */
+		giop_initial_timeout_limit = timeout;
+}
+
 GIOPRecvBuffer *
-giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
+giop_recv_buffer_get (GIOPMessageQueueEntry *ent,
+		      gboolean *timeout)
 {
 	GIOPThread *tdata = giop_thread_self ();
+	GTimeVal tval;
 
  thread_switch:
 	if (giop_thread_io ()) {
@@ -704,8 +715,17 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent)
 				ent_unlock (ent);
 				giop_thread_queue_process (tdata);
 				ent_lock (ent);
-			} else
-				g_cond_wait (tdata->incoming, tdata->lock);
+			} else {
+				if (0 < giop_initial_timeout_limit) {
+					g_get_current_time (&tval);
+					g_time_val_add (&tval, giop_initial_timeout_limit);
+				}
+				if (!g_cond_timed_wait (tdata->incoming, tdata->lock, ((0 < giop_initial_timeout_limit) ? &tval : NULL))) {
+					*timeout = TRUE;
+					break;
+				} else
+					*timeout = FALSE;
+			}
 		}
 		
 		ent_unlock (ent);
@@ -1352,3 +1372,4 @@ giop_recv_buffer_use_buf (GIOPConnection *cnx)
 
 	return buf;
 }
+

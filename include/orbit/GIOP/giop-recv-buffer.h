@@ -58,7 +58,8 @@ void            giop_recv_list_setup_queue_entry   (GIOPMessageQueueEntry *ent,
 void            giop_recv_list_setup_queue_entry_async (GIOPMessageQueueEntry *ent,
 							GIOPAsyncCallback      cb);
 
-GIOPRecvBuffer *giop_recv_buffer_get               (GIOPMessageQueueEntry *ent);
+GIOPRecvBuffer *giop_recv_buffer_get               (GIOPMessageQueueEntry *ent,
+						    gboolean *timeout);
 void            giop_recv_buffer_unuse             (GIOPRecvBuffer        *buf);
 
 #define giop_recv_buffer_reply_status(buf) (                                            \
