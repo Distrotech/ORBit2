@@ -1,3 +1,9 @@
+2006-12-12  Christian Persch  <chpe@cvs.gnome.org>
+
+	* autogen.sh:
+	* configure.in:
+	Don't use deprecated autoconf macros. Use AM 1.9. Bug #383527.
+
 2006-12-05  Jules Colding  <colding@omesc.com>
 
 	* ORBit2: The previous two ChangeLog entries are hiding a lot of 
