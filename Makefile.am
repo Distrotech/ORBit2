@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = 1.3
-
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 
 SUBDIRS=linc2 src include test docs

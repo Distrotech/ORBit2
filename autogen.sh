@@ -5,7 +5,7 @@ srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
 PKG_NAME="ORBit2"
-REQUIRED_AUTOMAKE_VERSION=1.6
+REQUIRED_AUTOMAKE_VERSION=1.9
 
 test -f $srcdir/ORBit.spec.in || {
     echo -n "**Error**: Directory "\`$srcdir\'" does not look like the"
