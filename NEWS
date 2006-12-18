@@ -1,3 +1,23 @@
+ORBit2-2.14.4
+
+	* bug fixes
+		+ Cleanups and compiler warning fixes (Kjartan)
+		+ Win32 portability fixes (Tor)
+		+ Constification fixes (Georg Schwartz)
+		+ Portability and build fixes (dmacks at netspace org)
+		+ Build fixes, add g_cond_timed_wait and use it instead
+		  of g_cond_wait to avoid blocking indefinitely in some
+		  situations (Jules)
+		+ Build fixes (Christian)
+ORBit2-2.14.3
+
+	* bug fixes
+		+ Fix DHCP hostname changes breaking login. (Brian)
+		+ Modify ORBLocalOnly test for TCP/IP connections so that differences
+		  in the port number does not cause the test to fail. Fixes a11y
+		  breakage on Solaris (Brian)
+	* docs
+		+ Document ORBit_get_giop_recv_limit (Jules)
 ORBit2-2.14.2
 
 	* bug fixes
