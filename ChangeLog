@@ -1,3 +1,12 @@
+2006-12-20  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl-compiler/orbit-idl-c-common.c: (cc_output_iargs),
+	(cc_output_method), (cc_output_base_itypes), (cc_output_itypes):
+	* src/idl-compiler/orbit-idl-c-typecode.c:
+	(orbit_output_tcstruct_name), (orbit_output_tcstruct_repo_id):
+	More constification fixes. Patch from Jody Goldberg. Closes
+	bug #81892.
+
 ======================= ORBit2-2.14.4 ===========================
 
 2006-12-18  Kjartan Maraas  <kmaraas@gnome.org>

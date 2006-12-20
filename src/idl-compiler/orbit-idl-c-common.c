@@ -220,7 +220,7 @@ cc_output_iargs (FILE *of, const char *method, IDL_tree tree)
 		fprintf (of, ", ");
 
 		/* string name */
-		fprintf (of, "\"%s\"", IDL_IDENT (IDL_PARAM_DCL (
+		fprintf (of, "(char *)\"%s\"", IDL_IDENT (IDL_PARAM_DCL (
 			IDL_LIST (sub).data).simple_declarator).str);
 
 		fprintf (of, " }%s\n", IDL_LIST (sub).next ? "," : "");
@@ -349,7 +349,7 @@ cc_output_method (FILE *of, IDL_tree tree, const char *id)
 
 	/* string name, long name_len */
 	method = IDL_IDENT (IDL_OP_DCL (tree).ident).str;
-	fprintf (of, "\"%s\", %d,\n", method, strlen (method));
+	fprintf (of, "(char *)\"%s\", %d,\n", method, strlen (method));
 
 	/* IMethodFlags flags */
 	fprintf (of, "\t\t0");
@@ -380,7 +380,7 @@ cc_output_base_itypes(IDL_tree node, CCSmallInterfaceTraverseInfo *iti)
 	if (iti->cur_node == node)
 		return;
 
-	fprintf (iti->of, "\"%s\",\n",
+	fprintf (iti->of, "(char *)\"%s\",\n",
 		 IDL_IDENT(IDL_INTERFACE(node).ident).repo_id);
 
 	iti->parents++;
@@ -421,7 +421,7 @@ cc_output_itypes (GSList *list, OIDL_C_Info *ci)
 					fprintf(of, ", ");
 			}
 
-			fprintf (of, "};");
+			fprintf (of, "};\n\n");
 		}
 
 		fprintf (of, "static CORBA_string %s__base_itypes[] = {\n", id);
@@ -432,7 +432,7 @@ cc_output_itypes (GSList *list, OIDL_C_Info *ci)
 		iti.parents = 0;
 		IDL_tree_traverse_parents(i->tree, (GFunc)cc_output_base_itypes, &iti);
 
-		fprintf (of, "\"IDL:omg.org/CORBA/Object:1.0\"\n};");
+		fprintf (of, "(char *)\"IDL:omg.org/CORBA/Object:1.0\"\n};");
 
 		fprintf (of, "\n#ifdef ORBIT_IDL_C_IMODULE_%s\n",
 			 ci->c_base_name);

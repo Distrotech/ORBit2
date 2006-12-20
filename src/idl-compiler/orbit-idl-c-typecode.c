@@ -467,27 +467,27 @@ orbit_output_tcstruct_name (FILE *fh, IDL_tree node, int array_gen_ctr)
 {
 	switch (IDL_NODE_TYPE (node)) {
 	case IDLN_TYPE_STRUCT:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_STRUCT (node).ident).str);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_STRUCT (node).ident).str);
 		break;
 	case IDLN_TYPE_UNION:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_UNION (node).ident).str);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_UNION (node).ident).str);
 		break;
 	case IDLN_TYPE_ENUM:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_ENUM (node).ident).str);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_ENUM (node).ident).str);
 		break;
 	case IDLN_INTERFACE:
 	case IDLN_FORWARD_DCL:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_INTERFACE (node).ident).str);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_INTERFACE (node).ident).str);
 		break;
 	case IDLN_EXCEPT_DCL:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_EXCEPT_DCL (node).ident).str);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_EXCEPT_DCL (node).ident).str);
 		break;
 	case IDLN_IDENT:
-		fprintf (fh, "\"%s\"", IDL_IDENT (node).str);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (node).str);
 		break;
 	case IDLN_TYPE_ARRAY:
 		if (!array_gen_ctr)
-			fprintf (fh, "\"%s\"", 
+			fprintf (fh, "(char *)\"%s\"", 
 				 IDL_IDENT (IDL_TYPE_ARRAY (node).ident).str);
 		else
 			fprintf (fh, "NULL");
@@ -503,27 +503,27 @@ orbit_output_tcstruct_repo_id (FILE *fh, IDL_tree node, int array_gen_ctr)
 {
 	switch (IDL_NODE_TYPE (node)) {
 	case IDLN_TYPE_STRUCT:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_STRUCT (node).ident).repo_id);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_STRUCT (node).ident).repo_id);
 		break;
 	case IDLN_TYPE_UNION:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_UNION (node).ident).repo_id);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_UNION (node).ident).repo_id);
 		break;
 	case IDLN_TYPE_ENUM:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_ENUM (node).ident).repo_id);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_ENUM (node).ident).repo_id);
 		break;
 	case IDLN_INTERFACE:
 	case IDLN_FORWARD_DCL:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_INTERFACE (node).ident).repo_id);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_INTERFACE (node).ident).repo_id);
 		break;
 	case IDLN_EXCEPT_DCL:
-		fprintf (fh, "\"%s\"", IDL_IDENT (IDL_EXCEPT_DCL (node).ident).repo_id);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_EXCEPT_DCL (node).ident).repo_id);
 		break;
 	case IDLN_IDENT:
-		fprintf (fh, "\"%s\"", IDL_IDENT (node).repo_id);
+		fprintf (fh, "(char *)\"%s\"", IDL_IDENT (node).repo_id);
 		break;
 	case IDLN_TYPE_ARRAY:
 		if (!array_gen_ctr)
-			fprintf (fh, "\"%s\"", IDL_IDENT (IDL_TYPE_ARRAY (node).ident).repo_id);
+			fprintf (fh, "(char *)\"%s\"", IDL_IDENT (IDL_TYPE_ARRAY (node).ident).repo_id);
 		else
 			fprintf (fh, "NULL");
 		break;
