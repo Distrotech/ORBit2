@@ -1,9 +1,0 @@
-Makefile
-Makefile.in
-.deps
-.libs
-*-common.c
-*.la
-*.lo
-dynamic-defs.h
-*-imodule.c
