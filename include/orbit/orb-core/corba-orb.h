@@ -12,8 +12,6 @@ CORBA_ORB CORBA_ORB_init (int                *argc,
 			  CORBA_ORBid         orb_identifier,
 			  CORBA_Environment  *ev);
 
-#ifdef ORBIT2_EXTENSIONS
-
 /* Will return TRUE if the named protocol is supported by 
  * the ORB. Currently supported values of "name" are:
  *
@@ -33,8 +31,6 @@ gboolean  ORBit_proto_use (const char *name);
  * are bound by the type chosen internally by linc2.
  */
 glong ORBit_get_giop_recv_limit (void);
-
-#endif /* ORBIT2_EXTENSIONS */
 
 #ifdef ORBIT2_INTERNAL_API
 

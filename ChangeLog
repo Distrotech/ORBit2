@@ -1,3 +1,10 @@
+2007-01-02  Rodrigo Moya <rodrigo@novell.com>
+
+	Fixes #328701
+
+	* include/orbit/orb-core/corba-orb.h: removed #ifdef ORBIT2_EXTENSIONS
+	guard.
+
 2006-12-20  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/idl-compiler/orbit-idl-c-common.c: (cc_output_iargs),
