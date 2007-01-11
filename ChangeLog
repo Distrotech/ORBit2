@@ -1,3 +1,8 @@
+2007-01-11  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl/interop/conv_frame.new.idl:
+	Nuke this file since hasn't been distributed since the dawn of time.
+
 2007-01-09  Tor Lillqvist  <tml@novell.com>
 
 	* src/idl/interop/CONV_FRAME.idl
