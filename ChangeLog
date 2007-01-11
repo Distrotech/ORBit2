@@ -1,5 +1,10 @@
 2007-01-11  Kjartan Maraas  <kmaraas@gnome.org>
 
+	* configure.in: Remove -std=gnu89 from the compiler flags since it
+	breaks on some compilers. Closes bug #393329.
+
+2007-01-11  Kjartan Maraas  <kmaraas@gnome.org>
+
 	* src/idl/interop/conv_frame.new.idl:
 	Nuke this file since hasn't been distributed since the dawn of time.
 
