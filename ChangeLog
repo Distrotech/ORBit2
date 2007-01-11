@@ -1,3 +1,14 @@
+2007-01-09  Tor Lillqvist  <tml@novell.com>
+
+	* src/idl/interop/CONV_FRAME.idl
+	* src/idl/interop/conv_frame.new.idl: Rename CONV_FRAME.idl to
+	conv_frame.new.idl. File names that differ only in case prevent
+	checking out from SVN on Windows. (In CVS there was just a
+	warning.) The CONV_FRAME.idl file wasn't used anywhere else, so
+	this should be safe. (conv_frame.idl, on the other hand, is
+	included from src/orb/orb-core/iop-defs.idl.) Actually, is this
+	file needed at all? It isn't even distriubted.
+
 2007-01-02  Rodrigo Moya <rodrigo@novell.com>
 
 	Fixes #328701
