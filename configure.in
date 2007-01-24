@@ -333,8 +333,11 @@ AC_CONFIG_FILES([
 Makefile
 orbit2-config
 ORBit-2.0.pc
+ORBit-2.0-uninstalled.pc
 ORBit-CosNaming-2.0.pc
+ORBit-CosNaming-2.0-uninstalled.pc
 ORBit-imodule-2.0.pc
+ORBit-imodule-2.0-uninstalled.pc
 ORBit.spec
 orbit2-zip
 src/Makefile
