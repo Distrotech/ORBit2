@@ -1,3 +1,9 @@
+2007-01-24  Brian Cameron  <Brian.Cameron@sun.com>
+
+	* configure.in, ORBit-2.0-uninstalled.pc.in,
+	  ORBit-CosNaming-2.0-uninstalled.pc.in,
+	  ORBit-imodule-2.0-uninstalled.pc.in:  Add uninstalled.pc files.
+
 ======================= ORBit2-2.14.5 ==========================
 
 2007-01-11  Kjartan Maraas  <kmaraas@gnome.org>
