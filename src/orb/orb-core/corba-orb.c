@@ -1323,6 +1323,7 @@ CORBA_ORB_destroy (CORBA_ORB          orb,
 
 	/* destroy the forward bind hashtable*/
 	g_hash_table_destroy (orb->forw_binds);
+	orb->forw_binds = NULL;
 	
 	orb->life_flags |= ORBit_LifeF_Destroyed;
 

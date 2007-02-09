@@ -1,3 +1,8 @@
+2007-02-09  Sebastien Bacher  <seb128@ubuntu.com>
+
+	* src/orb/orb-core/corba-orb.c: (CORBA_ORB_destroy):
+	  - explicitly set variable for better debugging, patch by Kees Cook 
+
 2007-01-24  Brian Cameron  <Brian.Cameron@sun.com>
 
 	* configure.in, ORBit-2.0-uninstalled.pc.in,
