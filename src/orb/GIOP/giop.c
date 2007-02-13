@@ -307,7 +307,8 @@ static void
 giop_thread_key_add_T (GIOPThread *tdata, gpointer key)
 {
 	/* We don't allow a key to be reused */
-	g_assert (g_hash_table_lookup (giop_pool_hash, key) == NULL);
+	gpointer reused = g_hash_table_lookup (giop_pool_hash, key);
+	g_assert (!reused);
   
 	tdata->keys = g_list_prepend (tdata->keys, key);
 	

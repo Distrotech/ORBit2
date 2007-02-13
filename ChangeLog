@@ -1,3 +1,10 @@
+2007-02-14  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/GIOP/giop.c: (giop_thread_key_add_T):
+	* src/orb/poa/orbit-adaptor.c: (ORBit_forw_bind_find):
+	Split up some asserts to make debugging a bit easier.
+	Related to bug #378454.
+
 ======================= ORBit2-2.14.6 ==========================
 
 2007-02-09  Sebastien Bacher  <seb128@ubuntu.com>

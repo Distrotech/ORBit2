@@ -194,8 +194,10 @@ ORBit_forw_bind_find (CORBA_ORB orb, ORBit_ObjectKey *objkey)
 		if (object) {
 			typeid = g_quark_to_string (object->type_qid);
 			if (!typeid) {
-				g_assert(g_hash_table_remove(orb->forw_binds,
-							     objectId));
+				gpointer removed;
+				removed = g_hash_table_remove (orb->forw_binds,
+							       objectId);
+				g_assert (removed);
 				object = NULL;
 			}
 		}
