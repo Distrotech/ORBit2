@@ -1,3 +1,7 @@
+2007-02-20  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* MAINTAINERS: Add myself here.
+
 2007-02-14  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/GIOP/giop.c: (giop_thread_key_add_T):
