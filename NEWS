@@ -1,3 +1,9 @@
+ORBit2-2.14.7
+
+	* bug fixes
+		+ Split up some asserts to ease debugging
+		+ Dist MAINTAINERS
+
 ORBit2-2.14.6
 
 	* bug fixes
