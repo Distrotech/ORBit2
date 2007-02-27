@@ -1469,7 +1469,7 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBInitRef",         ORBIT_OPTION_KEY_VALUE,  &orbit_initref_list},
 	{ "ORBCorbaloc",        ORBIT_OPTION_BOOLEAN, &orbit_use_corbaloc},
 	{ "GIOPTimeoutLimit",   ORBIT_OPTION_INT,     &orbit_timeout_limit },
-	{ NULL,                 0,                    NULL },
+	{ NULL,                 0,                    NULL }
 };
 
 #ifdef G_OS_WIN32

@@ -1319,7 +1319,7 @@ link_connection_get_type (void)
 			NULL,           /* class_data */
 			sizeof (LinkConnection),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) link_connection_init,
+			(GInstanceInitFunc) link_connection_init
 		};
       
 		object_type = g_type_register_static (G_TYPE_OBJECT,

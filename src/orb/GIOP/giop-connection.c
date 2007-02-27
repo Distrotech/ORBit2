@@ -153,7 +153,7 @@ giop_connection_get_type (void)
 			NULL,           /* class_data */
 			sizeof (GIOPConnection),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) giop_connection_init,
+			(GInstanceInitFunc) giop_connection_init
 		};
       
 		object_type = g_type_register_static (

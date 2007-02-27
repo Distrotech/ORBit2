@@ -145,7 +145,7 @@ test_get_broken_cnx_type (void)
 			NULL,           /* class_data */
 			sizeof (LinkConnection),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) NULL,
+			(GInstanceInitFunc) NULL
 		};
       
 		object_type = g_type_register_static (
@@ -290,7 +290,7 @@ test_get_blocking_cnx_type (void)
 			NULL,           /* class_data */
 			sizeof (LinkConnection),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) NULL,
+			(GInstanceInitFunc) NULL
 		};
       
 		object_type = g_type_register_static (

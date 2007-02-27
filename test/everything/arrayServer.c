@@ -188,7 +188,7 @@ POA_test_ArrayServer__epv ArrayServer_epv = {
   ArrayServer_opOctetArray,
   ArrayServer_opFixedLengthStructArray,
   ArrayServer_opStrArray,
-  ArrayServer_opAlignHoleStructArray,
+  ArrayServer_opAlignHoleStructArray
 };
 
 PortableServer_ServantBase__epv ArrayServer_base_epv = {NULL, simple_finalize, NULL};

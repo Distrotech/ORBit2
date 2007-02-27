@@ -176,7 +176,7 @@ POA_test_UnionServer__epv UnionServer_epv = {
 	UnionServer_opFixed,
 	UnionServer_opVariable,
 	UnionServer_opMisc,
-	UnionServer_opFixedLengthUnionArray,
+	UnionServer_opFixedLengthUnionArray
 };
 
 POA_test_UnionServer__vepv UnionServer_vepv = {&UnionServer_base_epv, &UnionServer_epv};

@@ -262,7 +262,7 @@ POA_test_BasicServer__epv BasicServer_epv = {
 	BasicServer_testLargeStringSeq,
 	BasicServer_getObjectCount,
 	BasicServer_getObject,
-	BasicServer_testBoolString,
+	BasicServer_testBoolString
 };
 
 PortableServer_ServantBase__epv BasicServer_base_epv = {NULL, simple_finalize, NULL};

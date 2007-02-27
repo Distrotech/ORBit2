@@ -160,7 +160,7 @@ POA_test_SequenceServer__epv SequenceServer_epv = {
 	SequenceServer_opStrSeq,
 	SequenceServer_opBoundedStructSeq,
 	SequenceServer_opMassiveSeq,
-	SequenceServer_opAnySeq,
+	SequenceServer_opAnySeq
 };
 
 PortableServer_ServantBase__epv SequenceServer_base_epv = {NULL, simple_finalize, NULL};

@@ -54,7 +54,7 @@ static POA_Test__epv impl_Test_epv = {
 
 static POA_Test__vepv impl_Test_vepv = {
    &impl_Test_base_epv,
-   &impl_Test_epv,
+   &impl_Test_epv
 };
 
 /*** Stub implementations ***/

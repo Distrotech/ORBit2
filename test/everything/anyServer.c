@@ -203,7 +203,7 @@ POA_test_AnyServer__epv AnyServer_epv = {
 	AnyServer_opAnyLong,
 	AnyServer_opAnyString,
 	AnyServer_opAnyStruct,
-	AnyServer_opTypeCode,
+	AnyServer_opTypeCode
 };
 
 PortableServer_ServantBase__epv AnyServer_base_epv = {NULL, simple_finalize, NULL};

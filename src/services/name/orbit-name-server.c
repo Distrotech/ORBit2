@@ -702,7 +702,7 @@ static POA_CosNaming_BindingIterator__epv impl_BindingIterator_epv = {
   NULL,				/* _private */
   (gpointer) & impl_BindingIterator_next_one,
   (gpointer) & impl_BindingIterator_next_n,
-  (gpointer) & impl_BindingIterator_destroy,
+  (gpointer) & impl_BindingIterator_destroy
 };
 
 static POA_CosNaming_NamingContextExt__epv impl_NamingContextExt_epv = {
@@ -710,14 +710,14 @@ static POA_CosNaming_NamingContextExt__epv impl_NamingContextExt_epv = {
   (gpointer) & impl_NamingContextExt_to_string,
   (gpointer) & impl_NamingContextExt_to_name,
   (gpointer) & impl_NamingContextExt_to_url,
-  (gpointer) & impl_NamingContextExt_resolve_str,
+  (gpointer) & impl_NamingContextExt_resolve_str
 };
 
 /*** vepv structures ***/
 
 static POA_CosNaming_BindingIterator__vepv impl_BindingIterator_vepv = {
   &impl_BindingIterator_base_epv,
-  &impl_BindingIterator_epv,
+  &impl_BindingIterator_epv
 };
 
 static CosNaming_BindingIterator
@@ -795,13 +795,13 @@ static POA_CosNaming_NamingContext__epv impl_NamingContext_epv = {
   (gpointer) & impl_NamingContext_new_context,
   (gpointer) & impl_NamingContext_bind_new_context,
   (gpointer) & impl_NamingContext_destroy,
-  (gpointer) & impl_NamingContext_list,
+  (gpointer) & impl_NamingContext_list
 };
 
 static POA_CosNaming_NamingContextExt__vepv impl_NamingContextExt_vepv = {
 	&impl_NamingContextExt_base_epv,
 	&impl_NamingContext_epv,
-	&impl_NamingContextExt_epv,
+	&impl_NamingContextExt_epv
 };
 
 CosNaming_NamingContextExt
