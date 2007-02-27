@@ -19,6 +19,6 @@ POA_test_DerivedServer__vepv DerivedServer_vepv = {
 	&B1_epv,
 	&B2_epv,
 	&C1_epv,
-	&DerivedServer_epv,
+	&DerivedServer_epv
 };
 

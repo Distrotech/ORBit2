@@ -51,7 +51,7 @@ DeadReferenceObj_test (PortableServer_Servant  servant,
 
 static POA_test_DeadReferenceObj__epv DeadReferenceObj_epv = {
 	NULL,
-	DeadReferenceObj_test,
+	DeadReferenceObj_test
 };
 
 static PortableServer_ServantBase__epv DeadReferenceObj_base_epv = {

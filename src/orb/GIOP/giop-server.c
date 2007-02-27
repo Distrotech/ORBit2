@@ -75,7 +75,7 @@ giop_server_get_type(void)
 			NULL,           /* class_data */
 			sizeof (GIOPServer),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) NULL,
+			(GInstanceInitFunc) NULL
 		};
       
 		object_type = g_type_register_static (

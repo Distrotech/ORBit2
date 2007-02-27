@@ -1,3 +1,21 @@
+2007-02-27  Kjartan Maraas  <kmaraas@gnome.org>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/orb/GIOP/giop-connection.c: (giop_connection_get_type):
+	* src/orb/GIOP/giop-server.c: (giop_server_get_type):
+	* src/orb/orb-core/corba-orb.c:
+	* src/services/name/orbit-name-server.c:
+	* test/everything/anyServer.c:
+	* test/everything/arrayServer.c:
+	* test/everything/basicServer.c:
+	* test/everything/contextServer.c:
+	* test/everything/deadReference.c:
+	* test/everything/derivedServer.c:
+	* test/everything/sequenceServer.c:
+	* test/everything/unionServer.c:
+	* test/test-mem.c:
+
 ======================= ORBit2-2.14.7 ==========================
 
 2007-02-20  Kjartan Maraas  <kmaraas@gnome.org>

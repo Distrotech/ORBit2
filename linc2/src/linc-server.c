@@ -535,7 +535,7 @@ link_server_get_type (void)
 			NULL,           /* class_data */
 			sizeof (LinkServer),
 			0,              /* n_preallocs */
-			(GInstanceInitFunc) link_server_init,
+			(GInstanceInitFunc) link_server_init
 		};
       
 		object_type = g_type_register_static (

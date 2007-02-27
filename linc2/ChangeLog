@@ -1,3 +1,11 @@
+2007-02-27  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/linc-connection.c: (link_connection_get_type):
+	* src/linc-server.c: (link_server_get_type):
+	* test/test-linc.c: (test_get_broken_cnx_type),
+	(test_get_blocking_cnx_type): Remove unneeded trailing
+	commas.
+
 ========================== ORBit2-2.14.7 ========================
 
 ========================== ORBit2-2.14.6 ========================

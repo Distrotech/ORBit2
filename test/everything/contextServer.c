@@ -64,7 +64,7 @@ ContextServer_opWithContext (PortableServer_Servant _servant,
 
 POA_test_ContextServer__epv ContextServer_epv = {
 	NULL,
-	ContextServer_opWithContext,
+	ContextServer_opWithContext
 };
 
 PortableServer_ServantBase__epv ContextServer_base_epv = {NULL, simple_finalize, NULL};
