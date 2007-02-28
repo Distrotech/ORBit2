@@ -104,6 +104,9 @@
 	case CORBA_tk_TypeCode: \
 	case CORBA_tk_Principal
 
+#define PTR_PLUS(ptr, offset) \
+	((gpointer) (((guchar *)(ptr)) + (offset)))
+
 /* FIXME: ported very quickly from stable */
 struct DynamicAny_DynAny_type {
 	struct ORBit_RootObject_struct parent;
@@ -1422,7 +1425,7 @@ DynamicAny_DynStruct_get_members (DynamicAny_DynStruct obj,
 			(CORBA_Object) subtc, ev);
 		to = any->_value = ORBit_alloc_by_tc (subtc);
 		offset = ALIGN_VALUE (offset, subtc->c_align);
-		tmpsrc = src + offset;
+		tmpsrc = PTR_PLUS (src, offset);
 		ORBit_copy_value_core (&tmpsrc, &to, subtc);
 		offset += ORBit_gather_alloc_info (subtc);
 	}
@@ -1486,7 +1489,7 @@ DynamicAny_DynStruct_set_members (DynamicAny_DynStruct               obj,
 		gpointer tmpdest;
 
 		offset = ALIGN_VALUE (offset, subtc->c_align);
-		tmpdest = dest + offset;
+		tmpdest = PTR_PLUS (dest, offset);
 		ORBit_copy_value_core (&src, &tmpdest, subtc);
 		offset += ORBit_gather_alloc_info (subtc);
 	}

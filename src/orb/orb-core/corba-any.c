@@ -3,6 +3,15 @@
 #include "orb-core-private.h"
 #include <string.h>
 
+#define PTR_PLUS(ptr, offset) \
+	((gpointer) (((guchar *)(ptr)) + (offset)))
+#define CONST_PTR_PLUS(ptr, offset) \
+	((gconstpointer) (((const guchar *)(ptr)) + (offset)))
+
+/** Adds the size of TYPE to the gpointer PTR. */
+#define ADDSIZE(ptr, type) \
+	((gpointer) (((guchar *)(ptr)) + sizeof (type)))
+
 #define SKIP_ALIAS(tc) \
 	while ((tc)->kind == CORBA_tk_alias) { (tc) = (tc)->subtypes [0]; }
 
@@ -162,12 +171,12 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		int offset;
 		for (i = offset = 0; i < tc->sub_parts; i++) {
 			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
-			*val = val0 + offset;
+			*val = PTR_PLUS (val0, offset);
 			ORBit_marshal_value (buf, val, tc->subtypes[i]);
 			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
 		}
 		offset = ALIGN_VALUE (offset, tc->c_align);
-		*val = val0 + offset;
+		*val = PTR_PLUS (val0, offset);
 		break;
 	}
 	case CORBA_tk_union: {
@@ -183,14 +192,14 @@ ORBit_marshal_value (GIOPSendBuffer *buf,
 		for (i = 0; i < tc->sub_parts; i++)
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 
-		*val = val0 + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
-					   tc->c_align);
+		*val = PTR_PLUS (val0, ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+					   tc->c_align));
 		body = *val;
 		ORBit_marshal_value (buf, &body, subtc);
 		/* FIXME:
 		 * WATCHOUT: end of subtc may not be end of union
 		 */
-		*val = *val + ALIGN_VALUE (sz, tc->c_align);
+		*val = PTR_PLUS (*val, ALIGN_VALUE (sz, tc->c_align));
 		break;
 	}
 	case CORBA_tk_wstring: {
@@ -536,13 +545,13 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		gpointer val0 = *val;
 		for (i = offset = 0; i < tc->sub_parts; i++) {
 			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
-			*val = val0 + offset;
+			*val = PTR_PLUS (val0, offset);
 			if (ORBit_demarshal_value (tc->subtypes[i], val, buf, orb))
 				return TRUE;
 			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
 		}
 		offset = ALIGN_VALUE (offset, tc->c_align);
-		*val = val0 + offset;
+		*val = PTR_PLUS (val0, offset);
 		break;
 	}
 	case CORBA_tk_union: {
@@ -560,14 +569,14 @@ ORBit_demarshal_value (CORBA_TypeCode  tc,
 		for (i = 0; i < tc->sub_parts; i++)
 			sz = MAX (sz, ORBit_gather_alloc_info (tc->subtypes[i]));
 
-		*val = val0 + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
-					   tc->c_align);
+		*val = PTR_PLUS (val0, ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+					   tc->c_align));
 		body = *val;
 		if (ORBit_demarshal_value (subtc, &body, buf, orb))
 			return TRUE;
 
 		/* WATCHOUT: end subtc body may not be end of union */
-		*val = *val + ALIGN_VALUE (sz, tc->c_align);
+		*val = PTR_PLUS (*val, ALIGN_VALUE (sz, tc->c_align));
 		break;
 	}
 	case CORBA_tk_string:
@@ -860,14 +869,14 @@ ORBit_copy_value_core (gconstpointer *val,
 
 		for (i = offset = 0; i < tc->sub_parts; i++) {
 			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
-			*val = val0 + offset;
-			*newval = ((guchar *)newval0 + offset);
+			*val = PTR_PLUS (val0, offset);
+			*newval = PTR_PLUS (newval0, offset);
 			ORBit_copy_value_core (val, newval, tc->subtypes[i]);
 			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
 		}
 		offset = ALIGN_VALUE (offset, tc->c_align);
-		*val = val0 + offset;
-		*newval = newval0 + offset;
+		*val = PTR_PLUS (val0, offset);
+		*newval = PTR_PLUS (newval0, offset);
 		break;
 	}
 	case CORBA_tk_union: {
@@ -876,6 +885,7 @@ ORBit_copy_value_core (gconstpointer *val,
 		CORBA_TypeCode utc;
 		gint	       union_align = tc->c_align;
 		size_t	       union_size = ORBit_gather_alloc_info (tc);
+		size_t         aligned_size;
 
 		pval1 = *val;
 		pval2 = *newval;
@@ -884,9 +894,10 @@ ORBit_copy_value_core (gconstpointer *val,
 
 		ORBit_copy_value_core (&pval1, &pval2, tc->discriminator);
 
-		pval1 = val0 + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+		aligned_size = ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
 					    union_align);
-		pval2 = newval0 + (pval1 - val0);
+		pval1 = PTR_PLUS (val0, aligned_size);
+		pval2 = PTR_PLUS (newval0, aligned_size);
 
 		ORBit_copy_value_core (&pval1, &pval2, utc);
 
@@ -1044,16 +1055,16 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 
 		for (i = offset = 0; i < tc->sub_parts; i++) {
 			offset = ALIGN_VALUE (offset, tc->subtypes[i]->c_align);
-			*a = a0 + offset;
-			*b = b0 + offset;
+			*a = PTR_PLUS (a0, offset);
+			*b = PTR_PLUS (b0, offset);
 			if (!ORBit_value_equivalent (a, b, tc->subtypes [i], ev))
 				return FALSE;
 			offset += ORBit_gather_alloc_info (tc->subtypes[i]);
 		}
 
 		offset = ALIGN_VALUE (offset, tc->c_align);
-		*a = a0 + offset;
-		*b = b0 + offset;
+		*a = PTR_PLUS (a0, offset);
+		*b = PTR_PLUS (b0, offset);
 		return TRUE;
 	}
 
@@ -1084,6 +1095,7 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		gint           union_align = tc->c_align;
 		size_t         union_size = ORBit_gather_alloc_info (tc);
 		gpointer       a_orig, b_orig;
+		size_t         aligned_size;
 
 		a_orig = *a;
 		b_orig = *b;
@@ -1097,9 +1109,10 @@ ORBit_value_equivalent (gpointer *a, gpointer *b,
 		if (!ORBit_value_equivalent (a, b, tc->discriminator, ev))
 			return FALSE;
 
-		*a = a_orig + ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
+		aligned_size = ALIGN_VALUE (ORBit_gather_alloc_info (tc->discriminator),
 					   union_align);
-		*b = b_orig + (*a - a_orig);
+		*a = PTR_PLUS (a_orig, aligned_size);
+		*b = PTR_PLUS (b_orig, aligned_size);
 		if (!ORBit_value_equivalent (a, b, utc_a, ev))
 			return FALSE;
 

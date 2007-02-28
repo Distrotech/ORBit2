@@ -1,3 +1,15 @@
+2007-02-28  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* include/orbit/dynamic/dynamic.h: Header guards.
+	* src/orb/dynamic/dynany.c: (DynamicAny_DynStruct_get_members),
+	(DynamicAny_DynStruct_set_members):
+	* src/orb/orb-core/corba-any.c: (ORBit_marshal_value),
+	(ORBit_demarshal_value), (ORBit_copy_value_core),
+	(ORBit_value_equivalent): Fix pointer arithmetic. Patch
+	from Roland Illig. Closes bug #410002.
+	* src/orb/poa/orbit-adaptor.c: (ORBit_forw_bind_find):
+	Fix a warning I introduced with the assert splitup.
+
 2007-02-27  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/orb/GIOP/giop-connection.c: (giop_connection_get_type):
