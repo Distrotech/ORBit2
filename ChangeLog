@@ -1,3 +1,15 @@
+2007-03-18  Brian Cameron  <Brian.Cameron@sun.com>
+
+	* linc2/src/linc-protocols.c: Now always set the
+	  LINC_PROTOCOL_NEEDS_BIND flag in the
+	  static_link_protocols array for both IPv4 and IPv6
+	  This is needed on Solaris because bind is needed to
+	  open the ports securely when ORBLocalOnly is being 
+	  used.  The maintainers decided that it would be best
+	  to simply turn the flag on for all platorms rather
+	  than support complicated ifdefs since this should not
+	  cause any issues.  Fixes bug #422908.
+
 ======================= ORBit2-2.14.8 =========================
 
 2007-02-28  Kjartan Maraas  <kmaraas@gnome.org>
