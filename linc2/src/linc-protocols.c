@@ -1058,6 +1058,22 @@ link_protocol_tcp_setup (int                   fd,
 }
 #endif /* defined(AF_INET) || defined(AF_INET6) */
 
+/*
+ * Comments from bug #422908.
+ * Since version 2.14.9 we now always set the flag
+ * LINK_PROTOCOL_NEEDS_BIND for IPv4 and IPv6.  This was 
+ * changed because on Solaris this bind is needed to open
+ * the ports securely when ORBLocalOnly is being used.  The
+ * maintainers decided it would be best to simply turn the
+ * flag on for all platforms rather than support complicated
+ * ifdefs.  We believe this will not cause any issues.
+ * However, if there is a need to revert, please make sure
+ * that this flag continues to be set for the following 
+ * platforms at minimum:
+ *
+ * IPv4: #if defined (G_OS_WIN32) || defined (__sun)
+ * IPv6: #if defined (__sun)
+ */
 static LinkProtocolInfo static_link_protocols[] = {
 #if defined(AF_INET)
 	{
@@ -1065,12 +1081,7 @@ static LinkProtocolInfo static_link_protocols[] = {
 	AF_INET, 			/* family */
 	sizeof (struct sockaddr_in), 	/* addr_len */
 	IPPROTO_TCP, 			/* stream_proto_num */
-					/* flags */
-#ifdef G_OS_WIN32
-	LINK_PROTOCOL_NEEDS_BIND,
-#else
-	0,
-#endif
+	LINK_PROTOCOL_NEEDS_BIND,       /* flags */
 	link_protocol_tcp_setup, 	/* setup */
 	NULL, 				/* destroy */
 	link_protocol_get_sockaddr_ipv4,/* get_sockaddr */
@@ -1084,7 +1095,7 @@ static LinkProtocolInfo static_link_protocols[] = {
 	AF_INET6, 			/* family */
 	sizeof (struct sockaddr_in6), 	/* addr_len */
 	IPPROTO_TCP, 			/* stream_proto_num */
-	0, 				/* flags */
+        LINK_PROTOCOL_NEEDS_BIND,       /* flags */
 	link_protocol_tcp_setup, 	/* setup */
 	NULL, 				/* destroy */
 	link_protocol_get_sockaddr_ipv6,/* get_sockaddr */
