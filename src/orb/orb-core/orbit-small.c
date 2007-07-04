@@ -593,14 +593,14 @@ ORBit_small_invoke_stub (CORBA_Object       obj,
 	ORBitPolicy            *invoke_policy = CORBA_OBJECT_NIL;
 	gboolean                timeout = FALSE;
 
+	CORBA_exception_init (ev);
+
 	if (!obj) {
 		dprintf (MESSAGES, "Cannot invoke method on null object\n");
 		CORBA_exception_set_system (ev, ex_CORBA_INV_OBJREF,
 					    CORBA_COMPLETED_NO);
 		goto clean_out;
 	}
-
-	CORBA_exception_init (ev);
 
 	if ((invoke_policy = ORBit_object_get_policy (obj)))
 		ORBit_policy_push (invoke_policy);
