@@ -1,3 +1,9 @@
+2007-07-04  Vincent Untz  <vuntz@gnome.org>
+
+	* src/orb/orb-core/orbit-small.c: (ORBit_small_invoke_stub):
+	initialize the exception sooner. This fixes a crash where the
+	exception was used without having been initialized (bug #452428)
+
 2007-03-18  Brian Cameron  <Brian.Cameron@sun.com>
 
 	* linc2/src/linc-protocols.c: Now always set the
