@@ -179,18 +179,15 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	/* ORB: tear down the ORB */
-	if (CORBA_OBJECT_NIL != orb) {
-		CORBA_ORB_destroy (orb, &ev);
-		if (ev._major != CORBA_NO_EXCEPTION) {
-			g_error ("Exception caught from destroy() - exiting");
-			goto out;
-		}
-		CORBA_Object_release ((CORBA_Object) orb, &ev);
-		if (ev._major != CORBA_NO_EXCEPTION) {
-			g_error ("Exception caught from release() - exiting");
-			goto out;
-		}
+	CORBA_ORB_destroy (orb, &ev);
+	if (ev._major != CORBA_NO_EXCEPTION) {
+		g_error ("Exception caught from destroy() - exiting");
+		goto out;
+	}
+	CORBA_Object_release ((CORBA_Object) orb, &ev);
+	if (ev._major != CORBA_NO_EXCEPTION) {
+		g_error ("Exception caught from release() - exiting");
+		goto out;
 	}
 
 	retv = EXIT_SUCCESS;
