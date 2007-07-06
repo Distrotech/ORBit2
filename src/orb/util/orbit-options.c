@@ -53,6 +53,9 @@ ORBit_option_set (const ORBit_option *option,
 	case ORBIT_OPTION_INT:
 		*(gint *)option->arg = atoi (val);	
 		break;
+	case ORBIT_OPTION_ULONG:
+		*(guint *)option->arg = strtoul(val, (char **)NULL, 10);	
+		break;
 	case ORBIT_OPTION_STRING: {
 		gchar **str_arg = (char **) option->arg;
 

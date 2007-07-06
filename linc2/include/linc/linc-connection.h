@@ -39,7 +39,8 @@ G_BEGIN_DECLS
 #define LINK_IS_CONNECTION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), LINK_TYPE_CONNECTION))
 #define LINK_IS_CONNECTION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LINK_TYPE_CONNECTION))
 
-typedef enum { LINK_CONNECTING, LINK_CONNECTED, LINK_DISCONNECTED } LinkConnectionStatus;
+typedef enum { LINK_CONNECTING, LINK_CONNECTED, LINK_DISCONNECTED, LINK_TIMEOUT } LinkConnectionStatus;
+typedef enum { LINK_TIMEOUT_UNKNOWN, LINK_TIMEOUT_YES, LINK_TIMEOUT_NO } LinkTimeoutStatus;
 
 typedef struct _LinkWriteOpts         LinkWriteOpts;
 typedef struct _LinkConnectionPrivate LinkConnectionPrivate;
@@ -61,6 +62,11 @@ typedef struct {
 	LinkConnectionPrivate  *priv;
 
 	GSList                 *idle_broken_callbacks;
+
+	GMutex                 *timeout_mutex;
+	guint                   timeout_msec;
+	guint                   timeout_source_id; // protected by timeout_mutex
+	LinkTimeoutStatus       timeout_status;    // protected by timeout_mutex
 } LinkConnection;
 
 typedef struct {
@@ -152,6 +158,9 @@ void           link_connection_remove_broken_cb  (LinkConnection    *cnx,
 						  gpointer           opt_user_data);
 
 void           link_connections_close            (void);
+
+/* set the link timeout in miliseconds */
+extern void link_set_timeout (guint msec);
 
 G_END_DECLS
 

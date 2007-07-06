@@ -45,6 +45,25 @@ static const CORBA_unsigned_long iop_service_context_data [] = {
 
 static const GIOP_AddressingDisposition giop_1_2_target_type = GIOP_KeyAddr;
 
+static gboolean
+giop_send_buffer_is_oneway(const GIOPSendBuffer *buf)
+{
+	g_assert (buf);
+
+	switch (buf->giop_version) {
+	case GIOP_1_0:
+	case GIOP_1_1:
+		return (buf->msg.u.request_1_0.response_expected ? FALSE : TRUE);
+	case GIOP_1_2:
+		return (buf->msg.u.request_1_2.response_flags ? FALSE : TRUE);
+	default:
+		break;
+	}
+	g_assert_not_reached();
+
+	return TRUE;
+}
+
 GIOPSendBuffer *
 giop_send_buffer_use_request (GIOPVersion giop_version,
 			      CORBA_unsigned_long request_id,
@@ -426,6 +445,7 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 			gboolean        blocking)
 {
 	int retval;
+	LinkConnection *lcnx = LINK_CONNECTION (cnx);
 	static LinkWriteOpts *non_block = NULL;
 
 	if (!non_block)
@@ -434,10 +454,16 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 	/* FIXME: if a FRAGMENT, assert the 8 byte tail align,
 	   &&|| giop_send_buffer_align (buf, 8); */
 
-	retval = link_connection_writev (
-		(LinkConnection *) cnx, buf->iovecs,
-		buf->num_used, 
-		blocking ? NULL : non_block);
+	if (g_thread_supported () 
+	    && lcnx->timeout_msec 
+	    && !giop_send_buffer_is_oneway (buf)) {
+		giop_timeout_add (cnx);
+	}
+
+	retval = link_connection_writev (lcnx, 
+					 buf->iovecs,
+					 buf->num_used, 
+					 blocking ? NULL : non_block);
 
 	if (!blocking && retval == LINK_IO_QUEUED_DATA)
 		retval = 0;

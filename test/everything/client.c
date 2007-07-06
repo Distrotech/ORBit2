@@ -2034,6 +2034,7 @@ testPingPong (test_TestFactory   factory,
 
 
 	test_PingPongServer_pingPong (r_objref, l_objref, 64, ev);
+	d_print (CORBA_exception_id (ev));
 	g_assert (ev->_major == CORBA_NO_EXCEPTION);
 	
 	d_print ("Testing ping pong reg / lookup ...\n");

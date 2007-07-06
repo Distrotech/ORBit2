@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # This is a generic script for firing up a server, waiting for it to write
-# its stringified IOR to a file, then firing up a server
+# its stringified IOR to a file, then firing up a client
 
 if test "z$ORBIT_TMPDIR" = "z"; then
 	ORBIT_TMPDIR="/tmp/orbit-$USER/tst"

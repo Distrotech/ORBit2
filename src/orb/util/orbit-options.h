@@ -10,7 +10,8 @@ typedef enum {
 	ORBIT_OPTION_STRING,
 	ORBIT_OPTION_INT,
 	ORBIT_OPTION_BOOLEAN,
-	ORBIT_OPTION_KEY_VALUE  /* returns GSList of ORBit_option_key_value */
+	ORBIT_OPTION_KEY_VALUE,  /* returns GSList of ORBit_option_key_value */
+	ORBIT_OPTION_ULONG,
 } ORBit_option_type;
 
 typedef struct {
