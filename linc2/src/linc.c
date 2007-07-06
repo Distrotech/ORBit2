@@ -52,9 +52,6 @@ SSL_METHOD *link_ssl_method;
 SSL_CTX    *link_ssl_ctx;
 #endif
 
-/* max time to wait for the link condition to get signaled - 10 seconds */
-#define LINK_WAIT_TIMEOUT_USEC (10000000) 
-
 static void link_dispatch_command (gpointer data, gboolean immediate);
 
 gboolean
@@ -537,28 +534,17 @@ link_signal (void)
 	}
 }
 
-gboolean
+void
 link_wait (void)
 {
-	GTimeVal gtime;
-
 	if (!(link_is_thread_safe && link_is_io_in_thread)) {
 		link_unlock ();
 		link_main_iteration (TRUE);
 		link_lock ();
 	} else {
 		g_assert (link_main_cond != NULL);
-
-		g_get_current_time (&gtime);
-		g_time_val_add (&gtime, LINK_WAIT_TIMEOUT_USEC);
-		if (!g_cond_timed_wait (link_main_cond, link_main_lock, &gtime)) {
-			if (link_is_locked ())
-				link_unlock ();
-			return FALSE;
-		}
+		g_cond_wait (link_main_cond, link_main_lock);
 	}
-
-	return TRUE;
 }
 
 
@@ -567,4 +553,38 @@ gboolean
 link_is_locked (void)
 {
 	return link_mutex_is_locked (link_main_lock);
+}
+
+/* Hack */
+guint
+link_io_thread_add_timeout (guint       interval,
+                            GSourceFunc function,
+                            gpointer    data)
+{
+	guint id;
+	GSource *tsrc;
+
+	if (!link_thread_safe())
+		return 0;
+
+	tsrc = g_timeout_source_new (interval);
+	g_source_set_priority (tsrc, G_PRIORITY_HIGH_IDLE);
+	g_source_set_callback (tsrc, function, data, NULL);
+	g_source_set_can_recurse (tsrc, TRUE);
+	id = g_source_attach (tsrc, link_thread_context);
+	g_source_unref (tsrc);
+
+	return id;
+}
+
+void
+link_io_thread_remove_timeout (guint source_id)
+{
+	GSource *tsrc;
+
+	if (!source_id)
+		return;
+
+	tsrc = g_main_context_find_source_by_id (link_thread_context, source_id);
+	g_source_destroy (tsrc);
 }

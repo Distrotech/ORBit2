@@ -108,6 +108,7 @@ giop_connection_get_property (GObject           *object,
 	}
 }
 
+
 static void
 giop_connection_class_init (GIOPConnectionClass *klass)
 {
@@ -191,4 +192,10 @@ giop_connection_try_reconnect (GIOPConnection *cnx)
 {
 	return link_connection_try_reconnect (LINK_CONNECTION (cnx));
 }
+
+void
+giop_set_timeout (guint msec)
+{
+	link_set_timeout (msec);
+} 
 

@@ -14,11 +14,12 @@ bin_PROGRAMS=ior-decode-2 typelib-dump
 noinst_PROGRAMS=test1 \
 	echo-client echo-client-t echo-server \
 	empty-client empty-server \
-	test-any-client test-any-server
+	test-any-client test-any-server \
+	timeout-client timeout-server 
 
 check_PROGRAMS = test-dynany test-mem test-performance test-giop test-corbaloc
 
-TESTS = $(check_PROGRAMS)
+TESTS =  timeout.sh $(check_PROGRAMS)
 
 LDADD = $(top_builddir)/src/orb/libORBit-2.la $(ORBIT_LIBS)
 
@@ -50,6 +51,11 @@ empty_client_SOURCES=empty-client.c $(EMPTY_IDLOUT)
 empty_server_SOURCES=empty-server.c $(EMPTY_IDLOUT)
 $(srcdir)/empty-client.c $(srcdir)/empty-server.c: empty.h
 
+TIMEOUT_IDLOUT=timeout.h timeout-common.c timeout-stubs.c timeout-skels.c
+timeout_client_SOURCES=timeout-client.c $(TIMEOUT_IDLOUT)
+timeout_server_SOURCES=timeout-server.c $(TIMEOUT_IDLOUT)
+$(srcdir)/timeout-client.c $(srcdir)/timeout-server.c: timeout.h
+
 IDLOUT=test1-stubs.c test1-skels.c test1-common.c test1.h
 test1_SOURCES=test1.c $(IDLOUT)
 $(srcdir)/test1.c: test1.h
@@ -65,7 +71,7 @@ test_dynany_SOURCES=$(DYNANY_IDLOUT) test-dynany.c
 test_dynany_LDFLAGS=$(LIBM)
 
 IDL_FLAGS =  --showcpperrors
-IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl
+IDL_FILES=echo.idl empty.idl test-any.idl test1.idl dynany.idl timeout.idl
 include $(top_srcdir)/Makefile.shared
 
 BUILT_SOURCES =            \
@@ -73,7 +79,8 @@ BUILT_SOURCES =            \
 	$(ECHO_IDLOUT)     \
 	$(IDLOUT)          \
 	$(TEST_ANY_IDLOUT) \
-	$(DYNANY_IDLOUT)
+	$(DYNANY_IDLOUT)   \
+	$(TIMEOUT_IDLOUT)
 
 CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = $(IDL_FILES)

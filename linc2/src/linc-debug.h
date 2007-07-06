@@ -25,6 +25,7 @@ static inline void d_printf (const char *format, ...)
 #  define STATE_NAME(s) (((s) == LINK_CONNECTED) ? "Connected" : \
 			 ((s) == LINK_CONNECTING) ? "Connecting" : \
 			 ((s) == LINK_DISCONNECTED) ? "Disconnected" : \
+			 ((s) == LINK_TIMEOUT) ? "Timeout" : \
 			 "Invalid state")
 #  ifdef CONNECTION_DEBUG_FLAG
 extern gboolean link_connection_debug_flag;

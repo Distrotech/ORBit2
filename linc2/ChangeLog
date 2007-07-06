@@ -1,3 +1,29 @@
+2007-07-05  Jules Colding  <colding@omesc.com>
+
+	* src/linc-connection.c (link_connection_try_reconnect): 
+	Added LINK_TIMEOUT to valid reconnect states.
+
+2007-06-19  Jules Colding  <colding@omesc.com>
+
+	* src/linc-connection.c (link_connection_init): Initialize
+	timeout members in the LinkConnection structure.
+	(link_set_timeout): New function to set the timeout value.
+
+2007-06-18  Jules Colding  <colding@omesc.com>
+
+	* src/linc-connection.c (link_connection_from_fd_T): Initiate
+	timeout members of the link connection iff:
+	1) The connection is IPv4 or IPv6
+	2) It is not a oneway
+	3) The timeout parameter is non-zero
+
+	* include/linc/linc-connection.h (struct): 
+	1) timeout mutex
+	2) timeout value in milliseconds
+	3) timeout status
+
+	Furthermore declare link_set_timeout()
+
 ========================== ORBit2-2.14.8 ========================
 
 2007-02-27  Kjartan Maraas  <kmaraas@gnome.org>

@@ -33,11 +33,16 @@ GMainLoop *link_main_get_loop    (void);
 guint      link_main_idle_add    (GSourceFunc function,
 				  gpointer    data);
 
-gboolean   link_wait             (void);
+void       link_wait             (void);
 void       link_signal           (void);
 
 gboolean   link_thread_io        (void);
 gboolean   link_thread_safe      (void);
+
+guint      link_io_thread_add_timeout    (guint       interval,
+					  GSourceFunc function,
+					  gpointer    data);
+void       link_io_thread_remove_timeout (guint source_id);
 
 #ifdef G_OS_WIN32
 void link_map_winsock_error_to_errno (void);

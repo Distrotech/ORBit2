@@ -74,6 +74,8 @@ CORBA_sequence_CORBA_octet *giop_recv_buffer_get_objkey     (GIOPRecvBuffer *buf
 void                        giop_recv_list_zap              (GIOPConnection *cnx);
 gboolean                    giop_connection_handle_input    (LinkConnection *lcnx);
 void                        giop_connection_destroy_frags   (GIOPConnection *cnx);
+extern void                 giop_timeout_add                (GIOPConnection *cnx);
+
 
 #endif /* ORBIT2_INTERNAL_API */
 

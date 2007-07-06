@@ -27,6 +27,7 @@
 #include <linc/linc-connection.h>
 
 static GObjectClass *parent_class = NULL;
+static guint _link_timeout = 0;
 
 enum {
 	BROKEN,
@@ -288,6 +289,7 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 		break;
 
 	case LINK_DISCONNECTED:
+	case LINK_TIMEOUT:
 		link_source_remove (cnx);
 		link_close_fd (cnx);
 		queue_free (cnx);
@@ -439,6 +441,16 @@ link_connection_from_fd_T (LinkConnection         *cnx,
 	cnx->remote_host_info = remote_host_info;
 	g_free (cnx->remote_serv_info);
 	cnx->remote_serv_info = remote_serv_info;
+
+	switch (cnx->proto->family) {
+	case AF_INET:
+	case AF_INET6:
+		if (_link_timeout && !cnx->timeout_msec) /* this should'nt happen twice but I'm always paranoid... */
+			cnx->timeout_msec = _link_timeout;
+		break;
+	default:
+		break;
+	}
 
 	d_printf ("Cnx from fd (%d) '%s', '%s', '%s'\n",
 		 fd, proto->name, 
@@ -635,10 +647,8 @@ link_connection_do_initiate (LinkConnection        *cnx,
 static LinkConnectionStatus
 link_connection_wait_connected_T (LinkConnection *cnx)
 {
-	while (cnx && cnx->status == LINK_CONNECTING) {
-		if (!link_wait ())
-			link_connection_disconnect (cnx);
-	}
+	while (cnx && cnx->status == LINK_CONNECTING)
+		link_wait ();
 
 	return cnx ? cnx->status : LINK_DISCONNECTED;
 }
@@ -661,20 +671,21 @@ link_connection_try_reconnect (LinkConnection *cnx)
 			cnx->inhibit_reconnect = FALSE;
 			dispatch_callbacks_drop_lock (cnx);
 			g_main_context_release (NULL);
-		} else {
-			if (!link_wait ()) {
-				link_connection_disconnect (cnx);
-				break;
-			}
-		}
+		} else 
+			link_wait ();
 	}
 
-	if (cnx->status != LINK_DISCONNECTED)
-		g_warning ("trying to re-connect connected cnx.");
-	else
+	switch (cnx->status) {
+	case LINK_DISCONNECTED :
+	case LINK_TIMEOUT :
 		link_connection_do_initiate
 			(cnx, cnx->proto->name, cnx->remote_host_info,
 			 cnx->remote_serv_info, cnx->options);
+		break;
+	default :
+		g_warning ("trying to re-connect connected cnx.");
+		break;
+	}
 
 	cnx->priv->was_disconnected = TRUE;
 	status = link_connection_wait_connected_T (cnx);
@@ -1254,6 +1265,13 @@ link_connection_finalize (GObject *obj)
 
 	g_free (cnx->priv);
 
+	if (cnx->timeout_mutex)
+		g_mutex_free (cnx->timeout_mutex);
+
+	if (cnx->timeout_source_id)
+		link_io_thread_remove_timeout (cnx->timeout_source_id);
+
+
 #ifdef G_ENABLE_DEBUG
 	g_assert (g_list_find(cnx_list, cnx) == NULL);
 #endif
@@ -1269,6 +1287,12 @@ link_connection_init (LinkConnection *cnx)
 	cnx->priv = g_new0 (LinkConnectionPrivate, 1);
 	cnx->priv->fd = -1;
 	cnx->priv->was_disconnected = FALSE;
+
+	cnx->timeout_mutex = NULL;
+	cnx->timeout_msec = 0;
+	cnx->timeout_source_id = 0;
+	cnx->timeout_status = LINK_TIMEOUT_UNKNOWN;
+
 #ifdef CONNECTION_DEBUG
 	cnx->priv->total_read_bytes = 0;
 	cnx->priv->total_written_bytes = 0;
@@ -1568,3 +1592,10 @@ link_connections_close (void)
 
 	g_list_free (cnx);
 }
+
+void
+link_set_timeout (guint msec)
+{
+	_link_timeout = msec;
+}
+
