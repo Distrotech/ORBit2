@@ -101,40 +101,40 @@ main (int argc, char *argv[])
 	/* create IPv4 orb */
 	orb = create_ipv4_orb ("orb-name", &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("create_ipv4_orb(): %s\n", CORBA_exception_id (&ev));
+		g_print ("create_ipv4_orb(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
 	/* get root poa */
 	poa = (PortableServer_POA)CORBA_ORB_resolve_initial_references (orb, "RootPOA", &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("create_ipv4_orb(): %s\n", CORBA_exception_id (&ev));
+		g_print ("create_ipv4_orb(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
 	/* activate root poa */
 	mgr = PortableServer_POA__get_the_POAManager (poa, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("PortableServer_POA__get_the_POAManager(): %s\n", CORBA_exception_id (&ev));
+		g_print ("PortableServer_POA__get_the_POAManager(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
 	PortableServer_POAManager_activate (mgr, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("PortableServer_POAManager_activate(): %s\n", CORBA_exception_id (&ev));
+		g_print ("PortableServer_POAManager_activate(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
 	CORBA_Object_release ((CORBA_Object)mgr, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
+		g_print ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
 	/* get corba object */
 	servant = impl_Timeout__create (poa, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
+		g_print ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
@@ -148,7 +148,7 @@ main (int argc, char *argv[])
 
 	objid = PortableServer_POA_reference_to_id (poa, (CORBA_Object)servant, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from reference_to_id() - exiting");
+		g_print ("Exception caught from reference_to_id() - exiting");
 		if (objid)
 			CORBA_free(objid);
 		goto out;
@@ -157,36 +157,36 @@ main (int argc, char *argv[])
 	PortableServer_POA_deactivate_object (poa, objid, &ev);
 	CORBA_free(objid);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from deactivate_object() - exiting");
+		g_print ("Exception caught from deactivate_object() - exiting");
 		goto out;
 	}
 
 	CORBA_Object_release ((CORBA_Object)servant, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from release() - exiting");
+		g_print ("Exception caught from release() - exiting");
 		goto out;
 	}
 
 	PortableServer_POA_destroy (poa, TRUE, FALSE, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from destroy() - exiting");
+		g_print ("Exception caught from destroy() - exiting");
 		goto out;
 	}
 
 	CORBA_Object_release ((CORBA_Object)poa, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from release() - exiting");
+		g_print ("Exception caught from release() - exiting");
 		goto out;
 	}
 
 	CORBA_ORB_destroy (orb, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from destroy() - exiting");
+		g_print ("Exception caught from destroy() - exiting");
 		goto out;
 	}
 	CORBA_Object_release ((CORBA_Object) orb, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Exception caught from release() - exiting");
+		g_print ("Exception caught from release() - exiting");
 		goto out;
 	}
 

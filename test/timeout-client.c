@@ -140,19 +140,19 @@ get_timeout_ref(CORBA_ORB orb)
 
 	obj = object_ref_from_file(orb, "./timeout-server.iorfile", ev);
 	if (ev->_major != CORBA_NO_EXCEPTION) {
-		g_error ("object_ref_from_file(): %s\n", CORBA_exception_id (ev));
+		g_print ("object_ref_from_file(): %s\n", CORBA_exception_id (ev));
 		obj = CORBA_OBJECT_NIL;
 		goto out;
 	}
 
 	cb = CORBA_Object_is_nil((CORBA_Object)obj, ev);
 	if (ev->_major != CORBA_NO_EXCEPTION) {
-		g_error ("create_timeout_orb(): %s\n", CORBA_exception_id (ev));
+		g_print ("create_timeout_orb(): %s\n", CORBA_exception_id (ev));
 		obj = CORBA_OBJECT_NIL;
 		goto out;
 	}
 	if (cb) {
-		g_error ("Could not get Timeout reference\n");
+		g_print ("Could not get Timeout reference\n");
 		goto out;
 	}
 
@@ -168,7 +168,7 @@ main (int argc, char *argv[])
 	Timeout timeout_obj = CORBA_OBJECT_NIL;
 	CORBA_Environment ev;
 	CORBA_ORB orb;
-	int retv = EXIT_SUCCESS;
+	int retv = EXIT_FAILURE;
 
 	g_print ("=======================================================================\n");
 	g_print ("                ***  Starting GIOP timeout tests  ***                  \n");
@@ -179,8 +179,7 @@ main (int argc, char *argv[])
 	/* create timeout orb */
 	orb = create_timeout_orb ("orbit-io-thread", "2000", &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("create_timeout_orb(): %s\n", CORBA_exception_id (&ev));
-		retv = EXIT_FAILURE;
+		g_print ("create_timeout_orb(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
@@ -193,8 +192,7 @@ main (int argc, char *argv[])
 		g_print ("ERROR, usage: %s [ior]\n", argv[0]);
 	}
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("CORBA_ORB_string_to_object(): %s\n", CORBA_exception_id (&ev));
-		retv = EXIT_FAILURE;
+		g_print ("CORBA_ORB_string_to_object(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 
@@ -205,13 +203,11 @@ main (int argc, char *argv[])
 	g_print ("Provoking timeout exception... ");
 	Timeout_ping (timeout_obj, 3, &ev);
 	if (ev._major == CORBA_NO_EXCEPTION) {
-		g_error ("ERROR: Timeout exception expected\n");
-		retv = EXIT_FAILURE;
+		g_print ("ERROR: Timeout exception expected\n");
 		goto out;
 	} else {
 		if (strcmp (CORBA_exception_id (&ev), ex_CORBA_TIMEOUT)) {
-			g_error ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
-			retv = EXIT_FAILURE;
+			g_print ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
 			goto out;
 		}
 	}
@@ -220,8 +216,7 @@ main (int argc, char *argv[])
 	g_print ("Testing reacquired connection with no server delay... ");
 	Timeout_ping (timeout_obj, 0, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
-		retv = EXIT_FAILURE;
+		g_print ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 	g_print ("OK\n");
@@ -230,8 +225,7 @@ main (int argc, char *argv[])
 	g_print ("Testing with small server delay... ");
 	Timeout_ping (timeout_obj, 1, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
-		retv = EXIT_FAILURE;
+		g_print ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 	g_print ("OK\n");
@@ -239,13 +233,12 @@ main (int argc, char *argv[])
 	g_print ("Provoking timeout exception... ");
 	Timeout_ping (timeout_obj, 3, &ev);
 	if (ev._major == CORBA_NO_EXCEPTION) {
-		g_error ("ERROR: Timeout exception expected\n");
-		retv = EXIT_FAILURE;
+		g_print ("ERROR: Timeout exception expected\n");
+
 		goto out;
 	} else {
 		if (strcmp (CORBA_exception_id (&ev), ex_CORBA_TIMEOUT)) {
-			g_error ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
-			retv = EXIT_FAILURE;
+			g_print ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
 			goto out;
 		}
 	}
@@ -254,11 +247,12 @@ main (int argc, char *argv[])
 	g_print ("Testing reacquired connection with no server delay... ");
 	Timeout_ping (timeout_obj, 0, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
-		retv = EXIT_FAILURE;
+		g_print ("Timeout_ping(): %s\n", CORBA_exception_id (&ev));
 		goto out;
 	}
 	g_print ("OK\n");
+	
+	retv = EXIT_SUCCESS;
 
 out:
 	g_print ("Shutting down GIOP timeout tests... ");
@@ -266,30 +260,34 @@ out:
 	/* release object reference */
 	CORBA_Object_release(timeout_obj, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
-		_exit(EXIT_FAILURE);
+		g_print ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
+		retv = EXIT_FAILURE;
+		goto fast_out;
 	}
 
 	/* shutdown ORB, shutdown IO channels */
 	CORBA_ORB_shutdown (orb, FALSE, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("CORBA_ORB_shutdown(): %s\n", CORBA_exception_id (&ev));
-		_exit(EXIT_FAILURE);
+		g_print ("CORBA_ORB_shutdown(): %s\n", CORBA_exception_id (&ev));
+		retv = EXIT_FAILURE;
+		goto fast_out;
 	}
 
 	/* destroy local ORB */
 	CORBA_ORB_destroy(orb, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
-		g_error ("CORBA_ORB_destroy(): %s\n", CORBA_exception_id (&ev));
-		_exit(EXIT_FAILURE);
+		g_print ("CORBA_ORB_destroy(): %s\n", CORBA_exception_id (&ev));
+		retv = EXIT_FAILURE;
+		goto fast_out;
 	}
 	CORBA_exception_free (&ev);
 
 	g_print ("OK\n");
 
+fast_out:
 	g_print ("=======================================================================\n");
 	if (retv == EXIT_FAILURE)
-		g_error ("             ***  Some GIOP timeout tests failed  ***                  \n");
+		g_print ("             ***  Some GIOP timeout tests failed  ***                  \n");
 	else
 		g_print ("            ***  All GIOP timeout tests successful  ***                \n");
 	g_print ("=======================================================================\n");
