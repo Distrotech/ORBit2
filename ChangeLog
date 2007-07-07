@@ -1,3 +1,7 @@
+2007-07-07  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
+
+	* test/Makefile.am (EXTRA_DIST): Add timeout.sh.
+
 2007-07-07  Jules Colding  <colding@omesc.com>
 
 	* test/timeout-client.c (main): Don't use g_error(), use g_print()
