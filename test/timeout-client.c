@@ -267,21 +267,21 @@ out:
 	CORBA_Object_release(timeout_obj, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
 		g_error ("CORBA_Object_release(): %s\n", CORBA_exception_id (&ev));
-		abort ();
+		_exit(EXIT_FAILURE);
 	}
 
 	/* shutdown ORB, shutdown IO channels */
 	CORBA_ORB_shutdown (orb, FALSE, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
 		g_error ("CORBA_ORB_shutdown(): %s\n", CORBA_exception_id (&ev));
-		abort ();
+		_exit(EXIT_FAILURE);
 	}
 
 	/* destroy local ORB */
 	CORBA_ORB_destroy(orb, &ev);
 	if (ev._major != CORBA_NO_EXCEPTION) {
 		g_error ("CORBA_ORB_destroy(): %s\n", CORBA_exception_id (&ev));
-		abort ();
+		_exit(EXIT_FAILURE);
 	}
 	CORBA_exception_free (&ev);
 
