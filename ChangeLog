@@ -1,3 +1,7 @@
+2007-07-07  Jules Colding  <colding@omesc.com>
+
+	* test/timeout-client.c (main): abort() ==> _exit(EXIT_FAILURE)
+
 2007-07-04  Vincent Untz  <vuntz@gnome.org>
 
 	* src/orb/orb-core/orbit-small.c: (ORBit_small_invoke_stub):
