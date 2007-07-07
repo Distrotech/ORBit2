@@ -1,3 +1,7 @@
+2007-07-07  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
+
+	* test/Makefile.am (EXTRA_DIST): Add timeout_impl.c to dist.
+
 2007-07-07  Jules Colding  <colding@omesc.com>
 
 	* test/timeout-client.c (main): abort() ==> _exit(EXIT_FAILURE)

@@ -83,7 +83,7 @@ BUILT_SOURCES =            \
 	$(TIMEOUT_IDLOUT)
 
 CLEANFILES = $(BUILT_SOURCES)
-EXTRA_DIST = $(IDL_FILES)
+EXTRA_DIST = $(IDL_FILES) timeout_impl.c
 
 dist-hook:
 	cd $(distdir); rm -f $(BUILT_SOURCES)
