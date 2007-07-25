@@ -1,3 +1,11 @@
+2007-07-25  Jules Colding  <colding@omesc.com>
+
+	* test/timeout-server.c (create_ipv4_orb): 
+	Removed non-working ORBNetID option. Use default instead.
+
+	* test/timeout-client.c (create_timeout_orb): 
+	Simplified regression client 
+
 2007-07-07  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
 
 	* test/Makefile.am (EXTRA_DIST): Add timeout.sh.
