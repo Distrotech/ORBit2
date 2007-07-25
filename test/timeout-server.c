@@ -46,29 +46,26 @@ create_ipv4_orb(const char *orb_name,
 	if (!orb_name)
 		return CORBA_OBJECT_NIL;
 
-	argc = 6;
+	argc = 5;
 	argv = (char**)malloc (sizeof(char*) * argc);
 	if (!argv)
 		return CORBA_OBJECT_NIL;
 	memset ((void*)argv, 0, argc);
 
 	//  dummy argument
-	argv[0] = "dummy";
+	argv[0] = "timeout-server";
 
-	// IPv4 - needed to interoperate with TAO
+	// IPv4 enabled
 	argv[1] = "--ORBIIOPIPv4=1";
 
-	// IPv6 - could be needed to interoperate with TAO
+	// IPv6 enabled
 	argv[2] = "--ORBIIOPIPv6=1";
 
-	// Explicitly force ORBit2 to be non-local
+	// explicitly force ORBit2 to be non-local
 	argv[3] = "--ORBLocalOnly=0";
 
-	// Force ORBit2 to use the IP address in the all generated IORs
-	argv[4] = "--ORBNetID=ipaddr";
-
 	// do not use sockets
-	argv[5] = "--ORBIIOPUNIX=0";
+	argv[4] = "--ORBIIOPUNIX=0";
 
 	// initialize the ORB
 	orb = CORBA_ORB_init (&argc, argv, (char*)orb_name, ev);
