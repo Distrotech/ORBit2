@@ -154,10 +154,6 @@ main (int argc, char *argv[])
 	CORBA_ORB orb;
 	int retv = EXIT_FAILURE;
 
-	g_print ("=======================================================================\n");
-	g_print ("                ***  Starting GIOP timeout tests  ***                  \n");
-	g_print ("=======================================================================\n");
-
 	CORBA_exception_init (&ev);
 
 	/* create timeout orb */
@@ -269,12 +265,10 @@ out:
 	g_print ("OK\n");
 
 fast_out:
-	g_print ("=======================================================================\n");
 	if (retv == EXIT_FAILURE)
-		g_print ("             ***  Some GIOP timeout tests failed  ***                  \n");
+		g_print ("Some GIOP timeout tests failed\n");
 	else
-		g_print ("            ***  All GIOP timeout tests successful  ***                \n");
-	g_print ("=======================================================================\n");
+		g_print ("All GIOP timeout tests passed OK\n");
 
 	return retv;
 }

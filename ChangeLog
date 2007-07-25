@@ -1,5 +1,7 @@
 2007-07-25  Jules Colding  <colding@omesc.com>
 
+	* test/timeout-client.c (main): Silence timeout testing somewhat
+
 	* test/timeout-server.c (create_ipv4_orb): 
 	Removed non-working ORBNetID option. Use default instead.
 
