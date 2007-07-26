@@ -1,8 +1,11 @@
 ORBit2-2.14.8
 
 	* bug fixes
+		+ Fix GIOP timeouts and add unit tests (Jules Colding)
 		+ Code cleanups (Kjartan)
 		+ Fix pointer arithmetics (Roland Illig)
+		+ Fix crash with uninitialized exception (Vincent Untz)
+                + ORBLocalOnly mode in Solaris fixes (Brian Cameron)
 
 ORBit2-2.14.7
 

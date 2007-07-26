@@ -1,3 +1,5 @@
+======================= ORBit2-2.14.8 =========================
+
 2007-07-25  Jules Colding  <colding@omesc.com>
 
 	* test/timeout-client.c (main): Silence timeout testing somewhat
@@ -43,8 +45,6 @@
 	  to simply turn the flag on for all platorms rather
 	  than support complicated ifdefs since this should not
 	  cause any issues.  Fixes bug #422908.
-
-======================= ORBit2-2.14.8 =========================
 
 2007-02-28  Kjartan Maraas  <kmaraas@gnome.org>
 
