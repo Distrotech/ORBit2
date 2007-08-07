@@ -1,3 +1,8 @@
+2007-08-07  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-connection.c (link_connection_from_fd_T): Ifdef
+	AF_INET6. (#464094, Andreas Köhler)
+
 2007-07-05  Jules Colding  <colding@omesc.com>
 
 	* src/linc-connection.c (link_connection_try_reconnect): 

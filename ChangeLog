@@ -1,3 +1,8 @@
+2007-08-07  Tor Lillqvist  <tml@novell.com>
+
+	* test/timeout_impl.c (impl_Timeout_ping): Use g_usleep() instead
+	of sleep() for portability. (#464094, Andreas Köhler)
+
 2007-07-26  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
 
 	* configure.in: Post-release version bump.

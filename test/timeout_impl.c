@@ -121,7 +121,7 @@ impl_Timeout_ping(impl_POA_Timeout *servant,
 		  CORBA_Environment *ev)
 {
 	/* ------   insert method code here   ------ */
-	sleep(delay_secs);
+	g_usleep(delay_secs * 1000000);
 	/* ------ ---------- end ------------ ------ */
 }
 #endif
