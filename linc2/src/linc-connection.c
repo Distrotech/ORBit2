@@ -444,7 +444,9 @@ link_connection_from_fd_T (LinkConnection         *cnx,
 
 	switch (cnx->proto->family) {
 	case AF_INET:
+#ifdef AF_INET6
 	case AF_INET6:
+#endif
 		if (_link_timeout && !cnx->timeout_msec) /* this should'nt happen twice but I'm always paranoid... */
 			cnx->timeout_msec = _link_timeout;
 		break;
