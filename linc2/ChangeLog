@@ -1,3 +1,11 @@
+2007-08-14  Jules Colding  <colding@omesc.com>
+
+	* src/linc-connection.c (link_connection_init): Initialize new
+	data member in connection struct
+
+	* include/linc/linc-connection.h (struct): Add void member 
+	to hold a GIOPThread*
+
 2007-08-07  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-connection.c (link_connection_from_fd_T): Ifdef
