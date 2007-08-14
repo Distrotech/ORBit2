@@ -1269,10 +1269,8 @@ link_connection_finalize (GObject *obj)
 
 	if (cnx->timeout_mutex)
 		g_mutex_free (cnx->timeout_mutex);
-
-	if (cnx->timeout_source_id)
+	if (cnx->timeout_source_id) 
 		link_io_thread_remove_timeout (cnx->timeout_source_id);
-
 
 #ifdef G_ENABLE_DEBUG
 	g_assert (g_list_find(cnx_list, cnx) == NULL);
@@ -1294,6 +1292,7 @@ link_connection_init (LinkConnection *cnx)
 	cnx->timeout_msec = 0;
 	cnx->timeout_source_id = 0;
 	cnx->timeout_status = LINK_TIMEOUT_UNKNOWN;
+	cnx->tdata = NULL; 
 
 #ifdef CONNECTION_DEBUG
 	cnx->priv->total_read_bytes = 0;

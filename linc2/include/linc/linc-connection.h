@@ -67,6 +67,7 @@ typedef struct {
 	guint                   timeout_msec;
 	guint                   timeout_source_id; // protected by timeout_mutex
 	LinkTimeoutStatus       timeout_status;    // protected by timeout_mutex
+	void                   *tdata;             // "do not pollute the namespace"-hack (it's a GIOPThread*)
 } LinkConnection;
 
 typedef struct {

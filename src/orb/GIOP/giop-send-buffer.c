@@ -456,6 +456,7 @@ giop_send_buffer_write (GIOPSendBuffer *buf,
 
 	if (g_thread_supported () 
 	    && lcnx->timeout_msec 
+	    && !lcnx->timeout_source_id
 	    && !giop_send_buffer_is_oneway (buf)) {
 		giop_timeout_add (cnx);
 	}

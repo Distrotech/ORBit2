@@ -736,6 +736,7 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent,
 			link_io_thread_remove_timeout (ent->cnx->parent.timeout_source_id);
 			ent->cnx->parent.timeout_source_id = 0;
 			ent->cnx->parent.timeout_status = LINK_TIMEOUT_NO;
+			g_object_unref (&ent->cnx->parent); // we remove the source so we must unref the connection
 		} else if (ent->cnx->parent.timeout_status == LINK_TIMEOUT_YES)
 			*timeout = TRUE;
 		g_mutex_unlock (ent->cnx->parent.timeout_mutex);
@@ -1355,17 +1356,12 @@ giop_connection_handle_input (LinkConnection *lcnx)
 	return TRUE;
 }
 
-struct timeout_thread_data {
-	GIOPThread *tdata;
-	LinkConnection *lcnx;
-};
-
 static gboolean
-giop_timeout(gpointer data)
+giop_timeout (gpointer data)
 {
 	gboolean retv = FALSE;
-	LinkConnection *lcnx = ((struct timeout_thread_data*)data)->lcnx;
-	GIOPThread *tdata =  ((struct timeout_thread_data*)data)->tdata;
+	LinkConnection *lcnx = (LinkConnection*)data;
+	GIOPThread *tdata = (GIOPThread *)lcnx->tdata;
 
 	g_assert (lcnx->timeout_mutex);
 
@@ -1386,27 +1382,29 @@ giop_timeout(gpointer data)
 	giop_incoming_signal_T (tdata, GIOP_CLOSECONNECTION);
 	g_mutex_unlock (tdata->lock); /* ent_lock */
 	
-out:
-	g_object_unref (lcnx);
-	g_free (data);
+	g_object_unref (lcnx); // we remove the source so we must unref lcnx
 
+out:
 	return retv;
 }
 
 void
-giop_timeout_add(GIOPConnection *cnx)
+giop_timeout_add (GIOPConnection *cnx)
 {
-	struct timeout_thread_data *data = NULL;
+	static GStaticMutex static_mutex = G_STATIC_MUTEX_INIT;
 	LinkConnection *lcnx = LINK_CONNECTION (cnx);
-	GSource *timeout_source = NULL;
 
 	if (!giop_thread_io ())
 		return;
 	if (!lcnx->timeout_msec) 
 		return;
 
-	g_object_ref (lcnx);
+	g_static_mutex_lock (&static_mutex);
+	if (lcnx->timeout_source_id)
+		goto out;
 
+	g_object_ref (lcnx); // to be unref'ed by the one who removes the timeout source
+	
 	if (!lcnx->timeout_mutex)
 		lcnx->timeout_mutex = g_mutex_new ();
 
@@ -1414,11 +1412,12 @@ giop_timeout_add(GIOPConnection *cnx)
 	lcnx->timeout_status = LINK_TIMEOUT_UNKNOWN;
 	g_mutex_unlock (lcnx->timeout_mutex);
 
-	data = g_new0 (struct timeout_thread_data, 1);
-	data->tdata = giop_thread_self ();
-	data->lcnx = lcnx;
+	lcnx->tdata = giop_thread_self ();
 
-	lcnx->timeout_source_id = link_io_thread_add_timeout (lcnx->timeout_msec, giop_timeout, data);
+	lcnx->timeout_source_id = link_io_thread_add_timeout (lcnx->timeout_msec, giop_timeout, (gpointer)lcnx);
+
+out:
+	g_static_mutex_unlock (&static_mutex);
 }
 
 GIOPRecvBuffer *

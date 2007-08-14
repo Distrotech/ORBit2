@@ -1,3 +1,18 @@
+2007-08-14  Jules Colding  <colding@omesc.com>
+
+	* src/orb/GIOP/giop-send-buffer.c (giop_send_buffer_write): Do
+	not enter giop_timeout_add() if a timeout is already present. This 
+	check is not thread safe, but the additional check in giop_timeout_add()
+	is.
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_timeout_add): Fix
+	race when creating the timeout mutex.
+	Do not depend on the dynamically created "struct timeout_thread_data". 
+	The right thing to do is to pass the connection directly and add an 
+	additional member to the LincConnection	to hold the GIOPThread.
+	(giop_timeout): Correct to use new input data (LincConnection*).
+	(giop_recv_buffer_get): Fix memory leak.
+
 2007-08-07  Tor Lillqvist  <tml@novell.com>
 
 	* test/timeout_impl.c (impl_Timeout_ping): Use g_usleep() instead
