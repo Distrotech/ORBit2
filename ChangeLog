@@ -1,3 +1,14 @@
+2007-08-22  Jules Colding  <colding@omesc.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_timeout_add): 
+	Use LinkConnection native ref function instead of g_object_ref()
+	(giop_recv_buffer_get): Use LinkConnection native unref function 
+	instead of g_object_unref()
+	(giop_timeout): Use LinkConnection native unref function instead 
+	of g_object_unref()
+
+	* configure.in: Fix 'if test' statement
+
 2007-08-14  Jules Colding  <colding@omesc.com>
 
 	* src/orb/GIOP/giop-send-buffer.c (giop_send_buffer_write): Do

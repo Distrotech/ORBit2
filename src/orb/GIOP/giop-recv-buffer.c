@@ -736,7 +736,7 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent,
 			link_io_thread_remove_timeout (ent->cnx->parent.timeout_source_id);
 			ent->cnx->parent.timeout_source_id = 0;
 			ent->cnx->parent.timeout_status = LINK_TIMEOUT_NO;
-			g_object_unref (&ent->cnx->parent); // we remove the source so we must unref the connection
+			link_connection_unref (&ent->cnx->parent); // we remove the source so we must unref the connection
 		} else if (ent->cnx->parent.timeout_status == LINK_TIMEOUT_YES)
 			*timeout = TRUE;
 		g_mutex_unlock (ent->cnx->parent.timeout_mutex);
@@ -1382,7 +1382,7 @@ giop_timeout (gpointer data)
 	giop_incoming_signal_T (tdata, GIOP_CLOSECONNECTION);
 	g_mutex_unlock (tdata->lock); /* ent_lock */
 	
-	g_object_unref (lcnx); // we remove the source so we must unref lcnx
+	link_connection_unref (lcnx); // we remove the source so we must unref lcnx
 
 out:
 	return retv;
@@ -1403,7 +1403,7 @@ giop_timeout_add (GIOPConnection *cnx)
 	if (lcnx->timeout_source_id)
 		goto out;
 
-	g_object_ref (lcnx); // to be unref'ed by the one who removes the timeout source
+	link_connection_ref (lcnx); // to be unref'ed by the one who removes the timeout source
 	
 	if (!lcnx->timeout_mutex)
 		lcnx->timeout_mutex = g_mutex_new ();
