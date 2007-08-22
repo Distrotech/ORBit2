@@ -13,6 +13,7 @@ INCLUDES =                         \
 	-I$(top_srcdir)/linc2/include    \
 	$(LINC_CFLAGS)             \
 	$(WARN_CFLAGS)             \
+        $(ORBIT_DEBUG_CFLAGS)      \
 	-DG_DISABLE_DEPRECATED	   \
 	-D_GNU_SOURCE
 
