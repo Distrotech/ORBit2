@@ -1,3 +1,8 @@
+2007-08-31  Jules Colding  <colding@omesc.com>
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get): Make sure
+	nothing is NULL before referencing it
+
 2007-08-22  Jules Colding  <colding@omesc.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_timeout_add): 

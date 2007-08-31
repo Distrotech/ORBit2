@@ -730,7 +730,10 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent,
 			goto thread_switch;
 	}
 
-	if (giop_thread_io() && ent->cnx->parent.timeout_mutex) {
+	if (giop_thread_io() 
+	    && ent 
+	    && ent->cnx 
+	    && ent->cnx->parent.timeout_mutex) {
 		g_mutex_lock (ent->cnx->parent.timeout_mutex);
 		if (ent->cnx->parent.timeout_status == LINK_TIMEOUT_UNKNOWN) {
 			link_io_thread_remove_timeout (ent->cnx->parent.timeout_source_id);
