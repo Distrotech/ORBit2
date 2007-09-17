@@ -1,3 +1,9 @@
+==================== ORBit2-2.14.9 =====================
+
+2007-09-17  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* test/Makefile.am: Clean iorfile to make distcheck happy.
+
 2007-08-31  Jules Colding  <colding@omesc.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get): Make sure
