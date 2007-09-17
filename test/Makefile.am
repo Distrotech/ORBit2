@@ -82,7 +82,7 @@ BUILT_SOURCES =            \
 	$(DYNANY_IDLOUT)   \
 	$(TIMEOUT_IDLOUT)
 
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES) timeout-server.iorfile
 EXTRA_DIST = $(IDL_FILES) timeout_impl.c timeout.sh
 
 dist-hook:
