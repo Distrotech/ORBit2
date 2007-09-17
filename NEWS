@@ -1,3 +1,9 @@
+ORBit2-2.14.9
+
+	* bug fixes
+		+ Portability fix (Tor Lillqvist)
+		+ Various fixes in GIOP (Jules Colding)  
+
 ORBit2-2.14.8
 
 	* bug fixes
