@@ -101,6 +101,7 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 				link_use_local_hostname (LINK_NET_ID_IS_IPADDR);
 				break;
 			}
+			link_set_local_hostname(orbit_net_id);
 		} while (0);
 	}
 		    

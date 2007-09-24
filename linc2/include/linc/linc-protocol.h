@@ -74,7 +74,8 @@ typedef enum {
 	LINK_NET_ID_IS_LOCAL,
 	LINK_NET_ID_IS_SHORT_HOSTNAME,
 	LINK_NET_ID_IS_FQDN,
-	LINK_NET_ID_IS_IPADDR
+	LINK_NET_ID_IS_IPADDR,
+	LINK_NET_ID_IS_CUSTOM
 } LinkNetIdType;
 
 
@@ -84,6 +85,7 @@ LinkProtocolInfo * link_protocol_all      (void);
 char                    *link_get_tmpdir        (void);
 void                     link_set_tmpdir        (const char *dir);
 void                     link_use_local_hostname (LinkNetIdType use);
+void                     link_set_local_hostname (const char *host_id);
 const char*              link_get_local_hostname (void);
 
 G_END_DECLS

@@ -1,3 +1,14 @@
+2007-09-24  Jules Colding  <colding@omesc.com>
+
+	* include/linc/linc-protocol.h (enum): LinkNetIdType expanded 
+	with one more value. This value will request that ORBit2 is using 
+	a specific NIC when creating network visible objects.
+
+	* src/linc-protocols.c (get_netid): Support more than 2 NICs.
+	Implement the new LINK_NET_ID_IS_CUSTOM functionality.
+	(link_set_local_hostname): Will set the requested NIC as the
+	one that is chosen when an object is bound to an interface.
+
 2007-09-22  Jules Colding  <colding@omesc.com>
 
 	* src/linc-connection.c (link_connection_finalize): 

@@ -1,5 +1,39 @@
 2007-09-24  Jules Colding  <colding@omesc.com>
 
+	* ORBit2: It is now possible to use the ORBNetID command
+	line option to specify a specific NIC to be used by ORBit2
+	when creating externally visible objects. This is supported 
+	by adding LINK_NET_ID_IS_CUSTOM to the LinkNetIdType enum 
+	type. Previously the first NIC which wasn't "127.0.0.1" was 
+	unconditionally used.
+	
+	The ORBNetID argument must be of a format that is compatible 
+	to the address format that is returned by inet_ntoa(3) on a 
+	return value of the SIOCGIFCONF ioctl. A specific IP address,
+	such as '192.168.2.45', would be an acceptable format.
+
+	The previous behavior of just using the first non "127.0.0.1" 
+	NIC is maintained if the net id isn't LINK_NET_ID_IS_CUSTOM. 
+
+	If, on the other hand, the net id is LINK_NET_ID_IS_CUSTOM then
+	the used NIC will be:
+
+	1) The net id specified but only if it is found in the interface
+	list as	returned by SIOCGIFCONF.
+
+	2) If the requested net id isn't found in the list then it will
+	be the last non "0.0.0.0" addressed NIC in said list. This may 
+	or may not be "127.0.0.1".
+
+	I considered if we should use assert() if the specified net id 
+	isn't found or if it is invalid, but I decided against it on the 
+	grounds that not doing so is more in line with current behavior.
+
+	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers): 
+	Support the new LINK_NET_ID_IS_CUSTOM functionality
+
+2007-09-24  Jules Colding  <colding@omesc.com>
+
 	* src/orb/orb-core/orbit-small.c (async_recv_cb): 
 	Set CORBA_TIMEOUT exception if state is LINK_TIMEOUT
 
