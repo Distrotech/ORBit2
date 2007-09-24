@@ -38,7 +38,8 @@ giop_connection_real_state_changed (LinkConnection      *cnx,
 void
 giop_connection_close (GIOPConnection *cnx)
 {
-	if (cnx->parent.status == LINK_DISCONNECTED)
+	if ((cnx->parent.status == LINK_DISCONNECTED)
+	    || (cnx->parent.status == LINK_TIMEOUT))
 		return;
 
 	if (cnx->parent.status == LINK_CONNECTED &&

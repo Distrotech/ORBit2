@@ -1272,10 +1272,6 @@ link_connection_finalize (GObject *obj)
 	if (cnx->timeout_source_id) 
 		link_io_thread_remove_timeout (cnx->timeout_source_id);
 
-#ifdef G_ENABLE_DEBUG
-	g_assert (g_list_find(cnx_list, cnx) == NULL);
-#endif
-
 	parent_class->finalize (obj);
 }
 
