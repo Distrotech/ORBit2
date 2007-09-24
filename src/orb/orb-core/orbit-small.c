@@ -1149,6 +1149,11 @@ async_recv_cb (ORBitAsyncQueueEntry *aqe)
 		CORBA_exception_set_system (ev, ex_CORBA_COMM_FAILURE,
 					    aqe->completion_status);
 
+	if (aqe->mqe.cnx &&
+	    aqe->mqe.cnx->parent.status == LINK_TIMEOUT)
+		CORBA_exception_set_system (ev, ex_CORBA_TIMEOUT,
+					    aqe->completion_status);
+
 	if (aqe->fn)
 		aqe->fn (aqe->obj, aqe->m_data, aqe, aqe->user_data, ev);
 

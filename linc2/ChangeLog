@@ -1,3 +1,9 @@
+2007-09-22  Jules Colding  <colding@omesc.com>
+
+	* src/linc-connection.c (link_connection_finalize): 
+	Remove g_assert() on the non-presence of cnx in cnx_list. The 
+	cnx might not yet have gone.
+
 ======================== ORBit2-2.14.9 ====================
 
 2007-08-14  Jules Colding  <colding@omesc.com>

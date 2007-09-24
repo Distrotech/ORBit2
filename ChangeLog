@@ -1,3 +1,28 @@
+2007-09-24  Jules Colding  <colding@omesc.com>
+
+	* src/orb/orb-core/orbit-small.c (async_recv_cb): 
+	Set CORBA_TIMEOUT exception if state is LINK_TIMEOUT
+
+2007-09-22  Jules Colding  <colding@omesc.com>
+
+	* configure.in: Added -O0 to ORBIT_DEBUG_CFLAGS. 
+	TODO: Still need to fix the debug CFLAGS so that they are 
+	effective in the Makefile.am's.
+
+	* src/orb/GIOP/giop-connection.c (giop_connection_close): 
+	Added a check for the link being in LINK_TIMEOUT state. Not
+	doing this would result in link_connection_finalize() being
+	invoked twice for the same link. We can not have that...
+
+	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get): 
+	Use giop_connection_unref() instead of linc_connection_unref()
+	as we really are manipulating a GIOPConnection not a LinkConnection.
+	(giop_timeout): Use the giop_connection_(un)ref() functions. Same 
+	reasoning as above. 
+	Do not call link_connection_state_changed() or giop_incoming_signal_T()
+	if the link is in the LINK_DISCONNECTED state. Doing so would make
+	link_connection_state_changed() very unhappy (invalid read of size 1).
+
 ==================== ORBit2-2.14.9 =====================
 
 2007-09-17  Kjartan Maraas  <kmaraas@gnome.org>

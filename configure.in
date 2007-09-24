@@ -104,7 +104,7 @@ AC_ARG_ENABLE(compile-warnings, [  --enable-compile-warnings=[no/yes] Turn on co
 dnl --enable-debug=(yes|minimum|no)
 AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging [default=no]],,enable_debug=minimum)
 if test "x$enable_debug" = "xyes"; then
-  ORBIT_DEBUG_CFLAGS="-ggdb -DG_ENABLE_DEBUG"
+  ORBIT_DEBUG_CFLAGS="-ggdb -O0 -DG_ENABLE_DEBUG"
 else
   if test "x$enable_debug" = "xno"; then
     ORBIT_DEBUG_CFLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS"
