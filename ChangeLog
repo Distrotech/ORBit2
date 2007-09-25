@@ -1,5 +1,7 @@
 2007-09-24  Jules Colding  <colding@omesc.com>
 
+	* ORBit2: Add G_OBJECT() casts to all cases of g_unref_object()
+
 	* ORBit2: Removed ORBIT_DEBUG_CFLAGS from all Makefile.am's.
 	Instead appended the debug flags directly to CFLAGS in 
 	configure.in. The debug flags would otherwise be masked by
