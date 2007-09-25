@@ -137,7 +137,7 @@ main (int argc, char *argv[])
 
 	ior = CORBA_ORB_object_to_string (orb, servant, &ev);
 	iorfile = fopen ("timeout-server.iorfile", "w");
-	fprintf (iorfile, "%s\n", ior);
+	fprintf (iorfile, "%s", ior);
 	fclose (iorfile);
 	CORBA_free (ior);
 

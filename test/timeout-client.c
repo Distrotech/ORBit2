@@ -95,7 +95,7 @@ object_ref_from_file(CORBA_ORB orb,
 	if (g_stat(filename, &st))
 		goto out;
 
-	objref = g_malloc0((st.st_size) * sizeof(gchar));
+	objref = g_malloc0(st.st_size);
 	if (!objref)
 		goto out;
 
@@ -191,6 +191,8 @@ main (int argc, char *argv[])
 			goto out;
 		}
 	}
+	CORBA_exception_free (&ev);
+	CORBA_exception_init (&ev);
 	g_print ("OK\n");
 
 	g_print ("Testing reacquired connection with no server delay... ");
@@ -222,6 +224,8 @@ main (int argc, char *argv[])
 			goto out;
 		}
 	}
+	CORBA_exception_free (&ev);
+	CORBA_exception_init (&ev);
 	g_print ("OK\n");
 
 	g_print ("Testing reacquired connection with no server delay... ");
@@ -260,11 +264,12 @@ out:
 		retv = EXIT_FAILURE;
 		goto fast_out;
 	}
-	CORBA_exception_free (&ev);
 
 	g_print ("OK\n");
 
 fast_out:
+	CORBA_exception_free (&ev);
+
 	if (retv == EXIT_FAILURE)
 		g_print ("Some GIOP timeout tests failed\n");
 	else
