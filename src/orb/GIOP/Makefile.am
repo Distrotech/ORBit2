@@ -3,7 +3,6 @@ INCLUDES =				\
 	-I$(top_builddir)/include	\
 	-DORBIT2_INTERNAL_API		\
 	$(WARN_CFLAGS)			\
-	$(ORBIT_DEBUG_CFLAGS)		\
 	$(DISABLE_DEPRECATED_CFLAGS)	\
 	$(LOCAL_LINC_CFLAGS)		\
 	$(ORBIT_CFLAGS)
