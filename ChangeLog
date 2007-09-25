@@ -1,3 +1,12 @@
+2007-09-25  Jules Colding  <colding@omesc.com>
+
+	* test/timeout-server.c (main): Do not write more into the
+	IOR file than really needed
+
+	* test/timeout-client.c (main): Fix memory leaks
+	(object_ref_from_file): Do not allocate more memory than 
+	really needed
+
 2007-09-24  Jules Colding  <colding@omesc.com>
 
 	* ORBit2: Add G_OBJECT() casts to all cases of g_unref_object()
