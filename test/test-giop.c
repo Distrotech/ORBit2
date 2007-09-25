@@ -216,7 +216,7 @@ run_test (CORBA_ORB orb, void (*do_test) (void), gboolean reverse)
 		cnx = tmp;
 	}
 
-	g_object_unref (server);
+	g_object_unref (G_OBJECT (server));
 	server_cnx = NULL;
 	server = NULL;
 	link_connection_unref (cnx);

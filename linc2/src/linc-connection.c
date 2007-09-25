@@ -66,7 +66,7 @@ static void
 link_connection_unref_T_ (gpointer cnx)
 {
 	g_assert (((GObject *)cnx)->ref_count > 1);
-	g_object_unref (cnx);
+	g_object_unref (G_OBJECT (cnx));
 }
 
 static void
@@ -75,7 +75,7 @@ link_connection_unref_unlock (gpointer cnx)
 	gboolean tail_unref = FALSE;
 
 	if (((GObject *)cnx)->ref_count > 1)
-		g_object_unref (cnx);
+		g_object_unref (G_OBJECT (cnx));
 
 	else {
 		cnx_list = g_list_remove (cnx_list, cnx);
@@ -100,7 +100,7 @@ link_connection_exec_cnx_unref (LinkCommandCnxUnref *cmd, gboolean immediate)
 	d_printf ("Exec defered unref on %p\n", cmd->cnx);
 
 	if (immediate) /* In I/O thread - with just 1 ref left */
-		g_object_unref (cmd->cnx);
+		g_object_unref (G_OBJECT (cmd->cnx));
 	else {
 		CNX_AND_LIST_LOCK (cmd->cnx);
 		link_connection_unref_unlock (cmd->cnx);

@@ -355,7 +355,7 @@ test_blocking (void)
 
 	link_main_iteration (FALSE);
 
-	g_object_unref (server);
+	g_object_unref (G_OBJECT (server));
 	g_assert (server == NULL);
 
 	test_server_cnx_type = 0;
@@ -543,7 +543,7 @@ test_connected (void)
 	/* FIXME: this is horribly difficult to regression test properly: we fail */
 	g_assert (link_connection_wait_connected (client) == LINK_CONNECTED);
 
-	g_object_unref (server);
+	g_object_unref (G_OBJECT (server));
 	link_connection_unref (client);
 }
 
