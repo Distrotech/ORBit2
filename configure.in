@@ -112,7 +112,6 @@ else
     ORBIT_DEBUG_CFLAGS=""
   fi
 fi
-AC_SUBST(ORBIT_DEBUG_CFLAGS)
 
 AC_ARG_ENABLE(purify, [  --enable-purify        be clean for memory debuggers], enable_purify=yes, enable_purify=no)
 if test z$enable_purify = zyes; then
@@ -322,6 +321,7 @@ dnl
 dnl --------- set additional gcc flags to catch errors ---------
 dnl
 AX_CFLAGS_GCC_OPTION(-Werror-implicit-function-declaration)
+CFLAGS="$CFLAGS $ORBIT_DEBUG_CFLAGS"
 AC_SUBST(CFLAGS)
 
 

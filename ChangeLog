@@ -1,5 +1,10 @@
 2007-09-24  Jules Colding  <colding@omesc.com>
 
+	* ORBit2: Removed ORBIT_DEBUG_CFLAGS from all Makefile.am's.
+	Instead appended the debug flags directly to CFLAGS in 
+	configure.in. The debug flags would otherwise be masked by
+	CFLAGS and have next to no effect in terms of debug symbols.
+
 	* ORBit2: It is now possible to use the ORBNetID command
 	line option to specify a specific NIC to be used by ORBit2
 	when creating externally visible objects. This is supported 
