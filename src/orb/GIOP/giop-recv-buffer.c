@@ -739,7 +739,7 @@ giop_recv_buffer_get (GIOPMessageQueueEntry *ent,
 			link_io_thread_remove_timeout (ent->cnx->parent.timeout_source_id);
 			ent->cnx->parent.timeout_source_id = 0;
 			ent->cnx->parent.timeout_status = LINK_TIMEOUT_NO;
-			giop_connection_unref (&ent->cnx); // we remove the source so we must unref the connection
+			giop_connection_unref (ent->cnx); // we remove the source so we must unref the connection
 		} else if (ent->cnx->parent.timeout_status == LINK_TIMEOUT_YES)
 			*timeout = TRUE;
 		g_mutex_unlock (ent->cnx->parent.timeout_mutex);
