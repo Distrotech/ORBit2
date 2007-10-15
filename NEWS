@@ -1,3 +1,16 @@
+ORBit2-2.14.10
+
+	- bug fixes
+		+ It is now possible to use the ORBNetID command
+        	  line option to specify a specific NIC to be used by ORBit2
+        	  when creating externally visible objects. This is supported
+        	  by adding LINK_NET_ID_IS_CUSTOM to the LinkNetIdType enum
+        	  type. Previously the first NIC which wasn't "127.0.0.1" was
+        	  unconditionally used. (Jules Colding)
+		+ More GIOP fixing (Jules Colding)
+		+ Build and debugging fixes (Jules Colding)
+		+ Fix a crash (Tor Lillqvist)
+
 ORBit2-2.14.9
 
 	* bug fixes

@@ -574,7 +574,7 @@ ORBit_POA_deactivate (PortableServer_POA poa,
 	/* bounce all pending requested (OBJECT_NOT_EXIST
 	 * exceptions raised); none should get requeued. */
 	ORBit_POA_handle_held_requests (poa);
-	g_assert (poa->held_requests == 0);
+	g_assert (poa->held_requests == NULL);
 
 	if (IS_RETAIN (poa)) {
 		TraverseInfo info;
