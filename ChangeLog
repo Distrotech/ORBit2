@@ -1,3 +1,11 @@
+============================ 2.14.10 =======================
+
+2007-10-15  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* NEWS: Update for 2.14.10.
+	* src/orb/GIOP/giop-connection.c: (giop_connection_initiate):
+	* src/orb/poa/poa.c: Compiler warning fixes
+
 2007-09-27  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/GIOP/giop-recv-buffer.c (giop_recv_buffer_get): Fix
