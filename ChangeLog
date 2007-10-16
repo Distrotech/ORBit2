@@ -1,3 +1,10 @@
+2007-10-17  Tor Lillqvist  <tml@novell.com>
+
+	* test/timeout.sh: Use the killall command only on Linux. On
+	Solaris, for instance, the killall command does something
+	different... On other systems ask the user to manually kill the
+	timeout-server and/or lt-timeout-server processes.
+
 2007-10-15  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* configure.in: Post release bump.
