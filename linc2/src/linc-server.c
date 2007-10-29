@@ -115,7 +115,7 @@ link_server_dispose (GObject *obj)
 
 		srv->priv->connections = l->next;
 		g_slist_free_1 (l);
-		link_connection_unref (o);
+		link_connection_unref (LINK_CONNECTION (o));
 	}
 
 	parent_class->dispose (obj);

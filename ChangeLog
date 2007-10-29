@@ -1,3 +1,10 @@
+2007-10-29  Tor Lillqvist  <tml@novell.com>
+
+	* include/orbit/GIOP/giop-connection.h
+	* src/orb/orb-core/orbit-small.c (ORBit_small_connection_unref):
+	Adapt to change of prototype of link_connection_ref() and
+	link_connection_unref().
+
 2007-10-17  Tor Lillqvist  <tml@novell.com>
 
 	* test/timeout.sh: Use the killall command only on Linux. On

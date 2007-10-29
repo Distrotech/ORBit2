@@ -107,8 +107,8 @@ LinkConnection *link_connection_initiate (GType                 derived_type,
 					  ...);
 LinkConnectionStatus link_connection_try_reconnect (LinkConnection *cnx);
 
-gpointer link_connection_ref   (gpointer cnx);
-void     link_connection_unref (gpointer cnx);
+LinkConnection *link_connection_ref   (LinkConnection *cnx);
+void            link_connection_unref (LinkConnection *cnx);
 
 typedef enum {
 	LINK_IO_OK = 0,

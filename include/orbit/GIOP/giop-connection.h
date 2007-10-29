@@ -50,8 +50,8 @@ void            giop_connections_shutdown     (void);
 void            giop_connection_close         (GIOPConnection       *cnx);
 LinkConnectionStatus giop_connection_try_reconnect (GIOPConnection *cnx);
 
-#define         giop_connection_ref(cnx)      link_connection_ref(cnx)
-#define         giop_connection_unref(cnx)    link_connection_unref(cnx)
+#define         giop_connection_ref(cnx)      link_connection_ref(&((cnx)->parent))
+#define         giop_connection_unref(cnx)    link_connection_unref(&((cnx)->parent))
 
 /* set the link timeout in milliseconds */
 extern void giop_set_timeout (guint msec);

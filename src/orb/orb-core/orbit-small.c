@@ -1398,7 +1398,7 @@ void
 ORBit_small_connection_unref (ORBitConnection *cnx)
 {
 	if (cnx)
-		giop_connection_unref (cnx);
+		giop_connection_unref (GIOP_CONNECTION (cnx));
 }
 
 void
