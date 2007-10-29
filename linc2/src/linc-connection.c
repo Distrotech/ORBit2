@@ -49,13 +49,17 @@ static gboolean link_connection_io_handler (GIOChannel  *gioc,
 					    GIOCondition condition,
 					    gpointer     data);
 
-#define link_connection_ref_T(cnx) g_object_ref (cnx)
+static inline LinkConnection*
+link_connection_ref_T (LinkConnection *cnx) 
+{
+	return LINK_CONNECTION (g_object_ref (G_OBJECT (cnx)));
+}
 
-gpointer
-link_connection_ref (gpointer cnx)
+LinkConnection *
+link_connection_ref (LinkConnection *cnx)
 {
 	CNX_AND_LIST_LOCK (cnx);
-	g_object_ref (cnx);
+	g_object_ref (G_OBJECT (cnx));
 	CNX_AND_LIST_UNLOCK (cnx);
 
 	return cnx;
@@ -63,14 +67,14 @@ link_connection_ref (gpointer cnx)
 
 /* Only call if we are _certain_ that we don't hold the last ref */
 static void
-link_connection_unref_T_ (gpointer cnx)
+link_connection_unref_T_ (LinkConnection *cnx)
 {
 	g_assert (((GObject *)cnx)->ref_count > 1);
 	g_object_unref (G_OBJECT (cnx));
 }
 
 static void
-link_connection_unref_unlock (gpointer cnx)
+link_connection_unref_unlock (LinkConnection *cnx)
 {
 	gboolean tail_unref = FALSE;
 
@@ -108,7 +112,7 @@ link_connection_exec_cnx_unref (LinkCommandCnxUnref *cmd, gboolean immediate)
 }
 
 void
-link_connection_unref (gpointer cnx)
+link_connection_unref (LinkConnection *cnx)
 {
 	g_return_if_fail (cnx != NULL);
 

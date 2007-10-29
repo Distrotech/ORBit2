@@ -1,3 +1,11 @@
+2007-10-29  Tor Lillqvist  <tml@novell.com>
+
+	* include/linc/linc-connection.h
+	* src/linc-connection.c
+	* src/linc-server.c: Improve type safety: Change type of parameter
+	of link_connection_ref() and link_connection_unref() from gpointer
+	to LinkConnection*.
+
 ======================== 2.14.10 ==========================
 
 2007-09-24  Jules Colding  <colding@omesc.com>
