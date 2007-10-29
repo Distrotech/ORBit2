@@ -50,7 +50,6 @@ create_ipv4_orb(const char *orb_name,
 	argv = (char**)malloc (sizeof(char*) * argc);
 	if (!argv)
 		return CORBA_OBJECT_NIL;
-	memset ((void*)argv, 0, argc);
 
 	//  dummy argument
 	argv[0] = "timeout-server";
@@ -64,7 +63,7 @@ create_ipv4_orb(const char *orb_name,
 	// explicitly force ORBit2 to be non-local
 	argv[3] = "--ORBLocalOnly=0";
 
-	// do not use sockets
+	// do not use Unix domain sockets
 	argv[4] = "--ORBIIOPUNIX=0";
 
 	// initialize the ORB
