@@ -15,5 +15,4 @@ libGIOP_la_SOURCES=giop-connection.c \
 	giop-debug.h \
 	giop-private.h \
 	giop-send-buffer.c \
-	giop-recv-buffer.c \
-	giop-endian.c
+	giop-recv-buffer.c

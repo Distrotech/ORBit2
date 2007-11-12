@@ -15,6 +15,18 @@
 #define SKIP_ALIAS(tc) \
 	while ((tc)->kind == CORBA_tk_alias) { (tc) = (tc)->subtypes [0]; }
 
+static void
+giop_byteswap (guchar       *outdata,
+	       const guchar *data,
+	       gulong        datalen)
+{
+	const guchar *source_ptr = data;
+	guchar       *dest_ptr = (guchar *) outdata + datalen - 1;
+
+	while (dest_ptr >= outdata)
+		*dest_ptr-- = *source_ptr++;
+}
+
 size_t
 ORBit_gather_alloc_info (CORBA_TypeCode tc)
 {
