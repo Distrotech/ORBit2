@@ -1,3 +1,9 @@
+2007-11-12  Jules Colding  <colding@omesc.com>
+
+	* src/orb/orb-core/corba-any.c (giop_byteswap): This function is only 
+	used in this file so there is really no need to keep giop-endian.[ch] 
+	around any more.
+
 2007-10-30  Tor Lillqvist  <tml@novell.com>
 
 	* test/timeout-server.c (create_ipv4_orb): Drop unnecessary
