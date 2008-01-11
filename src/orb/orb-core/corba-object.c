@@ -902,91 +902,91 @@ CORBA_Object__imethods[] = {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_InterfaceDef, "_interface", 11, 0
+    TC_CORBA_InterfaceDef, "_interface", 10, 0
    },
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_boolean, "is_nil", 7, 
+    TC_CORBA_boolean, "is_nil", 6,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_Object, "duplicate", 10, 0
+    TC_CORBA_Object, "duplicate", 9, 0
    },
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    CORBA_OBJECT_NIL, "release", 8, 0
+    CORBA_OBJECT_NIL, "release", 7, 0
    },
    {
     {1, 1, CORBA_Object_is_a__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_boolean, "_is_a", 6,
+    TC_CORBA_boolean, "_is_a", 5,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_boolean, "_non_existent", 14,
+    TC_CORBA_boolean, "_non_existent", 13,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
     {1, 1, CORBA_Object_is_equivalent__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_boolean, "is_equivalent", 14,
+    TC_CORBA_boolean, "is_equivalent", 13,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
     {1, 1, CORBA_Object_hash__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_unsigned_long, "hash", 5,
+    TC_CORBA_unsigned_long, "hash", 4,
     0 | ORBit_I_COMMON_FIXED_SIZE
    },
    {
     {6, 6, CORBA_Object_create_request__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    CORBA_OBJECT_NIL, "create_request", 15, 0
+    CORBA_OBJECT_NIL, "create_request", 14, 0
    },
    {
     {1, 1, CORBA_Object_get_policy__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_Policy, "get_policy", 11, 0
+    TC_CORBA_Policy, "get_policy", 10, 0
    },
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_DomainManagersList, "get_domain_managers", 20, 0
+    TC_CORBA_DomainManagersList, "get_domain_managers", 19, 0
    },
    {
     {2, 2, CORBA_Object_set_policy_overrides__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_Object, "set_policy_overrides", 21, 0
+    TC_CORBA_Object, "set_policy_overrides", 20, 0
    },
    /* ORBit-small bits */
    {
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
     {0, 0, NULL, FALSE},
-    TC_CORBA_string, "ORBit_get_type_id", 18, 0
+    TC_CORBA_string, "ORBit_get_type_id", 17, 0
    },
    {
     {1, 1, CORBA_Object_ORBit_get_iinterface__arginfo, FALSE},
     {0, 0, NULL, FALSE},
     {1, 1, CORBA_Object_ORBit_get_iinterface__exceptinfo, FALSE},
-    TC_ORBit_IInterface, "ORBit_get_iinterface", 21, 0
+    TC_ORBit_IInterface, "ORBit_get_iinterface", 20, 0
    }
 };
 
