@@ -1,3 +1,8 @@
+2008-01-11  J. Specht <j.specht@z-extern.com>
+
+	* src/orb/orb-core/corba-object.c (CORBA_Object__imethods):
+	fix broken method name lengths - all off by one.
+
 2007-11-12  Jules Colding  <colding@omesc.com>
 
 	* src/orb/orb-core/corba-any.c (giop_byteswap): This function is only 
