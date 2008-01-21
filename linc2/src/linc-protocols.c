@@ -30,7 +30,11 @@
 #undef LOCAL_DEBUG
 
 static char *link_tmpdir = NULL;
+#ifdef G_OS_WIN32
+static LinkNetIdType use_local_host = LINK_NET_ID_IS_IPADDR;
+#else
 static LinkNetIdType use_local_host = LINK_NET_ID_IS_FQDN;
+#endif
 static const char *fixed_host_net_id = NULL;
 
 /*
@@ -146,8 +150,13 @@ get_netid(LinkNetIdType which,
 	  char *buf, 
 	  size_t len)
 {
-	if (LINK_NET_ID_IS_LOCAL == which)
+	if (LINK_NET_ID_IS_LOCAL == which) {
+#ifndef G_OS_WIN32
 		return strncpy(buf, "localhost", len);
+#else
+		return strncpy(buf, "127.0.0.1", len);
+#endif
+	}
 
 	if ((LINK_NET_ID_IS_IPADDR == which)
 	    || (LINK_NET_ID_IS_CUSTOM == which)) {
@@ -235,8 +244,10 @@ get_netid(LinkNetIdType which,
 		for (i = 0; i < nbytes / sizeof (INTERFACE_INFO); i++) {
 			if ((interfaces[i].iiFlags & IFF_UP) &&
 			    !(interfaces[i].iiFlags & IFF_LOOPBACK) &&
-			    interfaces[i].iiAddress.Address.sa_family == AF_INET)
+			    interfaces[i].iiAddress.Address.sa_family == AF_INET) {
+				d_printf("%s:%s:%d: returning %s\n", __FILE__, __FUNCTION__, __LINE__, inet_ntoa(interfaces[i].iiAddress.AddressIn.sin_addr));
 				return strncpy(buf, inet_ntoa(interfaces[i].iiAddress.AddressIn.sin_addr), len);
+			}
 		}
 
 		/* Next look for a loopback IPv4 address */
@@ -253,6 +264,7 @@ get_netid(LinkNetIdType which,
 	}
 
 	if ((LINK_NET_ID_IS_SHORT_HOSTNAME == which) || (LINK_NET_ID_IS_FQDN == which)) {
+                d_printf("%s:%s:%d:gethostname()\n", __FILE__, __FUNCTION__, __LINE__);
 		if (gethostname(buf, len))
 			goto out;
 #ifndef G_OS_WIN32
@@ -284,6 +296,7 @@ get_netid(LinkNetIdType which,
 		struct hostent *he;
 
 		/* gethostbyname() is MT-safe on Windows, btw */
+                d_printf("%s:%s:%d:gethostbyname(%s)\n", __FILE__, __FUNCTION__, __LINE__, buf);
 		he = gethostbyname(buf);
 
 		if (!he)
@@ -460,6 +473,7 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 #else   /*HAVE_GETADDRINFO*/	
 	if (!local_hostent) {
 		LINK_RESOLV_SET_IPV6;
+                d_printf("%s:%s:%d:gethostbyname(%s)\n", __FILE__, __FUNCTION__, __LINE__, link_get_local_hostname ());
 		local_hostent = gethostbyname (link_get_local_hostname ());
 	}
 
@@ -574,6 +588,7 @@ link_protocol_get_sockaddr_ipv4 (const LinkProtocolInfo *proto,
 			res_init();
 #endif
 		
+                d_printf("%s:%s:%d:gethostbyname(%s)\n", __FILE__, __FUNCTION__, __LINE__, hostname);
 		host = gethostbyname (hostname);
 		if (!host) {
 		  g_free (saddr);
@@ -671,6 +686,7 @@ link_protocol_get_sockaddr_ipv6 (const LinkProtocolInfo *proto,
 #endif
 
 	LINK_RESOLV_SET_IPV6;
+        d_printf("%s:%s:%d:gethostbyname(%s)\n", __FILE__, __FUNCTION__, __LINE__, hostname);
 	host = gethostbyname (hostname);
 	if (!host || host->h_addrtype != AF_INET6) {
 		g_free (saddr);
@@ -851,29 +867,15 @@ link_protocol_get_sockinfo_ipv4 (const LinkProtocolInfo  *proto,
 
 	g_assert (proto && saddr && saddr->sa_family == AF_INET);
 
-	if (sa_in->sin_addr.s_addr != INADDR_ANY) {
+#ifdef G_OS_WIN32
+	hname = inet_ntoa(sa_in->sin_addr);
+#else
+	if (ntohl (sa_in->sin_addr.s_addr) != INADDR_ANY) {
 		host = gethostbyaddr ((char *)&sa_in->sin_addr, 
                                       sizeof (struct in_addr), AF_INET);
 		if (!host)
 			return FALSE;
 		hname = host->h_name;
-	}
-#ifdef G_OS_WIN32
-	/* Make sure looking up that name works */
-	if (strcmp (hname, "localhost") == 0)
-		hname = "127.0.0.1"; /* Don't take any risk */
-	else {
-		char *hname_copy = g_strdup (hname);
-		host = gethostbyname (hname_copy);
-		
-		g_free (hname_copy);
-		if (host == NULL) {
-			/* Nope, use IP address then */
-			hname = inet_ntoa (sa_in->sin_addr);
-		} else {
-			hname = host->h_name;
-		}
-	}
 #endif
 	return link_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
 						 hostname, portnum);

@@ -1,3 +1,26 @@
+2008-01-21  Tor Lillqvist  <tml@novell.com>
+
+	Rework form of addresses used on Windows. Seems to fix the
+	problems reported in bug #363648. See that bug for extensive even
+	if occasionally misleading discussion.
+
+	* src/linc-protocols.c [Win32]: Change the default value of the
+	use_local_host variable to LINK_NET_ID_IS_IPADDR. This seems to in
+	general be more useful than FQDNs especially for end-user machines
+	with DNS randomness issues.
+
+	Add some d_printf() calls to print debugging information when DNS
+	lookups are being done. To see them, recompile with
+	CONNECTION_DEBUG defined in src/linc-debug.h and set the
+	LINK_CONNECTION_DEBUG environment variable.
+
+	(get_netid) [Win32]: Return the numeric "127.0.0.1" in the
+	LINK_NET_ID_IS_LOCAL case.
+
+	(link_protocol_get_sockinfo_ipv4) [Win32]: always return the
+	numeric IP address instead of doing any gethostbyaddr() etc
+	lookups.
+
 2007-10-29  Tor Lillqvist  <tml@novell.com>
 
 	* include/linc/linc-connection.h
