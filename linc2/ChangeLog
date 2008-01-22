@@ -1,3 +1,8 @@
+2008-01-23  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-protocols.c (link_protocol_get_sockinfo_ipv4): Add
+	accidentally removed closing brace.
+
 2008-01-21  Tor Lillqvist  <tml@novell.com>
 
 	Rework form of addresses used on Windows. Seems to fix the

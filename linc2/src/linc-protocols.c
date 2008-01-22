@@ -876,6 +876,7 @@ link_protocol_get_sockinfo_ipv4 (const LinkProtocolInfo  *proto,
 		if (!host)
 			return FALSE;
 		hname = host->h_name;
+	}
 #endif
 	return link_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
 						 hostname, portnum);
