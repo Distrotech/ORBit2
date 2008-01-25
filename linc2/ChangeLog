@@ -1,3 +1,5 @@
+=============================== 2.14.11 ========================
+
 2008-01-23  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-protocols.c (link_protocol_get_sockinfo_ipv4): Add

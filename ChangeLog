@@ -1,3 +1,10 @@
+2008-01-25  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* NEWS: Forgot to commit this.
+	* configure.in: Post release bump.
+
+========================== 2.14.11 ========================
+
 2008-01-11  J. Specht <j.specht@z-extern.com>
 
 	* src/orb/orb-core/corba-object.c (CORBA_Object__imethods):
@@ -13,7 +20,7 @@
 
 	* test/timeout-server.c (create_ipv4_orb): Drop unnecessary
 	zeroing of the argv as the code below assigns all elements of it
-	anyway. And the third ardument to memset() was wrong.
+	anyway. And the third argument to memset() was wrong.
 
 2007-10-29  Tor Lillqvist  <tml@novell.com>
 
