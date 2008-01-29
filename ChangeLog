@@ -1,3 +1,8 @@
+2008-01-29  Christian Persch  <chpe@gnome.org>
+
+	* src/orb/orb-core/corba-typecode.c: (tc_dec): Use G_STRFUNC, since
+	G_GNUC_FUNCTION was deprecated.
+
 2008-01-25  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* NEWS: Forgot to commit this.
