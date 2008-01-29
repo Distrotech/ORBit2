@@ -1,3 +1,8 @@
+ORBit2-2.14.12
+
+        - bug fixes
+                + Fix the build with glib 2.15
+
 ORBit2-2.14.11
 
 	- bug fixes
@@ -377,7 +382,7 @@ ORBit2-2.4.1
 		+ return sys ex on no method (Michael)
 		+ orbit-idl 'ns' fix (Murray Cumming, Felix Breuer)
 		+ cnx / buffer lifecycle fixes (Michael)
-		+ cmd line parsing regression (Gustavo Giráldez)
+		+ cmd line parsing regression (Gustavo Girï¿½ldez)
 		+ disable broken http: IOR code by default (Michael)
 		+ check send buffer alignment (Alex Larsson, Michael)
 		+ don't install various tests (Brian Cameron)

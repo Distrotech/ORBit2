@@ -1,3 +1,6 @@
+
+========================== 2.14.12 ========================
+
 2008-01-29  Christian Persch  <chpe@gnome.org>
 
 	* src/orb/orb-core/corba-typecode.c: (tc_dec): Use G_STRFUNC, since
@@ -892,7 +895,7 @@
 	* src/orb/poa/orbit-adaptor.c: (ORBit_forw_bind_find),
 	(ORBit_handle_request): implement forward binding.
 
-	Patch by Alejandro García Castro <acastro@igalia.com>
+	Patch by Alejandro Garcï¿½a Castro <acastro@igalia.com>
 
 	reviewed by: Michael Meeks
 
@@ -1653,7 +1656,7 @@
 	top_srcdir from ending up in the .dep files and causing make
 	distcheck to fail.
 
-2004-02-10  Tomasz K³oczko <kloczek@pld.org.pl>
+2004-02-10  Tomasz Kï¿½oczko <kloczek@pld.org.pl>
 
 	* acinclude.m4: added missing [] quotation first parameter of
 	  AC_DEFUN(). This fix is for aclocal from automake 1.8.x and is
@@ -4149,7 +4152,7 @@ Thu Sep 18 09:09:39 2003  George Lebl <jirka@5z.com>
 
 	* test/test-giop.c: fix the non-debugging build.
 
-2002-06-24  Gustavo Giráldez <gustavo.giraldez@gmx.net>
+2002-06-24  Gustavo Girï¿½ldez <gustavo.giraldez@gmx.net>
 
 	* src/orb/util/orbit-options.c
 	(ORBit_option_command_line_parse): fix '\0'
