@@ -1,3 +1,6 @@
+2008-02-01  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* test/poa/poatest-exception.h: Fix warning from gcc 4.3.
 
 ========================== 2.14.12 ========================
 

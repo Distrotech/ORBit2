@@ -27,7 +27,7 @@
 /*
  * knackered from bonobo-exception.h
  */
-#define POATEST_EX(ev)         ((ev) && (ev)->_major != CORBA_NO_EXCEPTION)
+#define POATEST_EX(ev)         ((ev != NULL) && (ev)->_major != CORBA_NO_EXCEPTION)
 
 #define POATEST_PRINT_EX(str, ev)                                             \
 	G_STMT_START {                                                        \
