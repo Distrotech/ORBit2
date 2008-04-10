@@ -36,6 +36,7 @@ static LinkNetIdType use_local_host = LINK_NET_ID_IS_IPADDR;
 static LinkNetIdType use_local_host = LINK_NET_ID_IS_FQDN;
 #endif
 static const char *fixed_host_net_id = NULL;
+static char local_host[NI_MAXHOST] = { 0 };
 
 /*
  * make_local_tmpdir:
@@ -314,8 +315,6 @@ out:
 const char *
 link_get_local_hostname (void)
 {
-	static char local_host[NI_MAXHOST] = { 0 };
-
 	if (local_host[0])
 		return local_host;
 
@@ -327,7 +326,10 @@ link_get_local_hostname (void)
 void
 link_use_local_hostname (LinkNetIdType use)
 {
-        use_local_host = use;
+	if (use_local_host != use) {
+		get_netid(use, local_host, NI_MAXHOST);
+        	use_local_host = use;
+	}
 }
 
 void 
