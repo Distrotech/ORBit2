@@ -1,3 +1,10 @@
+2008-04-10  Li Yuan  <li.yuan@sun.com>
+
+	* src/linc-protocols.c: (link_get_local_hostname),
+	(link_use_local_hostname):
+	Bug #527128.
+	Refresh local_host when use_local_host is changed.
+
 =============================== 2.14.11 ========================
 
 2008-01-23  Tor Lillqvist  <tml@novell.com>
