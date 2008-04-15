@@ -36,7 +36,6 @@ static LinkNetIdType use_local_host = LINK_NET_ID_IS_IPADDR;
 static LinkNetIdType use_local_host = LINK_NET_ID_IS_FQDN;
 #endif
 static const char *fixed_host_net_id = NULL;
-static char local_host[NI_MAXHOST] = { 0 };
 
 /*
  * make_local_tmpdir:
@@ -315,6 +314,8 @@ out:
 const char *
 link_get_local_hostname (void)
 {
+	static char local_host[NI_MAXHOST] = { 0 };
+
 	if (local_host[0])
 		return local_host;
 
@@ -326,10 +327,7 @@ link_get_local_hostname (void)
 void
 link_use_local_hostname (LinkNetIdType use)
 {
-	if (use_local_host != use) {
-		get_netid(use, local_host, NI_MAXHOST);
-        	use_local_host = use;
-	}
+        use_local_host = use;
 }
 
 void 
@@ -439,12 +437,17 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 		 */
 		if (proto->family == AF_INET) {
 			if (af == AF_INET) {
+				struct in_addr ipv4_def_addr;
+
 				struct sockaddr_in * localaddr;
 				struct sockaddr_in * incomingaddr;
+
+				inet_aton ("127.0.0.1", &ipv4_def_addr);
 				localaddr = (struct sockaddr_in *)result->ai_addr;
 				incomingaddr = (struct sockaddr_in *)saddr;
 				localaddr->sin_port = incomingaddr->sin_port;
-				if (!memcmp (localaddr, incomingaddr, result->ai_addrlen)) {
+				if (ipv4_def_addr.s_addr == incomingaddr->sin_addr.s_addr || 
+					!memcmp (localaddr, incomingaddr, result->ai_addrlen)) {
 #ifdef LOCAL_DEBUG
 					g_warning ("local ipv4 address");
 #endif
@@ -454,12 +457,16 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 		}
 		else {
 			if (af == AF_INET6) {
+				struct in6_addr ipv6_def_addr;
 				struct sockaddr_in6 * localaddr;
 				struct sockaddr_in6 * incomingaddr;
+
+				inet_pton (AF_INET6, "::1", (void *)&ipv6_def_addr);
 				localaddr = (struct sockaddr_in6 *)result->ai_addr;
 				incomingaddr = (struct sockaddr_in6 *)saddr;
 				localaddr->sin6_port = incomingaddr->sin6_port;
-				if (!memcmp (localaddr, incomingaddr, result->ai_addrlen)) {
+				if (!memcmp (&ipv6_def_addr, &incomingaddr->sin6_addr, sizeof(ipv6_def_addr))
+                                    || !memcmp (localaddr, incomingaddr, result->ai_addrlen)) {
 #ifdef LOCAL_DEBUG
 					g_warning ("local ipv6 address");
 #endif

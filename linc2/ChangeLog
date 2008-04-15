@@ -1,3 +1,12 @@
+2008-04-15  Jeff Cai<jeff.cai@sun.com>
+
+	* src/linc-protocols.c: (link_get_local_hostname),
+	(link_use_local_hostname), (link_protocol_is_local_ipv46):
+	Bug #527128
+	Removed Li Yuan's Patch. Any incoming requests with
+	"127.0.0.1" or "::1" in header field will be regarded
+	as local request.
+
 2008-04-10  Li Yuan  <li.yuan@sun.com>
 
 	* src/linc-protocols.c: (link_get_local_hostname),
