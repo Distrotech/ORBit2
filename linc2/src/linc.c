@@ -435,10 +435,12 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 	GError *error = NULL;
 	gboolean to_io_thread = TRUE;
 
-	if (link_is_io_in_thread)
-		return;
-
 	link_lock ();
+	if (link_is_io_in_thread) {
+		link_unlock ();
+		return;
+	}
+
 	g_mutex_lock (link_cmd_queue_lock);
 
 	link_is_io_in_thread = TRUE;
@@ -474,13 +476,6 @@ void
 link_set_io_thread (gboolean io_in_thread)
 {
 	LinkSyncCommand cmd = { { 0 }, 0 };
-
-#ifdef G_ENABLE_DEBUG
-	g_warning ("FIXME: guard from double entry");
-#endif
-
-	if (link_is_io_in_thread)
-		return;
 
 	cmd.cmd.type = LINK_COMMAND_SET_IO_THREAD;
 
