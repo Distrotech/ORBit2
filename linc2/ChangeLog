@@ -1,3 +1,11 @@
+2008-04-18  Tor Lillqvist  <tml@novell.com>
+
+	Bug 514993 - Get rid of the "FIXME: guard from double entry" warning
+
+	* src/linc.c (link_set_io_thread): Get rid of the warning.
+        (link_exec_set_io_thread): Instead rearrange the locking and
+	testing of flag here.
+
 2008-04-15  Jeff Cai<jeff.cai@sun.com>
 
 	* src/linc-protocols.c: (link_get_local_hostname),
