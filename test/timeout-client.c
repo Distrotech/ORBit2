@@ -95,7 +95,7 @@ object_ref_from_file(CORBA_ORB orb,
 	if (g_stat(filename, &st))
 		goto out;
 
-	objref = g_malloc0(st.st_size);
+	objref = g_malloc0(st.st_size + 1);
 	if (!objref)
 		goto out;
 
@@ -122,7 +122,7 @@ get_timeout_ref(CORBA_ORB orb)
 
 	CORBA_exception_init (ev);
 
-	obj = object_ref_from_file(orb, "./timeout-server.iorfile", ev);
+	obj = object_ref_from_file(orb, "timeout-server.iorfile", ev);
 	if (ev->_major != CORBA_NO_EXCEPTION) {
 		g_print ("object_ref_from_file(): %s\n", CORBA_exception_id (ev));
 		obj = CORBA_OBJECT_NIL;
