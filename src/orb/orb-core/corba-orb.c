@@ -62,6 +62,7 @@ static char        *orbit_naming_ref         = NULL;
 static GSList      *orbit_initref_list       = NULL; 
 static gboolean     orbit_use_corbaloc       = FALSE;
 static guint        orbit_timeout_msec       = 60000; /* 60 seconds - 0 will disable timeouts altogether */
+
 void
 ORBit_ORB_start_servers (CORBA_ORB orb)
 {

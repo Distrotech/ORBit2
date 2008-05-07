@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <ctype.h>
 #include <orbit/orbit.h>
+#include <stdlib.h>
 
 #include "orb-core-private.h"
 #include "orbit-debug.h"
@@ -150,27 +151,32 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		if (v == NULL)
 			tprintf("(null)");
 		else {
-			const int max = 64;
+            static int max = -1;
 			const char * v = (*(const char **)*val);
-			char *p, *str = g_strndup (v, max);
+            GString *str;
 			int len = strlen (v);
 
-			if (len > max) {
-				const char ins[5] = " ... ";
-				int i;
+            if (max < 0) {
+                max = 64;
+                if (g_getenv ("ORBIT2_DEBUG_STRMAX"))
+                    max = atoi (g_getenv ("ORBIT2_DEBUG_STRMAX"));
+            }
+            str = g_string_sized_new (max + 8);
+            for (i = 0; i < MIN (max, len); i++) {
+                if (g_ascii_isprint (v[i]) && v[i] != '#')
+                    g_string_append_c (str, v[i]);
+                else {
+                    g_string_append_c (str, '#');
+                    g_string_append_printf (str, "0x%2x", v[i]);
+                    g_string_append_c (str, '#');
+                }
+            }
+			if (len > max)
+                g_string_append (str, " ...");
 
-				for (i = 0; i < max / 2; ++i)
-					str[i + max / 2] = v[len - max / 2 + i];
-				strncpy(str + (max - sizeof(ins)) / 2, ins, sizeof(ins));
-			}
-
-			for (p = str; p && *p; p++)
-				if (!isascii ((int)*p))
-					*p = '#';
+			tprintf ("'%s'", str->str);
 			
-			tprintf ("'%s'", str);
-			
-			g_free (str);
+			g_string_free (str, TRUE);
 		}
 		break;
 	}
