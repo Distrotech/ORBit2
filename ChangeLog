@@ -1,3 +1,14 @@
+2008-05-07  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/orb/orb-core/orbit-trace.c (ORBit_trace_value):
+	slow down, but substantially improve string printing in
+	debugging, and add ORBIT2_DEBUG_STRMAX for long strings.
+
+	* src/orb/GIOP/giop.c (giop_thread_free): armour against
+	double thingits; and NULL the giop_main_thread as we free
+	it: from nasty problems having shut-down the 'main' thread
+	in yast, and started doing calls from another non-main thread.
+
 2008-04-24  Jules Colding  <colding@42tools.com>
 
 	* test/timeout-client.c (object_ref_from_file): Add terminating
