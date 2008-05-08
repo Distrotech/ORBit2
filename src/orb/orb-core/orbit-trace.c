@@ -151,28 +151,28 @@ ORBit_trace_value (gconstpointer *val, CORBA_TypeCode tc)
 		if (v == NULL)
 			tprintf("(null)");
 		else {
-            static int max = -1;
+			static int max = -1;
 			const char * v = (*(const char **)*val);
-            GString *str;
+			GString *str;
 			int len = strlen (v);
 
-            if (max < 0) {
-                max = 64;
-                if (g_getenv ("ORBIT2_DEBUG_STRMAX"))
-                    max = atoi (g_getenv ("ORBIT2_DEBUG_STRMAX"));
-            }
-            str = g_string_sized_new (max + 8);
-            for (i = 0; i < MIN (max, len); i++) {
-                if (g_ascii_isprint (v[i]) && v[i] != '#')
-                    g_string_append_c (str, v[i]);
-                else {
-                    g_string_append_c (str, '#');
-                    g_string_append_printf (str, "0x%2x", v[i]);
-                    g_string_append_c (str, '#');
-                }
-            }
+			if (max < 0) {
+				max = 64;
+				if (g_getenv ("ORBIT2_DEBUG_STRMAX"))
+					max = atoi (g_getenv ("ORBIT2_DEBUG_STRMAX"));
+			}
+			str = g_string_sized_new (max + 8);
+			for (i = 0; i < MIN (max, len); i++) {
+				if (g_ascii_isprint (v[i]) && v[i] != '#')
+					g_string_append_c (str, v[i]);
+				else {
+					g_string_append_c (str, '#');
+					g_string_append_printf (str, "0x%2x", v[i]);
+					g_string_append_c (str, '#');
+				}
+			}
 			if (len > max)
-                g_string_append (str, " ...");
+				g_string_append (str, " ...");
 
 			tprintf ("'%s'", str->str);
 			

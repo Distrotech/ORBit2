@@ -1,3 +1,9 @@
+2008-05-08  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/orbit-trace.c (ORBit_trace_value)
+	* src/orb/GIOP/giop.c (giop_thread_free): Re-indent Michael's
+	changes from yesterday. 8-column tab stops are used here.
+
 2008-05-07  Michael Meeks  <michael.meeks@novell.com>
 
 	* src/orb/orb-core/orbit-trace.c (ORBit_trace_value):
