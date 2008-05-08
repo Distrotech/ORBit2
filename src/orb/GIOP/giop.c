@@ -326,8 +326,8 @@ giop_thread_free (GIOPThread *tdata)
 {
 	GList *l;
 
-    if (tdata == giop_main_thread)
-        giop_main_thread = NULL;
+	if (tdata == giop_main_thread)
+		giop_main_thread = NULL;
 	
 	if (giop_thread_safe ()) {
 		g_mutex_lock (giop_pool_hash_lock);
@@ -338,12 +338,12 @@ giop_thread_free (GIOPThread *tdata)
 	}
 	
 	g_list_free (tdata->keys);
-    tdata->keys = NULL;
+	tdata->keys = NULL;
 	
 	g_mutex_free (tdata->lock);
-    tdata->lock = NULL;
+	tdata->lock = NULL;
 	g_cond_free (tdata->incoming);
-    tdata->incoming = NULL;
+	tdata->incoming = NULL;
 
 #ifdef G_ENABLE_DEBUG
 	if (tdata->async_ents)
@@ -353,8 +353,8 @@ giop_thread_free (GIOPThread *tdata)
 #endif
 	if (tdata->invoke_policies) {
 		g_queue_free (tdata->invoke_policies);
-        tdata->invoke_policies = NULL;
-    }
+		tdata->invoke_policies = NULL;
+	}
 	
 	g_free (tdata);
 }
