@@ -23,7 +23,6 @@
 ***************************************************************************/
 
 #include "config.h"
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -34,6 +33,10 @@
 #include <glib/gi18n.h>
 
 #include "orbit-idl2.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /* FIXME: this program doesn't seem to support i18n? */
 #ifndef GETTEXT_PACKAGE
