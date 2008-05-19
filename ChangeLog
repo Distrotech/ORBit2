@@ -5,8 +5,9 @@
 	* src/idl-compiler/orbit-idl-c-backend.h
 	* src/idl-compiler/orbit-idl-c-skelimpl.c
 	* src/idl-compiler/orbit-idl-main.c
-	* src/idl-compiler/orbit-idl3-types.h: Remove unnecessary
-	inclusions of <unistd.h>. Surround those left with ifdefs.
+	* src/idl-compiler/orbit-idl3-types.h: Patch by Marcelo
+	Vanzin. Remove unnecessary inclusions of <unistd.h>. Surround
+	those left with ifdefs.
 
 2008-05-19  Tor Lillqvist  <tml@novell.com>
 
