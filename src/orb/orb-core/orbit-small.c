@@ -22,7 +22,9 @@
 
 #include <config.h>
 #include <sys/types.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 

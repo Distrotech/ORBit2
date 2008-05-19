@@ -1,7 +1,9 @@
 #include "config.h"
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -13,6 +15,7 @@
 
 #ifdef G_OS_WIN32
 #  define getuid() 0
+#  define getpid() GetCurrentProcessId ()
 #endif
 
 void

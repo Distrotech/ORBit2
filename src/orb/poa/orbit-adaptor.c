@@ -1,6 +1,8 @@
 #include <config.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include <orbit/orbit.h>
 #include <orbit/poa/orbit-adaptor.h>

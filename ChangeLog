@@ -1,3 +1,17 @@
+2008-05-19  Tor Lillqvist  <tml@novell.com>
+
+	Bug 524061 - Patch: fix orbit2 so it compiles with MSVC.
+
+	* src/orb/poa/poa.c
+	* src/orb/poa/orbit-adaptor.c
+	* src/orb/orbit-init.c
+	* src/orb/orb-core/orbhttp.c'
+	* src/orb/orb-core/orbit-small.c
+	* util/genrand.c
+	* GIOP/giop-connection.c: Patch by Marcelo Vanzin. Add
+	HAVE_UNISTD_H and HAVE_SYS_TIME_H ifdefs. Define replacements for
+	getpid() and pid_t.
+
 2008-05-08  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/orb-core/orbit-trace.c (ORBit_trace_value)

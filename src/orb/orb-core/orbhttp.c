@@ -31,6 +31,10 @@
 #  ifndef _WINSOCKAPI_
 #    define _WINSOCKAPI_
 #  endif
+#  define read(s, b, l) recv(s, b, l, 0)
+#  define write(s, b, l) send(s, b, l, 0)
+#  define EINPROGRESS WSAEINPROGRESS
+#  define close closesocket
 #else /* !HAVE_WINSOCK2_H */
 #  ifdef HAVE_SYS_SOCKET_H
 #    include <sys/socket.h>
@@ -53,6 +57,9 @@
 #  include <sys/select.h>
 #endif
 
+#if !defined(strncasecmp)
+#  define strncasecmp _strnicmp
+#endif
 
 #define CHECK_URI(str) \
 (!strncmp(str, "IOR:", strlen("IOR:")) \
