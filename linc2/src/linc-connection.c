@@ -888,8 +888,10 @@ link_connection_read (LinkConnection *cnx,
 		}
 	} while (len > 0 && block_for_full_read);
 
+#ifdef CONNECTION_DEBUG
 	d_printf ("we read %d bytes (total %"G_GUINT64_FORMAT")\n",
 		  bytes_read, cnx->priv->total_read_bytes);
+#endif
 
  out:
 	CNX_UNLOCK (cnx);
@@ -987,11 +989,12 @@ write_data_T (LinkConnection *cnx, QueuedWrite *qw)
 								qw->vecs,
 								MIN (qw->nvecs, LINK_IOV_MAX)), n);
 #endif
+#ifdef CONNECTION_DEBUG
 		d_printf ("wrote %d bytes (total %"G_GUINT64_FORMAT")\n",
 			  n,
 			  (cnx->priv->total_written_bytes += ((n > 0) ? n : 0),
 			   cnx->priv->total_written_bytes));
-
+#endif
 		if (n < 0) {
 #ifdef LINK_SSL_SUPPORT
 			if (cnx->options & LINK_CONNECTION_SSL) {
