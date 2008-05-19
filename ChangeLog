@@ -1,6 +1,16 @@
+2008-05-20  Tor Lillqvist  <tml@novell.com>
+
+	Bug 524058 - Patch: fix ORBit2 idl-compiler so it compiles with MSVC.
+
+	* src/idl-compiler/orbit-idl-c-backend.h
+	* src/idl-compiler/orbit-idl-c-skelimpl.c
+	* src/idl-compiler/orbit-idl-main.c
+	* src/idl-compiler/orbit-idl3-types.h: Remove unnecessary
+	inclusions of <unistd.h>. Surround those left with ifdefs.
+
 2008-05-19  Tor Lillqvist  <tml@novell.com>
 
-	Bug 524061 - Patch: fix orbit2 so it compiles with MSVC.
+	Bug 524061 - Patch: fix ORBit2 so it compiles with MSVC.
 
 	* src/orb/poa/poa.c
 	* src/orb/poa/orbit-adaptor.c

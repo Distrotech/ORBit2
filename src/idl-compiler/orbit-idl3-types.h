@@ -2,7 +2,6 @@
 #define ORBIT_IDL3_TYPES_H 1
 
 #include <errno.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <libIDL/IDL.h>
 #include <orbit/util/orbit-util.h>

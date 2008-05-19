@@ -13,12 +13,14 @@ orbit_idl_output_c_skelimpl(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci
 }
 
 #include <ctype.h>
+#include <errno.h>
 #include <glib.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <errno.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /* Abbreviations used here:
    "cbe" stands for "C backend"
