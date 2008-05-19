@@ -1,3 +1,11 @@
+2008-05-20  Tor Lillqvist  <tml@novell.com>
+
+	Bug 524056 - Patch: fix linc2 so it compiles with MSVC.
+	
+	* src/linc-connection.c
+	* src/linc-source.c
+	* src/linc-compat.h: Patch by Marcelo Vanzin. Add a few ifdefs.
+
 2008-04-23  Tor Lillqvist  <tml@novell.com>
 
 	Bug 514993 - Get rid of the "FIXME: guard from double entry" warning

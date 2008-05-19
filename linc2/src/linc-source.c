@@ -9,6 +9,7 @@
  * Copyright 1998, 2001, 2005, Red Hat, Inc., Ximian, Inc., Novell, Inc.
  */
 
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -81,8 +82,10 @@ link_source_prepare (GSource *source,
 	}
 
 	if (watch->event_mask != event_mask) {
+#ifdef CONNECTION_DEBUG
 		d_printf ("prepare: WSAEventSelect(%d, %#x, {%s})\n",
 			  watch->socket, watch->pollfd.fd, fd_mask (event_mask));
+#endif
 		if (WSAEventSelect (watch->socket, (HANDLE) watch->pollfd.fd,
 				    event_mask) == SOCKET_ERROR)
 			d_printf ("WSAEventSelect() failed: %s\n",
@@ -115,7 +118,9 @@ link_source_check (GSource *source)
 		d_printf ("\nWSAEnumNetworkEvents failed: %s\n",
 			  link_strerror (WSAGetLastError ()));
 	else {
+#ifdef CONNECTION_DEBUG
 		d_printf ("events={%s}\n", fd_mask (events.lNetworkEvents));
+#endif
 		if (watch->pollfd.revents != 0 &&
 		    events.lNetworkEvents == 0) {
 			watch->event_mask = 0;
