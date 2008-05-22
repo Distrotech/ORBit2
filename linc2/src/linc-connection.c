@@ -149,26 +149,64 @@ link_connection_emit_broken (LinkConnection *cnx, GSList *callbacks)
 	g_slist_free (callbacks);
 }
 
+/*
+ * Unfortunate to have a global list, but we need to know
+ * if this is being processed in the main thread & if so
+ * simply append to it.
+ */
+static GSList *idle_broken_cnxs = NULL;
+
 static gboolean
-link_connection_broken_idle (gpointer data)
+link_connection_broken_idle (gpointer dummy)
 {
 	GSList *callbacks;
-	LinkConnection *cnx = data;
+	LinkConnection *cnx;
 
 	d_printf ("Connection %p broken idle ...\n", data);
 
-	CNX_LOCK (cnx);
-	callbacks = cnx->idle_broken_callbacks;
-	cnx->idle_broken_callbacks = NULL;
-	cnx->inhibit_reconnect = FALSE;
-	link_signal ();
-	CNX_UNLOCK (cnx);
+	do {
+		link_lock();
+		cnx = NULL;
+		if (idle_broken_cnxs != NULL) {
+			cnx = idle_broken_cnxs->data;
+			idle_broken_cnxs = g_slist_delete_link (idle_broken_cnxs, idle_broken_cnxs);
+		}
+		if (cnx) {
+			callbacks = cnx->idle_broken_callbacks;
+			cnx->idle_broken_callbacks = NULL;
+			cnx->inhibit_reconnect = FALSE;
+			link_signal ();
+		}
+		link_unlock ();
 
-	link_connection_emit_broken (cnx, callbacks);
-
-	link_connection_unref (cnx);
+		if (cnx) {
+			link_connection_emit_broken (cnx, callbacks);
+			link_connection_unref (cnx);
+		}
+	} while (cnx != NULL);
 
 	return FALSE;
+}
+
+static void
+add_idle_broken_for_cnx_T (LinkConnection *cnx)
+{
+	if (idle_broken_cnxs != NULL) {
+		fprintf (stderr, "Deadlock potential - avoiding evil bug!\n");
+		/*
+		 * just append ourself & exit - we don't want to
+		 * inhibit re-connection because of the horrendous
+		 * deadlock possible, cf. g#534351#
+		 */
+		if (g_slist_find (idle_broken_cnxs, cnx) != NULL)
+			return;
+	} else {
+		/* inhibit reconnect while we emit 'broken' */
+		cnx->inhibit_reconnect = TRUE;
+		g_idle_add (link_connection_broken_idle, NULL);
+	}
+	link_connection_ref_T (cnx);
+	idle_broken_cnxs = g_slist_prepend (idle_broken_cnxs, cnx);
 }
 
 static void
@@ -314,10 +352,7 @@ link_connection_state_changed_T_R (LinkConnection      *cnx,
 					dispatch_callbacks_drop_lock (cnx);
 				} else {
 					d_printf ("Queuing broken callbacks at idle\n");
-
-					cnx->inhibit_reconnect = TRUE;
-					link_connection_ref_T (cnx);
-					g_idle_add (link_connection_broken_idle, cnx);
+					add_idle_broken_for_cnx_T (cnx);
 				}
 			}
 		}

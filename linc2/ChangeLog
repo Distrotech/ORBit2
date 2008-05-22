@@ -1,3 +1,11 @@
+2008-05-22  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/linc-connection.c (link_connection_broken_idle),
+	(add_idle_broken_for_cnx_T, link_connection_state_changed_T_R): 
+	don't add one idle handler per cnx; share a global idle handler.
+	don't inhibit reconnection while emitting 'broken' if we are
+	already emitting broken callbacks. bug #534351#
+
 2008-05-20  Tor Lillqvist  <tml@novell.com>
 
 	Bug 524056 - Patch: fix linc2 so it compiles with MSVC.
