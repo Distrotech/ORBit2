@@ -1,6 +1,6 @@
 2008-05-25  Tor Lillqvist  <tml@novell.com>
 
-	* src/orb/poa/poa.c (getpid): Fix compilation with gcc after
+	* src/orb/poa/poa.c (getpid): Fix compilation with mingw after
 	change below. Define getpid() on Windows.
 
 2008-05-20  Tor Lillqvist  <tml@novell.com>
