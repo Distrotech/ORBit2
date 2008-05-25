@@ -1,3 +1,8 @@
+2008-05-25  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-connection.c (link_connection_broken_idle): Don't print
+	a parameter that is now gone in d_printf.
+
 2008-05-22  Michael Meeks  <michael.meeks@novell.com>
 
 	* src/linc-connection.c (link_connection_broken_idle),

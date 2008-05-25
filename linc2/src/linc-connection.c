@@ -162,7 +162,7 @@ link_connection_broken_idle (gpointer dummy)
 	GSList *callbacks;
 	LinkConnection *cnx;
 
-	d_printf ("Connection %p broken idle ...\n", data);
+	d_printf ("Connection broken idle ...\n");
 
 	do {
 		link_lock();
