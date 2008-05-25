@@ -1,7 +1,11 @@
+#include <config.h>
 #include <string.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#endif
+#ifdef _WIN32
+#  include <process.h>
 #endif
 #include <stdarg.h>
 
@@ -16,10 +20,6 @@
 #include "poa-macros.h"
 #include "poa-private.h"
 #include "orbit-poa.h"
-
-#ifdef G_OS_WIN32
-# define getpid() ((int) GetCurrentProcessId())
-#endif
 
 #ifdef DEBUG_LOCKS
 #  define LOCK_DEBUG(a) g_printerr("%p: %6s file %s: line %d (%s)\n", \
