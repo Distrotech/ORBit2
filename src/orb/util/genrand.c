@@ -6,6 +6,9 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef _WIN32
+#  include <process.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -18,7 +21,6 @@
 #include "orbit-purify.h"
 
 #ifdef G_OS_WIN32
-#  define getpid()    GetCurrentProcessId ()
 #  define pid_t     DWORD
 #include <wincrypt.h>
 #endif

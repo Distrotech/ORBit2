@@ -1,7 +1,13 @@
 2008-05-25  Tor Lillqvist  <tml@novell.com>
 
-	* src/orb/poa/poa.c (getpid): Fix compilation with mingw after
-	change below. Define getpid() on Windows.
+	* src/orb/poa/poa.c: Include <config.h> before checking HAVE_UNISTD_H.
+
+	* src/orb/orbit-init.c
+	* src/orb/poa/poa.c
+	* src/orb/util/genrand.c: Windows does have a getpid() in its C
+	library. It's just declared in <process.h> and not <unistd.h>
+	(which doesn't even exist with MSVC), so include <process.h> on
+	Windows instead of using a #define getpid() GetCurrentProcessId().
 
 2008-05-20  Tor Lillqvist  <tml@novell.com>
 

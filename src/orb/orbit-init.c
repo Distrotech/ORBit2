@@ -7,6 +7,9 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef _WIN32
+#  include <process.h>
+#endif
 #include <orbit/orbit.h>
 
 #include "orbit-init.h"
@@ -15,7 +18,6 @@
 
 #ifdef G_OS_WIN32
 #  define getuid() 0
-#  define getpid() GetCurrentProcessId ()
 #endif
 
 void
