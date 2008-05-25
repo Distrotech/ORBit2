@@ -1,3 +1,8 @@
+2008-05-25  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/poa/poa.c (getpid): Fix compilation with gcc after
+	change below. Define getpid() on Windows.
+
 2008-05-20  Tor Lillqvist  <tml@novell.com>
 
 	Bug 524058 - Patch: fix ORBit2 idl-compiler so it compiles with MSVC.

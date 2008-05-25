@@ -17,6 +17,10 @@
 #include "poa-private.h"
 #include "orbit-poa.h"
 
+#ifdef G_OS_WIN32
+# define getpid() ((int) GetCurrentProcessId())
+#endif
+
 #ifdef DEBUG_LOCKS
 #  define LOCK_DEBUG(a) g_printerr("%p: %6s file %s: line %d (%s)\n", \
 				   poa, a, __FILE__, __LINE__, __PRETTY_FUNCTION__);
