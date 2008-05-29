@@ -25,7 +25,7 @@
 #ifndef __ORBIT_IDL_BACKEND_H__
 #define __ORBIT_IDL_BACKEND_H__
 
-#include <glib/gmacros.h>
+#include <glib.h>
 #include <libIDL/IDL.h>
 
 G_BEGIN_DECLS

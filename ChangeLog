@@ -1,3 +1,10 @@
+2008-05-29  Christian Persch <chpe@gnome.org>
+
+	* src/idl-compiler/orbit-idl-backend.h:
+	* src/services/imodule/orbit-imodule.h:
+	* include/orbit/util/basic_types.h: Include <glib.h> instead of single
+	headers. Bug #535474.
+
 2008-05-25  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/poa/poa.c: Include <config.h> before checking HAVE_UNISTD_H.

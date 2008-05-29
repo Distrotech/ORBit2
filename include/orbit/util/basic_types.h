@@ -2,7 +2,6 @@
 #define BASIC_TYPES_H 1
 
 #include <glib.h>
-#include <glib/gunicode.h>
 
 G_BEGIN_DECLS
 

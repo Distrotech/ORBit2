@@ -24,7 +24,7 @@
 #ifndef __ORBIT_IMODULE_H__
 #define __ORBIT_IMODULE_H__
 
-#include <glib/gmacros.h>
+#include <glib.h>
 #include <orbit/orb-core/orbit-interface.h>
 #include <libIDL/IDL.h>
 
