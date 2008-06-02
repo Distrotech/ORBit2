@@ -1,3 +1,15 @@
+ORBit2-2.14.13
+
+	- porting
+		+ Fixes for building with MSVC (Tor Lillqvist and
+		  Marcelo Vanzin)
+	- bug fixes
+		+ Robustness fixes (Michael)
+		+ Fixes for the poa test client (Jules)
+		+ Build fixes with single glib includes (Christian)
+		+ Locking fixes in linc (Michael, Tor)
+		+ Fixes for handling of local requests (Jeff, Li)
+
 ORBit2-2.14.12
 
         - bug fixes
