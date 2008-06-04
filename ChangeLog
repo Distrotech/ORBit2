@@ -8,6 +8,8 @@
 	was introduced in this file by accident in the patch for bug
 	524061 below. But actually, you shouldn't be using --enable-http.
 
+================================ 2.14.13 ============================
+
 2008-05-29  Christian Persch <chpe@gnome.org>
 
 	* src/idl-compiler/orbit-idl-backend.h:

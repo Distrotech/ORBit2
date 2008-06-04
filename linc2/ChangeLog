@@ -1,3 +1,5 @@
+============================== 2.14.13 ===========================
+
 2008-05-25  Tor Lillqvist  <tml@novell.com>
 
 	* src/linc-connection.c (link_connection_broken_idle): Don't print
@@ -42,6 +44,8 @@
 	(link_use_local_hostname):
 	Bug #527128.
 	Refresh local_host when use_local_host is changed.
+
+=============================== 2.14.12 ========================
 
 =============================== 2.14.11 ========================
 
