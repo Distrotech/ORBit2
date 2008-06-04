@@ -4,7 +4,7 @@
 	function '_strnicmp'
 
 	* src/orb/orb-core/orbhttp.c: Use g_ascii_strncasecmp() instead of
-	strcasecmp() or _strnicmp(). _strnicmp() is Microsoft-specific and
+	strncasecmp() or _strnicmp(). _strnicmp() is Microsoft-specific and
 	was introduced in this file by accident in the patch for bug
 	524061 below. But actually, you shouldn't be using --enable-http.
 
