@@ -1,3 +1,13 @@
+2008-06-04  Tor Lillqvist  <tml@novell.com>
+
+	Bug 536505 - Error building 2.14.13 - implicit declaration of
+	function '_strnicmp'
+
+	* src/orb/orb-core/orbhttp.c: Use g_ascii_strncasecmp() instead of
+	strcasecmp() or _strnicmp(). _strnicmp() is Microsoft-specific and
+	was introduced in this file by accident in the patch for bug
+	524061 below. But actually, you shouldn't be using --enable-http.
+
 2008-05-29  Christian Persch <chpe@gnome.org>
 
 	* src/idl-compiler/orbit-idl-backend.h:
@@ -34,7 +44,7 @@
 	* src/orb/poa/poa.c
 	* src/orb/poa/orbit-adaptor.c
 	* src/orb/orbit-init.c
-	* src/orb/orb-core/orbhttp.c'
+	* src/orb/orb-core/orbhttp.c
 	* src/orb/orb-core/orbit-small.c
 	* util/genrand.c
 	* GIOP/giop-connection.c: Patch by Marcelo Vanzin. Add

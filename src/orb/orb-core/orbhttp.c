@@ -57,10 +57,6 @@
 #  include <sys/select.h>
 #endif
 
-#if !defined(strncasecmp)
-#  define strncasecmp _strnicmp
-#endif
-
 #define CHECK_URI(str) \
 (!strncmp(str, "IOR:", strlen("IOR:")) \
  || !strncmp(str, "iiop://", strlen("iiop://")) \
@@ -515,13 +511,13 @@ orbHTTPScanAnswer(orbHTTPCtxtPtr ctxt, const char *line) {
 	}
 	if ((*cur != 0) && (*cur != ' ') && (*cur != '\t')) return;
 	ctxt->returnValue = ret;
-    } else if (!strncasecmp(line, "content-type:", 13)
-	       || !strncasecmp(line, "contenttype:", 12)) {
+    } else if (!g_ascii_strncasecmp(line, "content-type:", 13)
+	       || !g_ascii_strncasecmp(line, "contenttype:", 12)) {
         cur = strchr(cur, ':') + 1;
 	if (ctxt->contentType != NULL) return;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
 	ctxt->contentType = g_strdup(cur);
-    } else if (!strncasecmp(line, "Location:", 9)) {
+    } else if (!g_ascii_strncasecmp(line, "Location:", 9)) {
         cur += 9;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
 	if (ctxt->location != NULL)
