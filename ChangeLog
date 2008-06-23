@@ -1,3 +1,11 @@
+2008-06-23  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/services/imodule/Makefile.am:
+	* test/everything/Makefile.am:
+	Patch from <dmacks at netspace org> to fix
+	compile failures from passing global -I flags
+	before local ones. Closes bug #538514.
+
 2008-06-04  Tor Lillqvist  <tml@novell.com>
 
 	Bug 536505 - Error building 2.14.13 - implicit declaration of
