@@ -139,11 +139,48 @@ link_get_tmpdir (void)
 
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
 
-/* hopefully a sufficiently large default NIC count */
-#ifdef DEFAULT_LINC2_IFNUM
-#undef DEFAULT_LINC2_IFNUM
+#ifndef G_OS_WIN32
+static char *
+get_first_non_local_ipaddr(char *buf, 
+			   size_t len)
+{
+	int sock;
+	const char *retv;
+	struct if_nameindex *ifname_idx_array;
+	struct if_nameindex *ifname_idx;
+	struct sockaddr_in sin;
+	struct ifreq ifr;
+
+	*buf = '\0';
+
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (-1 == sock)
+		return;
+
+	ifname_idx_array = if_nameindex();
+	for (ifname_idx = ifname_idx_array; ifname_idx && ifname_idx->if_name && ifname_idx->if_name[0]; ifname_idx++) {
+		strncpy(ifr.ifr_name, ifname_idx->if_name, IFNAMSIZ);
+		if (ioctl(sock, SIOCGIFADDR, &ifr)) 
+			continue;
+
+		memcpy(&sin, &(ifr.ifr_addr), sizeof(struct sockaddr_in));
+		retv = (const char*)inet_ntoa(sin.sin_addr);
+		retv = strcmp("127.0.0.1", retv) ? retv : NULL;
+		if (retv) {
+			strncpy(buf, (const char*)inet_ntoa(sin.sin_addr), len);
+			break;
+		}
+	}
+
+	if (ifname_idx_array)
+		if_freenameindex(ifname_idx_array);
+
+	if (-1 != sock)
+		close(sock);
+
+	return buf;
+}
 #endif
-#define DEFAULT_LINC2_IFNUM (32)
 
 static char *
 get_netid(LinkNetIdType which, 
@@ -161,58 +198,13 @@ get_netid(LinkNetIdType which,
 	if ((LINK_NET_ID_IS_IPADDR == which)
 	    || (LINK_NET_ID_IS_CUSTOM == which)) {
 #ifndef G_OS_WIN32
-		struct sockaddr_in *adr = NULL;
-		struct ifreq *my_ifreqs = NULL;
-		struct ifconf my_ifconf = { 0 };
-		int sock = -1;
-		int num = 0;
-		int i = 0;
+		if (fixed_host_net_id) 
+			strncpy(buf, fixed_host_net_id, len);
+		else
+			get_first_non_local_ipaddr(buf, len);
+		if ('\0' == *buf)
+			strncpy(buf, "127.0.0.1", len);
 
-		sock = socket(AF_INET,SOCK_DGRAM,0);
-		if (-1 == sock) 
-			goto out;
-#ifdef SIOCGIFNUM
-		i = ioctl(sock, SIOCGIFNUM, &num);
-		if ((0 > i) || !num) {
-			close(sock);
-			goto out;
-		}
-#else
-		num = DEFAULT_LINC2_IFNUM;
-#endif
-		my_ifconf.ifc_len = sizeof(struct ifreq) * num;
-		my_ifconf.ifc_req = (struct ifreq*)malloc(my_ifconf.ifc_len);
-		if (!my_ifconf.ifc_req) {
-			close(sock);
-			goto out;
-		}
-		if (ioctl(sock,SIOCGIFCONF,&my_ifconf) < 0) {
-			close(sock);
-			free(my_ifconf.ifc_req);
-			goto out;
-		}
-		close(sock);
-
-		my_ifreqs = my_ifconf.ifc_req;
- 		for (i = 0; i < num; i++) {
-			adr = (struct sockaddr_in *)&my_ifreqs[i].ifr_ifru.ifru_addr;
-			if (fixed_host_net_id) {
-				if (!strcmp(fixed_host_net_id, inet_ntoa(adr->sin_addr)))
-					break;
-			} else {
-				if (strcmp("127.0.0.1", inet_ntoa(adr->sin_addr)))
-					break;
-			}
-			if (!strcmp("0.0.0.0", inet_ntoa(adr->sin_addr))) {
-				if (i) 
-					adr = (struct sockaddr_in *)&my_ifreqs[--i].ifr_ifru.ifru_addr;
-				break;
-			}
-		}
-		strncpy(buf, (const char*)inet_ntoa(adr->sin_addr), len);
-		free(my_ifconf.ifc_req);
-
-		/* will be 127.0.0.1 anyway, if no other address is defined... */
 		return buf;
 #else
 		SOCKET sock;
@@ -220,10 +212,8 @@ get_netid(LinkNetIdType which,
 		/* Let's hope 20 interfaces is enough. There doesn't
 		 * seem to be any way to get information about how
 		 * many interfaces there are.
-		 * 
-		 * [Jules] Using the ifnum define instead...
 		 */
-		INTERFACE_INFO interfaces[DEFAULT_LINC2_IFNUM]; 
+		INTERFACE_INFO interfaces[20]; 
 		int i;
 
 		sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
