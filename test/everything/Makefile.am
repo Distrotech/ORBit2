@@ -21,8 +21,8 @@ INCLUDES =                                 \
 	-DORBIT2_INTERNAL_API              \
         -DTEST_SRCDIR=\""$(top_srcdir)"/test/everything\" \
 	$(WARN_CFLAGS)                     \
-	$(ORBIT_CFLAGS)			   \
 	$(LOCAL_LINC_CFLAGS)		   \
+	$(ORBIT_CFLAGS)			   \
 	$(ORBIT_IDL_CFLAGS)
 
 #	-DORBIT_STUB_DEBUG_LOCAL
