@@ -1,3 +1,8 @@
+2008-07-18  Michael Meeks  <michael.meeks@novell.com>
+
+	* test/typelib-dump.c (dump_tc): remove redundant code
+	causing warnings - thanks JP.
+
 2008-06-23  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/services/imodule/Makefile.am:
