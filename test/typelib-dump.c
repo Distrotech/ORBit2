@@ -9,19 +9,13 @@
 #include "../src/orb/orb-core/orb-core-private.h"
 
 static void
-dump_tc (CORBA_TypeCode tc, int ident)
+dump_tc (CORBA_TypeCode tc)
 {
-	char *id_str;
 	CORBA_TypeCode kind = TC_CORBA_TCKind;
 
-	id_str = g_new (char, ident + 1);
-	memset (id_str, ' ', ident);
-	id_str [ident] = '\0';
-
-	printf ("%sType %12s: '%s'\n",
-		id_str, kind->subnames [tc->kind],
+	printf ("Type %12s: '%s'\n",
+		kind->subnames [tc->kind],
 		tc->repo_id);
-	g_free (id_str);
 }
 
 static void
@@ -121,7 +115,7 @@ main (int argc, char *argv [])
 	else {
 		printf ("%u types:\n", tcs->_length);
 		for (i = 0; i < tcs->_length; i++)
-			dump_tc (tcs->_buffer [i], 0);
+			dump_tc (tcs->_buffer [i]);
 	}
 
 	ifaces = ORBit_small_get_iinterfaces (name);
