@@ -114,7 +114,7 @@ main (int argc, char *argv[])
 	}
 
 	type_id = g_quark_to_string (obj->type_qid);
-	printf ("Object ID: %s\n", type_id ? type_id : "<error no type id>");
+	printf ("Interface Repository ID: %s\n", type_id ? type_id : "<error no type id>");
 
 	for (l = obj->profile_list; l; l = l->next) {
 		IOP_Profile_info *pi = l->data;
