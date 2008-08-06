@@ -1,3 +1,8 @@
+2008-08-06  Jules Colding  <colding@42tools.com>
+
+	* test/ior-decode.c (main): Fix terminology. The ID previously
+	known as the "Object ID" is really the "Interface Repository ID".
+
 2008-07-18  Michael Meeks  <michael.meeks@novell.com>
 
 	* test/typelib-dump.c (dump_tc): remove redundant code
