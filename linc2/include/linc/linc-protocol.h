@@ -50,6 +50,9 @@ typedef gboolean (*LinkProtocolGetSockInfoFunc) (const LinkProtocolInfo *proto,
 						 gchar                 **hostname,
 						 gchar                 **service);
 
+typedef void (*LinkProtocolPostCreateFunc) (int fd,
+					    struct sockaddr *sockaddr);
+
 typedef gboolean (*LinkProtocolIsLocal)         (const LinkProtocolInfo *proto,
 						 const struct sockaddr  *sockaddr,
 						 LinkSockLen             saddr_len);
@@ -66,8 +69,9 @@ struct _LinkProtocolInfo {
 	LinkProtocolGetSockAddrFunc get_sockaddr;
 	LinkProtocolGetSockInfoFunc get_sockinfo;
 	LinkProtocolIsLocal         is_local;
+	LinkProtocolPostCreateFunc  post_create;
 	/* This structure is private and may be extended in future */
-	gpointer                    dummy[8];
+	gpointer                    dummy[7];
 };
 
 typedef enum {

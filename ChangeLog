@@ -1,3 +1,10 @@
+2008-08-11  Mike Gorse  <mgorse@novell.com>
+	
+	* src/orb/GIOP/giop.c (giop_tmpdir_init): use ORBIT_SOCKETDIR
+	to propagate the socket dir to children wherever possible: has
+	two benefits: speeds up ORBit2 launch, and allows root owned
+	apps to talk to the user's AT.
+
 2008-08-06  Jules Colding  <colding@42tools.com>
 
 	* test/ior-decode.c (main): Fix terminology. The ID previously

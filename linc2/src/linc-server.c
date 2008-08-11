@@ -385,6 +385,9 @@ link_server_setup (LinkServer            *srv,
 	if ((proto->flags & LINK_PROTOCOL_NEEDS_BIND) || local_serv_info)
 		n = bind (fd, saddr, saddr_len);
 
+	if (proto->post_create)
+		(*proto->post_create) (fd, saddr);
+
 #ifdef HAVE_WINSOCK2_H
 	if (n == SOCKET_ERROR) {
 		n = -1;
