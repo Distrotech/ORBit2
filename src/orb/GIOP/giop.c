@@ -48,7 +48,7 @@ test_safe_socket_dir (const char *dirname)
 	}
 	
 #ifndef G_PLATFORM_WIN32
-	if (statbuf.st_uid != getuid ()) {
+	if (getuid() != 0 && statbuf.st_uid != getuid ()) {
 		S_PRINT (("Owner of %s is not the current user\n", dirname));
 		return FALSE;
 	}
@@ -126,11 +126,20 @@ giop_tmpdir_init (void)
 	char *dirname;
 	char *safe_dir = NULL;
 	long iteration = 0;
+	const gchar *env_dir;
 	static gboolean inited = FALSE;
 
 	if (inited)
 		return;
 	inited = TRUE;
+
+#ifndef G_OS_WIN32
+	env_dir = g_getenv("ORBIT_SOCKETDIR");
+	if (env_dir && test_safe_socket_dir (env_dir)) {
+		link_set_tmpdir (env_dir);
+		return;
+	}
+#endif
 
 	tmp_root = g_get_tmp_dir ();
 	dirname = g_strdup_printf ("orbit-%s",
@@ -205,6 +214,9 @@ giop_tmpdir_init (void)
 			g_error ("Cannot find a safe socket path in '%s'", tmp_root);
 	}
 
+#ifndef G_OS_WIN32
+	g_setenv ("ORBIT_SOCKETDIR", safe_dir, TRUE);
+#endif
 	g_free (safe_dir);
 	g_free (dirname);
 }

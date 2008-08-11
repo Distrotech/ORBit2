@@ -1,3 +1,16 @@
+2008-08-11  Michael Meeks  <michael.meeks@novell.com>
+
+	* src/linc-protocols.c (get_first_non_local_ipaddr): 
+	remove bogus return bits; re-order linc-protocols array
+	to maintain binary compat.
+
+2008-08-11  Mike Gorse  <mgorse@novell.com>
+
+	* src/linc-protocols.c (link_protocol_post_create_unix),
+	* src/linc-server.c (link_server_setup): add and call post_create
+	method to allow root user to create sockets in ORBIT_SOCKETDIR,
+	to allow user owned ATs to talk to a root owned app.
+
 2008-06-21  Jules Colding  <colding@42tools.com>
 
 	* src/linc-protocols.c (get_netid): This function

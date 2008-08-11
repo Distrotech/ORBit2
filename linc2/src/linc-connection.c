@@ -548,6 +548,25 @@ link_connection_from_fd (LinkConnection         *cnx,
 	CNX_UNLOCK (cnx);
 }
 
+#ifndef G_OS_WIN32
+static void
+fix_permissions (const char *filename)
+{
+	char *tmp_dir = g_strdup (filename);
+	char *p;
+	struct stat stat_buf;
+
+	if (!tmp_dir)
+		return;
+	p = strrchr (tmp_dir, '/');
+	if (p) {
+		*p = '\0';
+		stat (tmp_dir, &stat_buf);
+		chown (filename, stat_buf.st_uid, -1);
+	}
+}
+#endif
+
 static gboolean
 link_connection_do_initiate (LinkConnection        *cnx,
 			     const char            *proto_name,
@@ -626,6 +645,12 @@ link_connection_do_initiate (LinkConnection        *cnx,
 		fd = newfd;
 	}
 #endif	
+
+#ifndef G_OS_WIN32
+	if (!strcmp (proto_name, "UNIX") && getuid() == 0) {
+		fix_permissions (service);
+	}
+#endif
 
 	LINK_TEMP_FAILURE_RETRY_SOCKET (connect (fd, saddr, saddr_len), rv);
 #ifdef HAVE_WINSOCK2_H

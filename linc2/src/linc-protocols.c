@@ -63,7 +63,7 @@ make_local_tmpdir (const char *dirname)
 				g_error ("Can not stat %s\n", dirname);
 
 #if !defined (__CYGWIN__) && !defined(_WIN32)
-			if (statbuf.st_uid != getuid ())
+			if (getuid() != 0 && statbuf.st_uid != getuid ())
 				g_error ("Owner of %s is not the current user\n", dirname);
 
 			if ((statbuf.st_mode & (S_IRWXG|S_IRWXO)) ||
@@ -140,7 +140,7 @@ link_get_tmpdir (void)
 #if defined(AF_INET) || defined(AF_INET6) || defined (AF_UNIX)
 
 #ifndef G_OS_WIN32
-static char *
+static void
 get_first_non_local_ipaddr(char *buf, 
 			   size_t len)
 {
@@ -177,8 +177,6 @@ get_first_non_local_ipaddr(char *buf,
 
 	if (-1 != sock)
 		close(sock);
-
-	return buf;
 }
 #endif
 
@@ -996,6 +994,28 @@ link_protocol_get_sockinfo_unix (const LinkProtocolInfo  *proto,
 
 	return TRUE;
 }
+
+/*
+ * link_protocol_post_create_unix:
+ * @fd: the file descriptor.
+ * @sockaddr: a #sockaddr_un structure describing the socket.
+ *
+ * For a user running a program as root, set the owner of the socket to
+ * the original user.
+ */
+static void
+link_protocol_post_create_unix (int fd, struct sockaddr *saddr)
+{
+#ifndef G_OS_WIN32
+  struct sockaddr_un *saddr_un = (struct sockaddr_un *)saddr;
+
+	if (getuid() == 0) {
+		struct stat stat_buf;
+		if (!stat (link_tmpdir, &stat_buf))
+			fchown (fd, stat_buf.st_uid, -1);
+	}
+#endif
+}
 #endif /* AF_UNIX */
 
 /*
@@ -1133,7 +1153,8 @@ static LinkProtocolInfo static_link_protocols[] = {
 	NULL, 				/* destroy */
 	link_protocol_get_sockaddr_ipv4,/* get_sockaddr */
 	link_protocol_get_sockinfo_ipv4,/* get_sockinfo */
-	link_protocol_is_local_ipv46    /* is_local */
+	link_protocol_is_local_ipv46,   /* is_local */
+	NULL				/* post_create */
 	},
 #endif
 #if defined(AF_INET6)
@@ -1147,7 +1168,8 @@ static LinkProtocolInfo static_link_protocols[] = {
 	NULL, 				/* destroy */
 	link_protocol_get_sockaddr_ipv6,/* get_sockaddr */
 	link_protocol_get_sockinfo_ipv6,/* get_sockinfo */
-	link_protocol_is_local_ipv46    /* is_local */
+	link_protocol_is_local_ipv46,   /* is_local */
+	NULL				/* post_create */
 	},
 #endif
 #ifdef AF_UNIX
@@ -1161,7 +1183,8 @@ static LinkProtocolInfo static_link_protocols[] = {
 	link_protocol_unix_destroy,  			/* destroy */
 	link_protocol_get_sockaddr_unix, 		/* get_sockaddr */
 	link_protocol_get_sockinfo_unix, 		/* get_sockinfo */
-	link_protocol_unix_is_local                     /* is_local */
+	link_protocol_unix_is_local,                     /* is_local */
+	link_protocol_post_create_unix			/* post_create */
 	},
 #endif
 	{ NULL /* name */ }
