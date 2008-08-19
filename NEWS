@@ -1,3 +1,16 @@
+ORBit2-2.14.14
+
+	- portability
+		+ Fix build on win32 (Tor)
+		+ Mac OS/X fixes (Jules Colding)
+
+	- bug fixes
+		+ use ORBIT_SOCKETDIR to propagate the socket dir to children
+                  wherever possible: has two benefits: speeds up ORBit2 launch,
+                  and allows root owned apps to talk to the user's AT. (Mike Gorse)
+		+ other linc2 fixes (Michael, Mike)
+		+ Cleanups (JP, Jules Colding, dmacks at netspace org)
+ 
 ORBit2-2.14.13
 
 	- porting
