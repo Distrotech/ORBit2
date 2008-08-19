@@ -22,7 +22,7 @@
  *	Mark McLoughlin <mark@skynet.ie>
  */
 
-#include <config.h>
+#include "config.h"
 
 #include "orbit-idl-backend.h"
 #include "orbit-idl2.h"
