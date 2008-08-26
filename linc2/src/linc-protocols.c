@@ -1012,7 +1012,7 @@ link_protocol_post_create_unix (int fd, struct sockaddr *saddr)
 	if (getuid() == 0) {
 		struct stat stat_buf;
 		if (!stat (link_tmpdir, &stat_buf))
-			fchown (fd, stat_buf.st_uid, -1);
+			chown (saddr_un->sun_path, stat_buf.st_uid, -1);
 	}
 #endif
 }
