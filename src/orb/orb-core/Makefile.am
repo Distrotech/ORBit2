@@ -75,7 +75,6 @@ include $(top_srcdir)/Makefile.shared
 
 IDL_FLAGS_CORBA_OPS = --showcpperrors
 $(OPS_IDLOUT_C): $(OPS_IDLOUT_H)
-	true
 
 $(OPS_IDLOUT_H): corba-ops.idl $(IDL_COMPILER)
 	-(rm -f $(OPS_IDLOUT_C) $(OPS_IDLOUT_H) || true) > /dev/null
@@ -98,10 +97,5 @@ EXTRA_DIST = $(IDL_FILES) $(HTTP_FILES)
 dist-hook:
 	cd $(distdir); rm -f $(BUILT_SOURCES)
 
-$(IDL_COMPILER): update-orbitidl
-	@true
-
-update-orbitidl:
+$(IDL_COMPILER):
 	@cd $(top_builddir)/src/idl-compiler && $(MAKE) $(AM_MAKEFLAGS)
-
-.PHONY: update-orbitidl

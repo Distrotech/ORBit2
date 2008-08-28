@@ -1,3 +1,9 @@
+2008-08-28  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/orb/orb-core/Makefile.am: Fix a possible infinite
+	make loop with parallel make. Diego Pettenò. Closes
+	bug #549693.
+
 ======================== 2.14.14 ============================
 
 2008-08-11  Mike Gorse  <mgorse@novell.com>
