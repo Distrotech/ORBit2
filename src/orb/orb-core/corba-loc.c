@@ -294,7 +294,7 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 		corbaloc += strlen("corbaloc:");
 	
 	/* dup. multi profile + object key */ 
-	loc = g_strdup (corbaloc);
+	loc = g_strdup (corbaloc); 
 
 	/* split at last '/' */ 
 	okey = strrchr (loc, '/');
@@ -341,18 +341,23 @@ ORBit_corbaloc_parse (const gchar       *corbaloc)
 			
 		}
 	}
+	goto ret_ok;
 
-	CORBA_free (objkey);
+ret_error:
+	if (profiles) {
+		IOP_delete_profiles (NULL, &profiles);
+		profiles = NULL;
+	}
+
+ret_ok:
+	if (loc)
+		g_free (loc);        /* also free's okey */
+	if (token)
+		g_strfreev (token);
+	if (objkey)
+		CORBA_free (objkey);
 
 	return profiles;
-	
- ret_error:
-	if (loc)    g_free (loc);        /* also free's okey */
-	if (token)  g_strfreev (token);
-	if (objkey) CORBA_free (objkey);
-	if (profiles) IOP_delete_profiles (NULL, &profiles);
-		
-	return NULL;
 }
 
 static gboolean
