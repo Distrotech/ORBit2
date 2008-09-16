@@ -1,3 +1,10 @@
+ORBit2-2.14.15
+
+	- bug fixes
+		+ fix some leaks (Jules Colding)
+		+ fix for Mike's recent fixes (Mike Gorse)
+		+ fix potential make loop (Diego Pettenò)
+
 ORBit2-2.14.14
 
 	- portability
