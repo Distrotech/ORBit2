@@ -870,9 +870,8 @@ link_protocol_get_sockinfo_ipv4 (const LinkProtocolInfo  *proto,
 	if (ntohl (sa_in->sin_addr.s_addr) != INADDR_ANY) {
 		host = gethostbyaddr ((char *)&sa_in->sin_addr, 
                                       sizeof (struct in_addr), AF_INET);
-		if (!host)
-			return FALSE;
-		hname = host->h_name;
+		if (host)
+			hname = host->h_name;
 	}
 #endif
 	return link_protocol_get_sockinfo_ipv46 (hname, sa_in->sin_port, 
@@ -931,16 +930,12 @@ link_protocol_get_sockinfo_ipv6 (const LinkProtocolInfo  *proto,
 	if (memcmp (&sa_in6->sin6_addr, &in6addr_any, sizeof (struct in6_addr))) {
 
 #ifdef HAVE_GETNAMEINFO
-                if (getnameinfo((struct sockaddr *)sa_in6, sizeof(*sa_in6), hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD))
-			return FALSE;
-		else
+                if (!getnameinfo((struct sockaddr *)sa_in6, sizeof(*sa_in6), hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD))
 			hname = hbuf;
 	}
 #else
 		host = gethostbyaddr ((char *)&sa_in6->sin6_addr,
 				      sizeof (struct in6_addr), AF_INET6);
-		if (!host)
-			return FALSE;
 		if (host)
 			hname = host->h_name;
 	}

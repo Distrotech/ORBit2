@@ -332,7 +332,7 @@ link_server_setup (LinkServer            *srv,
 	else
 		local_host = link_get_local_hostname ();
 
- address_in_use:
+address_in_use:
 
 	saddr = link_protocol_get_sockaddr (
 		proto, local_host, local_serv_info, &saddr_len);

@@ -1,13 +1,20 @@
+2008-09-16  Jules Colding  <colding@42tools.com>
+
+	* src/linc-protocols.c (link_protocol_get_sockinfo_ipv4)
+	(link_protocol_get_sockinfo_ipv6): Do not fail if the hostname
+	couldn't be determined. Instead rely on the link_get_local_hostname()
+	provided hostname. This is expected to fix #538388 and #552323.
+
 ====================== 2.14.15 ==================
 
 2008-08-26  Mike Gorse  <mgorse@novell.com>
 
-	* src/linc-protocols.c (link_protocol_post_create_unix): 
+	* src/linc-protocols.c (link_protocol_post_create_unix):
 	use chown not fchown on the socket.
 
 2008-08-11  Michael Meeks  <michael.meeks@novell.com>
 
-	* src/linc-protocols.c (get_first_non_local_ipaddr): 
+	* src/linc-protocols.c (get_first_non_local_ipaddr):
 	remove bogus return bits; re-order linc-protocols array
 	to maintain binary compat.
 
