@@ -106,6 +106,11 @@ ORBit_ORB_start_servers (CORBA_ORB orb)
 		} while (0);
 	}
 		    
+	if (!orbit_ipname)
+		orbit_ipname = link_get_local_hostname();
+	else
+		link_set_local_hostname(orbit_ipname);
+
 	for (info = link_protocol_all (); info->name; info++) {
 		GIOPServer           *server;
 
@@ -1451,7 +1456,7 @@ const ORBit_option orbit_supported_options[] = {
 	{ "ORBNamingIOR",       ORBIT_OPTION_STRING,  &orbit_naming_ref},
 
 	{ "ORBRootPOAIOR",      ORBIT_OPTION_STRING,  NULL }, /* FIXME: huh?          */
- 	{ "ORBIIOPIPName",      ORBIT_OPTION_STRING,  &orbit_ipname },
+ 	{ "ORBIIOPIPName",      ORBIT_OPTION_STRING,  &orbit_ipname }, /* Will always take precedence over ORBNetID */
  	{ "ORBIIOPIPSock",      ORBIT_OPTION_STRING,  &orbit_ipsock },
 	{ "ORBInitialMsgLimit", ORBIT_OPTION_INT,     &orbit_initial_recv_limit },
 	{ "ORBLocalOnly",       ORBIT_OPTION_BOOLEAN, &orbit_local_only },

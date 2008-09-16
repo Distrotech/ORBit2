@@ -1,3 +1,12 @@
+2008-09-16  Jules Colding  <colding@42tools.com>
+
+	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers):
+	The ORBNetID option was not consistent in relation to
+	ORBIIOPIPName. This fix ensures that ORBIIOPIPName always
+	takes precedence. It also fixed the fact that the given
+	ORBNetID was not applied to all part of the profile,
+	specifically not the IOP_TAG_INTERNET_IOP part.
+
 2008-09-16  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* configure.in: Post release bump.
@@ -24,7 +33,7 @@
 ======================== 2.14.14 ============================
 
 2008-08-11  Mike Gorse  <mgorse@novell.com>
-	
+
 	* src/orb/GIOP/giop.c (giop_tmpdir_init): use ORBIT_SOCKETDIR
 	to propagate the socket dir to children wherever possible: has
 	two benefits: speeds up ORBit2 launch, and allows root owned
