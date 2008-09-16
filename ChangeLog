@@ -1,3 +1,11 @@
+2008-09-16  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* NEWS: Update for release.
+	* test/everything/client.c: Remove suspect code causing
+	critical warnings in g_print().
+
+======================= 2.14.15 ============================
+
 2008-09-04  Jules Colding  <colding@42tools.com>
 
 	* src/orb/orb-core/corba-loc.c (ORBit_corbaloc_parse):
