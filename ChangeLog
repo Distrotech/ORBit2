@@ -1,3 +1,10 @@
+2008-09-16  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* NEWS: Updated. 
+	* configure.in: Bump again.
+
+======================= 2.14.16 ============================
+
 2008-09-16  Jules Colding  <colding@42tools.com>
 
 	* src/orb/orb-core/corba-orb.c (ORBit_ORB_start_servers):
