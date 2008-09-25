@@ -9,10 +9,10 @@
 #include "orbit-options.h"
 
 #ifdef G_OS_WIN32
-extern const gchar *ORBit_win32_system_rcfile;
+extern const gchar *ORBit_win32_get_system_rcfile (void);
 
 #undef ORBIT_SYSTEM_RCFILE
-#define ORBIT_SYSTEM_RCFILE ORBit_win32_system_rcfile
+#define ORBIT_SYSTEM_RCFILE ORBit_win32_get_system_rcfile ()
 #endif
 
 #undef DEBUG

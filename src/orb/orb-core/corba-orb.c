@@ -23,13 +23,6 @@ extern const ORBit_option orbit_supported_options[];
 OrbitDebugFlags _orbit_debug_flags = ORBIT_DEBUG_NONE;
 #endif
 
-#ifdef G_OS_WIN32
-/* Silence gcc warning about no prototype */
-BOOL WINAPI DllMain (HINSTANCE hinstDLL,
-		     DWORD     fdwReason,
-		     LPVOID    lpvReserved);
-#endif
-
 /*
  * Command line option handling.
  */
@@ -1481,66 +1474,75 @@ const ORBit_option orbit_supported_options[] = {
 
 #ifdef G_OS_WIN32
 
-const gchar *ORBit_win32_typelib_dir;
-const gchar *ORBit_win32_system_rcfile;
+/* DllMain function used to store the DLL handle */
+static HMODULE hmodule;
+G_LOCK_DEFINE_STATIC (mutex);
 
-/* DllMain function needed to fetch the DLL name and deduce the
- * installation directory from that, and then form the pathnames for
- * the typelib directory and system orbitrc file.
- */
+/* Silence gcc warnings about no prototype */
+BOOL WINAPI DllMain (HINSTANCE hinstDLL,
+		     DWORD     fdwReason,
+		     LPVOID    lpvReserved);
+const gchar *ORBit_win32_get_typelib_dir (void);
+const gchar *ORBit_win32_get_system_rcfile (void);
+
 BOOL WINAPI
 DllMain (HINSTANCE hinstDLL,
 	 DWORD     fdwReason,
 	 LPVOID    lpvReserved)
 {
-  wchar_t wcbfr[1000];
-  char cpbfr[1000];
-  char *dll_name = NULL;
-  gchar *prefix;
-  
-  switch (fdwReason) {
-  case DLL_PROCESS_ATTACH:
-	  /* GLib 2.6 uses UTF-8 file names */
-	  if (GetVersion () < 0x80000000) {
-		  /* NT-based Windows has wide char API */
-		  if (GetModuleFileNameW ((HMODULE) hinstDLL,
-					  wcbfr, G_N_ELEMENTS (wcbfr)))
-			  dll_name = g_utf16_to_utf8 (wcbfr, -1,
-						      NULL, NULL, NULL);
-	  } else {
-		  /* Win9x, yecch */
-		  if (GetModuleFileNameA ((HMODULE) hinstDLL,
-					  cpbfr, G_N_ELEMENTS (cpbfr)))
-			  dll_name = g_locale_to_utf8 (cpbfr, -1,
-						       NULL, NULL, NULL);
-	  }
+        switch (fdwReason) {
+        case DLL_PROCESS_ATTACH:
+                hmodule = hinstDLL;
+                break;
+        }
+        return TRUE;
+}
 
-	  if (dll_name) {
-		  gchar *p = strrchr (dll_name, '\\');
-		  
-		  if (p != NULL)
-			  *p = '\0';
+static const char *typelib_dir = NULL;
+static const char *system_rcfile = NULL;
 
-		  p = strrchr (dll_name, '\\');
-		  if (p && (g_ascii_strcasecmp (p + 1, "bin") == 0))
-			  *p = '\0';
-		  
-		  prefix = dll_name;
-	  } else {
-		  prefix = g_strdup ("");
-	  }
+static void
+setup (void)
+{
+	gchar *prefix;
 
-	  ORBit_win32_typelib_dir = g_strconcat (prefix,
-						 "\\lib\\orbit-2.0",
-						 NULL);
-	  ORBit_win32_system_rcfile = g_strconcat (prefix,
-						   "\\etc\\orbitrc",
-						   NULL);
-	  g_free (prefix);
-	  break;
-  }
+	G_LOCK (mutex);
+	if (typelib_dir != NULL) {
+		G_UNLOCK (mutex);
+		return;
+	}
 
-  return TRUE;
+	prefix = g_win32_get_package_installation_directory_of_module (hmodule);
+
+	if (prefix == NULL) {
+		/* Just to not crash... */
+		prefix = g_strdup ("");
+	}
+
+	typelib_dir = g_strconcat (prefix,
+				   "\\lib\\orbit-2.0",
+				   NULL);
+
+	system_rcfile = g_strconcat (prefix,
+				     "\\etc\\orbitrc",
+				     NULL);
+	G_UNLOCK (mutex);
+
+	g_free (prefix);
+}
+
+const gchar *
+ORBit_win32_get_typelib_dir (void)
+{
+	setup ();
+	return typelib_dir;
+}
+
+const gchar *
+ORBit_win32_get_system_rcfile (void)
+{
+	setup ();
+	return system_rcfile;
 }
 
 #endif

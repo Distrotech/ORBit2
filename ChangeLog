@@ -1,3 +1,15 @@
+2008-09-26  Tor Lillqvist  <tml@novell.com>
+
+	* src/orb/orb-core/corba-orb.c [Win32]: A DllMain() function
+	shouldn't really call functions in other DLLs. Just save the
+	HMODULE of the libORBit-2 DLL. Don't calculate the typelib
+	directory and system rcfile paths in DllMain(), do it as needed in
+	separate functions. Simplyfy code by using
+	g_win32_get_package_installation_directory_of_module().
+
+	* src/orb/orb-core/orb-core-private.h
+	* src/orb/util/orbit-options.c: Corresponding changes.
+
 2008-09-16  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* NEWS: Updated. 
