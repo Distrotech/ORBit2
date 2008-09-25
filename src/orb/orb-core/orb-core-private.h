@@ -78,9 +78,9 @@ glong ORBit_get_giop_recv_limit (void);
 
 
 #ifdef G_OS_WIN32
-extern const gchar *ORBit_win32_typelib_dir;
+extern const gchar *ORBit_win32_get_typelib_dir (void);
 #undef ORBIT_TYPELIB_DIR
-#define ORBIT_TYPELIB_DIR ORBit_win32_typelib_dir
+#define ORBIT_TYPELIB_DIR ORBit_win32_get_typelib_dir ()
 #endif
 
 #endif
