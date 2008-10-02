@@ -1,5 +1,11 @@
 2008-10-02  Tor Lillqvist  <tml@novell.com>
 
+	* src/linc-protocols.c (link_protocol_is_local_ipv46): Do simple
+	checks for loopback addresses first before doing any
+	gethostbyname(). Avoids superfluous potential DNS lookups.
+
+2008-10-02  Tor Lillqvist  <tml@novell.com>
+
 	* src/linc-debug.h: Always turn on the debug printout possibility
 	on Windows.
 
