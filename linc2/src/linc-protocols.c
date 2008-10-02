@@ -468,6 +468,33 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 #endif
 	return FALSE;
 #else   /*HAVE_GETADDRINFO*/	
+
+	/* Do simple check for INADDR_LOOPBACK first */
+	if (saddr->sa_family == AF_INET &&
+	    ((struct sockaddr_in *)saddr)->sin_addr.s_addr == htonl (INADDR_LOOPBACK)) {
+#ifdef LOCAL_DEBUG
+		/* I don't understand why g_warning() is used here,
+		 * but as the existing code does this if LOCAL_DEBUG
+		 * is defined and we are going to return TRUE, keep
+		 * doing it like that then... Not that I know if
+		 * anybody is using the LOCAL_DEBUG possibility?
+		 */
+		g_warning ("local ipv4 address");
+#endif
+		return TRUE;
+	}
+
+#ifdef AF_INET6
+	/* Then simple check for IPv6 loopback address */
+	if (saddr->sa_family == AF_INET6 &&
+	    IN6_IS_ADDR_LOOPBACK (saddr)) {
+#ifdef LOCAL_DEBUG
+		g_warning ("local ipv6 address");
+#endif
+		return TRUE;
+	}
+#endif
+
 	if (!local_hostent) {
 		LINK_RESOLV_SET_IPV6;
                 d_printf("%s:%s:%d:gethostbyname(%s)\n", __FILE__, __FUNCTION__, __LINE__, link_get_local_hostname ());
