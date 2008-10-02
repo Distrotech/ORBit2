@@ -1,3 +1,11 @@
+2008-10-02  Tor Lillqvist  <tml@novell.com>
+
+	* src/linc-debug.h: Always turn on the debug printout possibility
+	on Windows.
+
+	* src/Makefile.am: Don't use -DGNU_SOURCE on Windows as it
+	confuses newest mingw headers.
+
 ====================== 2.14.16 ===================
 
 2008-09-16  Jules Colding  <colding@42tools.com>

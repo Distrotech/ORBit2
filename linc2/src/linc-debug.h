@@ -4,6 +4,13 @@
 /* Enables debug printout for the socket / connection */
 #undef CONNECTION_DEBUG
 
+/* Always turn on the possibility to get debug printout on Windows as
+ * it is much more often needed there.
+ */
+#ifdef _WIN32 
+#define CONNECTION_DEBUG
+#endif
+
 /* If CONNECTION_DEBUG is defined, define this to make it selectable
  * at runtime by setting the LINK_CONNECTION_DEBUG env var.
  */
