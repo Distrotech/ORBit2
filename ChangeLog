@@ -1,3 +1,10 @@
+2008-10-03  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/idl-compiler/orbit-idl-c-utils.c: (orbit_cbe_write_typespec),
+	(orbit_cbe_write_param_typespec_raw):
+	* src/orb/orb-core/corba-orb.c: Fix missing format specifiers
+	and const. Closes bug #554564.
+
 2008-09-26  Tor Lillqvist  <tml@novell.com>
 
 	* src/orb/orb-core/corba-orb.c [Win32]: A DllMain() function

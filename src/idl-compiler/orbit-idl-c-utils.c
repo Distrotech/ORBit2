@@ -203,7 +203,7 @@ void
 orbit_cbe_write_typespec(FILE *of, IDL_tree tree)
 {
     char *name = orbit_cbe_get_typespec_str(tree);
-    fprintf( of, name);
+    fprintf(of, "%s", name);
     g_free(name);
 }
 
@@ -262,7 +262,7 @@ orbit_cbe_write_param_typespec_raw (FILE *of, IDL_tree ts, IDL_ParamRole role)
 {
     char *str;
     str = orbit_cbe_write_param_typespec_str (ts, role);
-    fprintf (of, str);
+    fprintf (of, "%s", str);
     g_free (str);
 }
 
