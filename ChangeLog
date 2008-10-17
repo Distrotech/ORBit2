@@ -1,6 +1,11 @@
 2008-10-17  Cosimo Cecchi  <cosimoc@gnome.org>
 
 	* configure.in:
+	Enforce deprecated CFLAGS only under maintainer mode.
+
+2008-10-17  Cosimo Cecchi  <cosimoc@gnome.org>
+
+	* configure.in:
 	* src/idl-compiler/orbit-idl-main.c:
 	* src/orb/orb-core/orbit-small.c:
 	* src/orb/orb-core/orbit-typelib.c:
