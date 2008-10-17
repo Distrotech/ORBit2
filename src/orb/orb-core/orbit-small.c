@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include <gmodule.h>
-#include <glib/garray.h>
+#include <glib.h>
 
 #include <orbit/orbit.h>
 

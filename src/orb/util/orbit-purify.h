@@ -2,7 +2,7 @@
 #define _ORBIT_PURIFY_H 1
 
 #include <string.h>
-#include <glib/gmacros.h>
+#include <glib.h>
 
 #ifdef ORBIT_PURIFY
 #  define p_memwipe(m,len)	memset ((m), 0xaa, (len))

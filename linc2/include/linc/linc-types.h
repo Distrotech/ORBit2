@@ -12,8 +12,7 @@
 #ifndef _LINK_TYPES_H_
 #define _LINK_TYPES_H_
 
-#include <glib/gmacros.h>
-#include <glib/gthread.h>
+#include <glib.h>
 #include <glib-object.h>
 
 G_BEGIN_DECLS

@@ -4,7 +4,7 @@
 
 #include <orbit/orbit.h>
 #include <gmodule.h>
-#include <glib/garray.h>
+#include <glib.h>
 
 #include "orb-core-private.h"
 #include "orbit-debug.h"

@@ -1,3 +1,15 @@
+2008-10-17  Cosimo Cecchi  <cosimoc@gnome.org>
+
+	* configure.in:
+	* src/idl-compiler/orbit-idl-main.c:
+	* src/orb/orb-core/orbit-small.c:
+	* src/orb/orb-core/orbit-typelib.c:
+	* src/orb/poa/poa-macros.h:
+	* src/orb/poa/poa-private.h:
+	* src/orb/util/orbit-purify.h:
+	* src/services/name/boot.c:
+	Use and enforce single GLib includes.
+
 2008-10-03  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/idl-compiler/orbit-idl-c-utils.c: (orbit_cbe_write_typespec),
