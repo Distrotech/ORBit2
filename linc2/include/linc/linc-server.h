@@ -12,7 +12,7 @@
 #ifndef _LINK_SERVER_H_
 #define _LINK_SERVER_H_
 
-#include <glib/gmacros.h>
+#include <glib.h>
 
 G_BEGIN_DECLS
 

@@ -29,7 +29,6 @@
 #include <string.h>
 #include <glib.h>
 #include <libIDL/IDL.h>
-#include <glib/goption.h>
 #include <glib/gi18n.h>
 
 #include "orbit-idl2.h"

@@ -6,7 +6,7 @@
 #  include <syslog.h>
 #endif
 #include <signal.h>
-#include <glib/goption.h>
+#include <glib.h>
 #include <glib/gi18n.h>
 #include "CosNaming_impl.h"
 
