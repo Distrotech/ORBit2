@@ -1,3 +1,9 @@
+2008-12-01  Jules Colding  <colding@42tools.com>
+
+	* src/orb/orb-core/corba-any.c (ORBit_sequence_remove):
+	Submitted on behalf of Stian Skjelstad <stian@nixia.no>.
+	Fixes #552690.
+
 2008-10-17  Cosimo Cecchi  <cosimoc@gnome.org>
 
 	* configure.in:

@@ -1327,7 +1327,7 @@ ORBit_sequence_remove (gpointer sequence,
         remaining = seq->_length - idx - 1;
         ORBit_freekids_via_TypeCode (subtc, elem);
           /* shift remaining elements into free slot */
-        memcpy (elem, elem + element_size, element_size*remaining);
+        memmove (elem, elem + element_size, element_size*remaining);
           /* zero last element */
         memset (elem + element_size*remaining, 0, element_size);
 
