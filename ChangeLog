@@ -1,3 +1,11 @@
+2008-12-09  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* src/services/imodule/orbit-imodule-libidl-utils.h:
+	* src/services/imodule/orbit-imodule-utils.h:
+	* test/everything/client.c: (wait_until_done):
+	Fix glib single includes. Patch from Przemysław Grzegorczyk.
+	Closes bug #563700.
+
 2008-12-01  Jules Colding  <colding@42tools.com>
 
 	* src/orb/orb-core/corba-any.c (ORBit_sequence_remove):

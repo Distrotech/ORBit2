@@ -1957,7 +1957,7 @@ static void
 wait_until_done (void)
 {
 	while (!done)
-		g_main_iteration (TRUE);
+		g_main_context_iteration (NULL, TRUE);
 }
 
 static void

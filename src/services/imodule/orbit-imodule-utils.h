@@ -25,8 +25,7 @@
 #ifndef __ORBIT_IMODULE_UTILS_H__
 #define __ORBIT_IMODULE_UTILS_H__
 
-#include <glib/gmacros.h>
-#include <glib/ghash.h>
+#include <glib.h>
 #include <libIDL/IDL.h>
 
 G_BEGIN_DECLS
