@@ -528,6 +528,8 @@ init_iinterfaces (ORBit_IInterfaces *interfaces,
 
 	free (malloc (8)); /* -lefence */
 
+	g_thread_init (NULL);
+
 	CORBA_exception_init(&real_ev);
 
 	for (i = 0; i < argc; i++) {

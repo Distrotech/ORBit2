@@ -187,6 +187,8 @@ int main (int argc, char *argv[]) {
 	CORBA_Environment ev;
 	CORBA_ORB orb;
 	
+	g_thread_init (NULL);
+
 	CORBA_exception_init(&ev);
 	orb = CORBA_ORB_init(&argc, argv, "orbit-local-orb", &ev);
 

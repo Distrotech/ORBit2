@@ -1,3 +1,14 @@
+2008-12-15  Tor Lillqvist  <tml@novell.com>
+
+	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
+	is usually too late
+
+	* src/linc.c (link_init): Don't call g_thread_init() here, it's
+	way too late. g_thread_init() must be the first GLib function
+	called in a program if it is called at all. Instead, if thread
+	support is requested but g_thread_init() has not been called,
+	print a warning and continue without threads.
+
 2008-10-17  Cosimo Cecchi  <cosimoc@gnome.org>
 
 	* include/linc/linc-connection.h:

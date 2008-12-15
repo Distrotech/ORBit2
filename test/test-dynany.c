@@ -571,6 +571,8 @@ main (int argc, char *argv[])
 
 	free (malloc (8));
 
+	g_thread_init (NULL);
+
 	CORBA_exception_init (&ev);
 	orb = CORBA_ORB_init (NULL, NULL, "orbit-local-orb", &ev);
   

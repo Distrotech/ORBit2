@@ -37,7 +37,7 @@
 #ifdef TIMING_RUN
 #  define d_print(a)
 #else
-#  define d_print(a) if (!thread_tests) g_print(a)
+#  define d_print(a) if (!thread_tests && a != NULL) g_print(a)
 #endif
 
 extern CORBA_ORB global_orb;
@@ -2555,6 +2555,8 @@ main (int argc, char *argv [])
 	gboolean           gen_imodule = FALSE;
 	char              *orb_name;
 	int                i;
+
+	g_thread_init (NULL);
 
 	CORBA_exception_init (ev);
 
