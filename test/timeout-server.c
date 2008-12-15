@@ -92,6 +92,8 @@ main (int argc, char *argv[])
 	signal(SIGINT, exit);
 	signal(SIGTERM, exit);
 
+	g_thread_init (NULL);
+
 	CORBA_exception_init (&ev);
 
 	/* create IPv4 orb */

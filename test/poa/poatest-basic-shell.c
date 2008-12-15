@@ -36,6 +36,8 @@ main (int argc, char **argv)
 	PortableServer_POAManager poa_mgr;
 	poatest                   poatest_obj;
 
+	g_thread_init (NULL);
+
 	CORBA_exception_init (&ev);
 
 	orb = CORBA_ORB_init (&argc, argv, "", &ev);

@@ -258,6 +258,7 @@ int
 main(int argc, char *argv[]) {
 	/* ORBit2-2.7.6 leaks on shutdown with about 700KB */
 	/* LEAK_DETECT_WITH_TOLERANCE (1, main_func (argc,argv), 20); */
+	g_thread_init (NULL);
 	main_func (argc, argv);
 	exit (0);
 }

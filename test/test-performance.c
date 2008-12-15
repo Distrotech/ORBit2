@@ -175,6 +175,8 @@ main (int argc, char *argv[])
 
 	free (malloc (8));
 
+	g_thread_init (NULL);
+
 	CORBA_exception_init (&ev);
 
 	timer = g_timer_new ();

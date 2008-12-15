@@ -534,7 +534,7 @@ giop_init (gboolean thread_safe, gboolean blank_wire_data)
 {
 	link_init (thread_safe);
 
-	if (thread_safe) {
+	if (giop_thread_safe ()) {
 		GIOPThread *tdata;
 
 		/* We need a destructor to clean up if giopthreads are used

@@ -154,6 +154,8 @@ main (int argc, char *argv[])
 	CORBA_ORB orb;
 	int retv = EXIT_FAILURE;
 
+	g_thread_init (NULL);
+
 	CORBA_exception_init (&ev);
 
 	/* create timeout orb */

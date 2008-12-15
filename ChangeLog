@@ -1,3 +1,23 @@
+2008-12-15  Tor Lillqvist  <tml@novell.com>
+
+	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
+	is usually too late
+
+	* src/orb/GIOP/giop.c (giop_init): Don't assume that link_init()
+	managed to actually take threads into use if requested to. See
+	linc2/ChangeLog. Check with giop_thread_safe().
+
+	* test/everything/client.c (main)
+	* test/everything/server.c (main)
+	* test/poa/poatest-basic-shell.c (main)
+	* test/test-corbaloc.c (main) 
+	* test/test-dynany.c (main)
+	* test/test-giop.c (main)
+	* test/test-mem.c (main)
+	* test/test-performance.c (main)
+	* test/timeout-client.c (main)
+	* test/timeout-server.c (main): Call g_thread_init(NULL).
+
 2008-12-09  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* src/services/imodule/orbit-imodule-libidl-utils.h:
