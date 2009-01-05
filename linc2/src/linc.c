@@ -197,15 +197,7 @@ link_init (gboolean thread_safe)
 #endif
 
 	if (thread_safe && !g_thread_supported ())
-		g_warning ("g_thread_init() has not been called. "
-			   "ORBit2 would like to use threads, so the application "
-			   "should have called g_thread_init(NULL) before any "
-			   "GLib or GLib-using API. "
-			   "Calling g_thread_init() now here "
-			   "inside the libORBit-2 library is too late, "
-			   "so instead threads won't be used by ORBit2. "
-			   "This might have bad side-effects. "
-			   "Fix the application!");
+		g_thread_init (NULL);
 
 	link_is_thread_safe = (thread_safe && g_thread_supported());
 
