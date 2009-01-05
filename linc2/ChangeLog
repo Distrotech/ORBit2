@@ -1,3 +1,15 @@
+2009-01-05  Tor Lillqvist  <tml@novell.com>
+
+	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
+	is usually too late
+
+	* src/linc.c (link_init): Revert change below. Do call
+	g_thread_init(). We don't care what the GLib documentation
+	says. If this potentially late call of g_thread_init() causes
+	problems on some non-Linux platforms, that is the problem of
+	whoever is porting or writing code for that platform, and they
+	need to make sure they call g_thread_init(NULL) very early.
+
 2008-12-15  Tor Lillqvist  <tml@novell.com>
 
 	Bug 547885 - ORBit2 should not call g_thread_init() itself as it

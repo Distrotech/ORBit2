@@ -1,3 +1,16 @@
+2009-01-05  Tor Lillqvist  <tml@novell.com>
+
+	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
+	is usually too late
+
+	The change to linc2 mentioned in the below ChangeLog entry has
+	been reverted. I didn't bother to revert the corresponding changes
+	to src/orb/GIOP/giop.c and the test programs, they are harmless
+	even with the reverted linc2 behaviour. And I still think that it
+	is more correct to call g_thread_init() from main() in an
+	ORBit2-using program, even if it happens to work not to do it, at
+	least on Linux.
+
 2008-12-15  Tor Lillqvist  <tml@novell.com>
 
 	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
