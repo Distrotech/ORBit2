@@ -1,4 +1,4 @@
-IDL_COMPILER = $(top_builddir)/src/idl-compiler/orbit-idl-2$(EXEEXT)
+IDL_COMPILER = @IDL_COMPILER@
 
 %-stubs.c %-skels.c %-common.c %-imodule.c %-skelimpl.c: %.h
 	true

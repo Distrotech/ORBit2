@@ -1,5 +1,14 @@
 2009-01-09  Fridrich Strba  <fridrich.strba@bluewin.ch>
 
+	* configure.in: Add a warning saying that the borked-linking-test
+	could not be run when cross-compiling.
+	* configure.in, Makefile.shared: allow to specify an external idl
+	compiler during the build so that we can use the native compiler while
+	cross-compiling. The fallback is the current situation, the internal
+	idl compiler is used.
+
+2009-01-09  Fridrich Strba  <fridrich.strba@bluewin.ch>
+
 	* configure.in: add fallback action to AC_TRY_RUN to allow cross-
 	compiling since that one is not possible to override with config.cache
 	file.
