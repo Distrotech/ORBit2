@@ -118,6 +118,23 @@ if test z$enable_purify = zyes; then
 	AC_DEFINE(ORBIT_PURIFY, 1, [defined if purify is enabled])
 fi
 
+AC_MSG_CHECKING(which idl compiler to use)
+IDL_COMPILER="\$(top_builddir)/src/idl-compiler/orbit-idl-2\$(EXEEXT)"
+AC_ARG_WITH(idl-compiler,
+    [  --with-idl-compiler    use specific idl compiler (useful when crosscompiling)],
+	if test "x$withval" != x; then
+		if test -f "$withval"; then
+		    IDL_COMPILER=$withval
+		fi
+	fi
+)
+if test x$IDL_COMPILER == x"\$(top_builddir)/src/idl-compiler/orbit-idl-2\$(EXEEXT)"; then
+  AC_MSG_RESULT(internal)
+else
+  AC_MSG_RESULT(external ($IDL_COMPILER))
+fi
+AC_SUBST(IDL_COMPILER)
+
 AC_PROG_AWK
 
 GLIB_REQUIRED=2.8.0
@@ -211,7 +228,8 @@ AC_TRY_RUN([ #include <stdio.h>
 Linking is badly borked on your system. Please ensure your library path is correct
 Check config.log for details - check near the end of the log above 'failed program was'
 Alternatively ensure that your /etc/ld.so.conf (and/or LD_LIBRARY_PATH) includes the
-prefix you're compiling on: '${prefix}' ], ))
+prefix you're compiling on: '${prefix}' ]), 
+AC_MSG_WARN([Could not check for borked linking while cross-compiling]))
 LIBS="$dofus_save_libs"
 
 orig_CPPFLAGS=$CPPFLAGS
