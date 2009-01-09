@@ -211,7 +211,7 @@ AC_TRY_RUN([ #include <stdio.h>
 Linking is badly borked on your system. Please ensure your library path is correct
 Check config.log for details - check near the end of the log above 'failed program was'
 Alternatively ensure that your /etc/ld.so.conf (and/or LD_LIBRARY_PATH) includes the
-prefix you're compiling on: '${prefix}' ]))
+prefix you're compiling on: '${prefix}' ], ))
 LIBS="$dofus_save_libs"
 
 orig_CPPFLAGS=$CPPFLAGS

@@ -1,3 +1,9 @@
+2009-01-09  Fridrich Strba  <fridrich.strba@bluewin.ch>
+
+	* configure.in: add fallback action to AC_TRY_RUN to allow cross-
+	compiling since that one is not possible to override with config.cache
+	file.
+
 2009-01-05  Tor Lillqvist  <tml@novell.com>
 
 	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
