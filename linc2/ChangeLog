@@ -1,3 +1,5 @@
+============================= 2.14.17 =========================
+
 2009-01-05  Tor Lillqvist  <tml@novell.com>
 
 	Bug 547885 - ORBit2 should not call g_thread_init() itself as it
