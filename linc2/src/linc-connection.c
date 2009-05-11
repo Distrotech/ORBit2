@@ -1648,9 +1648,8 @@ link_connections_close (void)
 	if (!cnx)
 		return;
 
-#ifdef G_ENABLE_DEBUG
-	g_warning ("FIXME: Need to shutdown linc connections ...");
-#endif
+	/* FIXME: Need to shutdown linc connections ... */
+
 	for (l = cnx; l; l = l->next)
 		g_object_run_dispose (l->data);
 

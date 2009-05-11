@@ -1,3 +1,8 @@
+2009-05-11  Christian Persch  <chpe@gnome.org>
+
+	* linc2/src/linc-connection.c: (link_connections_close): Convert
+	a FIXME g_warning into a code comment. Bug #581914.
+
 ========================== 2.14.17 ========================
 
 2009-01-09  Fridrich Strba  <fridrich.strba@bluewin.ch>
