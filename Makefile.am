@@ -12,7 +12,8 @@ EXTRA_DIST =		\
 	MAINTAINERS	\
 	README.win32	\
 	Makefile.shared \
-	gtk-doc.make
+	gtk-doc.make	\
+	ORBit2.doap
 
 rpms: distcheck
 	rpm -ta $(top_builddir)/@PACKAGE@-@VERSION@.tar.gz
