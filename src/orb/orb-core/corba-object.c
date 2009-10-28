@@ -396,12 +396,11 @@ GIOPConnection *
 ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 			       CORBA_Object    obj)
 {
-	GIOPConnection *retval = NULL;
 	GSList         *profiles = NULL;
 	GIOPConnection *old_connection;
 
 	if (ORBit_demarshal_IOR (obj->orb, buf, NULL, &profiles))
-		goto out;
+	  return NULL;
 
 	OBJECT_LOCK (obj);
 	IOP_delete_profiles (obj->orb, &obj->forward_locations);
@@ -415,12 +414,7 @@ ORBit_handle_location_forward (GIOPRecvBuffer *buf,
 
 	giop_connection_unref (old_connection);
 
-	retval = ORBit_object_get_connection (obj);
-
- out:
-	giop_recv_buffer_unuse (buf);
-
-	return retval;
+	return ORBit_object_get_connection (obj);
 }
 
 CORBA_InterfaceDef
