@@ -574,21 +574,29 @@ static void
 ch_output_codefrag(IDL_tree tree, OIDL_Run_Info *rinfo, OIDL_C_Info *ci)
 {
   GSList *list;
+  char *ctmp;
 
   for(list = IDL_CODEFRAG(tree).lines; list;
       list = g_slist_next(list)) {
-    if(!strncmp(list->data,
-		"#pragma include_defs",
-		sizeof("#pragma include_defs")-1)) {
-	char *ctmp, *cte;
-	ctmp = ((char *)list->data) + sizeof("#pragma include_defs");
-	while(*ctmp && (isspace((int)*ctmp) || *ctmp == '"')) ctmp++;
-	cte = ctmp;
-	while(*cte && !isspace((int)*cte) && *cte != '"') cte++;
-	*cte = '\0';
-      fprintf(ci->fh, "#include <%s>\n", ctmp);
-    } else
-      fprintf(ci->fh, "%s\n", (char *)list->data);
+    ctmp = list->data;
+    if(!strncmp(ctmp, "#pragma", sizeof("#pragma")-1)) {
+      ctmp += sizeof("#pragma")-1;
+      if (*ctmp && (isspace((int)*ctmp))) {
+	while(*ctmp && (isspace((int)*ctmp))) ctmp++;
+	if(!strncmp(ctmp, "include_defs", sizeof("include_defs")-1)) {
+	  char *cte;
+
+	  ctmp += sizeof("include_defs")-1;
+	  while(*ctmp && (isspace((int)*ctmp) || *ctmp == '"')) ctmp++;
+	  cte = ctmp;
+	  while(*cte && !isspace((int)*cte) && *cte != '"') cte++;
+	  *cte = '\0';
+	  fprintf(ci->fh, "#include <%s>\n", ctmp);
+	  continue;
+	}
+      }
+    }
+    fprintf(ci->fh, "%s\n", (char *)list->data);
   }
 }
 
