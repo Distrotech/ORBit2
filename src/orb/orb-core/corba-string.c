@@ -41,3 +41,20 @@ CORBA_wstring_len (CORBA_wchar *ws)
 
 	return i;
 }
+
+CORBA_wchar *
+CORBA_wstring_dup (const CORBA_wchar *str)
+{
+	CORBA_wchar *retval;
+	CORBA_unsigned_long len;
+
+	if (!str)
+		return NULL;
+
+	len = CORBA_wstring_len (str);
+
+	retval = CORBA_wstring_alloc (len);
+	memcpy (retval, str, (len + 1) * 2);
+
+	return retval;
+}
