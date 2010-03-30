@@ -1,6 +1,6 @@
 m4_define([orbit_major_version],[2])
 m4_define([orbit_minor_version],[14])
-m4_define([orbit_micro_version],[18])
+m4_define([orbit_micro_version],[19])
 m4_define([orbit_version],[orbit_major_version.orbit_minor_version.orbit_micro_version])
 
 dnl Process this file with autoconf to produce a configure script.
