@@ -1485,7 +1485,7 @@ IOP_TAG_GENERIC_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
     len = GUINT32_SWAP_LE_BE(len);
   buf->cur += 4;
 
-  retval = g_new(IOP_TAG_GENERIC_IOP_info, 1);
+  retval = g_new0(IOP_TAG_GENERIC_IOP_info, 1);
   retval->parent.profile_type = IOP_TAG_GENERIC_IOP;
   retval->iiop_version = version;
   if((buf->cur + len) > buf->end
@@ -1590,7 +1590,7 @@ IOP_TAG_INTERNET_IOP_demarshal(IOP_ProfileId p, GIOPRecvBuffer *pbuf,
     len = GUINT32_SWAP_LE_BE(len);
   buf->cur += 4;
 
-  retval = g_new(IOP_TAG_INTERNET_IOP_info, 1);
+  retval = g_new0(IOP_TAG_INTERNET_IOP_info, 1);
   retval->parent.profile_type = IOP_TAG_INTERNET_IOP;
   retval->iiop_version = version;
   if((buf->cur + len) > buf->end
