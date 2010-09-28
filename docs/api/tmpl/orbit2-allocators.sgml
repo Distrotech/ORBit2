@@ -17,6 +17,9 @@ Memory allocation functions for CORBA types.
 <!-- ##### SECTION Stability_Level ##### -->
 
 
+<!-- ##### SECTION Image ##### -->
+
+
 <!-- ##### MACRO CORBA_sequence_set_release ##### -->
 <para>
     CORBA_sequence_set_release() can be used to set the state of the

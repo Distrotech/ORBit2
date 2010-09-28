@@ -1,3 +1,9 @@
+ORBit2-2.14.19
+
+	- bug fixes
+		+ fix free on error of uninitialized IOR components
+		  (Michael Meeks)
+
 ORBit2-2.14.18
 
 	- bug fixes
