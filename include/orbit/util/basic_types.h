@@ -34,7 +34,6 @@ typedef CORBA_wchar *CORBA_wstring;
 typedef struct CORBA_Object_type *CORBA_Object;
 #endif
 
-#ifdef G_HAVE_GINT64
 #define HAVE_CORBA_LONG_LONG
 
 /*
@@ -43,13 +42,6 @@ typedef struct CORBA_Object_type *CORBA_Object;
  */
 typedef gint64  CORBA_long_long;
 typedef guint64 CORBA_unsigned_long_long;
-
-#else
-#error ""
-#error "You don't G_HAVE_GINT64 defined in glib."
-#error "Please make sure you don't have an old glibconfig.h lying around."
-#error ""
-#endif
 
 G_END_DECLS
 
