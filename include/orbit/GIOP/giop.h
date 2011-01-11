@@ -14,6 +14,7 @@ G_BEGIN_DECLS
 
 #ifdef ORBIT2_INTERNAL_API
 
+void        giop_set_main_context  (GMainContext *context);
 void        giop_init              (gboolean thread_safe,
 				    gboolean blank_wire_data);
 void        giop_main_run          (void);

@@ -1442,6 +1442,12 @@ ORBit_get_giop_recv_limit (void)
 	return giop_recv_get_limit ();
 }
 
+void
+ORBit_set_giop_main_context (GMainContext *context)
+{
+	giop_set_main_context (context);
+}
+
 const ORBit_option orbit_supported_options[] = {
 	{ "ORBid",              ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */
 	{ "ORBImplRepoIOR",     ORBIT_OPTION_STRING,  NULL }, /* FIXME: unimplemented */

@@ -32,6 +32,8 @@ gboolean  ORBit_proto_use (const char *name);
  */
 glong ORBit_get_giop_recv_limit (void);
 
+void ORBit_set_giop_main_context (GMainContext *context);
+
 #ifdef ORBIT2_INTERNAL_API
 
 void      ORBit_ORB_forw_bind (CORBA_ORB                   orb,
