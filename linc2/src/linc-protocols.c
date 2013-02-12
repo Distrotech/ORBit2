@@ -383,6 +383,7 @@ link_protocol_is_local_ipv46 (const LinkProtocolInfo *proto,
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = AI_CANONNAME;
+		hints.ai_family = proto->family;
 
 		if (getaddrinfo(link_get_local_hostname(), NULL, &hints, &local_addr) != 0) {
 			if (!warned++)
