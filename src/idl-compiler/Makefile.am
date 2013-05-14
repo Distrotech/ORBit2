@@ -2,7 +2,7 @@ bin_PROGRAMS = orbit-idl-2
 
 orbit_backends_dir = $(libdir)/orbit-2.0/idl-backends
 
-INCLUDES =							\
+AM_CPPFLAGS =							\
 	-I$(top_builddir)					\
 	-I$(top_builddir)/include				\
 	-I$(top_srcdir)						\

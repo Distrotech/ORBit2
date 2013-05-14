@@ -26,7 +26,7 @@ libORBitCosNaming_2_la_LDFLAGS =					\
 	$(ORBIT_NAME_LIBS)						\
 	$(top_builddir)/src/orb/libORBit-2.la
 
-INCLUDES =				\
+AM_CPPFLAGS =				\
 	-I.				\
 	-I$(top_builddir)/include	\
 	-I$(top_srcdir)/include		\

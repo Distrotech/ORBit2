@@ -2,7 +2,7 @@ NULL =
 
 lib_LTLIBRARIES = libORBit-imodule-2.la
 
-INCLUDES =				\
+AM_CPPFLAGS =				\
         -I$(top_srcdir)/include		\
         -I$(top_builddir)/include	\
 	-DORBIT2_INTERNAL_API		\

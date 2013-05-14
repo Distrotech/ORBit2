@@ -2,7 +2,7 @@ SUBDIRS=include orb-core util GIOP poa dynamic
 
 lib_LTLIBRARIES=libORBit-2.la
 
-INCLUDES =					\
+AM_CPPFLAGS =					\
 	-I.					\
 	-I$(srcdir)				\
 	-I$(top_srcdir)/include			\
