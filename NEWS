@@ -1,3 +1,10 @@
+ORBit2-2.14.20
+
+	- build fixes
+		+ Stop using -DG_DISABLE_DEPRECATED since it doesn't build
+		+ Use AM_CPPFLAGS instead of INCLUDES
+		+ Move configure.in to configure.ac
+
 ORBit2-2.14.19
 
 	- bug fixes
