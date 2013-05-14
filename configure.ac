@@ -7,8 +7,8 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([ORBit2],[orbit_version],[http://bugzilla.gnome.org/enter_bug.cgi?product=ORBit2],[ORBit2])
 
 # Process this file with autoconf to produce a configure script.
-# require autoconf 2.54
-AC_PREREQ(2.54)
+# require autoconf 2.60
+AC_PREREQ(2.60)
 
 # Before making a release, the LT_VERSION string should be modified.
 # The string is of the form C:R:A.
@@ -277,10 +277,11 @@ AC_SUBST(LINC_CFLAGS)
 
 dnl Checks for header files.
 AC_HEADER_STDC
+AC_HEADER_RESOLV
 AC_CHECK_HEADERS(fcntl.h unistd.h sys/endian.h endian.h machine/endian.h sys/machine.h sys/isa_defs.h sys/poll.h)
 AC_CHECK_HEADERS(stddef.h wchar.h wcstr.h wctype.h machine/types.h)
 AC_CHECK_HEADERS(netinet/in.h netinet/tcp.h sys/un.h)
-AC_CHECK_HEADERS(arpa/nameser.h resolv.h)
+AC_CHECK_HEADERS(arpa/nameser.h)
 dnl AC_CHECK_HEADERS(linux/irda.h)
 
 dnl Checks for library functions.
