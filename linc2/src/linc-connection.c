@@ -651,8 +651,12 @@ link_connection_do_initiate (LinkConnection        *cnx,
 		fix_permissions (service);
 	}
 #endif
-
+retry:
 	LINK_TEMP_FAILURE_RETRY_SOCKET (connect (fd, saddr, saddr_len), rv);
+	if (rv == -1L && errno == EAGAIN) {
+		g_usleep (10000);
+		goto retry;
+	}
 #ifdef HAVE_WINSOCK2_H
 	if (rv == SOCKET_ERROR) {
 		if ((options & LINK_CONNECTION_NONBLOCKING) &&
