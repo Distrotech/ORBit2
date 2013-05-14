@@ -10,7 +10,7 @@ EVERYTHING_IDLOUT =          \
 	$(EVERYTHING_BUILT)  \
 	everything-imodule.c
 
-INCLUDES =                                 \
+AM_CPPFLAGS =                              \
 	-I$(top_srcdir)/include            \
 	-I$(top_builddir)/include          \
 	-I$(top_builddir)/src              \
@@ -78,7 +78,7 @@ include $(top_srcdir)/Makefile.shared
 BUILT_SOURCES = ${EVERYTHING_BUILT} everything-imodule.c
 CLEANFILES = ${BUILT_SOURCES} iorfile
 
-TESTS = $(srcdir)/test.sh
+TESTS = $(top_builddir)/test/everything/test.sh
 
 EXTRA_DIST = $(IDL_FILES) test.sh $(included_src)
 
