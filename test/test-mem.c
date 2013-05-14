@@ -236,9 +236,9 @@ main_func(int argc, char *argv[]) {
         PortableServer_POAManager_activate(poa_manager, ev);
         g_assert (!ORBIT_EX (ev));
 	
- 	LEAK_DETECT_WITH_TOLERANCE (1000, test_ORBit_alloc (), 50); 
- 	LEAK_DETECT_WITH_TOLERANCE (1000, test_ORBit_sequence (), 50); 
-	LEAK_DETECT_WITH_TOLERANCE (1000, test_activate_deactivate (poa, ev), 50);
+ 	LEAK_DETECT_WITH_TOLERANCE (1000, test_ORBit_alloc (), 200); 
+ 	LEAK_DETECT_WITH_TOLERANCE (1000, test_ORBit_sequence (), 200); 
+	LEAK_DETECT_WITH_TOLERANCE (1000, test_activate_deactivate (poa, ev), 200); 
 
         /* tear down the ORB */
 	CORBA_Object_release ((CORBA_Object) poa_manager, ev);
