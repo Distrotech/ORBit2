@@ -1335,7 +1335,7 @@ link_connection_finalize (GObject *obj)
 	g_free (cnx->priv);
 
 	if (cnx->timeout_mutex)
-		g_mutex_free (cnx->timeout_mutex);
+		g_mutex_clear (cnx->timeout_mutex);
 	if (cnx->timeout_source_id) 
 		link_io_thread_remove_timeout (cnx->timeout_source_id);
 

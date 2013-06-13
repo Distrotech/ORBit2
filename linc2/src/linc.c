@@ -36,10 +36,10 @@ static gboolean        link_is_io_in_thread = FALSE;
 
 /* a big global lock for link */
 static GMutex  *link_main_lock;
-static GCond   *link_main_cond;
+static GCond   link_main_cond;
 /* command dispatch to the I/O loop */
 static GMutex  *link_cmd_queue_lock = NULL;
-static GCond   *link_cmd_queue_cond = NULL;
+static GCond   link_cmd_queue_cond;
 static GList   *link_cmd_queue = NULL;
 
 static int link_wakeup_fds[2] = { -1, -1 };
@@ -108,7 +108,7 @@ link_mainloop_handle_input (GIOChannel   *source,
 		if (sync) {
 			g_mutex_lock (link_cmd_queue_lock);
 			((LinkSyncCommand *)l->data)->complete = TRUE;
-			g_cond_broadcast (link_cmd_queue_cond);
+			g_cond_broadcast (&link_cmd_queue_cond);
 			g_mutex_unlock (link_cmd_queue_lock);
 		}
 	}
@@ -151,7 +151,7 @@ link_exec_command (LinkCommand *cmd)
 
 	if (cmd_is_sync (cmd))
 		while (!((LinkSyncCommand *)cmd)->complete)
-			g_cond_wait (link_cmd_queue_cond,
+			g_cond_wait (&link_cmd_queue_cond,
 				     link_cmd_queue_lock);
 
 	LINK_MUTEX_UNLOCK (link_cmd_queue_lock);
@@ -196,12 +196,8 @@ link_init (gboolean thread_safe)
 	}
 #endif
 
-	if (thread_safe && !g_thread_supported ())
-		g_thread_init (NULL);
-
-	link_is_thread_safe = (thread_safe && g_thread_supported());
-
 	g_type_init ();
+	link_is_thread_safe = (thread_safe);
 
 #ifdef SIGPIPE
 	/*
@@ -259,8 +255,8 @@ link_init (gboolean thread_safe)
 	link_main_lock = link_mutex_new ();
 	link_cmd_queue_lock = link_mutex_new ();
 	if (link_is_thread_safe) {
-		link_main_cond = g_cond_new ();
-		link_cmd_queue_cond = g_cond_new ();
+		g_cond_init(&link_main_cond);
+		g_cond_init(&link_cmd_queue_cond);
 	}
 
 #ifdef HAVE_WINSOCK2_H
@@ -320,9 +316,13 @@ link_main_loop_run (void)
 GMutex *
 link_mutex_new (void)
 {
-	if (link_is_thread_safe)
-		return g_mutex_new ();
-	else
+	GMutex *new_mutex;
+
+	if (link_is_thread_safe) {
+		new_mutex = g_new0(GMutex, 1);
+		g_mutex_init(new_mutex);
+		return new_mutex;
+	} else
 		return NULL;
 }
 
@@ -459,9 +459,8 @@ link_exec_set_io_thread (gpointer data, gboolean immediate)
 		 NULL, (G_IO_IN | G_IO_PRI),
 		 link_mainloop_handle_input, NULL);
 	
-	link_io_thread = g_thread_create_full
-		(link_io_thread_fn, NULL, 256 * 1024, TRUE, FALSE,
-		 G_THREAD_PRIORITY_NORMAL, &error);
+	link_io_thread = g_thread_new
+		("link_io_thread_fn", link_io_thread_fn, NULL);
 	
 	if (!link_io_thread || error)
 		g_error ("Failed to create linc worker thread");
@@ -523,9 +522,8 @@ void
 link_signal (void)
 {
 	if (link_is_thread_safe && link_is_io_in_thread) {
-		g_assert (link_main_cond != NULL);
 		g_assert (link_is_locked ());
-		g_cond_broadcast (link_main_cond);
+		g_cond_broadcast (&link_main_cond);
 	}
 }
 
@@ -537,8 +535,7 @@ link_wait (void)
 		link_main_iteration (TRUE);
 		link_lock ();
 	} else {
-		g_assert (link_main_cond != NULL);
-		g_cond_wait (link_main_cond, link_main_lock);
+		g_cond_wait (&link_main_cond, link_main_lock);
 	}
 }
 
