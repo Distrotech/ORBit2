@@ -68,7 +68,7 @@ libname_server_2_a_DEPENDENCIES = $(DEPS) CosNaming.h
 
 orbit_name_server_2_SOURCES = boot.c
 orbit_name_server_2_LDFLAGS = $(FLAGS)
-orbit_name_server_2_DEPENDENCIES = $(DEPS) CosNaming.h
+orbit_name_server_2_DEPENDENCIES = $(DEPS) CosNaming.h libname-server-2.a
 orbit_name_server_2_LDADD = libname-server-2.a $(LDADDS)
 
 $(libname_server_2_a_OBJECTS) $(name_client_2_OBJECTS) $(orbit_name_server_2_OBJECTS) : CosNaming.h
