@@ -41,7 +41,7 @@ gpointer ORBit_realloc_tcval (gpointer       old,
     Below, some magic values of the fnc ptr are defined.
 **/
 typedef gpointer (*ORBit_Mem_free_fn) (gpointer mem,
-				       gpointer func_data);
+				       gpointer gfunc_data);
 
 #define ORBIT_MEMHOW_HOW(how)      ((how) & 0x3)
 #define ORBIT_MEMHOW_ELEMENTS(how) ((how) >> 2)

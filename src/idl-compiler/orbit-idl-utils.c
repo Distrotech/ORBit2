@@ -362,7 +362,7 @@ orbit_idl_print_node(IDL_tree node, int indent_level)
 
 static void
 IDL_tree_traverse_helper(IDL_tree p, GFunc f,
-			 gconstpointer func_data,
+			 gconstpointer gfunc_data,
 			 GHashTable *visited_nodes,
 			 gboolean    include_self)
 {
@@ -376,17 +376,17 @@ IDL_tree_traverse_helper(IDL_tree p, GFunc f,
 	for (curitem = IDL_INTERFACE (p).inheritance_spec; curitem;
 	     curitem = IDL_LIST (curitem).next) {
 		IDL_tree_traverse_helper (IDL_get_parent_node 
-			(IDL_LIST (curitem).data, IDLN_INTERFACE, NULL), f, func_data, visited_nodes, TRUE);
+			(IDL_LIST (curitem).data, IDLN_INTERFACE, NULL), f, gfunc_data, visited_nodes, TRUE);
 	}
 
 	if (include_self)
-		f(p, (gpointer)func_data);
+		f(p, (gpointer)gfunc_data);
 }
 
 void
 IDL_tree_traverse_parents_full (IDL_tree      p,
 				GFunc         f,
-				gconstpointer func_data,
+				gconstpointer gfunc_data,
 				gboolean      include_self)
 {
 	GHashTable *visited_nodes = g_hash_table_new (NULL, g_direct_equal);
@@ -400,7 +400,7 @@ IDL_tree_traverse_parents_full (IDL_tree      p,
 	if (!p)
 		return;
 
-	IDL_tree_traverse_helper (p, f, func_data, visited_nodes, include_self);
+	IDL_tree_traverse_helper (p, f, gfunc_data, visited_nodes, include_self);
 
 	g_hash_table_destroy (visited_nodes);
 }
@@ -408,9 +408,9 @@ IDL_tree_traverse_parents_full (IDL_tree      p,
 void
 IDL_tree_traverse_parents (IDL_tree p,
 			   GFunc f,
-			   gconstpointer func_data)
+			   gconstpointer gfunc_data)
 {
-	IDL_tree_traverse_parents_full (p, f, func_data, TRUE);
+	IDL_tree_traverse_parents_full (p, f, gfunc_data, TRUE);
 }
 
 /* For use by below function */

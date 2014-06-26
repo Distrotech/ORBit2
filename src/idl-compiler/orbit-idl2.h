@@ -16,10 +16,10 @@ void     orbit_idl_print_node            (IDL_tree      node,
 					  int           indent_level);
 void     IDL_tree_traverse_parents       (IDL_tree      p,
 					  GFunc         f,
-					  gconstpointer func_data);
+					  gconstpointer gfunc_data);
 void     IDL_tree_traverse_parents_full  (IDL_tree      p,
 					  GFunc         f,
-					  gconstpointer func_data, 
+					  gconstpointer gfunc_data,
 					  gboolean      include_self);
 gboolean orbit_cbe_type_contains_complex (IDL_tree      ts);
 void     orbit_idl_check_oneway_op       (IDL_tree      op);
